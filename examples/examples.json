@@ -1,0 +1,18 @@
+﻿[
+  { "label": "hello_world_runio.asm", "path": "hello_world_runio.asm" },
+  { "label": "guess_number.asm", "path": "guess_number.asm" },
+  { "label": "digital_lab_sim_demo.asm", "path": "digital_lab_sim_demo.asm" },
+  { "label": "floating_point_demo.asm", "path": "floating_point_demo.asm" },
+  { "label": "mars_bot_game.asm", "path": "mars_bot_game.asm" },
+  { "label": "mips.asm", "path": "mips.asm" },
+  { "label": "bitmap_display_bars.asm", "path": "bitmap_display_bars.asm" },
+  { "label": "keyboard_display_mmio_echo.asm", "path": "keyboard_display_mmio_echo.asm" },
+  { "label": "cache_stride_benchmark.asm", "path": "cache_stride_benchmark.asm" },
+  { "label": "branch_predictor_bht_demo.asm", "path": "branch_predictor_bht_demo.asm" },
+  { "label": "factorial_recursive.asm", "path": "factorial_recursive.asm" },
+  { "label": "fibonacci_iterative.asm", "path": "fibonacci_iterative.asm" },
+  { "label": "bubble_sort_array.asm", "path": "bubble_sort_array.asm" },
+  { "label": "matrix_mul_3x3.asm", "path": "matrix_mul_3x3.asm" },
+  { "label": "c_compiled_style_sum.asm", "path": "c_compiled_style_sum.asm" },
+  { "label": "string_strlen_strcpy.asm", "path": "string_strlen_strcpy.asm" }
+]
