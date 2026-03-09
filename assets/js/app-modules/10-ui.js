@@ -3060,6 +3060,7 @@ function createHelpSystem(refs, messagesPane, windowManager) {
           Distributed under the MIT License. Please note this is an ongoing project; some features may still be under development or behave differently from the original version.<br><br>
           Contact:<br>
           Nelson Ferreira - nels.ferreira@sapo.pt
+          <a href="https://github.com/codigoavulso/webMARS/" target="_blank" rel="noopener noreferrer">https://github.com/codigoavulso/webMARS/</a>
         </div>
       </div>
       <div class="about-actions">
