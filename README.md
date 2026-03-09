@@ -2,6 +2,10 @@
 
 Port of MARS MIPS 4.5 for the browser, featuring a Java MARS-inspired interface and native JavaScript execution.
 
+[Live demo](https://webmars.nfiles.top/)
+
+![webMARS screenshot](assets/images/screenshot-main.png)
+
 ## Overview
 
 This directory contains the web application (`webMARS`) including:
