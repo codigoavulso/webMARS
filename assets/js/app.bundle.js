@@ -1,6 +1,7 @@
 (() => {
   const MODULE_SCRIPTS = [
     "./assets/js/app-modules/00-core.js",
+    "./assets/js/app-modules/00-core-wasm-bridge.js",
     "./assets/js/app-modules/10-ui.js",
     "./assets/js/app-modules/20-app-runtime.js"
   ];

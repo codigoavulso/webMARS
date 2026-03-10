@@ -1,4 +1,4 @@
-# webMARS 0.3.7
+# webMARS 0.3.8
 
 Port of MARS MIPS 4.5 for the browser, featuring a Java MARS-inspired interface and native JavaScript execution.
 
@@ -73,6 +73,8 @@ Project in an advanced state of functionality.
 - MARS Syscalls adapted for the browser (includes popup/Run I/O, sleep, MIDI)
 - `Assemble all` and `.include` support within the loaded context
 - Program arguments support
+- Runtime memory/backstep caps configurable via `Settings > Uso máximo de Memória...`
+- Engine factory ready for future WASM/C++ core (`createMarsEngine` + bridge fallback to JS)
 
 ### Help
 
@@ -107,7 +109,7 @@ Currently included:
 
 ## Examples
 
-ASM examples located in `examples/` and accessible via the `File > Examples` menu.
+ASM examples located in `examples/` and accessible via the `File > Examples` menu (`examples/examples.json` manifest).
 
 Includes simple and academic demos, such as:
 

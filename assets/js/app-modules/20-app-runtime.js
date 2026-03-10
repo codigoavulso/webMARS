@@ -2,6 +2,29 @@
 
 const preferences = loadPreferences();
 const runtimeSettings = { ...DEFAULT_SETTINGS };
+
+const MIN_MEMORY_GB = 0.25;
+const MAX_MEMORY_GB = 16;
+const DEFAULT_MEMORY_GB = 2;
+const DEFAULT_MAX_BACKSTEPS = 100;
+const MIN_MAX_BACKSTEPS = 0;
+const MAX_MAX_BACKSTEPS = 1000000;
+
+function sanitizeMemoryGb(value, fallback = DEFAULT_MEMORY_GB) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(MIN_MEMORY_GB, Math.min(MAX_MEMORY_GB, parsed));
+}
+
+function sanitizeMaxBacksteps(value, fallback = DEFAULT_MAX_BACKSTEPS) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(MIN_MAX_BACKSTEPS, Math.min(MAX_MAX_BACKSTEPS, parsed));
+}
+
+function memoryGbToBytes(gbValue) {
+  return Math.floor(sanitizeMemoryGb(gbValue) * 1024 * 1024 * 1024);
+}
 runtimeSettings.startAtMain = preferences.startAtMain;
 runtimeSettings.delayedBranching = preferences.delayedBranching;
 runtimeSettings.warningsAreErrors = preferences.warningsAreErrors;
@@ -12,6 +35,8 @@ runtimeSettings.selfModifyingCode = preferences.selfModifyingCode;
 runtimeSettings.popupSyscallInput = preferences.popupSyscallInput;
 runtimeSettings.programArguments = preferences.programArguments;
 runtimeSettings.programArgumentsLine = preferences.programArgumentsText || "";
+runtimeSettings.maxBacksteps = sanitizeMaxBacksteps(preferences.maxBacksteps, DEFAULT_SETTINGS.maxBacksteps);
+runtimeSettings.maxMemoryBytes = memoryGbToBytes(preferences.maxMemoryGb ?? DEFAULT_MEMORY_GB);
 
 const memoryPresets = (typeof MEMORY_CONFIG_PRESETS === "object" && MEMORY_CONFIG_PRESETS) || {};
 
@@ -117,7 +142,7 @@ const store = createStore({
 const editor = setupEditor(refs, store);
 const messagesPane = createMessagesPane(refs, DEFAULT_SETTINGS.maxMessageCharacters);
 const helpSystem = createHelpSystem(refs, messagesPane, windowManager);
-const engine = new MarsEngine({ settings: runtimeSettings, memoryMap: initialMemoryMap });
+const engine = createMarsEngine({ settings: runtimeSettings, memoryMap: initialMemoryMap });
 let activeMemoryConfigId = memoryPresets[initialMemorySelection.id] ? initialMemorySelection.id : "Default";
 const executePane = createExecutePane(refs, engine);
 const registersPane = createRegistersPane(refs);
@@ -581,6 +606,23 @@ function applyPreferences(nextPreferences) {
   runtimeSettings.popupSyscallInput = nextPreferences.popupSyscallInput;
   runtimeSettings.programArguments = nextPreferences.programArguments;
   runtimeSettings.programArgumentsLine = nextPreferences.programArgumentsText || "";
+  runtimeSettings.maxBacksteps = sanitizeMaxBacksteps(nextPreferences.maxBacksteps, runtimeSettings.maxBacksteps);
+  runtimeSettings.maxMemoryBytes = memoryGbToBytes(nextPreferences.maxMemoryGb ?? DEFAULT_MEMORY_GB);
+
+  if (Array.isArray(engine.executionHistory)) {
+    const limit = runtimeSettings.maxBacksteps;
+    if (limit <= 0) {
+      engine.executionHistory.length = 0;
+    } else if (engine.executionHistory.length > limit) {
+      engine.executionHistory.splice(0, engine.executionHistory.length - limit);
+    }
+  }
+  if (typeof engine.getMemoryUsageBytes === "function") {
+    const currentUsage = engine.getMemoryUsageBytes();
+    if (Number.isFinite(currentUsage) && currentUsage > runtimeSettings.maxMemoryBytes) {
+      messagesPane.postMars("[warn] Current memory usage exceeds configured limit; new allocations may fail until usage decreases.");
+    }
+  }
 
   const selectedMemory = resolveMemoryPreset(nextPreferences);
   const memoryConfigId = memoryPresets[selectedMemory.id] ? selectedMemory.id : (memoryPresets.Default ? "Default" : selectedMemory.id);
@@ -910,6 +952,33 @@ async function openMemoryConfigurationPreferencesDialog() {
     exceptionHandlerAddress: toHex(defaultException)
   }, `Memory configuration set to ${memoryPresets[selectedId].label || selectedId}.`);
 }
+
+async function openMemoryUsagePreferencesDialog() {
+  const current = store.getState().preferences;
+  const defaultMemoryGb = sanitizeMemoryGb(current.maxMemoryGb, DEFAULT_MEMORY_GB);
+  const defaultBacksteps = sanitizeMaxBacksteps(current.maxBacksteps, DEFAULT_MAX_BACKSTEPS);
+  const defaultValue = `${defaultMemoryGb},${defaultBacksteps}`;
+
+  const raw = await requestTextDialog(
+    "Uso máximo de Memória",
+    "Definir limites: memória GB e max backsteps (GB,steps)\nExemplo: 2,100",
+    defaultValue
+  );
+  if (raw == null) return;
+
+  const parts = raw.split(/[\s,;]+/).filter(Boolean);
+  const parsedMemoryGb = sanitizeMemoryGb(parts[0], defaultMemoryGb);
+  const parsedBacksteps = sanitizeMaxBacksteps(parts[1], defaultBacksteps);
+
+  updatePreferencesPatch(
+    {
+      maxMemoryGb: parsedMemoryGb,
+      maxBacksteps: parsedBacksteps
+    },
+    `Memory limits updated: ${parsedMemoryGb} GB, ${parsedBacksteps} backsteps.`
+  );
+}
+
 async function loadTextResource(path) {
   try {
     const response = await fetch(path, { cache: "no-store" });
@@ -966,21 +1035,6 @@ async function discoverExampleFiles() {
     }
   } catch {
     // Optional manifest file.
-  }
-
-  if (window.location.protocol === "file:") return;
-
-  try {
-    const listing = await loadTextResource("./examples/");
-    const matches = [...listing.matchAll(/href=["']([^"']+\.(?:asm|s))["']/ig)];
-    const entries = matches.map((match) => {
-      const raw = match[1];
-      const path = raw.startsWith("http") ? raw : `./examples/${raw.replace(/^\.?\/?examples\//i, "")}`;
-      return { label: raw.split("/").pop() || raw, path };
-    });
-    mergeExampleEntries(entries);
-  } catch {
-    // Directory listing is server-dependent.
   }
 }
 
@@ -1308,6 +1362,7 @@ const commands = {
   showHighlightingPreferences() { openHighlightingPreferencesDialog(); },
   showExceptionHandlerPreferences() { openExceptionHandlerPreferencesDialog(); },
   showMemoryConfigurationPreferences() { openMemoryConfigurationPreferencesDialog(); },
+  showMemoryUsagePreferences() { openMemoryUsagePreferencesDialog(); },
 
   openTool(toolId) { toolManager.open(toolId); },
 

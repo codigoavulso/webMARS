@@ -13,7 +13,9 @@
   programArgumentsLine: "",
   maxMessageCharacters: 200000,
   maxErrors: 200,
-  maxBacksteps: 2000,
+  maxBacksteps: 100,
+  maxMemoryBytes: 2 * 1024 * 1024 * 1024,
+  coreBackend: "js",
   fileExtensions: ["asm", "s"],
   asciiNonPrint: "."
 };
@@ -854,9 +856,31 @@ class MarsEngine {
     }
   }
 
+  getMemoryUsageBytes() {
+    return this.memoryBytes.size >>> 0;
+  }
+
+  getMaxMemoryBytes() {
+    const configured = Number(this.settings.maxMemoryBytes);
+    if (Number.isFinite(configured) && configured > 0) return Math.floor(configured);
+    return 2 * 1024 * 1024 * 1024;
+  }
+
+  ensureMemoryCapacity(extraBytes = 0) {
+    const growth = Math.max(0, extraBytes | 0);
+    if (!growth) return;
+    const limit = this.getMaxMemoryBytes();
+    if (!Number.isFinite(limit) || limit <= 0) return;
+    const used = this.getMemoryUsageBytes();
+    if ((used + growth) > limit) {
+      throw new Error(`Memory limit exceeded: ${(used + growth)} bytes requested (limit ${limit} bytes).`);
+    }
+  }
+
   setByte(address, value) {
     const addr = address >>> 0;
     this.assertWritableAddress(addr, 1);
+    if (!this.memoryBytes.has(addr)) this.ensureMemoryCapacity(1);
     this.memoryBytes.set(addr, value & 0xff);
     this.syncWordCache(addr & ~0x3);
     this.lastMemoryWriteAddress = (addr & ~0x3) >>> 0;
@@ -2300,7 +2324,10 @@ class MarsEngine {
     }
 
     this.executionHistory.push(previousState);
-    if (this.executionHistory.length > this.settings.maxBacksteps) {
+    const maxBacksteps = Math.max(0, Number(this.settings.maxBacksteps) | 0);
+    if (maxBacksteps === 0) {
+      this.executionHistory.length = 0;
+    } else if (this.executionHistory.length > maxBacksteps) {
       this.executionHistory.shift();
     }
 
@@ -2473,6 +2500,8 @@ class MarsEngine {
       assembled: this.assembled,
       halted: this.halted,
       steps: this.steps,
+      memoryUsageBytes: this.getMemoryUsageBytes(),
+      maxMemoryBytes: this.getMaxMemoryBytes(),
       pc: this.pc,
       pcHex: toHex(this.pc),
       textRows: rows,
@@ -3581,6 +3610,23 @@ class MarsEngine {
 
     return null;
   }
+}
+
+function createMarsEngine(options = {}) {
+  const settings = options?.settings || {};
+  const backend = String(settings.coreBackend || DEFAULT_SETTINGS.coreBackend || "js").trim().toLowerCase();
+  const wasmFactory = typeof window !== "undefined" ? window.WebMarsWasmCore : null;
+
+  if (backend === "wasm" && wasmFactory && typeof wasmFactory.createEngineSync === "function") {
+    try {
+      const wasmEngine = wasmFactory.createEngineSync(options);
+      if (wasmEngine) return wasmEngine;
+    } catch {
+      // Fallback to JavaScript engine on any wasm bridge failure.
+    }
+  }
+
+  return new MarsEngine(options);
 }
 
 

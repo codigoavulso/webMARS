@@ -1825,7 +1825,9 @@ const DEFAULT_PREFERENCES = {
   highlightDataUpdates: true,
   highlightRegisterUpdates: true,
   exceptionHandlerAddress: "0x80000180",
-  memoryConfiguration: "Default"
+  memoryConfiguration: "Default",
+  maxMemoryGb: 2,
+  maxBacksteps: 100
 };
 
 function loadPreferences() {
@@ -3602,7 +3604,8 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Editor...", command: "showEditorPreferences" },
         { label: "Highlighting...", command: "showHighlightingPreferences" },
         { label: "Exception Handler...", command: "showExceptionHandlerPreferences" },
-        { label: "Memory Configuration...", command: "showMemoryConfigurationPreferences" }
+        { label: "Memory Configuration...", command: "showMemoryConfigurationPreferences" },
+        { label: "Uso máximo de Memória...", command: "showMemoryUsagePreferences" }
       ],
       Tools: toolManager.getTools().map((tool) => ({
         label: tool.label,

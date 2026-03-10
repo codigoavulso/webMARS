@@ -92,6 +92,24 @@
 <body>
   <h1>webMARS · changelog</h1>
   <p class="subtitle">https://github.com/codigoavulso/webMARS/</p>
+ 
+  <!-- 0.3.8 (2026) -->
+  <section class="release">
+    <div class="release-header"><span>v0.3.8</span><span>2026-03-10</span></div>
+    <div class="release-body">
+      <h3>Runtime limits, examples manifest hardening & WASM-ready core bootstrap</h3>
+      <ul>
+        <li>Added settings dialog <code>Settings &gt; Uso máximo de Memória...</code> to configure two runtime caps in a single prompt: memory budget (GB) and max backsteps.</li>
+        <li>New persisted preferences: <code>maxMemoryGb</code> (default 2) and <code>maxBacksteps</code> (default 100), wired directly into engine settings.</li>
+        <li>Engine memory writes now enforce <code>maxMemoryBytes</code>; over-limit allocations raise a controlled runtime error instead of runaway growth.</li>
+        <li>Backstep history pruning now obeys dynamic limits during preference changes and supports zero-history mode.</li>
+        <li>Example loading now trusts only <code>examples/examples.json</code>; removed server-dependent directory autodiscovery to guarantee deterministic menus on all hosts.</li>
+        <li>Switched runtime engine bootstrap to <code>createMarsEngine()</code> factory (JS fallback by default, WASM selectable via backend setting).</li>
+        <li>Introduced <code>00-core-wasm-bridge.js</code> with <code>window.WebMarsWasmCore</code> API (<code>init</code>, <code>registerFactory</code>, <code>createEngineSync</code>) to support future C++/WebAssembly core migration without refactoring UI/runtime modules.</li>
+        <li>Updated bootstrap module order in <code>app.bundle.js</code> to load WASM bridge before UI/runtime.</li>
+      </ul>
+    </div>
+  </section>
   
   <!-- 0.3.7 (2026) -->
   <section class="release">
