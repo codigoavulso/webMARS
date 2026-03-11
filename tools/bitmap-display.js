@@ -2,6 +2,70 @@
   const host = window.MarsWebTools;
   if (!host || typeof host.register !== "function") return;
 
+  const STYLE_ID = "mars-web-tool-bitmap-style";
+  if (!document.getElementById(STYLE_ID)) {
+    const style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = `
+      .bitmap-tool {
+        font: 11px Tahoma, "Segoe UI", sans-serif;
+      }
+
+      .bitmap-main {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 8px;
+        min-height: 0;
+        flex: 1 1 auto;
+      }
+
+      .bitmap-controls {
+        display: grid;
+        grid-auto-rows: minmax(22px, auto);
+        gap: 6px;
+        align-content: start;
+      }
+
+      .bitmap-control-label {
+        color: #111;
+      }
+
+      .bitmap-control-field {
+        width: 128px;
+      }
+
+      .bitmap-viewport {
+        display: flex;
+        min-height: 0;
+      }
+
+      .bitmap-canvas-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        border: 1px solid #bdbdbd;
+        background: #fff;
+        padding: 10px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+      }
+
+      .bitmap-canvas {
+        display: block;
+        flex: 0 0 auto;
+        background: #000;
+        image-rendering: pixelated;
+      }
+
+      .bitmap-tool .mars-tool-panel-body.bitmap-controls {
+        padding-top: 10px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   const DEFAULT_CONFIG = {
     unitWidth: 1,
     unitHeight: 1,
@@ -9,17 +73,44 @@
     displayHeight: 256,
     baseAddress: 0x10010000
   };
+  const layoutConfig = (typeof window !== "undefined" ? window.WebMarsLayoutConfig : globalThis.WebMarsLayoutConfig) || {};
+  const STACKED_BREAKPOINT_PX = Number(layoutConfig.STACKED_BREAKPOINT_PX) > 0
+    ? Number(layoutConfig.STACKED_BREAKPOINT_PX)
+    : 800;
+  const DESKTOP_DEFAULT_DISPLAY = { width: 512, height: 256 };
+  const MOBILE_DEFAULT_DISPLAY = { width: 512, height: 128 };
+  const MOBILE_LAYOUT_MAX_WIDTH = Math.max(0, STACKED_BREAKPOINT_PX - 1);
+  const LAYOUT_SYNC_DEBOUNCE_MS = 140;
 
   const UNIT_OPTIONS = [1, 2, 4, 8, 16, 32];
-  const WIDTH_OPTIONS = [128, 256, 320, 512, 640, 800, 1024];
-  const HEIGHT_OPTIONS = [64, 128, 192, 256, 384, 512];
+  const WIDTH_OPTIONS = [64, 128, 256, 512, 1024];
+  const HEIGHT_OPTIONS = [64, 128, 256, 512, 1024];
   const BASE_OPTIONS = [
-    { value: 0x10008000, label: "0x10008000 (global data)" },
+    { value: 0x10000000, label: "0x10000000 (global data)" },
+    { value: 0x10008000, label: "0x10008000 ($gp)" },
     { value: 0x10010000, label: "0x10010000 (static data)" },
     { value: 0x10040000, label: "0x10040000 (heap)" },
-    { value: 0x00400000, label: "0x00400000 (text)" },
-    { value: 0xffff0000, label: "0xFFFF0000 (MMIO)" }
+    { value: 0xffff0000, label: "0xFFFF0000 (memory map)" }
   ];
+
+  function formatFallback(message, variables = {}) {
+    return String(message ?? "").replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => (
+      Object.prototype.hasOwnProperty.call(variables, key) ? String(variables[key]) : match
+    ));
+  }
+
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return formatFallback(message, variables);
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
+  }
 
   function toHex32(value) {
     return `0x${(value >>> 0).toString(16).padStart(8, "0")}`;
@@ -42,38 +133,85 @@
       .join("");
   }
 
+  function isMobileLayoutMode() {
+    const desktopRoot = document.querySelector("#mars-desktop");
+    if (desktopRoot instanceof HTMLElement) {
+      if (desktopRoot.classList.contains("desktop-compact")) return true;
+      if (desktopRoot.classList.contains("desktop-stacked")) return true;
+      if (desktopRoot.classList.contains("desktop")) return false;
+    }
+    if (typeof window.matchMedia === "function") {
+      return window.matchMedia(`(max-width: ${MOBILE_LAYOUT_MAX_WIDTH}px)`).matches;
+    }
+    return (window.innerWidth || 0) <= MOBILE_LAYOUT_MAX_WIDTH;
+  }
+
+  function getLayoutDefaultDisplay(isMobile = isMobileLayoutMode()) {
+    return isMobile ? MOBILE_DEFAULT_DISPLAY : DESKTOP_DEFAULT_DISPLAY;
+  }
+
+  function isLayoutManagedResolution(displayWidth, displayHeight) {
+    const width = Number(displayWidth) || 0;
+    const height = Number(displayHeight) || 0;
+    if (width !== DESKTOP_DEFAULT_DISPLAY.width) return false;
+    return height === DESKTOP_DEFAULT_DISPLAY.height || height === MOBILE_DEFAULT_DISPLAY.height;
+  }
+
+  function createDefaultConfigForLayout(isMobile = isMobileLayoutMode()) {
+    const defaults = getLayoutDefaultDisplay(isMobile);
+    return {
+      ...DEFAULT_CONFIG,
+      displayWidth: defaults.width,
+      displayHeight: defaults.height
+    };
+  }
+
   host.register({
     id: "bitmap-display",
     label: "Bitmap Display",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("bitmap-display", "Bitmap Display, Version 1.0", 1040, 590, `
-        <div class="bitmap-tool">
-          <h2 class="bitmap-tool-title">Bitmap Display</h2>
+      const shell = ctx.createToolWindowShell("bitmap-display", "Bitmap Display, Version 1.0", 1080, 760, `
+        <div class="mars-tool-shell bitmap-tool">
+          <h2 class="mars-tool-heading">Bitmap Display</h2>
           <div class="bitmap-main">
-            <div class="bitmap-controls">
-              <label class="bitmap-control">Unit Width in Pixels
-                <select data-bitmap="unit-width">${buildOptions(UNIT_OPTIONS, DEFAULT_CONFIG.unitWidth)}</select>
-              </label>
-              <label class="bitmap-control">Unit Height in Pixels
-                <select data-bitmap="unit-height">${buildOptions(UNIT_OPTIONS, DEFAULT_CONFIG.unitHeight)}</select>
-              </label>
-              <label class="bitmap-control">Display Width in Pixels
-                <select data-bitmap="display-width">${buildOptions(WIDTH_OPTIONS, DEFAULT_CONFIG.displayWidth)}</select>
-              </label>
-              <label class="bitmap-control">Display Height in Pixels
-                <select data-bitmap="display-height">${buildOptions(HEIGHT_OPTIONS, DEFAULT_CONFIG.displayHeight)}</select>
-              </label>
-              <label class="bitmap-control">Base address for display
-                <select data-bitmap="base-address">${buildBaseOptions(DEFAULT_CONFIG.baseAddress)}</select>
-              </label>
-            </div>
-            <div class="bitmap-canvas-wrap">
-              <canvas class="bitmap-canvas" data-bitmap="canvas"></canvas>
-            </div>
+            <section class="mars-tool-panel">
+              <div class="mars-tool-panel-title">Display Settings</div>
+              <div class="mars-tool-panel-body bitmap-controls">
+                <div class="mars-tool-row">
+                  <span class="bitmap-control-label">Unit Width in Pixels</span>
+                  <select class="bitmap-control-field" data-bitmap="unit-width">${buildOptions(UNIT_OPTIONS, DEFAULT_CONFIG.unitWidth)}</select>
+                </div>
+                <div class="mars-tool-row">
+                  <span class="bitmap-control-label">Unit Height in Pixels</span>
+                  <select class="bitmap-control-field" data-bitmap="unit-height">${buildOptions(UNIT_OPTIONS, DEFAULT_CONFIG.unitHeight)}</select>
+                </div>
+                <div class="mars-tool-row">
+                  <span class="bitmap-control-label">Display Width in Pixels</span>
+                  <select class="bitmap-control-field" data-bitmap="display-width">${buildOptions(WIDTH_OPTIONS, DEFAULT_CONFIG.displayWidth)}</select>
+                </div>
+                <div class="mars-tool-row">
+                  <span class="bitmap-control-label">Display Height in Pixels</span>
+                  <select class="bitmap-control-field" data-bitmap="display-height">${buildOptions(HEIGHT_OPTIONS, DEFAULT_CONFIG.displayHeight)}</select>
+                </div>
+                <div class="mars-tool-row">
+                  <span class="bitmap-control-label">Base address for display</span>
+                  <select class="bitmap-control-field" data-bitmap="base-address">${buildBaseOptions(DEFAULT_CONFIG.baseAddress)}</select>
+                </div>
+              </div>
+            </section>
+            <section class="mars-tool-panel">
+              <div class="mars-tool-panel-title">Bitmap Display</div>
+              <div class="mars-tool-panel-body bitmap-viewport">
+                <div class="bitmap-canvas-wrap">
+                  <canvas class="bitmap-canvas" data-bitmap="canvas"></canvas>
+                </div>
+              </div>
+            </section>
           </div>
-          <div class="bitmap-footer">
+          <div class="mars-tool-footer bitmap-footer">
             <button class="tool-btn" data-bitmap="connect" type="button">Connect to MIPS</button>
-            <div style="display:flex; gap:10px;">
+            <div class="ctrl">Tool Control</div>
+            <div class="mars-tool-footer-actions">
               <button class="tool-btn" data-bitmap="reset" type="button">Reset</button>
               <button class="tool-btn" data-bitmap="help" type="button">Help</button>
               <button class="tool-btn" data-bitmap="close" type="button">Close</button>
@@ -101,7 +239,10 @@
       let connected = false;
       let framePending = false;
       let latestSnapshot = null;
-      let config = { ...DEFAULT_CONFIG };
+      let activeLayoutIsMobile = isMobileLayoutMode();
+      let autoLayoutResolution = true;
+      let config = createDefaultConfigForLayout(activeLayoutIsMobile);
+      let layoutSyncTimer = null;
       let sourceImageData = null;
       let sourceData = null;
       let fullRedrawNeeded = true;
@@ -164,11 +305,11 @@
 
       function readConfigFromControls() {
         return {
-          unitWidth: parseNumeric(unitWidthSelect.value, DEFAULT_CONFIG.unitWidth),
-          unitHeight: parseNumeric(unitHeightSelect.value, DEFAULT_CONFIG.unitHeight),
-          displayWidth: parseNumeric(displayWidthSelect.value, DEFAULT_CONFIG.displayWidth),
-          displayHeight: parseNumeric(displayHeightSelect.value, DEFAULT_CONFIG.displayHeight),
-          baseAddress: parseNumeric(baseAddressSelect.value, DEFAULT_CONFIG.baseAddress) >>> 0
+          unitWidth: parseNumeric(unitWidthSelect.value, config.unitWidth),
+          unitHeight: parseNumeric(unitHeightSelect.value, config.unitHeight),
+          displayWidth: parseNumeric(displayWidthSelect.value, config.displayWidth),
+          displayHeight: parseNumeric(displayHeightSelect.value, config.displayHeight),
+          baseAddress: parseNumeric(baseAddressSelect.value, config.baseAddress) >>> 0
         };
       }
 
@@ -181,7 +322,7 @@
       }
 
       function updateConnectButtonLabel() {
-        connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
+        connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
       }
 
       function readMemoryWords(snapshot) {
@@ -301,19 +442,80 @@
       }
 
       function syncConfigAndRender(logChange = false) {
-        config = readConfigFromControls();
+        const nextConfig = readConfigFromControls();
+        const displayChanged = nextConfig.displayWidth !== config.displayWidth || nextConfig.displayHeight !== config.displayHeight;
+        config = nextConfig;
+        if (displayChanged) {
+          autoLayoutResolution = isLayoutManagedResolution(config.displayWidth, config.displayHeight);
+        }
         resizeCanvases();
         fullRedrawNeeded = true;
         if (logChange) {
-          ctx.messagesPane.postMars(
-            `[tool] Bitmap Display: ${config.displayWidth}x${config.displayHeight}, unit ${config.unitWidth}x${config.unitHeight}, base ${toHex32(config.baseAddress)}.`
-          );
+          ctx.messagesPane.postMars(`${t("[tool] Bitmap Display: {width}x{height}, unit {unitWidth}x{unitHeight}, base {address}.", {
+            width: config.displayWidth,
+            height: config.displayHeight,
+            unitWidth: config.unitWidth,
+            unitHeight: config.unitHeight,
+            address: toHex32(config.baseAddress)
+          })}\n`);
         }
         if (connected) scheduleRender();
       }
 
+      function applyLayoutDefaultResolution(force = false) {
+        const nextIsMobile = isMobileLayoutMode();
+        const defaults = getLayoutDefaultDisplay(nextIsMobile);
+        const layoutChanged = nextIsMobile !== activeLayoutIsMobile;
+        const resolutionMismatch = config.displayWidth !== defaults.width || config.displayHeight !== defaults.height;
+        activeLayoutIsMobile = nextIsMobile;
+        if (!force && !autoLayoutResolution) return false;
+        if (!force && !layoutChanged && !resolutionMismatch) return false;
+        const nextWidth = defaults.width;
+        const nextHeight = defaults.height;
+        if (!force && config.displayWidth === nextWidth && config.displayHeight === nextHeight) return false;
+
+        config.displayWidth = nextWidth;
+        config.displayHeight = nextHeight;
+        autoLayoutResolution = true;
+        applyConfigToControls();
+        resizeCanvases();
+        fullRedrawNeeded = true;
+        pendingWriteAddress = null;
+        if (connected) scheduleRender();
+        return true;
+      }
+
+      function scheduleLayoutResolutionSync(force = false) {
+        if (layoutSyncTimer != null) {
+          window.clearTimeout(layoutSyncTimer);
+          layoutSyncTimer = null;
+        }
+        if (force) {
+          applyLayoutDefaultResolution(true);
+          return;
+        }
+        layoutSyncTimer = window.setTimeout(() => {
+          layoutSyncTimer = null;
+          applyLayoutDefaultResolution(false);
+        }, LAYOUT_SYNC_DEBOUNCE_MS);
+      }
+
+      function refreshUiText() {
+        shell.refreshTranslations?.();
+        updateConnectButtonLabel();
+      }
+
       [unitWidthSelect, unitHeightSelect, displayWidthSelect, displayHeightSelect, baseAddressSelect].forEach((control) => {
         control.addEventListener("change", () => syncConfigAndRender(false));
+      });
+
+      const onViewportResize = () => {
+        scheduleLayoutResolutionSync(false);
+      };
+      window.addEventListener("resize", onViewportResize);
+
+      shell.onResize(() => {
+        onViewportResize();
       });
 
       connectButton.addEventListener("click", () => {
@@ -323,18 +525,20 @@
           fullRedrawNeeded = true;
           pendingWriteAddress = null;
           lastSnapshotStep = Number.isFinite(latestSnapshot?.steps) ? (latestSnapshot.steps | 0) : null;
-          ctx.messagesPane.postMars("[tool] Bitmap Display connected to MIPS memory.");
+          ctx.messagesPane.postMars(`${t("[tool] Bitmap Display connected to MIPS memory.")}\n`);
           scheduleRender();
-        } else {
-          ctx.messagesPane.postMars("[tool] Bitmap Display disconnected.");
-          pendingWriteAddress = null;
-          lastSnapshotStep = null;
-          clearDisplay();
+          return;
         }
+        ctx.messagesPane.postMars(`${t("[tool] Bitmap Display disconnected.")}\n`);
+        pendingWriteAddress = null;
+        lastSnapshotStep = null;
+        clearDisplay();
       });
 
       resetButton.addEventListener("click", () => {
-        config = { ...DEFAULT_CONFIG };
+        activeLayoutIsMobile = isMobileLayoutMode();
+        config = createDefaultConfigForLayout(activeLayoutIsMobile);
+        autoLayoutResolution = true;
         applyConfigToControls();
         resizeCanvases();
         fullRedrawNeeded = true;
@@ -343,6 +547,7 @@
         clearDisplay();
         if (connected) scheduleRender();
       });
+
       helpButton.addEventListener("click", () => {
         window.open("./help/MarsHelpTools.html", "_blank", "noopener,noreferrer");
       });
@@ -351,14 +556,16 @@
         shell.close();
       });
 
+      subscribeLanguageChange(refreshUiText);
       applyConfigToControls();
       resizeCanvases();
       clearDisplay();
-      updateConnectButtonLabel();
+      refreshUiText();
 
       return {
         open() {
           shell.open();
+          applyLayoutDefaultResolution(false);
           if (connected) {
             fullRedrawNeeded = true;
             pendingWriteAddress = null;
@@ -394,6 +601,3 @@
     }
   });
 })();
-
-
-

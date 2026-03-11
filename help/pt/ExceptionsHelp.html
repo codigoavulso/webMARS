@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt"><head>
+<meta charset="UTF-8">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>Redação e uso de manipuladores de exceção MIPS em MARS
+</title>
+</head><body>
+<center>
+<h3>Redação e uso de manipuladores de exceção MIPS em MARS</h3>
+</center>
+
+<h3>Introdução</h3>
+<i>Manipuladores de exceção</i>, também conhecido como <i>manipuladores de armadilhas</i> ou 
+<i>manipuladores de interrupção</i>, pode ser facilmente incorporado em um programa MIPS.
+Este guia não se destina a ser abrangente, mas fornece o essencial
+informações para escrever e usar manipuladores de exceção.
+
+<p>Embora o mesmo mecanismo satisfaça todos os <i>três</i>, <i>exceções, armadilhas</i>
+e <i>as interrupções</i> são todas distintas umas das outras.
+Exceções são causadas por condições excepcionais que ocorrem em tempo de execução
+como referências inválidas de endereço de memória.  Armadilhas são causadas por instruções
+construído especialmente para esse fim, listados abaixo.  Interrupções são
+causada por dispositivos externos.
+
+</p><p>MARS parcialmente, mas não implementa completamente a exceção e interrupção
+mecanismo do SPIM.
+
+</p><h3>Fatos essenciais</h3>
+Alguns fatos essenciais sobre a escrita e o uso de manipuladores de exceção incluem:
+<ul>
+<li>O MARS simula elementos básicos do mecanismo de exceção MIPS32.</li>
+<li>O conjunto de instruções MIPS inclui uma série de instruções que
+desencadear condicionalmente uma exceção de armadilha com base nos valores relativos de dois
+registos ou de uma constante e um registo:
+<tt>teq</tt>, <tt>teqi</tt> (armadilha se igual), 
+<tt>tne</tt>, <tt>tnei</tt> (armadilha se não for igual), 
+<tt>tge</tt>, <tt>tgeu</tt>, 
+<tt>tgei</tt>, <tt>tgeiu</tt> (armadilha se maior ou igual), 
+<tt>tlt</tt>, <tt>tltu</tt>, 
+<tt>tlti</tt>, <tt>tltiu</tt> (armadilha se menor que)
+</li>
+<li>Quando ocorre uma exceção, 
+  <ol>
+  <li>Coprocessor 0 register $12 (status) bit 1 é definido</li>
+  <li>Coprocessador 0 registrar $13 (causa) bits 2-6 são definidos para o tipo de exceção (códigos abaixo)</li>
+  <li>Coprocessador 0 registro $ 14 (epc) é definido para o
+  endereço da instrução que desencadeou a exceção</li>
+  <li>Se a exceção foi causada por um endereço de memória inválido, 
+  Coprocessador 0 registro $8 (vaddr) é definido para o endereço inválido.</li>
+  <li>Fluxo de execução salta para o MIPS
+   instrução no local da memória <tt>0x800000180</tt>.  Este endereço
+   no segmento de texto do kernel (<tt>.ktext</tt> diretiva) é o
+   padrão MIPS32 localização do manipulador de exceção.  A única forma de mudar
+   ele no MARS é mudar a configuração de memória MIPS através de
+   o item Configurações item Configuração Memória.
+   </li>
+  </ol>
+</li>
+<li>Existem três maneiras de incluir um manipulador de exceção em um programa MIPS
+  <ol>
+  <li>Escreva o manipulador de exceção no mesmo arquivo que o regular
+      programa.  Um exemplo disso é apresentado abaixo.
+  </li>
+  <li>Escreva o manipulador de exceção em um arquivo separado, armazene esse arquivo
+      no mesmo diretório do programa regular, e selecione
+	  o item de menu Configurações "Montar todos os arquivos no diretório"
+  </li>
+  <li>Escreva o manipulador de exceção em um arquivo separado, armazene esse arquivo
+      em qualquer diretório, em seguida, abra a caixa de diálogo "Exception Handler..."
+	  no menu Configurações, marque a caixa de seleção e navegue para 
+	  esse ficheiro.
+  </li>
+  </ol>
+</li>
+<li>Se não houver instrução no local <tt>0x800000180</tt>,
+O MARS encerrará o programa MIPS com uma mensagem de erro apropriada.
+</li>
+<li>O manipulador de exceção pode retornar o controle para o programa usando 
+o <tt>eret</tt> instrução.  Isso colocará o valor do registro EPC de US $ 14 no
+Contador do Programa, então certifique-se de incrementar US $ 14 por 4 antes de retornar
+para pular a instrução que causou a exceção.  O <tt>mfc0</tt>
+e <tt>mtc0</tt> instruções são usadas para ler e escrever para Coprocessador 0
+registros.</li>
+   <li>Bits 8-15 do registro de Causa $ 13 também pode ser usado para indicar
+   interrupções pendentes.  Atualmente isso é usado apenas pelo Teclado e
+   Ferramenta de Simulador de Exibição, onde o bit 8 representa uma interrupção do teclado
+   e bit 9 representa uma interrupção de exibição.  Para mais detalhes, consulte o
+   Painel de ajuda para essa ferramenta.
+   </li>
+<li>Tipos de exceção declarados em <tt>mars.simulator.Exceptions</tt>, mas
+não necessariamente implementado, são ADDRESS_EXCEPTION_LOAD (4), ADDRESS_EXCEPTION_STORE (5),
+	SYSCALL_EXCEPÇÃO (8),
+	BREAKPOINT_EXCEPTION (9), (EM INGLÊS)
+	RESERVADO_INSTRUÇÃO_EXCEÇÃO (10),
+	ARITHMETIC_OVERFLOW_EXCEPTION (12),
+	TRAP_EXCEPTION(13),
+	DIVIDE_BY_ZERO_EXCEPTION (15),
+	FLOATING_POINT_OVERFLOW (16)) e 
+	FLOATING_POINT_UNDERFLOW (17).
+</li>
+<li>Ao escrever um manipulador de exceção não trivial, seu manipulador deve primeiro salvar
+conteúdo de registro de uso geral, em seguida, restaurá-los antes de retornar.</li>
+</ul>
+
+
+<h3>Exemplo de manipulador de armadilhas</h3>
+O programa MIPS de amostra abaixo irá gerar imediatamente uma exceção de armadilha porque
+a condição armadilha avalia verdadeiro, controle salta para o manipulador de exceção,
+ o manipulador de exceção retorna o controle para as instruções seguintes
+o que acionou a exceção, então o programa termina normalmente.
+<p>
+</p><pre>
+   .text
+main:
+   teqi $t0,0     # immediately trap because $t0 contains 0
+   li   $v0, 10   # After return from exception handler, specify exit service
+   syscall        # terminate normally
+
+# Trap handler in the standard MIPS32 kernel text segment
+
+   .ktext 0x80000180
+   move $k0,$v0   # Save $v0 value
+   move $k1,$a0   # Save $a0 value
+   la   $a0, msg  # address of string to print
+   li   $v0, 4    # Print String service
+   syscall
+   move $v0,$k0   # Restore $v0
+   move $a0,$k1   # Restore $a0
+   mfc0 $k0,$14   # Coprocessor 0 register $14 has address of trapping instruction
+   addi $k0,$k0,4 # Add 4 to point to next instruction
+   mtc0 $k0,$14   # Store new address back into $14
+   eret           # Error return; set PC to value in $14
+   .kdata	
+msg:   
+   .asciiz "Trap generated"
+</pre>
+<p></p>
+
+<h3>Manipulador de exceção amplamente utilizado</h3>
+O manipulador de exceção <tt>exceptions.s</tt> fornecido com
+o simulador SPIM irá montar e correr sob o MARS.  O MARS
+assembler vai gerar avisos porque este programa
+contém directivas que não contém
+reconhecer, mas desde que a configuração "Avisos de montagem são 
+considerados erros" é <i>não</i> conjunto isso não causará qualquer
+problemas.
+
+
+
+
+
+</body></html>

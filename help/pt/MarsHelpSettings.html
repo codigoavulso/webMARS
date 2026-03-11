@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt"><head>
+<meta charset="UTF-8">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>MARS 4.5 conteúdo de ajuda
+</title>
+</head><body>
+<center>
+<h3>MARS - Simulador de montagem e tempo de execução de MIPS</h3>
+<h4>Lançamento 4.5</h4>
+<h4>Agosto de 2014</h4>
+<h4>Configurações</h4>
+</center>
+
+As versões 3.0 e posterior incluem um menu Configurações.  Os itens do 
+Editor e do Exception Handler iniciam uma caixa de diálogo, mas o resto é
+ cada um
+controlado por uma caixa de seleção para selecioná-lo ou desmarcá-lo 
+(verificado significa verdadeiro, não verificado significa falso).  
+Configurações e seu padrão
+valores são:
+   <ol>
+   <li><b>Exiba a janela Rótulos na guia Executar.</b>  O valor padrão é <b>falso</b>.  Se selecionado, a janela Etiquetas,
+       que mostra o nome e endereço associado para cada rótulo definido no programa, será
+       exibido à direita do Segmento de Texto.</li>
+   <li><b>Fornecer argumentos de programa para o programa MIPS.</b>  O valor padrão é <b>falso</b>.
+  Novo no lançamento 3.5.
+       Se selecionado, um campo de texto aparecerá na parte superior da 
+exibição de segmento de texto.  Algum argumento valoriza neste
+       campo de texto no momento da execução do programa será armazenado
+ na memória MIPS antes da execução.  O argumento
+       contagem (argc) será colocado no registro $a0, e o endereço de 
+uma matriz de strings terminadas nulas contendo
+       os argumentos (argv) serão colocados no registro $a1.  Esses 
+valores também estão disponíveis na pilha de tempo de execução ($sp).
+   </li><li><b>Diálogo pop-up para syscalls de entrada (5,6,7,8,12).</b>  Novo no lançamento 4.0.  O valor padrão é <b>falso</b>.
+  Se selecionado, console de tempo de execução
+entrada será inserida usando diálogos pop-up (esta foi a única opção 
+anterior à versão 4.0).  Caso contrário, a entrada é inserida
+diretamente na guia Executar E/S na parte inferior da tela.</li>   
+<li><b>Exibir endereços de memória em hexadecimal.</b>  O valor padrão é <b>verdadeiro</b>.  Se desmarcados, os endereços serão exibidos em decimal.
+       Essa configuração também pode ser alternada em uma caixa de seleção na borda inferior da janela de segmento de dados.</li>
+   <li><b>Exibir memória e registrar conteúdo em hexadecimal.</b>  O valor padrão é <b>verdadeiro</b>.  Se desmarcados, os vlaues serão exibidos em decimal.
+       Essa configuração também pode ser alternada em uma caixa de seleção na borda inferior da janela de segmento de dados.</li>
+   <li><b>Monte um arquivo automaticamente assim que ele for aberto</b> e inicialize a caixa de diálogo Abrir Arquivo com o arquivo mais recentemente aberto.  
+       O valor padrão é <b>falso</b>.  Isso é conveniente se você usar um editor externo para compor seus programas.</li>
+   <li><b>Assemble aplica-se a todos os arquivos no diretório.</b>  O valor padrão é <b>falso</b>.
+       Se selecionado, o arquivo atualmente é aberto no
+       editor se tornará o programa "principal" em uma operação de 
+montagem e link multi-arquivo envolvendo todos os
+       arquivos de montagem (*.asm; *.s) em seu diretório.  Se for 
+bem-sucedida, a execução começará com o arquivo atualmente aberto. </li>
+   <li><b>Avisos de montagem são considerados erros.</b>  O valor padrão é <b>falso</b>.
+  Novo no lançamento 3.5.
+       Se selecionada, a operação de montagem falhará se quaisquer 
+avisos forem produzidos.  Neste momento, todos os avisos de assembler
+       relacionar-se com diretivas não reconhecidas ou ignoradas.  O 
+MARS pode ser capaz de montar código produzido por compiladores para 
+outros MIPS
+       assemblers se esta configuração for desmarcada.
+   </li><li><b>Inicializar o Contador do Programa para global 'main' se definido.</b>  O valor padrão é <b>falso</b>.
+  Novo na versão 3.8.
+       Se selecionado, o Contador do Programa será inicializado para o 
+endereço da instrução do segmento de texto com o rótulo global 
+'main' se ele
+       existe.  Se ele não existir ou se a configuração não estiver 
+selecionada, o Contador do Programa será inicializado para o segmento 
+de texto padrão
+       endereço inicial.
+   </li><li><b>Permitir que os programas usem instruções e formatos estendidos (pseudo).</b>  O valor padrão é <b>verdadeiro</b>.  Isso inclui todo o endereçamento de memória
+       modos diferentes do modo nativo MIPS (16 bit constante offset adicionado para registrar conteúdo).</li>
+   <li><b>Monte e execute programas usando ramificação atrasada.</b>  O valor padrão é <b>falso</b>.  Processadores MIPS usam ramificações atrasadas
+       como parte do design pipelined, mas pode ser confuso para os programadores.  Com ramificação atrasada, a instrução 
+       seguir uma instrução de ramo ou salto <i>sempre será executado</i> mesmo que a condição do ramo seja verdadeira!  Montadores 
+       e, na falta disso, os programadores, muitas vezes lidam com isso seguindo ramos e salta com um "<tt>nop</tt>" instrução.  O MARS
+       assembler <i>não</i> insere a <tt>nop</tt>.  Quando a ramificação atrasada foi introduzida na versão 3.3, o código da máquina gerado
+		 para uma instrução de ramo dependia dessa configuração desde
+       seu valor-alvo é relativo ao Contador do Programa (<i>abordamento relativo ao PC</i>).
+  Apesar de tecnicamente correto, isso levou a 
+		 confusão na comunidade MARS porque o código gerado não correspondia a
+ exemplos de livros didáticos.  Começando com a Liberação 3.4, a 
+ramificação relativa
+		 offset é sempre calculado como se a ramificação atrasada fosse 
+habilitada mesmo quando não está.  A simulação de tempo de execução se 
+ajusta em conformidade.</li>
+   <li><b>Código auto-modificador.</b>  O valor padrão é <b>falso</b>.  
+Novo na versão 4.4.
+       Se selecionado, um programa MIPS em execução pode gravar em um 
+endereço de segmento de texto do usuário e pode ramificar/saltar para um
+ endereço de segmento de dados do usuário.
+	   Essas capacidades permitem que um programa gere e/ou modifique 
+dinamicamente seu código binário.  Também permite a modificação 
+interativa de
+	   conteúdo de segmento de texto através das janelas Segmento de Dados 
+ou Segmento de Texto.
+   </li><li><b>A caixa de diálogo Editor.</b>  Use-o para visualizar e modificar as configurações de fonte do editor.  Novo com o lançamento 3.3.</li>
+   <li><b>A caixa de diálogo Destaque.</b>  Use-o para modificar as 
+configurações de cor e fonte para o destaque de itens de tabela no 
+       Janela de segmento de texto, janela de segmento de dados, janela 
+de registros, janela Coprocessor0 e janela Coprocessor1.
+       O destaque ocorre durante a simulação cronometrada, escalada e 
+backsteped.  Cor e fonte para normal (não destacado)
+		 A exibição também pode ser definida separadamente para linhas de 
+exibição de números pares e de número ímpar, mas não individualmente por
+ janelas.
+       Novo com a versão 3.6.</li>
+   <li><b>A caixa de diálogo Exception Handler.</b>  Tem a configuração: Inclua isso
+manipulador de exceção em todas as operações de montagem.  O valor padrão é <b>falso</b>.  Se selecionado, um botão para navegar até o desejado
+       arquivo está habilitado.  Novo com Release 3.2</li>
+	<li><b>A caixa de diálogo Configuração de memória.</b>  Use-o para selecionar entre as configurações de espaço de endereço MIPS disponíveis.
+	A configuração padrão é derivada do SPIM; era apenas uma disponível de MARS 1.0 até MARS 3.6. 
+	Novo com o lançamento 3.7.  
+   </li></ol>
+A partir da versão 3.2, as configurações são mantidas de uma sessão 
+interativa para a próxima.  As configurações são armazenadas em um 
+sistema-dependente
+caminho conforme especificado por <tt>java.util.prefs.Preferences</tt>.  Os sistemas Windows usam o Registro.
+Essas configurações são independentes das opções de comando dadas ao usar o MARS na linha de comando;
+nem afeta o outro.  Prevemos que versões futuras incluam configurações e preferências adicionais.
+<p>
+
+</p><hr>
+<p>
+Este documento está disponível para impressão na página inicial do MARS
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+
+</p></body></html>

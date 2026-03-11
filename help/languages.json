@@ -1,0 +1,20 @@
+{
+  "defaultLanguage": "en",
+  "languages": [
+    {
+      "id": "en",
+      "label": "English",
+      "dir": "en"
+    },
+    {
+      "id": "es",
+      "label": "Espanol",
+      "dir": "es"
+    },
+    {
+      "id": "pt",
+      "label": "Português",
+      "dir": "pt"
+    }
+  ]
+}

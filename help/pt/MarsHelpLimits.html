@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt"><head>
+<meta charset="UTF-8">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>MARS 4.5 conteúdo de ajuda
+</title>
+</head><body>
+<center>
+<h3>MARS - Simulador de montagem e tempo de execução de MIPS</h3>
+<h4>Lançamento 4.5</h4>
+<h4>Agosto de 2014</h4>
+
+<h4>Requisitos de operação</h4>
+</center>
+<p>O MARS está escrito em Java e 
+requer pelo menos a liberação 1.5 do J2SE Java Runtime Environment (JRE) para funcionar.  
+O IDE gráfico é implementado usando o Swing. Tem sido 
+testado no Windows XP, Vista e 7; Mac OS X; e também está sendo usado no Linux.
+
+</p><center>
+<h4>Algumas limitações de montador e simulador de MARS</h4>
+</center>
+
+Libera 3.0 e depois monta e simula quase todas as instruções MIPS32 documentadas no 
+livro didático <i>Organização e Design de Computadores, Quarta Edição</i> por Patterson e Hennessy,
+Elsevier - Morgan Kaufmann, 2009.  Todas as instruções básicas e pseudo, directivas,
+e serviços de sistema descritos no Apêndice B são implementados.
+ 
+<p>As limitações do MARS a partir do Release 4.5 incluem:
+</p><ul>
+<li>Segmentos de memória (texto, dados, pilha, texto do kernel, dados do kernel) são limitados a 4MB cada um começando em seu
+respectivos endereços base.</li>
+<li>Não há modo pipelined (mas a ramificação atrasada é suportada).</li>
+<li>Se você abrir um arquivo que é um link ou atalho para outro arquivo, o MARS <em>não</em>
+abrir o arquivo de destino.  A caixa de diálogo aberta do arquivo é implementada usando o JFileChooser do Java Swing, 
+que não suporta links.</li>
+
+<li>Muito poucas alterações de configuração, além daquelas no menu Configurações, são salvas de uma sessão para a próxima.
+As configurações do editor, que incluem configurações de fonte e exibição de números de linha, são salvas.</li>
+
+<li>O IDE funcionará apenas com o montador do MARS.  Não pode ser usado 
+com qualquer outro compilador, montador ou simulador.  O montador e simulador MARS
+pode ser usado através do IDE ou de um prompt de comando.</li>
+
+<li><em>Bug:</em> O iluminador de mensagens de erro não seleciona automaticamente o código para o primeiro conjunto
+erro se o ficheiro que contém o erro não estiver aberto no momento da montagem (montar-em-aberto, montar-tudo).</li>
+
+<li><em>Bug:</em> O recurso de captura de tela do Screen Magnifier não parece funcionar corretamente no Windows Vista.</li>
+
+<li><em>Bug:</em> Parece haver um vazamento de memória no Editor.  Várias pessoas diferentes têm de forma independente
+relatou o mesmo comportamento: desaceleração severa na resposta do editor durante uma sessão interativa estendida.  
+Se o MARS for excluído e reiniciado, esse comportamento desaparece e o editor responde instantaneamente às ações.</li>
+
+<li><em>Não é um bug, mas documentado aqui de qualquer maneira:</em> os endereços de destino de instruções do MIPS Branch são representados por
+o número relativo de palavras para ramificar.  Com o Release 3.4, esse valor reflete ramificação atrasada,
+independentemente de a configuração de Ramificação Atrasada estar ativada ou não.  
+O código binário gerado para ramificações agora corresponderá ao de exemplos na <em>Organização</em> de <em>Computadores
+e</em> livro didático <em>de design</em>.  Esta é uma mudança em relação
+ ao passado, e foi feita após extensas discussões 
+com vários docentes adotantes da MARS.  Anteriormente, o deslocamento de
+ ramificação era 1 menor se a configuração de ramificação retardada
+foi habilitado -- a instrução <tt>label: beq $0,$0,label</tt> geraria <tt>0x1000FFFF</tt> se
+Ramificação atrasada foi habilitada e <tt>0x10000000</tt> se estivesse desativado.  Agora vai gerar <tt>0x1000FFFF</tt> em
+qualquer caso.  O simulador sempre se ramificará até o local correto; o MARS não permite a montagem sob um
+configuração e simulação sob o outro para ocorrer.</li>
+</ul>
+<p>
+</p><hr>
+<p>
+Este documento está disponível para impressão na página inicial do MARS
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+
+</p></body></html>

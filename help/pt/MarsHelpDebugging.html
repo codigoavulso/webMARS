@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt"><head>
+<meta charset="UTF-8">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>MARS 4.5 conteúdo de ajuda
+</title>
+</head><body>
+<center>
+<h3>MARS - Simulador de montagem e tempo de execução de MIPS</h3>
+<h4>Lançamento 4.5</h4>
+<h4>Agosto de 2014</h4>
+<h4>Recursos de depuração interativos</h4>
+</center>
+
+<p>
+O MARS oferece muitos recursos para depuração interativa através do seu painel Execute.
+As características incluem:
+</p><ul>
+<li>No modo <i>Passo</i>, a próxima instrução a ser simulada é destacada e
+Displays de conteúdo de memória são atualizados em cada etapa.</li>
+
+<li>Selecione a opção <i>Ir</i> se você quiser simular continuamente.
+Também pode ser usado para continuar a simulação
+de um estado pausado (etapa, ponto de interrupção, pausa).</li>
+
+<li>Os pontos de interrupção são facilmente definidos e redefinidos usando as caixas de seleção ao lado de cada instrução exibida
+na janela Segmento de Texto.  <i>Novo na versão 3.8:</i> você pode suspender temporariamente os pontos de interrupção
+usando Alternar pontos de interrupção no menu Executar ou clicando no cabeçalho da coluna "Bkpt" no segmento de texto
+janela.  Repita, para re-ativar.</li>
+
+<li>Ao executar no modo <i>Go</i>, você pode selecionar a simulação
+velocidade usando o controle deslizante Run Speed.  Faixa de velocidades disponível
+de .05 instruções por segundo (20 segundos entre os passos) até 30
+instruções por segundo, então acima disso oferece uma velocidade "ilimitada".
+Ao usar velocidade "ilimitada", realce de código e atualização de exibição de memória 
+são desligados durante a simulação (mas executa muito rápido!).  
+Quando um ponto de interrupção é alcançado, o destaque e a atualização ocorrem.
+A velocidade de execução pode ser ajustada enquanto o programa estiver em execução.</li>
+
+<li>Ao executar no modo <i>Ir</i>, você pode pausar ou parar
+simulação a qualquer momento usando os recursos <i>Pausa</i> ou <i>Parada</i>.
+O primeiro irá pausar a execução e atualizar a exibição, como se você
+estavam pisando ou em um ponto de ruptura.  Este último terminará a execução
+e exibir memória final e registrar valores.  Se correr em "ilimitado"
+velocidade, o sistema pode não responder imediatamente, mas ele vai responder.</li>
+
+
+<li>Você tem a capacidade de intervir interativamente "para trás" através da execução do programa 
+uma instrução de cada vez para "desfazer" etapas de execução.  Ele vai amortecer até 2000 dos mais 
+etapas de execução recentes (esse limite é armazenado em um arquivo de propriedades e pode ser alterado).
+Ele irá desfazer alterações feitas na memória MIPS, registros ou bandeiras de condição,
+mas não console ou arquivo I/O.  Este deve ser um grande auxílio de depuração.  
+Ele está disponível a qualquer momento que a execução é pausada e na rescisão (mesmo que terminada devido a 
+exceção).  
+
+</li><li>Quando a execução do programa for pausada ou encerrada, selecione <i>Redefinir</i>
+para redefinir todas as células de memória e registros para seus valores iniciais de pós-montagem.
+Na verdade, o Reset é implementado pela remonção do programa.</li>
+
+<li>Endereços e valores de memória e valores de registro podem ser visualizados em qualquer um dos decimais
+ou formato hexadecimal.  Todos os dados são armazenados em ordem de byte pouco endiana (cada 
+palavra consiste em byte 3 seguido de byte 2 então 1 então 0).  Note que cada palavra
+pode segurar 4 caracteres de uma string e esses 4 caracteres aparecerão no
+ordem inversa a partir da cadeia de caracteres literal.</li>
+
+<li>O conteúdo do segmento de dados é exibido 512 bytes
+em um momento (com rolagem) começando com o endereço base do segmento de dados (0x10010000).  
+Botões de navegação são fornecidos para alterar a exibição para a próxima 
+seção de memória, o anterior, ou de volta para o intervalo inicial (casa).  Uma caixa de combinação é 
+também fornecido para visualizar o conteúdo da memória nas proximidades do ponteiro da pilha 
+(conteúdo do registro MIPS $sp), ponteiro global (conteúdo do registro MIPS $gp),
+o endereço base de heap (0x10040000), .extern globals (0x10000000),
+o segmento de dados do kernel (0x90000000), ou IO mapeado pela memória (MMIO, 0xFFFF0000).
+<em>Começando com o Mars 4.4,</em> o conteúdo do segmento de texto bruto também pode ser exibido.</li>
+
+<li>O conteúdo de qualquer palavra de memória de segmento de dados e quase qualquer registro MIPS pode ser modificado por 
+editando sua célula de tabela exibida.  Clique duas vezes em uma célula para editá-la e pressione a tecla Enter
+quando terminou de digitar o novo valor.  Se você
+digite um número inteiro inválido de 32 bits, a palavra INVALID aparece na célula
+e conteúdo de memória/registro não são afetados.  Valores podem ser inseridos
+em decimal ou hexadecimal (levante "0x").  Hexadecimal negativo 
+valores podem ser inseridos no complemento de dois ou formato assinado.  Nota
+que três dos registros inteiros (zero, contador de programas, endereço de retorno) 
+não pode ser editado.</li>
+
+<li><em>Novo em 4.4</em> Se a configuração para o Código de Auto-Modificação estiver ativada
+(desativado por padrão, procure no menu Configurações), binário de segmento de texto
+código pode ser modificado usando a mesma técnica descrita acima. Também pode
+ser modificado clicando duas vezes em uma célula no Código da exibição do Segmento de Texto
+coluna.</li>
+
+<li>Conteúdo de células que representam registros de pontos flutuantes pode ser editado 
+conforme descrito acima e aceitará ponto flutuante hexadecimal ou decimal válido
+valores.  Uma vez que cada registo de dupla precisão sobrepõe duas pré-precisões únicas 
+registros, quaisquer alterações a um registro de dupla precisão afetarão um ou ambos
+do conteúdo apresentado dos seus correspondentes registos de precisão única.
+As alterações a um registo de precisão única afectarão a exibição da sua
+correspondente registo de dupla precisão.  Valores inscritos em hexadecimal 
+precisa estar em conformidade com o formato IEEE-754.  Valores inseridos em decimal são inseridos
+usando pontos decimais e E-notação (ex. 12,5e3 é 12,5 vezes 10 cubed).</li>
+
+<li>O conteúdo da célula pode ser editado durante a execução do programa e uma vez aceito
+será aplicada começando com a próxima instrução a ser executada.</li>
+
+<li>Clicar em uma entrada de janela do Labels causará a localização associada a 
+esse rótulo a ser centrado e destacado no Segmento de Texto ou Segmento de Dados
+janela conforme apropriado.  Observação A janela Rótulos não é exibida por padrão, mas
+pode ser selecionando-o no menu Configurações.</li>
+
+</ul>
+
+<hr>
+<p>
+Este documento está disponível para impressão na página inicial do MARS
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+
+</p></body></html>

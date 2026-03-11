@@ -207,7 +207,9 @@
         try { overlay.releasePointerCapture(event.pointerId); } catch {}
       });
 
-      window.addEventListener("resize", updateOverlaySize);
+      shell.onResize(() => {
+        updateOverlaySize();
+      });
 
       updateOverlaySize();
       capture();

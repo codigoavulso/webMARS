@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt"><head>
+<meta charset="UTF-8">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>MARS 4.5 conteúdo de ajuda
+</title>
+</head><body>
+<center>
+<h3>MARS - Simulador de montagem e tempo de execução de MIPS</h3>
+<h4>Lançamento 4.5</h4>
+<h4>Agosto de 2014</h4>
+<h4>Utilizando o MARS através do seu Ambiente Integrado de Desenvolvimento (IDE)</h4>
+</center>
+
+O IDE é invocado quando o MARS é executado sem argumentos de comando, por exemplo, <tt>java -jar mars.jar</tt>.
+Também pode ser lançado a partir de uma interface gráfica clicando duas vezes no <tt>mars.jar</tt> ícone
+que representa este arquivo JAR executável.
+O IDE fornece recursos básicos de edição, montagem e execução.  Espero que seja
+é intuitivo de usar.  Aqui estão os comentários sobre alguns recursos.
+<ul>
+<li><b>Menus e barra de ferramentas</b> : A maioria dos itens de menu tem ícones equivalentes da barra de ferramentas.
+Se a função de um ícone de barra de ferramentas não for óbvia, basta passar o mouse sobre ele e
+uma dica de ferramenta aparecerá em breve.  Quase todos os itens de menu também têm atalhos de teclado.
+Qualquer item de menu não apropriado em uma determinada situação é desativado.</li>
+<li><b>Editor</b> : MARS inclui dois editores de texto integrados.  O editor padrão, novo
+no Release 4.0, apresenta destaque de cores conscientes da sintaxe da maioria dos elementos de linguagem MIPS
+e guias de instruções pop-up.  O editor de texto original, genérico, sem esses recursos
+ainda está disponível e pode ser selecionado na caixa de diálogo Configurações do editor. suporta um único 
+fonte que pode ser modificada na caixa de diálogo Configurações do Editor.  
+A borda inferior de qualquer editor inclui a linha do cursor
+e posição da coluna e há uma caixa de seleção para exibir números de linha.
+Eles são exibidos fora da área de edição.  Se você usar um editor externo, o MARS fornece
+uma configuração de conveniência que irá montar automaticamente um arquivo assim que ele é aberto.  Ver
+o menu Configurações.
+</li><li><b>Áreas</b> de <b>mensagens</b> : Existem duas áreas de mensagens com guias no
+parte inferior da tela.  A guia <i>Executar E/S</i> é usada em tempo de execução para 
+exibir a saída do console e entrar na entrada do console à medida que a execução do programa progride.  
+Você tem a opção de inserir a entrada do console em uma caixa de diálogo pop-up e ecoa para a área de mensagem.  
+A guia <i>Mensagens MARS</i> é usada para outras mensagens, como montagem ou
+erros de tempo de execução e mensagens informativas.  Você pode clicar em mensagens de erro de montagem para
+selecione a linha de código correspondente no editor.
+</li><li><b>Registros MIPS</b> : Os registros MIPS são exibidos em todos os momentos, mesmo
+quando você está editando e não executando um programa.  Enquanto escreve seu programa,
+este serve como uma referência útil para nomes de registo e suas convencionais
+usa (passeie o mouse sobre o nome do registro para ver dicas de ferramentas).  São três
+abas de registro: o Arquivo de Registro (número inteiro registra US $ 0 a US $ 31 mais LO,
+HI e o Contador do Programa), selecionados Registros do Coprocessor 0 (exceções e
+interrupções), e Coprocessador 1 registros de ponto flutuante.
+
+</li><li><b>Montagem</b> : Selecione <i>Montar</i> no menu <i>Executar</i> ou no
+ícone correspondente da barra de ferramentas para montar o arquivo atualmente na guia Editar.
+Antes do Release 3.1, apenas um arquivo poderia ser montado e executado de cada vez.
+As versões 3.1 e posterior fornecem uma capacidade primitiva do Projeto.  Para usá-lo, vá para o
+O menu <i>de configurações</i> e a verificação <i>da operação de montagem se aplicam a todos 
+arquivos no diretório atual.</i>  Posteriormente, o montador vai montar
+o arquivo atual como o programa "principal" e também montar todas as outras assembleias
+arquivos (*.asm; *.s)
+no mesmo diretório.  Os resultados estão ligados e se todos estes 
+operações foram bem sucedidas o programa pode ser executado.  Etiquetas que são
+declarado global com a diretiva ".globl" pode ser referenciado em qualquer um dos
+outros arquivos no projeto.  Há também um cenário que permite
+carregamento automático e montagem de um arquivo manipulador de exceção selecionado.  MARS utiliza
+o endereço inicial MIPS32 para manipuladores de exceção: 0x80000180.
+
+
+</li><li><b>Execução</b> : Uma vez que um programa MIPS monta com sucesso, o
+os registros são inicializados e três janelas
+na guia Executar são preenchidos: <i>Segmento de Texto</i>, <i>Segmento de Dados</i>,
+e <i>rótulos do programa</i>.  Os principais recursos de tempo de execução são descritos abaixo.
+
+</li><li><b>Labels</b> Window : Display da janela Labels (mesa de símbolo) é
+controlada através do menu Configurações.  Quando exibido, você pode clicar em qualquer rótulo
+ou seu endereço associado ao centro e destacar o conteúdo desse endereço 
+na janela Segmento de texto ou na janela Segmento de dados, conforme apropriado.
+</li></ul>
+
+<p>O montador e o simulador são invocados a partir do IDE
+quando você selecionar o <i>Monte</i><i>,</i> Vá,
+ou Operações <i>de passo</i> a partir do menu <i>Executar</i> ou seu correspondente
+ícones da barra de ferramentas ou atalhos de teclado.  Mensagens de MARS são exibidas no
+<i>MARS Mensagens</i> guia da área de mensagem na parte inferior da tela.
+A entrada e a saída do console do tempo de <i>execução</i> são tratadas na guia <i>Executar E/S</i>.  
+</p><p>
+</p><hr>
+<p>
+Este documento está disponível para impressão na página inicial do MARS
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+
+</p></body></html>

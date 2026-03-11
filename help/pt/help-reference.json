@@ -1,0 +1,2266 @@
+{
+  "generatedAt": "2026-03-10T20:29:57.644Z",
+  "source": {
+    "basicInstructions": "../mars/mips/instructions/InstructionSet.java",
+    "extendedInstructions": "../PseudoOps.txt",
+    "directives": "../mars/assembler/Directives.java"
+  },
+  "basicInstructions": [
+    {
+      "example": "abs.d $f2,$f4",
+      "description": "Precisão dupla de valor absoluto de ponto flutuante: Defina $f2 para o valor absoluto de $f4, precisão dupla"
+    },
+    {
+      "example": "abs.s $f0,$f1",
+      "description": "Precisão única de valor absoluto de ponto flutuante: Defina $f0 para o valor absoluto de $f1, precisão única"
+    },
+    {
+      "example": "add $t1,$t2,$t3",
+      "description": "Adição com overflow: defina $t1 para ($t2 mais $t3)"
+    },
+    {
+      "example": "add.d $f2,$f4,$f6",
+      "description": "Precisão dupla de adição de ponto flutuante: Defina $f2 para o valor de ponto flutuante de precisão dupla de $f4 mais $f6"
+    },
+    {
+      "example": "add.s $f0,$f1,$f3",
+      "description": "Precisão única de adição de ponto flutuante: Defina $f0 para o valor de ponto flutuante de precisão simples de $f1 mais $f3"
+    },
+    {
+      "example": "addi $t1,$t2,-100",
+      "description": "Adição imediata com overflow: defina $t1 como ($t2 mais imediato assinado de 16 bits)"
+    },
+    {
+      "example": "addiu $t1,$t2,-100",
+      "description": "Adição imediata não assinada sem overflow: defina $t1 como ($t2 mais imediato assinado de 16 bits), sem overflow"
+    },
+    {
+      "example": "addu $t1,$t2,$t3",
+      "description": "Adição não assinada sem overflow: defina $t1 como ($t2 mais $t3), sem overflow"
+    },
+    {
+      "example": "and $t1,$t2,$t3",
+      "description": "AND bit a bit: Defina $t1 como AND bit a bit de $t2 e $t3"
+    },
+    {
+      "example": "andi $t1,$t2,100",
+      "description": "Bit a bit AND imediato: Defina $t1 como bit a bit AND de $t2 e imediato de 16 bits estendido com zero"
+    },
+    {
+      "example": "bc1f 1,label",
+      "description": "Ramificação se o sinalizador de condição FP especificado for falso (BC1F, não BCLF): se o sinalizador de condição do coprocessador 1 especificado por imediato for falso (zero), então ramifica para a instrução no endereço do rótulo"
+    },
+    {
+      "example": "bc1f label",
+      "description": "Ramificação se o sinalizador de condição FP 0 for falso (BC1F, não BCLF): Se o sinalizador de condição 0 do coprocessador 1 for falso (zero), então ramifica para a instrução no endereço do rótulo"
+    },
+    {
+      "example": "bc1t 1,label",
+      "description": "Ramificação se o sinalizador de condição FP especificado for verdadeiro (BC1T, não BCLT): Se o sinalizador de condição do coprocessador 1 especificado por imediato for verdadeiro (um), então ramifica para a instrução no endereço do rótulo"
+    },
+    {
+      "example": "bc1t label",
+      "description": "Ramificação se o sinalizador de condição FP 0 for verdadeiro (BC1T, não BCLT): Se o sinalizador de condição 0 do coprocessador 1 for verdadeiro (um), então ramifica para a instrução no endereço do rótulo"
+    },
+    {
+      "example": "beq $t1,$t2,label",
+      "description": "Ramificação se igual: ramifica para a instrução no endereço do rótulo se $t1 e $t2 forem iguais"
+    },
+    {
+      "example": "bgez $t1,label",
+      "description": "Ramificação se maior ou igual a zero: Ramificação para a instrução no endereço do rótulo se $t1 for maior ou igual a zero"
+    },
+    {
+      "example": "bgezal $t1,label",
+      "description": "Ramifique se for maior ou igual a zero e link: Se $t1 for maior ou igual a zero, então defina $ra para o contador do programa e desvie para a instrução no endereço do rótulo"
+    },
+    {
+      "example": "bgtz $t1,label",
+      "description": "Ramificação se maior que zero: ramifica para a instrução no endereço do rótulo se $t1 for maior que zero"
+    },
+    {
+      "example": "blez $t1,label",
+      "description": "Ramificação se menor ou igual a zero: Ramificação para instrução no endereço do rótulo se $t1 for menor ou igual a zero"
+    },
+    {
+      "example": "bltz $t1,label",
+      "description": "Ramificação se for menor que zero: ramifica para a instrução no endereço do rótulo se $t1 for menor que zero"
+    },
+    {
+      "example": "bltzal $t1,label",
+      "description": "Ramifique se for menor que zero e link: Se $t1 for menor ou igual a zero, então defina $ra para o contador do programa e ramifique para a instrução no endereço do rótulo"
+    },
+    {
+      "example": "bne $t1,$t2,label",
+      "description": "Ramificação se não for igual: ramifica para a instrução no endereço do rótulo se $t1 e $t2 não forem iguais"
+    },
+    {
+      "example": "break",
+      "description": "Interromper execução: encerra a execução do programa com exceção"
+    },
+    {
+      "example": "break 100",
+      "description": "Interromper a execução com código: encerra a execução do programa com código de exceção especificado"
+    },
+    {
+      "example": "c.eq.d $f2,$f4",
+      "description": "Compare precisão dupla igual: se $f2 for igual a $f4 (precisão dupla), defina o sinalizador de condição do coprocessador 1 como 0 verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.eq.d 1,$f2,$f4",
+      "description": "Compare a precisão dupla igual: se $f2 for igual a $f4 (precisão dupla), defina o sinalizador de condição do coprocessador 1 especificado por imediato como verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.eq.s $f0,$f1",
+      "description": "Compare precisão única igual: se $f0 for igual a $f1, defina o sinalizador de condição do coprocessador 1 como 0 verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.eq.s 1,$f0,$f1",
+      "description": "Compare a precisão única igual: se $f0 for igual a $f1, defina o sinalizador de condição do coprocessador 1 especificado por imediato como verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.le.d $f2,$f4",
+      "description": "Compare precisão dupla menor ou igual: se $f2 for menor ou igual a $f4 (precisão dupla), defina o sinalizador de condição do coprocessador 1 como 0 verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.le.d 1,$f2,$f4",
+      "description": "Compare precisão dupla menor ou igual: se $f2 for menor ou igual a $f4 (precisão dupla), defina o sinalizador de condição do coprocessador 1 especificado por verdadeiro imediato, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.le.s $f0,$f1",
+      "description": "Compare precisão única menor ou igual: se $f0 for menor ou igual a $f1, defina o sinalizador de condição do coprocessador 1 como 0 verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.le.s 1,$f0,$f1",
+      "description": "Compare precisão única menor ou igual: se $f0 for menor ou igual a $f1, defina o sinalizador de condição do coprocessador 1 especificado por imediato como verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.lt.d $f2,$f4",
+      "description": "Compare precisão menor que dupla: se $f2 for menor que $f4 (precisão dupla), defina o sinalizador de condição do coprocessador 1 como 0 verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.lt.d 1,$f2,$f4",
+      "description": "Compare precisão menor que dupla: se $f2 for menor que $f4 (precisão dupla), defina o sinalizador de condição do coprocessador 1 especificado por imediato como verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.lt.s $f0,$f1",
+      "description": "Compare menos que precisão única: se $f0 for menor que $f1, defina o sinalizador de condição do coprocessador 1 como 0 verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "c.lt.s 1,$f0,$f1",
+      "description": "Compare menos que precisão única: se $f0 for menor que $f1, defina o sinalizador de condição do coprocessador 1 especificado por imediato como verdadeiro, caso contrário, defina-o como falso"
+    },
+    {
+      "example": "ceil.w.d $f1,$f2",
+      "description": "Teto de precisão dupla para palavra: Defina $f1 como teto inteiro de 32 bits de flutuação de precisão dupla em $f2"
+    },
+    {
+      "example": "ceil.w.s $f0,$f1",
+      "description": "Teto de precisão única para palavra: Defina $f0 como teto inteiro de 32 bits de flutuação de precisão simples em $f1"
+    },
+    {
+      "example": "clo $t1,$t2",
+      "description": "Contagem do número de bits iniciais: Defina $t1 para a contagem dos bits iniciais em $t2 começando na posição de bit mais significativa"
+    },
+    {
+      "example": "clz $t1,$t2",
+      "description": "Contagem do número de zeros à esquerda: Defina $t1 para a contagem de bits de zero à esquerda em $t2 começando na posição de bit mais significativa"
+    },
+    {
+      "example": "cvt.d.s $f2,$f1",
+      "description": "Converter de precisão simples em precisão dupla: Defina $f2 para precisão dupla equivalente ao valor de precisão simples em $f1"
+    },
+    {
+      "example": "cvt.d.w $f2,$f1",
+      "description": "Converter de palavra para precisão dupla: Defina $f2 para precisão dupla equivalente ao valor inteiro de 32 bits em $f1"
+    },
+    {
+      "example": "cvt.s.d $f1,$f2",
+      "description": "Converter de precisão dupla em precisão simples: Defina $f1 para precisão simples equivalente ao valor de precisão dupla em $f2"
+    },
+    {
+      "example": "cvt.s.w $f0,$f1",
+      "description": "Converter de palavra para precisão única: Defina $f0 para precisão única equivalente ao valor inteiro de 32 bits em $f2"
+    },
+    {
+      "example": "cvt.w.d $f1,$f2",
+      "description": "Converter de precisão dupla em palavra: Defina $f1 como inteiro de 32 bits equivalente ao valor de precisão dupla em $f2"
+    },
+    {
+      "example": "cvt.w.s $f0,$f1",
+      "description": "Converter de precisão única em palavra: Defina $f0 como inteiro de 32 bits equivalente ao valor de precisão única em $f1"
+    },
+    {
+      "example": "div $t1,$t2",
+      "description": "Divisão com overflow: divida $t1 por $t2 e defina LO como quociente e HI como restante (use mfhi para acessar HI, mflo para acessar LO)"
+    },
+    {
+      "example": "div.d $f2,$f4,$f6",
+      "description": "Precisão dupla de divisão de ponto flutuante: Defina $f2 para o valor de ponto flutuante de precisão dupla de $f4 dividido por $f6"
+    },
+    {
+      "example": "div.s $f0,$f1,$f3",
+      "description": "Precisão única de divisão de ponto flutuante: Defina $f0 para o valor de ponto flutuante de precisão simples de $f1 dividido por $f3"
+    },
+    {
+      "example": "divu $t1,$t2",
+      "description": "Divisão não assinada sem estouro: divida $t1 não assinado por $t2 e defina LO como quociente e HI como restante (use mfhi para acessar HI, mflo para acessar LO)"
+    },
+    {
+      "example": "eret",
+      "description": "Retorno de exceção: Defina o contador do programa para o valor do registro do coprocessador 0 EPC, defina o bit 1 do registro de status do coprocessador (nível de exceção) para zero"
+    },
+    {
+      "example": "floor.w.d $f1,$f2",
+      "description": "Precisão dupla de piso para palavra: Defina $f1 como piso inteiro de 32 bits de flutuação de precisão dupla em $f2"
+    },
+    {
+      "example": "floor.w.s $f0,$f1",
+      "description": "Precisão única de piso para palavra: Defina $f0 como piso inteiro de 32 bits de flutuação de precisão simples em $f1"
+    },
+    {
+      "example": "j target",
+      "description": "Saltar incondicionalmente: saltar para a instrução no endereço de destino"
+    },
+    {
+      "example": "jal target",
+      "description": "Salto e link: Defina $ra para Contador de programa (endereço de retorno) e depois pule para a instrução no endereço de destino"
+    },
+    {
+      "example": "jalr $t1",
+      "description": "Registro de salto e link: Defina $ra para Contador de programa (endereço de retorno) e depois pule para a instrução cujo endereço está em $t1"
+    },
+    {
+      "example": "jalr $t1,$t2",
+      "description": "Registro de salto e link: Defina $t1 para Contador de programa (endereço de retorno) e depois pule para a instrução cujo endereço está em $t2"
+    },
+    {
+      "example": "jr $t1",
+      "description": "Salte o registro incondicionalmente: salte para a instrução cujo endereço está em $t1"
+    },
+    {
+      "example": "lb $t1,-100($t2)",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,-100($t2)",
+      "description": "Carregar byte não assinado: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ldc1 $f2,-100($t2)",
+      "description": "Carregar coprocessador de palavra dupla 1 (FPU)): Defina $f2 para o valor de 64 bits do endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "lh $t1,-100($t2)",
+      "description": "Carregar meia palavra: Defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,-100($t2)",
+      "description": "Carregar meia palavra não assinada: Defina $t1 como valor de 16 bits estendido por zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "ll $t1,-100($t2)",
+      "description": "Carga vinculada: emparelhada com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "lui $t1,100",
+      "description": "Carregar imediato superior: Defina 16 bits de ordem superior de $t1 para imediato de 16 bits e 16 bits de ordem inferior para 0"
+    },
+    {
+      "example": "lw $t1,-100($t2)",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lwc1 $f1,-100($t2)",
+      "description": "Carregar palavra no coprocessador 1 (FPU): Defina $f1 para o valor de 32 bits do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lwl $t1,-100($t2)",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,-100($t2)",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "madd $t1,$t2",
+      "description": "Multiplicar adição: Multiplique $t1 por $t2 e depois incremente HI por 32 bits de ordem superior do produto, incremente LO por 32 bits de ordem inferior do produto (use mfhi para acessar HI, mflo para acessar LO)"
+    },
+    {
+      "example": "maddu $t1,$t2",
+      "description": "Multiplicar adicionar não assinado: Multiplique $t1 por $t2 e depois incrementar HI por 32 bits de ordem superior do produto, incrementar LO por 32 bits de ordem inferior de produto, não assinado (use mfhi para acessar HI, mflo para acessar LO)"
+    },
+    {
+      "example": "mfc0 $t1,$8",
+      "description": "Mover do Coprocessador 0: Defina $t1 para o valor armazenado no registro do Coprocessador 0 $8"
+    },
+    {
+      "example": "mfc1 $t1,$f1",
+      "description": "Mover do Coprocessador 1 (FPU): Defina $t1 para o valor no registro do Coprocessador 1 $f1"
+    },
+    {
+      "example": "mfhi $t1",
+      "description": "Mover do registro HI: Defina $t1 para o conteúdo de HI (veja operações de multiplicação e divisão)"
+    },
+    {
+      "example": "mflo $t1",
+      "description": "Mover do registro LO: Defina $t1 para o conteúdo de LO (veja operações de multiplicação e divisão)"
+    },
+    {
+      "example": "mov.d $f2,$f4",
+      "description": "Mover precisão dupla de ponto flutuante: Defina a precisão dupla $f2 para o valor de precisão dupla em $f4"
+    },
+    {
+      "example": "mov.s $f0,$f1",
+      "description": "Mover precisão única de ponto flutuante: Defina a precisão única $f0 para o valor de precisão única em $f1"
+    },
+    {
+      "example": "movf $t1,$t2",
+      "description": "Mover se o sinalizador de condição FP 0 for falso: Defina $t1 como $t2 se o sinalizador de condição FPU (Coprocessador 1) 0 for falso (zero)"
+    },
+    {
+      "example": "movf $t1,$t2,1",
+      "description": "Mover se o sinalizador de condição FP especificado for falso: Defina $t1 como $t2 se o sinalizador de condição FPU (Coprocessador 1) especificado pelo imediato for falso (zero)"
+    },
+    {
+      "example": "movf.d $f2,$f4",
+      "description": "Mover precisão dupla de ponto flutuante: se o sinalizador de condição 0 for falso, defina a precisão dupla $f2 para o valor de precisão dupla em $f4"
+    },
+    {
+      "example": "movf.d $f2,$f4,1",
+      "description": "Mover precisão dupla de ponto flutuante: se o sinalizador de condição especificado por imediato for falso, defina a precisão dupla $f2 para o valor de precisão dupla em $f4"
+    },
+    {
+      "example": "movf.s $f0,$f1",
+      "description": "Mover precisão única de ponto flutuante: se o sinalizador de condição 0 for falso, defina a precisão única $f0 para o valor de precisão única em $f1"
+    },
+    {
+      "example": "movf.s $f0,$f1,1",
+      "description": "Mover precisão única de ponto flutuante: se o sinalizador de condição especificado por imediato for falso, defina a precisão única $f0 para o valor de precisão única em $f1e"
+    },
+    {
+      "example": "movn $t1,$t2,$t3",
+      "description": "Mover condicional diferente de zero: Defina $t1 como $t2 se $t3 não for zero"
+    },
+    {
+      "example": "movn.d $f2,$f4,$t3",
+      "description": "Mover precisão dupla de ponto flutuante: se $t3 não for zero, defina a precisão dupla $f2 para o valor de precisão dupla em $f4"
+    },
+    {
+      "example": "movn.s $f0,$f1,$t3",
+      "description": "Mover precisão única de ponto flutuante: se $t3 não for zero, defina a precisão única $f0 para o valor de precisão única em $f1"
+    },
+    {
+      "example": "movt $t1,$t2",
+      "description": "Mover se o sinalizador de condição FP 0 for verdadeiro: Defina $t1 como $t2 se o sinalizador de condição FPU (Coprocessador 1) 0 for verdadeiro (um)"
+    },
+    {
+      "example": "movt $t1,$t2,1",
+      "description": "Mover se o sinalizador de condição FP especificado for verdadeiro: Defina $t1 como $t2 se o sinalizador de condição FPU (Coprocessador 1) especificado pelo imediato for verdadeiro (um)"
+    },
+    {
+      "example": "movt.d $f2,$f4",
+      "description": "Mover precisão dupla de ponto flutuante: se o sinalizador de condição 0 for verdadeiro, defina a precisão dupla $f2 para o valor de precisão dupla em $f4"
+    },
+    {
+      "example": "movt.d $f2,$f4,1",
+      "description": "Mover precisão dupla de ponto flutuante: se o sinalizador de condição especificado por imediato for verdadeiro, defina a precisão dupla $f2 para o valor de precisão dupla em $f4e"
+    },
+    {
+      "example": "movt.s $f0,$f1",
+      "description": "Mover precisão única de ponto flutuante: se o sinalizador de condição 0 for verdadeiro, defina a precisão única $f0 para o valor de precisão única em $f1e"
+    },
+    {
+      "example": "movt.s $f0,$f1,1",
+      "description": "Mover precisão única de ponto flutuante: se o sinalizador de condição especificado por imediato for verdadeiro, defina a precisão única $f0 para o valor de precisão única em $f1e"
+    },
+    {
+      "example": "movz $t1,$t2,$t3",
+      "description": "Mover zero condicional: Defina $t1 como $t2 se $t3 for zero"
+    },
+    {
+      "example": "movz.d $f2,$f4,$t3",
+      "description": "Mover precisão dupla de ponto flutuante: se $t3 for zero, defina a precisão dupla $f2 para o valor de precisão dupla em $f4"
+    },
+    {
+      "example": "movz.s $f0,$f1,$t3",
+      "description": "Mover precisão única de ponto flutuante: se $t3 for zero, defina a precisão única $f0 para o valor de precisão única em $f1"
+    },
+    {
+      "example": "msub $t1,$t2",
+      "description": "Multiplicar subtrair: Multiplique $t1 por $t2 e depois diminua HI por 32 bits de ordem superior do produto, diminua LO por 32 bits de ordem inferior do produto (use mfhi para acessar HI, mflo para acessar LO)"
+    },
+    {
+      "example": "msubu $t1,$t2",
+      "description": "Multiplicar subtrair sem sinal: Multiplique $t1 por $t2 e depois diminua HI por 32 bits de ordem superior do produto, decréscimo de LO por 32 bits de ordem inferior de produto, sem sinal (use mfhi para acessar HI, mflo para acessar LO)"
+    },
+    {
+      "example": "mtc0 $t1,$8",
+      "description": "Mover para o coprocessador 0: Defina o registro do coprocessador 0 $8 para o valor armazenado em $t1"
+    },
+    {
+      "example": "mtc1 $t1,$f1",
+      "description": "Mover para o coprocessador 1 (FPU): Defina o registro do coprocessador 1 $f1 para o valor em $t1"
+    },
+    {
+      "example": "mthi $t1",
+      "description": "Mover para o registrador HI: Defina HI para o conteúdo de $t1 (veja operações de multiplicação e divisão)"
+    },
+    {
+      "example": "mtlo $t1",
+      "description": "Mover para o registro LO: Defina LO para o conteúdo de $t1 (veja operações de multiplicação e divisão)"
+    },
+    {
+      "example": "mul $t1,$t2,$t3",
+      "description": "Multiplicação sem overflow: Defina HI para 32 bits de ordem superior, LO e $t1 para 32 bits de ordem inferior do produto de $t2 e $t3 (use mfhi para acessar HI, mflo para acessar LO)"
+    },
+    {
+      "example": "mul.d $f2,$f4,$f6",
+      "description": "Precisão dupla de multiplicação de ponto flutuante: Defina $f2 para o valor de ponto flutuante de precisão dupla de $f4 vezes $f6"
+    },
+    {
+      "example": "mul.s $f0,$f1,$f3",
+      "description": "Precisão única de multiplicação de ponto flutuante: Defina $f0 para o valor de ponto flutuante de precisão simples de $f1 vezes $f3"
+    },
+    {
+      "example": "mult $t1,$t2",
+      "description": "Multiplicação: Defina hi para 32 bits de ordem superior, lo para 32 bits de ordem inferior do produto de $t1 e $t2 (use mfhi para acessar hi, mflo para acessar lo)"
+    },
+    {
+      "example": "multu $t1,$t2",
+      "description": "Multiplicação não assinada: Defina HI para 32 bits de ordem superior, LO para 32 bits de ordem inferior do produto de $t1 e $t2 não assinados (use mfhi para acessar HI, mflo para acessar LO)"
+    },
+    {
+      "example": "neg.d $f2,$f4",
+      "description": "Ponto flutuante nega precisão dupla: Defina a precisão dupla $f2 para negar o valor de precisão dupla em $f4"
+    },
+    {
+      "example": "neg.s $f0,$f1",
+      "description": "Ponto flutuante nega precisão única: Defina a precisão única $f0 para negação do valor de precisão única em $f1"
+    },
+    {
+      "example": "nop",
+      "description": "Operação nula: o código da máquina é todo zeros"
+    },
+    {
+      "example": "nor $t1,$t2,$t3",
+      "description": "NOR bit a bit: Defina $t1 como NOR bit a bit de $t2 e $t3"
+    },
+    {
+      "example": "or $t1,$t2,$t3",
+      "description": "OR bit a bit: Defina $t1 como OR bit a bit de $t2 e $t3"
+    },
+    {
+      "example": "ori $t1,$t2,100",
+      "description": "Bit a bit OR imediato: Defina $t1 como bit a bit OR de $t2 e imediato de 16 bits estendido com zero"
+    },
+    {
+      "example": "round.w.d $f1,$f2",
+      "description": "Arredondamento de precisão dupla para palavra: Defina $f1 para arredondamento inteiro de 32 bits de flutuação de precisão dupla em $f2"
+    },
+    {
+      "example": "round.w.s $f0,$f1",
+      "description": "Arredondamento de precisão simples para palavra: Defina $f0 para arredondamento inteiro de 32 bits de flutuação de precisão simples em $f1"
+    },
+    {
+      "example": "sb $t1,-100($t2)",
+      "description": "Armazenar byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sc $t1,-100($t2)",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Armazena o valor $t1 no endereço efetivo e, em seguida, define $t1 como 1 para sucesso. Sempre tem sucesso porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sdc1 $f2,-100($t2)",
+      "description": "Armazenar palavra dupla do coprocessador 1 (FPU)): Armazene o valor de 64 bits em $f2 no endereço de palavra dupla da memória efetiva"
+    },
+    {
+      "example": "sh $t1,-100($t2)",
+      "description": "Armazenar meia palavra: Armazene os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sll $t1,$t2,10",
+      "description": "Deslocamento lógico para a esquerda: Defina $t1 como o resultado do deslocamento $t2 para a esquerda pelo número de bits especificado pelo imediato"
+    },
+    {
+      "example": "sllv $t1,$t2,$t3",
+      "description": "Variável lógica de deslocamento para a esquerda: Defina $t1 como o resultado do deslocamento de $t2 para a esquerda pelo número de bits especificado pelo valor em 5 bits de ordem inferior de $t3"
+    },
+    {
+      "example": "slt $t1,$t2,$t3",
+      "description": "Defina menos que: Se $t2 for menor que $t3, então defina $t1 como 1, caso contrário, defina $t1 como 0"
+    },
+    {
+      "example": "slti $t1,$t2,-100",
+      "description": "Definir menos que imediato: se $t2 for menor que imediato de 16 bits com sinal estendido, defina $t1 como 1, caso contrário, defina $t1 como 0"
+    },
+    {
+      "example": "sltiu $t1,$t2,-100",
+      "description": "Definir menos que imediato sem sinal: se $t2 for menor que imediato com sinal estendido de 16 bits usando comparação não assinada, defina $t1 como 1, caso contrário, defina $t1 como 0"
+    },
+    {
+      "example": "sltu $t1,$t2,$t3",
+      "description": "Defina menos que não assinado: se $t2 for menor que $t3 usando comparação não assinada, defina $t1 como 1, caso contrário, defina $t1 como 0"
+    },
+    {
+      "example": "sqrt.d $f2,$f4",
+      "description": "Precisão dupla de raiz quadrada: Defina $f2 como raiz quadrada de ponto flutuante de precisão dupla de $f4"
+    },
+    {
+      "example": "sqrt.s $f0,$f1",
+      "description": "Precisão simples de raiz quadrada: Defina $f0 como raiz quadrada de ponto flutuante de precisão simples de $f1"
+    },
+    {
+      "example": "sra $t1,$t2,10",
+      "description": "Aritmética de deslocamento para a direita: Defina $t1 como o resultado do deslocamento estendido de sinal $t2 para a direita pelo número de bits especificado por imediato"
+    },
+    {
+      "example": "srav $t1,$t2,$t3",
+      "description": "Variável aritmética de deslocamento para a direita: Defina $t1 como o resultado do deslocamento de sinal estendido $t2 para a direita pelo número de bits especificado pelo valor em 5 bits de ordem inferior de $t3"
+    },
+    {
+      "example": "srl $t1,$t2,10",
+      "description": "Deslocamento lógico para a direita: Defina $t1 como o resultado do deslocamento de $t2 para a direita pelo número de bits especificado por imediato"
+    },
+    {
+      "example": "srlv $t1,$t2,$t3",
+      "description": "Variável lógica de deslocamento para a direita: Defina $t1 como o resultado do deslocamento de $t2 para a direita pelo número de bits especificado pelo valor em 5 bits de ordem inferior de $t3"
+    },
+    {
+      "example": "sub $t1,$t2,$t3",
+      "description": "Subtração com overflow: defina $t1 para ($t2 menos $t3)"
+    },
+    {
+      "example": "sub.d $f2,$f4,$f6",
+      "description": "Subtração de ponto flutuante de precisão dupla: Defina $f2 para o valor de ponto flutuante de precisão dupla de $f4 menos $f6"
+    },
+    {
+      "example": "sub.s $f0,$f1,$f3",
+      "description": "Precisão única de subtração de ponto flutuante: Defina $f0 para o valor de ponto flutuante de precisão simples de $f1 menos $f3"
+    },
+    {
+      "example": "subu $t1,$t2,$t3",
+      "description": "Subtração sem sinal sem estouro: defina $t1 como ($t2 menos $t3), sem estouro"
+    },
+    {
+      "example": "sw $t1,-100($t2)",
+      "description": "Armazenar palavra: armazena o conteúdo de $t1 no endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "swc1 $f1,-100($t2)",
+      "description": "Armazenar palavra do coprocessador 1 (FPU): Armazene o valor de 32 bits em $f1 no endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "swl $t1,-100($t2)",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swr $t1,-100($t2)",
+      "description": "Armazenar palavra à direita: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "syscall",
+      "description": "Emitir uma chamada de sistema: Execute a chamada de sistema especificada pelo valor em $v0"
+    },
+    {
+      "example": "teq $t1,$t2",
+      "description": "Armadilha se igual: Armadilha se $t1 for igual a $t2"
+    },
+    {
+      "example": "teqi $t1,-100",
+      "description": "Trap se igual a imediato: Trap se $t1 for igual a imediato de 16 bits com sinal estendido"
+    },
+    {
+      "example": "tge $t1,$t2",
+      "description": "Trap se maior ou igual: Trap se $t1 for maior ou igual a $t2"
+    },
+    {
+      "example": "tgei $t1,-100",
+      "description": "Trap se maior ou igual a imediato: Trap se $t1 maior ou igual a imediato de 16 bits com sinal estendido"
+    },
+    {
+      "example": "tgeiu $t1,-100",
+      "description": "Trap se maior ou igual a imediato sem sinal: Trap se $t1 maior ou igual a 16 bits estendidos com sinal imediato, comparação sem sinal"
+    },
+    {
+      "example": "tgeu $t1,$t2",
+      "description": "Trap se maior ou igual não assinado: Trap se $t1 for maior ou igual a $t2 usando comparação não assinada"
+    },
+    {
+      "example": "tlt $t1,$t2",
+      "description": "Trap se for menor que: Trap se $t1 for menor que $t2"
+    },
+    {
+      "example": "tlti $t1,-100",
+      "description": "Trap se for menor que imediato: Trap se $t1 for menor que imediato de 16 bits com sinal estendido"
+    },
+    {
+      "example": "tltiu $t1,-100",
+      "description": "Trap se for menor que imediato não assinado: Trap se $t1 for menor que comparação imediata e não assinada de 16 bits com sinal estendido"
+    },
+    {
+      "example": "tltu $t1,$t2",
+      "description": "Trap se for menor que não assinado: Trap se $t1 for menor que $t2, comparação não assinada"
+    },
+    {
+      "example": "tne $t1,$t2",
+      "description": "Armadilha se não for igual: Armadilha se $t1 não for igual a $t2"
+    },
+    {
+      "example": "tnei $t1,-100",
+      "description": "Trap se não for igual a imediato: Trap se $t1 não for igual a imediato de 16 bits com sinal estendido"
+    },
+    {
+      "example": "trunc.w.d $f1,$f2",
+      "description": "Truncar precisão dupla para palavra: Defina $f1 para truncamento inteiro de 32 bits de flutuação de precisão dupla em $f2"
+    },
+    {
+      "example": "trunc.w.s $f0,$f1",
+      "description": "Truncar precisão única para palavra: Defina $f0 para truncamento inteiro de 32 bits de float de precisão simples em $f1"
+    },
+    {
+      "example": "xor $t1,$t2,$t3",
+      "description": "XOR bit a bit (OU exclusivo): Defina $t1 como XOR bit a bit de $t2 e $t3"
+    },
+    {
+      "example": "xori $t1,$t2,100",
+      "description": "XOR bit a bit imediato: Defina $t1 como XOR bit a bit de $t2 e imediato estendido de 16 bits com zero"
+    }
+  ],
+  "extendedInstructions": [
+    {
+      "example": "abs $t1,$t2",
+      "description": "Valor absoluto: Defina $t1 para o valor absoluto de $t2 (algoritmo do Hacker's Delight)"
+    },
+    {
+      "example": "add $t1,$t2,-100",
+      "description": "Adição: defina $t1 como ($t2 mais imediato de 16 bits)"
+    },
+    {
+      "example": "add $t1,$t2,100000",
+      "description": "Adição: defina $t1 como ($t2 mais imediato de 32 bits)"
+    },
+    {
+      "example": "addi $t1,$t2,100000",
+      "description": "Adição imediata: defina $t1 como ($t2 mais imediato de 32 bits)"
+    },
+    {
+      "example": "addiu $t1,$t2,100000",
+      "description": "Adição imediata sem sinal: defina $t1 como ($t2 mais imediato de 32 bits), sem overflow"
+    },
+    {
+      "example": "addu $t1,$t2,100000",
+      "description": "Adição sem sinal: defina $t1 como ($t2 mais imediato de 32 bits), sem overflow"
+    },
+    {
+      "example": "and $t1,$t2,100",
+      "description": "AND: defina $t1 como ($t2 bit a bit-AND imediato não assinado de 16 bits)"
+    },
+    {
+      "example": "and $t1,100",
+      "description": "AND: defina $t1 como ($t1 bit a bit-AND imediato não assinado de 16 bits)"
+    },
+    {
+      "example": "andi $t1,$t2,100000",
+      "description": "AND Imediato: defina $t1 como ($t2 bit a bit-AND imediato de 32 bits)"
+    },
+    {
+      "example": "andi $t1,100",
+      "description": "AND Imediato: defina $t1 como ($t1 bit a bit-AND imediato não assinado de 16 bits)"
+    },
+    {
+      "example": "andi $t1,100000",
+      "description": "AND Imediato: defina $t1 como ($t1 bit a bit-AND imediato de 32 bits)"
+    },
+    {
+      "example": "b label",
+      "description": "Ramificação: ramificação para a instrução no rótulo incondicionalmente"
+    },
+    {
+      "example": "beq $t1,-100,label",
+      "description": "Ramificação se Igual: ramifica para a instrução no rótulo se $t1 for igual a imediato de 16 bits"
+    },
+    {
+      "example": "beq $t1,100000,label",
+      "description": "Ramificação se Igual: ramifica para a instrução no rótulo se $t1 for igual a imediato de 32 bits"
+    },
+    {
+      "example": "beqz $t1,label",
+      "description": "Ramificação se Igual Zero: ramifica para a instrução no rótulo se $t1 for igual a zero"
+    },
+    {
+      "example": "bge $t1,-100,label",
+      "description": "Ramificação se maior ou igual: ramifica para a instrução no rótulo se $t1 for maior ou igual ao imediato de 16 bits"
+    },
+    {
+      "example": "bge $t1,$t2,label",
+      "description": "Ramificação se maior ou igual: ramifica para a instrução no rótulo se $t1 for maior ou igual a $t2"
+    },
+    {
+      "example": "bge $t1,100000,label",
+      "description": "Ramificação se maior ou igual: ramifica para a instrução no rótulo se $t1 for maior ou igual ao imediato de 32 bits"
+    },
+    {
+      "example": "bgeu $t1,-100,label",
+      "description": "Ramificação se maior ou igual a não assinado: ramifica para a instrução no rótulo se $t1 for maior ou igual ao imediato de 16 bits (comparação sem sinal)"
+    },
+    {
+      "example": "bgeu $t1,$t2,label",
+      "description": "Ramificação se maior ou igual a não assinado: ramifica para a instrução no rótulo se $t1 for maior ou igual a $t2 (comparação sem sinal)"
+    },
+    {
+      "example": "bgeu $t1,100000,label",
+      "description": "Ramificação se maior ou igual a não assinado: ramifica para a instrução no rótulo se $t1 for maior ou igual ao imediato de 32 bits (comparação sem sinal)"
+    },
+    {
+      "example": "bgt $t1,-100,label",
+      "description": "Ramificação se for maior que: ramifica para a instrução no rótulo se $t1 for maior que 16 bits imediato"
+    },
+    {
+      "example": "bgt $t1,$t2,label",
+      "description": "Ramificação se for maior que: ramifica para a instrução no rótulo se $t1 for maior que $t2"
+    },
+    {
+      "example": "bgt $t1,100000,label",
+      "description": "Ramificação se for maior que: ramifica para a instrução no rótulo se $t1 for maior que 32 bits imediato"
+    },
+    {
+      "example": "bgtu $t1,-100,label",
+      "description": "Ramificação se for maior que não assinado: ramifica para a instrução no rótulo se $t1 for maior que 16 bits imediato (comparação sem sinal)"
+    },
+    {
+      "example": "bgtu $t1,$t2,label",
+      "description": "Ramificação se for maior que não assinado: ramifica para a instrução no rótulo se $t1 for maior que $t2 (comparação sem sinal)"
+    },
+    {
+      "example": "bgtu $t1,100000,label",
+      "description": "Ramificação se for maior que não assinado: ramifica para a instrução no rótulo se $t1 for maior que 16 bits imediato (comparação sem sinal)"
+    },
+    {
+      "example": "ble $t1,-100,label",
+      "description": "Ramificação se for menor ou igual: ramifica para a instrução no rótulo se $t1 for menor ou igual a 16 bits imediato"
+    },
+    {
+      "example": "ble $t1,$t2,label",
+      "description": "Ramificação se for menor ou igual: ramifica para a instrução no rótulo se $t1 for menor ou igual a $t2"
+    },
+    {
+      "example": "ble $t1,100000,label",
+      "description": "Ramificação se for menor ou igual: ramifica para a instrução no rótulo se $t1 for menor ou igual a 32 bits imediato"
+    },
+    {
+      "example": "bleu $t1,-100,label",
+      "description": "Ramificação se for menor ou igual a não assinado: ramifica para a instrução no rótulo se $t1 for menor ou igual a 16 bits imediato (comparação sem sinal)"
+    },
+    {
+      "example": "bleu $t1,$t2,label",
+      "description": "Ramificação se for menor ou igual a não assinado: ramifica para a instrução no rótulo se $t1 for menor ou igual a $t2 (comparação sem sinal)"
+    },
+    {
+      "example": "bleu $t1,100000,label",
+      "description": "Ramificação se for menor ou igual a não assinado: ramifica para a instrução no rótulo se $t1 for menor ou igual a 32 bits imediato (comparação sem sinal)"
+    },
+    {
+      "example": "blt $t1,-100,label",
+      "description": "Ramificação se for menor que: ramifica para a instrução no rótulo se $t1 for menor que 16 bits imediato"
+    },
+    {
+      "example": "blt $t1,$t2,label",
+      "description": "Ramificação se menor que: ramifica para a instrução no rótulo se $t1 for menor que $t2"
+    },
+    {
+      "example": "blt $t1,100000,label",
+      "description": "Ramificação se for menor que: ramifica para a instrução no rótulo se $t1 for menor que 32 bits imediato"
+    },
+    {
+      "example": "bltu $t1,-100,label",
+      "description": "Ramificação se for menor que não assinado: ramifica para a instrução no rótulo se $t1 for menor que 16 bits imediato"
+    },
+    {
+      "example": "bltu $t1,$t2,label",
+      "description": "Ramificação se for menor que não assinado: ramifica para a instrução no rótulo se $t1 for menor que $t2"
+    },
+    {
+      "example": "bltu $t1,100000,label",
+      "description": "Ramificação se for menor que não assinado: ramifica para a instrução no rótulo se $t1 for menor que 32 bits imediato"
+    },
+    {
+      "example": "bne $t1,-100,label",
+      "description": "Ramificação se não for igual: ramifica para a instrução no rótulo se $t1 não for igual ao imediato de 16 bits"
+    },
+    {
+      "example": "bne $t1,100000,label",
+      "description": "Ramificação se não for igual: ramifica para a instrução no rótulo se $t1 não for igual ao imediato de 32 bits"
+    },
+    {
+      "example": "bnez $t1,label",
+      "description": "Ramificação se não for igual a zero: ramifica para a instrução no rótulo se $t1 não for igual a zero"
+    },
+    {
+      "example": "div $t1,$t2,-100",
+      "description": "Divisão: Defina $t1 como ($t2 dividido por divisão inteira imediata de 16 bits)"
+    },
+    {
+      "example": "div $t1,$t2,$t3",
+      "description": "Divisão: Defina $t1 como ($t2 dividido por $t3, divisão inteira)"
+    },
+    {
+      "example": "div $t1,$t2,100000",
+      "description": "Divisão: Defina $t1 como ($t2 dividido por divisão inteira imediata de 32 bits)"
+    },
+    {
+      "example": "divu $t1,$t2,-100",
+      "description": "Divisão sem sinal: Defina $t1 como ($t2 dividido por divisão inteira imediata e sem sinal de 16 bits)"
+    },
+    {
+      "example": "divu $t1,$t2,$t3",
+      "description": "Divisão sem sinal: Defina $t1 como ($t2 dividido por $t3, divisão inteira sem sinal)"
+    },
+    {
+      "example": "divu $t1,$t2,100000",
+      "description": "Divisão sem sinal: Defina $t1 como ($t2 dividido por divisão inteira imediata e sem sinal de 32 bits)"
+    },
+    {
+      "example": "l.d $f2,-100",
+      "description": "Carregar ponto flutuante Precisão dupla: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "l.d $f2,($t2)",
+      "description": "Carregar ponto flutuante Precisão dupla: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "l.d $f2,100000",
+      "description": "Carregar ponto flutuante Precisão dupla: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "l.d $f2,100000($t2)",
+      "description": "Carregar ponto flutuante Precisão dupla: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "l.d $f2,label",
+      "description": "Carregar ponto flutuante Precisão dupla: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "l.d $f2,label($t2)",
+      "description": "Carregar ponto flutuante Precisão dupla: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "l.d $f2,label+100000",
+      "description": "Carregar ponto flutuante Precisão dupla: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "l.d $f2,label+100000($t2)",
+      "description": "Carregar ponto flutuante Precisão dupla: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "l.s $f1,-100",
+      "description": "Carregar ponto flutuante Precisão única: Defina $f1 para o valor de 32 bits no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "l.s $f1,($t2)",
+      "description": "Carregar ponto flutuante Precisão única: Defina $f1 para o valor de 32 bits no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "l.s $f1,100000",
+      "description": "Carregar ponto flutuante Precisão única: Defina $f1 para o valor de 32 bits no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "l.s $f1,100000($t2)",
+      "description": "Carregar ponto flutuante Precisão única: Defina $f1 para o valor de 32 bits no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "l.s $f1,label",
+      "description": "Carregar ponto flutuante Precisão única: Defina $f1 para o valor de 32 bits no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "l.s $f1,label($t2)",
+      "description": "Carregar ponto flutuante Precisão única: Defina $f1 para o valor de 32 bits no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "l.s $f1,label+100000",
+      "description": "Carregar ponto flutuante Precisão única: Defina $f1 para o valor de 32 bits no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "l.s $f1,label+100000($t2)",
+      "description": "Carregar ponto flutuante Precisão única: Defina $f1 para o valor de 32 bits no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "la $t1,-100",
+      "description": "Endereço de carregamento: Defina $t1 como imediato de 16 bits (sinal estendido)"
+    },
+    {
+      "example": "la $t1,($t2)",
+      "description": "Endereço de carregamento: Defina $t1 para o conteúdo de $t2"
+    },
+    {
+      "example": "la $t1,100",
+      "description": "Endereço de carregamento: Defina $t1 como imediato de 16 bits (estendido por zero)"
+    },
+    {
+      "example": "la $t1,100($t2)",
+      "description": "Endereço de carga: Defina $t1 como soma (de $t2 e imediato de 16 bits)"
+    },
+    {
+      "example": "la $t1,100000",
+      "description": "Endereço de carregamento: Defina $t1 como imediato de 32 bits"
+    },
+    {
+      "example": "la $t1,100000($t2)",
+      "description": "Endereço de carregamento: Defina $t1 como soma (de $t2 e imediato de 32 bits)"
+    },
+    {
+      "example": "la $t1,label",
+      "description": "Endereço de carga: Defina $t1 para o endereço da etiqueta"
+    },
+    {
+      "example": "la $t1,label($t2)",
+      "description": "Endereço de carga: Defina $t1 como soma (de $t2 e endereço do rótulo)"
+    },
+    {
+      "example": "la $t1,label+100000",
+      "description": "Endereço de carga: Defina $t1 como soma (do endereço do rótulo e imediato de 32 bits)"
+    },
+    {
+      "example": "la $t1,label+100000($t2)",
+      "description": "Endereço de carga: Defina $t1 como soma (do endereço do rótulo, imediato de 32 bits e $t2)"
+    },
+    {
+      "example": "lb $t1,-100",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lb $t1,($t2)",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lb $t1,100",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lb $t1,100($t2)",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lb $t1,100000",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lb $t1,100000($t2)",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lb $t1,label",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lb $t1,label($t2)",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lb $t1,label+100000",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lb $t1,label+100000($t2)",
+      "description": "Carregar byte: Defina $t1 para o valor de 8 bits estendido com sinal do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,-100",
+      "description": "Carregar byte sem sinal: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,($t2)",
+      "description": "Carregar byte sem sinal: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,100",
+      "description": "Carregar byte sem sinal: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,100($t2)",
+      "description": "Carregar byte sem sinal: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,100000",
+      "description": "Carregar byte sem sinal: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,100000($t2)",
+      "description": "Carregar byte sem sinal: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,label",
+      "description": "Carregar byte sem sinal: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,label($t2)",
+      "description": "Carregar byte sem sinal: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,label+100000",
+      "description": "Carregar byte sem sinal: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "lbu $t1,label+100000($t2)",
+      "description": "Carregar byte sem sinal: Defina $t1 como valor de 8 bits estendido para zero do endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ld $t1,-100($t2)",
+      "description": "Carregar Doubleword: Defina $t1 e o próximo registro para 64 bits começando no endereço de bytes de memória efetivo"
+    },
+    {
+      "example": "ld $t1,($t2)",
+      "description": "Carregar Doubleword: Defina $t1 e o próximo registro para 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "ld $t1,100000",
+      "description": "Carregar Doubleword: Defina $t1 e o próximo registro para 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "ld $t1,100000($t2)",
+      "description": "Carregar Doubleword: Defina $t1 e o próximo registro para 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "ld $t1,label",
+      "description": "Carregar Doubleword: Defina $t1 e o próximo registro para 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "ld $t1,label($t2)",
+      "description": "Carregar Doubleword: Defina $t1 e o próximo registro para 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "ld $t1,label+100000",
+      "description": "Carregar Doubleword: Defina $t1 e o próximo registro para 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "ld $t1,label+100000($t2)",
+      "description": "Carregar Doubleword: Defina $t1 e o próximo registro para 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "ldc1 $f2,-100",
+      "description": "Carregar o coprocessador Doubleword 1: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "ldc1 $f2,($t2)",
+      "description": "Carregar o coprocessador Doubleword 1: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "ldc1 $f2,100000",
+      "description": "Carregar o coprocessador Doubleword 1: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "ldc1 $f2,100000($t2)",
+      "description": "Carregar o coprocessador Doubleword 1: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "ldc1 $f2,label",
+      "description": "Carregar o coprocessador Doubleword 1: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "ldc1 $f2,label($t2)",
+      "description": "Carregar o coprocessador Doubleword 1: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "ldc1 $f2,label+100000",
+      "description": "Carregar o coprocessador Doubleword 1: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "ldc1 $f2,label+100000($t2)",
+      "description": "Carregar o coprocessador Doubleword 1: Defina o par de registros $f2 e $f3 para o valor de 64 bits no endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "lh $t1,-100",
+      "description": "Carregar meia palavra: defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lh $t1,($t2)",
+      "description": "Carregar meia palavra: defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lh $t1,100",
+      "description": "Carregar meia palavra: defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lh $t1,100($t2)",
+      "description": "Carregar meia palavra: defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lh $t1,100000",
+      "description": "Carregar meia palavra: defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lh $t1,100000($t2)",
+      "description": "Carregar meia palavra: defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lh $t1,label",
+      "description": "Carregar meia palavra: defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lh $t1,label($t2)",
+      "description": "Carregar meia palavra: defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lh $t1,label+100000",
+      "description": "Carregar meia palavra: defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lh $t1,label+100000($t2)",
+      "description": "Carregar meia palavra: defina $t1 para o valor de 16 bits estendido com sinal do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,-100",
+      "description": "Carregar Halfword sem sinal: Defina $t1 para valor de 16 bits estendido com zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,($t2)",
+      "description": "Carregar Halfword sem sinal: Defina $t1 para valor de 16 bits estendido com zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,100",
+      "description": "Carregar Halfword sem sinal: Defina $t1 para valor de 16 bits estendido com zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,100($t2)",
+      "description": "Carregar Halfword sem sinal: Defina $t1 para valor de 16 bits estendido com zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,100000",
+      "description": "Carregar Halfword sem sinal: Defina $t1 para valor de 16 bits estendido com zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,100000($t2)",
+      "description": "Carregar Halfword sem sinal: Defina $t1 para valor de 16 bits estendido com zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,label",
+      "description": "Carregar Halfword sem sinal: Defina $t1 para valor de 16 bits estendido com zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,label($t2)",
+      "description": "Carregar Halfword sem sinal: Defina $t1 para valor de 16 bits estendido com zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,label+100000",
+      "description": "Carregar Halfword sem sinal: Defina $t1 para valor de 16 bits estendido com zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "lhu $t1,label+100000($t2)",
+      "description": "Carregar Halfword sem sinal: Defina $t1 para valor de 16 bits estendido com zero do endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "li $t1,-100",
+      "description": "Carregar Imediato: Defina $t1 como imediato de 16 bits (sinal estendido)"
+    },
+    {
+      "example": "li $t1,100",
+      "description": "Carregar Imediato: Defina $t1 como imediato não assinado de 16 bits (estendido por zero)"
+    },
+    {
+      "example": "li $t1,100000",
+      "description": "Carregar Imediato: Defina $t1 como imediato de 32 bits"
+    },
+    {
+      "example": "ll $t1,-100",
+      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "ll $t1,($t2)",
+      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "ll $t1,100",
+      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "ll $t1,100($t2)",
+      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "ll $t1,100000",
+      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "ll $t1,100000($t2)",
+      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "ll $t1,label",
+      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "ll $t1,label($t2)",
+      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "ll $t1,label+100000",
+      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "ll $t1,label+100000($t2)",
+      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "lw $t1,-100",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lw $t1,($t2)",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lw $t1,100",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lw $t1,100($t2)",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lw $t1,100000",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lw $t1,100000($t2)",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lw $t1,label",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo da palavra da memória no endereço da etiqueta"
+    },
+    {
+      "example": "lw $t1,label($t2)",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lw $t1,label+100000",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lw $t1,label+100000($t2)",
+      "description": "Carregar palavra: Defina $t1 para o conteúdo do endereço de palavra de memória efetiva"
+    },
+    {
+      "example": "lwc1 $f1,-100",
+      "description": "Carregar o coprocessador de palavras 1: Defina $f1 para o valor de 32 bits do endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "lwc1 $f1,($t2)",
+      "description": "Carregar o coprocessador de palavras 1: Defina $f1 para o valor de 32 bits do endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "lwc1 $f1,100000",
+      "description": "Carregar o coprocessador de palavras 1: Defina $f1 para o valor de 32 bits do endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "lwc1 $f1,100000($t2)",
+      "description": "Carregar o coprocessador de palavras 1: Defina $f1 para o valor de 32 bits do endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "lwc1 $f1,label",
+      "description": "Carregar o coprocessador de palavras 1: Defina $f1 para o valor de 32 bits do endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "lwc1 $f1,label($t2)",
+      "description": "Carregar o coprocessador de palavras 1: Defina $f1 para o valor de 32 bits do endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "lwc1 $f1,label+100000",
+      "description": "Carregar o coprocessador de palavras 1: Defina $f1 para o valor de 32 bits do endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "lwc1 $f1,label+100000($t2)",
+      "description": "Carregar o coprocessador de palavras 1: Defina $f1 para o valor de 32 bits do endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "lwl $t1,-100",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwl $t1,($t2)",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwl $t1,100",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwl $t1,100($t2)",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwl $t1,100000",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwl $t1,100000($t2)",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwl $t1,label",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwl $t1,label($t2)",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwl $t1,label+100000",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwl $t1,label+100000($t2)",
+      "description": "Carregar palavra à esquerda: carrega de 1 a 4 bytes justificados à esquerda em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,-100",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,($t2)",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,100",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,100($t2)",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,100000",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,100000($t2)",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,label",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,label($t2)",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,label+100000",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "lwr $t1,label+100000($t2)",
+      "description": "Carregar palavra à direita: carrega de 1 a 4 bytes justificados à direita em $t1, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem superior de sua palavra"
+    },
+    {
+      "example": "mfc1.d $t1,$f2",
+      "description": "Mover do coprocessador 1 duplo: Defina $t1 para o conteúdo de $f2, defina o próximo registro superior de $t1 para o conteúdo do próximo registro superior de $f2"
+    },
+    {
+      "example": "move $t1,$t2",
+      "description": "MOVE: Defina $t1 para o conteúdo de $t2"
+    },
+    {
+      "example": "mtc1.d $t1,$f2",
+      "description": "Mover para o coprocessador 1 duplo: Defina $f2 para o conteúdo de $t1, defina o próximo registro superior de $f2 para o conteúdo do próximo registro superior de $t1"
+    },
+    {
+      "example": "mul $t1,$t2,-100",
+      "description": "Multiplicação: Defina HI para 32 bits de ordem superior, LO e $t1 para 32 bits de ordem inferior do produto de $t2 e imediato assinado de 16 bits (use mfhi para acessar HI, mflo para acessar LO)"
+    },
+    {
+      "example": "mul $t1,$t2,100000",
+      "description": "Multiplicação: Defina HI para 32 bits de ordem superior, LO e $t1 para 32 bits de ordem inferior do produto de $t2 e imediato de 32 bits (use mfhi para acessar HI, mflo para acessar LO)"
+    },
+    {
+      "example": "mulo $t1,$t2,-100",
+      "description": "Multiplicação com Overflow: Defina $t1 para 32 bits de ordem inferior do produto de $t2 e imediato assinado de 16 bits"
+    },
+    {
+      "example": "mulo $t1,$t2,$t3",
+      "description": "Multiplicação com Overflow: Defina $t1 para 32 bits de ordem inferior do produto de $t2 e $t3"
+    },
+    {
+      "example": "mulo $t1,$t2,100000",
+      "description": "Multiplicação com Overflow: Defina $t1 para 32 bits de ordem inferior do produto de $t2 e imediato de 32 bits"
+    },
+    {
+      "example": "mulou $t1,$t2,-100",
+      "description": "Multiplicação com Overflow sem sinal: Defina $t1 para 32 bits de ordem inferior do produto de $t2 e imediato assinado de 16 bits"
+    },
+    {
+      "example": "mulou $t1,$t2,$t3",
+      "description": "Multiplicação com Overflow sem sinal: Defina $t1 para 32 bits de ordem inferior do produto de $t2 e $t3"
+    },
+    {
+      "example": "mulou $t1,$t2,100000",
+      "description": "Multiplicação com Overflow sem sinal: Defina $t1 para 32 bits de ordem inferior do produto de $t2 e imediato de 32 bits"
+    },
+    {
+      "example": "mulu $t1,$t2,-100",
+      "description": "Multiplicação não assinada: Defina HI para 32 bits de ordem superior, LO e $t1 para 32 bits de ordem inferior de ($t2 multiplicado por multiplicação imediata e não assinada de 16 bits)"
+    },
+    {
+      "example": "mulu $t1,$t2,$t3",
+      "description": "Multiplicação não assinada: defina HI para 32 bits de ordem superior, LO e $t1 para 32 bits de ordem inferior de ($t2 multiplicado por $t3, multiplicação não assinada)"
+    },
+    {
+      "example": "mulu $t1,$t2,100000",
+      "description": "Multiplicação não assinada: defina HI para 32 bits de ordem superior, LO e $t1 para 32 bits de ordem inferior de ($t2 multiplicado por multiplicação imediata e não assinada de 32 bits)"
+    },
+    {
+      "example": "neg $t1,$t2",
+      "description": "Negação: Defina $t1 para negação de $t2"
+    },
+    {
+      "example": "negu $t1,$t2",
+      "description": "Negação sem sinal: Defina $t1 como negação de $t2, sem overflow"
+    },
+    {
+      "example": "not $t1,$t2",
+      "description": "NOT bit a bit (inversão de bits)"
+    },
+    {
+      "example": "or $t1,$t2,100",
+      "description": "OR: defina $t1 como ($t2 bit a bit-OR imediato não assinado de 16 bits)"
+    },
+    {
+      "example": "or $t1,100",
+      "description": "OR: defina $t1 como ($t1 bit a bit-OR imediato não assinado de 16 bits)"
+    },
+    {
+      "example": "ori $t1,$t2,100000",
+      "description": "OR Imediato: defina $t1 como ($t2 bit a bit-OR imediato de 32 bits)"
+    },
+    {
+      "example": "ori $t1,100",
+      "description": "OR Imediato: defina $t1 como ($t1 bit a bit-OR imediato não assinado de 16 bits)"
+    },
+    {
+      "example": "ori $t1,100000",
+      "description": "OR Imediato: defina $t1 como ($t1 bit a bit-OR imediato de 32 bits)"
+    },
+    {
+      "example": "rem $t1,$t2,-100",
+      "description": "Resto: Defina $t1 como (resto de $t2 dividido por imediato de 16 bits)"
+    },
+    {
+      "example": "rem $t1,$t2,$t3",
+      "description": "Resto: Defina $t1 como (resto de $t2 dividido por $t3)"
+    },
+    {
+      "example": "rem $t1,$t2,100000",
+      "description": "Resto: Defina $t1 como (resto de $t2 dividido por imediato de 32 bits)"
+    },
+    {
+      "example": "remu $t1,$t2,-100",
+      "description": "Resto: Defina $t1 como (resto de $t2 dividido por divisão imediata e não assinada de 16 bits)"
+    },
+    {
+      "example": "remu $t1,$t2,$t3",
+      "description": "Resto: Defina $t1 como (resto de $t2 dividido por $t3, divisão sem sinal)"
+    },
+    {
+      "example": "remu $t1,$t2,100000",
+      "description": "Resto: Defina $t1 como (resto de $t2 dividido por divisão imediata e não assinada de 32 bits)"
+    },
+    {
+      "example": "rol $t1,$t2,$t3",
+      "description": "ROtate Left: Defina $t1 como ($t2 girado para a esquerda pelo número de posições de bits especificadas em $t3)"
+    },
+    {
+      "example": "rol $t1,$t2,10",
+      "description": "ROtate Left: Defina $t1 como ($t2 girado para a esquerda pelo número de posições de bits especificadas no imediato de 5 bits)"
+    },
+    {
+      "example": "ror $t1,$t2,$t3",
+      "description": "ROtate Right: Defina $t1 como ($t2 girado para a direita pelo número de posições de bits especificadas em $t3)"
+    },
+    {
+      "example": "ror $t1,$t2,10",
+      "description": "ROtate Right: Defina $t1 como ($t2 girado para a direita pelo número de posições de bits especificadas no imediato de 5 bits)"
+    },
+    {
+      "example": "s.d $f2,-100",
+      "description": "Armazenar ponto flutuante Precisão dupla: Armazenar 64 bits do par de registros $f2 e $f3 para endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "s.d $f2,($t2)",
+      "description": "Armazenar ponto flutuante Precisão dupla: Armazenar 64 bits do par de registros $f2 e $f3 para endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "s.d $f2,100000",
+      "description": "Armazenar ponto flutuante Precisão dupla: Armazenar 64 bits do par de registros $f2 e $f3 para endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "s.d $f2,100000($t2)",
+      "description": "Armazenar ponto flutuante Precisão dupla: Armazenar 64 bits do par de registros $f2 e $f3 para endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "s.d $f2,label",
+      "description": "Armazenar ponto flutuante Precisão dupla: Armazenar 64 bits do par de registros $f2 e $f3 para endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "s.d $f2,label($t2)",
+      "description": "Armazenar ponto flutuante Precisão dupla: Armazenar 64 bits do par de registros $f2 e $f3 para endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "s.d $f2,label+100000",
+      "description": "Armazenar ponto flutuante Precisão dupla: Armazenar 64 bits do par de registros $f2 e $f3 para endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "s.d $f2,label+100000($t2)",
+      "description": "Armazenar ponto flutuante Precisão dupla: Armazenar 64 bits do par de registros $f2 e $f3 para endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "s.s $f1,-100",
+      "description": "Armazenar ponto flutuante Precisão única: Armazenar valor de 32 bits de $f1 no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "s.s $f1,($t2)",
+      "description": "Armazenar ponto flutuante Precisão única: Armazenar valor de 32 bits de $f1 no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "s.s $f1,100000",
+      "description": "Armazenar ponto flutuante Precisão única: Armazenar valor de 32 bits de $f1 no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "s.s $f1,100000($t2)",
+      "description": "Armazenar ponto flutuante Precisão única: Armazenar valor de 32 bits de $f1 no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "s.s $f1,label",
+      "description": "Armazenar ponto flutuante Precisão única: Armazenar valor de 32 bits de $f1 no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "s.s $f1,label($t2)",
+      "description": "Armazenar ponto flutuante Precisão única: Armazenar valor de 32 bits de $f1 no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "s.s $f1,label+100000",
+      "description": "Armazenar ponto flutuante Precisão única: Armazenar valor de 32 bits de $f1 no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "s.s $f1,label+100000($t2)",
+      "description": "Armazenar ponto flutuante Precisão única: Armazenar valor de 32 bits de $f1 no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "sb $t1,-100",
+      "description": "Armazenar Byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sb $t1,($t2)",
+      "description": "Armazenar Byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sb $t1,100",
+      "description": "Armazenar Byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sb $t1,100($t2)",
+      "description": "Armazenar Byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sb $t1,100000",
+      "description": "Armazenar Byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sb $t1,100000($t2)",
+      "description": "Armazenar Byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sb $t1,label",
+      "description": "Armazenar Byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sb $t1,label($t2)",
+      "description": "Armazenar Byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sb $t1,label+100000",
+      "description": "Armazenar Byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sb $t1,label+100000($t2)",
+      "description": "Armazenar Byte: Armazene os 8 bits de ordem inferior de $t1 no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sc $t1,-100",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sc $t1,($t2)",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sc $t1,100",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sc $t1,100($t2)",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sc $t1,100000",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sc $t1,100000($t2)",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sc $t1,label",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sc $t1,label($t2)",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sc $t1,label+100000",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sc $t1,label+100000($t2)",
+      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+    },
+    {
+      "example": "sd $t1,-100($t2)",
+      "description": "Armazenar Doubleword: Armazena o conteúdo de $t1 e o próximo registro nos 64 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "sd $t1,($t2)",
+      "description": "Armazenar Doubleword: Armazena o conteúdo de $t1 e o próximo registro nos 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "sd $t1,100000",
+      "description": "Armazenar Doubleword: Armazena o conteúdo de $t1 e o próximo registro nos 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "sd $t1,100000($t2)",
+      "description": "Armazenar Doubleword: Armazena o conteúdo de $t1 e o próximo registro nos 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "sd $t1,label",
+      "description": "Armazenar Doubleword: Armazena o conteúdo de $t1 e o próximo registro nos 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "sd $t1,label($t2)",
+      "description": "Armazenar Doubleword: Armazena o conteúdo de $t1 e o próximo registro nos 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "sd $t1,label+100000",
+      "description": "Armazenar Doubleword: Armazena o conteúdo de $t1 e o próximo registro nos 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "sd $t1,label+100000($t2)",
+      "description": "Armazenar Doubleword: Armazena o conteúdo de $t1 e o próximo registro nos 64 bits começando no endereço efetivo da palavra de memória"
+    },
+    {
+      "example": "sdc1 $f2,-100",
+      "description": "Armazenar coprocessador de palavra dupla 1: Armazene 64 bits do par de registros $f2 e $f3 para o endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "sdc1 $f2,($t2)",
+      "description": "Armazenar coprocessador de palavra dupla 1: Armazene 64 bits do par de registros $f2 e $f3 para o endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "sdc1 $f2,100000",
+      "description": "Armazenar coprocessador de palavra dupla 1: Armazene 64 bits do par de registros $f2 e $f3 para o endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "sdc1 $f2,100000($t2)",
+      "description": "Armazenar coprocessador de palavra dupla 1: Armazene 64 bits do par de registros $f2 e $f3 para o endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "sdc1 $f2,label",
+      "description": "Armazenar coprocessador de palavra dupla 1: Armazene 64 bits do par de registros $f2 e $f3 para o endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "sdc1 $f2,label($t2)",
+      "description": "Armazenar coprocessador de palavra dupla 1: Armazene 64 bits do par de registros $f2 e $f3 para o endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "sdc1 $f2,label+100000",
+      "description": "Armazenar coprocessador de palavra dupla 1: Armazene 64 bits do par de registros $f2 e $f3 para o endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "sdc1 $f2,label+100000($t2)",
+      "description": "Armazenar coprocessador de palavra dupla 1: Armazene 64 bits do par de registros $f2 e $f3 para o endereço de palavra dupla de memória efetiva"
+    },
+    {
+      "example": "seq $t1,$t2,-100",
+      "description": "Defina Igual: se $t2 for igual a imediato de 16 bits, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "seq $t1,$t2,$t3",
+      "description": "Defina Igual: se $t2 for igual a $t3, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "seq $t1,$t2,100000",
+      "description": "Defina Igual: se $t2 for igual a imediato de 32 bits, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sge $t1,$t2,-100",
+      "description": "Definir maior ou igual: se $t2 for maior ou igual ao imediato de 16 bits, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sge $t1,$t2,$t3",
+      "description": "Definir maior ou igual: se $t2 for maior ou igual a $t3, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sge $t1,$t2,100000",
+      "description": "Definir maior ou igual: se $t2 for maior ou igual ao imediato de 32 bits, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,-100",
+      "description": "Definir maior ou igual a não assinado: se $t2 for maior ou igual ao imediato de 16 bits (comparação não assinada), defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,$t3",
+      "description": "Definir maior ou igual a não assinado: se $t2 for maior ou igual a $t3 (comparação não assinada), defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,100000",
+      "description": "Definir maior ou igual a não assinado: se $t2 for maior ou igual ao imediato de 32 bits (comparação não assinada), defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sgt $t1,$t2,-100",
+      "description": "Definir maior que: se $t2 for maior que 16 bits imediato, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sgt $t1,$t2,$t3",
+      "description": "Definir maior que: se $t2 for maior que $t3, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sgt $t1,$t2,100000",
+      "description": "Definir maior que: se $t2 for maior que 32 bits imediato, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,-100",
+      "description": "Definir maior que não assinado: se $t2 for maior que 16 bits imediato (comparação não assinada), defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,$t3",
+      "description": "Definir maior que não assinado: se $t2 for maior que $t3 (comparação não assinada), defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,100000",
+      "description": "Definir maior que não assinado: se $t2 for maior que 32 bits imediato (comparação não assinada), defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sh $t1,-100",
+      "description": "Armazenar meia palavra: armazena os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sh $t1,($t2)",
+      "description": "Armazenar meia palavra: armazena os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sh $t1,100",
+      "description": "Armazenar meia palavra: armazena os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sh $t1,100($t2)",
+      "description": "Armazenar meia palavra: armazena os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sh $t1,100000",
+      "description": "Armazenar meia palavra: armazena os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sh $t1,100000($t2)",
+      "description": "Armazenar meia palavra: armazena os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sh $t1,label",
+      "description": "Armazenar meia palavra: armazena os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sh $t1,label($t2)",
+      "description": "Armazenar meia palavra: armazena os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sh $t1,label+100000",
+      "description": "Armazenar meia palavra: armazena os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sh $t1,label+100000($t2)",
+      "description": "Armazenar meia palavra: armazena os 16 bits de ordem inferior de $t1 no endereço de meia palavra da memória efetiva"
+    },
+    {
+      "example": "sle $t1,$t2,-100",
+      "description": "Definir menor ou igual: se $t2 for menor ou igual a imediato de 16 bits, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sle $t1,$t2,$t3",
+      "description": "Definir menor ou igual: se $t2 for menor ou igual a $t3, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sle $t1,$t2,100000",
+      "description": "Definir menor ou igual: se $t2 for menor ou igual a imediato de 32 bits, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sleu $t1,$t2,-100",
+      "description": "Definir menor ou igual a não assinado: se $t2 for menor ou igual a imediato de 16 bits (comparação não assinada), defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sleu $t1,$t2,$t3",
+      "description": "Definir menor ou igual sem sinal: se $t2 for menor ou igual a $t3 (comparação sem sinal), defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sleu $t1,$t2,100000",
+      "description": "Definir menor ou igual a não assinado: se $t2 for menor ou igual a imediato de 32 bits (comparação não assinada), defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sne $t1,$t2,-100",
+      "description": "Definir diferente: se $t2 não for igual ao imediato de 16 bits, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sne $t1,$t2,$t3",
+      "description": "Definir diferente: se $t2 não for igual a $t3, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sne $t1,$t2,100000",
+      "description": "Definir diferente: se $t2 não for igual ao imediato de 32 bits, defina $t1 como 1, caso contrário, 0"
+    },
+    {
+      "example": "sub $t1,$t2,-100",
+      "description": "SUBtração: defina $t1 como ($t2 menos imediato de 16 bits)"
+    },
+    {
+      "example": "sub $t1,$t2,100000",
+      "description": "SUBtração: defina $t1 como ($t2 menos imediato de 32 bits)"
+    },
+    {
+      "example": "subi $t1,$t2,-100",
+      "description": "SUBtração Imediata: defina $t1 como ($t2 menos imediato de 16 bits)"
+    },
+    {
+      "example": "subi $t1,$t2,100000",
+      "description": "SUBtração Imediata: defina $t1 como ($t2 menos imediato de 32 bits)"
+    },
+    {
+      "example": "subiu $t1,$t2,100000",
+      "description": "SUBtração Imediata Não Assinada: defina $t1 como ($t2 menos imediato de 32 bits), sem estouro"
+    },
+    {
+      "example": "subu $t1,$t2,100000",
+      "description": "SUBtração não assinada: defina $t1 como ($t2 menos imediato de 32 bits), sem estouro"
+    },
+    {
+      "example": "sw $t1,-100",
+      "description": "Armazenar palavra: Armazene o conteúdo $t1 no endereço de palavra de memória eficaz"
+    },
+    {
+      "example": "sw $t1,($t2)",
+      "description": "Armazenar palavra: Armazene o conteúdo $t1 no endereço de palavra de memória eficaz"
+    },
+    {
+      "example": "sw $t1,100",
+      "description": "Armazenar palavra: Armazene o conteúdo $t1 no endereço de palavra de memória eficaz"
+    },
+    {
+      "example": "sw $t1,100($t2)",
+      "description": "Armazenar palavra: Armazene o conteúdo $t1 no endereço de palavra de memória eficaz"
+    },
+    {
+      "example": "sw $t1,100000",
+      "description": "Armazenar palavra: Armazene o conteúdo $t1 no endereço de palavra de memória eficaz"
+    },
+    {
+      "example": "sw $t1,100000($t2)",
+      "description": "Armazenar palavra: Armazene o conteúdo $t1 no endereço de palavra de memória eficaz"
+    },
+    {
+      "example": "sw $t1,label",
+      "description": "Armazenar palavra: Armazene o conteúdo $t1 na palavra da memória no endereço da etiqueta"
+    },
+    {
+      "example": "sw $t1,label($t2)",
+      "description": "Armazenar palavra: Armazene o conteúdo $t1 no endereço de palavra de memória eficaz"
+    },
+    {
+      "example": "sw $t1,label+100000",
+      "description": "Armazenar palavra: Armazene o conteúdo $t1 no endereço de palavra de memória eficaz"
+    },
+    {
+      "example": "sw $t1,label+100000($t2)",
+      "description": "Armazenar palavra: Armazene o conteúdo $t1 no endereço de palavra de memória eficaz"
+    },
+    {
+      "example": "swc1 $f1,-100",
+      "description": "Armazenar coprocessador de palavras 1: Armazena o valor de 32 bits de $f1 no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "swc1 $f1,($t2)",
+      "description": "Armazenar coprocessador de palavras 1: Armazena o valor de 32 bits de $f1 no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "swc1 $f1,100000",
+      "description": "Armazenar coprocessador de palavras 1: Armazena o valor de 32 bits de $f1 no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "swc1 $f1,100000($t2)",
+      "description": "Armazenar coprocessador de palavras 1: Armazena o valor de 32 bits de $f1 no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "swc1 $f1,label",
+      "description": "Armazenar coprocessador de palavras 1: Armazena o valor de 32 bits de $f1 no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "swc1 $f1,label($t2)",
+      "description": "Armazenar coprocessador de palavras 1: Armazena o valor de 32 bits de $f1 no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "swc1 $f1,label+100000",
+      "description": "Armazenar coprocessador de palavras 1: Armazena o valor de 32 bits de $f1 no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "swc1 $f1,label+100000($t2)",
+      "description": "Armazenar coprocessador de palavras 1: Armazena o valor de 32 bits de $f1 no endereço de palavra de memória efetivo"
+    },
+    {
+      "example": "swl $t1,-100",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swl $t1,($t2)",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swl $t1,100",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swl $t1,100($t2)",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swl $t1,100000",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swl $t1,100000($t2)",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swl $t1,label",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swl $t1,label($t2)",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swl $t1,label+100000",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swl $t1,label+100000($t2)",
+      "description": "Armazenar palavra esquerda: Armazene 1 a 4 bytes de ordem superior de $t1 na memória, começando com o endereço de byte de memória efetivo e continuando até o byte de ordem inferior de sua palavra"
+    },
+    {
+      "example": "swr $t1,-100",
+      "description": "Armazenar a palavra corretamente: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte de memória efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "swr $t1,($t2)",
+      "description": "Armazenar a palavra corretamente: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte de memória efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "swr $t1,100",
+      "description": "Armazenar a palavra corretamente: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte de memória efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "swr $t1,100($t2)",
+      "description": "Armazenar a palavra corretamente: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte de memória efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "swr $t1,100000",
+      "description": "Armazenar a palavra corretamente: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte de memória efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "swr $t1,100000($t2)",
+      "description": "Armazenar a palavra corretamente: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte de memória efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "swr $t1,label",
+      "description": "Armazenar a palavra corretamente: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte de memória efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "swr $t1,label($t2)",
+      "description": "Armazenar a palavra corretamente: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte de memória efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "swr $t1,label+100000",
+      "description": "Armazenar a palavra corretamente: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte de memória efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "swr $t1,label+100000($t2)",
+      "description": "Armazenar a palavra corretamente: Armazene 1 a 4 bytes de ordem inferior de $t1 na memória, começando com o byte de ordem superior da palavra contendo o endereço de byte de memória efetivo e continuando através desse endereço de byte"
+    },
+    {
+      "example": "ulh $t1,-100($t2)",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, com sinal estendido, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulh $t1,($t2)",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, com sinal estendido, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulh $t1,100000",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, com sinal estendido, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulh $t1,100000($t2)",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, com sinal estendido, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulh $t1,label",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, com sinal estendido, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulh $t1,label($t2)",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, com sinal estendido, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulh $t1,label+100000",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, com sinal estendido, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulh $t1,label+100000($t2)",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, com sinal estendido, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulhu $t1,-100($t2)",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, estendido por zero, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulhu $t1,($t2)",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, estendido por zero, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulhu $t1,100000",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, estendido por zero, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulhu $t1,100000($t2)",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, estendido por zero, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulhu $t1,label",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, estendido por zero, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulhu $t1,label($t2)",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, estendido por zero, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulhu $t1,label+100000",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, estendido por zero, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulhu $t1,label+100000($t2)",
+      "description": "Meia palavra de carga desalinhada: Defina $t1 para 16 bits, estendido por zero, começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulw $t1,-100($t2)",
+      "description": "Palavra de carga desalinhada: Defina $t1 para 32 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulw $t1,($t2)",
+      "description": "Palavra de carga desalinhada: Defina $t1 para 32 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulw $t1,100000",
+      "description": "Palavra de carga desalinhada: Defina $t1 para 32 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulw $t1,100000($t2)",
+      "description": "Palavra de carga desalinhada: Defina $t1 para 32 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulw $t1,label",
+      "description": "Palavra de carga desalinhada: Defina $t1 para 32 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulw $t1,label($t2)",
+      "description": "Palavra de carga desalinhada: Defina $t1 para 32 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulw $t1,label+100000",
+      "description": "Palavra de carga desalinhada: Defina $t1 para 32 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ulw $t1,label+100000($t2)",
+      "description": "Palavra de carga desalinhada: Defina $t1 para 32 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ush $t1,-100($t2)",
+      "description": "Armazenamento de meia palavra não alinhado: Armazena conteúdo de meia palavra $t1 de ordem inferior nos 16 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ush $t1,($t2)",
+      "description": "Armazenamento de meia palavra não alinhado: Armazena conteúdo de meia palavra $t1 de ordem inferior nos 16 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ush $t1,100000",
+      "description": "Armazenamento de meia palavra não alinhado: Armazena conteúdo de meia palavra $t1 de ordem inferior nos 16 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ush $t1,100000($t2)",
+      "description": "Armazenamento de meia palavra não alinhado: Armazena conteúdo de meia palavra $t1 de ordem inferior nos 16 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ush $t1,label",
+      "description": "Armazenamento de meia palavra não alinhado: Armazena conteúdo de meia palavra $t1 de ordem inferior nos 16 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ush $t1,label($t2)",
+      "description": "Armazenamento de meia palavra não alinhado: Armazena conteúdo de meia palavra $t1 de ordem inferior nos 16 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ush $t1,label+100000",
+      "description": "Armazenamento de meia palavra não alinhado: Armazena conteúdo de meia palavra $t1 de ordem inferior nos 16 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "ush $t1,label+100000($t2)",
+      "description": "Armazenamento de meia palavra não alinhado: Armazena conteúdo de meia palavra $t1 de ordem inferior nos 16 bits começando no endereço de byte de memória efetivo"
+    },
+    {
+      "example": "usw $t1,-100($t2)",
+      "description": "Palavra de armazenamento não alinhada: armazena o conteúdo $t1 em 32 bits começando no endereço de bytes de memória efetivo"
+    },
+    {
+      "example": "usw $t1,($t2)",
+      "description": "Palavra de armazenamento não alinhada: armazena o conteúdo $t1 em 32 bits começando no endereço de bytes de memória efetivo"
+    },
+    {
+      "example": "usw $t1,100000",
+      "description": "Palavra de armazenamento não alinhada: armazena o conteúdo $t1 em 32 bits começando no endereço de bytes de memória efetivo"
+    },
+    {
+      "example": "usw $t1,100000($t2)",
+      "description": "Palavra de armazenamento não alinhada: armazena o conteúdo $t1 em 32 bits começando no endereço de bytes de memória efetivo"
+    },
+    {
+      "example": "usw $t1,label",
+      "description": "Palavra de armazenamento não alinhada: armazena o conteúdo $t1 em 32 bits começando no endereço de bytes de memória efetivo"
+    },
+    {
+      "example": "usw $t1,label($t2)",
+      "description": "Palavra de armazenamento não alinhada: armazena o conteúdo $t1 em 32 bits começando no endereço de bytes de memória efetivo"
+    },
+    {
+      "example": "usw $t1,label+100000",
+      "description": "Palavra de armazenamento não alinhada: armazena o conteúdo $t1 em 32 bits começando no endereço de bytes de memória efetivo"
+    },
+    {
+      "example": "usw $t1,label+100000($t2)",
+      "description": "Palavra de armazenamento não alinhada: armazena o conteúdo $t1 em 32 bits começando no endereço de bytes de memória efetivo"
+    },
+    {
+      "example": "xor $t1,$t2,100",
+      "description": "XOR: defina $t1 como ($t2 bit a bit exclusivo-OR imediato não assinado de 16 bits)"
+    },
+    {
+      "example": "xor $t1,100",
+      "description": "XOR: defina $t1 como ($t1 bit a bit exclusivo-OR imediato não assinado de 16 bits)"
+    },
+    {
+      "example": "xori $t1,$t2,100000",
+      "description": "XOR Imediato: defina $t1 como ($t2 bit a bit exclusivo-OR imediato de 32 bits)"
+    },
+    {
+      "example": "xori $t1,100",
+      "description": "XOR Imediato: defina $t1 como ($t1 bit a bit exclusivo-OR imediato não assinado de 16 bits)"
+    },
+    {
+      "example": "xori $t1,100000",
+      "description": "XOR Imediato: defina $t1 como ($t1 bit a bit exclusivo-OR imediato de 32 bits)"
+    }
+  ],
+  "directives": [
+    {
+      "name": ".align",
+      "description": "Alinhe o próximo item de dados no limite de bytes especificado (0=byte, 1=metade, 2=palavra, 3=duplo)"
+    },
+    {
+      "name": ".ascii",
+      "description": "Armazene a string no segmento Data, mas não adicione o terminador nulo"
+    },
+    {
+      "name": ".asciiz",
+      "description": "Armazene a string no segmento Data e adicione o terminador nulo"
+    },
+    {
+      "name": ".byte",
+      "description": "Armazene os valores listados como bytes de 8 bits"
+    },
+    {
+      "name": ".data",
+      "description": "Itens subsequentes armazenados no segmento de dados no próximo endereço disponível"
+    },
+    {
+      "name": ".double",
+      "description": "Armazene os valores listados como ponto flutuante de precisão dupla"
+    },
+    {
+      "name": ".end_macro",
+      "description": "Finalizar definição da macro. Veja .macro"
+    },
+    {
+      "name": ".eqv",
+      "description": "Substitua o segundo operando pelo primeiro. O primeiro operando é um símbolo, o segundo operando é uma expressão (como #define)"
+    },
+    {
+      "name": ".extern",
+      "description": "Declare o rótulo listado e o comprimento de byte como um campo de dados global"
+    },
+    {
+      "name": ".float",
+      "description": "Armazene os valores listados como ponto flutuante de precisão única"
+    },
+    {
+      "name": ".globl",
+      "description": "Declare os rótulos listados como globais para permitir referência de outros arquivos"
+    },
+    {
+      "name": ".half",
+      "description": "Armazene os valores listados como meias palavras de 16 bits no limite de meia palavra"
+    },
+    {
+      "name": ".include",
+      "description": "Insira o conteúdo do arquivo especificado. Coloque o nome do arquivo entre aspas."
+    },
+    {
+      "name": ".kdata",
+      "description": "Itens subsequentes armazenados no segmento Kernel Data no próximo endereço disponível"
+    },
+    {
+      "name": ".ktext",
+      "description": "Itens subsequentes (instruções) armazenados no segmento Kernel Text no próximo endereço disponível"
+    },
+    {
+      "name": ".macro",
+      "description": "Comece a definição da macro. Veja .end_macro"
+    },
+    {
+      "name": ".set",
+      "description": "Defina variáveis ​​​​assembler. Atualmente ignorado, mas incluído para compatibilidade com SPIM"
+    },
+    {
+      "name": ".space",
+      "description": "Reserve o próximo número especificado de bytes no segmento de dados"
+    },
+    {
+      "name": ".text",
+      "description": "Itens subsequentes (instruções) armazenados no segmento de texto no próximo endereço disponível"
+    },
+    {
+      "name": ".word",
+      "description": "Armazene os valores listados como palavras de 32 bits no limite da palavra"
+    }
+  ]
+}

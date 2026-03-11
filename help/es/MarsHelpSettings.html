@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Contenido de la ayuda de MARS 4.5
+</title>
+</head>
+<body>
+<center>
+<h3>MARS - Mips Assembly and Runtime Simulator</h3>
+<h4>Version 4.5</h4>
+<h4>Agosto de 2014</h4>
+<h4>Opciones de configuracion</h4>
+</center>
+
+Las versiones 3.0 y posteriores incluyen un menu Settings. Los elementos Editor y Exception Handler abren un dialogo, mientras que el resto
+se controlan mediante una casilla de verificacion para activarlos o desactivarlos (marcada significa true, desmarcada significa false). Las opciones
+y sus valores por defecto son:
+   <ol>
+   <li><b>Display the Labels window in the Execute tab.</b> El valor por defecto es <b>false</b>. Si se selecciona, la ventana Labels,
+       que muestra el nombre y la direccion asociada a cada etiqueta definida en el programa, se
+       mostrara a la derecha del Text Segment.</li>
+   <li><b>Provide program arguments to the MIPS program.</b> El valor por defecto es <b>false</b>. Novedad en la version 3.5.
+       Si se selecciona, aparecera un campo de texto en la parte superior de la vista Text Segment Display. Los argumentos presentes en este
+       campo en el momento de ejecutar el programa se almacenaran en la memoria MIPS antes de la ejecucion. El numero
+       de argumentos (argc) se colocara en el registro $a0, y la direccion de un array de cadenas terminadas en null que contiene
+       los argumentos (argv) se colocara en el registro $a1. Estos valores tambien estaran disponibles en la pila de ejecucion ($sp).
+   <li><b>Popup Dialog for input syscalls (5,6,7,8,12).</b> Novedad en la version 4.0. El valor por defecto es <b>false</b>. Si se selecciona, la entrada por consola
+se introducira mediante dialogos emergentes (esta era la unica opcion antes de la version 4.0). En caso contrario, la entrada se introduce
+directamente en la pestaña Run I/O de la parte inferior de la pantalla.</li>
+<li><b>Display memory addresses in hexadecimal.</b> El valor por defecto es <b>true</b>. Si se desmarca, las direcciones se mostraran en decimal.
+       Esta opcion tambien puede alternarse mediante una casilla situada en el borde inferior de la ventana Data Segment Window.</li>
+   <li><b>Display memory and register contents in hexadecimal.</b> El valor por defecto es <b>true</b>. Si se desmarca, los valores se mostraran en decimal.
+       Esta opcion tambien puede alternarse mediante una casilla situada en el borde inferior de la ventana Data Segment Window.</li>
+   <li><b>Assemble a file automatically as soon as it is opened,</b> e inicializar el dialogo File Open con el archivo abierto mas recientemente.
+       El valor por defecto es <b>false</b>. Esto resulta comodo si usa un editor externo para escribir sus programas.</li>
+   <li><b>Assemble applies to all files in directory.</b> El valor por defecto es <b>false</b>.
+       Si se selecciona, el archivo actualmente abierto en el
+       editor se convertira en el programa "principal" en una operacion de ensamblado y enlace de multiples archivos que incluye todos
+       los archivos de ensamblador (*.asm; *.s) de su directorio. Si tiene exito, la ejecucion comenzara con el archivo abierto en ese momento.</li>
+   <li><b>Assembler warnings are considered errors.</b> El valor por defecto es <b>false</b>. Novedad en la version 3.5.
+       Si se selecciona, la operacion de ensamblado fallara si se produce cualquier warning. Por ahora, todos los warnings del ensamblador
+       estan relacionados con directivas no reconocidas o ignoradas. MARS puede ser capaz de ensamblar codigo producido por compiladores para otros
+       ensambladores MIPS si esta opcion se desactiva.
+   <li><b>Initialize Program Counter to global 'main' if defined.</b> El valor por defecto es <b>false</b>. Novedad en la version 3.8.
+       Si se selecciona, el Program Counter se inicializara con la direccion de la sentencia del segmento de texto que tenga la etiqueta global 'main' si
+       existe. Si no existe o la opcion no esta activada, el Program Counter se inicializara en la direccion de inicio por defecto del segmento de texto.
+   <li><b>Permit programs to use extended (pseudo) instructions and formats.</b> El valor por defecto es <b>true</b>. Esto incluye todos los modos de direccionamiento de memoria
+       distintos del modo nativo de MIPS (desplazamiento constante de 16 bits sumado al contenido de un registro).</li>
+   <li><b>Assemble and execute programs using delayed branching.</b> El valor por defecto es <b>false</b>. Los procesadores MIPS utilizan delayed branches
+       como parte de su diseño segmentado, pero puede resultar confuso para los programadores. Con delayed branching, la instruccion
+       que sigue a una instruccion branch o jump <i>siempre se ejecutara</i> aunque la condicion del salto sea verdadera.
+       Los ensambladores y, en su defecto, los programadores, suelen manejarlo colocando una instruccion "<tt>nop</tt>" despues de los branch y jump. El ensamblador de MARS
+       <i>no</i> inserta ese <tt>nop</tt>. Cuando delayed branching se introdujo en la version 3.3, el codigo maquina generado
+       para una instruccion branch dependia de esta opcion, ya que
+       su valor destino es relativo al Program Counter (<i>PC-relative addressing</i>). Aunque eso era tecnicamente correcto, produjo
+       confusion en la comunidad de MARS porque el codigo generado no coincidia con los ejemplos de los libros. A partir de la version 3.4, el desplazamiento relativo
+       de los branch se calcula siempre como si delayed branching estuviera activado, aunque no lo este. La simulacion en tiempo de ejecucion se ajusta en consecuencia.</li>
+   <li><b>Self-modifying code.</b> El valor por defecto es <b>false</b>. Novedad en la version 4.4.
+       Si se selecciona, un programa MIPS en ejecucion puede escribir en una direccion del segmento de texto de usuario y puede hacer branch/jump a una direccion del segmento de datos de usuario.
+       Estas capacidades permiten que un programa genere y/o modifique su codigo binario de forma dinamica. Tambien permite la modificacion interactiva del
+       contenido del segmento de texto a traves de las ventanas Data Segment o Text Segment.
+   <li><b>The Editor dialog.</b> Utilicelo para ver y modificar la configuracion de fuente del editor. Novedad en la version 3.3.</li>
+   <li><b>The Highlighting dialog.</b> Utilicelo para modificar las opciones de color y fuente del resaltado de los elementos de tabla en las
+       ventanas Text Segment, Data Segment, Registers, Coprocessor0 y Coprocessor1.
+       El resaltado ocurre durante la simulacion temporizada, paso a paso y backstep. El color y la fuente de la
+       visualizacion normal (sin resaltar) tambien pueden configurarse por separado para filas pares e impares, aunque no de manera individual por ventana.
+       Novedad en la version 3.6.</li>
+   <li><b>The Exception Handler dialog.</b> Incluye la opcion: Include this
+exception handler in all assemble operations. El valor por defecto es <b>false</b>. Si se selecciona, se habilita un boton para buscar el
+       archivo deseado. Novedad en la version 3.2</li>
+   <li><b>The Memory Configuration dialog.</b> Utilicelo para seleccionar entre las configuraciones disponibles del espacio de direcciones MIPS.
+   La configuracion por defecto deriva de SPIM; fue la unica disponible desde MARS 1.0 hasta MARS 3.6.
+   Novedad en la version 3.7.
+   </ol>
+A partir de la version 3.2, las opciones se conservan de una sesion interactiva a la siguiente. Las opciones se almacenan de una manera dependiente del sistema
+segun lo especificado por <tt>java.util.prefs.Preferences</tt>. En sistemas Windows se utiliza el Registro.
+Estas opciones son independientes de los argumentos dados al usar MARS desde la linea de comandos;
+ninguna afecta a la otra. Esperamos que las futuras versiones incluyan opciones y preferencias adicionales.
+<p>
+
+<hr>
+<p>
+Este documento esta disponible para imprimir en la pagina principal de MARS
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+</body>
+</html>

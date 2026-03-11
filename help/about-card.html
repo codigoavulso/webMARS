@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About webMARS</title>
+  <style>
+    :root {
+      --bg: #ece9d8;
+      --card: #f8f8f8;
+      --card-border: #b5b5b5;
+      --text: #1b1b1b;
+      --muted: #444;
+      --pill-bg: #e3ecfa;
+      --pill-border: #b9c9e6;
+      --pill-text: #274d80;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      padding: 10px;
+      background: var(--bg);
+      color: var(--text);
+      font: 13px/1.45 Tahoma, "Segoe UI", sans-serif;
+    }
+    .card {
+      height: 100%;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      display: grid;
+      grid-template-rows: auto auto auto 1fr;
+      gap: 10px;
+      overflow: auto;
+    }
+    .pill {
+      display: inline-block;
+      width: fit-content;
+      padding: 2px 8px;
+      border: 1px solid var(--pill-border);
+      border-radius: 999px;
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1;
+      color: #1f2c3b;
+    }
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+    h2 {
+      margin: 0 0 6px;
+      font-size: 15px;
+      color: #27384b;
+    }
+    ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .block {
+      border: 1px solid #d4d4d4;
+      background: #fff;
+      border-radius: 5px;
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+    }
+    a {
+      color: #1b4f86;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>webMARS 0.9.10</h1>
+    <p>JavaScript port of the original MARS MIPS 4.5 simulator.</p>
+    <section class="block">
+      <h2>Credits</h2>
+      <ul>
+        <li>Original Java MARS: Pete Sanderson, Kenneth Vollmar, and contributors (2003-2013).</li>
+        <li>JavaScript port: Nelson Ferreira (2020-2026).</li>
+      </ul>
+      <p><strong>License:</strong> MIT</p>
+      <p><strong>Contact:</strong> <a href="mailto:nels.ferreira@sapo.pt">nels.ferreira@sapo.pt</a> | <a href="https://github.com/codigoavulso/webMARS/" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+    </section>
+  </main>
+</body>
+</html>

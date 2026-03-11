@@ -9,7 +9,7 @@ export function createMessagesPane(refs, limit) {
   const { messages } = refs;
 
   const append = (node, message) => {
-    const next = `${node.textContent}${message}\n`;
+    const next = `${node.textContent}${message}`;
     node.textContent = trimToLimit(next, limit);
     node.scrollTop = node.scrollHeight;
   };

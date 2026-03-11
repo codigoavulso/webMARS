@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Contenido de la ayuda de MARS 4.5
+</title>
+</head>
+<body>
+<center>
+<h3>MARS - Mips Assembly and Runtime Simulator</h3>
+<h4>Versión 4.5</h4>
+<h4>Agosto de 2014</h4>
+<h4>Uso de MARS a través de su entorno de desarrollo integrado (IDE)</h4>
+</center>
+
+El IDE se invoca cuando MARS se ejecuta sin argumentos de línea de comandos, por ejemplo <tt>java -jar mars.jar</tt>.
+También puede lanzarse desde una interfaz gráfica haciendo doble clic en el icono <tt>mars.jar</tt>
+que representa este archivo JAR ejecutable.
+El IDE proporciona funciones básicas de edición, ensamblado y ejecución. Esperamos que
+sea intuitivo de usar. A continuación se comentan algunas de sus características.
+<ul>
+<li><b>Menús y barra de herramientas</b>: La mayoría de los elementos del menú tienen iconos equivalentes en la barra de herramientas.
+Si la función de un icono no es evidente, basta con pasar el ratón por encima y
+enseguida aparecerá una sugerencia. Casi todos los elementos del menú también tienen atajos de teclado.
+Cualquier elemento no apropiado en una situación determinada se desactiva.</li>
+<li><b>Editor</b>: MARS incluye dos editores de texto integrados. El editor predeterminado, nuevo
+en la versión 4.0, ofrece resaltado en color sensible a la sintaxis para la mayoría de los elementos del lenguaje MIPS
+y guías emergentes de instrucciones. El editor de texto genérico original, sin estas funciones,
+sigue estando disponible y puede seleccionarse en el diálogo de configuración del editor. Soporta una única
+fuente, modificable también en ese diálogo.
+El borde inferior de cualquiera de los dos editores muestra la línea
+y la columna del cursor, y existe una casilla para mostrar números de línea.
+Se muestran fuera del área de edición. Si utiliza un editor externo, MARS ofrece
+una opción práctica que ensambla automáticamente un archivo nada más abrirlo. Véase
+el menú Settings.
+<li><b>Áreas de mensajes</b>: Hay dos áreas de mensajes con pestañas en la
+parte inferior de la pantalla. La pestaña <i>Run I/O</i> se utiliza en tiempo de ejecución para
+mostrar la salida de consola e introducir la entrada de consola conforme avanza el programa.
+Existe la posibilidad de introducir la entrada de consola mediante un diálogo emergente que luego
+la replica en el área de mensajes.
+La pestaña <i>MARS Messages</i> se utiliza para otros mensajes, como errores de ensamblado
+o de ejecución, e información general. Puede hacer clic en los mensajes de error de ensamblado para
+seleccionar la línea correspondiente de código en el editor.
+<li><b>Registros MIPS</b>: Los registros MIPS se muestran en todo momento, incluso
+cuando está editando y no ejecutando un programa. Mientras escribe su programa,
+esto sirve como referencia útil de los nombres de los registros y sus usos
+convencionales (pase el ratón sobre el nombre del registro para ver sugerencias). Hay tres
+pestañas de registros: el Register File (registros enteros $0 a $31 más LO,
+HI y el Program Counter), algunos registros del Coprocessor 0 (excepciones e
+interrupciones), y los registros de coma flotante del Coprocessor 1.
+
+<li><b>Ensamblado</b>: Seleccione <i>Assemble</i> en el menú <i>Run</i> o el
+icono correspondiente de la barra de herramientas para ensamblar el archivo actual en la pestaña Edit.
+Antes de la versión 3.1, solo podía ensamblarse y ejecutarse un archivo a la vez.
+Las versiones 3.1 y posteriores ofrecen una capacidad de Project básica. Para usarla, vaya al
+menú <i>Settings</i> y marque <i>Assemble operation applies to all
+files in current directory.</i> Después de eso, el ensamblador ensamblará
+el archivo actual como programa "principal" y también ensamblará todos los demás archivos
+de ensamblador (*.asm; *.s)
+del mismo directorio. Los resultados se enlazan y, si todo
+ha sido correcto, el programa puede ejecutarse. Las etiquetas declaradas
+globales mediante la directiva ".globl" pueden referenciarse desde cualquiera de los
+demás archivos del proyecto. También existe una opción que permite
+cargar y ensamblar automáticamente un archivo manejador de excepciones seleccionado. MARS utiliza
+la dirección inicial MIPS32 para los manejadores de excepciones: 0x80000180.
+
+
+<li><b>Ejecución</b>: Una vez que un programa MIPS se ensambla correctamente, los
+registros se inicializan y se rellenan tres ventanas
+de la pestaña Execute: <i>Text Segment</i>, <i>Data Segment</i>
+y <i>Program Labels</i>. Las características principales de la ejecución se describen a continuación.
+
+<li><b>Ventana de etiquetas</b>: La visualización de la ventana Labels (tabla de símbolos) se
+controla desde el menú Settings. Cuando se muestra, puede hacer clic en cualquier etiqueta
+o en su dirección asociada para centrar y resaltar el contenido de esa dirección
+en la ventana Text Segment o en la ventana Data Segment, según corresponda.
+</ul>
+
+<p>El ensamblador y el simulador se invocan desde el IDE
+cuando selecciona las operaciones <i>Assemble</i>, <i>Go</i>
+o <i>Step</i> desde el menú <i>Run</i> o sus iconos
+correspondientes de la barra de herramientas o sus atajos de teclado. Los mensajes de MARS se muestran en la
+pestaña <i>MARS Messages</i> del área de mensajes situada en la parte inferior de la pantalla.
+La entrada y salida de consola en tiempo de ejecución se gestionan en la pestaña <i>Run I/O</i>.
+<p>
+<hr>
+<p>
+Este documento está disponible para imprimir en la página principal de MARS
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+</body>
+</html>

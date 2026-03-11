@@ -1,10 +1,47 @@
-# webMARS 0.3.8
+# webMARS 0.9.10
 
 Port of MARS MIPS 4.5 for the browser, featuring a Java MARS-inspired interface and native JavaScript execution.
 
 [Live demo](https://webmars.nfiles.top/)
 
 ![webMARS screenshot](assets/images/screenshot-main.png)
+
+## Release 0.9.10
+
+This is a massive update, validated by a full folder comparison against `web - Copia_20260309_0005`.
+
+Comparison summary:
+- Net delta: **+189 files**, **14 changed**, **0 removed**
+- Main expansion areas: `examples/` (+87), `help/` (+76), `assets/` (+12), `wasm/` (+8), `scripts/` (+4)
+
+Key changes in 0.9.10:
+- **UI bug fixes**
+  - Major refactor of window behavior, focus flow, splitters, and restore logic.
+  - `Help > About...` now uses a dedicated compact card (`help/about-card.html`) with reliable restore after refresh.
+  - `About` and browser-storage windows now behave like dialogs instead of cascading tool windows.
+  - Settings dialogs were regrouped into two panels: `Interface...` and `Runtime & Memory...`.
+- **Desktop/mobile UI modes**
+  - Added responsive runtime modes (`desktop`, `stacked`, `compact`) with dedicated behavior.
+  - Added shared desktop splitters and resolution-aware layout history persistence.
+- **Core WebAssembly reimplementation**
+  - Added WASM bootstrap modules (`00-core-wasm-hotpath.js`, `00-core-wasm-native.js`, `00-core-wasm-bridge.js`).
+  - Added C++ engine/hotpath artifacts in `wasm/` and server MIME support for `.wasm`.
+  - `createMarsEngine()` now supports JS/native/hybrid backend flow with fallback.
+- **Memory usage fine tuning**
+  - Runtime memory caps and backstep limits tightened for browser stability.
+  - Dynamic backstep budget pruning and sparse-memory optimizations.
+- **localStorage reliability and space improvements**
+  - Session persistence migrated to `mars45-web-session-v2` with legacy compatibility.
+  - Added compact server-draft channel (`mars45-web-session-server-draft-v1`).
+  - Stronger restore validation for files, windows, and machine state.
+  - Added browser-side source storage with a 50 kB quota, graphical file/folder manager, and explicit open/save flows.
+  - Empty placeholder tabs are now discarded automatically when opening/creating a real file.
+- **Tools bug fixes**
+  - Digital Lab Sim now keeps latched key state and clearly marks active keys in green.
+  - Bitmap Display, Cache Simulator, Keyboard/Display MMIO, and Screen Magnifier received behavior and resize robustness fixes.
+- **i18n language system**
+  - Added `00-i18n.js`, language catalogs (`en`, `pt`, `es`), and manifest-driven language loading.
+  - Localized help/examples structures added with language-aware selection.
 
 ## Overview
 
@@ -46,6 +83,8 @@ Project in an advanced state of functionality.
 
 - Multi-file with tabs
 - New / Open / Save / Save As / Close / Close All
+- Separate file flows for disk download/upload and browser storage
+- Graphical browser-storage manager with virtual folders and file deletion
 - Undo / Redo
 - Line numbering
 - Syntax highlighting
@@ -57,6 +96,7 @@ Project in an advanced state of functionality.
 - Breakpoints
 - Execution speed slider
 - Cooperative loop to reduce browser locking
+- Additional non-interactive optimization at max speed (minimal UI sync, no highlight flashes)
 - Automatic highlighting and focus on updates for:
   - current instruction (text segment)
   - modified memory (data segment)
@@ -75,6 +115,7 @@ Project in an advanced state of functionality.
 - Program arguments support
 - Runtime memory/backstep caps configurable via `Settings > Uso máximo de Memória...`
 - Engine factory ready for future WASM/C++ core (`createMarsEngine` + bridge fallback to JS)
+- Incremental WASM hotpath bootstrap (`web/wasm/core_hotpath.cpp` + `00-core-wasm-hotpath.js`)
 
 ### Help
 
@@ -83,7 +124,15 @@ Project in an advanced state of functionality.
 - Additional `webMARS` tab featuring:
   - `Info`
   - `Changelog`
-- About window (on first visit)
+- Compact `About...` window using a dedicated localized card page
+
+### Preferences and Persistence
+
+- Grouped preference panels:
+  - `Settings > Interface...`
+  - `Settings > Runtime & Memory...`
+- Session restore for files, machine state, and tool windows
+- Local browser storage manager for ASM sources with quota control and folder-style paths
 
 ### Tools
 
@@ -170,7 +219,15 @@ Default server:
 - `start-web.bat`
 - `powershell -ExecutionPolicy Bypass -File .\serve.ps1 -Port 8080`
 
-## Immediate Roadmap (0.3.x -> 0.4)
+### Optional: Build C++ WASM Hotpath
+
+Requires Emscripten (`emcc`) available on PATH:
+
+```bash
+node wasm/build-wasm-core.mjs
+```
+
+## Immediate Roadmap (0.9.x -> 1.0)
 
 - **Fine-grained semantic parity**
   - Close residual edge-case differences vs Java MARS (exceptions, delayed branching, specific runtime messages).

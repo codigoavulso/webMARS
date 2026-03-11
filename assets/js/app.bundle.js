@@ -1,24 +1,39 @@
 (() => {
-  const MODULE_SCRIPTS = [
+  const CORE_MODULE_SCRIPTS = [
+    "./assets/js/app-modules/00-core-wasm-hotpath.js",
+    "./assets/js/app-modules/00-i18n.js",
+    "./assets/js/reference/pseudo-ops.generated.js",
+    "./assets/js/reference/syscalls.generated.js",
+  ];
+
+  const DEFAULT_LANGUAGE_MODULE_SCRIPTS = [
+    "./assets/js/i18n/en.js"
+  ];
+
+  const APP_MODULE_SCRIPTS = [
     "./assets/js/app-modules/00-core.js",
+    "./assets/js/app-modules/00-core-wasm-native.js",
     "./assets/js/app-modules/00-core-wasm-bridge.js",
+    "./assets/js/app-modules/05-layout-config.js",
     "./assets/js/app-modules/10-ui.js",
+    "./assets/js/app-modules/15-help-system.js",
     "./assets/js/app-modules/20-app-runtime.js"
   ];
+  const LANGUAGE_MANIFEST_PATH = "./assets/js/i18n/languages.json";
 
   if (window.__marsWebAppBootstrapped) return;
 
-  function loadSequential(index) {
-    if (index >= MODULE_SCRIPTS.length) {
+  function loadSequential(moduleScripts, index) {
+    if (index >= moduleScripts.length) {
       window.__marsWebAppBootstrapped = true;
       return;
     }
 
-    const src = MODULE_SCRIPTS[index];
+    const src = moduleScripts[index];
     const script = document.createElement("script");
     script.src = src;
     script.async = false;
-    script.onload = () => loadSequential(index + 1);
+    script.onload = () => loadSequential(moduleScripts, index + 1);
     script.onerror = () => {
       console.error(`[mars-web] Failed to load module: ${src}`);
       const root = document.querySelector("#app") || document.body;
@@ -31,5 +46,37 @@
     document.head.appendChild(script);
   }
 
-  loadSequential(0);
+  async function loadLanguageModules() {
+    try {
+      const response = await fetch(LANGUAGE_MANIFEST_PATH, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const manifest = await response.json();
+      const entries = Array.isArray(manifest)
+        ? manifest
+        : Array.isArray(manifest?.languages)
+          ? manifest.languages
+          : [];
+      const modules = entries
+        .map((entry) => String(entry || "").trim())
+        .filter(Boolean)
+        .map((entry) => (
+          entry.startsWith("./") || entry.startsWith("/")
+            ? entry
+            : `./assets/js/i18n/${entry}`
+        ));
+      return modules.length ? modules : DEFAULT_LANGUAGE_MODULE_SCRIPTS;
+    } catch {
+      return DEFAULT_LANGUAGE_MODULE_SCRIPTS;
+    }
+  }
+
+  async function bootstrap() {
+    const languageModuleScripts = await loadLanguageModules();
+    loadSequential(
+      [...CORE_MODULE_SCRIPTS, ...languageModuleScripts, ...APP_MODULE_SCRIPTS],
+      0
+    );
+  }
+
+  void bootstrap();
 })();

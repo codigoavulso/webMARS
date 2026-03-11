@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt"><head>
+<meta charset="UTF-8">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>MARS 4.5 conteúdo de ajuda
+</title>
+</head><body>
+<center>
+<h3>MARS - Simulador de montagem e tempo de execução de MIPS</h3>
+<h4>Lançamento 4.5</h4>
+<h4>Agosto de 2014</h4>
+<h4>Usando o MARS na linha de comando.</h4>
+</center>
+
+O MARS pode ser executado a partir de um intérprete de comando para montar e executar um programa MIPS em
+uma modo em lote.
+O formato para executar o MARS a partir na linha de comando é:<br><br>
+<center><tt>java -jar mars.jar <i>[options]</i> program.asm <i>[more files...]</i> <i>[ </i>pa arg1<i> [more args...]]</i></tt></center>
+
+<p>Itens em <i>[ ]</i> são opcionais.  Opções válidas (não sensíveis a casos, separadas por espaços) são:<br><br>
+<table border="1" cellpadding="3">
+<tbody><tr><th>Opção</th><th align="left">Descrição</th><th>Desde</th></tr>
+<tr><td width="40" align="right"><tt>a</tt></td><td>montar apenas, não simular</td><td>1.0</td></tr>
+<tr><td width="40" align="right"><tt>ae<i>n</i></tt></td><td>encerrar o MARS com o código <i>de</i> saída inteiro <i>n</i> se ocorrer erro de montagem</td><td>4.1</td></tr>
+<tr><td width="40" align="right"><tt>ascii</tt></td><td>exibir memória ou registrar conteúdo interpretado como códigos ASCII. (alternativas são <tt>dec</tt> e <tt>hex</tt>)</td><td>4.1</td></tr>
+<tr><td width="40" align="right"><tt>b</tt></td><td>breve - não exibir registro / endereço de memória, juntamente com o conteúdo</td><td>2.2</td></tr>
+<tr><td width="40" align="right"><tt>d</tt></td><td>exibir declarações de depuração MARS (de interesse principalmente para desenvolvedor MARS)</td><td>1.0</td></tr>
+<tr><td width="40" align="right"><tt>db</tt></td><td>A ramificação atrasada do MIPS está habilitada.</td><td>3.3</td></tr>
+<tr><td width="40" align="right"><tt>dec</tt></td><td>exibir memória ou registrar conteúdo em decimal. (alternativas são <tt>ascii</tt> e <tt>hex</tt>)</td><td>2.2</td></tr>
+<tr><td width="40" align="right"><tt>dump</tt></td><td>despeje o conteúdo da memória para arquivar.  
+A opção tem 3 argumentos, por exemplo. <tt>dump &lt;segment&gt; &lt;format&gt; &lt;file&gt;</tt>.  Os segmentos atuais suportados são <tt>.text</tt>
+e <tt>.data</tt>.  Também suporta um intervalo de endereços (veja <i>m-n</i> abaixo).  Os formatos de dump suportados atuais são <tt>Binary</tt>, <tt>HexText</tt>, <tt>BinaryText</tt>, <tt>AsciiText</tt>.  Veja exemplos abaixo.</td><td>3.4</td></tr>
+<tr><td width="40" align="right"><tt>hex</tt></td><td>exibir memória ou registrar conteúdo em hexadecimal - este é o padrão. (alternativas são <tt>ascii</tt> e <tt>dec</tt>)</td><td>2.2</td></tr>
+<tr><td width="40" align="right"><tt>h</tt></td><td>exibir essa ajuda.  Use esta opção por si só e sem nome de arquivo.</td><td>1.0</td></tr>
+<tr><td width="40" align="right"><tt>ic</tt></td><td>contagem de instruções de exibição; o número de instruções básicas MIPS 'executadas'</td><td>4.3</td></tr>
+<tr><td width="40" align="right"><tt>mc</tt></td><td>definir configuração de memória.
+A opção tem 1 argumento, por exemplo. <tt>mc &lt;config&gt;</tt>.  Argumento <tt>&lt;config&gt;</tt> é case-sensitive e sua
+valores possíveis são <tt>Default</tt> para o espaço padrão de endereço de 32 bits, <tt>CompactDataAtZero</tt> para
+um espaço de endereço de 32KB com segmento de dados no endereço 0, ou <tt>CompactTextAtZero</tt>
+para um espaço de endereço de 32KB com segmento de texto no endereço 0.</td><td>3,7</td></tr>
+<tr><td width="40" align="right"><tt>me</tt></td><td>exibir mensagens 
+MARS para erro padrão em vez de padrão para fora.  Permite separar as 
+mensagens MARS da saída do programa MIPS usando o redirecionamento.</td><td>4.3</td></tr>
+<tr><td width="40" align="right"><tt>nc</tt></td><td>aviso de direitos autorais não será exibido.  Útil se redirecionar ou canalizar a saída do programa.</td><td>3.5</td></tr>
+<tr><td width="40" align="right"><tt>np</tt></td><td>pseudo-instruções ou formatos de instrução estendidos não são permitidos.</td><td>3.0</td></tr>
+<tr><td width="40" align="right"><tt>p</tt></td><td>opção de projeto - irá montar o arquivo especificado e todos os outros arquivos de montagem (*.asm; *.s) em seu diretório.</td><td>3.1</td></tr>
+<tr><td width="40" align="right"><tt>se<i>n</i></tt></td><td>terminar MARS com código de saída <i>n</i> se simular (execução) erro ocorre</td><td>4.1</td></tr>
+<tr><td width="40" align="right"><tt>sm</tt></td><td>iniciar a execução em declaração tendo rór?tulo global 'main' se definido</td><td>3.8</td></tr>
+<tr><td width="40" align="right"><tt>smc</tt></td><td>Código de Auto Modificação - O programa pode escrever e executar em qualquer segmento de texto ou dados</td><td>4.4</td></tr>
+<tr><td width="40" align="right"><tt>we</tt></td><td>avisos de assembler serão considerados erros.</td><td>3.5</td></tr>
+<tr><td width="40" align="right"><i>n</i></td><td>onde <i>n</i> é uma contagem máxima inteira de etapas de execução para simular.
+                  Se 0, negativo ou não especificado, não há máximo.</td><td>1.0</td></tr>
+<tr><td width="40" align="right"><tt>$</tt> <i>reg</i></td><td>onde <i>reg</i>
+ é número ou nome (por exemplo, 5, t3, f10) do registo cujo registo 
+                  conteúdo para exibir no final da execução.  O registro
+ de ponto flutuante com número uniforme exibe tanto ponto flutuante quanto duplo.  A
+ opção pode ser repetida.
+				  <em>OBSERVAÇÃO: Dependendo do shell do seu comando, talvez seja necessário escapar do $, por exemplo. <tt>\$t3</tt></em></td><td>2.2</td></tr>
+<tr><td width="40" align="right"><i>reg_name</i></td><td>onde <i>reg_name</i>
+ é o nome (por exemplo, t3, f10) do registro cujo 
+                  conteúdo para exibir no final da execução.  O registro
+ de ponto flutuante com número uniforme exibe tanto ponto flutuante quanto duplo.  A
+ opção pode ser repetida. $ não é necessária.</td><td>2.2</td></tr>
+<tr><td width="40" align="right"><i>m</i> - <i>n</i></td><td>endereço de memória variam de <i>m</i> a <i>n</i> cujo conteúdo para
+                  exibição no final da corrida. <i>m</i> e <i>n</i> pode ser decimal ou hexadecimal (começa com <tt>0x</tt>),
+                  <i>m</i> &lt;= <i>n</i>, ambos devem estar no limite da palavra.  A opção pode ser repetida.</td><td>2.2</td></tr>
+<tr><td width="40" align="right"><tt>pa</tt></td><td>argumentos do 
+programa - todos os itens separados pelo espaço restantes são valores de
+ argumento fornecidos ao MIPS
+programa via $a0 (argc - contagem de argumentos) e $a1 (argv - endereço 
+de array contendo ponteiros para argumento nulo-terminado
+cordas). A contagem também está no topo da pilha de tempo de execução 
+($sp), seguida pela <i>opção</i> array.Esta <i>e seus argumentos devem ser os últimos itens no comando!</i></td><td>3.5</td></tr>
+</tbody></table>
+
+</p><p><b>Exemplo:</b> <tt>java -jar mars.jar h</tt> 
+<br>Exibe opções de comando e explicações.
+</p><p><b>Exemplo:</b> <tt>java -jar mars.jar $s0 $s1 0x10010000-0x10010010 fibonacci.asm</tt> 
+<br>Monte e corra <tt>fibonacci.asm</tt>.  No final da execução, exibir o conteúdo dos registros <tt>$s0</tt> e
+<tt>$s1</tt>, e o conteúdo de locais de memória 0x10010000 até 0x100100100.  O conteúdo é exibido em
+formato hexadecimal.
+</p><p><b>Exemplo:</b> <tt>java -jar mars.jar a fibonacci.asm</tt>
+<br>Montar <tt>fibonacci.asm</tt>.  Não tenta executar o programa e o código montado não é salvo.
+</p><p><b>Exemplo:</b> <tt>java -jar mars.jar 100000 infinite.asm</tt>
+<br>Monte e corra <tt>infinite.asm</tt> para um máximo de 100.000 etapas de execução.
+</p><p><b>Exemplo:</b> <tt>java -jar mars.jar p major.asm</tt>
+<br>Montar <tt>major.asm</tt> e todos os outros arquivos no mesmo diretório, vincular o código montado e executar começando com a primeira instrução em <tt>major.asm</tt>.
+</p><p><b>Exemplo:</b> <tt>java -jar mars.jar  major.asm  minor.asm  sub.asm</tt>
+<br>Montar e link <tt>major.asm</tt>, <tt>minor.asm</tt> e <tt>sub.asm</tt>.  Se for bem sucedida, execução
+começará com a primeira instrução em <tt>major.asm</tt>.
+</p><p><b>Exemplo:</b> <tt>java -jar mars.jar a dump .text HexText hexcode.txt fibonacci.asm</tt>
+<br>Montar <tt>fibonacci.asm</tt> sem simular (note uso de opção 'a').  No final da montagem, despeje o segmento de texto (código da máquina) para
+arquivo <tt>hexcode.txt</tt> em formato de texto hexadecimal com uma instrução por linha.
+</p><p><b>Exemplo:</b> <tt>java -jar mars.jar  dump 0x10010000-0x10010020 HexText hexcode.txt fibonacci.asm</tt>
+<br>Monte e simule <tt>fibonacci.asm</tt>.  No final da simulação, despeje o conteúdo dos endereços 0x1001000 para
+0x10010020 para o arquivo <tt>hexdata.txt</tt> em formato de texto hexadecimal com uma palavra por linha.
+</p><p><b>Exemplo:</b> <tt>java -jar mars.jar t0 process.asm  pa counter 10</tt>
+<br>Monte e corra <tt>process.asm</tt> com dois valores de argumento de programa, "counter" e "10".  Pode recuperar o
+contagem de argumentos (2) de <tt>$a0</tt>, e o endereço de uma matriz contendo ponteiros para as strings "count" e "10",
+de <tt>$a1</tt>.  No
+fim da execução, exibir o conteúdo do registro <tt>$t0</tt>.
+
+
+</p><p>A capacidade de executar o MARS a partir da linha de comando é útil se você quiser desenvolver
+scripts (macros) para exercer um determinado programa MIPS em vários cenários 
+ou se você quiser executar uma série de diferentes programas MIPS
+tais como para fins de classificação.
+</p><p>
+</p><hr>
+<p>
+Este documento está disponível para impressão na página inicial do MARS
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+
+</p></body></html>

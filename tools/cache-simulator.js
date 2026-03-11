@@ -7,33 +7,156 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      .cache-tool { display:flex; flex-direction:column; gap:8px; height:100%; padding:8px; box-sizing:border-box; font:12px "Segoe UI", Tahoma, sans-serif; }
-      .cache-tool h2 { margin:0; text-align:center; font-size:42px; color:#1e2f47; line-height:1; }
-      .cache-panel { border:1px solid #9db0c8; padding:8px; background:#f7fbff; }
-      .cache-grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:8px 12px; }
-      .cache-grid2 label { display:flex; align-items:center; justify-content:space-between; gap:6px; font-weight:600; }
-      .cache-grid2 input[readonly] { width:80px; text-align:right; }
-      .cache-performance { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-      .cache-counts { display:grid; grid-template-columns:auto 1fr; gap:8px; align-items:center; }
-      .cache-counts label { font-weight:700; }
-      .cache-counts input { width:100%; box-sizing:border-box; border:1px solid #9db0c8; background:#fff; padding:4px 6px; font-family:Consolas, monospace; text-align:right; }
-      .cache-hitrate { grid-column: 1 / span 2; display:grid; grid-template-columns:auto 1fr; gap:8px; align-items:center; }
-      .cache-progress { border:1px solid #9db0c8; height:28px; position:relative; background:linear-gradient(#f6f8fc, #e3eaf4); }
-      .cache-progress .fill { position:absolute; inset:0 auto 0 0; width:0%; background:linear-gradient(90deg, #7ea9f3, #4f81d6); }
-      .cache-progress span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#4069ad; }
-      .cache-blocks { border:1px solid #9db0c8; background:#fff; overflow:auto; max-height:220px; }
-      .cache-block-row { display:grid; grid-template-columns:18px 1fr; gap:6px; align-items:center; border-bottom:1px solid #e1e8f3; padding:2px 6px; font-family:Consolas, monospace; }
-      .cache-dot { width:12px; height:12px; border:1px solid #8ea1bd; }
-      .cache-dot.empty { background:#f1f1f1; }
-      .cache-dot.hit { background:#12da12; }
-      .cache-dot.miss { background:#ff2b2b; }
-      .cache-log-wrap { border:1px solid #9db0c8; display:flex; flex-direction:column; min-height:90px; }
-      .cache-log-wrap .title { background:#eef3f8; border-bottom:1px solid #9db0c8; padding:3px 6px; font-weight:700; }
-      .cache-log { flex:1; width:100%; resize:none; border:0; padding:6px; box-sizing:border-box; font-family:Consolas, monospace; font-size:11px; }
-      .cache-enable { display:flex; align-items:center; gap:6px; font-weight:700; }
-      .cache-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:auto; }
-      .cache-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#24354b; }
-      .cache-footer .tool-btn { min-width:130px; }
+      .cache-tool {
+        font: 11px Tahoma, "Segoe UI", sans-serif;
+      }
+
+      .cache-section-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .cache-grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 12px;
+      }
+
+      .cache-grid2 .mars-tool-row select,
+      .cache-grid2 .mars-tool-row input {
+        width: 110px;
+      }
+
+      .cache-performance {
+        display: grid;
+        grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+        gap: 10px;
+        min-height: 0;
+      }
+
+      .cache-counts {
+        display: grid;
+        gap: 6px;
+      }
+
+      .cache-counts .mars-tool-row input {
+        width: 100px;
+        text-align: right;
+        font-family: "Courier New", "Lucida Console", monospace;
+      }
+
+      .cache-progress-row {
+        display: grid;
+        grid-template-columns: auto minmax(120px, 1fr);
+        gap: 8px;
+        align-items: center;
+      }
+
+      .cache-progress {
+        border: 1px solid #7f9db9;
+        height: 20px;
+        position: relative;
+        background: #fff;
+      }
+
+      .cache-progress .fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 0%;
+        background: #3b6fd8;
+      }
+
+      .cache-progress span {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #1f3f84;
+      }
+
+      .cache-block-table {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 10px;
+        min-height: 0;
+      }
+
+      .cache-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+        min-width: 110px;
+      }
+
+      .cache-legend-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      .cache-blocks {
+        border: 1px solid #a7a7a7;
+        background: #fff;
+        overflow: auto;
+        min-height: 180px;
+      }
+
+      .cache-block-row {
+        display: grid;
+        grid-template-columns: 16px minmax(0, 1fr);
+        gap: 6px;
+        align-items: center;
+        border-bottom: 1px solid #ececec;
+        padding: 2px 6px;
+        font-family: "Courier New", "Lucida Console", monospace;
+        font-size: 11px;
+      }
+
+      .cache-dot {
+        width: 10px;
+        height: 10px;
+        border: 1px solid #6b6b6b;
+        background: #f0f0f0;
+      }
+
+      .cache-dot.empty { background: #f0f0f0; }
+      .cache-dot.hit { background: #12da12; }
+      .cache-dot.miss { background: #ff2b2b; }
+
+      .cache-log-panel .mars-tool-panel-body {
+        gap: 6px;
+      }
+
+      .cache-enable {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .cache-log {
+        width: 100%;
+        min-height: 110px;
+        resize: none;
+        border: 1px solid #7f9db9;
+        background: #fff;
+        padding: 4px;
+        box-sizing: border-box;
+        font-family: "Courier New", "Lucida Console", monospace;
+        font-size: 11px;
+      }
+
+      @media (max-width: 880px) {
+        .cache-grid2,
+        .cache-performance,
+        .cache-block-table {
+          grid-template-columns: 1fr;
+        }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -43,6 +166,25 @@
     "lwc1", "swc1", "ldc1", "sdc1"
   ]);
   const WRITE_OPS = new Set(["sb", "sh", "sw", "swl", "swr", "sc", "swc1", "sdc1"]);
+
+  function formatFallback(message, variables = {}) {
+    return String(message ?? "").replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => (
+      Object.prototype.hasOwnProperty.call(variables, key) ? String(variables[key]) : match
+    ));
+  }
+
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return formatFallback(message, variables);
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
+  }
 
   function toHex32(v) {
     return `0x${(v >>> 0).toString(16).padStart(8, "0")}`;
@@ -173,64 +315,89 @@
     id: "cache-simulator",
     label: "Data Cache Simulator",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("cache-simulator", "Data Cache Simulation Tool, Version 1.2", 940, 900, `
-        <div class="cache-tool">
-          <h2>Simulate and illustrate data cache performance</h2>
-          <div class="cache-panel">
-            <div class="cache-grid2">
-              <label>Placement Policy
-                <select data-cache="placement">
-                  <option value="direct" selected>Direct Mapping</option>
-                  <option value="full">Fully Associative</option>
-                  <option value="set">N-way Set Associative</option>
-                </select>
-              </label>
-              <label>Number of blocks
-                <select data-cache="blocks">
-                  <option>1</option><option>2</option><option>4</option><option selected>8</option><option>16</option><option>32</option><option>64</option>
-                </select>
-              </label>
-              <label>Block Replacement Policy
-                <select data-cache="replacement">
-                  <option value="LRU" selected>LRU</option>
-                  <option value="RANDOM">Random</option>
-                </select>
-              </label>
-              <label>Cache block size (words)
-                <select data-cache="blocksize">
-                  <option>1</option><option>2</option><option selected>4</option><option>8</option><option>16</option>
-                </select>
-              </label>
-              <label>Set size (blocks)
-                <select data-cache="setsize"></select>
-              </label>
-              <label>Cache size (bytes)
-                <input data-cache="bytes" readonly>
-              </label>
-            </div>
-          </div>
-          <div class="cache-panel cache-performance">
-            <div class="cache-counts">
-              <label>Memory Access Count</label><input data-cache="access" readonly>
-              <label>Cache Hit Count</label><input data-cache="hit" readonly>
-              <label>Cache Miss Count</label><input data-cache="miss" readonly>
-              <div class="cache-hitrate">
-                <label>Cache Hit Rate</label>
-                <div class="cache-progress"><div class="fill" data-cache="ratefill"></div><span data-cache="rate">0%</span></div>
+      const shell = ctx.createToolWindowShell("cache-simulator", "Data Cache Simulation Tool, Version 1.2", 940, 760, `
+        <div class="mars-tool-shell cache-tool">
+          <h2 class="mars-tool-heading">Simulate and illustrate data cache performance</h2>
+          <section class="mars-tool-panel">
+            <div class="mars-tool-panel-title">Cache Organization</div>
+            <div class="mars-tool-panel-body cache-section-body">
+              <div class="cache-grid2">
+                <div class="mars-tool-row">
+                  <span>Placement Policy</span>
+                  <select data-cache="placement">
+                    <option value="direct" selected>Direct Mapping</option>
+                    <option value="full">Fully Associative</option>
+                    <option value="set">N-way Set Associative</option>
+                  </select>
+                </div>
+                <div class="mars-tool-row">
+                  <span>Number of blocks</span>
+                  <select data-cache="blocks">
+                    <option>1</option><option>2</option><option>4</option><option selected>8</option><option>16</option><option>32</option><option>64</option>
+                  </select>
+                </div>
+                <div class="mars-tool-row">
+                  <span>Block Replacement Policy</span>
+                  <select data-cache="replacement">
+                    <option value="LRU" selected>LRU</option>
+                    <option value="RANDOM">Random</option>
+                  </select>
+                </div>
+                <div class="mars-tool-row">
+                  <span>Cache block size (words)</span>
+                  <select data-cache="blocksize">
+                    <option>1</option><option>2</option><option selected>4</option><option>8</option><option>16</option>
+                  </select>
+                </div>
+                <div class="mars-tool-row">
+                  <span>Set size (blocks)</span>
+                  <select data-cache="setsize"></select>
+                </div>
+                <div class="mars-tool-row">
+                  <span>Cache size (bytes)</span>
+                  <input data-cache="bytes" readonly>
+                </div>
               </div>
             </div>
-            <div class="cache-blocks" data-cache="blocksview"></div>
-          </div>
-          <div class="cache-log-wrap">
-            <div class="title">Runtime Log</div>
-            <textarea class="cache-log" data-cache="log" readonly></textarea>
-          </div>
-          <label class="cache-enable"><input type="checkbox" data-cache="enabled"> Enabled</label>
-          <div class="cache-footer">
+          </section>
+          <section class="mars-tool-panel">
+            <div class="mars-tool-panel-title">Cache Performance</div>
+            <div class="mars-tool-panel-body cache-performance">
+              <div class="cache-counts">
+                <div class="mars-tool-row"><span>Memory Access Count</span><input data-cache="access" readonly></div>
+                <div class="mars-tool-row"><span>Cache Hit Count</span><input data-cache="hit" readonly></div>
+                <div class="mars-tool-row"><span>Cache Miss Count</span><input data-cache="miss" readonly></div>
+                <div class="cache-progress-row">
+                  <span>Cache Hit Rate</span>
+                  <div class="cache-progress"><div class="fill" data-cache="ratefill"></div><span data-cache="rate">0%</span></div>
+                </div>
+              </div>
+              <div class="cache-block-table">
+                <div class="cache-legend">
+                  <div>Cache Block Table</div>
+                  <div>(block 0 at top)</div>
+                  <div class="cache-legend-line"><span class="cache-dot empty"></span><span>= empty</span></div>
+                  <div class="cache-legend-line"><span class="cache-dot hit"></span><span>= hit</span></div>
+                  <div class="cache-legend-line"><span class="cache-dot miss"></span><span>= miss</span></div>
+                </div>
+                <div class="cache-blocks" data-cache="blocksview"></div>
+              </div>
+            </div>
+          </section>
+          <section class="mars-tool-panel cache-log-panel">
+            <div class="mars-tool-panel-title">Runtime Log</div>
+            <div class="mars-tool-panel-body cache-section-body">
+              <label class="cache-enable"><input type="checkbox" data-cache="enabled"> Enabled</label>
+              <textarea class="cache-log" data-cache="log" readonly wrap="off"></textarea>
+            </div>
+          </section>
+          <div class="mars-tool-footer cache-footer">
             <button class="tool-btn" data-cache="connect" type="button">Connect to MIPS</button>
             <div class="ctrl">Tool Control</div>
-            <button class="tool-btn" data-cache="reset" type="button">Reset</button>
-            <button class="tool-btn" data-cache="close" type="button">Close</button>
+            <div class="mars-tool-footer-actions">
+              <button class="tool-btn" data-cache="reset" type="button">Reset</button>
+              <button class="tool-btn" data-cache="close" type="button">Close</button>
+            </div>
           </div>
         </div>
       `);
@@ -284,6 +451,11 @@
         return values;
       }
 
+      function refreshUiText() {
+        shell.refreshTranslations?.();
+        controls.connect.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
+      }
+
       function updateSetSizeOptions() {
         const blockCount = parseIntControl(controls.blocks, 8);
         const placement = controls.placement.value;
@@ -331,7 +503,6 @@
         controls.blocksView.innerHTML = cache.blocks.map((block, index) => {
           let dotClass = "empty";
           if (index === highlightBlock) dotClass = highlightKind;
-          else if (block.valid) dotClass = "empty";
           const text = block.valid ? `#${index}  tag=${toHex32(block.tag)}  last=${block.lastUsed}` : `#${index}  <empty>`;
           return `<div class="cache-block-row"><span class="cache-dot ${dotClass}"></span><span>${text}</span></div>`;
         }).join("");
@@ -384,7 +555,14 @@
         highlightBlock = result.blockIndex;
         highlightKind = result.hit ? "hit" : "miss";
 
-        appendLog(`(${accesses}) ${access.write ? "write" : "read "} ${toHex32(access.address)} -> ${result.hit ? "HIT" : "MISS"} (set ${result.setIndex}, block ${result.blockIndex})`);
+        appendLog(t("({count}) {kind} {address} -> {result} (set {setIndex}, block {blockIndex})", {
+          count: accesses,
+          kind: access.write ? t("write") : t("read"),
+          address: toHex32(access.address),
+          result: result.hit ? t("HIT") : t("MISS"),
+          setIndex: result.setIndex,
+          blockIndex: result.blockIndex
+        }));
         render();
       }
 
@@ -393,17 +571,24 @@
 
       controls.connect.addEventListener("click", () => {
         connected = !connected;
-        controls.connect.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
-        ctx.messagesPane.postMars(`[tool] Data Cache Simulator ${connected ? "connected" : "disconnected"}.`);
+        refreshUiText();
+        ctx.messagesPane.postMars(`${t("[tool] Data Cache Simulator {state}.", {
+          state: connected ? t("connected") : t("disconnected")
+        })}\n`);
       });
 
       controls.reset.addEventListener("click", rebuildCache);
       controls.close.addEventListener("click", shell.close);
 
+      subscribeLanguageChange(refreshUiText);
       rebuildCache();
+      refreshUiText();
 
       return {
-        open: shell.open,
+        open() {
+          shell.open();
+          refreshUiText();
+        },
         close: shell.close,
         onSnapshot(snapshot) {
           const previous = lastSnapshot;

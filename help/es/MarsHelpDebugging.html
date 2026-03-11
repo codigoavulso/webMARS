@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Contenido de la ayuda de MARS 4.5
+</title>
+</head>
+<body>
+<center>
+<h3>MARS - Mips Assembly and Runtime Simulator</h3>
+<h4>Version 4.5</h4>
+<h4>Agosto de 2014</h4>
+<h4>Funciones de depuracion interactiva</h4>
+</center>
+
+<p>
+MARS ofrece muchas funciones de depuracion interactiva a traves de su panel Execute.
+Entre ellas se incluyen:
+<ul>
+<li>En modo <i>Step</i>, se resalta la siguiente instruccion que va a simularse y
+las vistas de memoria se actualizan en cada paso.</li>
+
+<li>Seleccione la opcion <i>Go</i> si desea simular de forma continua.
+Tambien puede usarse para reanudar la simulacion
+desde un estado de pausa (step, breakpoint, pause).</li>
+
+<li>Los breakpoints pueden activarse y desactivarse facilmente mediante las casillas situadas junto a cada instruccion mostrada
+en la ventana Text Segment. <i>Novedad en la version 3.8:</i> puede suspender temporalmente los breakpoints
+usando Toggle Breakpoints en el menu Run o haciendo clic en el encabezado de la columna "Bkpt" de la ventana Text Segment.
+Repitalo para volver a activarlos.</li>
+
+<li>Cuando se ejecuta en modo <i>Go</i>, puede seleccionar la
+velocidad de simulacion con el control Run Speed. Las velocidades disponibles van
+desde .05 instrucciones por segundo (20 segundos entre pasos) hasta 30
+instrucciones por segundo; por encima de eso se ofrece una velocidad "unlimited".
+Cuando se utiliza la velocidad "unlimited", el resaltado de codigo y la actualizacion
+de las vistas de memoria se desactivan mientras se simula
+(pero la ejecucion es realmente muy rapida).
+Cuando se alcanza un breakpoint, el resaltado y la actualizacion vuelven a activarse.
+La velocidad puede modificarse mientras el programa se esta ejecutando.</li>
+
+<li>Cuando se ejecuta en modo <i>Go</i>, puede pausar o detener la
+simulacion en cualquier momento mediante las funciones <i>Pause</i> o <i>Stop</i>.
+La primera detiene temporalmente la ejecucion y actualiza la pantalla, como si
+estuviera avanzando paso a paso o hubiera llegado a un breakpoint. La segunda
+termina la ejecucion y muestra los valores finales de memoria y registros. Si se esta
+ejecutando a velocidad "unlimited", el sistema puede no responder de inmediato,
+pero acabara respondiendo.</li>
+
+
+<li>Tiene la posibilidad de avanzar "hacia atras" de forma interactiva por la ejecucion del programa,
+una instruccion cada vez, para deshacer pasos de ejecucion.
+Se almacenan hasta 2000 de los pasos de ejecucion mas recientes
+(este limite esta guardado en un archivo de propiedades y puede cambiarse).
+Se deshacen los cambios realizados en memoria MIPS, registros o banderas de condicion,
+pero no la E/S de consola o de archivos. Esto constituye una gran ayuda para la depuracion.
+Esta funcion esta disponible siempre que la ejecucion este en pausa y tambien al finalizar
+(incluso si ha terminado por una excepcion).
+
+<li>Cuando la ejecucion del programa esta en pausa o ha terminado, seleccione <i>Reset</i>
+para restablecer todas las celdas de memoria y los registros a sus valores iniciales posteriores al ensamblado.
+De hecho, Reset se implementa volviendo a ensamblar el programa.</li>
+
+<li>Las direcciones y los valores de memoria, asi como los valores de los registros, pueden verse en formato decimal
+o hexadecimal. Todos los datos se almacenan en orden little-endian (cada
+palabra consta del byte 3 seguido del 2, luego el 1 y finalmente el 0). Tenga en cuenta que cada palabra
+puede contener 4 caracteres de una cadena, y esos 4 caracteres apareceran en
+orden inverso respecto al literal original.</li>
+
+<li>El contenido del segmento de datos se muestra en bloques de 512 bytes
+a la vez (con desplazamiento), empezando en la direccion base del segmento de datos (0x10010000).
+Hay botones de navegacion para cambiar la vista al siguiente
+bloque de memoria, al anterior o de vuelta al rango inicial (home). Un cuadro combinado
+permite ademas ver el contenido de memoria cerca del stack pointer
+(contenido del registro MIPS $sp), del global pointer (contenido del registro MIPS $gp),
+de la direccion base del heap (0x10040000), de los globales .extern (0x10000000),
+del segmento de datos del kernel (0x90000000), o de la E/S mapeada en memoria (MMIO, 0xFFFF0000).
+<em>A partir de Mars 4.4,</em> tambien puede mostrarse el contenido bruto del segmento de texto.</li>
+
+<li>El contenido de cualquier palabra del segmento de datos y de casi cualquier registro MIPS puede modificarse
+editando su celda en la tabla. Haga doble clic sobre una celda para editarla y pulse Enter
+cuando haya terminado de escribir el nuevo valor. Si
+introduce un entero de 32 bits no valido, la palabra INVALID aparecera en la celda
+y el contenido de memoria o de registros no se modificara. Los valores pueden introducirse
+en decimal o en hexadecimal (con prefijo "0x"). Los valores hexadecimales negativos
+pueden introducirse en complemento a dos o con signo.
+Tenga en cuenta que tres registros enteros (zero, program counter y return address)
+no pueden editarse.</li>
+
+<li><em>Novedad en 4.4</em> Si esta activada la opcion Self-Modifying Code
+(desactivada por defecto, consulte el menu Settings), el codigo binario del segmento de texto
+puede modificarse usando la misma tecnica descrita arriba. Tambien
+puede modificarse haciendo doble clic en una celda de la columna Code
+de la vista Text Segment.</li>
+
+<li>El contenido de las celdas que representan registros de coma flotante puede editarse
+como se ha descrito antes y aceptan valores de coma flotante validos en hexadecimal o decimal.
+Como cada registro de doble precision se superpone a dos registros de precision simple,
+cualquier cambio en un registro de doble precision afectara a uno o a ambos
+contenidos mostrados de sus correspondientes registros de precision simple.
+Los cambios en un registro de precision simple afectaran a la visualizacion de su
+registro de doble precision correspondiente. Los valores introducidos en hexadecimal
+deben ajustarse al formato IEEE-754. Los valores introducidos en decimal se escriben
+mediante punto decimal y notacion E (por ejemplo, 12.5e3 es 12.5 por 10 al cubo).</li>
+
+<li>El contenido de las celdas puede editarse durante la ejecucion del programa y,
+una vez aceptado, se aplicara a partir de la siguiente instruccion que vaya a ejecutarse.</li>
+
+<li>Al hacer clic en una entrada de la ventana Labels, la ubicacion asociada con
+esa etiqueta se centrara y resaltara en la ventana Text Segment o en la ventana Data Segment,
+segun corresponda. Tenga en cuenta que la ventana Labels no se muestra por defecto,
+pero puede activarse desde el menu Settings.</li>
+
+</ul>
+
+<hr>
+<p>
+Este documento esta disponible para imprimir en la pagina principal de MARS
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+</body>
+</html>

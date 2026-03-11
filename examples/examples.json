@@ -1,18 +1,44 @@
-﻿[
-  { "label": "hello_world_runio.asm", "path": "hello_world_runio.asm" },
-  { "label": "guess_number.asm", "path": "guess_number.asm" },
-  { "label": "digital_lab_sim_demo.asm", "path": "digital_lab_sim_demo.asm" },
-  { "label": "floating_point_demo.asm", "path": "floating_point_demo.asm" },
-  { "label": "mars_bot_game.asm", "path": "mars_bot_game.asm" },
-  { "label": "mips.asm", "path": "mips.asm" },
-  { "label": "bitmap_display_bars.asm", "path": "bitmap_display_bars.asm" },
-  { "label": "keyboard_display_mmio_echo.asm", "path": "keyboard_display_mmio_echo.asm" },
-  { "label": "cache_stride_benchmark.asm", "path": "cache_stride_benchmark.asm" },
-  { "label": "branch_predictor_bht_demo.asm", "path": "branch_predictor_bht_demo.asm" },
-  { "label": "factorial_recursive.asm", "path": "factorial_recursive.asm" },
-  { "label": "fibonacci_iterative.asm", "path": "fibonacci_iterative.asm" },
-  { "label": "bubble_sort_array.asm", "path": "bubble_sort_array.asm" },
-  { "label": "matrix_mul_3x3.asm", "path": "matrix_mul_3x3.asm" },
-  { "label": "c_compiled_style_sum.asm", "path": "c_compiled_style_sum.asm" },
-  { "label": "string_strlen_strcpy.asm", "path": "string_strlen_strcpy.asm" }
-]
+{
+  "defaultLanguage": "en",
+  "languages": [
+    "en",
+    "pt",
+    "es"
+  ],
+  "examples": [
+    { "label": "bitmap_display_bars.asm", "path": "bitmap_display_bars.asm", "category": "Tools" },
+    { "label": "branch_predictor_bht_demo.asm", "path": "branch_predictor_bht_demo.asm", "category": "Tools" },
+    { "label": "cache_stride_benchmark.asm", "path": "cache_stride_benchmark.asm", "category": "Tools" },
+    { "label": "digital_lab_sim_demo.asm", "path": "digital_lab_sim_demo.asm", "category": "Tools" },
+    { "label": "keyboard_display_mmio_echo.asm", "path": "keyboard_display_mmio_echo.asm", "category": "Tools" },
+    { "label": "mars_bot_game.asm", "path": "mars_bot_game.asm", "category": "Tools" },
+    { "label": "mips.asm", "path": "mips.asm", "category": "Tools" },
+
+    { "label": "c_compiled_style_sum.asm", "path": "c_compiled_style_sum.asm", "category": "Math" },
+    { "label": "factorial_recursive.asm", "path": "factorial_recursive.asm", "category": "Math" },
+    { "label": "fibonacci_iterative.asm", "path": "fibonacci_iterative.asm", "category": "Math" },
+    { "label": "floating_point_demo.asm", "path": "floating_point_demo.asm", "category": "Math" },
+    { "label": "matrix_mul_3x3.asm", "path": "matrix_mul_3x3.asm", "category": "Math" },
+
+    { "label": "bubble_sort_array.asm", "path": "bubble_sort_array.asm", "category": "Learn" },
+    { "label": "guess_number.asm", "path": "guess_number.asm", "category": "Learn" },
+    { "label": "hello_world_runio.asm", "path": "hello_world_runio.asm", "category": "Learn" },
+    {
+      "label": "multi_file_number_analyzer.asm",
+      "path": "learn/multi_file_number_analyzer/main.asm",
+      "category": "Learn",
+      "files": [
+        { "path": "learn/multi_file_number_analyzer/main.asm", "main": true },
+        { "path": "learn/multi_file_number_analyzer/parity.asm" },
+        { "path": "learn/multi_file_number_analyzer/prime.asm" }
+      ]
+    },
+    { "label": "string_strlen_strcpy.asm", "path": "string_strlen_strcpy.asm", "category": "Learn" },
+
+    { "label": "test_delay_slot_exception.asm", "path": "test_delay_slot_exception.asm", "category": "Tests" },
+    { "label": "test_jalr_register_order.asm", "path": "test_jalr_register_order.asm", "category": "Tests" },
+    { "label": "test_pseudo_ops_lowering.asm", "path": "test_pseudo_ops_lowering.asm", "category": "Tests" },
+    { "label": "test_start_at_main.asm", "path": "test_start_at_main.asm", "category": "Tests" },
+    { "label": "test_unaligned_memory_exception.asm", "path": "test_unaligned_memory_exception.asm", "category": "Tests" }
+  ]
+}
