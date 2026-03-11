@@ -1,4 +1,4 @@
-# webMARS 0.9.10
+# webMARS 0.4.0
 
 Port of MARS MIPS 4.5 for the browser, featuring a Java MARS-inspired interface and native JavaScript execution.
 
@@ -6,7 +6,7 @@ Port of MARS MIPS 4.5 for the browser, featuring a Java MARS-inspired interface 
 
 ![webMARS screenshot](assets/images/screenshot-main.png)
 
-## Release 0.9.10
+## Release 0.4.0
 
 This is a massive update, validated by a full folder comparison against `web - Copia_20260309_0005`.
 
@@ -14,7 +14,7 @@ Comparison summary:
 - Net delta: **+189 files**, **14 changed**, **0 removed**
 - Main expansion areas: `examples/` (+87), `help/` (+76), `assets/` (+12), `wasm/` (+8), `scripts/` (+4)
 
-Key changes in 0.9.10:
+Key changes in 0.4.0:
 - **UI bug fixes**
   - Major refactor of window behavior, focus flow, splitters, and restore logic.
   - `Help > About...` now uses a dedicated compact card (`help/about-card.html`) with reliable restore after refresh.
@@ -42,6 +42,13 @@ Key changes in 0.9.10:
 - **i18n language system**
   - Added `00-i18n.js`, language catalogs (`en`, `pt`, `es`), and manifest-driven language loading.
   - Localized help/examples structures added with language-aware selection.
+
+## Official Git Release Line
+
+- `0.3.7` - initial git baseline
+- `0.3.8` - core bug fixes and UI improvements
+- `0.3.9` - UI improvements/fixes and core WebAssembly (C++) reimplementation
+- `0.4.0` - latest release, initial mobile UI adaptation and language system (i18n)
 
 ## Overview
 
@@ -227,7 +234,7 @@ Requires Emscripten (`emcc`) available on PATH:
 node wasm/build-wasm-core.mjs
 ```
 
-## Immediate Roadmap (0.9.x -> 1.0)
+## Immediate Roadmap (0.4.x -> 1.0)
 
 - **Fine-grained semantic parity**
   - Close residual edge-case differences vs Java MARS (exceptions, delayed branching, specific runtime messages).
