@@ -11,12 +11,19 @@
   ];
 
   const APP_MODULE_SCRIPTS = [
+    "./assets/js/app-modules/00-core-store.js",
     "./assets/js/app-modules/00-core.js",
     "./assets/js/app-modules/00-core-wasm-native.js",
     "./assets/js/app-modules/00-core-wasm-bridge.js",
     "./assets/js/app-modules/05-layout-config.js",
+    "./assets/js/app-modules/09-ui-translation.js",
     "./assets/js/app-modules/10-ui.js",
+    "./assets/js/app-modules/11-ui-help-system-bridge.js",
+    "./assets/js/app-modules/12-ui-tool-manager.js",
+    "./assets/js/app-modules/13-ui-menu-system.js",
     "./assets/js/app-modules/15-help-system.js",
+    "./assets/js/app-modules/18-runtime-browser-storage.js",
+    "./assets/js/app-modules/19-runtime-settings.js",
     "./assets/js/app-modules/20-app-runtime.js"
   ];
   const LANGUAGE_MANIFEST_PATH = "./assets/js/i18n/languages.json";

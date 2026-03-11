@@ -7,6 +7,7 @@
   delayedBranching: false,
   warningsAreErrors: false,
   startAtMain: false,
+  strictMarsCompatibility: false,
   selfModifyingCode: false,
   popupSyscallInput: false,
   programArguments: false,
@@ -121,6 +122,71 @@ const BACKSTEP_HISTORY_BUDGET_DIVISOR = 8;
 const GENERIC_MAP_ENTRY_ESTIMATE_BYTES = 40;
 const BACKSTEP_MEMORY_CHANGE_ENTRY_ESTIMATE_BYTES = 16;
 const STRING_CHAR_ESTIMATE_BYTES = 2;
+const STRICT_MARS_SEGMENT_BYTES = 4 * 1024 * 1024;
+const STRICT_MARS_MMIO_BYTES = 64 * 1024;
+const UINT32_WRAP = 0x1_0000_0000n;
+
+function unsignedRangeContains(address, byteLength, start, sizeBytes) {
+  const length = BigInt(Math.max(1, byteLength | 0));
+  const windowSize = BigInt(Math.max(1, sizeBytes | 0));
+  const addrStart = BigInt(address >>> 0);
+  const windowStart = BigInt(start >>> 0);
+  const windowEnd = windowStart + windowSize;
+  const addrEnd = addrStart + length;
+
+  if (windowEnd <= UINT32_WRAP) {
+    return addrStart >= windowStart && addrEnd <= windowEnd;
+  }
+
+  const wrappedEnd = windowEnd - UINT32_WRAP;
+  const startInWindow = addrStart >= windowStart || addrStart < wrappedEnd;
+  const endAddress = (addrEnd - 1n) % UINT32_WRAP;
+  const endInWindow = endAddress >= windowStart || endAddress < wrappedEnd;
+  return startInWindow && endInWindow;
+}
+
+function strictStackStart(memoryMap) {
+  const stackBase = (memoryMap.stackBase ?? memoryMap.stackPointer ?? DEFAULT_MEMORY_MAP.stackBase) >>> 0;
+  return (stackBase - STRICT_MARS_SEGMENT_BYTES) >>> 0;
+}
+
+function buildStrictMemoryRanges(memoryMap = DEFAULT_MEMORY_MAP) {
+  const map = { ...DEFAULT_MEMORY_MAP, ...(memoryMap ?? {}) };
+  return [
+    { segment: "text", start: map.textBase >>> 0, size: STRICT_MARS_SEGMENT_BYTES },
+    {
+      segment: "data",
+      start: (map.dataSegmentBase ?? map.dataBase ?? DEFAULT_MEMORY_MAP.dataSegmentBase) >>> 0,
+      size: STRICT_MARS_SEGMENT_BYTES
+    },
+    { segment: "ktext", start: (map.kernelTextBase ?? map.kernelBase ?? DEFAULT_MEMORY_MAP.kernelTextBase) >>> 0, size: STRICT_MARS_SEGMENT_BYTES },
+    { segment: "kdata", start: (map.kernelDataBase ?? DEFAULT_MEMORY_MAP.kernelDataBase) >>> 0, size: STRICT_MARS_SEGMENT_BYTES },
+    {
+      segment: "stack",
+      start: strictStackStart(map),
+      size: STRICT_MARS_SEGMENT_BYTES + 4
+    },
+    { segment: "mmio", start: (map.mmioBase ?? DEFAULT_MEMORY_MAP.mmioBase) >>> 0, size: STRICT_MARS_MMIO_BYTES }
+  ];
+}
+
+function findStrictSegmentForAddress(memoryMap, address, byteLength = 1) {
+  const ranges = buildStrictMemoryRanges(memoryMap);
+  for (let i = 0; i < ranges.length; i += 1) {
+    const range = ranges[i];
+    if (unsignedRangeContains(address, byteLength, range.start, range.size)) {
+      return range.segment;
+    }
+  }
+  return null;
+}
+
+function isStrictSegmentAddressValid(memoryMap, segment, address, byteLength = 1) {
+  const ranges = buildStrictMemoryRanges(memoryMap);
+  const target = ranges.find((range) => range.segment === segment);
+  if (!target) return false;
+  return unsignedRangeContains(address, byteLength, target.start, target.size);
+}
 
 function clampByte(value) {
   return Number(value) & 0xff;
@@ -173,22 +239,25 @@ function storageHexToBytes(text) {
   return out;
 }
 
-function createStore(initialState) {
-  let state = { ...initialState };
-  const listeners = new Set();
+const coreStoreModule = (typeof window !== "undefined" ? window.WebMarsModules : globalThis.WebMarsModules)?.coreStore;
+const createStore = typeof coreStoreModule?.createStore === "function"
+  ? coreStoreModule.createStore
+  : function createStoreFallback(initialState) {
+      let state = { ...initialState };
+      const listeners = new Set();
 
-  return {
-    getState: () => state,
-    setState: (patch) => {
-      state = { ...state, ...patch };
-      listeners.forEach((listener) => listener(state));
-    },
-    subscribe: (listener) => {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    }
-  };
-}
+      return {
+        getState: () => state,
+        setState: (patch) => {
+          state = { ...state, ...patch };
+          listeners.forEach((listener) => listener(state));
+        },
+        subscribe: (listener) => {
+          listeners.add(listener);
+          return () => listeners.delete(listener);
+        }
+      };
+    };
 
 const USER_REGISTER_NAMES = [
   "$zero", "$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3",
@@ -693,6 +762,27 @@ function getReferenceSyscallMatrix() {
   return Array.isArray(referenceData?.syscallMatrix) ? referenceData.syscallMatrix : [];
 }
 
+const MANUAL_PSEUDO_EXPANSION_OPS = new Set([
+  "nop", "move", "clear", "not", "abs", "neg", "negu",
+  "li",
+  "add", "addu", "sub", "subu", "subi", "subiu",
+  "addi", "addiu", "andi", "ori", "xori",
+  "and", "or", "xor",
+  "b", "beqz", "bnez", "beq", "bne",
+  "blt", "bltu", "bgt", "bgtu", "ble", "bleu", "bge", "bgeu",
+  "div", "divu", "rem", "remu",
+  "seq", "sne", "sgt", "sgtu", "sge", "sgeu", "sle", "sleu",
+  "rol", "ror",
+  "mul", "mulu", "mulo", "mulou",
+  "mfc1.d", "mtc1.d",
+  "l.s", "s.s", "l.d", "s.d",
+  "ld", "sd",
+  "lb", "lbu", "lh", "lhu", "lw", "ll", "lwc1", "ldc1",
+  "sb", "sh", "sw", "sc", "swc1", "sdc1",
+  "lwl", "lwr", "swl", "swr",
+  "ulw", "usw", "ulh", "ulhu", "ush"
+]);
+
 function tokenizePseudoSourceStatement(statement) {
   const input = String(statement ?? "").trim();
   if (!input) return [];
@@ -856,7 +946,9 @@ function matchPseudoPatternToken(engine, patternToken, actualToken, firstPass = 
     if (numericPattern === 10) return fitsPseudoUnsigned5(actualValue);
     if (numericPattern === -100) return fitsPseudoSigned16(actualValue);
     if (numericPattern === 100) return fitsPseudoUnsigned16(actualValue);
-    if (Math.abs(numericPattern) === 100000) return true;
+    if (Math.abs(numericPattern) === 100000) {
+      return !fitsPseudoSigned16(actualValue) && !fitsPseudoUnsigned16(actualValue);
+    }
   }
 
   return pattern.toLowerCase() === actual.toLowerCase();
@@ -2003,6 +2095,26 @@ class MarsEngine {
     return inUserText || inKernelText;
   }
 
+  isStrictMarsCompatibilityEnabled() {
+    return this.settings?.strictMarsCompatibility === true;
+  }
+
+  assertAddressInStrictMemoryModel(address, byteLength = 1, operationLabel = "memory access") {
+    if (!this.isStrictMarsCompatibilityEnabled()) return;
+    const addr = address >>> 0;
+    const length = Math.max(1, byteLength | 0);
+    const segment = findStrictSegmentForAddress(this.memoryMap, addr, length);
+    if (segment) return;
+    throw new Error(translateText(
+      "Strict MARS memory mode rejected {operation} at {address} ({length} byte(s)).",
+      {
+        operation: operationLabel,
+        address: toHex(addr),
+        length
+      }
+    ));
+  }
+
   assertWritableAddress(address, byteLength = 1) {
     if (this.settings.selfModifyingCode) return;
     const size = Math.max(1, byteLength | 0);
@@ -2049,6 +2161,7 @@ class MarsEngine {
 
   setByte(address, value) {
     const addr = address >>> 0;
+    this.assertAddressInStrictMemoryModel(addr, 1, "write");
     this.assertWritableAddress(addr, 1);
     this.recordMemoryChange(addr);
     const masked = value & 0xff;
@@ -2074,7 +2187,9 @@ class MarsEngine {
   }
 
   readByte(address, signed = true) {
-    const value = this.getByte(address >>> 0);
+    const addr = address >>> 0;
+    this.assertAddressInStrictMemoryModel(addr, 1, "read");
+    const value = this.getByte(addr);
     return signed ? ((value << 24) >> 24) : value;
   }
 
@@ -2085,6 +2200,7 @@ class MarsEngine {
 
   readHalf(address, signed = true) {
     const addr = address >>> 0;
+    this.assertAddressInStrictMemoryModel(addr, 2, "read");
     if (addr % 2 !== 0) throw new Error(translateText("Address not aligned on halfword boundary: {address}", { address: toHex(addr) }));
     const value = ((this.getByte(addr) << 8) | this.getByte(addr + 1)) & 0xffff;
     return signed ? signExtend16(value) : zeroExtend16(value);
@@ -2092,6 +2208,7 @@ class MarsEngine {
 
   writeHalf(address, value) {
     const addr = address >>> 0;
+    this.assertAddressInStrictMemoryModel(addr, 2, "write");
     if (addr % 2 !== 0) throw new Error(translateText("Address not aligned on halfword boundary: {address}", { address: toHex(addr) }));
     this.assertWritableAddress(addr, 2);
     const numeric = zeroExtend16(value);
@@ -2101,12 +2218,14 @@ class MarsEngine {
 
   readWord(address) {
     const addr = address >>> 0;
+    this.assertAddressInStrictMemoryModel(addr, 4, "read");
     if (addr % 4 !== 0) throw new Error(translateText("Address not aligned on word boundary: {address}", { address: toHex(addr) }));
     return this.memoryWords.get(addr) ?? composeWord(this.getByte(addr), this.getByte(addr + 1), this.getByte(addr + 2), this.getByte(addr + 3));
   }
 
   writeWord(address, value) {
     const addr = address >>> 0;
+    this.assertAddressInStrictMemoryModel(addr, 4, "write");
     if (addr % 4 !== 0) throw new Error(translateText("Address not aligned on word boundary: {address}", { address: toHex(addr) }));
     this.assertWritableAddress(addr, 4);
     const numeric = value >>> 0;
@@ -2119,7 +2238,7 @@ class MarsEngine {
     let out = "";
     let cursor = address >>> 0;
     for (let i = 0; i < maxLen; i += 1) {
-      const byte = this.getByte(cursor);
+      const byte = this.readByte(cursor, false);
       if (byte === 0) break;
       out += String.fromCharCode(byte);
       cursor = (cursor + 1) >>> 0;
@@ -2405,8 +2524,10 @@ class MarsEngine {
 
     if (!this.settings.extendedAssembler) return [statement];
 
-    const referenceExpanded = this.expandPseudoFromReference(statement, firstPass);
-    if (Array.isArray(referenceExpanded) && referenceExpanded.length) return referenceExpanded;
+    if (!MANUAL_PSEUDO_EXPANSION_OPS.has(op)) {
+      const referenceExpanded = this.expandPseudoFromReference(statement, firstPass);
+      if (Array.isArray(referenceExpanded) && referenceExpanded.length) return referenceExpanded;
+    }
 
     switch (op) {
       case "nop":
@@ -2437,9 +2558,35 @@ class MarsEngine {
 
       case "la": {
         if (args.length < 2) return [statement];
-        const value = asImmediate(args[1]);
+        const destination = args[0];
+        const addressToken = String(args[1]).trim();
+        const memMatch = /^(.*)\((\$?[\w\d]+)\)$/.exec(addressToken.replace(/\s+/g, ""));
+        const high16Logical = (value) => ((value >>> 16) & 0xffff);
+
+        if (memMatch) {
+          const offsetToken = (memMatch[1] && memMatch[1].length > 0) ? memMatch[1] : "0";
+          const baseToken = memMatch[2];
+          const offsetValue = asImmediate(offsetToken);
+          if (fitsSigned16(offsetValue)) return [`addiu ${destination}, ${baseToken}, ${offsetValue}`];
+          if (fitsUnsigned16(offsetValue)) {
+            return [`ori $at, $zero, ${offsetValue >>> 0}`, `addu ${destination}, ${baseToken}, $at`];
+          }
+          const offsetUnsigned = offsetValue >>> 0;
+          return [
+            `lui $at, ${high16Logical(offsetUnsigned)}`,
+            `ori $at, $at, ${low16(offsetUnsigned)}`,
+            `addu ${destination}, ${baseToken}, $at`
+          ];
+        }
+
+        const value = asImmediate(addressToken);
+        if (fitsSigned16(value)) return [`addiu ${destination}, $zero, ${value}`];
+        if (fitsUnsigned16(value)) return [`ori ${destination}, $zero, ${value >>> 0}`];
         const asUnsigned = value >>> 0;
-        return [`lui ${args[0]}, ${high16(asUnsigned)}`, `ori ${args[0]}, ${args[0]}, ${low16(asUnsigned)}`];
+        return [
+          `lui $at, ${high16Logical(asUnsigned)}`,
+          `ori ${destination}, $at, ${low16(asUnsigned)}`
+        ];
       }
 
       case "add":
@@ -2765,9 +2912,30 @@ class MarsEngine {
           return [`${op} ${target}, ${absolute}($zero)`];
         }
 
+        let absoluteValue = Number.NaN;
+        if (Number.isFinite(absolute)) {
+          absoluteValue = absolute;
+        } else if (!firstPass) {
+          absoluteValue = asImmediate(memoryToken);
+          if (!Number.isFinite(absoluteValue)) absoluteValue = Number.NaN;
+        }
+
+        if (Number.isFinite(absoluteValue) && fitsSigned16(absoluteValue)) {
+          return [`${op} ${target}, ${absoluteValue}($zero)`];
+        }
+
+        if (!Number.isFinite(absoluteValue)) {
+          return [
+            "lui $at, 0",
+            `${op} ${target}, 0($at)`
+          ];
+        }
+
+        const absoluteUnsigned = absoluteValue >>> 0;
+        const absoluteLow16Signed = signExtend16(absoluteUnsigned & 0xffff);
         return [
-          ...loadToAt(memoryToken, false),
-          `${op} ${target}, 0($at)`
+          `lui $at, ${high16(absoluteUnsigned)}`,
+          `${op} ${target}, ${absoluteLow16Signed}($at)`
         ];
       }
       case "ulw":
@@ -2819,6 +2987,30 @@ class MarsEngine {
       const addr = getAddr();
       setAddr((addr + alignment - 1) & ~(alignment - 1));
     };
+
+    const enforceStrictSegmentRange = (segmentName, address, byteLength, contextLabel) => {
+      if (!this.isStrictMarsCompatibilityEnabled()) return true;
+      const start = address >>> 0;
+      const size = Math.max(0, byteLength | 0);
+      if (size === 0) return true;
+      if (isStrictSegmentAddressValid(this.memoryMap, segmentName, start, size)) return true;
+      errors.push({
+        line: lineNumber,
+        message: translateText(
+          "Strict MARS segment limit exceeded for {context} at {address} ({bytes} byte(s)).",
+          {
+            context: contextLabel,
+            address: toHex(start),
+            bytes: size
+          }
+        )
+      });
+      return false;
+    };
+
+    const enforceStrictDataRange = (byteLength, contextLabel) => (
+      enforceStrictSegmentRange(state.segment === "kdata" ? "kdata" : "data", getAddr(), byteLength, contextLabel)
+    );
 
     const writeIntegerBySize = (address, size, value) => {
       const numeric = Number(value) >>> 0;
@@ -2897,6 +3089,7 @@ class MarsEngine {
       const amount = count | 0;
       // Fresh assembly memory is already zero-initialized, so materializing
       // every byte here only wastes browser memory for sparse segments.
+      if (!enforceStrictDataRange(amount, directive)) return;
       setAddr(getAddr() + amount);
       return;
     }
@@ -2943,10 +3136,12 @@ class MarsEngine {
       if (state.labelsMap instanceof Map) {
         if (!state.labelsMap.has(symbol)) {
           const externalBase = state.externAddress >>> 0;
+          if (!enforceStrictSegmentRange("data", externalBase, size | 0, directive)) return;
           state.labelsMap.set(symbol, externalBase);
           state.externAddress = (state.externAddress + (size | 0)) >>> 0;
         }
       } else {
+        if (!enforceStrictSegmentRange("data", state.externAddress >>> 0, size | 0, directive)) return;
         state.externAddress = (state.externAddress + (size | 0)) >>> 0;
       }
       return;
@@ -2970,11 +3165,12 @@ class MarsEngine {
         alignAddress(size);
       }
 
-      args.forEach((arg) => {
+      for (const arg of args) {
         const repetition = parseRepeatedArg(arg);
-        if (!repetition) return;
+        if (!repetition) continue;
 
         for (let rep = 0; rep < repetition.repetitions; rep += 1) {
+          if (!enforceStrictDataRange(size, directive)) return;
           const token = repetition.valueToken;
           if (directive === ".float" || directive === ".double") {
             const parsed = Number.parseFloat(stripToken(token));
@@ -3011,30 +3207,30 @@ class MarsEngine {
           if (!sizeOnly) writeIntegerBySize(getAddr(), size, value);
           setAddr(getAddr() + size);
         }
-      });
+      }
       return;
     }
 
     if (directive === ".ascii" || directive === ".asciiz") {
-      args.forEach((arg) => {
+      for (const arg of args) {
         const decoded = parseStringLiteral(arg);
         if (decoded === null) {
           errors.push({ line: lineNumber, message: translateText("Invalid string literal '{arg}'.", { arg }) });
-          return;
+          continue;
         }
+        const totalBytes = decoded.length + (directive === ".asciiz" ? 1 : 0);
+        if (!enforceStrictDataRange(totalBytes, directive)) return;
+        const base = getAddr();
         if (!sizeOnly) {
           for (let i = 0; i < decoded.length; i += 1) {
-            this.writeByte(getAddr(), decoded.charCodeAt(i));
-            setAddr(getAddr() + 1);
+            this.writeByte((base + i) >>> 0, decoded.charCodeAt(i));
           }
           if (directive === ".asciiz") {
-            this.writeByte(getAddr(), 0);
-            setAddr(getAddr() + 1);
+            this.writeByte((base + decoded.length) >>> 0, 0);
           }
-        } else {
-          setAddr(getAddr() + decoded.length + (directive === ".asciiz" ? 1 : 0));
         }
-      });
+        setAddr(base + totalBytes);
+      }
       return;
     }
 
@@ -3295,26 +3491,59 @@ class MarsEngine {
       currentDataDirective: ".word",
       labelsMap: labels
     };
-    const updateSegmentAddress = (state, directive, argToken) => {
+    const strictEnabled = this.isStrictMarsCompatibilityEnabled();
+    const validateStrictSegmentRange = (segmentName, address, byteLength, lineNumber, contextLabel) => {
+      if (!strictEnabled) return true;
+      const start = address >>> 0;
+      const size = Math.max(0, byteLength | 0);
+      if (size === 0) return true;
+      if (isStrictSegmentAddressValid(this.memoryMap, segmentName, start, size)) return true;
+      errors.push({
+        line: lineNumber,
+        message: translateText(
+          "Strict MARS segment limit exceeded for {context} at {address} ({bytes} byte(s)).",
+          {
+            context: contextLabel,
+            address: toHex(start),
+            bytes: size
+          }
+        )
+      });
+      return false;
+    };
+    const updateSegmentAddress = (state, directive, argToken, lineNumber = 0) => {
       const parsed = argToken != null && argToken !== "" ? this.resolveValue(argToken) : Number.NaN;
       const explicit = Number.isFinite(parsed) ? (parsed >>> 0) : null;
       if (directive === ".text") {
         state.segment = "text";
-        if (explicit !== null) state.textAddress = explicit;
+        if (explicit !== null) {
+          if (!validateStrictSegmentRange("text", explicit, 1, lineNumber, ".text directive")) return false;
+          state.textAddress = explicit;
+        }
       } else if (directive === ".data") {
         state.segment = "data";
-        if (explicit !== null) state.dataAddress = explicit;
+        if (explicit !== null) {
+          if (!validateStrictSegmentRange("data", explicit, 1, lineNumber, ".data directive")) return false;
+          state.dataAddress = explicit;
+        }
         state.autoAlignData = true;
         state.currentDataDirective = ".word";
       } else if (directive === ".ktext") {
         state.segment = "ktext";
-        if (explicit !== null) state.kernelTextAddress = explicit;
+        if (explicit !== null) {
+          if (!validateStrictSegmentRange("ktext", explicit, 1, lineNumber, ".ktext directive")) return false;
+          state.kernelTextAddress = explicit;
+        }
       } else if (directive === ".kdata") {
         state.segment = "kdata";
-        if (explicit !== null) state.kernelDataAddress = explicit;
+        if (explicit !== null) {
+          if (!validateStrictSegmentRange("kdata", explicit, 1, lineNumber, ".kdata directive")) return false;
+          state.kernelDataAddress = explicit;
+        }
         state.autoAlignKernelData = true;
         state.currentDataDirective = ".word";
       }
+      return true;
     };
 
     const isDataListDirective = (directive) => [
@@ -3352,7 +3581,7 @@ class MarsEngine {
       if (/^\.(text|data|ktext|kdata)\b/i.test(statement)) {
         const directive = statement.split(/\s+/)[0].toLowerCase();
         const args = splitArguments(statement.slice(directive.length).trim());
-        updateSegmentAddress(pass1State, directive, args[0]);
+        if (!updateSegmentAddress(pass1State, directive, args[0], entry.lineNumber)) return;
         return;
       }
 
@@ -3390,8 +3619,10 @@ class MarsEngine {
       }
       const expanded = this.expandPseudo(statement, true);
       if (pass1State.segment === "text") {
+        if (!validateStrictSegmentRange("text", pass1State.textAddress, expanded.length * 4, entry.lineNumber, "instruction expansion")) return;
         pass1State.textAddress = (pass1State.textAddress + expanded.length * 4) >>> 0;
       } else {
+        if (!validateStrictSegmentRange("ktext", pass1State.kernelTextAddress, expanded.length * 4, entry.lineNumber, "instruction expansion")) return;
         pass1State.kernelTextAddress = (pass1State.kernelTextAddress + expanded.length * 4) >>> 0;
       }
     });
@@ -3426,7 +3657,7 @@ class MarsEngine {
       if (/^\.(text|data|ktext|kdata)\b/i.test(statement)) {
         const directive = statement.split(/\s+/)[0].toLowerCase();
         const args = splitArguments(statement.slice(directive.length).trim());
-        updateSegmentAddress(pass2State, directive, args[0]);
+        if (!updateSegmentAddress(pass2State, directive, args[0], entry.lineNumber)) return;
         return;
       }
 
@@ -3460,6 +3691,11 @@ class MarsEngine {
       if (pass2State.segment !== "text" && pass2State.segment !== "ktext") return;
 
       const expanded = this.expandPseudo(statement, false);
+      const currentTextAddress = pass2State.segment === "text" ? pass2State.textAddress : pass2State.kernelTextAddress;
+      const currentTextSegment = pass2State.segment === "text" ? "text" : "ktext";
+      if (!validateStrictSegmentRange(currentTextSegment, currentTextAddress, expanded.length * 4, entry.lineNumber, "instruction emission")) {
+        return;
+      }
       expanded.forEach((basic, index) => {
         const address = pass2State.segment === "text" ? pass2State.textAddress : pass2State.kernelTextAddress;
         textRows.push({
@@ -4986,6 +5222,7 @@ class MarsEngine {
 function createMarsEngine(options = {}) {
   const settings = options?.settings || {};
   const backend = String(settings.coreBackend || DEFAULT_SETTINGS.coreBackend || "js").trim().toLowerCase();
+  const strictCompatibility = settings?.strictMarsCompatibility === true;
   const wasmFactory = typeof window !== "undefined" ? window.WebMarsWasmCore : null;
 
   const wrapBackend = (engine, backendInfo = {}) => {
@@ -5111,7 +5348,7 @@ function createMarsEngine(options = {}) {
     };
   };
 
-  if (backend === "wasm" && wasmFactory && typeof wasmFactory.createEngineSync === "function") {
+  if (!strictCompatibility && backend === "wasm" && wasmFactory && typeof wasmFactory.createEngineSync === "function") {
     try {
       const wasmEngine = wasmFactory.createEngineSync(options);
       if (wasmEngine) {
@@ -5128,7 +5365,7 @@ function createMarsEngine(options = {}) {
 
   return wrapBackend(new MarsEngine(options), {
     backend: "js",
-    backendName: "js-core",
+    backendName: strictCompatibility ? "js-core-strict" : "js-core",
     native: false
   });
 }

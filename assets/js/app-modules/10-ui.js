@@ -1,4 +1,4 @@
-﻿function tabController(root, buttonSelector, panelSelector) {
+function tabController(root, buttonSelector, panelSelector) {
   const buttons = [...root.querySelectorAll(buttonSelector)];
   const panels = [...root.querySelectorAll(panelSelector)];
   const activate = (panelId) => {
@@ -18,7 +18,7 @@ function renderLayout(root) {
   root.innerHTML = `
     <div class="shell">
       <nav class="menu-bar panel">
-        <span class="menu-logo" aria-hidden="true">🚀</span>
+        <span class="menu-logo" aria-hidden="true">&#128640;</span>
         <button class="menu-item" type="button" data-menu="File">File</button>
         <button class="menu-item" type="button" data-menu="Edit">Edit</button>
         <button class="menu-item" type="button" data-menu="Run">Run</button>
@@ -46,16 +46,22 @@ function renderLayout(root) {
           <button class="tool-btn" id="btn-stop" type="button">Stop</button>
         </div>
 
-        <div class="toolbar-group">
-          <span id="assembly-status" class="tag warn">not assembled</span>
-        </div>
-
         <div class="toolbar-group toolbar-speed-group">
+          <span id="assembly-status" class="tag warn">not assembled</span>
           <label id="run-speed-label" class="run-speed-label" for="run-speed-slider">Run speed at max (no interaction)</label>
           <div class="run-speed-slider-wrap">
             <input id="run-speed-slider" type="range" min="0" max="40" step="1" value="40" />
             <div class="run-speed-ruler" aria-hidden="true"></div>
           </div>
+          <select id="run-speed-select-mobile" class="run-speed-select-mobile" aria-label="Run speed preset">
+            <option value="5">speed: 0.5 instr/sec</option>
+            <option value="6">speed: 1 instr/sec</option>
+            <option value="7">speed: 2 instr/sec</option>
+            <option value="10">speed: 5 instr/sec</option>
+            <option value="15">speed: 10 instr/sec</option>
+            <option value="25">speed: 20 instr/sec</option>
+            <option value="40">speed: no interaction</option>
+          </select>
         </div>
       </section>
 
@@ -204,8 +210,8 @@ function renderLayout(root) {
                 </table>
               </div>
             </div>
-            <div id="panel-coprocessor1" class="subtab-panel"><div class="register-body"><table><thead><tr><th>Name</th><th>Float</th><th>Double</th></tr></thead><tbody id="cop1-body"></tbody></table></div></div>
-            <div id="panel-coprocessor0" class="subtab-panel"><div class="register-body"><table><thead><tr><th>Name</th><th>Number</th><th>Value</th></tr></thead><tbody id="cop0-body"></tbody></table><div class="cop0-flags" id="cop0-flags"></div></div></div>
+            <div id="panel-coprocessor1" class="subtab-panel"><div class="register-body"><table><thead><tr><th>Name</th><th>Float</th><th>Double</th></tr></thead><tbody id="cop1-body"></tbody></table><div class="cop-flags" id="cop1-flags"></div></div></div>
+            <div id="panel-coprocessor0" class="subtab-panel"><div class="register-body"><table><thead><tr><th>Name</th><th>Number</th><th>Value</th></tr></thead><tbody id="cop0-body"></tbody></table></div></div>
           </div>
         </section>
       </section>
@@ -262,7 +268,8 @@ function renderLayout(root) {
     },
     controls: {
       runSpeedLabel: root.querySelector("#run-speed-label"),
-      runSpeedSlider: root.querySelector("#run-speed-slider")
+      runSpeedSlider: root.querySelector("#run-speed-slider"),
+      runSpeedSelectMobile: root.querySelector("#run-speed-select-mobile")
     },
     execute: {
       textBody: root.querySelector("#text-segment-body"),
@@ -288,7 +295,7 @@ function renderLayout(root) {
       body: root.querySelector("#registers-body"),
       cop1Body: root.querySelector("#cop1-body"),
       cop0Body: root.querySelector("#cop0-body"),
-      cop0Flags: root.querySelector("#cop0-flags")
+      cop1Flags: root.querySelector("#cop1-flags")
     }
   };
 
@@ -2963,14 +2970,20 @@ function escapeHtml(value) {
   const DATA_ROWS_PER_PAGE = 16;
   const WORD_SIZE_BYTES = 4;
   const DATA_PAGE_BYTES = DATA_COLUMNS * DATA_ROWS_PER_PAGE * WORD_SIZE_BYTES;
+  const DATA_ROW_BYTES = DATA_COLUMNS * WORD_SIZE_BYTES;
   const DATA_VIEW_MAX_RANGE = 0x01000000;
+
+  function alignToDataRow(address) {
+    const value = Number(address) >>> 0;
+    return (value - (value % DATA_ROW_BYTES)) >>> 0;
+  }
 
   const DATA_BASE_PRESETS = [
     { key: "data", label: "0x10010000 (.data)", resolve: () => DEFAULT_MEMORY_MAP.dataBase >>> 0 },
     { key: "extern", label: "0x10000000 (.extern)", resolve: () => 0x10000000 },
     { key: "heap", label: "0x10040000 (heap)", resolve: () => DEFAULT_MEMORY_MAP.heapBase >>> 0 },
-    { key: "gp", label: "current $gp", resolve: (snapshot) => getRegisterUnsigned(snapshot, "$gp", 0x10008000) },
-    { key: "sp", label: "current $sp", resolve: (snapshot) => getRegisterUnsigned(snapshot, "$sp", DEFAULT_MEMORY_MAP.stackBase >>> 0) },
+    { key: "gp", label: "current $gp", resolve: (snapshot) => alignToDataRow(getRegisterUnsigned(snapshot, "$gp", 0x10008000)) },
+    { key: "sp", label: "current $sp", resolve: (snapshot) => alignToDataRow(getRegisterUnsigned(snapshot, "$sp", DEFAULT_MEMORY_MAP.stackBase >>> 0)) },
     { key: "text", label: "0x00400000 (.text)", resolve: () => DEFAULT_MEMORY_MAP.textBase >>> 0 },
     { key: "kdata", label: "0x90000000 (.kdata)", resolve: () => 0x90000000 },
     { key: "mmio", label: "0xffff0000 (MMIO)", resolve: () => DEFAULT_MEMORY_MAP.mmioBase >>> 0 }
@@ -3323,33 +3336,73 @@ function formatCop1Double(lowWord, highWord) {
 }
 
 function createRegistersPane(refs) {
-  const cop0Names = {
-    8: "vaddr",
-    12: "status",
-    13: "cause",
-    14: "epc"
+  const cop0RowsLikeMars = [
+    { number: 8, name: "$8 (vaddr)" },
+    { number: 12, name: "$12 (status)" },
+    { number: 13, name: "$13 (cause)" },
+    { number: 14, name: "$14 (epc)" }
+  ];
+  const marsRegisterOrder = [
+    "$zero", "$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3",
+    "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7",
+    "$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7",
+    "$t8", "$t9", "$k0", "$k1", "$gp", "$sp", "$fp", "$ra",
+    "$pc", "$hi", "$lo"
+  ];
+  const marsRegisterOrderIndex = new Map(marsRegisterOrder.map((name, index) => [name, index]));
+  const sortRegistersLikeMars = (rows) => {
+    const list = Array.isArray(rows) ? rows.slice() : [];
+    return list.sort((a, b) => {
+      const aName = String(a?.name || "");
+      const bName = String(b?.name || "");
+      const aRank = marsRegisterOrderIndex.has(aName) ? marsRegisterOrderIndex.get(aName) : Number.POSITIVE_INFINITY;
+      const bRank = marsRegisterOrderIndex.has(bName) ? marsRegisterOrderIndex.get(bName) : Number.POSITIVE_INFINITY;
+      if (aRank !== bRank) return aRank - bRank;
+
+      const aIndex = Number.isFinite(a?.index) ? Number(a.index) : Number.POSITIVE_INFINITY;
+      const bIndex = Number.isFinite(b?.index) ? Number(b.index) : Number.POSITIVE_INFINITY;
+      if (aIndex !== bIndex) return aIndex - bIndex;
+      return aName.localeCompare(bName);
+    });
   };
 
   let previousCop0 = null;
   let previousCop1 = null;
   let previousFlags = null;
+  let cop1FlagToggleHandler = null;
+
+  refs.registers.cop1Flags?.addEventListener("change", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    const index = Number.parseInt(String(target.dataset.cop1Flag ?? ""), 10);
+    if (!Number.isFinite(index) || index < 0 || index > 7) return;
+    cop1FlagToggleHandler?.(index, target.checked ? 1 : 0);
+  });
 
   return {
+    onToggleCop1Flag(handler) {
+      cop1FlagToggleHandler = typeof handler === "function" ? handler : null;
+    },
     render(snapshotOrRows, changedRegisters = new Set(), options = {}) {
       const disableHighlights = options.disableHighlights === true;
       const disableAutoScroll = options.disableAutoScroll === true;
+      const displayValuesHex = options.displayValuesHex === true;
       const snapshot = Array.isArray(snapshotOrRows)
         ? { registers: snapshotOrRows }
         : (snapshotOrRows && typeof snapshotOrRows === "object" ? snapshotOrRows : { registers: [] });
 
-      const registerRows = Array.isArray(snapshot.registers) ? snapshot.registers : [];
+      const registerRows = sortRegistersLikeMars(Array.isArray(snapshot.registers) ? snapshot.registers : []);
       refs.registers.body.innerHTML = registerRows
         .map((register) => {
           const key = register.name === "$pc" ? "pc" : String(register.index);
           const changed = !disableHighlights && (changedRegisters.has(key) || changedRegisters.has(register.name));
           const cls = changed ? "updated-row" : "";
-          const numberCell = register.name === "$pc" ? "" : register.index;
-          return `<tr class="${cls}" data-register-key="${escapeHtml(key)}"><td>${register.name}</td><td>${numberCell}</td><td>${register.valueHex}</td><td>${register.value}</td></tr>`;
+          const isSpecial = register.name === "$pc" || register.name === "$hi" || register.name === "$lo";
+          const numberCell = isSpecial ? "" : register.index;
+          const displayName = register.name === "$pc"
+            ? "pc"
+            : (register.name === "$hi" ? "hi" : (register.name === "$lo" ? "lo" : register.name));
+          return `<tr class="${cls}" data-register-key="${escapeHtml(key)}"><td>${displayName}</td><td>${numberCell}</td><td>${register.valueHex}</td><td>${register.value}</td></tr>`;
         })
         .join("");
 
@@ -3365,9 +3418,11 @@ function createRegistersPane(refs) {
           const raw = cop1Values[i] | 0;
           const changed = !disableHighlights && previousCop1 && previousCop1[i] !== raw;
           const cls = changed ? "updated-row" : "";
-          const floatText = formatCop1Float(raw);
+          const floatText = displayValuesHex ? toHex(raw >>> 0) : formatCop1Float(raw);
           const doubleText = (i % 2 === 0 && (i + 1) < cop1Values.length)
-            ? formatCop1Double(cop1Values[i] | 0, cop1Values[i + 1] | 0)
+            ? (displayValuesHex
+              ? `0x${((cop1Values[i + 1] >>> 0).toString(16).padStart(8, "0"))}${((cop1Values[i] >>> 0).toString(16).padStart(8, "0"))}`
+              : formatCop1Double(cop1Values[i] | 0, cop1Values[i + 1] | 0))
             : "";
           cop1Rows.push(`<tr class="${cls}" data-cop1-index="${i}"><td>$f${i}</td><td>${escapeHtml(floatText)}</td><td>${escapeHtml(doubleText)}</td></tr>`);
         }
@@ -3377,28 +3432,28 @@ function createRegistersPane(refs) {
 
       const cop0Values = Array.isArray(snapshot.cop0) ? snapshot.cop0 : [];
       if (refs.registers.cop0Body) {
-        const cop0Rows = [];
-        for (let i = 0; i < 32; i += 1) {
+        const cop0Rows = cop0RowsLikeMars.map((entry) => {
+          const i = entry.number;
           const raw = cop0Values[i] | 0;
           const changed = !disableHighlights && previousCop0 && previousCop0[i] !== raw;
           const cls = changed ? "updated-row" : "";
-          const name = cop0Names[i] ? `$${cop0Names[i]}` : `$c${i}`;
-          cop0Rows.push(`<tr class="${cls}" data-cop0-index="${i}"><td>${name}</td><td>${i}</td><td>${toHex(raw >>> 0)}</td></tr>`);
-        }
+          const valueText = displayValuesHex ? toHex(raw >>> 0) : String(raw | 0);
+          return `<tr class="${cls}" data-cop0-index="${i}"><td>${entry.name}</td><td>${i}</td><td>${valueText}</td></tr>`;
+        });
         refs.registers.cop0Body.innerHTML = cop0Rows.join("");
       }
       previousCop0 = cop0Values.slice(0, 32);
 
       const flags = Array.isArray(snapshot.fpuFlags) ? snapshot.fpuFlags : [];
-      if (refs.registers.cop0Flags) {
-        refs.registers.cop0Flags.innerHTML = `<span>${escapeHtml(translateText("Condition Flags:"))}</span>${[0, 1, 2, 3, 4, 5, 6, 7].map((index) => {
+      if (refs.registers.cop1Flags) {
+        refs.registers.cop1Flags.innerHTML = `<span>${escapeHtml(translateText("Condition Flags:"))}</span>${[0, 1, 2, 3, 4, 5, 6, 7].map((index) => {
           const on = flags[index] ? "cop0-flag on" : "cop0-flag";
-          return `<span class="${on}">${index}</span>`;
+          return `<label class="${on}"><input type="checkbox" data-cop1-flag="${index}" ${flags[index] ? "checked" : ""}>${index}</label>`;
         }).join("")}`;
 
         if (!disableHighlights && previousFlags && flags.some((value, index) => value !== previousFlags[index])) {
-          refs.registers.cop0Flags.classList.add("updated-row");
-          window.setTimeout(() => refs.registers.cop0Flags.classList.remove("updated-row"), 160);
+          refs.registers.cop1Flags.classList.add("updated-row");
+          window.setTimeout(() => refs.registers.cop1Flags.classList.remove("updated-row"), 160);
         }
       }
       previousFlags = flags.slice(0, 8);
@@ -3596,6 +3651,7 @@ const DEFAULT_PREFERENCES = {
   startAtMain: false,
   extendedAssembler: true,
   delayedBranching: false,
+  strictMarsCompatibility: false,
   selfModifyingCode: false,
   programArgumentsText: "",
   editorFontSize: 12,
@@ -4695,7 +4751,7 @@ function injectRuntimeStyles() {
       padding: 2px 4px;
     }
 
-    .cop0-flags {
+    .cop-flags {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
@@ -4706,12 +4762,21 @@ function injectRuntimeStyles() {
     }
 
     .cop0-flag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
       min-width: 14px;
       padding: 1px 3px;
       border: 1px solid #a5b2c2;
       border-radius: 2px;
       background: #f3f6fa;
       text-align: center;
+    }
+
+    .cop0-flag input[type="checkbox"] {
+      margin: 0;
+      width: 11px;
+      height: 11px;
     }
 
     .cop0-flag.on {
@@ -4722,10 +4787,10 @@ function injectRuntimeStyles() {
     }
     .toolbar-speed-group {
       display: inline-grid;
-      grid-template-columns: auto minmax(188px, 210px);
+      grid-template-columns: auto auto minmax(188px, 210px);
       align-items: center;
       gap: 6px;
-      min-width: 300px;
+      min-width: 360px;
     }
 
     .run-speed-label {
@@ -4793,6 +4858,16 @@ function injectRuntimeStyles() {
       border-left: 1px solid #92a0b1;
       border-right: 1px solid #92a0b1;
       background: repeating-linear-gradient(90deg, #8596ab 0, #8596ab 1px, transparent 1px, transparent 19px);
+    }
+
+    .run-speed-select-mobile {
+      display: none;
+      min-height: 24px;
+      padding: 1px 4px;
+      font-size: 11px;
+      border: 1px solid #7f9db9;
+      background: #fff;
+      color: #1f2d3f;
     }
     #btn-new,
     #btn-open,
@@ -5210,7 +5285,8 @@ function injectRuntimeStyles() {
     .hide-labels-window .execute-top { grid-template-columns: 1fr; }
 
     @media (max-width: 1250px) {
-      .toolbar-speed-group { min-width: 100%; grid-template-columns: 1fr; }
+      .toolbar-speed-group { min-width: 100%; grid-template-columns: auto 1fr; }
+      .toolbar-speed-group .run-speed-label { display: none; }
       #run-speed-slider, .run-speed-ruler { width: 100%; }
       .bitmap-main { grid-template-columns: 1fr; }
       .bitmap-control { font-size: 17px; }
@@ -5221,6 +5297,14 @@ function injectRuntimeStyles() {
     @media (max-width: ${stackedMaxWidthPx}px) {
       html, body {
         overflow: auto;
+      }
+
+      .execute-top {
+        grid-template-columns: 1fr !important;
+      }
+
+      .labels-panel {
+        display: none !important;
       }
 
       .shell {
@@ -5266,29 +5350,37 @@ function injectRuntimeStyles() {
 
       .toolbar-speed-group {
         display: grid;
-        grid-template-columns: 1fr;
-        gap: 3px;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 6px;
         min-width: 100%;
         width: 100%;
       }
 
       .run-speed-label {
+        display: inline-block;
         width: auto;
         min-width: 0;
         max-width: none;
-        white-space: normal;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 11px;
       }
 
       .run-speed-slider-wrap {
-        width: 100%;
-        min-width: 0;
+        display: none;
       }
 
-      #run-speed-slider,
-      .run-speed-ruler {
+      .run-speed-select-mobile {
+        display: block;
         width: 100%;
-        max-width: 100%;
-        min-width: 0;
+        min-height: 28px;
+        font-size: 13px;
+      }
+
+      .toolbar .tool-btn {
+        min-height: 24px;
       }
 
       .desktop {
@@ -5479,7 +5571,7 @@ function injectRuntimeStyles() {
       .toolbar .tool-btn {
         padding: 1px 5px;
         font-size: 11px;
-        min-height: 18px;
+        min-height: 24px;
       }
 
       .run-speed-label {
@@ -5501,1060 +5593,3 @@ function injectRuntimeStyles() {
   document.head.appendChild(style);
 }
 
-function createHelpSystem(refs, messagesPane, windowManager) {
-  if (typeof window !== "undefined" && typeof window.createMarsJavaStyleHelpSystem === "function") {
-    return window.createMarsJavaStyleHelpSystem(refs, messagesPane, windowManager);
-  }
-  const desktop = refs.windows.desktop;
-  const renderArticle = (title, body) => `
-    <article class="help-article">
-      <h2>${escapeHtml(translateText(title))}</h2>
-      ${body}
-    </article>`;
-  const renderParagraph = (message) => `<p>${escapeHtml(translateText(message))}</p>`;
-  const ABOUT_INFO_PAGE_PATH = "./help/info.html";
-  const groups = [
-    {
-      id: "webmars",
-      label: "webMARS",
-      pages: [
-        { id: "info", label: "Info", path: "./help/info.html" },
-        { id: "changelog", label: "Changelog", path: "./help/changelog.html" }
-      ]
-    },
-    {
-      id: "mips",
-      label: "MIPS",
-      pages: [
-        {
-          id: "basic",
-          label: "Basic Instructions",
-          renderHtml: () => renderArticle("Basic Instructions", [
-            renderParagraph("The web runtime follows the Java MARS 4.5 core for basic MIPS instruction execution."),
-            renderParagraph("Use the official references below for canonical syntax and behavior details."),
-            `<ul>
-              <li><a href="./help/mipsref.pdf" target="_blank" rel="noopener noreferrer">${escapeHtml(translateText("Open mipsref.pdf"))}</a></li>
-              <li>${escapeHtml(translateText("Source of truth in this workspace:"))} <code>mars/mips/instructions/</code>.</li>
-            </ul>`
-          ].join(""))
-        },
-        {
-          id: "extended",
-          label: "Extended (pseudo) Instructions",
-          renderHtml: () => renderArticle("Extended (Pseudo) Instructions", [
-            `<p>${escapeHtml(translateText("Pseudo-instruction expansion follows"))} <code>PseudoOps.txt</code> ${escapeHtml(translateText("from Java MARS 4.5."))}</p>`,
-            renderParagraph("Macro expansion and pseudo-op lowering are applied before assembly, matching the Java workflow.")
-          ].join(""))
-        },
-        {
-          id: "directives",
-          label: "Directives",
-          renderHtml: () => renderArticle("Directives", [
-            renderParagraph("The assembler supports the MARS directive set used in normal workflows, including data directives, macros and includes."),
-            `<p>${escapeHtml(translateText("See"))} <code>mars/assembler</code> ${escapeHtml(translateText("and bundled help pages for directive-specific semantics."))}</p>`
-          ].join(""))
-        },
-        { id: "syscalls", label: "Syscalls", path: "./help/SyscallHelp.html" },
-        { id: "exceptions", label: "Exceptions", path: "./help/ExceptionsHelp.html" },
-        { id: "macros", label: "Macros", path: "./help/MacrosHelp.html" }
-      ]
-    },
-    {
-      id: "mars",
-      label: "MARS",
-      pages: [
-        { id: "intro", label: "Intro", path: "./help/MarsHelpIntro.html" },
-        { id: "ide", label: "IDE", path: "./help/MarsHelpIDE.html" },
-        { id: "debugging", label: "Debugging", path: "./help/MarsHelpDebugging.html" },
-        { id: "settings", label: "Settings", path: "./help/MarsHelpSettings.html" },
-        { id: "tools", label: "Tools", path: "./help/MarsHelpTools.html" },
-        { id: "command", label: "Command", path: "./help/MarsHelpCommand.html" },
-        { id: "limits", label: "Limits", path: "./help/MarsHelpLimits.html" },
-        { id: "history", label: "History", path: "./help/MarsHelpHistory.html" }
-      ]
-    },
-    {
-      id: "license",
-      label: "License",
-      pages: [{ id: "main", label: "License", path: "./help/MARSlicense.txt" }]
-    },
-    {
-      id: "bugs",
-      label: "Bugs/Comments",
-      pages: [{ id: "main", label: "Bugs/Comments", path: "./help/BugReportingHelp.html" }]
-    },
-    {
-      id: "ack",
-      label: "Acknowledgements",
-      pages: [{ id: "main", label: "Acknowledgements", path: "./help/Acknowledgements.html" }]
-    },
-    {
-      id: "song",
-      label: "Instruction Set Song",
-      pages: [{ id: "main", label: "Instruction Set Song", path: "./help/MIPSInstructionSetSong.html" }]
-    }
-  ];
-
-  const win = document.createElement("section");
-  win.className = "desktop-window window-hidden tool-window help-window";
-  win.id = "window-help";
-  win.style.left = "110px";
-  win.style.top = "60px";
-  win.style.width = "992px";
-  win.style.height = "732px";
-  win.innerHTML = `
-    <div class="window-titlebar">
-      <span class="window-title" id="help-title">webMARS 0.3 Help</span>
-      <div class="window-controls">
-        <button class="win-btn" data-win-action="min" type="button">_</button>
-        <button class="win-btn" data-win-action="max" type="button">[]</button>
-        <button class="win-btn win-btn-close" data-win-action="close" type="button">x</button>
-      </div>
-    </div>
-    <div class="window-content help-window-content">
-      <div class="help-tab-row" id="help-top-tabs"></div>
-      <div class="help-tab-row help-subtab-row" id="help-sub-tabs"></div>
-      <div class="help-body-wrap">
-        <iframe id="help-frame" class="help-frame" title="MARS Help"></iframe>
-        <div id="help-inline" class="help-inline hidden"></div>
-      </div>
-      <div class="help-footer">
-        <button id="help-close" class="tool-btn" type="button">Close</button>
-      </div>
-    </div>
-  `;
-
-  desktop.appendChild(win);
-  windowManager.registerWindow(win);
-
-  const aboutWin = document.createElement("section");
-  aboutWin.className = "desktop-window window-hidden tool-window about-window";
-  aboutWin.id = "window-help-about";
-  aboutWin.style.left = "180px";
-  aboutWin.style.top = "120px";
-  aboutWin.style.width = "760px";
-  aboutWin.style.height = "420px";
-  aboutWin.innerHTML = `
-    <div class="window-titlebar">
-      <span class="window-title">About webMARS</span>
-      <div class="window-controls">
-        <button class="win-btn" data-win-action="min" type="button">_</button>
-        <button class="win-btn" data-win-action="max" type="button">[]</button>
-        <button class="win-btn win-btn-close" data-win-action="close" type="button">x</button>
-      </div>
-    </div>
-    <div class="window-content about-window-content">
-      <div class="about-brand">
-        <iframe id="about-frame" class="help-frame" title="About webMARS"></iframe>
-      </div>
-      <div class="about-actions">
-        <button id="help-about-close" class="tool-btn" type="button">Close</button>
-      </div>
-    </div>
-  `;
-  desktop.appendChild(aboutWin);
-  windowManager.registerWindow(aboutWin);
-  const docWin = document.createElement("section");
-  docWin.className = "desktop-window window-hidden tool-window help-window";
-  docWin.id = "window-help-doc";
-  docWin.style.left = "140px";
-  docWin.style.top = "90px";
-  docWin.style.width = "980px";
-  docWin.style.height = "700px";
-  docWin.innerHTML = `
-    <div class="window-titlebar">
-      <span class="window-title" id="help-doc-title">Help Document</span>
-      <div class="window-controls">
-        <button class="win-btn" data-win-action="min" type="button">_</button>
-        <button class="win-btn" data-win-action="max" type="button">[]</button>
-        <button class="win-btn win-btn-close" data-win-action="close" type="button">x</button>
-      </div>
-    </div>
-    <div class="window-content help-window-content">
-      <div class="help-body-wrap">
-        <iframe id="help-doc-frame" class="help-frame" title="Help Document"></iframe>
-      </div>
-      <div class="help-footer">
-        <button id="help-doc-close" class="tool-btn" type="button">Close</button>
-      </div>
-    </div>
-  `;
-  desktop.appendChild(docWin);
-  windowManager.registerWindow(docWin);
-  const refreshHelpWindowTranslations = translateStaticTree(win);
-  const refreshAboutWindowTranslations = translateStaticTree(aboutWin);
-  const refreshDocumentWindowTranslations = translateStaticTree(docWin);
-
-  const titleNode = win.querySelector("#help-title");
-  const closeButton = win.querySelector("#help-close");
-  const topTabsNode = win.querySelector("#help-top-tabs");
-  const subTabsNode = win.querySelector("#help-sub-tabs");
-  const frame = win.querySelector("#help-frame");
-  const inlineNode = win.querySelector("#help-inline");
-  const titleCloseButton = win.querySelector('[data-win-action="close"]');
-  const aboutFrameNode = aboutWin.querySelector("#about-frame");
-  const aboutCloseButton = aboutWin.querySelector("#help-about-close");
-  const docTitleNode = docWin.querySelector("#help-doc-title");
-  const docFrame = docWin.querySelector("#help-doc-frame");
-  const docCloseButton = docWin.querySelector("#help-doc-close");
-  const docTitleCloseButton = docWin.querySelector('[data-win-action="close"]');
-
-  let activeGroupId = "webmars";
-  let activePageId = "info";
-  let currentDocumentTitle = "Help Document";
-  let currentLoadToken = 0;
-
-  const getGroup = (groupId) => groups.find((group) => group.id === groupId) || groups[0];
-  const getPage = (group, pageId) => group.pages.find((page) => page.id === pageId) || group.pages[0];
-  const updateTitle = (group, page) => {
-    titleNode.textContent = translateText("webMARS 0.3 [{groupLabel} / {pageLabel}]", {
-      groupLabel: translateText(group.label),
-      pageLabel: translateText(page.label)
-    });
-  };
-
-  function cleanupView() {
-    frame.src = "about:blank";
-    inlineNode.innerHTML = "";
-    inlineNode.classList.add("hidden");
-    frame.classList.remove("hidden");
-  }
-
-  function closeWindow() {
-    cleanupView();
-    windowManager.hide(win.id);
-  }
-
-  function closeDocWindow() {
-    docFrame.src = "about:blank";
-    windowManager.hide(docWin.id);
-  }
-
-  function loadAboutWindow() {
-    if (!(aboutFrameNode instanceof HTMLIFrameElement)) return;
-    aboutFrameNode.src = "about:blank";
-    aboutFrameNode.src = ABOUT_INFO_PAGE_PATH;
-  }
-
-  function renderTopTabs() {
-    topTabsNode.innerHTML = groups.map((group) => {
-      const active = group.id === activeGroupId ? "active" : "";
-      return `<button type="button" class="help-tab-btn ${active}" data-help-group="${group.id}">${escapeHtml(translateText(group.label))}</button>`;
-    }).join("");
-
-    topTabsNode.querySelectorAll("[data-help-group]").forEach((button) => {
-      button.addEventListener("click", () => {
-        activeGroupId = button.dataset.helpGroup;
-        const group = getGroup(activeGroupId);
-        activePageId = group.pages[0].id;
-        render();
-      });
-    });
-  }
-
-  function renderSubTabs(group) {
-    if (group.pages.length <= 1) {
-      subTabsNode.classList.add("hidden");
-      subTabsNode.innerHTML = "";
-      return;
-    }
-
-    subTabsNode.classList.remove("hidden");
-    subTabsNode.innerHTML = group.pages.map((page) => {
-      const active = page.id === activePageId ? "active" : "";
-      return `<button type="button" class="help-tab-btn ${active}" data-help-page="${page.id}">${escapeHtml(translateText(page.label))}</button>`;
-    }).join("");
-
-    subTabsNode.querySelectorAll("[data-help-page]").forEach((button) => {
-      button.addEventListener("click", () => {
-        activePageId = button.dataset.helpPage;
-        render();
-      });
-    });
-  }
-
-  function loadPage(page, group) {
-    const loadToken = ++currentLoadToken;
-    updateTitle(group, page);
-    if (typeof page.renderHtml === "function") {
-      frame.classList.add("hidden");
-      inlineNode.classList.remove("hidden");
-      inlineNode.innerHTML = page.renderHtml();
-      return;
-    }
-
-    if (typeof page.path === "string" && /\.txt$/i.test(page.path)) {
-      frame.classList.add("hidden");
-      inlineNode.classList.remove("hidden");
-      inlineNode.innerHTML = `<pre class="help-plain">${escapeHtml(translateText("Loading..."))}</pre>`;
-      const loadPlainText = () => fetch(page.path, { cache: "no-store" })
-        .then((response) => {
-          if (!response.ok) throw new Error("HTTP " + response.status);
-          return response.text();
-        })
-        .catch(() => new Promise((resolve, reject) => {
-          const req = new XMLHttpRequest();
-          req.open("GET", page.path, true);
-          req.onload = () => {
-            if (req.status === 0 || (req.status >= 200 && req.status < 300)) {
-              resolve(req.responseText);
-              return;
-            }
-            reject(new Error("HTTP " + req.status));
-          };
-          req.onerror = () => reject(new Error(translateText("Failed to load text resource.")));
-          req.send();
-        }));
-
-      loadPlainText()
-        .then((body) => {
-          if (loadToken !== currentLoadToken) return;
-          inlineNode.innerHTML = `<pre class="help-plain">${escapeHtml(body)}</pre>`;
-        })
-        .catch(() => {
-          if (loadToken !== currentLoadToken) return;
-          inlineNode.innerHTML = `<pre class="help-plain">${escapeHtml(translateText("Failed to load this help page."))}</pre>`;
-          messagesPane.postMars("[error] Failed to load selected help file.\n");
-        });
-      return;
-    }
-
-    inlineNode.classList.add("hidden");
-    inlineNode.innerHTML = "";
-    frame.classList.remove("hidden");
-    frame.src = page.path;
-  }
-  function render() {
-    const group = getGroup(activeGroupId);
-    const page = getPage(group, activePageId);
-    renderTopTabs();
-    renderSubTabs(group);
-    loadPage(page, group);
-  }
-
-  closeButton.addEventListener("click", closeWindow);
-  titleCloseButton?.addEventListener("click", closeWindow);
-  aboutCloseButton?.addEventListener("click", () => windowManager.hide(aboutWin.id));
-  docCloseButton?.addEventListener("click", closeDocWindow);
-  docTitleCloseButton?.addEventListener("click", closeDocWindow);
-  aboutFrameNode?.addEventListener("error", () => {
-    messagesPane.postMars("[error] Failed to load About info page.\n");
-  });
-  docFrame?.addEventListener("error", () => {
-    messagesPane.postMars("[error] Failed to load selected help document.\n");
-  });
-
-  frame.addEventListener("error", () => {
-    messagesPane.postMars("[error] Failed to load selected help file.\n");
-  });
-
-  window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !win.classList.contains("window-hidden")) closeWindow();
-    if (event.key === "Escape" && !aboutWin.classList.contains("window-hidden")) windowManager.hide(aboutWin.id);
-    if (event.key === "Escape" && !docWin.classList.contains("window-hidden")) closeDocWindow();
-  });
-
-  return {
-    open(groupId = "webmars", pageId = "info") {
-      const group = getGroup(groupId);
-      const page = getPage(group, pageId);
-      activeGroupId = group.id;
-      activePageId = page.id;
-      render();
-      windowManager.show(win.id);
-    },
-    openAbout() {
-      loadAboutWindow();
-      windowManager.show(aboutWin.id);
-    },
-    openDocument(path, title = "Help Document") {
-      const safePath = String(path || "").trim();
-      if (!safePath) return;
-      currentDocumentTitle = String(title || "Help Document");
-      docTitleNode.textContent = translateText(currentDocumentTitle);
-      docFrame.src = safePath;
-      windowManager.show(docWin.id);
-    },
-    close: closeWindow,
-    refreshTranslations() {
-      refreshHelpWindowTranslations();
-      refreshAboutWindowTranslations();
-      refreshDocumentWindowTranslations();
-      if (!aboutWin.classList.contains("window-hidden")) loadAboutWindow();
-      if (docTitleNode) docTitleNode.textContent = translateText(currentDocumentTitle || "Help Document");
-      const group = getGroup(activeGroupId);
-      const page = getPage(group, activePageId);
-      renderTopTabs();
-      renderSubTabs(group);
-      updateTitle(group, page);
-      if (!win.classList.contains("window-hidden") && typeof page.renderHtml === "function") {
-        frame.classList.add("hidden");
-        inlineNode.classList.remove("hidden");
-        inlineNode.innerHTML = page.renderHtml();
-      }
-    }
-  };
-}
-
-function createToolManager(engine, messagesPane, windowManager, desktop) {
-  const FALLBACK_TOOLS = [
-    // Only used if tools.json cannot be loaded.
-    { id: "bitmap-display", label: "Bitmap Display", script: "./tools/bitmap-display.js" }
-  ];
-
-  const registry = (() => {
-    const host = window.MarsWebTools || (window.MarsWebTools = {});
-    if (!(host.definitions instanceof Map)) host.definitions = new Map();
-    if (typeof host.register !== "function") {
-      host.register = (definition) => {
-        if (!definition || typeof definition !== "object") return;
-        const id = String(definition.id || "").trim();
-        if (!id) return;
-        host.definitions.set(id, {
-          id,
-          label: definition.label ? String(definition.label) : id,
-          create: typeof definition.create === "function" ? definition.create : null
-        });
-      };
-    }
-    return host;
-  })();
-
-  const instances = new Map();
-  let placementIndex = 0;
-  let loadPromise = null;
-  let toolEntries = [...FALLBACK_TOOLS].sort((a, b) => a.label.localeCompare(b.label));
-
-  function sortTools(entries) {
-    return [...entries].sort((a, b) => a.label.localeCompare(b.label));
-  }
-
-  function upsertEntries(entries) {
-    const map = new Map(toolEntries.map((entry) => [entry.id, entry]));
-    entries.forEach((entry) => {
-      if (!entry?.id || !entry?.label) return;
-      const previous = map.get(entry.id) || {};
-      map.set(entry.id, { ...previous, ...entry });
-    });
-    toolEntries = sortTools([...map.values()]);
-  }
-
-  function nextPlacement() {
-    const step = 28;
-    const offset = placementIndex * step;
-    placementIndex = (placementIndex + 1) % 9;
-    return {
-      left: 70 + offset,
-      top: 54 + offset
-    };
-  }
-
-  function createToolWindowShell(id, title, width, height, html) {
-    const pos = nextPlacement();
-    const win = document.createElement("section");
-    win.className = "desktop-window window-hidden tool-window";
-    win.id = `window-tool-${id}`;
-    win.dataset.toolId = id;
-    win.style.left = `${pos.left}px`;
-    win.style.top = `${pos.top}px`;
-    win.style.width = `${width}px`;
-    win.style.height = `${height}px`;
-    win.style.minWidth = `${Math.max(320, Math.min(width, 520))}px`;
-    win.style.minHeight = `${Math.max(220, Math.min(height, 320))}px`;
-    win.innerHTML = `
-      <div class="window-titlebar">
-        <span class="window-title">${escapeHtml(title)}</span>
-        <div class="window-controls">
-          <button class="win-btn" data-win-action="min" type="button">_</button>
-          <button class="win-btn" data-win-action="max" type="button">[]</button>
-          <button class="win-btn win-btn-close" data-win-action="close" type="button">x</button>
-        </div>
-      </div>
-      <div class="window-content">${html}</div>
-    `;
-
-    desktop.appendChild(win);
-    windowManager.registerWindow(win);
-    const refreshWindowTranslations = translateStaticTree(win);
-    const content = win.querySelector(".window-content");
-    const resizeListeners = new Set();
-    let resizeFrame = null;
-
-    const emitResize = () => {
-      resizeFrame = null;
-      const detail = {
-        width: content instanceof HTMLElement ? content.clientWidth : win.clientWidth,
-        height: content instanceof HTMLElement ? content.clientHeight : win.clientHeight,
-        windowWidth: win.clientWidth,
-        windowHeight: win.clientHeight
-      };
-      resizeListeners.forEach((listener) => {
-        try {
-          listener(detail);
-        } catch {
-          // ignore tool resize listener errors
-        }
-      });
-    };
-
-    const scheduleResize = () => {
-      if (resizeFrame !== null) return;
-      resizeFrame = window.requestAnimationFrame(emitResize);
-    };
-
-    if (typeof ResizeObserver === "function") {
-      const observer = new ResizeObserver(() => scheduleResize());
-      observer.observe(win);
-      if (content instanceof HTMLElement) observer.observe(content);
-    }
-
-    const close = () => windowManager.hide(win.id);
-    const open = () => {
-      refreshWindowTranslations();
-      windowManager.show(win.id);
-      scheduleResize();
-    };
-    open.windowRoot = win;
-    close.windowRoot = win;
-    return {
-      root: win,
-      content,
-      close,
-      open,
-      refreshTranslations: refreshWindowTranslations,
-      onResize(listener) {
-        if (typeof listener !== "function") return () => {};
-        resizeListeners.add(listener);
-        scheduleResize();
-        return () => resizeListeners.delete(listener);
-      }
-    };
-  }
-
-  function createPlaceholderTool(label, id) {
-    const shell = createToolWindowShell(id, label, 620, 330, `
-      <div class="tool-placeholder">
-        <h3>${escapeHtml(label)}</h3>
-        <p>This tool is detected from Java MARS sources and already wired in the web menu.</p>
-        <p>Its full behavior and rendering are pending implementation in the JS runtime migration.</p>
-      </div>
-    `);
-
-    return {
-      open: shell.open,
-      close: shell.close,
-      onSnapshot() {}
-    };
-  }
-
-  async function loadText(path) {
-    try {
-      const response = await fetch(path, { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return await response.text();
-    } catch (fetchError) {
-      return await new Promise((resolve, reject) => {
-        const req = new XMLHttpRequest();
-        req.open("GET", path, true);
-        req.onload = () => {
-          if (req.status === 0 || (req.status >= 200 && req.status < 300)) {
-            resolve(req.responseText);
-            return;
-          }
-          reject(new Error(`HTTP ${req.status}`));
-        };
-        req.onerror = () => reject(fetchError instanceof Error ? fetchError : new Error(translateText("Failed to load file.")));
-        req.send();
-      });
-    }
-  }
-
-  function loadScript(path) {
-    return new Promise((resolve) => {
-      if (!path) {
-        resolve(false);
-        return;
-      }
-      const escapedPath = window.CSS && typeof window.CSS.escape === "function"
-        ? window.CSS.escape(path)
-        : String(path).replace(/["\\]/g, "\\$&");
-      const selector = `script[data-mars-tool-script="${escapedPath}"]`;
-      if (document.querySelector(selector)) {
-        resolve(true);
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.src = path;
-      script.async = true;
-      script.dataset.marsToolScript = path;
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.head.appendChild(script);
-    });
-  }
-
-  function normalizeManifestTool(raw) {
-    if (!raw || typeof raw !== "object") return null;
-    const id = String(raw.id || "").trim();
-    const label = String(raw.label || "").trim();
-    const script = raw.script ? String(raw.script).trim() : "";
-    if (!id || !label) return null;
-    return { id, label, script };
-  }
-
-  async function loadManifestAndScripts() {
-    let manifestTools = FALLBACK_TOOLS;
-    try {
-      const text = await loadText("./tools/tools.json");
-      const parsed = JSON.parse(text.replace(/^\uFEFF/, ""));
-      const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.tools) ? parsed.tools : [];
-      const normalized = list.map(normalizeManifestTool).filter(Boolean);
-      if (normalized.length) manifestTools = normalized;
-    } catch {
-      // Fall back to built-in definitions.
-    }
-
-    upsertEntries(manifestTools);
-
-    for (const tool of manifestTools) {
-      if (!tool.script) continue;
-      await loadScript(tool.script);
-      const plugin = registry.definitions.get(tool.id);
-      if (plugin) {
-        upsertEntries([{ ...tool, label: plugin.label || tool.label, factory: plugin.create }]);
-      }
-    }
-
-    registry.definitions.forEach((plugin, id) => {
-      if (!toolEntries.some((entry) => entry.id === id)) {
-        upsertEntries([{ id, label: plugin.label || id, factory: plugin.create, script: "" }]);
-      }
-    });
-  }
-
-  function ensureLoaded() {
-    if (!loadPromise) {
-      loadPromise = loadManifestAndScripts();
-    }
-    return loadPromise;
-  }
-
-  ensureLoaded();
-
-  function createToolInstance(definition) {
-    if (typeof definition.factory === "function") {
-      try {
-        const instance = definition.factory({
-          id: definition.id,
-          label: definition.label,
-          engine,
-          messagesPane,
-          windowManager,
-          desktop,
-          escapeHtml,
-          defaultMemoryMap: DEFAULT_MEMORY_MAP,
-          createToolWindowShell,
-          createPlaceholderTool,
-          nextPlacement
-        });
-
-        if (instance && typeof instance.open === "function") {
-          const windowRoot = instance.root instanceof HTMLElement
-            ? instance.root
-            : (instance.open?.windowRoot instanceof HTMLElement
-              ? instance.open.windowRoot
-              : (instance.close?.windowRoot instanceof HTMLElement ? instance.close.windowRoot : null));
-          return {
-            open: instance.open,
-            close: typeof instance.close === "function" ? instance.close : () => {},
-            onSnapshot: typeof instance.onSnapshot === "function" ? instance.onSnapshot : () => {},
-            windowRoot
-          };
-        }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        messagesPane.postMars(`${translateText("[error] Tool '{label}' failed to initialize: {message}", {
-          label: definition.label,
-          message
-        })}\n`);
-      }
-    }
-
-    return createPlaceholderTool(definition.label, definition.id);
-  }
-
-  function ensureToolInstance(toolId) {
-    if (instances.has(toolId)) return instances.get(toolId);
-    const definition = toolEntries.find((tool) => tool.id === toolId);
-    if (!definition) return null;
-    const instance = createToolInstance(definition);
-    instances.set(toolId, instance);
-    return instance;
-  }
-
-  return {
-    getTools() {
-      return toolEntries.map(({ id, label }) => ({ id, label }));
-    },
-    open(toolId) {
-      void ensureLoaded().finally(() => {
-        const tool = ensureToolInstance(toolId);
-        if (!tool) {
-          messagesPane.postMars(`${translateText("[warn] Tool '{toolId}' not found.", { toolId })}\n`);
-          return;
-        }
-        tool.open();
-      });
-    },
-    onSnapshot(snapshot) {
-      instances.forEach((tool) => {
-        if (tool.windowRoot instanceof HTMLElement && tool.windowRoot.classList.contains("window-hidden")) return;
-        if (typeof tool.onSnapshot === "function") tool.onSnapshot(snapshot);
-      });
-    },
-    closeAll() {
-      instances.forEach((tool) => {
-        if (typeof tool.close === "function") tool.close();
-      });
-    }
-  };
-}
-function createMenuSystem(refs, handlers, getState, toolManager) {
-  const popup = document.createElement("div");
-  popup.className = "menu-popup hidden";
-  document.body.appendChild(popup);
-
-  const submenuPopup = document.createElement("div");
-  submenuPopup.className = "menu-popup menu-sub-popup hidden";
-  document.body.appendChild(submenuPopup);
-
-  const submenuPopupLevel2 = document.createElement("div");
-  submenuPopupLevel2.className = "menu-popup menu-sub-popup hidden";
-  document.body.appendChild(submenuPopupLevel2);
-
-  const definitions = () => {
-    const examples = typeof handlers.getExampleMenuItems === "function" ? handlers.getExampleMenuItems() : [];
-    const exampleItems = examples.length ? examples : [{ label: "(no examples)", enabled: () => false }];
-    return {
-      File: [
-        { label: "New", command: "newFile", shortcut: "Ctrl+N" },
-        { label: "Open from Disk...", command: "openFileFromDisk", shortcut: "Ctrl+O" },
-        { label: "Open from Browser Storage...", command: "openFileFromBrowserStorage" },
-        "-",
-        { label: "Close", command: "closeFile", shortcut: "Ctrl+W" },
-        { label: "Close All", command: "closeAllFiles" },
-        "-",
-        { label: "Download", command: "saveFileToDisk", shortcut: "Ctrl+S" },
-        { label: "Download As...", command: "saveFileToDiskAs", shortcut: "Ctrl+Shift+S" },
-        { label: "Save to Browser Storage", command: "saveFileToBrowserStorage" },
-        { label: "Save to Browser Storage As...", command: "saveFileToBrowserStorageAs" },
-        "-",
-        { label: "Examples", submenu: exampleItems },
-        "-",
-        { label: "Dump Run I/O", command: "dumpRunIo" }
-      ],
-      Edit: [
-        { label: "Undo", command: "undo", shortcut: "Ctrl+Z" },
-        { label: "Redo", command: "redo", shortcut: "Ctrl+Y" },
-        "-",
-        { label: "Cut", command: "cut", shortcut: "Ctrl+X" },
-        { label: "Copy", command: "copy", shortcut: "Ctrl+C" },
-        { label: "Paste", command: "paste", shortcut: "Ctrl+V" },
-        { label: "Find", command: "find", shortcut: "Ctrl+F" },
-        { label: "Select All", command: "selectAll", shortcut: "Ctrl+A" }
-      ],
-      Run: [
-        { label: "Assemble", command: "assemble", shortcut: "F3" },
-        { label: "Go", command: "go", shortcut: "F5" },
-        { label: "Pause", command: "pause" },
-        { label: "Stop", command: "stop" },
-        { label: "Step", command: "step", shortcut: "F7" },
-        { label: "Backstep", command: "backstep" },
-        { label: "Reset", command: "reset" }
-      ],
-      Settings: [
-        { label: "Show Labels Window (symbol table)", command: "toggleShowLabelsWindow", check: (st) => st.preferences.showLabelsWindow },
-        { label: "Program arguments provided to MIPS program", command: "toggleProgramArguments", check: (st) => st.preferences.programArguments },
-        { label: "Popup dialog for input syscalls", command: "togglePopupSyscallInput", check: (st) => st.preferences.popupSyscallInput },
-        { label: "Addresses displayed in hexadecimal", command: "toggleAddressDisplayBase", check: (st) => st.preferences.displayAddressesHex },
-        { label: "Values displayed in hexadecimal", command: "toggleValueDisplayBase", check: (st) => st.preferences.displayValuesHex },
-        "-",
-        { label: "Assemble file upon opening", command: "toggleAssembleOnOpen", check: (st) => st.preferences.assembleOnOpen },
-        { label: "Assemble all files in directory", command: "toggleAssembleAll", check: (st) => st.preferences.assembleAll },
-        { label: "Assembler warnings are considered errors", command: "toggleWarningsAreErrors", check: (st) => st.preferences.warningsAreErrors },
-        { label: "Initialize Program Counter to global 'main' if defined", command: "toggleStartAtMain", check: (st) => st.preferences.startAtMain },
-        { label: "Permit extended (pseudo) instructions and formats", command: "toggleExtendedAssembler", check: (st) => st.preferences.extendedAssembler },
-        { label: "Delayed branching", command: "toggleDelayedBranching", check: (st) => st.preferences.delayedBranching },
-        { label: "Self-modifying code", command: "toggleSelfModifyingCode", check: (st) => st.preferences.selfModifyingCode },
-        "-",
-        { label: "Interface...", command: "showInterfacePreferences" },
-        { label: "Runtime & Memory...", command: "showRuntimeMemoryPreferences" }
-      ],
-      Tools: toolManager.getTools().map((tool) => ({
-        label: tool.label,
-        command: () => handlers.openTool(tool.id)
-      })),
-      Help: [
-        { label: "Help", command: "helpHub", shortcut: "F1" },
-        "-",
-        { label: "About ...", command: "helpAbout" }
-      ]
-    };
-  };
-
-  let activeMenu = null;
-
-  function hideDeepSubmenu() {
-    submenuPopupLevel2.classList.add("hidden");
-    submenuPopupLevel2.innerHTML = "";
-  }
-
-  function hideSubmenu() {
-    hideDeepSubmenu();
-    submenuPopup.classList.add("hidden");
-    submenuPopup.innerHTML = "";
-  }
-
-  function hide() {
-    hideSubmenu();
-    popup.classList.add("hidden");
-    popup.innerHTML = "";
-    refs.root.querySelectorAll(".menu-item").forEach((button) => button.classList.remove("active"));
-    activeMenu = null;
-  }
-
-  function run(command) {
-    if (typeof command === "function") command();
-    else if (typeof handlers[command] === "function") handlers[command]();
-    hide();
-  }
-
-  function renderRows(target, items, state) {
-    const inSubmenu = target === submenuPopup || target === submenuPopupLevel2;
-    target.innerHTML = "";
-    items.forEach((item) => {
-      if (item === "-") {
-        const sep = document.createElement("div");
-        sep.className = "menu-separator";
-        target.appendChild(sep);
-        return;
-      }
-
-      const row = document.createElement("button");
-      row.type = "button";
-      const hasSubmenu = Array.isArray(item.submenu) && item.submenu.length > 0;
-      row.className = `menu-row${hasSubmenu ? " has-submenu" : ""}`;
-
-      const checked = typeof item.check === "function" ? item.check(state) : false;
-      const enabled = typeof item.enabled === "function" ? item.enabled(state) : true;
-      row.innerHTML = `<span class="menu-check">${checked ? "&#10003;" : ""}</span><span>${escapeHtml(translateText(item.label))}</span><span class="menu-shortcut">${escapeHtml(item.shortcut ?? "")}</span><span class="menu-arrow">${hasSubmenu ? "&#9654;" : ""}</span>`;
-
-      if (!enabled) {
-        row.classList.add("disabled");
-        row.disabled = true;
-        target.appendChild(row);
-        return;
-      }
-
-      if (hasSubmenu) {
-        const submenuItems = item.submenu;
-        const childPopup = target === submenuPopup ? submenuPopupLevel2 : submenuPopup;
-        const openSubmenu = () => {
-          if (childPopup === submenuPopup) hideDeepSubmenu();
-          renderRows(childPopup, submenuItems, state);
-          const rowRect = row.getBoundingClientRect();
-          childPopup.style.left = `${Math.round(rowRect.right - 2)}px`;
-          childPopup.style.top = `${Math.round(rowRect.top)}px`;
-          childPopup.classList.remove("hidden");
-
-          const subRect = childPopup.getBoundingClientRect();
-          if (subRect.right > window.innerWidth - 4) {
-            childPopup.style.left = `${Math.max(4, Math.round(rowRect.left - subRect.width + 2))}px`;
-          }
-          if (subRect.bottom > window.innerHeight - 4) {
-            childPopup.style.top = `${Math.max(4, Math.round(window.innerHeight - subRect.height - 4))}px`;
-          }
-        };
-
-        row.addEventListener("mouseenter", openSubmenu);
-        row.addEventListener("click", (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          openSubmenu();
-        });
-      } else {
-        if (!inSubmenu) row.addEventListener("mouseenter", hideSubmenu);
-        else if (target === submenuPopup) row.addEventListener("mouseenter", hideDeepSubmenu);
-        row.addEventListener("click", () => run(item.command));
-      }
-
-      target.appendChild(row);
-    });
-  }
-
-  function open(menuName, anchor) {
-    const menuMap = definitions();
-    const items = menuMap[menuName];
-    if (!items) return;
-
-    hideSubmenu();
-    const state = getState();
-    renderRows(popup, items, state);
-
-    const rect = anchor.getBoundingClientRect();
-    popup.style.left = `${Math.round(rect.left)}px`;
-    popup.style.top = `${Math.round(rect.bottom + 2)}px`;
-    popup.classList.remove("hidden");
-
-    const popupRect = popup.getBoundingClientRect();
-    if (popupRect.right > window.innerWidth - 4) {
-      popup.style.left = `${Math.max(4, Math.round(window.innerWidth - popupRect.width - 4))}px`;
-    }
-
-    refs.root.querySelectorAll(".menu-item").forEach((button) => {
-      button.classList.toggle("active", button === anchor);
-    });
-
-    activeMenu = menuName;
-  }
-
-  popup.addEventListener("mouseleave", (event) => {
-    const related = event.relatedTarget;
-    if (related instanceof Node && (submenuPopup.contains(related) || submenuPopupLevel2.contains(related))) return;
-    hideSubmenu();
-  });
-
-  submenuPopup.addEventListener("mouseleave", (event) => {
-    const related = event.relatedTarget;
-    if (related instanceof Node && (popup.contains(related) || submenuPopupLevel2.contains(related))) return;
-    hideSubmenu();
-  });
-
-  submenuPopupLevel2.addEventListener("mouseleave", (event) => {
-    const related = event.relatedTarget;
-    if (related instanceof Node && submenuPopup.contains(related)) return;
-    hideDeepSubmenu();
-  });
-
-  refs.root.querySelectorAll(".menu-item").forEach((button) => {
-    button.addEventListener("click", () => {
-      const menuName = button.dataset.menu || button.textContent.trim();
-      if (menuName === activeMenu) {
-        hide();
-        return;
-      }
-      open(menuName, button);
-    });
-  });
-
-  document.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    if (target.closest(".menu-item") || target.closest(".menu-popup")) return;
-    hide();
-  });
-
-  window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") hide();
-  });
-
-  return { hide };
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function translateStaticTree(root) {
-  if (!root || typeof document === "undefined") return () => {};
-  const textNodes = [];
-  const attributes = [];
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  let node = walker.nextNode();
-  while (node) {
-    const original = node.nodeValue;
-    if (original && original.trim()) {
-      const parentTag = node.parentElement?.tagName || "";
-      if (parentTag !== "SCRIPT" && parentTag !== "STYLE") {
-        textNodes.push({ node, key: original });
-      }
-    }
-    node = walker.nextNode();
-  }
-
-  root.querySelectorAll("[title],[aria-label],[placeholder]").forEach((element) => {
-    ["title", "aria-label", "placeholder"].forEach((attribute) => {
-      if (!element.hasAttribute(attribute)) return;
-      const value = element.getAttribute(attribute);
-      if (!value || !value.trim()) return;
-      attributes.push({ element, attribute, key: value });
-    });
-  });
-
-  const refresh = () => {
-    textNodes.forEach((entry) => {
-      if (!entry.node?.isConnected) return;
-      entry.node.nodeValue = translateText(entry.key);
-    });
-
-    attributes.forEach((entry) => {
-      if (!entry.element?.isConnected) return;
-      entry.element.setAttribute(entry.attribute, translateText(entry.key));
-    });
-  };
-
-  refresh();
-  return refresh;
-}

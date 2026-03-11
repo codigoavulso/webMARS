@@ -201,6 +201,37 @@ function buildBrowserSuiteSource() {
       };
     });
 
+    addCase("strict_mode_rejects_segment_overflow", async () => {
+      const engine = await createEngineWithWarmup("wasm", {
+        settings: { strictMarsCompatibility: true }
+      });
+      const assembled = engine.assemble(".data\nbig: .space 5000000\n.text\nmain:\nli $v0, 10\nsyscall\n", {
+        sourceName: "strict-overflow.s"
+      });
+      assert(assembled.ok === false, "Strict mode should reject data segment overflow.");
+      const messages = JSON.stringify(assembled.errors || []);
+      assert(/strict mars|segment limit/i.test(messages), "Expected strict mode segment limit error.");
+      const backend = engine.getBackendInfo ? engine.getBackendInfo() : null;
+      assert(backend && backend.native === false, "Strict mode should disable native execution path.");
+      return {
+        backend,
+        errors: assembled.errors
+      };
+    });
+
+    addCase("set_directive_is_ignored_with_warning", async () => {
+      const engine = await createEngineWithWarmup("wasm");
+      const assembled = engine.assemble(".set noreorder\n.text\nmain:\nli $v0, 10\nsyscall\n", {
+        sourceName: "set-directive.s"
+      });
+      assert(assembled.ok === true, ".set directive should not fail assembly in MARS-compatible mode.");
+      const warningsText = JSON.stringify(assembled.warnings || []);
+      assert(/ignores the \.set directive/i.test(warningsText), "Expected .set ignored warning.");
+      return {
+        warnings: assembled.warnings || []
+      };
+    });
+
     addCase("circular_include_rejected_safely", async () => {
       const engine = await createEngineWithWarmup("wasm");
       const result = engine.assemble('.include "a.inc"\n.text\nmain:\nli $v0, 10\nsyscall\n', {

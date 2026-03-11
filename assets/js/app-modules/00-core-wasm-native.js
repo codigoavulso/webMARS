@@ -129,11 +129,18 @@
     }
 
     getBackendInfo() {
+      const strict = this.isStrictCompatibilityEnabled();
       return {
         backend: "wasm",
-        backendName: this.nativeSynchronized ? "wasm-cpp-native" : "wasm-cpp-hybrid",
-        native: this.nativeSynchronized
+        backendName: strict
+          ? "wasm-cpp-hybrid-strict-js"
+          : (this.nativeSynchronized ? "wasm-cpp-native" : "wasm-cpp-hybrid"),
+        native: strict ? false : this.nativeSynchronized
       };
+    }
+
+    isStrictCompatibilityEnabled() {
+      return this.settings?.strictMarsCompatibility === true;
     }
 
     whenReady() {
@@ -168,6 +175,7 @@
     }
 
     ensureNativeSync() {
+      if (this.isStrictCompatibilityEnabled()) return false;
       if (!this.nativeEngine) return false;
       if (this.nativeSynchronized) return true;
       const snapshot = this.helper.getSnapshot({
@@ -253,7 +261,7 @@
         });
       }
 
-      if (this.nativeEngine && typeof this.nativeEngine.assemble === "function") {
+      if (!this.isStrictCompatibilityEnabled() && this.nativeEngine && typeof this.nativeEngine.assemble === "function") {
         const nativeResult = this.nativeEngine.assemble(String(source ?? ""), {
           sourceName: options.sourceName || this.helper?.activeSourceName || this.helper?.defaultSourceName || "main.s",
           includeFiles,
@@ -289,9 +297,10 @@
         this.markNativeStale(true);
         return result;
       }
-      if (this.nativeEngine) {
+      const strictMode = this.isStrictCompatibilityEnabled();
+      if (this.nativeEngine && !strictMode) {
         this.syncNativeFromHelper(true);
-      } else {
+      } else if (!strictMode) {
         void this.whenReady().then(() => this.syncNativeFromHelper(true));
       }
       return {

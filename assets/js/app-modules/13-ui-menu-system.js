@@ -1,0 +1,297 @@
+function createMenuSystem(refs, handlers, getState, toolManager) {
+  const popup = document.createElement("div");
+  popup.className = "menu-popup hidden";
+  document.body.appendChild(popup);
+
+  const submenuPopup = document.createElement("div");
+  submenuPopup.className = "menu-popup menu-sub-popup hidden";
+  document.body.appendChild(submenuPopup);
+
+  const submenuPopupLevel2 = document.createElement("div");
+  submenuPopupLevel2.className = "menu-popup menu-sub-popup hidden";
+  document.body.appendChild(submenuPopupLevel2);
+
+  const definitions = () => {
+    const examples = typeof handlers.getExampleMenuItems === "function" ? handlers.getExampleMenuItems() : [];
+    const exampleItems = examples.length ? examples : [{ label: "(no examples)", enabled: () => false }];
+    return {
+      File: [
+        { label: "New", command: "newFile", shortcut: "Ctrl+N" },
+        { label: "Open from Disk...", command: "openFileFromDisk", shortcut: "Ctrl+O" },
+        { label: "Open from Browser Storage...", command: "openFileFromBrowserStorage" },
+        "-",
+        { label: "Close", command: "closeFile", shortcut: "Ctrl+W" },
+        { label: "Close All", command: "closeAllFiles" },
+        "-",
+        { label: "Download", command: "saveFileToDisk", shortcut: "Ctrl+S" },
+        { label: "Download As...", command: "saveFileToDiskAs", shortcut: "Ctrl+Shift+S" },
+        { label: "Save to Browser Storage", command: "saveFileToBrowserStorage" },
+        { label: "Save to Browser Storage As...", command: "saveFileToBrowserStorageAs" },
+        "-",
+        { label: "Examples", submenu: exampleItems },
+        "-",
+        { label: "Dump Run I/O", command: "dumpRunIo" }
+      ],
+      Edit: [
+        { label: "Undo", command: "undo", shortcut: "Ctrl+Z" },
+        { label: "Redo", command: "redo", shortcut: "Ctrl+Y" },
+        "-",
+        { label: "Cut", command: "cut", shortcut: "Ctrl+X" },
+        { label: "Copy", command: "copy", shortcut: "Ctrl+C" },
+        { label: "Paste", command: "paste", shortcut: "Ctrl+V" },
+        { label: "Find", command: "find", shortcut: "Ctrl+F" },
+        { label: "Select All", command: "selectAll", shortcut: "Ctrl+A" }
+      ],
+      Run: [
+        { label: "Assemble", command: "assemble", shortcut: "F3" },
+        { label: "Go", command: "go", shortcut: "F5" },
+        { label: "Pause", command: "pause" },
+        { label: "Stop", command: "stop" },
+        { label: "Step", command: "step", shortcut: "F7" },
+        { label: "Backstep", command: "backstep" },
+        { label: "Reset", command: "reset" }
+      ],
+      Settings: [
+        { label: "Show Labels Window (symbol table)", command: "toggleShowLabelsWindow", check: (st) => st.preferences.showLabelsWindow },
+        { label: "Program arguments provided to MIPS program", command: "toggleProgramArguments", check: (st) => st.preferences.programArguments },
+        { label: "Popup dialog for input syscalls", command: "togglePopupSyscallInput", check: (st) => st.preferences.popupSyscallInput },
+        { label: "Addresses displayed in hexadecimal", command: "toggleAddressDisplayBase", check: (st) => st.preferences.displayAddressesHex },
+        { label: "Values displayed in hexadecimal", command: "toggleValueDisplayBase", check: (st) => st.preferences.displayValuesHex },
+        "-",
+        { label: "Assemble file upon opening", command: "toggleAssembleOnOpen", check: (st) => st.preferences.assembleOnOpen },
+        { label: "Assemble all files in directory", command: "toggleAssembleAll", check: (st) => st.preferences.assembleAll },
+        { label: "Assembler warnings are considered errors", command: "toggleWarningsAreErrors", check: (st) => st.preferences.warningsAreErrors },
+        { label: "Initialize Program Counter to global 'main' if defined", command: "toggleStartAtMain", check: (st) => st.preferences.startAtMain },
+        { label: "Permit extended (pseudo) instructions and formats", command: "toggleExtendedAssembler", check: (st) => st.preferences.extendedAssembler },
+        { label: "Delayed branching", command: "toggleDelayedBranching", check: (st) => st.preferences.delayedBranching },
+        { label: "Strict MARS 4.5 compatibility mode", command: "toggleStrictMarsCompatibility", check: (st) => st.preferences.strictMarsCompatibility },
+        { label: "Self-modifying code", command: "toggleSelfModifyingCode", check: (st) => st.preferences.selfModifyingCode },
+        "-",
+        { label: "Interface...", command: "showInterfacePreferences" },
+        { label: "Runtime & Memory...", command: "showRuntimeMemoryPreferences" }
+      ],
+      Tools: toolManager.getTools().map((tool) => ({
+        label: tool.label,
+        command: () => handlers.openTool(tool.id)
+      })),
+      Help: [
+        { label: "Help", command: "helpHub", shortcut: "F1" },
+        "-",
+        { label: "About ...", command: "helpAbout" }
+      ]
+    };
+  };
+
+  let activeMenu = null;
+
+  function hideDeepSubmenu() {
+    submenuPopupLevel2.classList.add("hidden");
+    submenuPopupLevel2.innerHTML = "";
+  }
+
+  function hideSubmenu() {
+    hideDeepSubmenu();
+    submenuPopup.classList.add("hidden");
+    submenuPopup.innerHTML = "";
+  }
+
+  function hide() {
+    hideSubmenu();
+    popup.classList.add("hidden");
+    popup.innerHTML = "";
+    refs.root.querySelectorAll(".menu-item").forEach((button) => button.classList.remove("active"));
+    activeMenu = null;
+  }
+
+  function run(command) {
+    if (typeof command === "function") command();
+    else if (typeof handlers[command] === "function") handlers[command]();
+    hide();
+  }
+
+  function renderRows(target, items, state) {
+    const inSubmenu = target === submenuPopup || target === submenuPopupLevel2;
+    target.innerHTML = "";
+    items.forEach((item) => {
+      if (item === "-") {
+        const sep = document.createElement("div");
+        sep.className = "menu-separator";
+        target.appendChild(sep);
+        return;
+      }
+
+      const row = document.createElement("button");
+      row.type = "button";
+      const hasSubmenu = Array.isArray(item.submenu) && item.submenu.length > 0;
+      row.className = `menu-row${hasSubmenu ? " has-submenu" : ""}`;
+
+      const checked = typeof item.check === "function" ? item.check(state) : false;
+      const enabled = typeof item.enabled === "function" ? item.enabled(state) : true;
+      row.innerHTML = `<span class="menu-check">${checked ? "&#10003;" : ""}</span><span>${escapeHtml(translateText(item.label))}</span><span class="menu-shortcut">${escapeHtml(item.shortcut ?? "")}</span><span class="menu-arrow">${hasSubmenu ? "&#9654;" : ""}</span>`;
+
+      if (!enabled) {
+        row.classList.add("disabled");
+        row.disabled = true;
+        target.appendChild(row);
+        return;
+      }
+
+      if (hasSubmenu) {
+        const submenuItems = item.submenu;
+        const childPopup = target === submenuPopup ? submenuPopupLevel2 : submenuPopup;
+        const openSubmenu = () => {
+          if (childPopup === submenuPopup) hideDeepSubmenu();
+          renderRows(childPopup, submenuItems, state);
+          const rowRect = row.getBoundingClientRect();
+          childPopup.style.left = `${Math.round(rowRect.right - 2)}px`;
+          childPopup.style.top = `${Math.round(rowRect.top)}px`;
+          childPopup.classList.remove("hidden");
+
+          const subRect = childPopup.getBoundingClientRect();
+          if (subRect.right > window.innerWidth - 4) {
+            childPopup.style.left = `${Math.max(4, Math.round(rowRect.left - subRect.width + 2))}px`;
+          }
+          if (subRect.bottom > window.innerHeight - 4) {
+            childPopup.style.top = `${Math.max(4, Math.round(window.innerHeight - subRect.height - 4))}px`;
+          }
+        };
+
+        row.addEventListener("mouseenter", openSubmenu);
+        row.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          openSubmenu();
+        });
+      } else {
+        if (!inSubmenu) row.addEventListener("mouseenter", hideSubmenu);
+        else if (target === submenuPopup) row.addEventListener("mouseenter", hideDeepSubmenu);
+        row.addEventListener("click", () => run(item.command));
+      }
+
+      target.appendChild(row);
+    });
+  }
+
+  function open(menuName, anchor) {
+    const menuMap = definitions();
+    const items = menuMap[menuName];
+    if (!items) return;
+
+    hideSubmenu();
+    const state = getState();
+    renderRows(popup, items, state);
+
+    const rect = anchor.getBoundingClientRect();
+    popup.style.left = `${Math.round(rect.left)}px`;
+    popup.style.top = `${Math.round(rect.bottom + 2)}px`;
+    popup.classList.remove("hidden");
+
+    const popupRect = popup.getBoundingClientRect();
+    if (popupRect.right > window.innerWidth - 4) {
+      popup.style.left = `${Math.max(4, Math.round(window.innerWidth - popupRect.width - 4))}px`;
+    }
+
+    refs.root.querySelectorAll(".menu-item").forEach((button) => {
+      button.classList.toggle("active", button === anchor);
+    });
+
+    activeMenu = menuName;
+  }
+
+  popup.addEventListener("mouseleave", (event) => {
+    const related = event.relatedTarget;
+    if (related instanceof Node && (submenuPopup.contains(related) || submenuPopupLevel2.contains(related))) return;
+    hideSubmenu();
+  });
+
+  submenuPopup.addEventListener("mouseleave", (event) => {
+    const related = event.relatedTarget;
+    if (related instanceof Node && (popup.contains(related) || submenuPopupLevel2.contains(related))) return;
+    hideSubmenu();
+  });
+
+  submenuPopupLevel2.addEventListener("mouseleave", (event) => {
+    const related = event.relatedTarget;
+    if (related instanceof Node && submenuPopup.contains(related)) return;
+    hideDeepSubmenu();
+  });
+
+  refs.root.querySelectorAll(".menu-item").forEach((button) => {
+    button.addEventListener("click", () => {
+      const menuName = button.dataset.menu || button.textContent.trim();
+      if (menuName === activeMenu) {
+        hide();
+        return;
+      }
+      open(menuName, button);
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.closest(".menu-item") || target.closest(".menu-popup")) return;
+    hide();
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") hide();
+  });
+
+  return { hide };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
