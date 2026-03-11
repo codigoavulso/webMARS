@@ -1,0 +1,134 @@
+<html lang="pt"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>O Conjunto de Instruções MIPS</title></head>
+<body>
+<font face="arial" size="+2">
+<b>O Conjunto de Instruções MIPS</b>
+</font>
+<font face="arial">
+<p>Escrito por Walter Chang </p>
+</font>
+<font face="arial" size="-1">Usado com permissão do autor.  Aviso de direitos autorais abaixo.
+<p><i>A pronúncia correta é fundamental para obter a cadência e bater para a linha 
+up; ver a Pronúncia 
+Guia no final deste documento para saber como você deve pronunciar os vários 
+instruções do montador.</i> </p>
+
+<p>À tona de: <i>A Canção</i> do <i>Major-General</i>, de 
+<b>Piratas da Penzance</b><br>Inspirado em <i>Os Elementos</i>, de Tom Lehrer<i></i> </p>
+</font>
+<br>
+<font face="Arial">
+<p>Há div e nem e mult e ou e sllv sra
+<br>Há xor e swl e beq e sol e saltos fundamentais hoje
+<br>E multu, srav, e j combinado com lhu e lui
+<br>E também slt e bne e instrução mthi
+<br>Há sh e sb e lbu e blez e jal e depois sltu
+<br>E, claro, há e e adicionar e srl e sub e coisas para fazer
+<br>Com as instruções do MIPS, sou muito ágil em meus pés
+<br>E embora eu cante montador, mas eu realmente não sou um geek
+
+<br><br>Há addu, ori, slti, swr, e bgez e jalr também
+<br>E muitas outras instruções divertidas que foram colocadas apenas para você
+<br>O conjunto de instruções MIPS é muito simples de memorizar
+<br>O que será útil quando você tiver seu código para otimizar! </p>
+
+<p>Há addi, divu, lh, rfe, e syscall, jr, mfcz
+<br>E mfc1, nop, e quebrar, e bltzal com bczt
+<br>E srlv, xori, bltz, e lb, lwl e addiu
+<br>andi, subu, lwr, e lwcz, mtcz, sltiu
+<br>Há bczf, bgtz para ramificar se for maior do que
+<br>E mflo e sw, estas instruções não são também-rans
+<br>Há mtlo e música também, embora eu não saiba para que servem
+<br>E lw - isso é obviamente carregar palavra de mem bytes há quatro
+
+<br><br>E agora minha música acabou e eu conheço todas as minhas palavras pelo coração
+<br>O que será útil quando tivermos nossos projetos em várias partes
+<br>Eu vivo e respiro o conjunto de instruções do MIPS todas as noites e dias
+<br>Porque o montador do MIPS vai sempre tentar trabalhar do meu jeito! </p>
+</font>
+<br><br>
+<font face="arial" size="+1">
+<b>Guia de Pronúncia</b>
+</font>
+<font face="arial">
+
+<p>nota: assembler é 4 sílabas: ass-em-bell-er </p>
+<p>As pronúncias adequadas para esta música são as seguintes: </p>
+<ul>
+  <li>div: div 
+  </li><li>nem: nem 
+  </li><li>mult: mult 
+  </li><li>ou: ou 
+  </li><li>sllv: s-l-l-v 
+  </li><li>sra: s-r-a 
+  </li><li>xor: zor 
+  </li><li>swl: swillTradução 
+  </li><li>beq: beck 
+  </li><li>sll: peitoril 
+  </li><li>bgezal: beh-geezal 
+  </li><li>multu: mult-you 
+  </li><li>srav: srav (uma sílaba) 
+  </li><li>j: jay 
+  </li><li>lhu: l-h-u 
+  </li><li>lui: l-u-i 
+  </li><li>slt: fenda 
+  </li><li>bne: b-n-e 
+  </li><li>mthi: m-t-alto 
+  </li><li>sh: shih 
+  </li><li>sb: sib 
+  </li><li>lbu: l-b-u 
+  </li><li>blez: blez 
+  </li><li>Categoria: jal 
+  </li><li>sltu: slit-u 
+  </li><li>e: e 
+  </li><li>adicionar: adicionar 
+  </li><li>srl: srillTradução 
+  </li><li>sub: sub 
+  </li><li>addu: add-u 
+  </li><li>ori: or-i 
+  </li><li>slti: slitty 
+  </li><li>swr: redemoinho 
+  </li><li>bgez: beh-gez 
+  </li><li>jalr: jal-er 
+  </li><li>addi: addy 
+  </li><li>divu: div-u 
+  </li><li>lh: l-h 
+  </li><li>ref: Recife 
+  </li><li>syscall: sis-call 
+  </li><li>jr: júnior 
+  </li><li>mfcz: miff-c-z 
+  </li><li>mfc1: m-f-c-one 
+  </li><li>nop: nopp 
+  </li><li>quebra: quebra 
+  </li><li>bltzal: blitz-al 
+  </li><li>bczt: b-c-z-t 
+  </li><li>srlv: s-r-l-v 
+  </li><li>xori: zorri 
+  </li><li>bltz: blitz 
+  </li><li>lb: l-b 
+  </li><li>lwl: vontade 
+  </li><li>addiu: addy-you 
+  </li><li>andi: Andy 
+  </li><li>subu: sub-u 
+  </li><li>lwr: mais 
+  </li><li>lwcz: lwiscz 
+  </li><li>mtcz: m-t-c-z 
+  </li><li>sltiu: slitty-u 
+  </li><li>bzcf: b-z-c-f 
+  </li><li>bgtz: b-g-t-z 
+  </li><li>mflo: em-fluxo 
+  </li><li>sw: swee 
+  </li><li>mtlo: m-t-baixo 
+  </li><li>swcz: swizzy 
+  </li><li>lw: leve </li></ul>
+<p>
+
+<a href="http://www.cs.utexas.edu/users/walter/cs-songbook/instruction_set.html">http://www.cs.utexas.edu/users/walter/cs-songbook/instruction_set.html</a>
+
+</p>
+Direitos autorais Walter Chang.  Permissão concedida para uso não comercial
+desde que a atribuição seja mantida. walter@cs.utexas.edu
+</font>
+
+
+</body></html>

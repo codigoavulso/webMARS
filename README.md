@@ -57,6 +57,7 @@ Project in an advanced state of functionality.
 - Breakpoints
 - Execution speed slider
 - Cooperative loop to reduce browser locking
+- Additional non-interactive optimization at max speed (minimal UI sync, no highlight flashes)
 - Automatic highlighting and focus on updates for:
   - current instruction (text segment)
   - modified memory (data segment)
@@ -75,6 +76,7 @@ Project in an advanced state of functionality.
 - Program arguments support
 - Runtime memory/backstep caps configurable via `Settings > Uso máximo de Memória...`
 - Engine factory ready for future WASM/C++ core (`createMarsEngine` + bridge fallback to JS)
+- Incremental WASM hotpath bootstrap (`web/wasm/core_hotpath.cpp` + `00-core-wasm-hotpath.js`)
 
 ### Help
 
@@ -169,6 +171,14 @@ Default server:
 
 - `start-web.bat`
 - `powershell -ExecutionPolicy Bypass -File .\serve.ps1 -Port 8080`
+
+### Optional: Build C++ WASM Hotpath
+
+Requires Emscripten (`emcc`) available on PATH:
+
+```bash
+node wasm/build-wasm-core.mjs
+```
 
 ## Immediate Roadmap (0.3.x -> 0.4)
 

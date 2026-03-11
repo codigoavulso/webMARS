@@ -1,0 +1,2266 @@
+{
+  "generatedAt": "2026-03-10T20:29:57.644Z",
+  "source": {
+    "basicInstructions": "../mars/mips/instructions/InstructionSet.java",
+    "extendedInstructions": "../PseudoOps.txt",
+    "directives": "../mars/assembler/Directives.java"
+  },
+  "basicInstructions": [
+    {
+      "example": "abs.d $f2,$f4",
+      "description": "Floating point absolute value double precision : Set $f2 to absolute value of $f4, double precision"
+    },
+    {
+      "example": "abs.s $f0,$f1",
+      "description": "Floating point absolute value single precision : Set $f0 to absolute value of $f1, single precision"
+    },
+    {
+      "example": "add $t1,$t2,$t3",
+      "description": "Addition with overflow : set $t1 to ($t2 plus $t3)"
+    },
+    {
+      "example": "add.d $f2,$f4,$f6",
+      "description": "Floating point addition double precision : Set $f2 to double-precision floating point value of $f4 plus $f6"
+    },
+    {
+      "example": "add.s $f0,$f1,$f3",
+      "description": "Floating point addition single precision : Set $f0 to single-precision floating point value of $f1 plus $f3"
+    },
+    {
+      "example": "addi $t1,$t2,-100",
+      "description": "Addition immediate with overflow : set $t1 to ($t2 plus signed 16-bit immediate)"
+    },
+    {
+      "example": "addiu $t1,$t2,-100",
+      "description": "Addition immediate unsigned without overflow : set $t1 to ($t2 plus signed 16-bit immediate), no overflow"
+    },
+    {
+      "example": "addu $t1,$t2,$t3",
+      "description": "Addition unsigned without overflow : set $t1 to ($t2 plus $t3), no overflow"
+    },
+    {
+      "example": "and $t1,$t2,$t3",
+      "description": "Bitwise AND : Set $t1 to bitwise AND of $t2 and $t3"
+    },
+    {
+      "example": "andi $t1,$t2,100",
+      "description": "Bitwise AND immediate : Set $t1 to bitwise AND of $t2 and zero-extended 16-bit immediate"
+    },
+    {
+      "example": "bc1f 1,label",
+      "description": "Branch if specified FP condition flag false (BC1F, not BCLF) : If Coprocessor 1 condition flag specified by immediate is false (zero) then branch to statement at label's address"
+    },
+    {
+      "example": "bc1f label",
+      "description": "Branch if FP condition flag 0 false (BC1F, not BCLF) : If Coprocessor 1 condition flag 0 is false (zero) then branch to statement at label's address"
+    },
+    {
+      "example": "bc1t 1,label",
+      "description": "Branch if specified FP condition flag true (BC1T, not BCLT) : If Coprocessor 1 condition flag specified by immediate is true (one) then branch to statement at label's address"
+    },
+    {
+      "example": "bc1t label",
+      "description": "Branch if FP condition flag 0 true (BC1T, not BCLT) : If Coprocessor 1 condition flag 0 is true (one) then branch to statement at label's address"
+    },
+    {
+      "example": "beq $t1,$t2,label",
+      "description": "Branch if equal : Branch to statement at label's address if $t1 and $t2 are equal"
+    },
+    {
+      "example": "bgez $t1,label",
+      "description": "Branch if greater than or equal to zero : Branch to statement at label's address if $t1 is greater than or equal to zero"
+    },
+    {
+      "example": "bgezal $t1,label",
+      "description": "Branch if greater then or equal to zero and link : If $t1 is greater than or equal to zero, then set $ra to the Program Counter and branch to statement at label's address"
+    },
+    {
+      "example": "bgtz $t1,label",
+      "description": "Branch if greater than zero : Branch to statement at label's address if $t1 is greater than zero"
+    },
+    {
+      "example": "blez $t1,label",
+      "description": "Branch if less than or equal to zero : Branch to statement at label's address if $t1 is less than or equal to zero"
+    },
+    {
+      "example": "bltz $t1,label",
+      "description": "Branch if less than zero : Branch to statement at label's address if $t1 is less than zero"
+    },
+    {
+      "example": "bltzal $t1,label",
+      "description": "Branch if less than zero and link : If $t1 is less than or equal to zero, then set $ra to the Program Counter and branch to statement at label's address"
+    },
+    {
+      "example": "bne $t1,$t2,label",
+      "description": "Branch if not equal : Branch to statement at label's address if $t1 and $t2 are not equal"
+    },
+    {
+      "example": "break",
+      "description": "Break execution : Terminate program execution with exception"
+    },
+    {
+      "example": "break 100",
+      "description": "Break execution with code : Terminate program execution with specified exception code"
+    },
+    {
+      "example": "c.eq.d $f2,$f4",
+      "description": "Compare equal double precision : If $f2 is equal to $f4 (double-precision), set Coprocessor 1 condition flag 0 true else set it false"
+    },
+    {
+      "example": "c.eq.d 1,$f2,$f4",
+      "description": "Compare equal double precision : If $f2 is equal to $f4 (double-precision), set Coprocessor 1 condition flag specified by immediate to true else set it to false"
+    },
+    {
+      "example": "c.eq.s $f0,$f1",
+      "description": "Compare equal single precision : If $f0 is equal to $f1, set Coprocessor 1 condition flag 0 true else set it false"
+    },
+    {
+      "example": "c.eq.s 1,$f0,$f1",
+      "description": "Compare equal single precision : If $f0 is equal to $f1, set Coprocessor 1 condition flag specied by immediate to true else set it to false"
+    },
+    {
+      "example": "c.le.d $f2,$f4",
+      "description": "Compare less or equal double precision : If $f2 is less than or equal to $f4 (double-precision), set Coprocessor 1 condition flag 0 true else set it false"
+    },
+    {
+      "example": "c.le.d 1,$f2,$f4",
+      "description": "Compare less or equal double precision : If $f2 is less than or equal to $f4 (double-precision), set Coprocessor 1 condition flag specfied by immediate true else set it false"
+    },
+    {
+      "example": "c.le.s $f0,$f1",
+      "description": "Compare less or equal single precision : If $f0 is less than or equal to $f1, set Coprocessor 1 condition flag 0 true else set it false"
+    },
+    {
+      "example": "c.le.s 1,$f0,$f1",
+      "description": "Compare less or equal single precision : If $f0 is less than or equal to $f1, set Coprocessor 1 condition flag specified by immediate to true else set it to false"
+    },
+    {
+      "example": "c.lt.d $f2,$f4",
+      "description": "Compare less than double precision : If $f2 is less than $f4 (double-precision), set Coprocessor 1 condition flag 0 true else set it false"
+    },
+    {
+      "example": "c.lt.d 1,$f2,$f4",
+      "description": "Compare less than double precision : If $f2 is less than $f4 (double-precision), set Coprocessor 1 condition flag specified by immediate to true else set it to false"
+    },
+    {
+      "example": "c.lt.s $f0,$f1",
+      "description": "Compare less than single precision : If $f0 is less than $f1, set Coprocessor 1 condition flag 0 true else set it false"
+    },
+    {
+      "example": "c.lt.s 1,$f0,$f1",
+      "description": "Compare less than single precision : If $f0 is less than $f1, set Coprocessor 1 condition flag specified by immediate to true else set it to false"
+    },
+    {
+      "example": "ceil.w.d $f1,$f2",
+      "description": "Ceiling double precision to word : Set $f1 to 32-bit integer ceiling of double-precision float in $f2"
+    },
+    {
+      "example": "ceil.w.s $f0,$f1",
+      "description": "Ceiling single precision to word : Set $f0 to 32-bit integer ceiling of single-precision float in $f1"
+    },
+    {
+      "example": "clo $t1,$t2",
+      "description": "Count number of leading ones : Set $t1 to the count of leading one bits in $t2 starting at most significant bit position"
+    },
+    {
+      "example": "clz $t1,$t2",
+      "description": "Count number of leading zeroes : Set $t1 to the count of leading zero bits in $t2 starting at most significant bit positio"
+    },
+    {
+      "example": "cvt.d.s $f2,$f1",
+      "description": "Convert from single precision to double precision : Set $f2 to double precision equivalent of single precision value in $f1"
+    },
+    {
+      "example": "cvt.d.w $f2,$f1",
+      "description": "Convert from word to double precision : Set $f2 to double precision equivalent of 32-bit integer value in $f1"
+    },
+    {
+      "example": "cvt.s.d $f1,$f2",
+      "description": "Convert from double precision to single precision : Set $f1 to single precision equivalent of double precision value in $f2"
+    },
+    {
+      "example": "cvt.s.w $f0,$f1",
+      "description": "Convert from word to single precision : Set $f0 to single precision equivalent of 32-bit integer value in $f2"
+    },
+    {
+      "example": "cvt.w.d $f1,$f2",
+      "description": "Convert from double precision to word : Set $f1 to 32-bit integer equivalent of double precision value in $f2"
+    },
+    {
+      "example": "cvt.w.s $f0,$f1",
+      "description": "Convert from single precision to word : Set $f0 to 32-bit integer equivalent of single precision value in $f1"
+    },
+    {
+      "example": "div $t1,$t2",
+      "description": "Division with overflow : Divide $t1 by $t2 then set LO to quotient and HI to remainder (use mfhi to access HI, mflo to access LO)"
+    },
+    {
+      "example": "div.d $f2,$f4,$f6",
+      "description": "Floating point division double precision : Set $f2 to double-precision floating point value of $f4 divided by $f6"
+    },
+    {
+      "example": "div.s $f0,$f1,$f3",
+      "description": "Floating point division single precision : Set $f0 to single-precision floating point value of $f1 divided by $f3"
+    },
+    {
+      "example": "divu $t1,$t2",
+      "description": "Division unsigned without overflow : Divide unsigned $t1 by $t2 then set LO to quotient and HI to remainder (use mfhi to access HI, mflo to access LO)"
+    },
+    {
+      "example": "eret",
+      "description": "Exception return : Set Program Counter to Coprocessor 0 EPC register value, set Coprocessor Status register bit 1 (exception level) to zero"
+    },
+    {
+      "example": "floor.w.d $f1,$f2",
+      "description": "Floor double precision to word : Set $f1 to 32-bit integer floor of double-precision float in $f2"
+    },
+    {
+      "example": "floor.w.s $f0,$f1",
+      "description": "Floor single precision to word : Set $f0 to 32-bit integer floor of single-precision float in $f1"
+    },
+    {
+      "example": "j target",
+      "description": "Jump unconditionally : Jump to statement at target address"
+    },
+    {
+      "example": "jal target",
+      "description": "Jump and link : Set $ra to Program Counter (return address) then jump to statement at target address"
+    },
+    {
+      "example": "jalr $t1",
+      "description": "Jump and link register : Set $ra to Program Counter (return address) then jump to statement whose address is in $t1"
+    },
+    {
+      "example": "jalr $t1,$t2",
+      "description": "Jump and link register : Set $t1 to Program Counter (return address) then jump to statement whose address is in $t2"
+    },
+    {
+      "example": "jr $t1",
+      "description": "Jump register unconditionally : Jump to statement whose address is in $t1"
+    },
+    {
+      "example": "lb $t1,-100($t2)",
+      "description": "Load byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,-100($t2)",
+      "description": "Load byte unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "ldc1 $f2,-100($t2)",
+      "description": "Load double word Coprocessor 1 (FPU)) : Set $f2 to 64-bit value from effective memory doubleword address"
+    },
+    {
+      "example": "lh $t1,-100($t2)",
+      "description": "Load halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,-100($t2)",
+      "description": "Load halfword unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "ll $t1,-100($t2)",
+      "description": "Load linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "lui $t1,100",
+      "description": "Load upper immediate : Set high-order 16 bits of $t1 to 16-bit immediate and low-order 16 bits to 0"
+    },
+    {
+      "example": "lw $t1,-100($t2)",
+      "description": "Load word : Set $t1 to contents of effective memory word address"
+    },
+    {
+      "example": "lwc1 $f1,-100($t2)",
+      "description": "Load word into Coprocessor 1 (FPU) : Set $f1 to 32-bit value from effective memory word address"
+    },
+    {
+      "example": "lwl $t1,-100($t2)",
+      "description": "Load word left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,-100($t2)",
+      "description": "Load word right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "madd $t1,$t2",
+      "description": "Multiply add : Multiply $t1 by $t2 then increment HI by high-order 32 bits of product, increment LO by low-order 32 bits of product (use mfhi to access HI, mflo to access LO)"
+    },
+    {
+      "example": "maddu $t1,$t2",
+      "description": "Multiply add unsigned : Multiply $t1 by $t2 then increment HI by high-order 32 bits of product, increment LO by low-order 32 bits of product, unsigned (use mfhi to access HI, mflo to access LO)"
+    },
+    {
+      "example": "mfc0 $t1,$8",
+      "description": "Move from Coprocessor 0 : Set $t1 to the value stored in Coprocessor 0 register $8"
+    },
+    {
+      "example": "mfc1 $t1,$f1",
+      "description": "Move from Coprocessor 1 (FPU) : Set $t1 to value in Coprocessor 1 register $f1"
+    },
+    {
+      "example": "mfhi $t1",
+      "description": "Move from HI register : Set $t1 to contents of HI (see multiply and divide operations)"
+    },
+    {
+      "example": "mflo $t1",
+      "description": "Move from LO register : Set $t1 to contents of LO (see multiply and divide operations)"
+    },
+    {
+      "example": "mov.d $f2,$f4",
+      "description": "Move floating point double precision : Set double precision $f2 to double precision value in $f4"
+    },
+    {
+      "example": "mov.s $f0,$f1",
+      "description": "Move floating point single precision : Set single precision $f0 to single precision value in $f1"
+    },
+    {
+      "example": "movf $t1,$t2",
+      "description": "Move if FP condition flag 0 false : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag 0 is false (zero)"
+    },
+    {
+      "example": "movf $t1,$t2,1",
+      "description": "Move if specified FP condition flag false : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is false (zero)"
+    },
+    {
+      "example": "movf.d $f2,$f4",
+      "description": "Move floating point double precision : If condition flag 0 false, set double precision $f2 to double precision value in $f4"
+    },
+    {
+      "example": "movf.d $f2,$f4,1",
+      "description": "Move floating point double precision : If condition flag specified by immediate is false, set double precision $f2 to double precision value in $f4"
+    },
+    {
+      "example": "movf.s $f0,$f1",
+      "description": "Move floating point single precision : If condition flag 0 is false, set single precision $f0 to single precision value in $f1"
+    },
+    {
+      "example": "movf.s $f0,$f1,1",
+      "description": "Move floating point single precision : If condition flag specified by immediate is false, set single precision $f0 to single precision value in $f1e"
+    },
+    {
+      "example": "movn $t1,$t2,$t3",
+      "description": "Move conditional not zero : Set $t1 to $t2 if $t3 is not zero"
+    },
+    {
+      "example": "movn.d $f2,$f4,$t3",
+      "description": "Move floating point double precision : If $t3 is not zero, set double precision $f2 to double precision value in $f4"
+    },
+    {
+      "example": "movn.s $f0,$f1,$t3",
+      "description": "Move floating point single precision : If $t3 is not zero, set single precision $f0 to single precision value in $f1"
+    },
+    {
+      "example": "movt $t1,$t2",
+      "description": "Move if FP condition flag 0 true : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag 0 is true (one)"
+    },
+    {
+      "example": "movt $t1,$t2,1",
+      "description": "Move if specfied FP condition flag true : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is true (one)"
+    },
+    {
+      "example": "movt.d $f2,$f4",
+      "description": "Move floating point double precision : If condition flag 0 true, set double precision $f2 to double precision value in $f4"
+    },
+    {
+      "example": "movt.d $f2,$f4,1",
+      "description": "Move floating point double precision : If condition flag specified by immediate is true, set double precision $f2 to double precision value in $f4e"
+    },
+    {
+      "example": "movt.s $f0,$f1",
+      "description": "Move floating point single precision : If condition flag 0 is true, set single precision $f0 to single precision value in $f1e"
+    },
+    {
+      "example": "movt.s $f0,$f1,1",
+      "description": "Move floating point single precision : If condition flag specified by immediate is true, set single precision $f0 to single precision value in $f1e"
+    },
+    {
+      "example": "movz $t1,$t2,$t3",
+      "description": "Move conditional zero : Set $t1 to $t2 if $t3 is zero"
+    },
+    {
+      "example": "movz.d $f2,$f4,$t3",
+      "description": "Move floating point double precision : If $t3 is zero, set double precision $f2 to double precision value in $f4"
+    },
+    {
+      "example": "movz.s $f0,$f1,$t3",
+      "description": "Move floating point single precision : If $t3 is zero, set single precision $f0 to single precision value in $f1"
+    },
+    {
+      "example": "msub $t1,$t2",
+      "description": "Multiply subtract : Multiply $t1 by $t2 then decrement HI by high-order 32 bits of product, decrement LO by low-order 32 bits of product (use mfhi to access HI, mflo to access LO)"
+    },
+    {
+      "example": "msubu $t1,$t2",
+      "description": "Multiply subtract unsigned : Multiply $t1 by $t2 then decrement HI by high-order 32 bits of product, decement LO by low-order 32 bits of product, unsigned (use mfhi to access HI, mflo to access LO)"
+    },
+    {
+      "example": "mtc0 $t1,$8",
+      "description": "Move to Coprocessor 0 : Set Coprocessor 0 register $8 to value stored in $t1"
+    },
+    {
+      "example": "mtc1 $t1,$f1",
+      "description": "Move to Coprocessor 1 (FPU) : Set Coprocessor 1 register $f1 to value in $t1"
+    },
+    {
+      "example": "mthi $t1",
+      "description": "Move to HI registerr : Set HI to contents of $t1 (see multiply and divide operations)"
+    },
+    {
+      "example": "mtlo $t1",
+      "description": "Move to LO register : Set LO to contents of $t1 (see multiply and divide operations)"
+    },
+    {
+      "example": "mul $t1,$t2,$t3",
+      "description": "Multiplication without overflow  : Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of the product of $t2 and $t3 (use mfhi to access HI, mflo to access LO)"
+    },
+    {
+      "example": "mul.d $f2,$f4,$f6",
+      "description": "Floating point multiplication double precision : Set $f2 to double-precision floating point value of $f4 times $f6"
+    },
+    {
+      "example": "mul.s $f0,$f1,$f3",
+      "description": "Floating point multiplication single precision : Set $f0 to single-precision floating point value of $f1 times $f3"
+    },
+    {
+      "example": "mult $t1,$t2",
+      "description": "Multiplication : Set hi to high-order 32 bits, lo to low-order 32 bits of the product of $t1 and $t2 (use mfhi to access hi, mflo to access lo)"
+    },
+    {
+      "example": "multu $t1,$t2",
+      "description": "Multiplication unsigned : Set HI to high-order 32 bits, LO to low-order 32 bits of the product of unsigned $t1 and $t2 (use mfhi to access HI, mflo to access LO)"
+    },
+    {
+      "example": "neg.d $f2,$f4",
+      "description": "Floating point negate double precision : Set double precision $f2 to negation of double precision value in $f4"
+    },
+    {
+      "example": "neg.s $f0,$f1",
+      "description": "Floating point negate single precision : Set single precision $f0 to negation of single precision value in $f1"
+    },
+    {
+      "example": "nop",
+      "description": "Null operation : machine code is all zeroes"
+    },
+    {
+      "example": "nor $t1,$t2,$t3",
+      "description": "Bitwise NOR : Set $t1 to bitwise NOR of $t2 and $t3"
+    },
+    {
+      "example": "or $t1,$t2,$t3",
+      "description": "Bitwise OR : Set $t1 to bitwise OR of $t2 and $t3"
+    },
+    {
+      "example": "ori $t1,$t2,100",
+      "description": "Bitwise OR immediate : Set $t1 to bitwise OR of $t2 and zero-extended 16-bit immediate"
+    },
+    {
+      "example": "round.w.d $f1,$f2",
+      "description": "Round double precision to word : Set $f1 to 32-bit integer round of double-precision float in $f2"
+    },
+    {
+      "example": "round.w.s $f0,$f1",
+      "description": "Round single precision to word : Set $f0 to 32-bit integer round of single-precision float in $f1"
+    },
+    {
+      "example": "sb $t1,-100($t2)",
+      "description": "Store byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sc $t1,-100($t2)",
+      "description": "Store conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Stores $t1 value into effective address, then sets $t1 to 1 for success.  Always succeeds because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sdc1 $f2,-100($t2)",
+      "description": "Store double word from Coprocessor 1 (FPU)) : Store 64 bit value in $f2 to effective memory doubleword address"
+    },
+    {
+      "example": "sh $t1,-100($t2)",
+      "description": "Store halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sll $t1,$t2,10",
+      "description": "Shift left logical : Set $t1 to result of shifting $t2 left by number of bits specified by immediate"
+    },
+    {
+      "example": "sllv $t1,$t2,$t3",
+      "description": "Shift left logical variable : Set $t1 to result of shifting $t2 left by number of bits specified by value in low-order 5 bits of $t3"
+    },
+    {
+      "example": "slt $t1,$t2,$t3",
+      "description": "Set less than : If $t2 is less than $t3, then set $t1 to 1 else set $t1 to 0"
+    },
+    {
+      "example": "slti $t1,$t2,-100",
+      "description": "Set less than immediate : If $t2 is less than sign-extended 16-bit immediate, then set $t1 to 1 else set $t1 to 0"
+    },
+    {
+      "example": "sltiu $t1,$t2,-100",
+      "description": "Set less than immediate unsigned : If $t2 is less than  sign-extended 16-bit immediate using unsigned comparison, then set $t1 to 1 else set $t1 to 0"
+    },
+    {
+      "example": "sltu $t1,$t2,$t3",
+      "description": "Set less than unsigned : If $t2 is less than $t3 using unsigned comparision, then set $t1 to 1 else set $t1 to 0"
+    },
+    {
+      "example": "sqrt.d $f2,$f4",
+      "description": "Square root double precision : Set $f2 to double-precision floating point square root of $f4"
+    },
+    {
+      "example": "sqrt.s $f0,$f1",
+      "description": "Square root single precision : Set $f0 to single-precision floating point square root of $f1"
+    },
+    {
+      "example": "sra $t1,$t2,10",
+      "description": "Shift right arithmetic : Set $t1 to result of sign-extended shifting $t2 right by number of bits specified by immediate"
+    },
+    {
+      "example": "srav $t1,$t2,$t3",
+      "description": "Shift right arithmetic variable : Set $t1 to result of sign-extended shifting $t2 right by number of bits specified by value in low-order 5 bits of $t3"
+    },
+    {
+      "example": "srl $t1,$t2,10",
+      "description": "Shift right logical : Set $t1 to result of shifting $t2 right by number of bits specified by immediate"
+    },
+    {
+      "example": "srlv $t1,$t2,$t3",
+      "description": "Shift right logical variable : Set $t1 to result of shifting $t2 right by number of bits specified by value in low-order 5 bits of $t3"
+    },
+    {
+      "example": "sub $t1,$t2,$t3",
+      "description": "Subtraction with overflow : set $t1 to ($t2 minus $t3)"
+    },
+    {
+      "example": "sub.d $f2,$f4,$f6",
+      "description": "Floating point subtraction double precision : Set $f2 to double-precision floating point value of $f4 minus $f6"
+    },
+    {
+      "example": "sub.s $f0,$f1,$f3",
+      "description": "Floating point subtraction single precision : Set $f0 to single-precision floating point value of $f1  minus $f3"
+    },
+    {
+      "example": "subu $t1,$t2,$t3",
+      "description": "Subtraction unsigned without overflow : set $t1 to ($t2 minus $t3), no overflow"
+    },
+    {
+      "example": "sw $t1,-100($t2)",
+      "description": "Store word : Store contents of $t1 into effective memory word address"
+    },
+    {
+      "example": "swc1 $f1,-100($t2)",
+      "description": "Store word from Coprocesor 1 (FPU) : Store 32 bit value in $f1 to effective memory word address"
+    },
+    {
+      "example": "swl $t1,-100($t2)",
+      "description": "Store word left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swr $t1,-100($t2)",
+      "description": "Store word right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective byte address and continuing through that byte address"
+    },
+    {
+      "example": "syscall",
+      "description": "Issue a system call : Execute the system call specified by value in $v0"
+    },
+    {
+      "example": "teq $t1,$t2",
+      "description": "Trap if equal : Trap if $t1 is equal to $t2"
+    },
+    {
+      "example": "teqi $t1,-100",
+      "description": "Trap if equal to immediate : Trap if $t1 is equal to sign-extended 16 bit immediate"
+    },
+    {
+      "example": "tge $t1,$t2",
+      "description": "Trap if greater or equal : Trap if $t1 is greater than or equal to $t2"
+    },
+    {
+      "example": "tgei $t1,-100",
+      "description": "Trap if greater than or equal to immediate : Trap if $t1 greater than or equal to sign-extended 16 bit immediate"
+    },
+    {
+      "example": "tgeiu $t1,-100",
+      "description": "Trap if greater or equal to immediate unsigned : Trap if $t1 greater than or equal to sign-extended 16 bit immediate, unsigned comparison"
+    },
+    {
+      "example": "tgeu $t1,$t2",
+      "description": "Trap if greater or equal unsigned : Trap if $t1 is greater than or equal to $t2 using unsigned comparision"
+    },
+    {
+      "example": "tlt $t1,$t2",
+      "description": "Trap if less than: Trap if $t1 less than $t2"
+    },
+    {
+      "example": "tlti $t1,-100",
+      "description": "Trap if less than immediate : Trap if $t1 less than sign-extended 16-bit immediate"
+    },
+    {
+      "example": "tltiu $t1,-100",
+      "description": "Trap if less than immediate unsigned : Trap if $t1 less than sign-extended 16-bit immediate, unsigned comparison"
+    },
+    {
+      "example": "tltu $t1,$t2",
+      "description": "Trap if less than unsigned : Trap if $t1 less than $t2, unsigned comparison"
+    },
+    {
+      "example": "tne $t1,$t2",
+      "description": "Trap if not equal : Trap if $t1 is not equal to $t2"
+    },
+    {
+      "example": "tnei $t1,-100",
+      "description": "Trap if not equal to immediate : Trap if $t1 is not equal to sign-extended 16 bit immediate"
+    },
+    {
+      "example": "trunc.w.d $f1,$f2",
+      "description": "Truncate double precision to word : Set $f1 to 32-bit integer truncation of double-precision float in $f2"
+    },
+    {
+      "example": "trunc.w.s $f0,$f1",
+      "description": "Truncate single precision to word : Set $f0 to 32-bit integer truncation of single-precision float in $f1"
+    },
+    {
+      "example": "xor $t1,$t2,$t3",
+      "description": "Bitwise XOR (exclusive OR) : Set $t1 to bitwise XOR of $t2 and $t3"
+    },
+    {
+      "example": "xori $t1,$t2,100",
+      "description": "Bitwise XOR immediate : Set $t1 to bitwise XOR of $t2 and zero-extended 16-bit immediate"
+    }
+  ],
+  "extendedInstructions": [
+    {
+      "example": "abs $t1,$t2",
+      "description": "ABSolute value : Set $t1 to absolute value of $t2 (algorithm from Hacker's Delight)"
+    },
+    {
+      "example": "add $t1,$t2,-100",
+      "description": "ADDition : set $t1 to ($t2 plus 16-bit immediate)"
+    },
+    {
+      "example": "add $t1,$t2,100000",
+      "description": "ADDition : set $t1 to ($t2 plus 32-bit immediate)"
+    },
+    {
+      "example": "addi $t1,$t2,100000",
+      "description": "ADDition Immediate : set $t1 to ($t2 plus 32-bit immediate)"
+    },
+    {
+      "example": "addiu $t1,$t2,100000",
+      "description": "ADDition Immediate Unsigned: set $t1 to ($t2 plus 32-bit immediate), no overflow"
+    },
+    {
+      "example": "addu $t1,$t2,100000",
+      "description": "ADDition Unsigned : set $t1 to ($t2 plus 32-bit immediate), no overflow"
+    },
+    {
+      "example": "and $t1,$t2,100",
+      "description": "AND : set $t1 to ($t2 bitwise-AND 16-bit unsigned immediate)"
+    },
+    {
+      "example": "and $t1,100",
+      "description": "AND : set $t1 to ($t1 bitwise-AND 16-bit unsigned immediate)"
+    },
+    {
+      "example": "andi $t1,$t2,100000",
+      "description": "AND Immediate : set $t1 to ($t2 bitwise-AND 32-bit immediate)"
+    },
+    {
+      "example": "andi $t1,100",
+      "description": "AND Immediate : set $t1 to ($t1 bitwise-AND 16-bit unsigned immediate)"
+    },
+    {
+      "example": "andi $t1,100000",
+      "description": "AND Immediate : set $t1 to ($t1 bitwise-AND 32-bit immediate)"
+    },
+    {
+      "example": "b label",
+      "description": "Branch : Branch to statement at label unconditionally"
+    },
+    {
+      "example": "beq $t1,-100,label",
+      "description": "Branch if EQual : Branch to statement at label if $t1 is equal to 16-bit immediate"
+    },
+    {
+      "example": "beq $t1,100000,label",
+      "description": "Branch if EQual : Branch to statement at label if $t1 is equal to 32-bit immediate"
+    },
+    {
+      "example": "beqz $t1,label",
+      "description": "Branch if EQual Zero : Branch to statement at label if $t1 is equal to zero"
+    },
+    {
+      "example": "bge $t1,-100,label",
+      "description": "Branch if Greater or Equal : Branch to statement at label if $t1 is greater or equal to 16-bit immediate"
+    },
+    {
+      "example": "bge $t1,$t2,label",
+      "description": "Branch if Greater or Equal : Branch to statement at label if $t1 is greater or equal to $t2"
+    },
+    {
+      "example": "bge $t1,100000,label",
+      "description": "Branch if Greater or Equal : Branch to statement at label if $t1 is greater or equal to 32-bit immediate"
+    },
+    {
+      "example": "bgeu $t1,-100,label",
+      "description": "Branch if Greater or Equal Unsigned : Branch to statement at label if $t1 is greater or equal to 16-bit immediate (unsigned compare)"
+    },
+    {
+      "example": "bgeu $t1,$t2,label",
+      "description": "Branch if Greater or Equal Unsigned : Branch to statement at label if $t1 is greater or equal to $t2 (unsigned compare)"
+    },
+    {
+      "example": "bgeu $t1,100000,label",
+      "description": "Branch if Greater or Equal Unsigned : Branch to statement at label if $t1 is greater or equal to 32-bit immediate (unsigned compare)"
+    },
+    {
+      "example": "bgt $t1,-100,label",
+      "description": "Branch if Greater Than : Branch to statement at label if $t1 is greater than 16-bit immediate"
+    },
+    {
+      "example": "bgt $t1,$t2,label",
+      "description": "Branch if Greater Than : Branch to statement at label if $t1 is greater than $t2"
+    },
+    {
+      "example": "bgt $t1,100000,label",
+      "description": "Branch if Greater Than : Branch to statement at label if $t1 is greater than 32-bit immediate"
+    },
+    {
+      "example": "bgtu $t1,-100,label",
+      "description": "Branch if Greater Than Unsigned: Branch to statement at label if $t1 is greater than 16-bit immediate (unsigned compare)"
+    },
+    {
+      "example": "bgtu $t1,$t2,label",
+      "description": "Branch if Greater Than Unsigned: Branch to statement at label if $t1 is greater than $t2 (unsigned compare)"
+    },
+    {
+      "example": "bgtu $t1,100000,label",
+      "description": "Branch if Greater Than Unsigned: Branch to statement at label if $t1 is greater than 16-bit immediate (unsigned compare)"
+    },
+    {
+      "example": "ble $t1,-100,label",
+      "description": "Branch if Less or Equal : Branch to statement at label if $t1 is less than or equal to 16-bit immediate"
+    },
+    {
+      "example": "ble $t1,$t2,label",
+      "description": "Branch if Less or Equal : Branch to statement at label if $t1 is less than or equal to $t2"
+    },
+    {
+      "example": "ble $t1,100000,label",
+      "description": "Branch if Less or Equal : Branch to statement at label if $t1 is less than or equal to 32-bit immediate"
+    },
+    {
+      "example": "bleu $t1,-100,label",
+      "description": "Branch if Less or Equal Unsigned : Branch to statement at label if $t1 is less than or equal to 16-bit immediate (unsigned compare)"
+    },
+    {
+      "example": "bleu $t1,$t2,label",
+      "description": "Branch if Less or Equal Unsigned : Branch to statement at label if $t1 is less than or equal to $t2 (unsigned compare)"
+    },
+    {
+      "example": "bleu $t1,100000,label",
+      "description": "Branch if Less or Equal Unsigned : Branch to statement at label if $t1 is less than or equal to 32-bit immediate (unsigned compare)"
+    },
+    {
+      "example": "blt $t1,-100,label",
+      "description": "Branch if Less Than : Branch to statement at label if $t1 is less than 16-bit immediate"
+    },
+    {
+      "example": "blt $t1,$t2,label",
+      "description": "Branch if Less Than : Branch to statement at label if $t1 is less than $t2"
+    },
+    {
+      "example": "blt $t1,100000,label",
+      "description": "Branch if Less Than : Branch to statement at label if $t1 is less than 32-bit immediate"
+    },
+    {
+      "example": "bltu $t1,-100,label",
+      "description": "Branch if Less Than Unsigned : Branch to statement at label if $t1 is less than 16-bit immediate"
+    },
+    {
+      "example": "bltu $t1,$t2,label",
+      "description": "Branch if Less Than Unsigned : Branch to statement at label if $t1 is less than $t2"
+    },
+    {
+      "example": "bltu $t1,100000,label",
+      "description": "Branch if Less Than Unsigned : Branch to statement at label if $t1 is less than 32-bit immediate"
+    },
+    {
+      "example": "bne $t1,-100,label",
+      "description": "Branch if Not Equal : Branch to statement at label if $t1 is not equal to 16-bit immediate"
+    },
+    {
+      "example": "bne $t1,100000,label",
+      "description": "Branch if Not Equal : Branch to statement at label if $t1 is not equal to 32-bit immediate"
+    },
+    {
+      "example": "bnez $t1,label",
+      "description": "Branch if Not Equal Zero : Branch to statement at label if $t1 is not equal to zero"
+    },
+    {
+      "example": "div $t1,$t2,-100",
+      "description": "DIVision : Set $t1 to ($t2 divided by 16-bit immediate, integer division)"
+    },
+    {
+      "example": "div $t1,$t2,$t3",
+      "description": "DIVision : Set $t1 to ($t2 divided by $t3, integer division)"
+    },
+    {
+      "example": "div $t1,$t2,100000",
+      "description": "DIVision : Set $t1 to ($t2 divided by 32-bit immediate, integer division)"
+    },
+    {
+      "example": "divu $t1,$t2,-100",
+      "description": "DIVision Unsigned :  Set $t1 to ($t2 divided by 16-bit immediate, unsigned integer division)"
+    },
+    {
+      "example": "divu $t1,$t2,$t3",
+      "description": "DIVision Unsigned :  Set $t1 to ($t2 divided by $t3, unsigned integer division)"
+    },
+    {
+      "example": "divu $t1,$t2,100000",
+      "description": "DIVision Unsigned :  Set $t1 to ($t2 divided by 32-bit immediate, unsigned integer division)"
+    },
+    {
+      "example": "l.d $f2,-100",
+      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "l.d $f2,($t2)",
+      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "l.d $f2,100000",
+      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "l.d $f2,100000($t2)",
+      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "l.d $f2,label",
+      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "l.d $f2,label($t2)",
+      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "l.d $f2,label+100000",
+      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "l.d $f2,label+100000($t2)",
+      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "l.s $f1,-100",
+      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+    },
+    {
+      "example": "l.s $f1,($t2)",
+      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+    },
+    {
+      "example": "l.s $f1,100000",
+      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+    },
+    {
+      "example": "l.s $f1,100000($t2)",
+      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+    },
+    {
+      "example": "l.s $f1,label",
+      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+    },
+    {
+      "example": "l.s $f1,label($t2)",
+      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+    },
+    {
+      "example": "l.s $f1,label+100000",
+      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+    },
+    {
+      "example": "l.s $f1,label+100000($t2)",
+      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+    },
+    {
+      "example": "la $t1,-100",
+      "description": "Load Address : Set $t1 to 16-bit immediate (sign-extended)"
+    },
+    {
+      "example": "la $t1,($t2)",
+      "description": "Load Address : Set $t1 to contents of $t2"
+    },
+    {
+      "example": "la $t1,100",
+      "description": "Load Address : Set $t1 to 16-bit immediate (zero-extended)"
+    },
+    {
+      "example": "la $t1,100($t2)",
+      "description": "Load Address : Set $t1 to sum (of $t2 and 16-bit immediate)"
+    },
+    {
+      "example": "la $t1,100000",
+      "description": "Load Address : Set $t1 to 32-bit immediate"
+    },
+    {
+      "example": "la $t1,100000($t2)",
+      "description": "Load Address : Set $t1 to sum (of $t2 and 32-bit immediate)"
+    },
+    {
+      "example": "la $t1,label",
+      "description": "Load Address : Set $t1 to label's address"
+    },
+    {
+      "example": "la $t1,label($t2)",
+      "description": "Load Address : Set $t1 to sum (of $t2 and label's address)"
+    },
+    {
+      "example": "la $t1,label+100000",
+      "description": "Load Address : Set $t1 to sum (of label's address and 32-bit immediate)"
+    },
+    {
+      "example": "la $t1,label+100000($t2)",
+      "description": "Load Address : Set $t1 to sum (of label's address, 32-bit immediate, and $t2)"
+    },
+    {
+      "example": "lb $t1,-100",
+      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lb $t1,($t2)",
+      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lb $t1,100",
+      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lb $t1,100($t2)",
+      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lb $t1,100000",
+      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lb $t1,100000($t2)",
+      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lb $t1,label",
+      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lb $t1,label($t2)",
+      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lb $t1,label+100000",
+      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lb $t1,label+100000($t2)",
+      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,-100",
+      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,($t2)",
+      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,100",
+      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,100($t2)",
+      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,100000",
+      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,100000($t2)",
+      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,label",
+      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,label($t2)",
+      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,label+100000",
+      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "lbu $t1,label+100000($t2)",
+      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+    },
+    {
+      "example": "ld $t1,-100($t2)",
+      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ld $t1,($t2)",
+      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "ld $t1,100000",
+      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "ld $t1,100000($t2)",
+      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "ld $t1,label",
+      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "ld $t1,label($t2)",
+      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "ld $t1,label+100000",
+      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "ld $t1,label+100000($t2)",
+      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "ldc1 $f2,-100",
+      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "ldc1 $f2,($t2)",
+      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "ldc1 $f2,100000",
+      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "ldc1 $f2,100000($t2)",
+      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "ldc1 $f2,label",
+      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "ldc1 $f2,label($t2)",
+      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "ldc1 $f2,label+100000",
+      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "ldc1 $f2,label+100000($t2)",
+      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+    },
+    {
+      "example": "lh $t1,-100",
+      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lh $t1,($t2)",
+      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lh $t1,100",
+      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lh $t1,100($t2)",
+      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lh $t1,100000",
+      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lh $t1,100000($t2)",
+      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lh $t1,label",
+      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lh $t1,label($t2)",
+      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lh $t1,label+100000",
+      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lh $t1,label+100000($t2)",
+      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,-100",
+      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,($t2)",
+      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,100",
+      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,100($t2)",
+      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,100000",
+      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,100000($t2)",
+      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,label",
+      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,label($t2)",
+      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,label+100000",
+      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "lhu $t1,label+100000($t2)",
+      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+    },
+    {
+      "example": "li $t1,-100",
+      "description": "Load Immediate : Set $t1 to 16-bit immediate (sign-extended)"
+    },
+    {
+      "example": "li $t1,100",
+      "description": "Load Immediate : Set $t1 to unsigned 16-bit immediate (zero-extended)"
+    },
+    {
+      "example": "li $t1,100000",
+      "description": "Load Immediate : Set $t1 to 32-bit immediate"
+    },
+    {
+      "example": "ll $t1,-100",
+      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "ll $t1,($t2)",
+      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "ll $t1,100",
+      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "ll $t1,100($t2)",
+      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "ll $t1,100000",
+      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "ll $t1,100000($t2)",
+      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "ll $t1,label",
+      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "ll $t1,label($t2)",
+      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "ll $t1,label+100000",
+      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "ll $t1,label+100000($t2)",
+      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "lw $t1,-100",
+      "description": "Load Word : Set $t1 to contents of effective memory word address"
+    },
+    {
+      "example": "lw $t1,($t2)",
+      "description": "Load Word : Set $t1 to contents of effective memory word address"
+    },
+    {
+      "example": "lw $t1,100",
+      "description": "Load Word : Set $t1 to contents of effective memory word address"
+    },
+    {
+      "example": "lw $t1,100($t2)",
+      "description": "Load Word : Set $t1 to contents of effective memory word address"
+    },
+    {
+      "example": "lw $t1,100000",
+      "description": "Load Word : Set $t1 to contents of effective memory word address"
+    },
+    {
+      "example": "lw $t1,100000($t2)",
+      "description": "Load Word : Set $t1 to contents of effective memory word address"
+    },
+    {
+      "example": "lw $t1,label",
+      "description": "Load Word : Set $t1 to contents of memory word at label's address"
+    },
+    {
+      "example": "lw $t1,label($t2)",
+      "description": "Load Word : Set $t1 to contents of effective memory word address"
+    },
+    {
+      "example": "lw $t1,label+100000",
+      "description": "Load Word : Set $t1 to contents of effective memory word address"
+    },
+    {
+      "example": "lw $t1,label+100000($t2)",
+      "description": "Load Word : Set $t1 to contents of effective memory word address"
+    },
+    {
+      "example": "lwc1 $f1,-100",
+      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+    },
+    {
+      "example": "lwc1 $f1,($t2)",
+      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+    },
+    {
+      "example": "lwc1 $f1,100000",
+      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+    },
+    {
+      "example": "lwc1 $f1,100000($t2)",
+      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+    },
+    {
+      "example": "lwc1 $f1,label",
+      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+    },
+    {
+      "example": "lwc1 $f1,label($t2)",
+      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+    },
+    {
+      "example": "lwc1 $f1,label+100000",
+      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+    },
+    {
+      "example": "lwc1 $f1,label+100000($t2)",
+      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+    },
+    {
+      "example": "lwl $t1,-100",
+      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwl $t1,($t2)",
+      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwl $t1,100",
+      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwl $t1,100($t2)",
+      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwl $t1,100000",
+      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwl $t1,100000($t2)",
+      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwl $t1,label",
+      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwl $t1,label($t2)",
+      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwl $t1,label+100000",
+      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwl $t1,label+100000($t2)",
+      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,-100",
+      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,($t2)",
+      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,100",
+      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,100($t2)",
+      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,100000",
+      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,100000($t2)",
+      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,label",
+      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,label($t2)",
+      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,label+100000",
+      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "lwr $t1,label+100000($t2)",
+      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+    },
+    {
+      "example": "mfc1.d $t1,$f2",
+      "description": "Move From Coprocessor 1 Double : Set $t1 to contents of $f2, set next higher register from $t1 to contents of next higher register from $f2"
+    },
+    {
+      "example": "move $t1,$t2",
+      "description": "MOVE : Set $t1 to contents of $t2"
+    },
+    {
+      "example": "mtc1.d $t1,$f2",
+      "description": "Move To Coprocessor 1 Double : Set $f2 to contents of $t1, set next higher register from $f2 to contents of next higher register from $t1"
+    },
+    {
+      "example": "mul $t1,$t2,-100",
+      "description": "MULtiplication : Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of the product of $t2 and 16-bit signed immediate (use mfhi to access HI, mflo to access LO)"
+    },
+    {
+      "example": "mul $t1,$t2,100000",
+      "description": "MULtiplication : Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of the product of $t2 and 32-bit immediate (use mfhi to access HI, mflo to access LO)"
+    },
+    {
+      "example": "mulo $t1,$t2,-100",
+      "description": "MULtiplication with Overflow : Set $t1 to low-order 32 bits of the product of $t2 and signed 16-bit immediate"
+    },
+    {
+      "example": "mulo $t1,$t2,$t3",
+      "description": "MULtiplication with Overflow : Set $t1 to low-order 32 bits of the product of $t2 and $t3"
+    },
+    {
+      "example": "mulo $t1,$t2,100000",
+      "description": "MULtiplication with Overflow : Set $t1 to low-order 32 bits of the product of $t2 and 32-bit immediate"
+    },
+    {
+      "example": "mulou $t1,$t2,-100",
+      "description": "MULtiplication with Overflow Unsigned : Set $t1 to low-order 32 bits of the product of $t2 and signed 16-bit immediate"
+    },
+    {
+      "example": "mulou $t1,$t2,$t3",
+      "description": "MULtiplication with Overflow Unsigned : Set $t1 to low-order 32 bits of the product of $t2 and $t3"
+    },
+    {
+      "example": "mulou $t1,$t2,100000",
+      "description": "MULtiplication with Overflow Unsigned : Set $t1 to low-order 32 bits of the product of $t2 and 32-bit immediate"
+    },
+    {
+      "example": "mulu $t1,$t2,-100",
+      "description": "MULtiplication Unsigned :  Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of ($t2 multiplied by 16-bit immediate, unsigned multiplication)"
+    },
+    {
+      "example": "mulu $t1,$t2,$t3",
+      "description": "MULtiplication Unsigned : Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of ($t2 multiplied by $t3, unsigned multiplication)"
+    },
+    {
+      "example": "mulu $t1,$t2,100000",
+      "description": "MULtiplication Unsigned :  Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of ($t2 multiplied by 32-bit immediate, unsigned multiplication)"
+    },
+    {
+      "example": "neg $t1,$t2",
+      "description": "NEGate : Set $t1 to negation of $t2"
+    },
+    {
+      "example": "negu $t1,$t2",
+      "description": "NEGate Unsigned : Set $t1 to negation of $t2, no overflow"
+    },
+    {
+      "example": "not $t1,$t2",
+      "description": "Bitwise NOT (bit inversion)"
+    },
+    {
+      "example": "or $t1,$t2,100",
+      "description": "OR : set $t1 to ($t2 bitwise-OR 16-bit unsigned immediate)"
+    },
+    {
+      "example": "or $t1,100",
+      "description": "OR : set $t1 to ($t1 bitwise-OR 16-bit unsigned immediate)"
+    },
+    {
+      "example": "ori $t1,$t2,100000",
+      "description": "OR Immediate : set $t1 to ($t2 bitwise-OR 32-bit immediate)"
+    },
+    {
+      "example": "ori $t1,100",
+      "description": "OR Immediate : set $t1 to ($t1 bitwise-OR 16-bit unsigned immediate)"
+    },
+    {
+      "example": "ori $t1,100000",
+      "description": "OR Immediate : set $t1 to ($t1 bitwise-OR 32-bit immediate)"
+    },
+    {
+      "example": "rem $t1,$t2,-100",
+      "description": "REMainder : Set $t1 to (remainder of $t2 divided by 16-bit immediate)"
+    },
+    {
+      "example": "rem $t1,$t2,$t3",
+      "description": "REMainder : Set $t1 to (remainder of $t2 divided by $t3)"
+    },
+    {
+      "example": "rem $t1,$t2,100000",
+      "description": "REMainder : Set $t1 to (remainder of $t2 divided by 32-bit immediate)"
+    },
+    {
+      "example": "remu $t1,$t2,-100",
+      "description": "REMainder : Set $t1 to (remainder of $t2 divided by 16-bit immediate, unsigned division)"
+    },
+    {
+      "example": "remu $t1,$t2,$t3",
+      "description": "REMainder : Set $t1 to (remainder of $t2 divided by $t3, unsigned division)"
+    },
+    {
+      "example": "remu $t1,$t2,100000",
+      "description": "REMainder : Set $t1 to (remainder of $t2 divided by 32-bit immediate, unsigned division)"
+    },
+    {
+      "example": "rol $t1,$t2,$t3",
+      "description": "ROtate Left : Set $t1 to ($t2 rotated left by number of bit positions specified in $t3)"
+    },
+    {
+      "example": "rol $t1,$t2,10",
+      "description": "ROtate Left : Set $t1 to ($t2 rotated left by number of bit positions specified in 5-bit immediate)"
+    },
+    {
+      "example": "ror $t1,$t2,$t3",
+      "description": "ROtate Right : Set $t1 to ($t2 rotated right by number of bit positions specified in $t3)"
+    },
+    {
+      "example": "ror $t1,$t2,10",
+      "description": "ROtate Right : Set $t1 to ($t2 rotated right by number of bit positions specified in 5-bit immediate)"
+    },
+    {
+      "example": "s.d $f2,-100",
+      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "s.d $f2,($t2)",
+      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "s.d $f2,100000",
+      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "s.d $f2,100000($t2)",
+      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "s.d $f2,label",
+      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "s.d $f2,label($t2)",
+      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "s.d $f2,label+100000",
+      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "s.d $f2,label+100000($t2)",
+      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "s.s $f1,-100",
+      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "s.s $f1,($t2)",
+      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "s.s $f1,100000",
+      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "s.s $f1,100000($t2)",
+      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "s.s $f1,label",
+      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "s.s $f1,label($t2)",
+      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "s.s $f1,label+100000",
+      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "s.s $f1,label+100000($t2)",
+      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "sb $t1,-100",
+      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sb $t1,($t2)",
+      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sb $t1,100",
+      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sb $t1,100($t2)",
+      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sb $t1,100000",
+      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sb $t1,100000($t2)",
+      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sb $t1,label",
+      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sb $t1,label($t2)",
+      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sb $t1,label+100000",
+      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sb $t1,label+100000($t2)",
+      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+    },
+    {
+      "example": "sc $t1,-100",
+      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sc $t1,($t2)",
+      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sc $t1,100",
+      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sc $t1,100($t2)",
+      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sc $t1,100000",
+      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sc $t1,100000($t2)",
+      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sc $t1,label",
+      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sc $t1,label($t2)",
+      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sc $t1,label+100000",
+      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sc $t1,label+100000($t2)",
+      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    },
+    {
+      "example": "sd $t1,-100($t2)",
+      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory byte address"
+    },
+    {
+      "example": "sd $t1,($t2)",
+      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "sd $t1,100000",
+      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "sd $t1,100000($t2)",
+      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "sd $t1,label",
+      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "sd $t1,label($t2)",
+      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "sd $t1,label+100000",
+      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "sd $t1,label+100000($t2)",
+      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+    },
+    {
+      "example": "sdc1 $f2,-100",
+      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "sdc1 $f2,($t2)",
+      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "sdc1 $f2,100000",
+      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "sdc1 $f2,100000($t2)",
+      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "sdc1 $f2,label",
+      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "sdc1 $f2,label($t2)",
+      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "sdc1 $f2,label+100000",
+      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "sdc1 $f2,label+100000($t2)",
+      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+    },
+    {
+      "example": "seq $t1,$t2,-100",
+      "description": "Set EQual : if $t2 equal to 16-bit immediate then set $t1 to 1 else 0"
+    },
+    {
+      "example": "seq $t1,$t2,$t3",
+      "description": "Set EQual : if $t2 equal to $t3 then set $t1 to 1 else 0"
+    },
+    {
+      "example": "seq $t1,$t2,100000",
+      "description": "Set EQual : if $t2 equal to 32-bit immediate then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sge $t1,$t2,-100",
+      "description": "Set Greater or Equal : if $t2 greater or equal to 16-bit immediate then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sge $t1,$t2,$t3",
+      "description": "Set Greater or Equal : if $t2 greater or equal to $t3 then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sge $t1,$t2,100000",
+      "description": "Set Greater or Equal : if $t2 greater or equal to 32-bit immediate then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,-100",
+      "description": "Set Greater or Equal Unsigned : if $t2 greater or equal to 16-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,$t3",
+      "description": "Set Greater or Equal Unsigned : if $t2 greater or equal to $t3 (unsigned compare) then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,100000",
+      "description": "Set Greater or Equal Unsigned : if $t2 greater or equal to 32-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sgt $t1,$t2,-100",
+      "description": "Set Greater Than : if $t2 greater than 16-bit immediate then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sgt $t1,$t2,$t3",
+      "description": "Set Greater Than : if $t2 greater than $t3 then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sgt $t1,$t2,100000",
+      "description": "Set Greater Than : if $t2 greater than 32-bit immediate then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,-100",
+      "description": "Set Greater Than Unsigned : if $t2 greater than 16-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,$t3",
+      "description": "Set Greater Than Unsigned : if $t2 greater than $t3 (unsigned compare) then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,100000",
+      "description": "Set Greater Than Unsigned : if $t2 greater than 32-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sh $t1,-100",
+      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sh $t1,($t2)",
+      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sh $t1,100",
+      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sh $t1,100($t2)",
+      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sh $t1,100000",
+      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sh $t1,100000($t2)",
+      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sh $t1,label",
+      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sh $t1,label($t2)",
+      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sh $t1,label+100000",
+      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sh $t1,label+100000($t2)",
+      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+    },
+    {
+      "example": "sle $t1,$t2,-100",
+      "description": "Set Less or Equal : if $t2 less or equal to 16-bit immediate then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sle $t1,$t2,$t3",
+      "description": "Set Less or Equal : if $t2 less or equal to $t3 then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sle $t1,$t2,100000",
+      "description": "Set Less or Equal : if $t2 less or equal to 32-bit immediate then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sleu $t1,$t2,-100",
+      "description": "Set Less or Equal Unsigned: if $t2 less or equal to 16-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sleu $t1,$t2,$t3",
+      "description": "Set Less or Equal Unsigned: if $t2 less or equal to $t3 (unsigned compare) then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sleu $t1,$t2,100000",
+      "description": "Set Less or Equal Unsigned: if $t2 less or equal to 32-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sne $t1,$t2,-100",
+      "description": "Set Not Equal : if $t2 not equal to 16-bit immediate then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sne $t1,$t2,$t3",
+      "description": "Set Not Equal : if $t2 not equal to $t3 then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sne $t1,$t2,100000",
+      "description": "Set Not Equal : if $t2 not equal to 32-bit immediate then set $t1 to 1 else 0"
+    },
+    {
+      "example": "sub $t1,$t2,-100",
+      "description": "SUBtraction : set $t1 to ($t2 minus 16-bit immediate)"
+    },
+    {
+      "example": "sub $t1,$t2,100000",
+      "description": "SUBtraction : set $t1 to ($t2 minus 32-bit immediate)"
+    },
+    {
+      "example": "subi $t1,$t2,-100",
+      "description": "SUBtraction Immediate : set $t1 to ($t2 minus 16-bit immediate)"
+    },
+    {
+      "example": "subi $t1,$t2,100000",
+      "description": "SUBtraction Immediate : set $t1 to ($t2 minus 32-bit immediate)"
+    },
+    {
+      "example": "subiu $t1,$t2,100000",
+      "description": "SUBtraction Immediate Unsigned : set $t1 to ($t2 minus 32-bit immediate), no overflow"
+    },
+    {
+      "example": "subu $t1,$t2,100000",
+      "description": "SUBtraction Unsigned : set $t1 to ($t2 minus 32-bit immediate), no overflow"
+    },
+    {
+      "example": "sw $t1,-100",
+      "description": "Store Word : Store $t1 contents into effective memory word address"
+    },
+    {
+      "example": "sw $t1,($t2)",
+      "description": "Store Word : Store $t1 contents into effective memory word address"
+    },
+    {
+      "example": "sw $t1,100",
+      "description": "Store Word : Store $t1 contents into effective memory word address"
+    },
+    {
+      "example": "sw $t1,100($t2)",
+      "description": "Store Word : Store $t1 contents into effective memory word address"
+    },
+    {
+      "example": "sw $t1,100000",
+      "description": "Store Word : Store $t1 contents into effective memory word address"
+    },
+    {
+      "example": "sw $t1,100000($t2)",
+      "description": "Store Word : Store $t1 contents into effective memory word address"
+    },
+    {
+      "example": "sw $t1,label",
+      "description": "Store Word : Store $t1 contents into memory word at label's address"
+    },
+    {
+      "example": "sw $t1,label($t2)",
+      "description": "Store Word : Store $t1 contents into effective memory word address"
+    },
+    {
+      "example": "sw $t1,label+100000",
+      "description": "Store Word : Store $t1 contents into effective memory word address"
+    },
+    {
+      "example": "sw $t1,label+100000($t2)",
+      "description": "Store Word : Store $t1 contents into effective memory word address"
+    },
+    {
+      "example": "swc1 $f1,-100",
+      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "swc1 $f1,($t2)",
+      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "swc1 $f1,100000",
+      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "swc1 $f1,100000($t2)",
+      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "swc1 $f1,label",
+      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "swc1 $f1,label($t2)",
+      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "swc1 $f1,label+100000",
+      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "swc1 $f1,label+100000($t2)",
+      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+    },
+    {
+      "example": "swl $t1,-100",
+      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swl $t1,($t2)",
+      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swl $t1,100",
+      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swl $t1,100($t2)",
+      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swl $t1,100000",
+      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swl $t1,100000($t2)",
+      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swl $t1,label",
+      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swl $t1,label($t2)",
+      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swl $t1,label+100000",
+      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swl $t1,label+100000($t2)",
+      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+    },
+    {
+      "example": "swr $t1,-100",
+      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+    },
+    {
+      "example": "swr $t1,($t2)",
+      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+    },
+    {
+      "example": "swr $t1,100",
+      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+    },
+    {
+      "example": "swr $t1,100($t2)",
+      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+    },
+    {
+      "example": "swr $t1,100000",
+      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+    },
+    {
+      "example": "swr $t1,100000($t2)",
+      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+    },
+    {
+      "example": "swr $t1,label",
+      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+    },
+    {
+      "example": "swr $t1,label($t2)",
+      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+    },
+    {
+      "example": "swr $t1,label+100000",
+      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+    },
+    {
+      "example": "swr $t1,label+100000($t2)",
+      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+    },
+    {
+      "example": "ulh $t1,-100($t2)",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulh $t1,($t2)",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulh $t1,100000",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulh $t1,100000($t2)",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulh $t1,label",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulh $t1,label($t2)",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulh $t1,label+100000",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulh $t1,label+100000($t2)",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulhu $t1,-100($t2)",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulhu $t1,($t2)",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulhu $t1,100000",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulhu $t1,100000($t2)",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulhu $t1,label",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulhu $t1,label($t2)",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulhu $t1,label+100000",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulhu $t1,label+100000($t2)",
+      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+    },
+    {
+      "example": "ulw $t1,-100($t2)",
+      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ulw $t1,($t2)",
+      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ulw $t1,100000",
+      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ulw $t1,100000($t2)",
+      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ulw $t1,label",
+      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ulw $t1,label($t2)",
+      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ulw $t1,label+100000",
+      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ulw $t1,label+100000($t2)",
+      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ush $t1,-100($t2)",
+      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ush $t1,($t2)",
+      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ush $t1,100000",
+      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ush $t1,100000($t2)",
+      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ush $t1,label",
+      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ush $t1,label($t2)",
+      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ush $t1,label+100000",
+      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+    },
+    {
+      "example": "ush $t1,label+100000($t2)",
+      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+    },
+    {
+      "example": "usw $t1,-100($t2)",
+      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "usw $t1,($t2)",
+      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "usw $t1,100000",
+      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "usw $t1,100000($t2)",
+      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "usw $t1,label",
+      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "usw $t1,label($t2)",
+      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "usw $t1,label+100000",
+      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "usw $t1,label+100000($t2)",
+      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+    },
+    {
+      "example": "xor $t1,$t2,100",
+      "description": "XOR : set $t1 to ($t2 bitwise-exclusive-OR 16-bit unsigned immediate)"
+    },
+    {
+      "example": "xor $t1,100",
+      "description": "XOR : set $t1 to ($t1 bitwise-exclusive-OR 16-bit unsigned immediate)"
+    },
+    {
+      "example": "xori $t1,$t2,100000",
+      "description": "XOR Immediate : set $t1 to ($t2 bitwise-exclusive-OR 32-bit immediate)"
+    },
+    {
+      "example": "xori $t1,100",
+      "description": "XOR Immediate : set $t1 to ($t1 bitwise-exclusive-OR 16-bit unsigned immediate)"
+    },
+    {
+      "example": "xori $t1,100000",
+      "description": "XOR Immediate : set $t1 to ($t1 bitwise-exclusive-OR 32-bit immediate)"
+    }
+  ],
+  "directives": [
+    {
+      "name": ".align",
+      "description": "Align next data item on specified byte boundary (0=byte, 1=half, 2=word, 3=double)"
+    },
+    {
+      "name": ".ascii",
+      "description": "Store the string in the Data segment but do not add null terminator"
+    },
+    {
+      "name": ".asciiz",
+      "description": "Store the string in the Data segment and add null terminator"
+    },
+    {
+      "name": ".byte",
+      "description": "Store the listed value(s) as 8 bit bytes"
+    },
+    {
+      "name": ".data",
+      "description": "Subsequent items stored in Data segment at next available address"
+    },
+    {
+      "name": ".double",
+      "description": "Store the listed value(s) as double precision floating point"
+    },
+    {
+      "name": ".end_macro",
+      "description": "End macro definition.  See .macro"
+    },
+    {
+      "name": ".eqv",
+      "description": "Substitute second operand for first. First operand is symbol, second operand is expression (like #define)"
+    },
+    {
+      "name": ".extern",
+      "description": "Declare the listed label and byte length to be a global data field"
+    },
+    {
+      "name": ".float",
+      "description": "Store the listed value(s) as single precision floating point"
+    },
+    {
+      "name": ".globl",
+      "description": "Declare the listed label(s) as global to enable referencing from other files"
+    },
+    {
+      "name": ".half",
+      "description": "Store the listed value(s) as 16 bit halfwords on halfword boundary"
+    },
+    {
+      "name": ".include",
+      "description": "Insert the contents of the specified file.  Put filename in quotes."
+    },
+    {
+      "name": ".kdata",
+      "description": "Subsequent items stored in Kernel Data segment at next available address"
+    },
+    {
+      "name": ".ktext",
+      "description": "Subsequent items (instructions) stored in Kernel Text segment at next available address"
+    },
+    {
+      "name": ".macro",
+      "description": "Begin macro definition.  See .end_macro"
+    },
+    {
+      "name": ".set",
+      "description": "Set assembler variables.  Currently ignored but included for SPIM compatability"
+    },
+    {
+      "name": ".space",
+      "description": "Reserve the next specified number of bytes in Data segment"
+    },
+    {
+      "name": ".text",
+      "description": "Subsequent items (instructions) stored in Text segment at next available address"
+    },
+    {
+      "name": ".word",
+      "description": "Store the listed value(s) as 32 bit words on word boundary"
+    }
+  ]
+}

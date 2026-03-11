@@ -1,0 +1,60 @@
+<html>
+<title>Contenido de la ayuda de MARS 4.5
+</title>
+<body>
+<center>
+<h3>MARS - Mips Assembly and Runtime Simulator</h3>
+<h4>Versión 4.5</h4>
+<h4>Agosto de 2014</h4>
+<h4>Introducción</h4>
+</center>
+
+MARS, el <b>M</b>ips <b>A</b>ssembly and <b>R</b>untime <b>S</b>imulator,
+ensambla y simula la ejecución de programas en lenguaje ensamblador MIPS.
+Puede utilizarse tanto desde la línea de comandos como a través de su
+entorno de desarrollo integrado (IDE). MARS está escrito en Java y
+requiere al menos la versión 1.5 del entorno J2SE Java Runtime Environment (JRE) para funcionar.
+Se distribuye como un archivo JAR ejecutable.
+La página principal de MARS
+es
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>. Este documento está disponible allí para su impresión.
+
+<p>A partir de la versión 4.0, MARS ensambla y simula 155 instrucciones básicas del conjunto
+de instrucciones MIPS-32, aproximadamente 370 pseudo-instrucciones o variaciones de instrucciones, las 17 funciones
+de syscall definidas principalmente por SPIM para E/S de consola y archivos, y 22 syscalls adicionales para otros usos como
+salida MIDI, generación de números aleatorios y más. Estas aparecen listadas en pestañas de ayuda independientes. También admite siete
+modos diferentes de direccionamiento de memoria para instrucciones de carga y almacenamiento: <tt>label</tt>, <tt>immed</tt>,
+<tt>label+immed</tt>, <tt>($reg)</tt>, <tt>label($reg)</tt>, <tt>immed($reg)</tt> y <tt>label+immed($reg)</tt>, donde <tt>immed</tt>
+es un entero de hasta 32 bits. Hay una opción de configuración para impedir el uso de pseudo-instrucciones
+y de formatos extendidos de instrucción y direccionamiento de memoria.
+<p>
+Nuestra referencia principal para implementar el conjunto de instrucciones ha sido
+<i>Computer Organization and Design, Fourth Edition</i> de Patterson y Hennessy,
+Elsevier - Morgan Kaufmann, 2009. Resume el conjunto de instrucciones MIPS-32
+y las pseudo-instrucciones en las Figuras 3.24 y 3.25 de las páginas 279-281, con detalles
+adicionales en el texto y en el Apéndice B. Las versiones 3.2 y posteriores de MARS implementan todas las instrucciones
+del Apéndice B y de esas figuras, excepto los delay branches de la columna izquierda de la Figura 3.25.
+También implementa todos los servicios del sistema (syscalls) y las directivas del ensamblador
+documentadas en el Apéndice B.
+
+<p>El IDE de MARS ofrece edición y ensamblado de programas, pero su verdadera
+fortaleza está en el soporte para depuración interactiva. El programador puede fijar y
+eliminar puntos de ruptura con facilidad o avanzar y retroceder paso a paso (undo) mientras
+observa y edita directamente el contenido de registros y memoria.
+
+<h4>Preguntas y comentarios</h4>
+Envíe sus preguntas y comentarios sobre MARS a
+Dr. Pete Sanderson a <tt>PSanderson@otterbein.edu</tt> o
+Dr. Ken Vollmar a <tt>KenVollmar@missouristate.edu</tt>.
+Responderemos tan pronto como nos sea posible, aunque como profesores no disponemos de tanto tiempo durante
+el curso académico como nos gustaría para dedicarlo a este proyecto. Presentamos artículos
+sobre MARS en la conferencia CCSC:MW de 2005 y en el SIGCSE Technical Symposium de 2006. También presentamos
+una sesión tutorial sobre MARS en la conferencia CCSC:CP de 2007, y el material de ese tutorial está disponible
+en la página principal de MARS.
+<p>
+<hr>
+<p>
+Este documento está disponible para imprimir en la página principal de MARS
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+</body>
+</html>

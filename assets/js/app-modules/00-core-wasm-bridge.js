@@ -103,7 +103,9 @@
     }
   };
 
-  if (existing && typeof existing.createEngineSync === "function") {
+  if (globalScope.WebMarsNativeFactory) {
+    registerFactory(globalScope.WebMarsNativeFactory, "wasm-cpp");
+  } else if (existing && typeof existing.createEngineSync === "function") {
     registerFactory(existing, "wasm-cpp");
   } else {
     markUnavailable("No WASM backend loaded (using JS core).");

@@ -1,0 +1,872 @@
+<html lang="pt"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>Histórico de Lançamentos e Notas do MARS
+</title>
+</head><body>
+<center>
+<h3>MARTE - Simulador de montagem e tempo de execução de microfones</h3>
+<h4>Lançamento 4.5</h4>
+<h4>Agosto de 2014</h4>
+<h4>História do Lançamento do MARS</h4>
+</center>
+
+<p>O Mars 4.5 foi lançado em agosto de 2014.  Aprimoramentos e correções de bugs incluem:
+</p><ul>
+<li>A ferramenta Keyboard e Display MMIO Simulator foi aprimorada por 
+sugestão de Eric Wang em
+Universidade Estadual de Washington.  Até agora, todos os caracteres 
+gravados na exibição através do Transmissor de Dados
+localização (porto de ordem baixa da palavra de memória 0xFFFF000C) 
+foram simplesmente transmitidos para a janela de exibição das 
+ferramentas.
+Sr. Wang solicitou a capacidade de tratar a janela de exibição como um 
+terminal virtual baseado em texto por
+ser capaz de limpar programaticamente a janela ou definir a posição 
+(x,y) de um cursor de texto.  Controlado
+colocação do cursor de texto (que não é exibido) permite que você, entre
+ outras coisas, desenvolva 
+Jogos de modo de texto 2D.
+  <ul>
+  <li>Para limpar a janela, coloque o decimal ASCII/Unicode 12 no byte do Transmissor de Dados.  Esta é a não-impressão 
+  Caractere de alimentação de formulário.
+  </li>
+  <li>Para definir o cursor de texto para uma posição especificada (x,y), onde x é a coluna e y é a linha,
+  coloque o ASCII/Unicode 7 no byte do Transmissor de Dados e coloque a posição (x,y) no não utilizado
+  superior 24 bits da palavra Transmissor de Dados.  Coloque a posição X em bits 20-31 e a posição Y em bits 8-19.
+  Posição (0,0) é o canto superior esquerdo da tela.
+  </li>
+  <li>Você pode redimensionar a janela de exibição para as dimensões desejadas antes de executar seu programa MIPS.  
+  As dimensões são exibidas dinamicamente na borda superior.  Observe que a ferramenta agora contém um divisor entre 
+  a janela de exibição e a janela do teclado.  Uma vez que o programa está em execução, alterações no tamanho da tela
+  não afeta o posicionamento do cursor.</li>
+  </ul>
+ A janela de Ajuda para esta ferramenta não é mais modal, então você pode visualizá-la enquanto trabalha em outras janelas.  
+ A janela Ajuda contém muitas informações para que você
+ vai achar útil ser capaz de se referir a ele enquanto trabalha em seu programa.
+</li>
+<li>Instalou a Ferramenta de Raio-X MIPS desenvolvida por Marcio Roberto e colegas do Centro Federal de 
+Educação Tecnológica de Minas Gerais no Brasil. Esta ferramenta anima uma exibição do datapath do MIPS.
+A animação ocorre durante a execução do programa.  Pesquise na Internet por "MIPS X-ray"
+para encontrar publicações relevantes e outras informações.
+</li>
+<li>A ajuda sensível ao contexto no editor agora deve ser mais fácil de ler.  foi implementado como um menu de
+itens desativados, o que fez com que seu texto fosse escurecido.  Os itens agora estão habilitados para maior visibilidade
+mas clicar neles só vai fazer a lista desaparecer.
+</li>
+<li>Correção de bugs: Corrigido um problema de editor que afeta determinados teclados europeus.  O editor de destaque de sintaxe
+ignorou a tecla Alt, que alguns teclados europeus exigem para produzir os caracteres # ou $ em particular.  
+Eu não tinha meios de testar isso, mas Torsten Maehne na França me enviar uma solução e Umberto
+Villano, na Itália, afirmou que funcionou para ele também.
+</li>
+<li>Correção de bugs: Referências de código-fonte para registros de pontos flutuantes do Coprocessor 1 (por exemplo, $f12) 
+dentro de definições macro foram erroneamente sinalizados como erros de sintaxe.  MARTE permite estilo SPIM
+parâmetros macro (que começam com $ em vez de %) e não os distinguiu corretamente
+de nomes de registro de ponto flutuante.  Isto foi corrigido.  Agradecimentos a Rudolf Biczok na Alemanha por alertar
+eu ao bicho.
+</li>
+<li>Correção de bugs: Corrigido um bug que fazia com que a janela do Segmento de Dados às vezes exibisse valores incorretos
+na fronteira superior de segmentos de memória simuladas.  Agradecimentos a Yi-Yu (James) Liu de Taiwan por alertar
+eu para o bug, que foi introduzido em Mars 4.4.
+</li>
+
+</ul>
+<p></p>
+
+<p>Marte 4.4 foi lançado em agosto de 2013.  Aprimoramentos e correções de bugs incluem:
+</p><ul>
+<li>Um recurso para suportar código auto-modificado foi desenvolvido por Carl Burch 
+(Hendrix College) e Pete Sanderson.  É desativado por padrão
+e pode ser ativado através de uma opção de menu Configurações.  Um programa pode escrever para o
+segmento de texto e também pode ramificar/saltar para qualquer endereço de usuário nos segmentos de dados
+dentro dos limites do espaço de endereço simulado.  Conteúdo do segmento de texto 
+também pode ser editado de forma interativa usando a janela Segmento de Dados e texto
+conteúdo de segmento dentro do intervalo de endereços do código existente pode ser editado
+utilização interativa da janela Segmento de Texto.  No modo de comando, a opção smc
+permite que um programa escreva e execute em ambos os segmentos de texto e dados.
+</li>
+<li>Correção de bug: ocorreu um erro de montagem quando uma linha dentro de uma macro continha ambos 
+um parâmetro macro e um identificador definido para ter uma substituição .eqv.
+</li>
+<li>Correção de bug: Se um nome de macro foi usado como parâmetro macro, um erro de montagem ocorreu em algumas situações
+quando uma macro sendo usada como argumento foi definida seguindo a macro que
+definir o parâmetro.  A macro "para" descrita na guia Ajuda macro é
+um exemplo.
+</li>
+</ul>
+<p></p>
+
+<p>O Mars 4.3 foi lançado em janeiro de 2013.  Aprimoramentos e correções de bugs incluem:
+</p><ul>
+<li>
+Uma instalação macro foi desenvolvida pelo Sr. Mohammad Sekhavat.  está documentado
+na guia ajuda do MIPS Macros.  
+</li>
+<li>
+Uma facilidade de substituição de texto semelhante ao #define foi desenvolvida usando
+o novo <tt>.eqv</tt> diretiva.  Também está documentado na ajuda do MIPS
+tab Macros.
+</li>
+<li>
+Uma facilidade de inserção de texto semelhante ao #include foi desenvolvida
+usando o novo <tt>.incluir</tt> diretiva.  Também está documentado no
+Guia de ajuda do MIPS Macros.  Permite que uma macro seja definida em um único arquivo e
+incluído sempre que necessário.
+</li>
+<li>Duas novas opções de modo de comando já estão disponíveis: ic (Contagem de instruções) para
+exibir uma contagem de declarações executadas após o término do programa, e eu
+(Mensagens para Erro) para enviar mensagens MARS para System.err em vez de System.out.
+Permite separar as mensagens MARS da saída MIPS usando o redirecionamento, 
+se desejar.  Redirecionar um fluxo no DOS com "1&gt;" ou "2&gt;" para fora e err, 
+respectivamente. Para redirecionar ambos, use "&gt; filename 2&gt;&amp;1"
+</li>
+<li>Alterou as configurações padrão da família de fontes de Courier New para Monospaced.
+Isso foi em resposta a relatos de Macs exibindo parênteses esquerdos e verticais 
+barras incorretamente.   
+</li>
+<li>Alterado a maneira como os operandos para .byte e .half diretrizes são verificados.
+Agora funcionará como o SPIM, que aceita qualquer valor de operando, mas trunca bits high-end como
+necessário para encaixar o campo de 1 (byte) ou 2 (metade) byte.  Ainda vamos emitir um aviso
+mas não um erro.
+</li>
+<li>Para leituras de arquivo, syscall 14, descritor de arquivo 0 está sempre aberto para entrada padrão.  Para arquivo
+escreve, syscall 15, descritores de arquivo 1 e 2 estão sempre abertos para saída padrão e 
+erro padrão, respectivamente.  Isso permite que você escreva o código de E/S que irá
+trabalhar com arquivos ou E/S padrão.  Ao usar o IDE, entrada e saída padrão 
+são executadas na guia Run I/O.  Os descritores de arquivo para arquivos regulares são
+alocado começando com descritor de arquivo 3.  
+</li>
+
+
+</ul>
+<p>Marte 4.2 foi lançado em agosto de 2011.  Aprimoramentos e correções de bugs incluem:
+</p><ul>
+<li>A execução de uma operação Salvar em um novo arquivo agora usará a guia do arquivo
+etiquetar como o nome de arquivo padrão na caixa de diálogo Salvar como (por exemplo, mips1.asm).
+Anteriormente, não fornecia um nome padrão.
+</li>
+<li>Quando a configuração "montar todos os arquivos no diretório" estiver ativada (útil
+para projetos multi-file), agora você pode alternar o foco de uma guia do editor para outra
+sem invalidar a operação de montagem atual.  Você pode abrir da mesma forma
+arquivos de projeto adicionais.  Anteriormente, a seleção aberta ou de guias seria
+invalidar a operação de montagem e qualquer estado de execução pausado ou
+pontos de ruptura seriam perdidos.
+</li>
+<li>O syscall Read String (syscall 8) foi fortificado para evitar que exceções Java ocorram 
+quando valores inválidos são colocados em $a1.
+</li>
+<li>Agora irá realizar o teste de tempo de execução para endereço de palavra dupla não alinhado em 
+Instruções e armadilhas 'ldc1' e 'sdc1' se não estiver alinhada.  
+</li>
+<li>As instruções básicas na exibição do Segmento de texto agora renderizam imediatas usando
+oito dígitos hexadecimais ao exibir em hex.  Anteriormente, prestava apenas
+quatro dígitos para conservar o espaço.  Isso levou a confusão
+resultados.  Por exemplo, -1 e 0xFFFF seriam ambos exibidos como 0xFFFF
+mas -1 expande para 0xFFFFFFF e 0xFFFF expande para 0x0000FFF.  
+</li>
+
+</ul>
+
+
+<p>Marte 4.1 foi lançado em janeiro de 2011.  Aprimoramentos e correções de bugs incluem:
+</p><ul>
+
+<li>A capacidade de visualizar o conteúdo do Segmento de Dados interpretado como ASCII
+personagens foi acrescentado.  Você vai encontrá-lo na fronteira inferior de
+a Janela Segmento Dados como a caixa de seleção "ASCII".  Isso substitui o
+configuração hexadecimal/decimal mas somente para a exibição do Segmento de Dados.
+Não persiste em sessões.  As células não podem ser editadas em
+formato ASCII.
+</li>
+
+<li>O recurso de memória de despejo no menu Arquivo agora fornece um despejo ASCII
+formato.  O conteúdo da memória é interpretado como códigos ASCII.
+</li>
+
+<li>Uma opção de modo de comando "ascii" foi adicionada à memória de exibição ou
+conteúdo de registro interpretado como códigos ASCII.  Ele se junta ao existente
+Opções "dec" e "hex" para exibição em decimal ou hexadecimal,
+respectivamente.  Apenas um dos três pode ser especificado.
+</li>
+
+<li>Os caracteres reais para exibir para todas as opções de exibição ASCII
+(janela de segmento de dados, memória de despejo, opção de modo de comando) são
+especificado no arquivo config.properties.  Isso inclui um "placeholder"
+caractere a ser exibido para todos os códigos especificados como não-impressão.
+Os códigos ASCII 1-7, 14-31 e 127-255 são especificados como 
+não-impressão, mas isso pode ser alterado no arquivo de propriedades.
+</li>
+
+<li>Uma nova guia de Ajuda chamada Exceções foi adicionada.  explica o básico
+de exceções e interrupções MIPS conforme implementado no MARS.  Também inclui
+dicas para escrever e usar manipuladores de exceção.
+</li>
+
+<li>Uma nova ferramenta chamada Bitmap Display foi adicionada.  Você pode usá-lo
+para simular uma exibição de bitmap simples.  Cada palavra do endereço especificado
+espaço representa uma cor RGB de 24 bits (vermelho em bits 16-23, verde em bits
+8-15, azul em bits 0-7) e o valor de uma palavra será exibido na ferramenta 
+área de exibição quando a palavra é escrita pelo programa MIPS.  A base
+endereço corresponde ao canto superior esquerdo da exibição, e as palavras são
+exibido em ordem de linha-principal.  A versão 1.0 é bastante básica, construída
+do código da Ferramenta de Visualização de Referência de Memória.
+</li> 
+
+<li>Formatos de operando adicionais
+foram adicionadas para a multiplicação pseudo-instruções ¿mul¿ e ¿mulu».
+</li>
+
+<li>A ajuda pop-up sensível ao contexto do editor agora aparecerá abaixo
+a linha atual sempre que possível.  Originalmente, apareceu acima, 
+centrado para o lado,
+ou abaixo, dependendo da posição vertical da linha atual na edição
+janela.  Exibir o pop-up acima da linha atual tende a bloquear visualmente
+informações importantes, uma vez que freqüentemente uma linha de código utiliza o mesmo operando 
+(especialmente registros) como o imediatamente acima dele.
+</li>
+
+<li>O editor agora irá auto-indentar cada nova linha quando o Enter
+tecla é pressionada.  Recuo da nova linha vai coincidir com a do
+linha que a precede.  Esse recurso pode ser desativado na caixa de diálogo Configurações do Editor.
+</li>
+
+<li>Duas novas opções de modo de comando foram adicionadas.  A opção "aeN", onde
+N é um número inteiro, vai terminar MARS com valor de saída N quando um erro de montagem 
+ocorre.  A opção "seN" irá igualmente encerrar o MARS com valor de saída
+N quando ocorre um erro de simulação (tempo de execução do MIPS).  Essas opções podem ser úteis
+ao escrever scripts para classificação. Graças ao meu software
+Os estudantes de engenharia Robert Anderson, Jonathan Barnes, Sean Pomeroy e Melissa Tress
+para projetar e implementar essas opções.
+</li>
+
+<li>Um bug do editor que afetou os usuários do Macintosh foi corrigido.  
+Atalhos de comando, por exemplo. Comandos para salvar, não foi 
+função e também inseriu o caractere no texto. 
+</li>
+
+<li>Um bug no Syscall 54 (InputDialogString) foi corrigido.  Este syscall é
+o equivalente GUI do Syscall 8 (ReadString), que segue a semântica
+de "fgets" da UNIX.  O Syscall 54 foi modificado para também seguir os "fgets"
+semântica.
+</li>
+
+<li>Um bug na ferramenta Cache Simulator foi corrigido.  O animador que
+tintas blocos visualizados verde ou vermelho (para mostrar cache hit ou miss) às vezes
+pinta o bloco errado quando o cache associado a set é usado.  O subjacente
+algoritmo de cache está correto de modo que os resultados numéricos, como relações de acerto
+sempre foram corretos.  O animador foi corrigido.
+Obrigado a Andreas Schafer e sua aluna Carsten Demel por trazer isso
+à minha atenção.
+</li>
+
+</ul>
+
+<p>Marte 4.0.1 foi lançado em outubro de 2010.  É uma versão de correção de bugs para resolver três bugs.
+</p><ul>
+<li>As guias Editar e Executar do IDE, que foram realocadas em 4.0 da 
+borda superior para a esquerda e orientadas verticalmente, foram
+Movido de volta para a borda superior porque o Macintosh executando o 
+Java 1.6 não renderiza corretamente guias orientadas para a vertical.
+</li>
+<li>Uma exceção pode ser lançada em montagens de vários arquivos quando o
+ último arquivo da montagem não for o mais longo. Isso ocorre
+somente ao utilizar o IDE, e tiver sido corrigido.
+</li>
+<li>Se uma operação de montagem falhar devido a um arquivo de 
+manipulador de exceção não existente (especificado através do menu 
+Configurações do IDE), desmarcando
+a configuração do manipulador de exceção não impede que o mesmo erro 
+ocorra na próxima montagem. Isto foi corrigido.
+</li>
+</ul>
+ 
+<p>O Mars 4.0 foi lançado em agosto de 2010.  Aprimoramentos e correções de bugs incluem:
+</p><ul>
+
+<li><i>Novo Editor de Texto:</i> Mars apresenta um editor de texto integrado totalmente novo.  Ele cria uma nova guia para cada arquivo
+como está aberto.  O editor agora apresenta linguagem-aware 
+realce de cor de muitos elementos de linguagem de montagem MIPS com personalizável 
+cores e estilos.  Ele também possui instrução popup automática sensível ao contexto 
+guias.  Existem dois níveis: um com ajuda e preenchimento automático de nomes de instruções
+e um segundo com informações de ajuda para operandos.  Este e outro novo editor 
+recursos podem ser personalizados ou desativados através de
+a caixa de diálogo Configurações do Editor expandida.  Você pode até reverter para o anterior 
+editor estilo bloco de notas, se desejar (a capacidade de vários arquivos é retida).  
+O editor de linguagem-ware é baseado em
+o <i>pacote de sintaxe jEdit</i> de código aberto (syntax.jedit.org).  É separado de
+o montador, portanto, qualquer sintaxe destacando peculiaridades não afetará a montagem.
+</li>
+
+<li><i>Ajuda de instrução aprimorada:</i> todos os exemplos de instruções nas guias de ajuda (e novos guias de instruções pop-up)
+agora use nomes de registro realistas, por exemplo, $t1, $t2, em vez de US $ 1, US $ 2.  O formato de instrução
+chave exibida acima as guias de ajuda MIPS foi expandida para incluir explicações do 
+vários modos de endereçamento para instruções de carga e armazenamento e pseudo-instruções.  
+As descrições foram adicionadas a todos os exemplos de instrução e pseudo-instrução.
+</li>
+
+<li><i>Capacidade de erro de montagem aprimorada:</i> Se a operação de 
+montagem resultar em erros, a primeira mensagem de erro
+na área de texto de Mensagens de Marte será elevada e a instrução 
+errônea correspondente será selecionada no
+editor de texto.  Além disso, você pode clicar em qualquer mensagem de 
+erro na área de texto Mars Mensagens para selecionar o correspondente
+instrução errada no editor de texto.  O primeiro recurso não seleciona 
+em todas as situações (como quando
+assemble-on-open está definido) mas nas situações em que não funciona 
+nenhum mal é feito mais
+o segundo recurso, clicando em mensagens de erro, ainda pode ser usado.
+</li>
+
+<li>Syscalls de entrada do console (5, 6, 7, 8, 12) executados no IDE agora recebem teclas digitadas diretamente no texto Run I/O 
+área em vez de através de uma caixa de diálogo de entrada pop-up.  Obrigado a Ricardo Pascual por fornecer este recurso!
+Se você preferir as caixas de diálogo pop-up, há uma configuração para restaurá-las.
+</li>
+
+<li>As operações de piso, teto, trunc e rodada agora produzem o 
+resultado padrão MIPS 2^31-1 se o valor for 
+infinito, NaN ou fora da faixa de 32 bits.  Para consistência, as 
+operações de exercício agora produzem o resultado NaN se o operando for 
+negativo
+(em vez de levantar uma exceção).  Todos esses casos são consistentes 
+com o FCSR (FPU Control and Status Register)
+Bandeira inválida da Operação está desligada.  A solução ideal seria 
+simular o registro FCSR em si para todos 
+Especificações MIPS para instruções de ponto flutuante podem ser 
+implementadas, mas isso ainda não aconteceu.
+</li>
+
+<li>A coluna Básica na Janela de Segmento de Texto agora exibe dados e endereços em decimal ou
+hexadecimal, dependendo das configurações atuais.  Observe que o "endereço" nas instruções do ramo 
+é na verdade um deslocamento relativo ao PC, por isso é tratado como dados não endereço.  Desde que os dados operam em
+instruções básicas não têm mais de 16 bits de comprimento, sua tela hexadecimal inclui apenas 4 dígitos.
+</li>
+
+<li>A coluna Fonte na Janela de Segmento de Texto agora preserva o 
+espaçamento da guia para uma aparência mais limpa (os caracteres da guia
+ não foram renderizados anteriormente).
+</li>
+
+<li>A mnemônica de instrução agora pode ser usada como rótulos, por exemplo. "<tt>b:</tt>".
+</li>
+
+<li>O novo syscall 36 exibirá um número inteiro como um decimal não assinado.
+</li>
+
+<li>Uma nova ferramenta, Digital Lab Sim, contribuída por Didier 
+Teifreto (dteifreto@lifc.univ-fcomte.fr).  Esta ferramenta
+apresenta duas telas de sete segmentos, um teclado hexadecimal e um 
+contador.  Ele usa MMIO para explorar 
+E/S orientado por interrupção em um ambiente envolvente.  Mais 
+informações estão disponíveis em seu recurso de Ajuda.  Muito obrigado!
+</li>
+
+<li>O MARS 4.0 requer Java 1.5 (5.0) em vez de 1.4.  Se isto é um problema para ti, avisa-me.
+</li>
+
+
+
+</ul>
+
+
+
+
+<p>Marte 3.8 foi lançado em janeiro de 2010.  Aprimoramentos e correções de bugs incluem:
+</p><ul>
+
+<li>Um novo recurso para suspender temporariamente os pontos de interrupção que você definiu anteriormente.  Use-o
+quando você se sentir confiante o suficiente para executar o seu programa sem os pontos de interrupção, mas não
+confiante o suficiente para limpá-los!  Use o item Alternar Pontos de interrupção no menu Executar ou
+basta clicar no cabeçalho da coluna "Bkpt" na janela Segmento de texto.  Repita, para re-ativar.
+</li>
+
+<li>Duas novas ferramentas contribuídas por Ingo Kofler da Universidade Klagenfurt, na Áustria.
+Um gera estatísticas de instrução e o outro simula a previsão de ramo usando
+uma Tabela de História de Ramo.
+</li>
+
+<li>Duas novas syscalls de impressão.  Syscall 34 imprime um número inteiro em formato hexadecimal.
+Syscall 35 imprime um número inteiro em formato binário.  Sugestão de Bernardo Cunha de Portugal.
+</li>
+
+<li>Uma nova Configuração para controlar se o contador de programas MIPS será ou não
+inicializado à declaração com rótulo global 'principal' se tal declaração existir.  Se 
+a configuração está desmarcada ou se verificada e não há 'principal', o contador do programa 
+será inicializado para o endereço inicial padrão.  A liberação 3.7 foi programada
+para inicializá-lo automaticamente para a declaração rotulada como 'principal'.  Isso levou a 
+problemas com programas que usam o padrão SPIM exceção manipulador exceções.s
+porque ele inclui uma sequência de instrução curta no endereço inicial padrão
+para fazer alguma inicialização então ramificar para 'principal'.  Sob 3.7 a inicialização 
+sequência estava sendo contornada.  Por padrão, essa configuração está desmarcada.  Isto
+opção pode ser especificada no modo de comando usando a opção 'sm' (Start at Main).
+</li>
+
+<li>Ferramentas de Marte que existem fora de Marte agora podem ser incluídas nas Ferramentas
+menu colocando-os em um JAR e incluindo-o em um comando que é lançado
+o Mars IDE.  Por exemplo: <tt>java -cp plugin.jar;Mars.jar Mars Em inglês</tt>
+Obrigado a Ingo Kofler por pensar nesta técnica e fornecer o
+patch para implementá-lo.
+</li>
+
+<li>Correções e melhorias gerais para as syscalls MIDI.  Graças a Max Hailperin
+do Colégio Gustavus Adolphus para fornecê-los.
+</li>
+
+<li>Correção para um bug assembler que sinalizou instruções MIPS inválidas e invalidas identificadas 
+como diretivas.
+</li>
+
+</ul>
+
+
+<p>Marte 3.7 foi lançado em agosto de 2009.  Aprimoramentos e correções de bugs incluem:
+</p><ul>
+
+<li>Um novo recurso para alterar a configuração de espaço de endereço do
+máquina MIPS simulada.  A configuração de espaço de endereço de 32 bits usada por
+todos os lançamentos anteriores continuam sendo o padrão.  Definimos dois
+configurações alternativas para um espaço de endereço compacto de 32KB.  Um começa o
+segmento de texto no endereço 0 e o outro inicia o segmento de dados no endereço 0.
+Um espaço de endereço de 32KB permite pseudo-instruções de carga/loja comumente usadas 
+usando rótulos, como <tt>lw $t0, incremento</tt>, para expandir para um único básico
+instrução, uma vez que o endereço completo da etiqueta caberá no endereço de 16 bits
+campo de deslocamento sem se estender a um valor negativo.  Isso foi feito em resposta a
+diversas solicitações ao longo dos anos para endereços menores e expansões simplificadas 
+para tornar os programas de montagem mais fáceis de compreender.  Este lançamento não 
+incluir a capacidade de definir sua própria configuração personalizada, embora nós
+antecipar adicioná-lo no futuro.  Está disponível tanto através do comando
+modo (opção mc) e o IDE.
+Ver <tt>Configuração de Memória...</tt> na parte inferior do menu Configurações.</li>
+
+<li>Relacionado ao item anterior: carregar e armazenar pseudo-instruções do formulário
+<tt>lw $t0, rótulo</tt> e <tt>lw $t0, etiqueta ($t1)</tt> expandir-se-á para um único
+instrução (<tt>addi</tt> para estes exemplos) se a configuração de memória atual garantir o
+O endereço completo da etiqueta caberá nos 15 bits de ordem baixa.  Instruções
+para os quais isso foi implementado são: la, lw, lh, lb, lhu, lbu, lwl, lwr, ll,
+lwc1, ldc1, l.s, l.d, sw, sh, sb, swl, swr, sc, swc1, sdc1,
+s.s, e s.d.</li>
+
+<li>Se um arquivo contém um rótulo de instrução global "principal" (sem citações, caso-sensível), então a execução irá
+começar nessa declaração independentemente do seu endereço.  Anteriormente, a execução do programa
+sempre iniciado no endereço base do segmento de texto.  Isto será útil para
+projetos multi-arquivo porque você não precisa mais ter o "arquivo principal" aberto em
+o editor para executar o projeto.  Note que o principal tem que ser declarado global
+usando o <tt>.globl</tt> diretiva.</li>
+
+<li>Adicionamos um recurso Localizar/Substituir ao editor.  Isto tem sido outro
+pedido frequente.  Acesse-o através do menu Editar ou Ctrl-F.  Procure por major
+aprimoramentos para o editor em 2010!</li>
+
+<li>As syscalls para Open File (13), Read from File (14) e Write to File (15)
+todos agora colocar o seu valor de retorno em registro $v0 em vez de $a0.  A mesa
+em <i>Organização de Computador e</i> Design's Apêndice B no SPIM especifica
+$a0 mas o próprio SPIM usa consistentemente $v0 para os valores de retorno.</li>
+
+<li>Pseudo-instruções para div, divu, mulo, mulou, rem, remu, seq, sne, sge, 
+sgeu, sgt, sgtu, sle, sleu agora aceitam um 16 ou 32-bit imediato como seu terceiro operando.  
+Anteriormente, o terceiro operando tinha que ser um registro.</li>
+
+<li>Ferramentas existentes foram testadas usando espaço de endereço de memória reconfigurado (ver primeiro item).  Fez alguns
+adaptações ao Teclado e Display Simulator Tool que permitem que ele seja usado para
+Memória Mapeada I/O (MMIO) mesmo sob o modelo de memória compacta, onde o endereço base MMIO
+é 0x00007f00 em vez de 0xffff00000.  Destacar não é perfeito nesse cenário.</li>
+
+<li>Correção de Bug: O syscall para Open File (13) reverteu os significados do
+termos <i>modo</i> e <i>bandeira</i>.  Bandeiras são usadas para indicar o pretendido
+utilização do arquivo (ler/escrever).  O modo é usado para definir permissões de arquivo em situações específicas.
+O MARS implementa sinalizadores selecionados como suportados por fluxos de arquivos Java, 
+e ignora o modo se especificado.  Para mais detalhes, consulte os Syscalls
+guia em Ajuda.  O exemplo do arquivo nessa guia foi corrigido.</li>
+
+<li>Correção de bugs: O montador gerou incorretamente um
+erro nas instruções Jump localizadas no segmento de texto do kernel.</li>
+
+<li>Correção de bugs: A opção de projeto (p) na interface de comando funcionou incorretamente
+quando o MARS foi invocado dentro do diretório contendo os arquivos a serem montados.</li>
+
+<li>Reconhecimento: O desenvolvimento do Release 3.7 foi apoiado por um SIGCSE
+Concessão de Projetos Especiais.</li>
+
+</ul>
+
+
+
+<p>Marte 3.6 foi lançado em janeiro de 2009.  Aprimoramentos e correções de bugs incluem:
+</p><ul>
+
+<li>Finalmente implementamos o novo recurso mais solicitado: memória e células de registro
+ser destacado quando escrito para durante simulação cronometrada ou escalonada!  O 
+célula de memória/registro destacado representa, assim, o resultado da instrução acabada de ser concluída.
+Durante a execução cronometrada ou escalonada, esta NÃO é a instrução destacada.  Durante o back-stepping,
+esta É a instrução destacada.  A instrução destacada é a próxima
+a ser executado na sequência de execução normal (para frente).
+
+</li><li>Em conjunto com o destaque da célula, adicionamos a capacidade 
+de personalizar o realce
+esquema de cores e fonte.  Selecione Destaque no menu Configurações.  Na
+ caixa de diálogo resultante,
+você pode selecionar destacar a cor de fundo, a cor do texto e a fonte 
+para as diferentes tabelas de tempo de execução (segmento de texto,
+Segmento de dados, Registros).  Você também pode selecioná-los para 
+normal, não apenas
+destacado, exibição por linha de números pares e ímpares mas não por 
+tabela.
+
+</li><li>Recurso de janela de novos rótulos frescos: a tabela pode ser classificada em ascendência ou descida
+ordem baseada na coluna Rótulo (alfanumérico) ou em Endereço (numérico).  É só clicar em
+a coluna que se dirige para selecionar e alternar entre ascendente (triângulo reto) ou descendente
+(Triângulo invertido).  Os endereços são classificados com base em valores de 32 bits não assinados. 
+A configuração persiste em todas as sessões.</li>
+
+<li>O painel Mensagens, que inclui as guias Mensagens de Marte e Run I/O, agora é exibido usando
+uma fonte mono-espaçada (largura de caracteres fixa).  Isso facilita gráficos baseados em texto ao executar
+do IDE.</li>
+
+<li>O arquivo de distribuição Mars.jar agora contém todos os arquivos necessários para produzir
+um novo arquivo de jar.  Isso tornará mais fácil para você expandir o frasco, modificar arquivos de origem,
+recompilar e produzir um novo frasco para uso local.  <tt>CriatMarsJar.bat</tt> contém a instrução do frasco.</li>
+
+<li>A janela Ajuda agora inclui uma guia para Reconhecimentos.  Isso reconhece os colaboradores do MARS
+e correspondentes.</li>
+
+<li>Adicionamos uma nova chamada de sistema (syscall) para gerar tons MIDI de forma síncrona, syscall 33.
+A chamada MIDI original retorna imediatamente quando o tom é gerado.  O novo não retornará
+até que a saída do tom esteja completa independentemente da sua duração.
+
+</li><li>A exibição do Segmento de Dados agora rola 8 linhas (meia tabela) em vez de 16 quando o 
+botões de seta são clicados.  Isso torna mais fácil visualizar uma sequência de células relacionadas que
+acontecer de atravessar um limite de mesa.  Observe que você pode manter pressionado qualquer botão para rolagem rápida.
+A caixa de combinação com vários limites de endereço de dados também funciona melhor agora.</li>
+
+<li>Correção de bugs: duas correções para a ferramenta de simulador de teclado e exibição.  Transmissor Pronto bit foi 
+não ser redefinido com base na contagem de instruções
+quando executado no segmento de texto do kernel, e o bit de Nível de Exceção do registro de Status não foi
+testado antes de habilitar a rotina de serviço de interrupção (pode levar ao looping se ocorrerem interrupções
+w/i a rotina de serviço de interrupção).  Obrigado a Michael Clancy e Carl Hauser por trazerem estes
+à minha atenção e sugerindo soluções.</li>
+
+<li>Correção de bugs: Os endereços de byte do segmento de pilha não nos limites do word não estavam sendo processados
+corretamente.  Isso se aplica à ordem de byte pouco endiana (o big-endian não está habilitado ou testado no MARS).
+Obrigado a Saul Spatz por reconhecer o problema e fornecer um patch.</li>
+
+<li>Pequenas correções de bugs incluem: Corrigir uma falha que leva à falha ao lançar o MARS no comando 
+modo, esclarecendo a mensagem de erro do assembler para muito-poucos ou muito-muitos operandos erro, e corrigindo o
+descrição de lhu e lbu instruções de "não alinhado" a "não assinado".</li>
+
+
+</ul>
+
+
+
+<p>O Mars 3.5 foi lançado em agosto de 2008.  Principais aprimoramentos e correções de bugs incluem:
+</p><ul>
+
+<li>Uma nova ferramenta, o teclado e Display MMIO Simulator, que suporta o póler e o sistema de interrupção
+operações de entrada e saída através da memória de E/S (MMIO) mapeada por memória.  O programa MIPS escreve para
+locais de memória que servem como registros para dispositivos simulados.  Suporta entrada de teclado e a
+exibição simulada orientada a caracteres.  Clique no botão Ajuda da ferramenta para mais detalhes.</li>
+
+<li>Uma nova Ferramenta, o Contador de Instruções, contribuída pelo usuário do MARS Felipe Lessa.  Vai contar o
+número de instruções MIPS executadas juntamente com porcentagens para formato R, formato I e formato J
+instruções. Obrigado, Felipe!</li>
+
+<li>Os argumentos do programa agora podem ser fornecidos ao programa 
+MIPS em tempo de execução, através de uma configuração de IDE ou
+modo de comando.  Consulte a opção "pa" do modo de comando para obter 
+mais detalhes sobre a operação do modo de comando.  O argumento
+contagem (argc) é colocado em $a0 e o endereço de uma matriz de cadeias 
+de caracteres terminadas nulas contendo o
+argumentos (argv) é colocado em $a1.  Eles também estão disponíveis na 
+pilha de tempo de execução ($sp). </li>
+
+<li>Duas alterações relacionadas permitem que o MARS monte código-fonte produzido por determinados compiladores, como o gcc.
+Uma mudança é emitir avisos em vez de erros para diretivas não reconhecidas.  MARTE implementa a
+número limitado de directivas.  Ignore esses avisos em seu risco, mas a montagem pode continuar.
+A segunda mudança é permitir que os rótulos de declaração contenham e comece especificamente com '$'.</li>
+
+<li>No modo de comando, os valores de registro final são exibidos dando o nome do registro como uma opção.
+Os nomes de registro começam com '$', que é interceptado por certos shells de comando do sistema operacional.  O
+convenção por escapar não é uniforme entre conchas.  Nós aprimoramos as opções, então agora você pode
+dar o nome do registo sem o '$'.  Por exemplo, você pode usar to em vez de $t0 como opção.
+Você não pode se referir a registros por número dessa maneira, uma vez que uma opção inteira é interpretada por
+o analisador de comando como um limite de execução de instruções.  Obrigado a Lucien Chaubert por reportagem
+este problema.</li>
+
+<li>Melhorias menores: O recurso de despejo do modo de comando também 
+foi estendido para permitir intervalos de endereço de memória
+como nomes de segmento. Se você inserir uma nova extensão de arquivo na 
+caixa de diálogo Abrir, a extensão permanecerá disponível durante todo o
+ processo
+a sessão interativa. O segmento de dados valor repetição operador ':' 
+agora 
+funciona para todas as diretivas numéricas (.word, .half, .byte, .float,
+ .double).
+Isso permite inicializar vários locais de memória consecutivos com o 
+mesmo valor.  Para
+exemplo: <br><tt>uns: .half 1 : 8 # Armazenar o valor 1 em 8 meias palavras consecutivas</tt></li>
+
+<li>Mudanças principais: as constantes hexadecimais contendo menos de 8 dígitos serão interpretadas como se o
+os principais dígitos são 0's.  Por exemplo, 0xFFFF será interpretado como 0x0000FFFF, não 0xFFFFFFFF como antes.
+Isso estava causando problemas com operandos imediatos na faixa de 32768 a 65535, que eram 
+mal interpretado pelas operações lógicas como valores de 32 bits assinados em vez de valores de 16 bits não assinados.
+Os valores de 16 bits assinados e não assinados agora são distinguidos pelo tokenizer baseado no protótipo
+símbolos -100 para assinado e 100 para não assinados (principalmente operações lógicas).
+Muito obrigado a Eric Shade, da Missouri State University, e Greg Gibeling, da UC Berkeley, por 
+seus esforços estendidos para me ajudar a resolver essa situação.</li>
+
+<li>Correções de bugs menores: <tt>round.w.s</tt> e <tt>round.w.d</tt> foram modificados para executar corretamente o IEEE
+arredondamento por padrão.  Obrigado ao Eric Shade por apontar isso. 
+Syscall 12 (caractere de leitura) foi alterado para deixar o personagem em $v0 em vez de $a0 em vez de $a0.  O
+original foi baseado em um erro de impressão no Apêndice A de <i>Organização e Design de Computadores</i>.
+O MARS não executaria a partir do arquivo executável Mars.jar se fosse armazenado em um diretório
+caminho esses nomes de diretório contêm quaisquer caracteres não-ASCII.  Isto foi corrigido.  Graças a
+Felipe Lessa por apontar isso e oferecer uma solução.
+O MARS agora detectará corretamente a condição EOF ao ler um arquivo usando o syscall 14.
+Obrigado a David Reimann por trazer isso à nossa atenção.
+</li></ul>
+
+
+
+<p>Marte 3.4.1 foi lançado em 23 de janeiro de 2008.  É uma versão de correção de bugs para resolver dois bugs.
+</p><ul>
+<li>Um bug aparece em pseudo-instruções em que a expansão inclui instruções de ramificação.  O ramo fixo
+offsets não estavam mais corretos devido a alterações no cálculo de compensações de ramificação na Liberação 3.4.
+Ao mesmo tempo, abordamos a questão da expansão de tais pseudo-instruções quando 
+ramificação atrasada está habilitada.  Tais expansões agora incluirão uma instrução nop seguindo o
+ramo.  
+</li><li>Também abordamos um erro off-by-one que ocorreu na geração da instrução lui no
+expansão de pseudo-instruções de ramo condicional cujo segundo operando é um 32 bit imediato.
+</li><li>As expansões para uma série de pseudo-instruções foram modificadas para eliminar os ramos internos.
+Essas e outras expansões também foram otimizadas para o carregamento estendido de sinais de operandos imediatos de 16 bits
+substituindo a sequência de lui/ori ou lui/sra por addi.  Pseudo-instruções afetadas por uma
+ou ambas as modificações incluem: abdômen, bleu, bgtu, beq, bne, seq, sge, sgeu, sle, sleu, sne,
+li, sub e subi.  Essas modificações foram sugeridas por Eric Shade, da Missouri State University.
+</li></ul>
+
+<p>Marte 3.4 foi lançado em janeiro de 2008.  Principais melhorias são:
+</p><ul>
+
+<li>Uma nova syscall (32) para suportar pausas de comprimento especificado em milissegundos (sono) durante a execução simulada.
+
+</li><li>Cinco novas syscalls (40-44) para suportar o uso de geradores 
+de números pseudo-aleatórios.  Um número ilimitado desses geradores está
+ disponível,
+cada um identificado por um valor inteiro, e para cada um você tem a 
+capacidade de: definir o valor de semente, gerar um valor inteiro de 32 
+bits a partir do Java
+intervalo int, gerar um valor inteiro de 32 bits entre 0 (inclusive) e 
+um limite superior especificado (exclusivo), gerar um valor de flutuação
+ de 32 bits entre 0 (inclusive) e 1 (exclusivo),
+e gerar um valor duplo de 64 bits entre 0 (inclusive) e 1 (exclusivo).  
+Todos são baseados no <tt>java.util.Random</tt> classe.
+
+</li><li>Dez novas syscalls (50-59) para suportar janelas de diálogo de 
+mensagens e janelas de diálogo de entrada de dados.  Estes últimos 
+distinguem-se de
+O syscalls de entrada de dados padrão em que uma mensagem de solicitação
+ é especificada como um argumento syscall e exibida na caixa de diálogo 
+de entrada. 
+Todos são baseados no <tt>javax.swing.JOptionPaneTradução</tt> classe.
+
+</li><li>A capacidade de despejar <tt>.texto</tt> ou <tt>.data</tt> 
+conteúdo de memória para arquivar em vários formatos.  O lixão pode ser 
+executado
+antes ou após a execução do programa a partir do IDE (menu de arquivo e 
+barra de ferramentas) ou do modo de comando.  Também pode ser realizado
+durante uma pausa de execução do IDE.  Procure o item de menu "Dump 
+Memory" no menu Arquivo ou a opção "dump" no comando
+modo.  A <tt>.texto</tt> dump incluirá apenas locais contendo uma instrução.  A <tt>.data</tt> despejo incluirá um múltiplo
+de 4KB "páginas" começando no endereço base do segmento e terminando com a última "página" 4KB a ser referenciada pelo
+programa.  Os formatos de despejo atuais incluem binário puro (<tt>java.io.PrintStream.write()Tradução</tt>
+ método), texto hexadecimal com uma palavra (32 bits) 
+por linha, e texto binário com uma palavra por linha.  Uma interface, 
+classe abstrata e carregador de formato foram desenvolvidos para 
+facilitar 
+desenvolvimento e implantação de formatos de despejo adicionais.  Esta 
+capacidade foi prototipada por Greg Gibeling da UC Berkeley.
+
+</li><li>Alterou o cálculo de compensações de ramificação quando a configuração de ramificação atrasada é desativada.  
+Os endereços de destino de instrução de ramificação são representados por
+o número relativo de palavras para ramificar.  Com o Release 3.4, esse valor reflete ramificação atrasada,
+independentemente de a configuração de Ramificação Atrasada estar ativada ou não.  
+O código binário gerado para ramificações agora corresponderá ao de exemplos na <em>Organização</em> de <em>Computadores
+e</em> livro didático <em>de design</em>.  Esta é uma mudança em relação
+ ao passado, e foi feita após extensas discussões 
+com vários adotantes do MARS.  Anteriormente, o deslocamento de 
+ramificação era 1 menor se a configuração de ramificação retardada
+foi habilitado -- a instrução <tt>etiqueta: beq $0, $0, label</tt> geraria <tt>0x1000FFFF</tt> se
+Ramificação atrasada foi habilitada e <tt>0x100000000</tt> se estivesse desativado.  Agora vai gerar <tt>0x1000FFFF</tt> em
+qualquer caso.  O simulador sempre se ramificará até o local correto; o MARTE não permite a montagem sob um
+configuração e simulação sob o outro.
+
+</li><li>Correção de bugs: O <tt>mars.jar</tt> arquivo JAR executável agora pode ser executado a partir de um diretório de trabalho diferente.  A correção foi
+sugerido por Zachary Kurmas da Universidade Estadual de Grand Valley.
+
+</li><li>Correção de bugs: O problema de MARS pendurado enquanto monta uma pseudo-instrução com um rótulo operando que
+contém a substring "lab", foi corrigido.
+
+</li><li>Correção de bug: Nenhum código relacionado ao Swing será 
+executado quando o MARS for executado no modo de comando.  Isso resolve 
+um problema que
+ocorreu quando o MARS foi executado em um sistema "sem cabeça" (sem 
+monitor).  Swing é a biblioteca Java para suportar
+programação Interfaces gráficas do usuário.  A correção foi fornecida 
+por Greg Gibeling, da UC Berkeley.
+
+</li><li>O '\0' caractere agora é reconhecido quando aparece em literais de string.
+
+
+</li></ul>
+
+<p>MARS 3.3 foi lançado em julho de 2007.  Principais melhorias são:
+</p><ul>
+<li>Suporte para ramificação atrasada MIPS.  Todos os computadores MIPS implementam isso, mas pode ser confuso para
+programadores, por isso é desativado por padrão.  Sob ramificação atrasada, a próxima instrução após um ramo 
+ou instrução de salto sempre <i>always</i>será executado, mesmo que o ramo ou salto seja levado!  Muitos 
+programadores e montadores lidam com isso inserindo uma instrução "nop" do do-noth após cada ramo ou salto.
+O montador do MARS <i>não</i> insere um "nop".  Certas pseudo-instruções se expandem para
+uma sequência que inclua um ramo; tais instruções não funcionarão corretamente sob atraso
+ramificação.
+A ramificação atrasada está disponível no modo de comando com a opção "db".</li>
+<li>Uma nova ferramenta de interesse principalmente para os instrutores.  A ferramenta Enlumeador de tela, quando selecionado de
+o menu Ferramentas, pode ser usado para produzir uma imagem estática ampliada dos pixels que se encontram abaixo dele.
+A imagem pode ser anotada arrastando o mouse sobre ela para produzir uma linha de rabisco.  Amplia-se
+até 4 vezes o tamanho original.</li>
+<li>Agora você tem a capacidade de definir e modificar a família de 
+fontes do editor de texto, estilo e tamanho.  Selecione
+"Editor..." no menu Configurações para obter a caixa de diálogo. Clique 
+no botão Aplicar para ver o novo
+configurações enquanto a caixa de diálogo ainda estiver aberta.  As 
+configurações da fonte são mantidas de uma sessão para a seguinte.
+A lista de família de fontes começa com 6 fontes comumente usadas em 
+plataformas (selecionadas a partir de listas
+encontrado em <a href="http://www.codestyle.org/">www.codestyle.org</a>), seguido por uma lista completa.
+Duas das seis são fontes monoespaçadas, duas são serifas proporcionais e duas são proporcionais sem serif.</li>
+<li>A janela Etiquetas no painel Executar, que exibe informações de tabela de símbolos, foi
+aprimorado.  Quando você clica em um nome de etiqueta ou seu endereço, o conteúdo desse endereço é
+centrado e destacado na janela Segmento de texto ou janela Segmento de dados, conforme apropriado.  Isso faz
+mais fácil definir pontos de interrupção com base em rótulos de texto ou encontrar o valor armazenado no endereço de um rótulo.
+</li><li>Se você voltar a ordenar as colunas na janela Segmento de texto arrastando um cabeçalho de coluna, 
+a nova encomenda será lembrada e aplicada a partir desse momento, mesmo de uma sessão do MARS para a próxima.  O Segmento Texto
+janela é onde o código-fonte, código básico, código binário, endereços de código e pontos de interrupção são exibidos.
+</li><li>Se um programa MIPS terminar "escondendo-se fora do fundo" do programa, o MARS termina, como 
+antes, sem exceção, mas agora exibirá uma mensagem de terminação mais descritiva no
+Janela de mensagens.  Anteriormente, a mensagem de término era a mesma gerada após a execução de uma syscall de saída.
+</li><li>Uma nova chamada de sistema (syscall) para obter o tempo do sistema está agora disponível.  É serviço
+30 e não está disponível no SPIM.  Seu valor é obtido a partir do <tt>java.util.Date.getTime() Em inglês</tt> método.  
+Consulte a guia Syscall na ajuda do MIPS para obter mais informações.  </li>
+<li>Uma nova chamada de sistema (syscall) para produzir som MIDI simulado através de sua placa de som agora está disponível.  
+É serviço 31 e não está disponível no SPIM.  Sua implementação é baseada na
+<tt>javax.sound.midi</tt> pacote.  Ele foi testado apenas no Windows.
+Consulte a guia Syscall na ajuda do MIPS para obter mais informações.  </li>
+</ul>
+
+<p>MARS 3.2.1 foi lançado em janeiro de 2007.  É uma versão de correção de bugs que aborda o
+seguinte bug em 3.2: um NullPointerException ocorre quando a execução do programa MIPS termina
+por "deixar cair da parte inferior" do programa em vez de usar um do sistema de saída
+chamadas.
+
+</p><p>O MARS 3.2 foi lançado em dezembro de 2006.  Principais melhorias são:
+</p><ul>
+<li>Ele corrige vários bugs menores, incluindo um que
+poderia causar sequenciamento de arquivos incorreto no recurso Projeto.  
+</li><li>Inclui o 
+<tt>AbstractMarsToolAndApplicationTradução</tt> classe abstrata para servir como uma estrutura para facilmente
+construção de "ferramentas" e aplicações independentes equivalentes que utilizam o montador MARS
+e motores simuladores (kudos para o membro do público do SIGCSE 2006 que sugeriu essa capacidade!).
+Uma subclasse desta classe abstrata pode ser usada nos dois sentidos (ferramenta ou aplicação).  
+</li><li>A flutuação
+ferramentas de cache de ponto e dados foram elaboradas nesta versão e uma nova ferramenta para animação e
+visualizando referências de memória foi desenvolvida.  Todos são <tt>AbstractMarsToolAndApplicationTradução</tt>
+subclasses.  
+</li><li>Esta versão inclui suporte para manipuladores de exceção: os dados do kernel e texto
+segmentos (directivas .kdata e .ktext), as instruções relacionadas à armadilha MIPS e a capacidade
+para incluir automaticamente um manipulador de exceção (armadilha) selecionado com cada operação de montagem.
+</li><li>Os itens no menu Configurações tornaram-se persistentes com esta versão.
+</li><li>Adicionado extensões de arquivo de montagem padrão "asm" e "s" para o arquivo Config.properties e usado
+aqueles não só para filtrar arquivos para a caixa de diálogo Abrir Arquivo, mas também para filtrá-los para o "montar todos"
+configuração.
+</li><li>Implementou um limite para a quantidade de texto rolável na mensagem Mars Messages e Run I/O
+tabs - padrão 1 MB é definido no arquivo Config.properties.
+</li><li>Para conveniência do programador, as etiquetas agora podem ser referenciadas no campo de operando de inteiros
+diretivas de dados (.word, .half, .byte).  O montador substituirá o endereço da etiqueta (baixa ordem
+metade para .half, byte de ordem baixa para .byte).
+</li><li>Para conveniência do programador, os literais de caracteres 
+(por exemplo, 'b', '\n', '\377') podem ser usados em qualquer lugar que 
+os literais inteiros sejam
+permitido.  O montador converte-os diretamente em seu valor inteiro 
+equivalente de 8 bits. Unicode não é suportado e
+valores octais devem ser exatamente 3 dígitos que variam de '\000' a 
+'\377'.
+</li><li>Botões substituídos para selecionar endereços base de exibição 
+de segmento de dados com uma caixa de combinação e adicionados mais
+Endereços de base: MMIO (0xFFFF0000), .kdata (0x900000000), .extern 
+(0x10000000). 
+</li></ul>
+
+<p>O MARS 3.1 foi lançado em outubro de 2006.  As principais questões e recursos estão listados aqui:
+</p><ul>
+<li>Ele abordou vários limites menores (itens do menu de ferramentas
+não poderia ser executado a partir do arquivo JAR, atalhos não padronizados para usuários de Mac, inflexíveis e
+por vezes dimensionamento inadequado de
+Componentes GUI). 
+</li><li>Ele mudou a forma como os SYSCALLs são implementados, para permitir que qualquer pessoa defina
+novos serviços de syscall personalizados sem modificar o MARS.  
+</li><li>acrescentou uma primitiva
+Capacidade do projeto através da "Operação de montagem aplica-se a todos os arquivos no diretório atual". 
+configuração (também disponível como opção "p" no modo de comando).  O modo de comando também permite que você
+para listar vários nomes de arquivos não necessariamente no mesmo diretório a ser montado e vinculado.
+</li><li>A montagem de vários arquivos também exigiu a implementação das diretivas ".globl" e ".extern".
+</li><li>E embora "ferramentas de Marte" não façam parte oficialmente dos lançamentos do MARS, o MARS 3.1 inclui o
+versões iniciais de duas ferramentas: uma para aprender sobre representação de pontos flutuantes e outra
+para simulação de capacidade de cache de dados.
+</li></ul>
+
+<p>O MARS 3.0 foi lançado em agosto de 2006, com uma correção de bug e duas grandes adições.  
+</p><ul>
+<li>A correção de bug foi corrigida no formato de instrução para as instruções slti e sltiu. 
+</li><li>Uma adição importante é uma instrução MIPS-32 muito expandida
+conjunto (as instruções da armadilha são as únicas significativas para permanecer não implementada).  Isso inclui, via
+pseudo-instruções, todos os modos de endereçamento de memória razoáveis para as instruções de carga/loja.  
+</li><li>O
+segunda grande adição é a capacidade de interativamente pisar "para trás" através da execução do programa 
+uma instrução de cada vez para "desfazer" etapas de execução.  Ele vai amortecer até 2000 dos mais 
+etapas de execução recentes (esse limite é armazenado em um arquivo de propriedades e pode ser alterado).
+Ele irá desfazer alterações feitas na memória MIPS, registros ou bandeiras de condição,
+mas não console ou arquivo I/O.  Este deve ser um grande auxílio de depuração.  
+Ele está disponível a qualquer momento que a execução é pausada e na rescisão (mesmo que terminada devido a 
+exceção).  
+</li><li>Uma série de configurações de IDE, descritas
+acima, agora estão disponíveis através do menu Configurações.
+</li></ul>
+
+<p>O MARS 2.2 foi lançado em março de 2006 com correções de bugs 
+adicionais e comando implementado
+opções de linha (execute o MARS da linha de comando com a opção h para 
+ajuda de linha de comando).  Isso também coincide com a nossa 
+SIGCSE 2006 paper "MARS: An Education-Oriented MIPS Assembly Language 
+Simulator".
+
+</p><p>O MARS 2.1 foi lançado em outubro de 2005 com algumas correções de bugs.
+
+</p><p>MARS 2.0 foi lançado em setembro de 2005.  Incorporou significativa
+modificações tanto na GUI quanto no montador, registros de pontos flutuantes e instruções
+mais notavelmente.
+
+</p><p>MARS 1.0 foi lançado em janeiro de 2005 e 
+divulgado durante uma apresentação de pôster no SIGCSE 2005.  
+
+</p><p>Dr. Dr. Ken Vollmar iniciou o desenvolvimento da MARS em 2002 na Missouri State University.  Em
+2003, Dr. Pete Sanderson do Otterbein College e seu aluno Jason Bumgarner continuou
+implementação.  Sanderson implementou o montador e simulador naquele verão, e 
+a GUI básica no verão seguinte, 2004.  
+
+</p><p>O desenvolvimento dos Lançamentos 3.1 e 3.2 em 2006 e 4.0 em 2010 foi apoiado pelo Colégio Otterbein
+programa de licença sabática.  O desenvolvimento do Release 3.7 durante o verão de 2009 foi apoiado por
+uma Subvenção de Projetos Especiais SIGCSE.
+
+</p><hr>
+<p>
+Este documento está disponível para impressão na página inicial do MARTE
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+
+
+
+</p></body></html>

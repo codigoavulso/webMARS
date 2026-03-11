@@ -1,0 +1,108 @@
+<html lang="pt"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>MARS 4.5 conteúdo de ajuda
+</title>
+</head><body>
+<center>
+<h3>MARTE - Simulador de montagem e tempo de execução de microfones</h3>
+<h4>Lançamento 4.5</h4>
+<h4>Agosto de 2014</h4>
+<h4>Capacidade legal: Ferramentas de plug-in</h4>
+</center>
+
+Começando com o Release 2.0, o MARS é capaz de executar externamente desenvolvido
+software que interage com um programa MIPS em execução e sistema MIPS
+recursos.  
+Os requisitos para tal programa são:
+<ol>
+<li>implementa o <tt>mars.tools.MarsToolTradução</tt> interface.  
+</li><li>Faz parte do <tt>mars.tools</tt> pacote.
+</li><li>Ele compila de forma limpa em um arquivo ".class", armazenado no <tt>Marte/ferramentas</tt> diretório.
+</li></ol>
+O MARS detectará todas as ferramentas de qualificação após a inicialização e as incluirá em
+seu menu Ferramentas. 
+Quando o item de menu de uma ferramenta é selecionado, uma instância dele será criada usando seu argumento sem argumento
+construtor e sua <tt>action()</tt> método será invocado.
+Se nenhuma ferramenta de qualificação for encontrada na inicialização do MARS, o menu Ferramentas não será 
+aparecem.  
+
+<p>Para usar essa ferramenta, carregue e monte um programa de interesse MIPS, selecione a ferramenta desejada
+no menu Ferramentas.  A janela da ferramenta será aberta e, dependendo de como ela está escrita, ela será
+precisa estar "conectado" ao programa MIPS clicando em um botão ou já estará conectado.  Corrida
+o programa MIPS como você faria normalmente, para iniciar a interação da ferramenta com o programa de execução.
+
+</p><p>Começando com Release 3.2, a classe abstrata <tt>mars.tools.AbstractMarsToolAndApplicationTradução</tt>
+está incluído na distribuição MARS para fornecer
+uma estrutura substancial para implementar sua própria ferramenta MARS.  Uma subclasse que a estende por
+implementar pelo menos seus dois métodos abstratos pode ser executado não apenas a partir do menu Ferramentas, mas também
+como uma aplicação independente que utiliza o montador e simulador MARS em segundo plano.
+
+</p><p>Várias Ferramentas desenvolvidas por subclassificação <tt>AbstractMarsToolAndApplicationTradução</tt> estão incluídos
+com o MARS: uma Introdução às Ferramentas, um Simulador de Cache de Dados, um Visualizador de Referência de Memória, e
+uma ferramenta Ponto Flutuante.  O último é bastante útil mesmo quando não está conectado a um programa MIPS
+porque exibe representações binárias, hexadecimais e decimais para um ponto flutuante de 32 bits
+valor; quando qualquer um deles é modificado os outros dois são atualizados também.
+
+</p><p>A versão 3.5 inclui novas ferramentas, mais notavelmente um simulador de teclado e exibição que permite
+para realizar E/S mapeada por memória (MMIO) utilizando técnicas pesquisadas e orientadas por interrupções conforme descrito
+em várias referências.  Clique no botão Ajuda para mais detalhes.
+
+</p><p>Se você deseja desenvolver sua própria ferramenta MARS, primeiro precisará extrair a distribuição MARS
+a partir de seu arquivo JAR se você ainda não o fez.  Todas as ferramentas do MARS devem
+ser armazenado no <tt>Marte/ferramentas</tt> diretório.
+
+</p><p>Siga o link Materiais do Tutorial na página inicial do MARS para encontrar um tutorial 
+que abrange desenvolvimento de Ferramentas MARS.
+
+</p><h4>Capacidade legal: estendendo o conjunto de syscall ou reatribuindo números de syscall</h4>
+
+Começando com Release 3.1, chamadas de sistema (<tt>syscall</tt> instrução) são implementadas usando
+uma técnica semelhante à para as ferramentas.  Isso permite que qualquer pessoa adicione uma nova syscall definindo
+uma nova classe que atenda a esses requisitos:
+<ol>
+<li>implementa o <tt>mars.mips.instructions.syscalls.Syscall</tt> interface, ou
+estende o <tt>mars.mips.instructions.syscalls.AbstractSyscallTradução</tt> classe (que
+fornece implementações padrão de tudo, exceto o <tt>simulate()</tt> método).  
+</li><li>Faz parte do <tt>mars.mips.instructions.syscallsTradução</tt> pacote.
+</li><li>Ele compila de forma limpa em um arquivo ".class", armazenado no 
+<tt>mars/mips/instruções/syscalls</tt> diretório.
+</li></ol>
+O MARS detectará todas as classes de syscall qualificadas após a inicialização e o simulador de tempo de execução
+invocá-los-á quando o <tt>syscall</tt> instrução é simulada e registra <tt>$v0</tt>
+contém o número de serviço de inteiro correspondente.
+
+<p>Syscalls e syscall number assignments em MARs correspondem aos de SPIM para syscalls 1 a 17.
+No entanto, se você deseja alterar as atribuições de número de syscall, você pode fazê-lo editando o
+<tt>Syscall.propriedades</tt> arquivo incluído na versão (isso requer extração do JAR
+arquivo).
+
+</p><p>Siga o link Materiais do Tutorial na página inicial do MARS para encontrar um tutorial 
+que abrange desenvolvimento de chamadas de sistema.
+
+</p><h4>Capacidade legal: estendendo o conjunto de instruções</h4>
+
+Você pode adicionar pseudo-instruções personalizadas ao conjunto de instruções do MIPS editando
+o <tt>PseudoOps.txt</tt> arquivo incluído na distribuição MARS.  Instrução
+formatos de especificação são explicados no próprio arquivo.  
+A especificação de uma pseudo-instrução é de uma linha de comprimento.  consiste em
+um exemplo da instrução, construída usando
+símbolos de especificação de instruções disponíveis, seguidos por uma guia separada
+lista das instruções básicas do MIPS para as quais ele se expandirá.  Cada um é um modelo de instrução
+construídos usando 
+símbolos de especificação de instruções combinados com modelo especial
+símbolos de especificação.  A última autorização de substituição no programa 
+tempo de montagem de operandos do programa do usuário para o expandido
+pseudo-instrução.
+
+<p><tt>PseudoOps.txt</tt> é lido e processado na inicialização do MARS, e as mensagens de erro serão
+ser produzido se uma especificação não estiver corretamente formatada.  Observe que se você deseja
+editá-lo você primeiro tem que extraí-lo do arquivo JAR.
+
+</p><p>Siga o link Materiais do Tutorial na página inicial do MARS para encontrar um tutorial 
+que abrange modificação do conjunto de pseudo-instrução.
+</p><p>
+</p><hr>
+<p>
+Este documento está disponível para impressão na página inicial do MARTE
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+
+</p></body></html>

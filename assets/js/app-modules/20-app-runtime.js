@@ -25,6 +25,26 @@ function sanitizeMaxBacksteps(value, fallback = DEFAULT_MAX_BACKSTEPS) {
 function memoryGbToBytes(gbValue) {
   return Math.floor(sanitizeMemoryGb(gbValue) * 1024 * 1024 * 1024);
 }
+
+function getI18nApi() {
+  return typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+}
+
+function applyLanguagePreference(language) {
+  const i18n = getI18nApi();
+  if (!i18n || typeof i18n.setLanguage !== "function") return;
+  i18n.setLanguage(language || "en");
+}
+
+function getAvailableLanguages() {
+  const i18n = getI18nApi();
+  if (!i18n || typeof i18n.getLanguages !== "function") return ["en"];
+  const languages = i18n.getLanguages();
+  return languages.length ? languages : ["en"];
+}
+
+applyLanguagePreference(preferences.language || "en");
+
 runtimeSettings.startAtMain = preferences.startAtMain;
 runtimeSettings.delayedBranching = preferences.delayedBranching;
 runtimeSettings.warningsAreErrors = preferences.warningsAreErrors;
@@ -141,6 +161,18 @@ const store = createStore({
 
 const editor = setupEditor(refs, store);
 const messagesPane = createMessagesPane(refs, DEFAULT_SETTINGS.maxMessageCharacters);
+const postMarsRaw = (template, variables = {}, options = {}) => (
+  messagesPane.postMars(translateText(template, variables), { translate: false, ...options })
+);
+const postMarsMessage = (template, variables = {}, options = {}) => (
+  messagesPane.postMars(`${translateText(template, variables)}\n`, { translate: false, ...options })
+);
+const postRunRaw = (template, variables = {}, options = {}) => (
+  messagesPane.postRun(translateText(template, variables), { translate: false, ...options })
+);
+const postRunMessage = (template, variables = {}, options = {}) => (
+  messagesPane.postRun(`${translateText(template, variables)}\n`, { translate: false, ...options })
+);
 const helpSystem = createHelpSystem(refs, messagesPane, windowManager);
 const engine = createMarsEngine({ settings: runtimeSettings, memoryMap: initialMemoryMap });
 let activeMemoryConfigId = memoryPresets[initialMemorySelection.id] ? initialMemorySelection.id : "Default";
@@ -170,11 +202,101 @@ let resumeRunAfterInput = false;
 let allowPageUnload = false;
 const RUN_LOOP_INTERVAL_MS = 16;
 const RUN_LOOP_MAX_BATCH = 240;
-const RUN_LOOP_MAX_BATCH_UNLIMITED = 1400;
-const RUN_LOOP_COOPERATIVE_CHECK_INTERVAL = 24;
+const RUN_LOOP_MAX_BATCH_UNLIMITED = 720;
+const RUN_LOOP_COOPERATIVE_CHECK_INTERVAL_INTERACTIVE = 24;
+const RUN_LOOP_COOPERATIVE_CHECK_INTERVAL_FAST = 8;
 const RUN_LOOP_TIME_BUDGET_MS_INTERACTIVE = 7;
-const RUN_LOOP_TIME_BUDGET_MS_FAST = 11;
-const RUN_LOOP_UI_SYNC_INTERVAL_MS = 66;
+const RUN_LOOP_TIME_BUDGET_MS_FAST = 6;
+const RUN_LOOP_UI_SYNC_INTERVAL_MS_INTERACTIVE = 66;
+const RUN_LOOP_UI_SYNC_INTERVAL_MS_FAST = 33;
+
+function getCurrentProgramName() {
+  const active = editor.getActiveFile?.();
+  return normalizeFilename(active?.name || store.getState().fileName || "untitled.s");
+}
+
+function describeAssemblySources(assemblyContext) {
+  if (!assemblyContext) return getCurrentProgramName();
+  if (assemblyContext.fileCount <= 1) {
+    return normalizeFilename(assemblyContext.activeFile?.name || assemblyContext.sourceName || getCurrentProgramName());
+  }
+  const names = Array.from(assemblyContext.includeMap?.keys?.() ?? [])
+    .map((name) => normalizeFilename(name))
+    .filter(Boolean);
+  return names.join(", ");
+}
+
+function extractDiagnosticDetails(message) {
+  const raw = String(message ?? "").trim();
+  const match = /^\[([^\]]+)\]\s*(.*)$/.exec(raw);
+  if (match) {
+    return {
+      fileName: String(match[1] || "").trim(),
+      message: String(match[2] || "").trim() || raw
+    };
+  }
+  return { fileName: "", message: raw };
+}
+
+function formatDiagnosticMessage(kind, diagnostic, fallbackFileName = "") {
+  const details = extractDiagnosticDetails(diagnostic?.message);
+  const fileName = details.fileName || String(fallbackFileName || "").trim();
+  const line = Number.isFinite(diagnostic?.line) ? (diagnostic.line | 0) : 0;
+  if (fileName && line > 0) {
+    return translateText("{kind} in {fileName} line {line}: {message}", {
+      kind: kind === "error" ? translateText("Error") : translateText("Warning"),
+      fileName,
+      line,
+      message: details.message
+    });
+  }
+  if (fileName) {
+    return translateText("{kind} in {fileName}: {message}", {
+      kind: kind === "error" ? translateText("Error") : translateText("Warning"),
+      fileName,
+      message: details.message
+    });
+  }
+  if (line > 0) {
+    return translateText("{kind} line {line}: {message}", {
+      kind: kind === "error" ? translateText("Error") : translateText("Warning"),
+      line,
+      message: details.message
+    });
+  }
+  return translateText("{kind}: {message}", {
+    kind: kind === "error" ? translateText("Error") : translateText("Warning"),
+    message: details.message
+  });
+}
+
+function postExecutionSuccess(actionLabel, haltReason = "exit") {
+  if (haltReason === "cliff") {
+    postMarsRaw(
+      actionLabel === translateText("Step")
+        ? "{action}: execution terminated due to null instruction.\n\n"
+        : "{action}: execution terminated by null instruction.\n\n",
+      { action: actionLabel }
+    );
+    postRunRaw("\n-- program is finished running (dropped off bottom) --\n\n");
+    messagesPane.selectRunTab?.();
+    return;
+  }
+
+  postMarsRaw("{action}: execution completed successfully.\n\n", { action: actionLabel });
+  postRunRaw("\n-- program is finished running --\n\n");
+  messagesPane.selectRunTab?.();
+}
+
+function postExecutionError(actionLabel, message) {
+  if (message) {
+    postMarsRaw("{message}\n", {
+      message: formatDiagnosticMessage("error", { line: 0, message })
+    });
+  }
+  postMarsRaw("{action}: execution terminated with errors.\n\n", { action: actionLabel });
+  messagesPane.selectMarsTab?.();
+}
 
 let audioContext = null;
 
@@ -233,9 +355,15 @@ const popupDialogState = {
   confirm: null,
   message: null
 };
-function flushRunOutputMessages(lines) {
-  if (!Array.isArray(lines) || !lines.length) return;
-  messagesPane.postRun(lines.join("\n"));
+function flushRunOutputMessages(entries) {
+  if (!Array.isArray(entries) || !entries.length) return;
+  entries.forEach((entry) => {
+    if (entry && typeof entry === "object") {
+      messagesPane.postRun(entry.text || "", { translate: entry.translate !== false });
+      return;
+    }
+    messagesPane.postRun(entry || "");
+  });
 }
 
 function clearInputPauseState() {
@@ -272,6 +400,16 @@ function tryResumeRunAfterInput() {
   runLoopTick();
 }
 
+function echoPopupInput(value) {
+  if (value == null) return;
+  postRunRaw("**** user input : {value}\n", { value: String(value) });
+}
+
+function getPopupRunIoContext() {
+  const recent = messagesPane.getRecentRunLines?.(4) || "";
+  return recent.trim().length ? recent : "";
+}
+
 function consumePopupPrompt(request, label, fallback) {
   const key = `input:${request.service || ""}:${label}:${fallback}`;
   if (!popupDialogState.input || popupDialogState.input.key !== key) {
@@ -282,26 +420,32 @@ function consumePopupPrompt(request, label, fallback) {
     };
     popupDialogState.input = ticket;
     void dialogSystem.prompt({
-      title: `Input syscall ${request.service || ""}`.trim(),
-      message: label || "Input",
+      title: translateText("Input syscall {service}", { service: request.service || "" }).trim(),
+      message: label || translateText("Input"),
+      contextText: getPopupRunIoContext(),
+      contextLabel: translateText("Recent Run I/O"),
       defaultValue: fallback,
-      confirmLabel: "Send",
-      cancelLabel: "Cancel"
+      confirmLabel: translateText("Send"),
+      cancelLabel: translateText("Cancel")
     }).then((result) => {
       if (popupDialogState.input !== ticket) return;
       ticket.ready = true;
       ticket.value = result?.ok ? String(result.value ?? "") : null;
+      ticket.cancelled = !result?.ok;
       tryResumeRunAfterInput();
     });
-    return { wait: true, message: `[input] Waiting for popup input: ${label || "input"}` };
+    return { wait: true, message: translateText("[input] Waiting for popup input: {label}", { label: label || translateText("input") }) };
   }
 
   if (!popupDialogState.input.ready) {
-    return { wait: true, message: `[input] Waiting for popup input: ${label || "input"}` };
+    return { wait: true, message: translateText("[input] Waiting for popup input: {label}", { label: label || translateText("input") }) };
   }
 
   const value = popupDialogState.input.value;
+  const cancelled = popupDialogState.input.cancelled === true;
   popupDialogState.input = null;
+  echoPopupInput(value);
+  if (cancelled) return { cancelled: true };
   return { value };
 }
 
@@ -315,22 +459,22 @@ function consumePopupConfirm(request, message) {
     };
     popupDialogState.confirm = ticket;
     void dialogSystem.prompt({
-      title: `Confirm syscall ${request.service || ""}`.trim(),
-      message: `${message}\n\nType: yes, no, or cancel`,
+      title: translateText("Confirm syscall {service}", { service: request.service || "" }).trim(),
+      message: translateText("{message}\n\nType: yes, no, or cancel", { message }),
       defaultValue: "yes",
-      confirmLabel: "Send",
-      cancelLabel: "Cancel"
+      confirmLabel: translateText("Send"),
+      cancelLabel: translateText("Cancel")
     }).then((result) => {
       if (popupDialogState.confirm !== ticket) return;
       ticket.ready = true;
       ticket.value = result?.ok ? parseConfirmChoice(result.value, 2) : 2;
       tryResumeRunAfterInput();
     });
-    return { wait: true, message: `[input] Waiting for popup confirmation: ${message}` };
+    return { wait: true, message: translateText("[input] Waiting for popup confirmation: {message}", { message }) };
   }
 
   if (!popupDialogState.confirm.ready) {
-    return { wait: true, message: `[input] Waiting for popup confirmation: ${message}` };
+    return { wait: true, message: translateText("[input] Waiting for popup confirmation: {message}", { message }) };
   }
 
   const value = popupDialogState.confirm.value;
@@ -351,17 +495,20 @@ function consumePopupMessage(request) {
     };
     popupDialogState.message = ticket;
 
-    const typeLabel = messageType === 0 ? "Error"
-      : messageType === 1 ? "Information"
-        : messageType === 2 ? "Warning"
-          : messageType === 3 ? "Question"
+    const typeLabel = messageType === 1 ? "Error"
+      : messageType === 2 ? "Information"
+        : messageType === 3 ? "Warning"
+          : messageType === 4 ? "Question"
             : "Message";
 
     void dialogSystem.confirm({
-      title: `${typeLabel} syscall ${request?.service || ""}`.trim(),
+      title: translateText("{typeLabel} syscall {service}", {
+        typeLabel: translateText(typeLabel),
+        service: request?.service || ""
+      }).trim(),
       message,
-      confirmLabel: "OK",
-      cancelLabel: "Close"
+      confirmLabel: translateText("OK"),
+      cancelLabel: translateText("Close")
     }).then(() => {
       if (popupDialogState.message !== ticket) return;
       ticket.ready = true;
@@ -369,11 +516,13 @@ function consumePopupMessage(request) {
       tryResumeRunAfterInput();
     });
 
-    return { wait: true, message: `[dialog] Waiting for message dialog close: ${typeLabel}` };
+    return { wait: true, message: translateText("[dialog] Waiting for message dialog close: {typeLabel}", {
+      typeLabel: translateText(typeLabel)
+    }) };
   }
 
   if (!popupDialogState.message.ready) {
-    return { wait: true, message: "[dialog] Waiting for message dialog close." };
+    return { wait: true, message: translateText("[dialog] Waiting for message dialog close.") };
   }
 
   const value = popupDialogState.message.value;
@@ -384,7 +533,10 @@ function consumePopupMessage(request) {
 engine.setRuntimeHooks({
   readInput(request) {
     const fallback = typeof request.fallback === "string" ? request.fallback : "";
-    const label = String(request.label || `Input syscall ${request.service || ""}`).trim();
+    const label = translateText(
+      String(request.label || "Input syscall {service}"),
+      { service: request.service || "" }
+    ).trim();
 
     if (request.popup) {
       return consumePopupPrompt(request, label, fallback);
@@ -392,8 +544,10 @@ engine.setRuntimeHooks({
 
     const queued = messagesPane.consumeInput();
     if (queued == null) {
-      messagesPane.requestInput(label || "input");
-      return { wait: true, message: `[input] Waiting for Run I/O input: ${label || "input"}` };
+      messagesPane.requestInput(label || translateText("input"));
+      return { wait: true, message: translateText("[input] Waiting for Run I/O input: {label}", {
+        label: label || translateText("input")
+      }) };
     }
 
     messagesPane.clearInputRequest();
@@ -401,7 +555,7 @@ engine.setRuntimeHooks({
   },
 
   confirmInput(request) {
-    const message = String(request.message || "Confirm?");
+    const message = request.message == null ? translateText("Confirm?") : String(request.message);
 
     if (request.popup) {
       return consumePopupConfirm(request, message);
@@ -409,8 +563,8 @@ engine.setRuntimeHooks({
 
     const queued = messagesPane.consumeInput();
     if (queued == null) {
-      messagesPane.requestInput(`${message} [yes/no/cancel]`);
-      return { wait: true, message: `[input] Waiting for confirmation in Run I/O: ${message}` };
+      messagesPane.requestInput(translateText("{message} [yes/no/cancel]", { message }));
+      return { wait: true, message: translateText("[input] Waiting for confirmation in Run I/O: {message}", { message }) };
     }
 
     messagesPane.clearInputRequest();
@@ -421,7 +575,7 @@ engine.setRuntimeHooks({
     if (request?.popup !== false) {
       return consumePopupMessage(request || {});
     }
-    messagesPane.postRun(String(request?.message || ""));
+    messagesPane.postRun(String(request?.message || ""), { translate: false });
     return { value: true };
   },
 
@@ -475,13 +629,31 @@ function formatRunSpeedLabel(index) {
   if (index <= RUN_SPEED_INDEX_INTERACTION_LIMIT) {
     const value = RUN_SPEED_TABLE[index];
     const display = value < 1 ? `${value}` : `${Math.trunc(value)}`;
-    return `Run speed ${display} inst/sec`;
+    return translateText("Run speed {display} inst/sec", { display });
   }
-  return "Run speed at max (no interaction)";
+  return translateText("Run speed at max (no interaction)");
+}
+
+function formatRunSpeedSummary(index) {
+  if (index <= RUN_SPEED_INDEX_INTERACTION_LIMIT) {
+    const value = RUN_SPEED_TABLE[index];
+    const display = value < 1 ? `${value}` : `${Math.trunc(value)}`;
+    return translateText("{display} inst/sec", { display });
+  }
+  return translateText("max (no interaction)");
+}
+
+function isNoInteractionMode(index = getRunSpeedIndex()) {
+  return index > RUN_SPEED_INDEX_INTERACTION_LIMIT;
+}
+
+function updateNoInteractionUiMode() {
+  refs.root.classList.toggle("run-no-interaction", runActive && isNoInteractionMode());
 }
 
 function updateRunSpeedLabel() {
   refs.controls.runSpeedLabel.textContent = formatRunSpeedLabel(getRunSpeedIndex());
+  updateNoInteractionUiMode();
 }
 
 function clearRunTimer() {
@@ -494,14 +666,14 @@ function clearRunTimer() {
 function shouldPostRunLoopMessage(result) {
   if (!result || !result.message) return false;
   if (result.done || result.stoppedOnBreakpoint || result.waitingForInput) return true;
-  return !/^Executed line \d+\.$/.test(result.message);
+  return result.messageCode !== "executed-line";
 }
 
 function setAssemblyTag(kind, text) {
   const tag = refs.status.assemblyTag;
   tag.classList.remove("ok", "warn", "error");
   tag.classList.add(kind);
-  tag.textContent = text;
+  tag.textContent = translateText(text);
 }
 
 function syncButtons(snapshot) {
@@ -509,7 +681,7 @@ function syncButtons(snapshot) {
   refs.buttons.reset.disabled = runActive;
   refs.buttons.go.disabled = !snapshot.assembled || runActive || snapshot.halted;
   refs.buttons.step.disabled = !snapshot.assembled || runActive || snapshot.halted;
-  refs.buttons.backstep.disabled = !snapshot.assembled || runActive || snapshot.steps === 0;
+  refs.buttons.backstep.disabled = !snapshot.assembled || runActive || (Number(snapshot.backstepDepth) <= 0);
   refs.buttons.pause.disabled = !runActive;
   refs.buttons.stop.disabled = !runActive && !snapshot.assembled;
   if (refs.buttons.undo) refs.buttons.undo.disabled = runActive;
@@ -522,6 +694,11 @@ function computeSnapshotDiff(snapshot, options = {}) {
   const changedRegisters = new Set();
   const changedDataAddresses = new Set();
   const fastMode = options.fastMode === true;
+  const skipDiff = options.skipDiff === true;
+
+  if (skipDiff) {
+    return { changedRegisters, changedDataAddresses };
+  }
 
   if (!previousSnapshot) {
     return { changedRegisters, changedDataAddresses };
@@ -556,18 +733,48 @@ function computeSnapshotDiff(snapshot, options = {}) {
   return { changedRegisters, changedDataAddresses };
 }
 
+function createSnapshotDiffBaseline(snapshot, options = {}) {
+  const fastMode = options.fastMode === true;
+  const previousMemoryWords = previousSnapshot?.memoryWords instanceof Map
+    ? previousSnapshot.memoryWords
+    : new Map();
+
+  return {
+    registers: Array.isArray(snapshot.registers)
+      ? snapshot.registers.map((register) => ({ ...register }))
+      : [],
+    memoryWords: fastMode
+      ? previousMemoryWords
+      : (snapshot.memoryWords instanceof Map ? new Map(snapshot.memoryWords) : new Map())
+  };
+}
+
 function syncSnapshot(snapshot, options = {}) {
-  const diff = computeSnapshotDiff(snapshot, options);
+  const skipHeavyRender = options.skipHeavyRender === true;
+  const noInteraction = options.noInteraction === true;
   const suppressPulse = options.suppressPulse === true;
-
-  executePane.render(snapshot, {
-    changedDataAddresses: diff.changedDataAddresses,
-    focusDataAddress: snapshot.lastMemoryWriteAddress
+  const skipToolSync = options.skipToolSync === true;
+  const preservePreviousSnapshot = options.preservePreviousSnapshot === true;
+  const diff = computeSnapshotDiff(snapshot, {
+    ...options,
+    skipDiff: skipHeavyRender
   });
-  registersPane.render(snapshot, diff.changedRegisters);
 
-  refs.status.runtimePc.textContent = `PC: ${snapshot.pcHex}`;
-  refs.status.runtimeSteps.textContent = `steps: ${snapshot.steps}`;
+  if (!skipHeavyRender) {
+    executePane.render(snapshot, {
+      changedDataAddresses: diff.changedDataAddresses,
+      focusDataAddress: snapshot.lastMemoryWriteAddress,
+      disableHighlights: noInteraction,
+      disableAutoScroll: noInteraction
+    });
+    registersPane.render(snapshot, diff.changedRegisters, {
+      disableHighlights: noInteraction,
+      disableAutoScroll: noInteraction
+    });
+  }
+
+  refs.status.runtimePc.textContent = translateText("PC: {pc}", { pc: snapshot.pcHex });
+  refs.status.runtimeSteps.textContent = translateText("steps: {steps}", { steps: snapshot.steps });
 
   if (!snapshot.assembled) setAssemblyTag("warn", "not assembled");
   else if (snapshot.errors.length) setAssemblyTag("error", "assembly errors");
@@ -575,7 +782,7 @@ function syncSnapshot(snapshot, options = {}) {
   else if (snapshot.halted) setAssemblyTag("warn", "program halted");
   else setAssemblyTag("ok", "assembled");
 
-  if (!suppressPulse) {
+  if (!suppressPulse && !skipHeavyRender) {
     if (snapshot.textRows.some((row) => row.isCurrent) || diff.changedDataAddresses.size) {
       windowManager.pulse("window-main");
     }
@@ -583,19 +790,35 @@ function syncSnapshot(snapshot, options = {}) {
   }
 
   syncButtons(snapshot);
-  toolManager.onSnapshot(snapshot);
+  updateNoInteractionUiMode();
+  if (!skipToolSync) toolManager.onSnapshot(snapshot);
   store.setState({ assembled: snapshot.assembled, halted: snapshot.halted, running: runActive });
-  previousSnapshot = snapshot;
+  if (!preservePreviousSnapshot) previousSnapshot = createSnapshotDiffBaseline(snapshot, options);
 }
 
-function reportDiagnostics(result) {
-  if (result.errors?.length) result.errors.forEach((e) => messagesPane.postMars(`[error] line ${e.line}: ${e.message}`));
-  if (result.warnings?.length) result.warnings.forEach((w) => messagesPane.postMars(`[warn] line ${w.line}: ${w.message}`));
+function reportDiagnostics(result, assemblyContext = null) {
+  const fallbackFileName = normalizeFilename(assemblyContext?.activeFile?.name || assemblyContext?.sourceName || "");
+  if (result.errors?.length) {
+    result.errors.forEach((e) => {
+      postMarsRaw("{message}\n", {
+        message: formatDiagnosticMessage("error", e, fallbackFileName)
+      });
+    });
+  }
+  if (result.warnings?.length) {
+    result.warnings.forEach((w) => {
+      postMarsRaw("{message}\n", {
+        message: formatDiagnosticMessage("warning", w, fallbackFileName)
+      });
+    });
+  }
 }
 
 function applyPreferences(nextPreferences) {
+  const previousLanguage = store.getState().preferences?.language || "en";
   store.setState({ preferences: nextPreferences });
   savePreferences(nextPreferences);
+  applyLanguagePreference(nextPreferences.language || "en");
   runtimeSettings.startAtMain = nextPreferences.startAtMain;
   runtimeSettings.delayedBranching = nextPreferences.delayedBranching;
   runtimeSettings.warningsAreErrors = nextPreferences.warningsAreErrors;
@@ -609,7 +832,9 @@ function applyPreferences(nextPreferences) {
   runtimeSettings.maxBacksteps = sanitizeMaxBacksteps(nextPreferences.maxBacksteps, runtimeSettings.maxBacksteps);
   runtimeSettings.maxMemoryBytes = memoryGbToBytes(nextPreferences.maxMemoryGb ?? DEFAULT_MEMORY_GB);
 
-  if (Array.isArray(engine.executionHistory)) {
+  if (typeof engine.trimExecutionHistory === "function") {
+    engine.trimExecutionHistory();
+  } else if (Array.isArray(engine.executionHistory)) {
     const limit = runtimeSettings.maxBacksteps;
     if (limit <= 0) {
       engine.executionHistory.length = 0;
@@ -620,7 +845,7 @@ function applyPreferences(nextPreferences) {
   if (typeof engine.getMemoryUsageBytes === "function") {
     const currentUsage = engine.getMemoryUsageBytes();
     if (Number.isFinite(currentUsage) && currentUsage > runtimeSettings.maxMemoryBytes) {
-      messagesPane.postMars("[warn] Current memory usage exceeds configured limit; new allocations may fail until usage decreases.");
+      postMarsMessage("[warn] Current memory usage exceeds configured limit; new allocations may fail until usage decreases.");
     }
   }
 
@@ -649,6 +874,12 @@ function applyPreferences(nextPreferences) {
   }
 
   applyUiPreferences(nextPreferences);
+  if ((nextPreferences.language || "en") !== previousLanguage) {
+    refs.refreshTranslations?.();
+    messagesPane.refreshTranslations?.();
+    editor.refreshStatus?.();
+    updateRunSpeedLabel();
+  }
   if (memoryChanged) previousSnapshot = null;
   syncSnapshot(engine.getSnapshot());
 }
@@ -692,64 +923,127 @@ function runLoopTick() {
   }
 
   const runOutputMessages = [];
-  let terminalMessage = "";
   let waitingForInput = false;
   let deferredDelayMs = 0;
-  const loopStart = performance.now();
-  const timeBudgetMs = interactive ? RUN_LOOP_TIME_BUDGET_MS_INTERACTIVE : RUN_LOOP_TIME_BUDGET_MS_FAST;
+  let stopReason = "";
+  let lastStepResult = null;
+  const backendInfo = typeof engine.getBackendInfo === "function" ? engine.getBackendInfo() : null;
+  const useBatchStep = typeof engine.stepMany === "function" && backendInfo?.backend === "wasm";
 
-  for (let i = 0; i < stepBudget; i += 1) {
+  if (useBatchStep) {
     if (runStopRequested) {
-      terminalMessage = "Execution stopped by user.";
-      break;
-    }
-
-    const result = engine.step({ includeSnapshot: false });
-    if (!result.ok) {
-      messagesPane.postMars(`[error] ${result.message}`);
-      terminalMessage = result.message;
-      runStopRequested = true;
-      break;
-    }
-
-    if (result.runIo && result.message) {
-      runOutputMessages.push(result.message);
-    } else if (interactive && shouldPostRunLoopMessage(result)) {
-      runOutputMessages.push(result.message);
-    }
-
-    if (result.waitingForInput) {
-      waitingForInput = true;
-      terminalMessage = result.message || "Waiting for Run I/O input.";
-      break;
-    }
-
-    if (interactive) {
-      const nowSync = performance.now();
-      const shouldSyncNow =
-        result.done
-        || result.stoppedOnBreakpoint
-        || result.waitingForInput
-        || ((nowSync - runLastUiSyncAt) >= RUN_LOOP_UI_SYNC_INTERVAL_MS);
-      if (shouldSyncNow) {
-        syncSnapshot(engine.getSnapshot({ shareMemoryWords: true }), { fastMode: true, suppressPulse: true });
-        runLastUiSyncAt = nowSync;
+      stopReason = "user";
+    } else {
+      const result = engine.stepMany(stepBudget, { includeSnapshot: false });
+      lastStepResult = result;
+      if (!result.ok) {
+        postExecutionError(translateText("Go"), result.message);
+        stopReason = "error";
+        runStopRequested = true;
+      } else {
+        if (result.runIo && result.message) {
+          runOutputMessages.push({ text: result.message, translate: false });
+        }
+        if (result.waitingForInput) {
+          waitingForInput = true;
+        }
+        if (interactive) {
+          const nowSync = performance.now();
+          const shouldSyncNow =
+            result.done
+            || result.stoppedOnBreakpoint
+            || result.waitingForInput
+            || ((nowSync - runLastUiSyncAt) >= RUN_LOOP_UI_SYNC_INTERVAL_MS_INTERACTIVE);
+          if (shouldSyncNow) {
+            syncSnapshot(engine.getSnapshot({
+              shareMemoryWords: true,
+              includeDataRows: false
+            }), {
+              fastMode: true,
+              suppressPulse: true
+            });
+            runLastUiSyncAt = nowSync;
+          }
+        }
+        if (result.stoppedOnBreakpoint) {
+          stopReason = "breakpoint";
+          runStopRequested = true;
+        } else if (result.done) {
+          stopReason = result.exception ? "exception" : "normal";
+          runStopRequested = true;
+        } else if (result.sleepMs > 0) {
+          deferredDelayMs = Math.max(deferredDelayMs, result.sleepMs | 0);
+        }
       }
     }
+  } else {
+    const loopStart = performance.now();
+    const timeBudgetMs = interactive ? RUN_LOOP_TIME_BUDGET_MS_INTERACTIVE : RUN_LOOP_TIME_BUDGET_MS_FAST;
+    const cooperativeCheckInterval = interactive
+      ? RUN_LOOP_COOPERATIVE_CHECK_INTERVAL_INTERACTIVE
+      : RUN_LOOP_COOPERATIVE_CHECK_INTERVAL_FAST;
 
-    if (result.done || result.stoppedOnBreakpoint) {
-      terminalMessage = result.message || (result.stoppedOnBreakpoint ? "Breakpoint reached." : "Program completed.");
-      runStopRequested = true;
-      break;
-    }
+    for (let i = 0; i < stepBudget; i += 1) {
+      if (runStopRequested) {
+        stopReason = "user";
+        break;
+      }
 
-    if (result.sleepMs > 0) {
-      deferredDelayMs = Math.max(deferredDelayMs, result.sleepMs | 0);
-      break;
-    }
+      const result = engine.step({ includeSnapshot: false });
+      lastStepResult = result;
+      if (!result.ok) {
+        postExecutionError(translateText("Go"), result.message);
+        stopReason = "error";
+        runStopRequested = true;
+        break;
+      }
 
-    if (!interactive && ((i + 1) % RUN_LOOP_COOPERATIVE_CHECK_INTERVAL === 0)) {
-      if ((performance.now() - loopStart) >= timeBudgetMs) {
+      if (result.runIo && result.message) {
+        runOutputMessages.push({ text: result.message, translate: false });
+      }
+
+      if (result.waitingForInput) {
+        waitingForInput = true;
+        break;
+      }
+
+      if (interactive) {
+        const nowSync = performance.now();
+        const shouldSyncNow =
+          result.done
+          || result.stoppedOnBreakpoint
+          || result.waitingForInput
+          || ((nowSync - runLastUiSyncAt) >= RUN_LOOP_UI_SYNC_INTERVAL_MS_INTERACTIVE);
+        if (shouldSyncNow) {
+          syncSnapshot(engine.getSnapshot({
+            shareMemoryWords: true,
+            includeDataRows: false
+          }), {
+            fastMode: true,
+            suppressPulse: true
+          });
+          runLastUiSyncAt = nowSync;
+        }
+      }
+
+      if (result.stoppedOnBreakpoint) {
+        stopReason = "breakpoint";
+        runStopRequested = true;
+        break;
+      }
+
+      if (result.done) {
+        stopReason = result.exception ? "exception" : "normal";
+        runStopRequested = true;
+        break;
+      }
+
+      if (result.sleepMs > 0) {
+        deferredDelayMs = Math.max(deferredDelayMs, result.sleepMs | 0);
+        break;
+      }
+
+      if (((i + 1) % cooperativeCheckInterval) === 0 && (performance.now() - loopStart) >= timeBudgetMs) {
         break;
       }
     }
@@ -759,9 +1053,6 @@ function runLoopTick() {
 
   if (waitingForInput) {
     markPausedForInput(true);
-    if (terminalMessage && (!runOutputMessages.length || runOutputMessages[runOutputMessages.length - 1] !== terminalMessage)) {
-      messagesPane.postRun(terminalMessage);
-    }
     messagesPane.focusRunInput();
     return;
   }
@@ -775,41 +1066,95 @@ function runLoopTick() {
     runLastUiSyncAt = 0;
     clearInputPauseState();
     syncSnapshot(engine.getSnapshot());
-    if (terminalMessage && (!runOutputMessages.length || runOutputMessages[runOutputMessages.length - 1] !== terminalMessage)) {
-      messagesPane.postRun(terminalMessage);
+    if (stopReason === "user") {
+      postMarsRaw("{action}: execution terminated by user.\n\n", { action: translateText("Go") });
+      messagesPane.selectMarsTab?.();
+    } else if (stopReason === "breakpoint") {
+      postMarsRaw("{action}: execution paused at breakpoint: {name}\n\n", {
+        action: translateText("Go"),
+        name: getCurrentProgramName()
+      });
+      messagesPane.selectMarsTab?.();
+    } else if (stopReason === "exception") {
+      postExecutionError(translateText("Go"), lastStepResult?.message);
+    } else if (stopReason === "normal") {
+      postExecutionSuccess(translateText("Go"), lastStepResult?.haltReason || "exit");
     }
     return;
   }
 
   if (!interactive) {
-    syncSnapshot(engine.getSnapshot({ shareMemoryWords: true }), { fastMode: true, suppressPulse: true });
-    runLastUiSyncAt = performance.now();
+    const nowSync = performance.now();
+    if ((nowSync - runLastUiSyncAt) >= RUN_LOOP_UI_SYNC_INTERVAL_MS_FAST) {
+      syncSnapshot(engine.getSnapshot({
+        includeDataRows: false,
+        shareMemoryWords: true
+      }), {
+        fastMode: true,
+        suppressPulse: true,
+        noInteraction: true
+      });
+      runLastUiSyncAt = nowSync;
+    }
   }
-  const nextDelay = deferredDelayMs > 0 ? deferredDelayMs : (speed === RUN_SPEED_UNLIMITED ? 0 : RUN_LOOP_INTERVAL_MS);
+  const nextDelay = deferredDelayMs > 0 ? deferredDelayMs : (speed === RUN_SPEED_UNLIMITED ? 1 : RUN_LOOP_INTERVAL_MS);
   runTimer = window.setTimeout(runLoopTick, nextDelay);
 }
 function togglePreference(key, label) {
   const current = store.getState().preferences;
   const next = { ...current, [key]: !current[key] };
   applyPreferences(next);
-  messagesPane.postMars(`Setting updated: ${label} = ${next[key]}.`);
+  postMarsMessage("Setting updated: {label} = {value}.", {
+    label: translateText(label),
+    value: next[key]
+  });
 }
 
 function updatePreferencesPatch(patch, successMessage = "") {
   const current = store.getState().preferences;
   const next = { ...current, ...patch };
   applyPreferences(next);
-  if (successMessage) messagesPane.postMars(successMessage);
+  if (successMessage) postMarsMessage(successMessage);
+}
+
+async function openLanguagePreferencesDialog() {
+  const current = store.getState().preferences;
+  const languages = getAvailableLanguages();
+  const menu = languages
+    .map((language, index) => `${index + 1}: ${language}`)
+    .join("\n");
+  const raw = await requestTextDialog(
+    "Language",
+    translateText("Language\n{menu}\n\nChoose language number or code", { menu }),
+    current.language || "en"
+  );
+  if (raw == null) return;
+
+  const trimmed = raw.trim();
+  let selected = languages.find((language) => language.toLowerCase() === trimmed.toLowerCase()) || "";
+  if (!selected) {
+    const numeric = Number.parseInt(trimmed, 10);
+    if (Number.isFinite(numeric) && numeric >= 1 && numeric <= languages.length) {
+      selected = languages[numeric - 1];
+    }
+  }
+
+  if (!selected) {
+    postMarsMessage("[warn] Unknown language.");
+    return;
+  }
+
+  updatePreferencesPatch({ language: selected }, translateText("Language updated: {language}.", { language: selected }));
 }
 
 async function requestTextDialog(title, message, defaultValue = "", options = {}) {
   const result = await dialogSystem.prompt({
-    title,
-    message,
+    title: translateText(title),
+    message: translateText(message),
     defaultValue,
-    confirmLabel: options.confirmLabel || "OK",
-    cancelLabel: options.cancelLabel || "Cancel",
-    placeholder: options.placeholder || ""
+    confirmLabel: translateText(options.confirmLabel || "OK"),
+    cancelLabel: translateText(options.cancelLabel || "Cancel"),
+    placeholder: translateText(options.placeholder || "")
   });
   if (!result?.ok) return null;
   return String(result.value ?? "");
@@ -817,10 +1162,10 @@ async function requestTextDialog(title, message, defaultValue = "", options = {}
 
 async function requestConfirmDialog(title, message, options = {}) {
   return dialogSystem.confirm({
-    title,
-    message,
-    confirmLabel: options.confirmLabel || "OK",
-    cancelLabel: options.cancelLabel || "Cancel"
+    title: translateText(title),
+    message: translateText(message),
+    confirmLabel: translateText(options.confirmLabel || "OK"),
+    cancelLabel: translateText(options.cancelLabel || "Cancel")
   });
 }
 
@@ -829,13 +1174,18 @@ function summarizeDirtyFiles(files) {
   const maxListed = 6;
   const listed = files.slice(0, maxListed).map((file) => `- ${file.name}`).join("\n");
   const remaining = files.length - maxListed;
-  return remaining > 0 ? `${listed}\n- ... and ${remaining} more` : listed;
+  return remaining > 0
+    ? `${listed}\n${translateText("- ... and {count} more", { count: remaining })}`
+    : listed;
 }
 
 async function confirmCloseDirtyFiles(files, actionLabel) {
   if (!files.length) return true;
   const details = summarizeDirtyFiles(files);
-  const message = `${actionLabel}\n\nUnsaved files:\n${details}\n\nContinue without saving?`;
+  const message = translateText("{actionLabel}\n\nUnsaved files:\n{details}\n\nContinue without saving?", {
+    actionLabel,
+    details
+  });
   return requestConfirmDialog("Unsaved changes", message, {
     confirmLabel: "Close anyway",
     cancelLabel: "Cancel"
@@ -860,7 +1210,7 @@ async function openEditorPreferencesDialog() {
   const parsedFont = Number(nextFontRaw);
   const parsedLine = Number(nextLineRaw);
   if (!Number.isFinite(parsedFont) || !Number.isFinite(parsedLine)) {
-    messagesPane.postMars("[warn] Invalid editor preferences.");
+    postMarsMessage("[warn] Invalid editor preferences.");
     return;
   }
 
@@ -886,7 +1236,7 @@ async function openHighlightingPreferencesDialog() {
 
   const parts = raw.split(/[\s,;]+/).filter(Boolean);
   if (parts.length < 3) {
-    messagesPane.postMars("[warn] Provide 3 values (text,data,registers). Example: 1,1,1");
+    postMarsMessage("[warn] Provide 3 values (text,data,registers). Example: 1,1,1");
     return;
   }
 
@@ -917,20 +1267,27 @@ async function openExceptionHandlerPreferencesDialog() {
   );
   if (raw == null) return;
   const parsed = parseAddressPreference(raw, fallbackAddress);
-  updatePreferencesPatch({ exceptionHandlerAddress: toHex(parsed) }, `Exception handler set to ${toHex(parsed)}.`);
+  updatePreferencesPatch(
+    { exceptionHandlerAddress: toHex(parsed) },
+    translateText("Exception handler set to {address}.", { address: toHex(parsed) })
+  );
 }
 
 async function openMemoryConfigurationPreferencesDialog() {
   const ids = Object.keys(memoryPresets);
   if (!ids.length) {
-    messagesPane.postMars("[warn] No memory presets available.");
+    postMarsMessage("[warn] No memory presets available.");
     return;
   }
 
   const menu = ids
     .map((id, index) => `${index + 1}: ${memoryPresets[id].label || id}`)
     .join("\n");
-  const raw = await requestTextDialog("Memory Configuration", `Memory Configuration\n${menu}\n\nChoose preset number or id`, activeMemoryConfigId || "Default");
+  const raw = await requestTextDialog(
+    "Memory Configuration",
+    translateText("Memory Configuration\n{menu}\n\nChoose preset number or id", { menu }),
+    activeMemoryConfigId || "Default"
+  );
   if (raw == null) return;
 
   const trimmed = raw.trim();
@@ -941,7 +1298,7 @@ async function openMemoryConfigurationPreferencesDialog() {
   }
 
   if (!selectedId) {
-    messagesPane.postMars("[warn] Unknown memory preset.");
+    postMarsMessage("[warn] Unknown memory preset.");
     return;
   }
 
@@ -950,7 +1307,9 @@ async function openMemoryConfigurationPreferencesDialog() {
   updatePreferencesPatch({
     memoryConfiguration: selectedId,
     exceptionHandlerAddress: toHex(defaultException)
-  }, `Memory configuration set to ${memoryPresets[selectedId].label || selectedId}.`);
+  }, translateText("Memory configuration set to {label}.", {
+    label: memoryPresets[selectedId].label || selectedId
+  }));
 }
 
 async function openMemoryUsagePreferencesDialog() {
@@ -960,8 +1319,8 @@ async function openMemoryUsagePreferencesDialog() {
   const defaultValue = `${defaultMemoryGb},${defaultBacksteps}`;
 
   const raw = await requestTextDialog(
-    "Uso máximo de Memória",
-    "Definir limites: memória GB e max backsteps (GB,steps)\nExemplo: 2,100",
+    "Memory Limits",
+    "Set limits: memory GB and max backsteps (GB,steps)\nBackstep history automatically fits the memory budget.\nExample: 2,100",
     defaultValue
   );
   if (raw == null) return;
@@ -975,44 +1334,271 @@ async function openMemoryUsagePreferencesDialog() {
       maxMemoryGb: parsedMemoryGb,
       maxBacksteps: parsedBacksteps
     },
-    `Memory limits updated: ${parsedMemoryGb} GB, ${parsedBacksteps} backsteps.`
+    translateText("Memory limits updated: {memoryGb} GB, {backsteps} backsteps.", {
+      memoryGb: parsedMemoryGb,
+      backsteps: parsedBacksteps
+    })
   );
 }
 
 async function loadTextResource(path) {
-  try {
-    const response = await fetch(path, { cache: "no-store" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.text();
-  } catch (fetchError) {
-    return await new Promise((resolve, reject) => {
-      const req = new XMLHttpRequest();
-      req.open("GET", path, true);
-      req.onload = () => {
-        if (req.status === 0 || (req.status >= 200 && req.status < 300)) {
-          resolve(req.responseText);
-          return;
-        }
-        reject(new Error(`HTTP ${req.status}`));
-      };
-      req.onerror = () => reject(fetchError instanceof Error ? fetchError : new Error("Failed to load file."));
-      req.send();
-    });
+  if (typeof fetch === "function") {
+    try {
+      const response = await fetch(path, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return await response.text();
+    } catch (fetchError) {
+      if (fetchError instanceof Error && /^HTTP \d+$/i.test(fetchError.message)) {
+        throw fetchError;
+      }
+    }
   }
+  return await new Promise((resolve, reject) => {
+    const req = new XMLHttpRequest();
+    req.open("GET", path, true);
+    req.onload = () => {
+      if (req.status === 0 || (req.status >= 200 && req.status < 300)) {
+        resolve(req.responseText);
+        return;
+      }
+      reject(new Error(`HTTP ${req.status}`));
+    };
+    req.onerror = () => reject(new Error(translateText("Failed to load file.")));
+    req.send();
+  });
 }
 
-const runtimeExampleFiles = [...EXAMPLE_FILES];
+const EXAMPLE_CATEGORY_ORDER = ["Tools", "Math", "Learn", "Tests"];
+const DEFAULT_EXAMPLE_CATEGORY = "Learn";
+const DEFAULT_EXAMPLE_LANGUAGE = "en";
+const exampleManifestState = {
+  defaultLanguage: DEFAULT_EXAMPLE_LANGUAGE,
+  languages: [DEFAULT_EXAMPLE_LANGUAGE]
+};
+const exampleVariantCache = new Map();
+
+function normalizeLanguageCode(language) {
+  return String(language || "")
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
+}
+
+function expandLanguageVariants(language) {
+  const normalized = normalizeLanguageCode(language);
+  if (!normalized) return [];
+  const base = normalized.split("-")[0];
+  return normalized === base ? [normalized] : [normalized, base];
+}
+
+function uniqueStrings(values) {
+  const seen = new Set();
+  const out = [];
+  values.forEach((value) => {
+    const normalized = String(value || "").trim();
+    if (!normalized || seen.has(normalized)) return;
+    seen.add(normalized);
+    out.push(normalized);
+  });
+  return out;
+}
+
+function normalizeExampleLanguageList(value) {
+  if (!Array.isArray(value)) return [];
+  return uniqueStrings(value.flatMap((entry) => expandLanguageVariants(entry)));
+}
+
+function normalizeExampleRelativePath(path) {
+  const normalized = String(path || "").trim().replace(/\\/g, "/");
+  if (!normalized) return "";
+  if (normalized.startsWith("./examples/")) return normalized.slice("./examples/".length);
+  if (normalized.startsWith("examples/")) return normalized.slice("examples/".length);
+  if (normalized.startsWith("/examples/")) return normalized.slice("/examples/".length);
+  return normalized.replace(/^\.?\//, "");
+}
+
+function toExampleResourcePath(path) {
+  const normalized = normalizeExampleRelativePath(path);
+  return normalized ? `./examples/${normalized}` : "./examples/";
+}
+
+function getExampleFileName(path) {
+  const normalized = normalizeExampleRelativePath(path);
+  return normalized.split("/").pop() || normalized || "example.asm";
+}
+
+function normalizeExampleFileEntry(entry, fallbackPath) {
+  if (typeof entry === "string") {
+    const relativePath = normalizeExampleRelativePath(entry);
+    if (!relativePath) return null;
+    return {
+      path: relativePath,
+      name: relativePath,
+      main: false
+    };
+  }
+  if (!entry || typeof entry !== "object") return null;
+  const rawPath = String(entry.path || entry.file || entry.name || fallbackPath || "").trim();
+  const relativePath = normalizeExampleRelativePath(rawPath);
+  if (!relativePath) return null;
+  const displayName = String(entry.name || relativePath).trim() || relativePath;
+  return {
+    path: relativePath,
+    name: displayName,
+    main: entry.main === true
+  };
+}
+
+function normalizeExampleFiles(entry, fallbackPath) {
+  const entries = Array.isArray(entry?.files) && entry.files.length
+    ? entry.files
+    : [fallbackPath];
+  const files = entries
+    .map((fileEntry) => normalizeExampleFileEntry(fileEntry, fallbackPath))
+    .filter(Boolean);
+  if (!files.length) return [];
+  if (!files.some((file) => file.main)) {
+    files[0] = { ...files[0], main: true };
+  }
+  return files;
+}
+
+function getCurrentExampleLanguage() {
+  const i18n = getI18nApi();
+  return normalizeLanguageCode(i18n?.getLanguage?.() || preferences.language || DEFAULT_EXAMPLE_LANGUAGE) || DEFAULT_EXAMPLE_LANGUAGE;
+}
+
+function buildExampleLanguageOrder(example) {
+  const i18n = getI18nApi();
+  const current = getCurrentExampleLanguage();
+  const fallback = normalizeLanguageCode(i18n?.getFallbackLanguage?.() || exampleManifestState.defaultLanguage || DEFAULT_EXAMPLE_LANGUAGE);
+  const manifestLanguages = normalizeExampleLanguageList(exampleManifestState.languages);
+  const exampleLanguages = normalizeExampleLanguageList(example?.languages);
+  const appLanguages = getAvailableLanguages().flatMap((language) => expandLanguageVariants(language));
+  return uniqueStrings([
+    ...expandLanguageVariants(current),
+    ...expandLanguageVariants(fallback),
+    ...expandLanguageVariants(exampleManifestState.defaultLanguage),
+    DEFAULT_EXAMPLE_LANGUAGE,
+    ...exampleLanguages,
+    ...manifestLanguages,
+    ...appLanguages
+  ]);
+}
+
+function buildExampleVariantCacheKey(example) {
+  return `${example?.id || example?.path || example?.label || "example"}::${getCurrentExampleLanguage()}`;
+}
+
+async function loadExampleVariant(example, language) {
+  const files = Array.isArray(example?.files) ? example.files : [];
+  const loadedFiles = [];
+  for (const file of files) {
+    const candidatePath = language
+      ? `./examples/${language}/${normalizeExampleRelativePath(file.path)}`
+      : toExampleResourcePath(file.path);
+    const source = await loadTextResource(candidatePath);
+    loadedFiles.push({
+      path: candidatePath,
+      source,
+      logicalPath: normalizeExampleRelativePath(file.path),
+      name: String(file.name || normalizeExampleRelativePath(file.path)).trim() || normalizeExampleRelativePath(file.path) || getExampleFileName(file.path),
+      main: file.main === true
+    });
+  }
+  return {
+    language: language || null,
+    files: loadedFiles
+  };
+}
+
+async function loadLocalizedExample(example) {
+  const cacheKey = buildExampleVariantCacheKey(example);
+  const cached = exampleVariantCache.get(cacheKey);
+  if (cached) {
+    try {
+      return await loadExampleVariant(example, cached.language);
+    } catch {
+      exampleVariantCache.delete(cacheKey);
+    }
+  }
+
+  const attempted = [];
+  const languages = buildExampleLanguageOrder(example);
+  for (const language of languages) {
+    try {
+      const variant = await loadExampleVariant(example, language);
+      exampleVariantCache.set(cacheKey, { language });
+      return variant;
+    } catch (error) {
+      attempted.push(error);
+    }
+  }
+
+  try {
+    const legacyVariant = await loadExampleVariant(example, null);
+    exampleVariantCache.set(cacheKey, { language: null });
+    return legacyVariant;
+  } catch (error) {
+    attempted.push(error);
+  }
+
+  throw attempted[attempted.length - 1] || new Error(translateText("Failed to load file."));
+}
+
+function normalizeExampleEntry(entry) {
+  if (!entry) return null;
+  if (typeof entry === "string") {
+    const fileName = entry.trim();
+    if (!fileName) return null;
+    const relativePath = normalizeExampleRelativePath(fileName);
+    return {
+      label: fileName,
+      path: toExampleResourcePath(relativePath),
+      relativePath,
+      category: DEFAULT_EXAMPLE_CATEGORY,
+      languages: [],
+      files: normalizeExampleFiles({}, relativePath),
+      id: relativePath || fileName
+    };
+  }
+  if (typeof entry !== "object") return null;
+  const rawPath = String(entry.path || entry.file || entry.name || "").trim();
+  if (!rawPath) return null;
+  const relativePath = normalizeExampleRelativePath(rawPath);
+  const path = toExampleResourcePath(relativePath);
+  const label = String(entry.label || entry.name || rawPath).trim() || (path.split("/").pop() || path);
+  const category = String(entry.category || DEFAULT_EXAMPLE_CATEGORY).trim() || DEFAULT_EXAMPLE_CATEGORY;
+  const languages = normalizeExampleLanguageList(entry.languages);
+  const files = normalizeExampleFiles(entry, relativePath);
+  return {
+    label,
+    path,
+    relativePath,
+    category,
+    languages,
+    files,
+    id: String(entry.id || relativePath || label).trim() || relativePath || label
+  };
+}
+
+const runtimeExampleFiles = EXAMPLE_FILES
+  .map((entry) => normalizeExampleEntry(entry))
+  .filter(Boolean);
 
 function mergeExampleEntries(entries) {
   entries.forEach((entry) => {
-    if (!entry || typeof entry.path !== "string") return;
-    const path = entry.path.trim();
-    if (!path) return;
-    if (runtimeExampleFiles.some((example) => example.path === path)) return;
-    runtimeExampleFiles.push({
-      label: entry.label ? String(entry.label) : path.split("/").pop() || path,
-      path
-    });
+    const normalized = normalizeExampleEntry(entry);
+    if (!normalized) return;
+    const existingIndex = runtimeExampleFiles.findIndex((example) => example.path === normalized.path);
+    if (existingIndex >= 0) {
+      runtimeExampleFiles[existingIndex] = {
+        ...runtimeExampleFiles[existingIndex],
+        ...normalized
+      };
+      return;
+    }
+    runtimeExampleFiles.push(normalized);
   });
 }
 
@@ -1020,17 +1606,19 @@ async function discoverExampleFiles() {
   try {
     const text = await loadTextResource("./examples/examples.json");
     const manifest = JSON.parse(text);
-    if (Array.isArray(manifest)) {
-      const entries = manifest.map((item) => {
-        if (typeof item === "string") return { label: item, path: `./examples/${item}` };
-        if (item && typeof item === "object") {
-          const rawPath = String(item.path || item.file || item.name || "").trim();
-          if (!rawPath) return null;
-          const path = rawPath.startsWith("./") || rawPath.startsWith("/") ? rawPath : `./examples/${rawPath}`;
-          return { label: item.label || item.name || rawPath, path };
-        }
-        return null;
-      }).filter(Boolean);
+    if (manifest && typeof manifest === "object" && !Array.isArray(manifest)) {
+      const defaultLanguage = normalizeLanguageCode(manifest.defaultLanguage);
+      if (defaultLanguage) exampleManifestState.defaultLanguage = defaultLanguage;
+      const languages = normalizeExampleLanguageList(manifest.languages);
+      exampleManifestState.languages = uniqueStrings([
+        exampleManifestState.defaultLanguage || DEFAULT_EXAMPLE_LANGUAGE,
+        ...languages
+      ]);
+    }
+    const entries = Array.isArray(manifest)
+      ? manifest
+      : (Array.isArray(manifest?.examples) ? manifest.examples : []);
+    if (entries.length) {
       mergeExampleEntries(entries);
     }
   } catch {
@@ -1098,7 +1686,7 @@ const commands = {
     modeController.setMode("edit");
     windowManager.focus("window-editor");
     editor.focus();
-    messagesPane.postMars(`New source buffer created: ${created.name}.`);
+    postMarsMessage("New source buffer created: {name}.", { name: created.name });
   },
 
   openFile() {
@@ -1111,7 +1699,7 @@ const commands = {
     if (runActive) stopRunLoop();
     const active = editor.getActiveFile();
     if (active && editor.isActiveDirty()) {
-      const ok = await confirmCloseDirtyFiles([active], `Close '${active.name}'?`);
+      const ok = await confirmCloseDirtyFiles([active], translateText("Close '{name}'?", { name: active.name }));
       if (!ok) return;
     }
 
@@ -1120,20 +1708,20 @@ const commands = {
     modeController.setMode("edit");
     windowManager.focus("window-editor");
     editor.focus();
-    messagesPane.postMars(`Closed '${result.closed.name}'.`);
+    postMarsMessage("Closed '{name}'.", { name: result.closed.name });
   },
 
   async closeAllFiles() {
     if (runActive) stopRunLoop();
     const dirtyFiles = editor.getDirtyFiles();
-    const ok = await confirmCloseDirtyFiles(dirtyFiles, "Close all files?");
+    const ok = await confirmCloseDirtyFiles(dirtyFiles, translateText("Close all files?"));
     if (!ok) return;
 
     const result = editor.closeAll();
     modeController.setMode("edit");
     windowManager.focus("window-editor");
     editor.focus();
-    messagesPane.postMars(`Closed ${result.closedCount} file(s).`);
+    postMarsMessage("Closed {count} file(s).", { count: result.closedCount });
   },
 
   saveFile() {
@@ -1141,7 +1729,7 @@ const commands = {
     if (!active) return;
     downloadText(normalizeFilename(active.name), active.source);
     editor.markActiveSaved();
-    messagesPane.postMars(`Saved '${normalizeFilename(active.name)}'.`);
+    postMarsMessage("Saved '{name}'.", { name: normalizeFilename(active.name) });
   },
 
   async saveFileAs() {
@@ -1160,12 +1748,12 @@ const commands = {
     if (!target) return;
     downloadText(target.name, target.source);
     editor.markActiveSaved();
-    messagesPane.postMars(`Saved as '${target.name}'.`);
+    postMarsMessage("Saved as '{name}'.", { name: target.name });
   },
 
   dumpRunIo() {
-    downloadText("run-io.txt", refs.messages.run.textContent || "");
-    messagesPane.postMars("Run I/O dumped to file.");
+    downloadText("run-io.txt", refs.messages.run.value || refs.messages.run.textContent || "");
+    postMarsMessage("Run I/O dumped to file.");
   },
 
   assemble() {
@@ -1179,21 +1767,24 @@ const commands = {
     clearInputPauseState();
     windowManager.focus("window-text"); windowManager.focus("window-data");
 
-    const { result, assemblyContext } = assembleFromEditor();
-    reportDiagnostics(result);
+    const assemblyContext = buildAssemblyContext();
+    postMarsRaw("{action}: assembling {sources}\n\n", {
+      action: translateText("Assemble"),
+      sources: describeAssemblySources(assemblyContext)
+    });
+    const result = engine.assemble(assemblyContext.source, {
+      sourceName: assemblyContext.sourceName,
+      includeMap: assemblyContext.includeMap,
+      programArgumentsEnabled: runtimeSettings.programArguments,
+      programArguments: runtimeSettings.programArgumentsLine
+    });
+    reportDiagnostics(result, assemblyContext);
 
     if (!result.ok) {
       setAssemblyTag("error", "assembly failed");
-      messagesPane.postMars("Assembly failed.");
+      postMarsRaw("{action}: operation completed with errors.\n\n", { action: translateText("Assemble") });
     } else {
-      const sourceScope = runtimeSettings.assembleAll
-        ? `${assemblyContext.fileCount} file(s)`
-        : `active file '${assemblyContext.activeFile?.name || assemblyContext.sourceName}'`;
-      messagesPane.postMars(`Assembly complete (${sourceScope}). ${engine.getSnapshot().textRows.length} text rows generated.`);
-      if (runtimeSettings.programArguments) {
-        const argsText = runtimeSettings.programArgumentsLine || "";
-        messagesPane.postMars(`Program arguments enabled: ${argsText || "(none)"}`);
-      }
+      postMarsRaw("{action}: operation completed successfully.\n\n", { action: translateText("Assemble") });
     }
 
     syncSnapshot(engine.getSnapshot());
@@ -1201,13 +1792,25 @@ const commands = {
   step() {
     modeController.setMode("execute");
     windowManager.focus("window-text"); windowManager.focus("window-data");
+    const snapshot = engine.getSnapshot();
+    if (!snapshot.assembled) {
+      postMarsMessage("The program must be assembled before it can be run.");
+      return;
+    }
+    if (snapshot.halted) {
+      postMarsMessage("You must reset before you can execute the program again.");
+      return;
+    }
+    messagesPane.selectRunTab?.();
     const result = engine.step();
     if (!result.ok) {
-      messagesPane.postMars(`[error] ${result.message}`);
+      postExecutionError(translateText("Step"), result.message);
       return;
     }
 
-    if (result.message) messagesPane.postRun(result.message);
+    if (result.runIo && result.message) {
+      messagesPane.postRun(result.message, { translate: false });
+    }
     syncSnapshot(result.snapshot ?? engine.getSnapshot());
 
     if (result.waitingForInput) {
@@ -1218,17 +1821,24 @@ const commands = {
     }
 
     clearInputPauseState();
+    if (result.done) {
+      if (result.exception) {
+        postExecutionError(translateText("Step"), result.message);
+      } else {
+        postExecutionSuccess(translateText("Step"), result.haltReason || "exit");
+      }
+    }
   },  go() {
     modeController.setMode("execute");
     windowManager.focus("window-text"); windowManager.focus("window-data");
     if (runActive) return;
     const snapshot = engine.getSnapshot();
     if (!snapshot.assembled) {
-      messagesPane.postMars("[error] Program is not assembled.");
+      postMarsMessage("The program must be assembled before it can be run.");
       return;
     }
     if (snapshot.halted) {
-      messagesPane.postMars("[warn] Program is halted. Use Reset to reassemble and restart.");
+      postMarsMessage("You must reset before you can execute the program again.");
       return;
     }
     clearInputPauseState();
@@ -1238,12 +1848,17 @@ const commands = {
     runStepCarry = 0;
     runLastUiSyncAt = 0;
     syncButtons(snapshot);
-    messagesPane.postRun(`Running at ${formatRunSpeedLabel(getRunSpeedIndex()).replace("Run speed ", "")}.`);
+    updateNoInteractionUiMode();
+    postMarsRaw("{action}: running {name}\n\n", {
+      action: translateText("Go"),
+      name: getCurrentProgramName()
+    }, { activate: false });
+    messagesPane.selectRunTab?.();
     runLoopTick();
   },
   pause() {
     if (!runActive) {
-      messagesPane.postMars("[warn] Runtime is not running.");
+      postMarsMessage("[warn] Runtime is not running.");
       return;
     }
     clearRunTimer();
@@ -1254,7 +1869,11 @@ const commands = {
     runLastUiSyncAt = 0;
     clearInputPauseState();
     syncSnapshot(engine.getSnapshot());
-    messagesPane.postRun("Execution paused.");
+    postMarsRaw("{action}: execution paused by user: {name}\n\n", {
+      action: translateText("Go"),
+      name: getCurrentProgramName()
+    });
+    messagesPane.selectMarsTab?.();
   },
   stop() {
     if (runActive) {
@@ -1264,14 +1883,15 @@ const commands = {
 
     const snapshot = engine.getSnapshot();
     if (!snapshot.assembled) {
-      messagesPane.postMars("[warn] No assembled program to stop.");
+      postMarsMessage("[warn] No assembled program to stop.");
       return;
     }
 
-    engine.halted = true;
+    if (typeof engine.stop === "function") engine.stop();
     clearInputPauseState();
     syncSnapshot(engine.getSnapshot());
-    messagesPane.postRun("Execution stopped.");
+    postMarsRaw("{action}: execution terminated by user.\n\n", { action: translateText("Go") });
+    messagesPane.selectMarsTab?.();
   },
   backstep() {
     modeController.setMode("execute");
@@ -1285,10 +1905,9 @@ const commands = {
     windowManager.focus("window-text"); windowManager.focus("window-data");
     const result = engine.backstep();
     if (!result.ok) {
-      messagesPane.postMars(`[warn] ${result.message}`);
+      postMarsMessage("[warn] {message}", { message: result.message });
       return;
     }
-    messagesPane.postRun(result.message);
     syncSnapshot(result.snapshot ?? engine.getSnapshot());
   },
   reset() {
@@ -1302,14 +1921,18 @@ const commands = {
     clearInputPauseState();
     engine.reset();
     messagesPane.clearInputRequest();
-    messagesPane.postMars("Runtime reset.");
 
     const activeFile = editor.getActiveFile();
     const source = activeFile?.source ?? store.getState().sourceCode;
     if (source.trim().length) {
-      const { result: assembleResult } = assembleFromEditor();
-      reportDiagnostics(assembleResult);
-      if (assembleResult.ok) messagesPane.postMars("Program reassembled after reset.");
+      const { result: assembleResult, assemblyContext } = assembleFromEditor();
+      reportDiagnostics(assembleResult, assemblyContext);
+      if (!assembleResult.ok) {
+        postMarsRaw("Unable to reset.  Please close file then re-open and re-assemble.\n");
+      } else {
+        postRunRaw("\n{action}: reset completed.\n\n", { action: translateText("Reset") });
+        messagesPane.selectRunTab?.();
+      }
     }
 
     syncSnapshot(engine.getSnapshot());
@@ -1340,13 +1963,13 @@ const commands = {
     if (idx < 0) idx = source.indexOf(query);
 
     if (idx < 0) {
-      messagesPane.postMars(`[warn] '${query}' not found.`);
+      postMarsMessage("[warn] '{query}' not found.", { query });
       return;
     }
 
     refs.editor.focus();
     refs.editor.setSelectionRange(idx, idx + query.length);
-    messagesPane.postMars(`Found '${query}' at offset ${idx}.`);
+    postMarsMessage("Found '{query}' at offset {offset}.", { query, offset: idx });
   },  togglePopupSyscallInput() { togglePreference("popupSyscallInput", "Popup dialog for input syscalls"); },
   toggleAddressDisplayBase() { togglePreference("displayAddressesHex", "Addresses displayed in hexadecimal"); },
   toggleValueDisplayBase() { togglePreference("displayValuesHex", "Values displayed in hexadecimal"); },
@@ -1358,6 +1981,7 @@ const commands = {
   toggleDelayedBranching() { togglePreference("delayedBranching", "Delayed branching"); },
   toggleSelfModifyingCode() { togglePreference("selfModifyingCode", "Self-modifying code"); },
 
+  showLanguagePreferences() { openLanguagePreferencesDialog(); },
   showEditorPreferences() { openEditorPreferencesDialog(); },
   showHighlightingPreferences() { openHighlightingPreferencesDialog(); },
   showExceptionHandlerPreferences() { openExceptionHandlerPreferencesDialog(); },
@@ -1367,28 +1991,53 @@ const commands = {
   openTool(toolId) { toolManager.open(toolId); },
 
   getExampleMenuItems() {
-    return runtimeExampleFiles.map((example) => ({
-      label: example.label,
-      command: () => commands.openExample(example)
-    }));
+    const categoryOrder = [
+      ...EXAMPLE_CATEGORY_ORDER,
+      ...runtimeExampleFiles
+        .map((example) => example.category)
+        .filter((category, index, values) => category && !EXAMPLE_CATEGORY_ORDER.includes(category) && values.indexOf(category) === index)
+    ];
+
+    return categoryOrder
+      .map((category) => {
+        const items = runtimeExampleFiles
+          .filter((example) => example.category === category)
+          .map((example) => ({
+            label: example.label,
+            command: () => commands.openExample(example)
+          }));
+        if (!items.length) return null;
+        return {
+          label: category,
+          submenu: items
+        };
+      })
+      .filter(Boolean);
   },
 
   async openExample(example) {
     if (runActive) stopRunLoop();
     try {
-      const source = await loadTextResource(example.path);
-      const opened = editor.openFile(example.label, source, true);
+      const variant = await loadLocalizedExample(example);
+      const files = Array.isArray(variant?.files) ? variant.files : [];
+      const mainFile = files.find((file) => file.main) || files[0];
+      if (!mainFile) throw new Error(translateText("Failed to load file."));
+      const openedFiles = files.map((file) => editor.openFile(file.name, file.source, file === mainFile));
+      const opened = openedFiles.find((file) => file.name === mainFile.name) || openedFiles[0];
       modeController.setMode("edit");
       windowManager.focus("window-editor");
       editor.focus();
-      messagesPane.postMars(`Opened example '${opened.name}'.`);
+      postMarsMessage("Opened example '{name}'.", { name: opened.name });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      messagesPane.postMars(`[error] Failed to open example '${example.label}': ${message}`);
+      postMarsMessage("[error] Failed to open example '{label}': {message}", {
+        label: example.label,
+        message
+      });
     }
   },
 
-  helpHub() { helpSystem.open("webmars", "info"); },
+  helpHub() { helpSystem.open("mips", "basic"); },
   helpIntro() { helpSystem.open("mars", "intro"); },
   helpIde() { helpSystem.open("mars", "ide"); },
   helpSyscalls() { helpSystem.open("mips", "syscalls"); },
@@ -1396,11 +2045,22 @@ const commands = {
   helpBugs() { helpSystem.open("bugs", "main"); },
   helpAcknowledgements() { helpSystem.open("ack", "main"); },
   helpSong() { helpSystem.open("song", "main"); },
-  helpMipsPdf() { helpSystem.openDocument("./help/mipsref.pdf", "MIPS Reference PDF"); },
+  helpMipsPdf() { helpSystem.openDocument("mipsref.pdf", "MIPS Reference PDF"); },
   helpAbout() { helpSystem.openAbout(); }
 };
 
 const menuSystem = createMenuSystem(refs, commands, () => store.getState(), toolManager);
+getI18nApi()?.subscribe?.(() => {
+  refs.refreshTranslations?.();
+  messagesPane.refreshTranslations?.();
+  editor.refreshStatus?.();
+  dialogSystem.refreshTranslations?.();
+  helpSystem.refreshTranslations?.();
+  updateRunSpeedLabel();
+  menuSystem.hide();
+  previousSnapshot = null;
+  syncSnapshot(engine.getSnapshot(), { suppressPulse: true });
+});
 
 function persistWorkspaceSession() {
   try {
@@ -1458,10 +2118,6 @@ refs.buttons.reset.addEventListener("click", commands.reset);
 refs.buttons.pause.addEventListener("click", commands.pause);
 refs.buttons.stop.addEventListener("click", commands.stop);
 
-refs.messages.clear?.addEventListener("click", () => {
-  messagesPane.clear();
-});
-
 refs.controls.runSpeedSlider.addEventListener("input", updateRunSpeedLabel);
 refs.controls.runSpeedSlider.addEventListener("change", updateRunSpeedLabel);
 
@@ -1475,7 +2131,7 @@ fileInput.addEventListener("change", async (event) => {
     const content = await file.text();
     const activate = index === files.length - 1;
     editor.openFile(normalizeFilename(file.name), content, activate);
-    messagesPane.postMars(`Opened '${file.name}'.`);
+    postMarsMessage("Opened '{name}'.", { name: file.name });
   }
 
   modeController.setMode("edit");
@@ -1486,7 +2142,10 @@ fileInput.addEventListener("change", async (event) => {
 });
 executePane.onToggleBreakpoint((address) => {
   const enabled = engine.toggleBreakpoint(address);
-  messagesPane.postMars(`Breakpoint ${enabled ? "added" : "removed"}: ${toHex(address)}.`);
+  postMarsMessage("Breakpoint {state}: {address}.", {
+    state: translateText(enabled ? "added" : "removed"),
+    address: toHex(address)
+  });
   syncSnapshot(engine.getSnapshot());
 });
 
@@ -1505,7 +2164,7 @@ window.addEventListener("keydown", async (event) => {
     if (key === "r") {
       event.preventDefault();
       const dirtyFiles = editor.getDirtyFiles();
-      const ok = await confirmCloseDirtyFiles(dirtyFiles, "Reload page?");
+      const ok = await confirmCloseDirtyFiles(dirtyFiles, translateText("Reload page?"));
       if (!ok) return;
       allowPageUnload = true;
       window.location.reload();
@@ -1543,15 +2202,12 @@ if (!restoredSession) {
   editor.setSource(INITIAL_SOURCE);
 } else {
   editor.refreshView?.();
-  messagesPane.postMars(`Workspace restored (${restoredSession.files.length} file(s)).`);
+  postMarsMessage("Workspace restored ({count} file(s)).", { count: restoredSession.files.length });
 }
 modeController.setMode("edit");
 syncSnapshot(engine.getSnapshot());
-messagesPane.postMars("MARS 4.5 web shell initialized.");
-messagesPane.postMars("Core parity enabled: multi-file assemble, cooperative run loop, coprocessor views, settings dialogs and Help window integration.");
 persistWorkspaceSession();
 showAboutOnFirstVisit();
-
 
 
 

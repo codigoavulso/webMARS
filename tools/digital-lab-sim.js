@@ -7,18 +7,59 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      .dlab-tool { display:flex; flex-direction:column; gap:8px; height:100%; box-sizing:border-box; padding:8px; font:12px "Segoe UI", Tahoma, sans-serif; }
-      .dlab-title { margin:0; text-align:center; font-size:42px; color:#1f3048; line-height:1; }
-      .dlab-main { display:grid; grid-template-columns: 1fr 1fr; gap:14px; align-items:start; }
-      .dlab-display { border:1px solid #9db0c8; background:#f7fbff; padding:10px; display:flex; gap:12px; justify-content:center; }
-      .dlab-digit { border:1px solid #a7bad1; background:#fff; }
-      .dlab-keypad { border:1px solid #9db0c8; background:#f7fbff; padding:10px; display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; }
-      .dlab-key { border:1px solid #8fa3bf; background:linear-gradient(#fefefe,#e8eef8); min-height:48px; font:700 22px Consolas, monospace; cursor:pointer; }
-      .dlab-key.active { background:linear-gradient(#9bc1ff,#6999e0); color:#fff; }
-      .dlab-info { border:1px solid #9db0c8; background:#fff; padding:8px; font-family:Consolas, monospace; white-space:pre-wrap; min-height:120px; }
-      .dlab-footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
-      .dlab-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#24354b; }
-      .dlab-footer .tool-btn { min-width:120px; }
+      .dlab-tool {
+        font: 11px Tahoma, "Segoe UI", sans-serif;
+      }
+
+      .dlab-main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        min-height: 0;
+        flex: 1 1 auto;
+      }
+
+      .dlab-display-body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .dlab-digit {
+        width: 60px;
+        height: 80px;
+        border: 1px solid #8f8f8f;
+        background: #fff;
+        image-rendering: crisp-edges;
+      }
+
+      .dlab-keypad-body {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(44px, 1fr));
+        gap: 6px;
+      }
+
+      .dlab-key {
+        min-width: 44px;
+        min-height: 34px;
+        padding: 0;
+        margin: 0;
+        font: 12px Tahoma, "Segoe UI", sans-serif;
+      }
+
+      .dlab-key.active {
+        background: #2cb42c;
+        border-color: #2a8a2a;
+        color: #111;
+        box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.45);
+      }
+
+      @media (max-width: 760px) {
+        .dlab-main {
+          grid-template-columns: 1fr;
+        }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -33,8 +74,23 @@
   const ROW_BITS = [0x1, 0x2, 0x4, 0x8];
   const COL_BITS = [0x1, 0x2, 0x4, 0x8];
 
-  function toHex32(value) {
-    return `0x${(value >>> 0).toString(16).padStart(8, "0")}`;
+  function formatFallback(message, variables = {}) {
+    return String(message ?? "").replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => (
+      Object.prototype.hasOwnProperty.call(variables, key) ? String(variables[key]) : match
+    ));
+  }
+
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return formatFallback(message, variables);
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
   }
 
   function drawSevenSegment(canvas, valueByte) {
@@ -42,22 +98,22 @@
     const w = canvas.width;
     const h = canvas.height;
     ctx2d.clearRect(0, 0, w, h);
-    ctx2d.fillStyle = "#f3f3f3";
+    ctx2d.fillStyle = "#ffffff";
     ctx2d.fillRect(0, 0, w, h);
 
-    const on = "#ef2f2f";
-    const off = "#d7d7d7";
-    const thick = Math.max(8, Math.floor(w * 0.11));
-    const margin = Math.max(9, Math.floor(w * 0.12));
+    const on = "#ff2020";
+    const off = "#d3d3d3";
+    const thick = Math.max(5, Math.floor(w * 0.1));
+    const margin = Math.max(5, Math.floor(w * 0.14));
 
     const segments = [
-      { bit: 0, x: margin + thick, y: margin, width: w - 2 * margin - 2 * thick, height: thick }, // a
-      { bit: 1, x: w - margin - thick, y: margin + thick, width: thick, height: h / 2 - margin - thick * 1.5 }, // b
-      { bit: 2, x: w - margin - thick, y: h / 2 + thick / 2, width: thick, height: h / 2 - margin - thick * 1.5 }, // c
-      { bit: 3, x: margin + thick, y: h - margin - thick, width: w - 2 * margin - 2 * thick, height: thick }, // d
-      { bit: 4, x: margin, y: h / 2 + thick / 2, width: thick, height: h / 2 - margin - thick * 1.5 }, // e
-      { bit: 5, x: margin, y: margin + thick, width: thick, height: h / 2 - margin - thick * 1.5 }, // f
-      { bit: 6, x: margin + thick, y: Math.floor(h / 2 - thick / 2), width: w - 2 * margin - 2 * thick, height: thick } // g
+      { bit: 0, x: margin + thick, y: margin, width: w - 2 * margin - 2 * thick, height: thick },
+      { bit: 1, x: w - margin - thick, y: margin + thick, width: thick, height: h / 2 - margin - thick * 1.5 },
+      { bit: 2, x: w - margin - thick, y: h / 2 + thick / 2, width: thick, height: h / 2 - margin - thick * 1.5 },
+      { bit: 3, x: margin + thick, y: h - margin - thick, width: w - 2 * margin - 2 * thick, height: thick },
+      { bit: 4, x: margin, y: h / 2 + thick / 2, width: thick, height: h / 2 - margin - thick * 1.5 },
+      { bit: 5, x: margin, y: margin + thick, width: thick, height: h / 2 - margin - thick * 1.5 },
+      { bit: 6, x: margin + thick, y: Math.floor(h / 2 - thick / 2), width: w - 2 * margin - 2 * thick, height: thick }
     ];
 
     segments.forEach((segment) => {
@@ -69,7 +125,7 @@
     const dpOn = ((valueByte >>> 7) & 1) === 1;
     ctx2d.fillStyle = dpOn ? on : off;
     ctx2d.beginPath();
-    ctx2d.arc(w - margin * 0.8, h - margin * 0.8, Math.max(4, thick * 0.45), 0, Math.PI * 2);
+    ctx2d.arc(w - margin * 0.8, h - margin * 0.8, Math.max(3, thick * 0.4), 0, Math.PI * 2);
     ctx2d.fill();
   }
 
@@ -77,23 +133,30 @@
     id: "digital-lab-sim",
     label: "Digital Lab Sim",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("digital-lab-sim", "Digital Lab Sim, Version 1.0 (Didier Teifreto)", 600, 520, `
-        <div class="dlab-tool">
-          <h2 class="dlab-title">Digital Lab Sim</h2>
+      const shell = ctx.createToolWindowShell("digital-lab-sim", "Digital Lab Sim, Version 1.0 (Didier Teifreto)", 560, 360, `
+        <div class="mars-tool-shell dlab-tool">
+          <h2 class="mars-tool-heading">Digital Lab Sim</h2>
           <div class="dlab-main">
-            <div class="dlab-display">
-              <canvas class="dlab-digit" width="150" height="220" data-dl="digit-left"></canvas>
-              <canvas class="dlab-digit" width="150" height="220" data-dl="digit-right"></canvas>
-            </div>
-            <div class="dlab-keypad" data-dl="keypad"></div>
+            <section class="mars-tool-panel">
+              <div class="mars-tool-panel-title">Seven Segment Display</div>
+              <div class="mars-tool-panel-body dlab-display-body">
+                <canvas class="dlab-digit" width="60" height="80" data-dl="digit-left"></canvas>
+                <canvas class="dlab-digit" width="60" height="80" data-dl="digit-right"></canvas>
+              </div>
+            </section>
+            <section class="mars-tool-panel">
+              <div class="mars-tool-panel-title">Hexadecimal Keyboard</div>
+              <div class="mars-tool-panel-body dlab-keypad-body" data-dl="keypad"></div>
+            </section>
           </div>
-          <div class="dlab-info" data-dl="info"></div>
-          <div class="dlab-footer">
+          <div class="mars-tool-footer dlab-footer">
             <button class="tool-btn" data-dl="connect" type="button">Connect to MIPS</button>
             <div class="ctrl">Tool Control</div>
-            <button class="tool-btn" data-dl="reset" type="button">Reset</button>
-            <button class="tool-btn" data-dl="help" type="button">Help</button>
-            <button class="tool-btn" data-dl="close" type="button">Close</button>
+            <div class="mars-tool-footer-actions">
+              <button class="tool-btn" data-dl="reset" type="button">Reset</button>
+              <button class="tool-btn" data-dl="help" type="button">Help</button>
+              <button class="tool-btn" data-dl="close" type="button">Close</button>
+            </div>
           </div>
         </div>
       `);
@@ -102,7 +165,6 @@
       const leftDigit = root.querySelector("[data-dl='digit-left']");
       const rightDigit = root.querySelector("[data-dl='digit-right']");
       const keypadRoot = root.querySelector("[data-dl='keypad']");
-      const info = root.querySelector("[data-dl='info']");
       const connectButton = root.querySelector("[data-dl='connect']");
       const resetButton = root.querySelector("[data-dl='reset']");
       const helpButton = root.querySelector("[data-dl='help']");
@@ -147,20 +209,15 @@
         }
       }
 
-      function updateInfo() {
-        const a = addresses();
-        const selected = pressedKey == null ? "none" : `${pressedKey.label} (${toHex32(pressedKey.code)})`;
-        info.textContent = [
-          `Display1: ${toHex32(a.DISPLAY_1)}  Display2: ${toHex32(a.DISPLAY_2)}`,
-          `Keyboard Ctrl: ${toHex32(a.KEYBOARD_CTRL)}  Keyboard Out: ${toHex32(a.KEYBOARD_OUT)}`,
-          `Counter Ctrl: ${toHex32(a.COUNTER_CTRL)}  Internal countdown: ${counterValue}`,
-          `Pressed key: ${selected}`
-        ].join("\n");
+      function refreshUiText() {
+        shell.refreshTranslations?.();
+        connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
       }
 
       function highlightKeypad() {
         keyButtons.forEach((entry) => {
-          entry.button.classList.toggle("active", pressedKey && entry.label === pressedKey.label);
+          const isActive = Boolean(pressedKey && entry.row === pressedKey.row && entry.col === pressedKey.col);
+          entry.button.classList.toggle("active", isActive);
         });
       }
 
@@ -198,38 +255,45 @@
         }
 
         updateKeyboardOutput();
-        updateInfo();
       }
 
       KEY_LAYOUT.forEach((row, rowIndex) => {
         row.forEach((label, colIndex) => {
           const button = document.createElement("button");
           button.type = "button";
-          button.className = "dlab-key";
+          button.className = "tool-btn dlab-key";
           button.textContent = label;
           button.addEventListener("click", () => {
-            const sameKey = pressedKey && pressedKey.row === rowIndex && pressedKey.col === colIndex;
+            const sameKey = Boolean(pressedKey && pressedKey.row === rowIndex && pressedKey.col === colIndex);
             if (sameKey) {
               pressedKey = null;
+              writeByteSafe(addresses().KEYBOARD_OUT, 0);
             } else {
-              pressedKey = { label, row: rowIndex, col: colIndex, code: ((COL_BITS[colIndex] << 4) | ROW_BITS[rowIndex]) >>> 0 };
+              pressedKey = {
+                label,
+                row: rowIndex,
+                col: colIndex,
+                code: ((COL_BITS[colIndex] << 4) | ROW_BITS[rowIndex]) >>> 0
+              };
             }
             highlightKeypad();
             updateKeyboardOutput();
-            updateInfo();
           });
-          keyButtons.push({ label, button });
+          keyButtons.push({ row: rowIndex, col: colIndex, button });
           keypadRoot.appendChild(button);
         });
       });
 
       connectButton.addEventListener("click", () => {
         connected = !connected;
-        connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
+        refreshUiText();
         if (connected) {
           updateFromMemory();
-          ctx.messagesPane.postMars("[tool] Digital Lab Sim connected.");
+          ctx.messagesPane.postMars(`${t("[tool] Digital Lab Sim connected.")}\n`);
+          return;
         }
+        ctx.messagesPane.postMars(`${t("[tool] Digital Lab Sim disconnected.")}\n`);
+        writeByteSafe(addresses().KEYBOARD_OUT, 0);
       });
 
       resetButton.addEventListener("click", () => {
@@ -238,23 +302,25 @@
         highlightKeypad();
         drawSevenSegment(leftDigit, 0);
         drawSevenSegment(rightDigit, 0);
-        const a = addresses();
-        writeByteSafe(a.KEYBOARD_OUT, 0);
-        updateInfo();
+        writeByteSafe(addresses().KEYBOARD_OUT, 0);
       });
 
       helpButton.addEventListener("click", () => {
-        ctx.messagesPane.postMars("[tool] Digital Lab Sim: display bytes at mmio+0x10/0x11 drive seven-segment; keyboard scan row bits in mmio+0x12 and read code from mmio+0x14.");
+        ctx.messagesPane.postMars(`${t("[tool] Digital Lab Sim: display bytes at mmio+0x10/0x11 drive seven-segment; keyboard scan row bits in mmio+0x12 and read code from mmio+0x14.")}\n`);
       });
 
       closeButton.addEventListener("click", shell.close);
 
+      subscribeLanguageChange(refreshUiText);
       drawSevenSegment(leftDigit, 0);
       drawSevenSegment(rightDigit, 0);
-      updateInfo();
+      refreshUiText();
 
       return {
-        open: shell.open,
+        open() {
+          shell.open();
+          refreshUiText();
+        },
         close: shell.close,
         onSnapshot(snapshot) {
           const previous = lastSnapshot;

@@ -1,0 +1,322 @@
+<html lang="pt"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>Funções de syscall do MIPS disponíveis no MARTE
+</title>
+</head><body>
+<center>
+<h3>Funções SYSCALL disponíveis no MARS</h3>
+</center>
+
+<h3>Introdução</h3>
+<p>Uma série de serviços do sistema, principalmente para entrada e saída, estão disponíveis para uso por 
+seu programa MIPS.  São descritos na tabela abaixo.</p>
+<p>O conteúdo do registro MIPS não é afetado por uma chamada do sistema, exceto para registros de resultados
+conforme especificado na tabela abaixo.</p>
+<h3>Como usar os serviços do sistema SYSCALL</h3>
+Passo 1. Carregue o número de serviço no registro $v0.<br>
+Passo 2. Carregue valores de argumento, se houver, em $a0, $a1, $a2, ou $f12 conforme especificado.<br>
+Passo 3. Emitir a instrução SYSCALL.<br>
+Passo 4. Recuperar valores de retorno, se houver, de registros de resultados conforme especificado.<br>
+<p></p>
+<strong>Exemplo: exibir o valor armazenado em $t0 no console</strong><br>
+<pre>    li $v0, 1 # serviço 1 é inteiro de impressão
+    adicionar $a0, $t0, $zero # carga de valor desejado em registro de argumento $a0, usando pseudo-op
+    syscall
+</pre>
+<h3>Tabela de Serviços Disponíveis</h3>
+
+<table border="1">
+  <tbody><tr>  <th>Serviço</th>  <th>Código em $v0</th>  <th>Argumentos</th>  <th>Resultado</th>  </tr>
+  <tr><td>número inteiro de impressão</td>                 <td align="center">1</td>   <td>$a0 = inteiro para imprimir</td>  <td>&nbsp;</td></tr>
+  <tr><td>impressão float</td>                   <td align="center">2</td>   <td>$f12 = flutuação para imprimir</td>   <td>&nbsp;</td></tr>
+  <tr><td>impressão dupla</td>                  <td align="center">3</td>   <td>$f12 = duplo para imprimir</td>  <td>&nbsp;</td></tr>
+  <tr><td>corda de impressão</td>                  <td align="center">4</td>   <td>$a0 = endereço de string null-terminado para imprimir</td>  <td>&nbsp;</td></tr>
+  <tr><td>Leia inteiro</td>                  <td align="center">5</td>   <td>&nbsp;</td>  <td>$v0 contém leitura inteira</td></tr>
+  <tr><td>Leia float</td>                    <td align="center">6</td>   <td>&nbsp;</td>  <td>$f0 contém flutuador lido</td></tr>
+  <tr><td>Leia o dobro</td>                   <td align="center">7</td>   <td>&nbsp;</td>  <td>$f0 contém leitura dupla</td></tr>
+  <tr><td>Leia a corda</td>                   <td align="center">8</td>   <td>$a0 = endereço do buffer de entrada<br>$a1 = número máximo de caracteres para ler</td>  <td><i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>sbrk (alocar a memória heap)</td>   <td align="center">9</td>   <td>$a0 = número de bytes para alocar</td>  <td>$v0 contém endereço de memória alocada</td></tr>
+  <tr><td>saída (execução de prazo)</td>   <td align="center">10</td>   <td>&nbsp;</td>  <td>&nbsp;</td></tr>
+  <tr><td>personagem de impressão</td>              <td align="center">11</td>   <td>$a0 = personagem para imprimir</td>  <td><i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>Leia o caráter</td>               <td align="center">12</td>   <td>&nbsp;</td>  <td>$v0 contém personagem lido</td></tr>
+  <tr><td>abrir arquivo</td>                    <td align="center">13</td>   <td>$a0 = endereço de string null-terminado contendo nome de arquivo<br>$a1 = bandeiras<br>$a2 = modo</td>  <td>$v0 contém descritor de arquivo (negativo se erro).  <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>Leia a partir do arquivo</td>               <td align="center">14</td>   <td>$a0 = descritor de arquivo<br>$a1 = endereço do buffer de entrada<br>$a2 = número máximo de caracteres para ler</td>  <td>$v0 contém o número de caracteres lidos (0 se fim de arquivo, negativo se erro).  <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>escrever para o arquivo</td>                <td align="center">15</td>   <td>$a0 = descritor de arquivo<br>$a1 = endereço do buffer de saída<br>$a2 = número de caracteres para escrever</td>  <td>$v0 contém o número de caracteres escritos (negativo se erro).  <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>fechar arquivo</td>                   <td align="center">16</td>   <td>$a0 = descritor de arquivo</td>  <td>&nbsp;</td></tr>
+  <tr><td>exit2 (terminar com valor)</td> <td align="center">17</td>   <td>$a0 = resultado de terminação</td>  <td><i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td align="center" colspan="4"><em>Os Serviços 1 a 17 são compatíveis com o simulador SPIM, além do Open File (13) conforme descrito nas Notas abaixo da tabela.
+  Os serviços 30 e superiores são exclusivos da MARS.</em></td></tr>
+  <tr><td>tempo (tempo do sistema)</td>           <td align="center">30</td>   <td>&nbsp;</td><td>$a0 = ordem baixa 32 bits de tempo do sistema<br>$a1 = alta ordem 32 bits de tempo do sistema.  <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>MIDI fora</td>                     <td align="center">31</td>   <td>$a0 = pitch (0-127)<br>$a1 = duração em milissegundos<br>$a2 = instrumento (0-127)<br>$a3 = volume (0-127)</td>  <td>Gerar tom e retornar imediatamente.  <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>dormir</td>                        <td align="center">32</td>   <td>$a0 = o período de tempo para dormir em milissegundos.</td>  <td>Faz
+ com que o thread do MARS Java durma por (pelo menos) o número 
+especificado de milissegundos. Este tempo não será preciso, pois a 
+implementação do Java adicionará alguma sobrecarga.</td></tr>
+  <tr><td>MIDI fora síncrono              </td><td align="center">33</td>   <td>$a0 = pitch (0-127)<br>$a1 = duração em milissegundos<br>$a2 = instrumento (0-127)<br>$a3 = volume (0-127)</td>  <td>Gerar tom e retorno após a conclusão do tom.  <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>número inteiro de impressão em hexadecimal</td> <td align="center">34</td>   <td>$a0 = inteiro para imprimir</td>  <td>O valor exibido é de 8 dígitos hexadecimais, com o preenchimento esquerdo com zeros, se necessário.</td></tr>
+  <tr><td>número inteiro de impressão em binário</td>      <td align="center">35</td>   <td>$a0 = inteiro para imprimir</td>  <td>O valor exibido é de 32 bits, com preenchimento esquerdo com zeros, se necessário.</td></tr>
+  <tr><td>imprimir inteiro como não assinado</td>    <td align="center">36</td>   <td>$a0 = inteiro para imprimir</td>  <td>Exibido como valor decimal não assinado.</td></tr>
+  <tr><td align="center">(não utilizado)</td>    <td align="center">37-39</td><td>&nbsp;</td>  <td>&nbsp;</td></tr>
+  <tr><td>conjunto de sementes</td>                     <td align="center">40</td>   <td>$a0 = i.d. de gerador de números pseudoalexiados (qualquer int).<br>$a1 = semente para o gerador de números pseudoaleatórios correspondente.</td>  <td>Nenhum valor é retornado. Define a semente do gerador de números pseudoaleatórios Java subjacente correspondente (<tt>java.util.Random</tt>). <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>int aleatório</td>                   <td align="center">41</td>   <td>$a0 = i.d. de gerador de números pseudoalexiados (qualquer int).</td>  <td>$a0
+ contém o próximo pseudoaleatório, uniformemente distribuído valor int a
+ partir da sequência deste gerador de números aleatórios. <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>intervalo int aleatório</td>             <td align="center">42</td>   <td>$a0 = i.d. de gerador de números pseudoalexiados (qualquer int).<br>$a1 = limite superior do intervalo de valores retornados.</td>  <td>$a0
+ contém pseudoaleatório, uniformemente distribuído valor int na faixa 0 
+&lt;= [int] &lt; [ligação superior], extraído a partir desta sequência 
+de gerador de números aleatórios.  <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>flutuador aleatório</td>                 <td align="center">43</td>   <td>$a0 = i.d. de gerador de números pseudoalexiados (qualquer int).</td>  <td>$f0
+ contém o próximo valor de flutuação pseudoaleatório, uniformemente 
+distribuído na faixa 0.0 &lt;= f &lt; 1,0 da sequência deste gerador de 
+número aleatório.  <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td>duplo aleatório</td>                <td align="center">44</td>   <td>$a0 = i.d. de gerador de números pseudoalexiados (qualquer int).</td>  <td>$f0
+ contém o próximo pseudoaleatório, uniformemente distribuído valor duplo
+ na faixa 0,0 &lt;= f &lt; 1,0 da sequência deste gerador de número 
+aleatório.  <i>Veja a nota abaixo tabela</i></td></tr>
+  <tr><td align="center">(não utilizado)</td>    <td align="center">45-49</td><td>&nbsp;</td>  <td>&nbsp;</td></tr>
+  <tr><td>ConfirmDialog</td>                <td align="center">50</td>   <td>$a0 = endereço da string null-terminada que é a mensagem para o usuário</td>  <td>$a0 contém valor da opção escolhida pelo usuário<br>0: Sim<br>1: Não<br>2: Cancelar</td></tr>
+  <tr><td>InputDialogInt</td>               <td align="center">51</td>   <td>$a0 = endereço da string null-terminada que é a mensagem para o usuário</td>  <td>$a0 contém na leitura<br>$a1 contém valor de status<br>0: OK status<br>-1: os dados de entrada não podem ser corretamente analisados<br>-2: Cancelado foi escolhido<br>-3: OK foi escolhido, mas nenhum dado foi inserido em campo</td></tr>
+  <tr><td>InputDialogFloatTradução</td>             <td align="center">52</td>   <td>$a0 = endereço da string null-terminada que é a mensagem para o usuário</td>  <td>$f0 contém flutuador lido<br>$a1 contém valor de status<br>0: OK status<br>-1: os dados de entrada não podem ser corretamente analisados<br>-2: Cancelado foi escolhido<br>-3: OK foi escolhido, mas nenhum dado foi inserido em campo</td></tr>
+  <tr><td>InputDialogDuplo</td>            <td align="center">53</td>   <td>$a0 = endereço da string null-terminada que é a mensagem para o usuário</td>  <td>$f0 contém leitura dupla<br>$a1 contém valor de status<br>0: OK status<br>-1: os dados de entrada não podem ser corretamente analisados<br>-2: Cancelado foi escolhido<br>-3: OK foi escolhido, mas nenhum dado foi inserido em campo</td></tr>
+  <tr><td>InputDialogStringTradução</td>            <td align="center">54</td>   <td>$a0 = endereço da string null-terminada que é a mensagem para o usuário<br>$a1 = endereço do buffer de entrada<br>$a2 = número máximo de caracteres para ler</td>  <td><i>Veja a nota do Serviço 8 abaixo tabela</i><br>$a1 contém valor de status<br>0: OK status. O buffer contém a cadeia de entrada.<br>-2: O cancelamento foi escolhido. Nenhuma mudança para buffer. <br>-3: OK foi escolhido, mas nenhum dado foi inserido em campo. Nenhuma mudança para buffer.<br>-4:
+ o comprimento da cadeia de entrada excedeu o máximo especificado. O 
+buffer contém a cadeia de entrada máxima permitida mais um null de 
+terminação.</td></tr>
+  <tr><td>MensagemDialog</td>                <td align="center">55</td>   <td>$a0 = endereço da string null-terminada que é a mensagem para o usuário<br>$a1 = o tipo de mensagem a ser exibida:<br> 
+0: mensagem de erro, indicada pelo ícone de erro <!-- <img src="SyscallMessageDialogError.gif"> --> <br>
+1: mensagem de informação, indicada pelo ícone Informação <!-- <img src="SyscallMessageDialogInformation.gif"> --> <br>
+2: mensagem de aviso, indicada pelo ícone de aviso <!-- <img src="SyscallMessageDialogWarning.gif"> --> <br>
+3: mensagem de pergunta, indicada pelo ícone de pergunta <!-- <img src="SyscallMessageDialogQuestion.gif"> --> <br>
+outro: mensagem simples (sem ícone exibido)
+</td>  <td>N/A</td></tr>
+  <tr><td>MensagemDialogInt</td>             <td align="center">56</td>   <td>$a0 = endereço de string null-terminado que é uma mensagem de tipo de informação para o usuário<br>$a1 = valor int para exibir na forma de string após a primeira string</td>  <td>N/A</td></tr>
+  <tr><td>MensagemDialogFloat</td>           <td align="center">57</td>   <td>$a0 = endereço de string null-terminado que é uma mensagem de tipo de informação para o usuário<br>$f12 = valor de flutuação para exibir na forma da string após a primeira string</td>  <td>N/A</td></tr>
+  <tr><td>MensagemDialogDuplo</td>          <td align="center">58</td>   <td>$a0 = endereço de string null-terminado que é uma mensagem de tipo de informação para o usuário<br>$f12 = valor duplo para exibir na forma de string após a primeira string</td>  <td>N/A</td></tr>
+  <tr><td>MensagemDialogString</td>          <td align="center">59</td>   <td>$a0 = endereço de string null-terminado que é uma mensagem de tipo de informação para o usuário<br>$a1 = endereço da cadeia de caracteres nominal para exibir após a primeira string</td>  <td>N/A</td></tr>
+</tbody></table>
+<br>
+<b>NOTAS: Serviços numerados com 30 anos ou superior não são fornecidos pela SPIM</b>
+<br><b>Serviço 8</b> - Segue a semântica de UNIX 'fgets'.  Para o 
+comprimento especificado n, a corda não pode ser mais do que n-1. Se 
+menos do que isso, adiciona newline ao fim.  Em ambos os casos, então 
+pads com byte nulo Se n = 1, entrada é ignorada e byte nulo colocado no 
+endereço de buffer. Se n &lt; 1, entrada é ignorada e nada é escrito 
+para o buffer.
+<br><b>Serviço 11</b> - Imprime o caractere ASCII correspondente ao conteúdo de byte de ordem baixa.
+<br><b>Serviço 13</b> - MARS implementa três valores de sinalizador: 0 
+para somente leitura, 1 para write-only com create, e 9 para write-only 
+com create e append.  Ele ignora o modo.  O descritor de arquivo 
+retornado será negativo se a operação falhar.  O arquivo subjacente I/O
+implementação utiliza <tt>java.io.FileInputStream.read() Em inglês</tt> para ler e <tt>java.io.FileOutputStream.write() Em inglês</tt>
+ para escrever.  O MARS mantém os descritores de arquivo internamente e 
+os aloca a partir de 3.  Os descritores de arquivo 0, 1 e 2 são
+sempre aberto para: leitura de entrada padrão, escrita para saída padrão
+ e escrita para erro padrão, respectivamente (novo na versão 4.3).
+<br><b>Serviços 13,14,15</b> - Em MARS 3.7, o registro de resultados foi
+ alterado para $v0 para compatibilidade SPIM.  Anteriormente $a0 foi 
+impresso erroneamente
+no Apêndice B de <i>Organização e Design de Computadores,</i>.
+<br><b>Serviço 17</b> - Se o programa MIPS for executado sob controle da interface gráfica MARS (GUI), o código de saída em $a0 é ignorado.
+<br><b>Serviço 30</b> - O tempo do sistema vem de <tt>java.util.Date.getTime() Em inglês</tt> como milissegundos desde 1 de Janeiro de 1970.
+<br><b>Serviços 31,33</b> - Simule a saída MIDI através de placa de som.  Detalhes abaixo.
+<br><b>Serviços 40-44</b> usar geradores de número pseudoaleatório Java subjacentes fornecidos pelo <tt>java.util.Random</tt> classe.  Cada fluxo (identificado
+por $a0 conteúdo) é modelado por um diferente <tt>Aleatório</tt> objeto.  Não há valores de sementes padrão, portanto, use o serviço Set Seed (40) se 
+sequências aleatórias replicadas são desejadas.
+
+
+
+<p></p>
+<hr>
+<h3>Exemplo de arquivo I/O</h3>
+O programa MIPS de exemplo abaixo abrirá um novo arquivo para escrever, 
+escreverá texto a partir de um buffer de memória e, em seguida, o 
+fechará.  O arquivo será criado no
+diretório em que o MARS foi executado.
+<p>
+</p><pre># Programa Sample MIPS que grava em um novo arquivo.
+# por Kenneth Vollmar e Pete Sanderson
+
+        .data
+fout: .asciiz "testout.txt" # nome do arquivo para saída
+buffer: .asciiz "A raposa marrom rápida salta sobre o cão preguiçoso."
+        .texto
+  ##############################################################################################################################
+  # Abrir (para escrever) um arquivo que não existe
+  li $v0, 13 # chamada de sistema para arquivo aberto
+  la $a0, fout # nome do arquivo de saída
+  li $a1, 1 # Aberto para escrever (bandeiras são 0: ler, 1: escrever)
+  li $a2, 0 # modo é ignorado
+  syscall # abrir um arquivo (descritor de arquivo retornado em $v0)
+  mover $s6, $v0 # salvar o descritor de arquivo 
+  ##############################################################################################################################
+  # Escrever para o arquivo recém-aberto
+  li $v0, 15 # chamada de sistema para escrever para arquivo
+  mover $a0, $s6 # descritor de arquivo 
+  la $a1, buffer # endereço de buffer a partir do qual escrever
+  li $a2, 44 # comprimento do buffer codificado
+  syscall # escrever para o arquivo
+  ##############################################################################################################################
+  # Feche o arquivo 
+  li $v0, 16 # chamada de sistema para arquivo próximo
+  mover $a0, $s6 # descritor de arquivo para fechar
+  syscall # fechar arquivo
+  ##############################################################################################################################
+</pre>
+<p></p>
+<hr>
+
+<h3>Usando os serviços do sistema SYSCALL 31 e 33: saída MIDI</h3>
+Esses serviços de sistema são exclusivos do MARS e fornecem um meio de produzir som.  A saída MIDI é
+simulado pela sua placa de som do sistema, e a simulação é fornecida pelo <tt>javax.sound.midi</tt>
+pacote.  
+<p>O serviço 31 irá gerar o tom e retornar imediatamente.  O serviço 33 irá gerar o tom então
+dormir pela duração do tom antes de retornar.  Assim, combina essencialmente os serviços 31 e 32.
+</p><p>
+Este serviço requer quatro parâmetros da seguinte forma:
+
+<table width="600" border="0" align="center" cellpadding="2">
+  <tbody><tr>
+    <td><h3>pitch ($a0)</h3>
+        
+      <li>Aceita um valor positivo de byte (0-127) que denota um pitch como faria 
+        ser representado no MIDI </li>
+        
+      <li>Cada número é um semitone / meio passo na escala cromática.</li>
+        
+      <li>0 representa um C muito baixo e 127 representa um G muito alto (um padrão 
+        88 key piano começa em 9-A e termina em 108-C).</li>
+      <li>Se o valor do parâmetro estiver fora desse intervalo, ele aplica um valor padrão 60 que é o mesmo que o meio C em um piano.</li>
+        
+      <li>Do meio C, todos os outros arremessos na oitava são os seguintes:</li>
+      
+        
+      <table width="450" border="0" align="center" cellpadding="2">
+        <tbody><tr>
+            <td>
+        	 <li>61 = C# ou Db</li>
+        	 <li>62 = D</li>
+        	 <li>63 = D# ou Eb</li>
+        	 <li>64 = E ou Fb</li>
+			</td>
+            <td>
+        	 <li>65 = E# ou F</li>
+        	 <li>66 = F# ou Gb</li>
+        	 <li>67 = G</li>
+        	 <li>68 = G# ou Ab</li>
+			</td>
+            <td>
+			 <li>69 = A</li>
+        	 <li>70 = A# ou Bb</li>
+        	 <li>71 = B ou Cb</li>
+        	 <li>72 = B# ou C</li>
+			</td>
+          </tr>
+        </tbody></table>
+        
+        
+      <li>Para produzir esses toms em outras oitavas, adicione ou subtraia múltiplos 
+        de 12.</li>
+      <br>
+      </td>
+  </tr>
+  <tr>
+    <td><h3>duração em milissegundos ($a1)</h3>
+      <li>Aceita um valor de número inteiro positivo que é o comprimento do tom em milissegundos.</li>
+      <li>Se o valor do parâmetro for negativo, ele aplica um valor padrão de um segundo (1000 milissegundos).</li>
+      <br>
+    </td>
+  </tr>
+  <tr>
+    <td><h3>instrumento ($a2)</h3>
+	  <li>Aceita um valor positivo de byte (0-127) que denota o MIDI Geral 
+        "Patch" costumava tocar o tom.</li>
+      <li>Se o parâmetro estiver fora desse intervalo, ele aplica um valor padrão 0 que é um <em>Grand Piano Acústico</em>.</li>
+      <li>General MIDI padroniza o número associado a cada instrumento possível 
+        (muitas vezes referido como números <em>de mudança de</em> programa), no entanto, ele faz 
+        não determinar como o tom vai soar. Isto é determinado pelo sintetizador 
+        que está produzindo o som. Assim, um <em>Tuba</em> (patch 58) em um computador 
+        pode soar diferente do mesmo patch em outro computador.</li>
+      <li>Os 128 adesivos disponíveis são divididos em famílias de instrumentos de 8:</li>
+	  <table width="450" border="0" align="center" cellpadding="2">
+        <tbody><tr> 
+          <td width="60">0-7</td>
+          <td width="160">piano</td>
+          <td width="60">64-71</td>
+          <td>ReedTradução</td>
+        </tr>
+        <tr> 
+          <td width="60">8-15</td>
+          <td width="160">Percussão Cromática</td>
+          <td width="60">72-79</td>
+          <td>Tubulação</td>
+        </tr>
+        <tr> 
+          <td width="60">16-23</td>
+          <td width="160">Órgão</td>
+          <td width="60">80-87</td>
+          <td>Chumbo de sintetizador</td>
+        </tr>
+        <tr> 
+          <td width="60">24-31</td>
+          <td width="160">Guitarra</td>
+          <td width="60">88-95</td>
+          <td>Pad de sintetizador</td>
+        </tr>
+        <tr> 
+          <td width="60">32-39</td>
+          <td width="160">Baixo</td>
+          <td width="60">96-103</td>
+          <td>Efeitos de sintetizador</td>
+        </tr>
+        <tr> 
+          <td width="60">40-47</td>
+          <td width="160">Cordas</td>
+          <td width="60">104-111</td>
+          <td>Étnica</td>
+        </tr>
+        <tr> 
+          <td width="60">48-55</td>
+          <td width="160">Conjunto</td>
+          <td width="60">112-119</td>
+          <td>Percussão</td>
+        </tr>
+        <tr> 
+          <td width="60">56-63</td>
+          <td width="160">Latão</td>
+          <td width="60">120-127</td>
+          <td>Efeitos sonoros</td>
+        </tr>
+      </tbody></table>
+      <li>Observe que fora do Java, o General MIDI geralmente se refere a patches 1-128. 
+        Quando se refere a uma lista de patches MIDI gerais, 1 deve ser subtraído 
+        para jogar o patch correto. Para uma lista completa dos instrumentos MIDI gerais, 
+        ver 
+        <a href="http://www.midi.org/">www.midi.org/about-midi/gm/gm1sound.shtml</a>. 
+        O mapa de chave de percussão do canal MIDI geral 10 não é relevante para o 
+        método toneGenerator porque sempre padrão para o canal MIDI 1.</li>
+		<br>
+      </td>
+  </tr>
+  <tr>
+    <td><h3>volume ($a3)</h3>
+      <li>Aceita um valor positivo de byte (0-127) onde 127 é o mais alto e 0 
+        está em silêncio. Este valor denota velocidade MIDI que se refere à inicial 
+        ataque do tom.</li>
+      <li>Se o valor do parâmetro estiver fora desse intervalo, ele aplica um valor padrão 100.</li>
+      <li>A velocidade MIDI mede o quão difícil uma <em>nota</em> (ou <em>nota)</em> 
+        mensagem é reproduzida, talvez em um controlador MIDI como um teclado. A maioria 
+        Os sintetizadores MIDI traduzirão isso em volume em uma escala logarítmica 
+        em que a diferença de amplitude diminui à medida que o valor da velocidade aumenta.</li>
+      <li>Observe que o valor de velocidade em sintetizadores mais sofisticados também pode 
+        afetar o timbre do tom (como a maioria dos instrumentos soam diferentes quando 
+        eles são tocados mais alto ou mais suave).</li>
+      </td>
+  </tr>
+</tbody></table>
+O serviço de sistema 31 foi desenvolvido e documentado pelo estudante de Otterbein Tony Brock em julho de 2007.
+
+
+
+
+
+
+</p></body></html>

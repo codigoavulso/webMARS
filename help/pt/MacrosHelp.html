@@ -1,0 +1,295 @@
+<html lang="pt"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>Macros em MARTE</title>
+	</head><body>
+		<center>
+			<h3>Escrevendo e usando macros</h3>
+			<h4><tt>.macro</tt>, <tt>.end_macro</tt>,<tt>.eqv</tt> e <tt>.incluir</tt> diretivas são novas no MARS 4.3</h4>
+		</center>
+		<h3> Introdução às macros</h3>
+		<p>Patterson e Hennessy definem uma <b>macro</b> como <i>uma instalação de correspondência e substituição de padrões 
+		que fornece um mecanismo simples para nomear uma sequência de instruções frequentemente utilizada</i> [1].
+		Isso permite que o programador especifique a sequência de instruções invocando a macro.  Isso requer
+		apenas uma linha de código para cada uso em vez de digitar repetidamente
+		na sequência de instruções de cada vez.  Segue-se o axioma "defina uma vez, use muitas vezes", que
+		não só reduz a chance de erro, mas também facilita a manutenção do programa.</p>
+
+		<p>As macros são como procedimentos (sub-rotinas) neste sentido, mas operam de forma diferente dos procedimentos.  
+		Procedimentos em linguagem de montagem MIPS seguem protocolos específicos para definição de procedimento, chamada e retorno.
+		As macros operam substituindo o corpo macro para cada uso no momento da montagem.  Essa substituição
+		é chamada <i>de expansão macro..</i>  Eles não exigem os protocolos e a execução de despesas gerais dos procedimentos.</p>
+		
+		<p>Como um exemplo simples, você pode querer encerrar seu programa a partir de vários locais.  Se você estiver correndo
+		do MARS IDE, você usará a chamada do sistema 10, <tt>saída</tt>.  A sequência de instruções é muito fácil</p>
+		<pre>		li $v0,10
+		syscall		</pre>
+		mas ainda tedioso.  Você pode definir uma macro, vamos chamá-la <tt>feito</tt>, para representar esta sequência
+		<pre>		.macro feito
+		li $v0,10
+		syscall
+		.end_macro		</pre>
+		em seguida, invocá-lo sempre que desejar com a declaração
+		<pre>		feito</pre>  
+		No momento da montagem, o montador substituirá cada ocorrência da declaração <tt>feito</tt> com a declaração de duas
+		sequência
+		<pre>		li $v0,10
+		syscall		</pre>
+		Esta é a expansão macro.  O simulador de tempo de execução desconhece macros ou expansão de macro.<p></p>
+		
+		<p>Se estiver executando o MARS a partir da linha de comando, talvez 
+você queira retornar um valor de terminação.  Isso pode ser feito
+		com syscall 17, <tt>exit2</tt>, que toma o valor de rescisão como argumento.  Uma macro equivalente,
+		Vamos chamar isso <tt>terminar</tt>  seria
+		</p><pre>		.macro termina (%termination_value)
+		li $a0, %termination_value
+		li $v0, 17 anos
+		syscall
+		.end_macro		</pre>
+		Esta macro define a <i>parâmetro formal</i> para representar o valor de rescisão.  Você o invocaria 
+		com a declaração
+		<pre>		terminar (1)</pre>
+		para terminar com o valor 1.  Após a montagem,
+		a declaração <tt>terminar (1)</tt> seria substituído pela sequência de três declarações
+		<pre>		li $a0, 1
+		li $v0, 17 anos
+		syscall		</pre>
+		O <i>valor do argumento</i>, 1, é substituído onde quer que o parâmetro formal <tt>%termination_value</tt> aparece
+		no corpo macro.
+		Trata-se de uma substituição textual.  Observe que neste exemplo o valor do argumento deve ser um número inteiro, não um 
+		registrar nome ou uma etiqueta, porque o parâmetro é usado como o segundo operando na operação Load Immediate.<p></p>
+		
+		<p>No MARS, uma macro é semelhante a uma instrução estendida (pseudo).
+ distinguem-se na medida em que a expansão de 
+		instruções estendidas é suportado por uma linguagem de especificação e
+ mecanismo definido internamente que pode manipular valores de 
+argumento.
+		A facilidade macro só pode substituir os valores de argumento conforme
+ dados, e usa um mecanismo separado de instruções estendidas. </p>
+		
+		<p>Seguem-se exemplos e detalhes adicionais.</p>
+
+		<h3> Como definir macros </h3>
+		A primeira linha começa com a <tt>.macro</tt> directiva seguida de uma lista facultativa de parâmetros formais. 
+		Colocar vírgulas entre parâmetros e parênteses ao redor da lista é opcional.
+		<p>
+			Cada parâmetro formal é um identificador que começa com um <tt>%</tt> caráter.  Para compatibilidade com
+			o APP pré-processador SPIM, ele pode, alternativamente, começar com <tt>$</tt>.
+		</p>
+		<p>
+		As linhas que se seguem definem o corpo da macro.  Use os parâmetros formais conforme apropriado.  O corpo
+		pode conter segmentos de dados, bem como segmentos de texto.
+		</p>
+		<p>A definição macro termina com a <tt>.end_macro</tt> diretiva.
+		</p>
+		<p>Veja as Notas abaixo para obter informações adicionais.</p>
+		
+		<h3> Como usar macros</h3>
+		
+		Para invocar uma macro, forme uma instrução que consiste no nome da macro e, em seguida, um token para cada argumento 
+		a ser substituído pelo seu parâmetro formal correspondente pelo montador. 
+		A lista de argumentos pode, opcionalmente, ser cercada por parênteses.
+		Os argumentos podem ser separados por espaços ou vírgulas. 
+		<p>
+		A expansão macro é uma tarefa de pré-processamento para montadores.
+		</p>
+		<h3> Notas</h3>
+		<ul>
+			<li>
+				Uma definição macro deve aparecer antes de sua utilização.  Sem referências para a frente.
+			</li>
+			<li>
+				Todas as definições de macro são locais em cada arquivo e não podem ser globais.
+			</li>
+			<li>
+				Definições macro aninhadas não são suportadas. Não <tt>.macro</tt> directiva deve aparecer dentro de um corpo de uma definição macro. 
+			</li>
+			<li>
+				Uma definição de macro pode conter uma chamada para uma macro 
+previamente definida.  Apenas referências atrasadas são permitidas.
+			</li>
+			<li>
+				Os rótulos colocados no corpo de uma definição macro não terão o mesmo nome após a expansão da macro. 
+				Durante a expansão, seu nome será seguido por "_M#" onde # será um número único para cada expansão macro.
+			</li>
+			<li>
+				Duas macros com o mesmo nome, mas um número diferente de parâmetros são considerados diferentes e ambos podem ser usados.
+			</li>
+			<li>
+				Uma macro definida com o mesmo nome e mesmo número de parâmetros como outra macro definida antes de ser ignorada.
+			</li>
+			<li>
+				Cada argumento em uma chamada de macro só pode ser um único elemento
+ de idioma (token).  Por exemplo "4($t0)" não pode ser um argumento.
+			</li>
+			<li>
+				As macros fazem parte do montador, não do ISA. Portanto, a sintaxe pode ser diferente com outros montadores. 
+				Para compatibilidade com o simulador SPIM, as <i>macros estilo SPIM também são suportadas no MARS</i>. As macros estilo SPIM são iguais ao MARTE, mas os parâmetros formais começam com "$" em vez de "%".
+			</li>
+		</ul>
+		<h3> Exemplos</h3>
+		<ul>
+			<li>
+				Imprimir um número inteiro (o argumento pode ser um valor imediato ou um nome de registo): 				
+				<pre>	<tt>.macro print_int (%x)
+	li $v0, 1
+	adicionar $a0, $zero, %x
+	syscall
+	.end_macro
+	
+	print_int ($s0)
+	print_int (10)</tt>
+</pre>
+			</li>
+			<li>
+				Imprimir uma string (a macro primeiro atribuirá um rótulo ao seu parâmetro no segmento de dados e depois o imprimirá): 				
+				<pre>	<tt>.macro print_str (%str)
+	.data
+myLabel: .asciiz %str
+	.texto
+	li $v0, 4
+	la $a0, myLabel Em inglês
+	syscall
+	.end_macro
+	
+	print_str ("test1") #"test1" será rotulado com o nome "myLabel_M0"
+	print_str ("test2") #"test2" será rotulado com o nome "myLabel_M1"</tt>
+</pre>
+			</li>
+			<li>
+				Implementando um for-loop simples: 				
+	<pre>	<tt># mecanismo de looping genérico
+	.macro para (%regiterator, %from, %to, %bodyMacroName)
+	adicionar %regiterator, $zero, %from
+	Loop:
+	%bodyMacroName ()Tradução
+	adicionar %regiterator, %regiterator, 1
+	ble %regiterator, %to, Loop
+	.end_macro
+	
+	#imprimir um número inteiro
+	corpo .macro()
+	print_int $t0
+	print_str "\n"
+	.end_macro
+	
+	#Impressão de 1 a 10:
+	para ($t0, 1, 10, corpo)</tt>
+</pre>
+				O <tt>para</tt> macro tem 4 parâmetros. <tt>%regiterator</tt> deve ser o nome de um registo que itera de <tt>%de</tt> para <tt>%to</tt> e em cada iteração <tt>%bodyMacroNome</tt> será ampliada e executada.
+				Argumentos para 
+				<tt>%de</tt> e <tt>%to</tt> pode ser um nome de registro ou um valor imediato, e <tt>%bodyMacroNome</tt> deve ser nome de uma macro que não tem parâmetros.
+			</li>
+		</ul>
+<h3>Números de linha macro source</h3>
+<p>Para fins de mensagens de erro e exibição de segmento de texto, o 
+MARS tenta exibir números de linha para a definição e o uso do 
+pertinente
+declaração macro.  Se uma mensagem de erro mostrar o número da linha no 
+formulário "<tt>X-&gt;Y</tt>" (ex. "<tt>20-&gt;4</tt>"), então <tt>X</tt> é o número da linha na expansão
+(utilização) onde o erro foi detectado e <tt>Y</tt> é o número da linha na definição macro.  Na exibição Segmento de texto
+de código fonte, a definição macro 
+número de linha será exibido dentro de colchetes, por exemplo. "<tt>&lt;4&gt;</tt>", no ponto de expansão.  Números de linha devem corresponder ao
+números que você veria no editor de texto. </p>
+
+<h3>A directiva .eqv</h3>
+<p>O <tt>.eqv</tt> diretiva (abreviação de "equivalência") é também nova no MARS 4.3.  É semelhante a <tt>#defina</tt> em C ou C++.  É 
+é usado para substituir uma string arbitrária por um identificador.  É útil, mas muito menos poderoso que macros.  
+Foi desenvolvido independentemente da instalação macro.
+</p>
+<p>Usando <tt>.eqv</tt>, você pode especificar substituições simples que fornecem "definir uma vez, usar muitas vezes" capacidade na montagem 
+tempo de pré-processamento.  Por exemplo, uma vez que você define
+</p><pre>       .eqv  LIMIT      20
+       .eqv  CTR        $t2
+       .eqv  CLEAR_CTR  add  CTR, $zero, 0</pre>
+então você pode se referir a eles no código subsequente:
+<pre>       li $v0,1
+       CLEAR_CTR
+loop:  move $a0, CTR
+       syscall
+       add   CTR, CTR, 1
+       blt   CTR, LIMIT, loop
+       CLEAR_CTR</pre>
+Durante o pré-processamento de montagem, o <tt>.eqv</tt> substituições serão aplicadas.  O código resultante é
+<pre>       li   $v0,1
+       add  $t2, $zero, 0
+loop:  move $a0, $t2
+       syscall
+       add  $t2, $t2, 1
+       blt  $t2, 20, loop
+       add  $t2, $zero, 0</pre>
+que quando executado irá exibir os valores de 0 a 19 em uma linha sem espaços intervenientes.
+<p></p>
+<p>Note that the substitution string is not limited to a single token.  Like <tt>.macro</tt>, <tt>.eqv</tt> is local to the file
+in which it is defined, and must be defined prior to use.  Macro bodies can contain references to <tt>.eqv</tt> directives.
+ </p>
+
+ <h3>The .include directive</h3>
+ <p>The <tt>.include</tt> directive is also new in MARS 4.3.  It has one operand, a quoted filename.  When the
+ directive is carried out, the contents of the specified file are substituted for the directive.  This occurs
+ during assembly preprocessing.  It is like <tt>#include</tt> in C or C++.</p>
+ 
+ <p><tt>.include</tt> is designed to make  macro and equivalence (.eqv directive) use
+ more convenient.  Both macro definitions and equivalence definitions are <i>local</i>, which means they can be used only
+ in the same file where defined.  Without <tt>.include</tt>, you would have to repeat their definitions in every
+ file where you want to use them.  Besides being tedious, this is poor programming practice; remember
+ "define once, use many times."  Now you can define macros and equivalences in a separate file, then include it 
+ in any file where you want to use them.</p>
+ 
+ <p>The <tt>.include</tt> preprocessor will detect and flag any circular includes (file that includes itself, directly or
+ indirectly).
+ 
+ </p><p>The use of <tt>.include</tt> presents some challenges for error 
+messaging and for source code numbering in the Text
+ Segment display.  If a file being included has any assembly errors, the
+ filename and line number in the error 
+ message should refer to the file being included, not the file it was 
+substituted into.  Similarly, the line number
+ given in the Text Segment source code display refers to the line in the
+ file being included.  Thus the displayed line numbers do not
+ monotonically increase - this is also the case when using the "assemble
+ all" setting.  Line numbers should correspond to the numbers
+ you would see in the text editor.</p>
+ 
+ <p>As a simple example, you could define the <tt>done</tt> macro (and others) in a separate file
+ then include it wherever you need it.  Suppose "macros.asm" contains the following:
+ 		</p><pre>		.macro done
+		li $v0,10
+		syscall
+		.end_macro		</pre>
+ 
+ Você pode incluí-lo em um arquivo de origem diferente, algo assim:
+  		<pre>		.include "macros.asm"
+		.data
+value:		.word	 13
+		.text
+		li	 $v0, 1
+		lw	 $a0, value
+		syscall
+		done		</pre>
+<p>During assembly preprocessing, this would be expanded to
+  		</p><pre>		.macro done
+		li $v0,10
+		syscall
+		.end_macro	
+		.data
+value:		.word	 13
+		.text
+		li	 $v0, 1
+		lw	 $a0, value
+		syscall
+		done		</pre>
+<p>The assembler will then perform the appropriate macro expansion.
+
+
+ 
+</p><h3>Acknowledgements</h3>
+<p>The MARS macro facility was developed in 2012 by Mohammad Hossein 
+Sekhavat, sekhavat17@gmail.com, while an engineering student at 
+Sharif University in Tehran.  MARS creators Pete and Ken are incredibly 
+grateful for his contribution!  Pete developed <tt>.eqv</tt>
+and <tt>.include</tt> at about the same time.</p>
+
+<h3>References</h3>
+		<p>[1] <i>Computer Organization and Design: The Hardware/Software Interface, Fourth Edition,</i> Patterson and Hennessy, 
+		Morgan Kauffman Publishers, 2009.</p>
+	
+</body></html>

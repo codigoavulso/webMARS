@@ -1,0 +1,68 @@
+<html>
+<title>Contenido de la ayuda de MARS 4.5
+</title>
+<body>
+<center>
+<h3>MARS - Mips Assembly and Runtime Simulator</h3>
+<h4>Version 4.5</h4>
+<h4>Agosto de 2014</h4>
+
+<h4>Requisitos de funcionamiento</h4>
+</center>
+<p>MARS esta escrito en Java y
+requiere al menos la version 1.5 del J2SE Java Runtime Environment (JRE) para funcionar.
+El IDE grafico esta implementado con Swing. Ha sido
+probado en Windows XP, Vista y 7; Mac OS X; y tambien se utiliza en Linux.
+
+<center>
+<h4>Algunas limitaciones del ensamblador y simulador MARS</h4>
+</center>
+
+Las versiones 3.0 y posteriores ensamblan y simulan casi todas las instrucciones MIPS32 documentadas en el
+libro <i>Computer Organization and Design, Fourth Edition</i> de Patterson y Hennessy,
+Elsevier - Morgan Kaufmann, 2009. Se implementan todas las instrucciones basicas y pseudo-instrucciones, directivas
+y servicios del sistema descritos en el Apendice B.
+
+<p>Las limitaciones de MARS en la version 4.5 incluyen:
+<ul>
+<li>Los segmentos de memoria (text, data, stack, kernel text, kernel data) estan limitados a 4MB cada uno a partir de sus
+respectivas direcciones base.</li>
+<li>No existe modo segmentado por tuberias (aunque si se soporta delayed branching).</li>
+<li>Si abre un archivo que es un enlace o acceso directo a otro archivo, MARS <em>no</em>
+abrira el archivo de destino. El dialogo de apertura esta implementado mediante JFileChooser de Swing,
+que no soporta enlaces.</li>
+
+<li>Muy pocos cambios de configuracion, aparte de los del menu Settings, se guardan de una sesion a la siguiente.
+La configuracion del editor, que incluye la fuente y la visualizacion de los numeros de linea, si se guarda.</li>
+
+<li>El IDE solo funcionara con el ensamblador de MARS. No puede utilizarse
+con ningun otro compilador, ensamblador o simulador. El ensamblador y simulador de MARS
+pueden usarse tanto desde el IDE como desde un simbolo del sistema.</li>
+
+<li><em>Bug:</em> El resaltador de mensajes de error no selecciona automaticamente el codigo del primer error de ensamblado
+si el archivo que contiene el error no esta abierto en el momento del ensamblado (assemble-on-open, assemble-all).</li>
+
+<li><em>Bug:</em> La funcion de captura de pantalla de Screen Magnifier no parece funcionar correctamente en Windows Vista.</li>
+
+<li><em>Bug:</em> Parece existir una fuga de memoria en el Editor. Varias personas diferentes han informado de manera independiente
+del mismo comportamiento: una ralentizacion severa de la respuesta del editor durante una sesion interactiva prolongada.
+Si MARS se cierra y se vuelve a abrir, este comportamiento desaparece y el editor vuelve a responder de inmediato.</li>
+
+<li><em>No es un bug, pero se documenta aqui igualmente:</em> Las direcciones destino de las instrucciones branch de MIPS se representan por
+el numero relativo de palabras a saltar. Desde la version 3.4, este valor refleja delayed branching,
+independientemente de si la opcion Delayed Branching esta activada o no.
+El codigo binario generado para los branch coincide ahora con el de los ejemplos del libro <em>Computer Organization
+and Design</em>. Esto supone un cambio respecto al pasado y se hizo tras extensas conversaciones
+con varios profesores usuarios de MARS. Antes, el desplazamiento del branch era 1 unidad menor si la opcion Delayed Branching
+estaba activada: la instruccion <tt>label: beq $0,$0,label</tt> generaba <tt>0x1000FFFF</tt> si
+Delayed Branching estaba activado y <tt>0x10000000</tt> si estaba desactivado. Ahora generara <tt>0x1000FFFF</tt> en
+cualquiera de los dos casos. El simulador siempre saltara a la ubicacion correcta; MARS no permite que el ensamblado bajo una
+configuracion y la simulacion bajo la otra se mezclen.</li>
+</ul>
+<p>
+<hr>
+<p>
+Este documento esta disponible para imprimir en la pagina principal de MARS
+<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+</body>
+</html>

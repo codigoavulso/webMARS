@@ -7,19 +7,79 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      .kd-tool { display:flex; flex-direction:column; gap:8px; height:100%; padding:8px; box-sizing:border-box; font:12px "Segoe UI", Tahoma, sans-serif; }
-      .kd-tool h2 { margin:0; text-align:center; font-size:42px; color:#1f3048; line-height:1; }
-      .kd-panel { border:1px solid #9db0c8; background:#f7fbff; padding:6px; }
-      .kd-title { font-weight:700; text-align:center; margin-bottom:4px; color:#26364d; }
-      .kd-display, .kd-keyboard { width:100%; box-sizing:border-box; resize:none; border:1px solid #9db0c8; font-family:Consolas, monospace; font-size:14px; background:#fff; padding:6px; }
-      .kd-display { height:310px; white-space:pre; overflow:auto; }
-      .kd-keyboard { height:210px; }
-      .kd-options { display:grid; grid-template-columns:auto auto 1fr auto 1fr; gap:8px; align-items:center; margin-top:6px; }
-      .kd-options label { font-weight:700; }
-      .kd-options input[type='range'] { width:100%; }
-      .kd-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:auto; }
-      .kd-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#24354b; }
-      .kd-footer .tool-btn { min-width:130px; }
+      .kd-tool {
+        font: 11px Tahoma, "Segoe UI", sans-serif;
+      }
+
+      .kd-split {
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+
+      .kd-panel-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .kd-display,
+      .kd-keyboard {
+        width: 100%;
+        min-height: 0;
+        resize: none;
+        border: 1px solid #7f9db9;
+        background: #fff;
+        padding: 4px;
+        font-family: "Courier New", "Lucida Console", monospace;
+        font-size: 12px;
+        box-sizing: border-box;
+      }
+
+      .kd-display {
+        flex: 1 1 auto;
+        white-space: pre;
+        overflow: auto;
+      }
+
+      .kd-keyboard {
+        flex: 1 1 auto;
+      }
+
+      .kd-options {
+        display: grid;
+        grid-template-columns: auto auto minmax(180px, 1fr);
+        gap: 6px 8px;
+        align-items: center;
+      }
+
+      .kd-options .kd-delay-group {
+        display: grid;
+        grid-template-columns: auto minmax(180px, 1fr);
+        gap: 6px 8px;
+        grid-column: 1 / -1;
+        align-items: center;
+      }
+
+      .kd-options select,
+      .kd-options input[type="range"] {
+        width: 100%;
+      }
+
+      .kd-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      @media (max-width: 860px) {
+        .kd-options {
+          grid-template-columns: 1fr;
+        }
+
+        .kd-options .kd-delay-group {
+          grid-template-columns: 1fr;
+        }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -29,6 +89,25 @@
     "lwc1", "swc1", "ldc1", "sdc1"
   ]);
   const WRITE_OPS = new Set(["sb", "sh", "sw", "swl", "swr", "sc", "swc1", "sdc1"]);
+
+  function formatFallback(message, variables = {}) {
+    return String(message ?? "").replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => (
+      Object.prototype.hasOwnProperty.call(variables, key) ? String(variables[key]) : match
+    ));
+  }
+
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return formatFallback(message, variables);
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
+  }
 
   function toHex32(value) {
     return `0x${(value >>> 0).toString(16).padStart(8, "0")}`;
@@ -96,9 +175,9 @@
   function resolveSourceValue(opcode, sourceToken, registers, snapshot) {
     const token = String(sourceToken || "").trim().toLowerCase();
     const regValue = registers.get(token) ?? registers.get(token.replace(/^\$/, "")) ?? 0;
-    if (["sb"].includes(opcode)) return regValue & 0xff;
-    if (["sh"].includes(opcode)) return regValue & 0xffff;
-    if (["swc1"].includes(opcode)) {
+    if (opcode === "sb") return regValue & 0xff;
+    if (opcode === "sh") return regValue & 0xffff;
+    if (opcode === "swc1") {
       const idx = Number.parseInt(token.replace(/^\$f/, ""), 10);
       if (Number.isFinite(idx) && Array.isArray(snapshot?.cop1)) return snapshot.cop1[idx] | 0;
     }
@@ -109,39 +188,52 @@
     id: "keyboard-display-mmio",
     label: "Keyboard and Display MMIO Simulator",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("keyboard-display-mmio", "Keyboard and Display MMIO Simulator, Version 1.4", 1080, 980, `
-        <div class="kd-tool">
-          <h2>Keyboard and Display MMIO Simulator</h2>
-          <div class="kd-panel">
-            <div class="kd-title" data-kd="displaytitle"></div>
-            <textarea class="kd-display" data-kd="display" spellcheck="false" readonly></textarea>
-            <div class="kd-options">
-              <button class="tool-btn" data-kd="font" type="button">Font</button>
-              <label><input type="checkbox" data-kd="dad" checked> DAD</label>
-              <select data-kd="delaymode">
-                <option value="fixed" selected>Fixed transmitter delay, select using slider</option>
-                <option value="uniform">Uniform random delay around slider value</option>
-                <option value="normal">Normal random delay around slider value</option>
-              </select>
-              <label data-kd="delaylabel">Delay length: 5 instruction executions</label>
-              <input type="range" min="0" max="50" step="1" value="5" data-kd="delay">
-            </div>
+      const shell = ctx.createToolWindowShell("keyboard-display-mmio", "Keyboard and Display MMIO Simulator, Version 1.4", 980, 760, `
+        <div class="mars-tool-shell kd-tool">
+          <h2 class="mars-tool-heading">Keyboard and Display MMIO Simulator</h2>
+          <div class="mars-tool-split-vertical kd-split" data-kd="split">
+            <section class="mars-tool-panel">
+              <div class="mars-tool-panel-title" data-kd="displaytitle"></div>
+              <div class="mars-tool-panel-body kd-panel-body">
+                <textarea class="kd-display" data-kd="display" spellcheck="false" readonly wrap="off"></textarea>
+                <div class="kd-options">
+                  <button class="tool-btn" data-kd="font" type="button">Font</button>
+                  <label class="kd-check"><input type="checkbox" data-kd="dad" checked> DAD</label>
+                  <select data-kd="delaymode">
+                    <option value="fixed" selected>Fixed transmitter delay, select using slider</option>
+                    <option value="uniform">Uniform random delay around slider value</option>
+                    <option value="normal">Normal random delay around slider value</option>
+                  </select>
+                  <div class="kd-delay-group">
+                    <label data-kd="delaylabel">Delay length: 5 instruction executions</label>
+                    <input type="range" min="0" max="50" step="1" value="5" data-kd="delay">
+                  </div>
+                </div>
+              </div>
+            </section>
+            <div class="mars-tool-splitter" data-kd="splitter"></div>
+            <section class="mars-tool-panel">
+              <div class="mars-tool-panel-title" data-kd="keyboardtitle"></div>
+              <div class="mars-tool-panel-body kd-panel-body">
+                <textarea class="kd-keyboard" data-kd="keyboard" spellcheck="false" wrap="off" placeholder="Type here to send keyboard MMIO input"></textarea>
+              </div>
+            </section>
           </div>
-          <div class="kd-panel">
-            <div class="kd-title" data-kd="keyboardtitle"></div>
-            <textarea class="kd-keyboard" data-kd="keyboard" spellcheck="false" placeholder="Type here to send keyboard MMIO input"></textarea>
-          </div>
-          <div class="kd-footer">
+          <div class="mars-tool-footer kd-footer">
             <button class="tool-btn" data-kd="connect" type="button">Connect to MIPS</button>
             <div class="ctrl">Tool Control</div>
-            <button class="tool-btn" data-kd="reset" type="button">Reset</button>
-            <button class="tool-btn" data-kd="help" type="button">Help</button>
-            <button class="tool-btn" data-kd="close" type="button">Close</button>
+            <div class="mars-tool-footer-actions">
+              <button class="tool-btn" data-kd="reset" type="button">Reset</button>
+              <button class="tool-btn" data-kd="help" type="button">Help</button>
+              <button class="tool-btn" data-kd="close" type="button">Close</button>
+            </div>
           </div>
         </div>
       `);
 
       const root = shell.root;
+      const splitPane = root.querySelector("[data-kd='split']");
+      const splitter = root.querySelector("[data-kd='splitter']");
       const displayTitle = root.querySelector("[data-kd='displaytitle']");
       const keyboardTitle = root.querySelector("[data-kd='keyboardtitle']");
       const displayArea = root.querySelector("[data-kd='display']");
@@ -157,10 +249,10 @@
       const closeButton = root.querySelector("[data-kd='close']");
 
       const fonts = [
-        "14px Consolas, monospace",
-        "15px 'Courier New', monospace",
-        "16px Menlo, monospace",
-        "13px 'Lucida Console', monospace"
+        "12px \"Courier New\", \"Lucida Console\", monospace",
+        "12px Consolas, monospace",
+        "12px Menlo, monospace",
+        "12px Monaco, monospace"
       ];
 
       let connected = false;
@@ -178,6 +270,8 @@
       let instructionCount = 0;
       let delayLimit = 0;
       let pendingWord = 0;
+      let splitRatio = 0.58;
+      let splitDrag = null;
 
       function mmioBase() {
         return (ctx.engine?.memoryMap?.mmioBase ?? ctx.defaultMemoryMap?.mmioBase ?? 0xffff0000) >>> 0;
@@ -191,12 +285,6 @@
           TRANSMITTER_CONTROL: (base + 8) >>> 0,
           TRANSMITTER_DATA: (base + 12) >>> 0
         };
-      }
-
-      function updateTitles() {
-        const { RECEIVER_DATA, TRANSMITTER_DATA } = addresses();
-        displayTitle.textContent = `DISPLAY: Store to Transmitter Data ${toHex32(TRANSMITTER_DATA)}, cursor ${cursorY}, area ${columns} x ${rows}`;
-        keyboardTitle.textContent = `KEYBOARD: Characters typed here are stored to Receiver Data ${toHex32(RECEIVER_DATA)}`;
       }
 
       function readWordSafe(address) {
@@ -228,12 +316,98 @@
         return (readWordSafe(address) & ~1) | 0;
       }
 
+      function applySplitLayout() {
+        if (!(splitPane instanceof HTMLElement)) return;
+        const splitterHeight = 6;
+        const available = Math.max(0, splitPane.clientHeight - splitterHeight);
+        if (!(available > 0)) return;
+        const minTop = 140;
+        const minBottom = 120;
+        let topHeight = Math.round(available * splitRatio);
+        if (available >= (minTop + minBottom)) {
+          topHeight = Math.max(minTop, Math.min(available - minBottom, topHeight));
+        } else {
+          topHeight = Math.round(available / 2);
+        }
+        splitRatio = available > 0 ? (topHeight / available) : 0.5;
+        splitPane.style.gridTemplateRows = `${topHeight}px ${splitterHeight}px ${Math.max(0, available - topHeight)}px`;
+      }
+
+      function stopSplitDrag() {
+        if (!splitDrag) return;
+        splitDrag = null;
+        document.removeEventListener("pointermove", onSplitPointerMove);
+        document.removeEventListener("pointerup", stopSplitDrag);
+        document.removeEventListener("pointercancel", stopSplitDrag);
+      }
+
+      function onSplitPointerMove(event) {
+        if (!splitDrag || !(splitPane instanceof HTMLElement)) return;
+        const rect = splitPane.getBoundingClientRect();
+        const splitterHeight = 6;
+        const available = Math.max(0, rect.height - splitterHeight);
+        if (!(available > 0)) return;
+        let topHeight = event.clientY - rect.top - splitDrag.offsetY;
+        const minTop = 140;
+        const minBottom = 120;
+        if (available >= (minTop + minBottom)) {
+          topHeight = Math.max(minTop, Math.min(available - minBottom, topHeight));
+        } else {
+          topHeight = Math.max(0, Math.min(available, topHeight));
+        }
+        splitRatio = topHeight / available;
+        applySplitLayout();
+        recalcGrid();
+      }
+
+      splitter.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0 || !(splitPane instanceof HTMLElement)) return;
+        event.preventDefault();
+        const rect = splitter.getBoundingClientRect();
+        splitDrag = {
+          offsetY: event.clientY - rect.top
+        };
+        document.addEventListener("pointermove", onSplitPointerMove);
+        document.addEventListener("pointerup", stopSplitDrag);
+        document.addEventListener("pointercancel", stopSplitDrag);
+      });
+
+      function getSequentialCursor() {
+        return displayArea.selectionStart ?? displayArea.value.length ?? 0;
+      }
+
+      function formatCursorPosition() {
+        if (randomAccessMode) return `(${cursorX},${cursorY})`;
+        return `${getSequentialCursor()}`;
+      }
+
+      function updateTitles() {
+        const { RECEIVER_DATA, TRANSMITTER_DATA } = addresses();
+        displayTitle.textContent = t("DISPLAY: Store to Transmitter Data {address}, cursor {cursor}, area {columns} x {rows}", {
+          address: toHex32(TRANSMITTER_DATA),
+          cursor: formatCursorPosition(),
+          columns,
+          rows
+        });
+        keyboardTitle.textContent = t("KEYBOARD: Characters typed here are stored to Receiver Data {address}", {
+          address: toHex32(RECEIVER_DATA)
+        });
+      }
+
       function recalcGrid() {
-        const fontSize = Number.parseFloat(window.getComputedStyle(displayArea).fontSize || "14");
+        const fontSize = Number.parseFloat(window.getComputedStyle(displayArea).fontSize || "12");
         const lineHeight = Math.max(fontSize * 1.35, 16);
         const charWidth = Math.max(fontSize * 0.62, 7);
-        columns = Math.max(20, Math.floor((displayArea.clientWidth - 12) / charWidth));
-        rows = Math.max(5, Math.floor((displayArea.clientHeight - 12) / lineHeight));
+        columns = Math.max(20, Math.floor((displayArea.clientWidth - 10) / charWidth));
+        rows = Math.max(5, Math.floor((displayArea.clientHeight - 10) / lineHeight));
+        if (randomAccessMode) {
+          terminalBuffer = Array.from({ length: rows }, (_, rowIndex) => (
+            Array.from({ length: columns }, (_, colIndex) => terminalBuffer[rowIndex]?.[colIndex] ?? " ")
+          ));
+          cursorX = Math.max(0, Math.min(columns - 1, cursorX));
+          cursorY = Math.max(0, Math.min(rows - 1, cursorY));
+          flushBufferToDisplay();
+        }
         updateTitles();
       }
 
@@ -241,14 +415,20 @@
         recalcGrid();
         if (!randomAccess) {
           displayArea.value = "";
+          displayArea.selectionStart = 0;
+          displayArea.selectionEnd = 0;
           cursorX = 0;
           cursorY = 0;
+          updateTitles();
           return;
         }
         terminalBuffer = Array.from({ length: rows }, () => Array.from({ length: columns }, () => " "));
         displayArea.value = terminalBuffer.map((line) => line.join("")).join("\n");
+        displayArea.selectionStart = 0;
+        displayArea.selectionEnd = 0;
         cursorX = 0;
         cursorY = 0;
+        updateTitles();
       }
 
       function flushBufferToDisplay() {
@@ -283,7 +463,10 @@
 
         if (!randomAccessMode) {
           displayArea.value += String.fromCharCode(ch);
+          displayArea.selectionStart = displayArea.value.length;
+          displayArea.selectionEnd = displayArea.value.length;
           displayArea.scrollTop = displayArea.scrollHeight;
+          updateTitles();
           return;
         }
 
@@ -315,7 +498,20 @@
       }
 
       function updateDelayLabel() {
-        delayLabel.textContent = `Delay length: ${Number.parseInt(delaySlider.value, 10) || 0} instruction executions`;
+        delayLabel.textContent = t("Delay length: {count} instruction executions", {
+          count: Number.parseInt(delaySlider.value, 10) || 0
+        });
+      }
+
+      function updateConnectButtonLabel() {
+        connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
+      }
+
+      function refreshUiText() {
+        shell.refreshTranslations?.();
+        updateConnectButtonLabel();
+        updateDelayLabel();
+        updateTitles();
       }
 
       function feedReceiverFromQueue() {
@@ -330,8 +526,7 @@
 
       function queueKey(value) {
         if (!Number.isFinite(value)) return;
-        const byte = value & 0xff;
-        keyQueue.push(byte);
+        keyQueue.push(value & 0xff);
         feedReceiverFromQueue();
       }
 
@@ -416,7 +611,6 @@
           queueKey(event.key.charCodeAt(0));
           return;
         }
-
         if (event.key === "Enter") {
           queueKey(10);
           return;
@@ -447,7 +641,7 @@
 
       connectButton.addEventListener("click", () => {
         connected = !connected;
-        connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
+        updateConnectButtonLabel();
         if (connected) {
           const { TRANSMITTER_CONTROL, RECEIVER_CONTROL } = addresses();
           writeWordSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
@@ -457,21 +651,33 @@
         }
       });
 
-      resetButton.addEventListener("click", doReset);
+      resetButton.addEventListener("click", () => {
+        doReset();
+        keyboardArea.focus();
+      });
 
       helpButton.addEventListener("click", () => {
-        ctx.messagesPane.postMars("[tool] Keyboard/Display MMIO: type in keyboard panel to feed receiver data; store to transmitter data address to print.");
+        ctx.messagesPane.postMars(`${t("[tool] Keyboard/Display MMIO: type in keyboard panel to feed receiver data; store to transmitter data address to print.")}\n`);
       });
 
       closeButton.addEventListener("click", shell.close);
-      window.addEventListener("resize", recalcGrid);
+      shell.onResize(() => {
+        applySplitLayout();
+        recalcGrid();
+      });
 
+      subscribeLanguageChange(refreshUiText);
+      displayArea.style.font = fonts[fontIndex];
+      keyboardArea.style.font = fonts[fontIndex];
+      applySplitLayout();
       updateDelayLabel();
       doReset();
+      refreshUiText();
 
       return {
         open() {
           shell.open();
+          applySplitLayout();
           recalcGrid();
           keyboardArea.focus();
         },
