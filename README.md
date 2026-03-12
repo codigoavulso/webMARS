@@ -1,4 +1,8 @@
-# webMARS v0.4.1
+# webMARS v0.4.2
+
+Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
+
+![webMARS main window](assets/images/screenshot-main.png)
 
 Browser port of MARS MIPS 4.5 (IDE + assembler + simulator), with a desktop/mobile UI and JS/WASM hybrid execution.
 
@@ -21,6 +25,20 @@ Browser port of MARS MIPS 4.5 (IDE + assembler + simulator), with a desktop/mobi
 - i18n catalogs (`en`, `pt`, `es`) and translated help resources.
 - Browser storage for ASM sources (virtual folders, quota control).
 - Session restore (files, machine state, tool windows).
+
+## What's New in v0.4.2
+
+- UI improvements:
+  - Window snap/drag behavior refined (20 px sticky distance without forced movement grid outside snap zones).
+  - Popup/tool maximize controls normalized and dialog/window sizing behavior polished.
+  - Bitmap Display settings layout compacted and tuned for better default usability.
+- Simulation error fixes:
+  - Runtime controls (`Go`, `Pause`, `Step`, `Backstep`, `Stop`) stabilized across assemble/restore/input-wait flows.
+  - Step-by-step popup input regressions fixed so controls recover correctly after syscall input submission.
+  - Mars Messages / Run I/O output normalization to reduce excessive blank-line noise.
+- Final parity adjustments with MARS MIPS 4.5:
+  - Completed missing settings handlers (`Show Labels Window`, `Program arguments provided to MIPS program`).
+  - Program arguments flow and restore behavior aligned more closely with Java MARS expectations.
 
 ## Compatibility Controls
 
@@ -92,6 +110,7 @@ Reports:
 
 ## Release Line
 
+- `v0.4.2`: UI polish + simulation runtime bug fixes + final MARS 4.5 parity adjustments
 - `v0.3.7`: initial git baseline
 - `v0.3.8`: core fixes and UI improvements
 - `v0.3.9`: UI fixes + WASM (C++) core reimplementation

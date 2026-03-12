@@ -93,6 +93,36 @@
   <h1>webMARS · changelog</h1>
   <p class="subtitle">https://github.com/codigoavulso/webMARS/</p>
  
+  <!-- 0.4.2 (2026) -->
+  <section class="release">
+    <div class="release-header"><span>v0.4.2</span><span>2026-03-12</span></div>
+    <div class="release-body">
+      <h3>UI Stabilization and Usability Improvements</h3>
+      <ul>
+        <li>Window snapping was refined (20 px sticky distance) with free pixel-level dragging outside snap zones, removing forced movement grid artifacts.</li>
+        <li>Maximize controls were unified across popup/tool windows, with improved desktop/mobile dialog clamp behavior.</li>
+        <li>Bitmap Display settings were compacted into a denser layout, controls were reordered, and default window sizing was tuned for better first-open ergonomics.</li>
+        <li>Data Segment readability on small screens was improved (header simplification and crop alignment strategy), plus split <code>Mars Messages</code>/<code>Run I/O</code> visual polish.</li>
+      </ul>
+
+      <h3>Simulation Runtime Error Fixes</h3>
+      <ul>
+        <li>Fixed execution-control edge cases for <code>Go</code>, <code>Pause</code>, <code>Step</code>, <code>Backstep</code>, and <code>Stop</code> state transitions after assemble, restore, and input wait states.</li>
+        <li>Resolved popup syscall input regressions in step-by-step mode: after submitting input, controls recover correctly without entering a broken run state.</li>
+        <li>Hardened runtime behavior against UI render exceptions that could leave controls disabled.</li>
+        <li>Normalized <code>Mars Messages</code> and <code>Run I/O</code> output emission to reduce excessive blank lines and improve log density.</li>
+      </ul>
+
+      <h3>MARS MIPS 4.5 Parity Final Adjustments</h3>
+      <ul>
+        <li>Completed missing Settings actions: <code>Show Labels Window</code> and <code>Program arguments provided to MIPS program</code>, including runtime wiring.</li>
+        <li>Program arguments flow was aligned with Java MARS expectations and documented with dedicated multilingual test examples.</li>
+        <li>Autoload restore was adjusted to reopen sources in Edit mode and require explicit <code>Assemble</code>, avoiding stale assembled-state recovery.</li>
+        <li>Menu/dialog behavior was further aligned with Java MARS interaction patterns.</li>
+      </ul>
+    </div>
+  </section>
+
   <!-- 0.4.1 (2026) -->
   <section class="release">
     <div class="release-header"><span>v0.4.1</span><span>2026-03-11</span></div>

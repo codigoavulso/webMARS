@@ -18,6 +18,9 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     std::uint32_t kernelDataAddress = 0;
     bool autoAlignData = true;
     bool autoAlignKernelData = true;
+    bool reorder = true;
+    bool at = true;
+    bool macro = true;
     std::string currentDataDirective = ".word";
     std::unordered_set<std::string> globalDeclarations;
   };
@@ -372,8 +375,8 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     return true;
   };
 
-  auto expandPseudoFromReference = [&](const std::string& statement, bool firstPass, std::vector<std::string>& expanded) -> bool {
-    if (!settings_.extendedAssembler) return false;
+  auto expandPseudoFromReference = [&](const std::string& statement, bool firstPass, bool allowExtendedAssembler, std::vector<std::string>& expanded) -> bool {
+    if (!allowExtendedAssembler) return false;
     const auto sourceTokens = tokenize_pseudo_source_statement_native(statement);
     if (sourceTokens.empty()) return false;
     const auto opcode = lower_copy(sourceTokens[0]);
@@ -422,7 +425,7 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     return false;
   };
 
-  auto expandPseudo = [&](const std::string& statement, bool firstPass, std::vector<std::string>& expanded) -> bool {
+  auto expandPseudo = [&](const std::string& statement, bool firstPass, bool allowExtendedAssembler, std::vector<std::string>& expanded) -> bool {
     expanded.clear();
     const auto tokens = tokenize_statement_native(statement);
     if (tokens.empty()) return true;
@@ -450,7 +453,11 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       expanded.push_back(statement);
       return true;
     }
-    if (expandPseudoFromReference(statement, firstPass, expanded)) return true;
+    if (!allowExtendedAssembler) {
+      expanded.push_back(statement);
+      return true;
+    }
+    if (expandPseudoFromReference(statement, firstPass, allowExtendedAssembler, expanded)) return true;
     if (opcode == "nop") { expanded.push_back("sll $zero, $zero, 0"); return true; }
     if (opcode == "move" && tokens.size() >= 3u) { expanded.push_back("addu " + tokens[1] + ", " + tokens[2] + ", $zero"); return true; }
     if (opcode == "clear" && tokens.size() >= 2u) { expanded.push_back("addu " + tokens[1] + ", $zero, $zero"); return true; }
@@ -739,23 +746,85 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     ".text", ".data", ".ktext", ".kdata", ".byte", ".half", ".word", ".float", ".double",
     ".ascii", ".asciiz", ".align", ".space", ".extern", ".globl", ".set", ".include"
   };
+  const auto hasAtRegisterToken = [](const std::string& statementText) {
+    return lower_copy(statementText).find("$at") != std::string::npos;
+  };
+  const auto emitsAtFromPseudo = [&](const std::string& sourceStatement, const std::vector<std::string>& expandedStatements) {
+    if (hasAtRegisterToken(sourceStatement)) return false;
+    for (const auto& item : expandedStatements) {
+      if (hasAtRegisterToken(item)) return true;
+    }
+    return false;
+  };
+  const std::uint32_t strictSegmentBytes = 4u * 1024u * 1024u;
+  auto strictSegmentStart = [&](const std::string& segment) -> std::uint32_t {
+    if (segment == "text") return memoryMap_.textBase;
+    if (segment == "data") return memoryMap_.dataSegmentBase;
+    if (segment == "ktext") return memoryMap_.kernelTextBase;
+    if (segment == "kdata") return memoryMap_.kernelDataBase;
+    if (segment == "stack") return (memoryMap_.stackBase - strictSegmentBytes) & 0xffffffffu;
+    return 0u;
+  };
+  auto strictSegmentSize = [&](const std::string& segment) -> std::uint32_t {
+    if (segment == "stack") return strictSegmentBytes + 4u;
+    return strictSegmentBytes;
+  };
+  auto isStrictRangeInside = [](std::uint32_t start, std::uint32_t size, std::uint32_t address, std::uint32_t byteLength) {
+    if (byteLength == 0u) return true;
+    const std::uint64_t windowStart = static_cast<std::uint64_t>(start);
+    const std::uint64_t windowEnd = windowStart + static_cast<std::uint64_t>(size);
+    const std::uint64_t addrStart = static_cast<std::uint64_t>(address);
+    const std::uint64_t addrEnd = addrStart + static_cast<std::uint64_t>(byteLength);
+    return addrStart >= windowStart && addrEnd <= windowEnd;
+  };
+  auto validateStrictSegmentRange = [&](const std::string& segment, std::uint32_t address, std::uint32_t byteLength, std::int32_t line, const std::string& context) {
+    if (!settings_.strictMarsCompatibility) return true;
+    const auto start = strictSegmentStart(segment);
+    const auto size = strictSegmentSize(segment);
+    if (isStrictRangeInside(start, size, address, byteLength)) return true;
+    errors.push_back({
+      line,
+      "Strict MARS segment limit exceeded for " + context + " at " + to_hex32(address) + " (" + std::to_string(byteLength) + " byte(s))."
+    });
+    return false;
+  };
 
-  auto updateSegment = [&](PassState& state, const std::string& directive, const std::string& token) {
+  auto updateSegment = [&](PassState& state, const std::string& directive, const std::string& token, std::int32_t lineNumber = 0) {
     const auto explicitValue = resolveValue(token, false);
     if (directive == ".text") {
       state.segment = "text";
-      if (std::isfinite(explicitValue)) state.textAddress = static_cast<std::uint32_t>(explicitValue);
+      if (std::isfinite(explicitValue)) {
+        const auto explicitAddress = static_cast<std::uint32_t>(explicitValue);
+        if (validateStrictSegmentRange("text", explicitAddress, 1u, lineNumber, ".text directive")) {
+          state.textAddress = explicitAddress;
+        }
+      }
     } else if (directive == ".data") {
       state.segment = "data";
-      if (std::isfinite(explicitValue)) state.dataAddress = static_cast<std::uint32_t>(explicitValue);
+      if (std::isfinite(explicitValue)) {
+        const auto explicitAddress = static_cast<std::uint32_t>(explicitValue);
+        if (validateStrictSegmentRange("data", explicitAddress, 1u, lineNumber, ".data directive")) {
+          state.dataAddress = explicitAddress;
+        }
+      }
       state.autoAlignData = true;
       state.currentDataDirective = ".word";
     } else if (directive == ".ktext") {
       state.segment = "ktext";
-      if (std::isfinite(explicitValue)) state.kernelTextAddress = static_cast<std::uint32_t>(explicitValue);
+      if (std::isfinite(explicitValue)) {
+        const auto explicitAddress = static_cast<std::uint32_t>(explicitValue);
+        if (validateStrictSegmentRange("ktext", explicitAddress, 1u, lineNumber, ".ktext directive")) {
+          state.kernelTextAddress = explicitAddress;
+        }
+      }
     } else if (directive == ".kdata") {
       state.segment = "kdata";
-      if (std::isfinite(explicitValue)) state.kernelDataAddress = static_cast<std::uint32_t>(explicitValue);
+      if (std::isfinite(explicitValue)) {
+        const auto explicitAddress = static_cast<std::uint32_t>(explicitValue);
+        if (validateStrictSegmentRange("kdata", explicitAddress, 1u, lineNumber, ".kdata directive")) {
+          state.kernelDataAddress = explicitAddress;
+        }
+      }
       state.autoAlignKernelData = true;
       state.currentDataDirective = ".word";
     }
@@ -780,6 +849,10 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     const auto args = split_arguments_native(trim_copy(statement.substr(tokens[0].size())));
     auto& address = state.segment == "kdata" ? state.kernelDataAddress : state.dataAddress;
     auto& autoAlign = state.segment == "kdata" ? state.autoAlignKernelData : state.autoAlignData;
+    const auto currentDataSegment = state.segment == "kdata" ? std::string("kdata") : std::string("data");
+    const auto enforceStrictDataRange = [&](std::uint32_t byteLength, const std::string& contextLabel) {
+      return validateStrictSegmentRange(currentDataSegment, address, byteLength, line, contextLabel);
+    };
     const auto alignAddressRef = [&](std::uint32_t alignment) {
       if (alignment <= 1u) return;
       address = (address + alignment - 1u) & ~(alignment - 1u);
@@ -870,7 +943,40 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       return true;
     }
     if (directive == ".set") {
-      if (sizeOnly) warnings.push_back({ line, "MARS currently ignores the .set directive." });
+      if (args.empty()) {
+        errors.push_back({ line, "\".set\" requires at least one argument." });
+        return true;
+      }
+      const auto option = lower_copy(trim_copy(args[0]));
+      if (option.empty()) {
+        errors.push_back({ line, "\".set\" requires at least one argument." });
+        return true;
+      }
+      if (option == "reorder") {
+        state.reorder = true;
+        return true;
+      }
+      if (option == "noreorder") {
+        state.reorder = false;
+        return true;
+      }
+      if (option == "at") {
+        state.at = true;
+        return true;
+      }
+      if (option == "noat") {
+        state.at = false;
+        return true;
+      }
+      if (option == "macro") {
+        state.macro = true;
+        return true;
+      }
+      if (option == "nomacro") {
+        state.macro = false;
+        return true;
+      }
+      warnings.push_back({ line, "Unsupported \".set\" option \"" + option + "\" (ignored)." });
       return true;
     }
     if (directive == ".include") {
@@ -905,6 +1011,7 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
         errors.push_back({ line, "\".space\" requires a non-negative integer" });
         return true;
       }
+      if (!enforceStrictDataRange(static_cast<std::uint32_t>(amount), directive)) return true;
       address = (address + static_cast<std::uint32_t>(amount)) & 0xffffffffu;
       return true;
     }
@@ -916,6 +1023,8 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
           errors.push_back({ line, "Malformed string literal in data directive." });
           continue;
         }
+        const auto totalBytes = static_cast<std::uint32_t>(text.size() + (directive == ".asciiz" ? 1u : 0u));
+        if (!enforceStrictDataRange(totalBytes, directive)) return true;
         for (const char ch : text) {
           if (!sizeOnly) writeByte(address, static_cast<std::uint8_t>(ch));
           address = (address + 1u) & 0xffffffffu;
@@ -940,6 +1049,8 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       std::int32_t repetitions = 1;
       if (!parseRepeatedArg(arg, valueToken, repetitions)) continue;
       for (std::int32_t repetition = 0; repetition < repetitions; repetition += 1) {
+        const auto bytesNeeded = directive == ".double" ? 8u : static_cast<std::uint32_t>(size);
+        if (!enforceStrictDataRange(bytesNeeded, directive)) return true;
         if (directive == ".float" || directive == ".double") {
           char* end = nullptr;
           const auto number = directive == ".float" ? static_cast<double>(std::strtof(valueToken.c_str(), &end)) : std::strtod(valueToken.c_str(), &end);
@@ -1006,7 +1117,7 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       const auto tokens = tokenize_statement_native(statement);
       const auto directive = lower_copy(tokens[0]);
       if (directive == ".text" || directive == ".data" || directive == ".ktext" || directive == ".kdata") {
-        updateSegment(pass1, directive, tokens.size() > 1 ? tokens[1] : std::string());
+        updateSegment(pass1, directive, tokens.size() > 1 ? tokens[1] : std::string(), line.lineNumber);
         continue;
       }
       if (supportedDirectives.find(directive) == supportedDirectives.end()) {
@@ -1029,12 +1140,22 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       continue;
     }
     std::vector<std::string> expanded;
-    if (!expandPseudo(statement, true, expanded)) {
+    if (!expandPseudo(statement, true, pass1.macro, expanded)) {
       fallbackReason = "pseudo:" + lower_copy(tokenize_statement_native(statement).front());
       return buildResult(false, true);
     }
-    if (pass1.segment == "text") pass1.textAddress = (pass1.textAddress + static_cast<std::uint32_t>(expanded.size() * 4u)) & 0xffffffffu;
-    else pass1.kernelTextAddress = (pass1.kernelTextAddress + static_cast<std::uint32_t>(expanded.size() * 4u)) & 0xffffffffu;
+    if (!pass1.at && emitsAtFromPseudo(statement, expanded)) {
+      errors.push_back({ line.lineNumber, "\".set noat\" forbids pseudo expansion that uses $at." });
+      continue;
+    }
+    const auto expansionBytes = static_cast<std::uint32_t>(expanded.size() * 4u);
+    if (pass1.segment == "text") {
+      if (!validateStrictSegmentRange("text", pass1.textAddress, expansionBytes, line.lineNumber, "instruction expansion")) continue;
+      pass1.textAddress = (pass1.textAddress + expansionBytes) & 0xffffffffu;
+    } else {
+      if (!validateStrictSegmentRange("ktext", pass1.kernelTextAddress, expansionBytes, line.lineNumber, "instruction expansion")) continue;
+      pass1.kernelTextAddress = (pass1.kernelTextAddress + expansionBytes) & 0xffffffffu;
+    }
   }
 
   PassState pass2;
@@ -1156,7 +1277,7 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       const auto tokens = tokenize_statement_native(statement);
       const auto directive = lower_copy(tokens[0]);
       if (directive == ".text" || directive == ".data" || directive == ".ktext" || directive == ".kdata") {
-        updateSegment(pass2, directive, tokens.size() > 1 ? tokens[1] : std::string());
+        updateSegment(pass2, directive, tokens.size() > 1 ? tokens[1] : std::string(), line.lineNumber);
         continue;
       }
       if (supportedDirectives.find(directive) == supportedDirectives.end()) {
@@ -1179,9 +1300,19 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       continue;
     }
     std::vector<std::string> expanded;
-    if (!expandPseudo(statement, false, expanded)) {
+    if (!expandPseudo(statement, false, pass2.macro, expanded)) {
       fallbackReason = "pseudo:" + lower_copy(tokenize_statement_native(statement).front());
       return buildResult(false, true);
+    }
+    if (!pass2.at && emitsAtFromPseudo(statement, expanded)) {
+      errors.push_back({ line.lineNumber, "\".set noat\" forbids pseudo expansion that uses $at." });
+      continue;
+    }
+    const auto emissionBytes = static_cast<std::uint32_t>(expanded.size() * 4u);
+    const auto currentSegment = pass2.segment == "text" ? std::string("text") : std::string("ktext");
+    const auto currentAddress = pass2.segment == "text" ? pass2.textAddress : pass2.kernelTextAddress;
+    if (!validateStrictSegmentRange(currentSegment, currentAddress, emissionBytes, line.lineNumber, "instruction emission")) {
+      continue;
     }
     for (std::size_t index = 0; index < expanded.size(); index += 1u) {
       const auto address = pass2.segment == "text" ? pass2.textAddress : pass2.kernelTextAddress;

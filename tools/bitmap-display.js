@@ -27,20 +27,36 @@
         align-content: start;
       }
 
+      .bitmap-controls-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px 14px;
+        align-items: start;
+      }
+
+      .bitmap-control-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 3px;
+        min-width: 0;
+      }
+
       .bitmap-control-label {
         color: #111;
+        line-height: 1.2;
       }
 
       .bitmap-control-field {
-        width: 128px;
+        width: 100%;
+        max-width: 100%;
       }
 
-      .bitmap-viewport {
+      .bitmap-tool .bitmap-viewport {
         display: flex;
         min-height: 0;
       }
 
-      .bitmap-canvas-wrap {
+      .bitmap-tool .bitmap-canvas-wrap {
         flex: 1 1 auto;
         min-height: 0;
         overflow: auto;
@@ -52,15 +68,32 @@
         justify-content: center;
       }
 
-      .bitmap-canvas {
+      .bitmap-tool .bitmap-canvas {
         display: block;
         flex: 0 0 auto;
         background: #000;
         image-rendering: pixelated;
+        width: auto !important;
+        height: auto !important;
+        max-width: none !important;
+        max-height: none !important;
+        align-self: flex-start;
       }
 
       .bitmap-tool .mars-tool-panel-body.bitmap-controls {
         padding-top: 10px;
+      }
+
+      @media (max-width: 900px) {
+        .bitmap-controls-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 720px) {
+        .bitmap-controls-grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
       }
     `;
     document.head.appendChild(style);
@@ -170,32 +203,34 @@
     id: "bitmap-display",
     label: "Bitmap Display",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("bitmap-display", "Bitmap Display, Version 1.0", 1080, 760, `
+      const shell = ctx.createToolWindowShell("bitmap-display", "Bitmap Display, Version 1.0", 800, 700, `
         <div class="mars-tool-shell bitmap-tool">
           <h2 class="mars-tool-heading">Bitmap Display</h2>
           <div class="bitmap-main">
             <section class="mars-tool-panel">
               <div class="mars-tool-panel-title">Display Settings</div>
               <div class="mars-tool-panel-body bitmap-controls">
-                <div class="mars-tool-row">
-                  <span class="bitmap-control-label">Unit Width in Pixels</span>
-                  <select class="bitmap-control-field" data-bitmap="unit-width">${buildOptions(UNIT_OPTIONS, DEFAULT_CONFIG.unitWidth)}</select>
-                </div>
-                <div class="mars-tool-row">
-                  <span class="bitmap-control-label">Unit Height in Pixels</span>
-                  <select class="bitmap-control-field" data-bitmap="unit-height">${buildOptions(UNIT_OPTIONS, DEFAULT_CONFIG.unitHeight)}</select>
-                </div>
-                <div class="mars-tool-row">
-                  <span class="bitmap-control-label">Display Width in Pixels</span>
-                  <select class="bitmap-control-field" data-bitmap="display-width">${buildOptions(WIDTH_OPTIONS, DEFAULT_CONFIG.displayWidth)}</select>
-                </div>
-                <div class="mars-tool-row">
-                  <span class="bitmap-control-label">Display Height in Pixels</span>
-                  <select class="bitmap-control-field" data-bitmap="display-height">${buildOptions(HEIGHT_OPTIONS, DEFAULT_CONFIG.displayHeight)}</select>
-                </div>
-                <div class="mars-tool-row">
-                  <span class="bitmap-control-label">Base address for display</span>
-                  <select class="bitmap-control-field" data-bitmap="base-address">${buildBaseOptions(DEFAULT_CONFIG.baseAddress)}</select>
+                <div class="bitmap-controls-grid">
+                  <label class="bitmap-control-item">
+                    <span class="bitmap-control-label">Unit Width in Pixels</span>
+                    <select class="bitmap-control-field" data-bitmap="unit-width">${buildOptions(UNIT_OPTIONS, DEFAULT_CONFIG.unitWidth)}</select>
+                  </label>
+                  <label class="bitmap-control-item">
+                    <span class="bitmap-control-label">Unit Height in Pixels</span>
+                    <select class="bitmap-control-field" data-bitmap="unit-height">${buildOptions(UNIT_OPTIONS, DEFAULT_CONFIG.unitHeight)}</select>
+                  </label>
+                  <label class="bitmap-control-item">
+                    <span class="bitmap-control-label">Base address for display</span>
+                    <select class="bitmap-control-field" data-bitmap="base-address">${buildBaseOptions(DEFAULT_CONFIG.baseAddress)}</select>
+                  </label>
+                  <label class="bitmap-control-item">
+                    <span class="bitmap-control-label">Display Width in Pixels</span>
+                    <select class="bitmap-control-field" data-bitmap="display-width">${buildOptions(WIDTH_OPTIONS, DEFAULT_CONFIG.displayWidth)}</select>
+                  </label>
+                  <label class="bitmap-control-item">
+                    <span class="bitmap-control-label">Display Height in Pixels</span>
+                    <select class="bitmap-control-field" data-bitmap="display-height">${buildOptions(HEIGHT_OPTIONS, DEFAULT_CONFIG.displayHeight)}</select>
+                  </label>
                 </div>
               </div>
             </section>

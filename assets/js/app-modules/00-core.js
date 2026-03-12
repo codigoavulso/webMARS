@@ -2132,6 +2132,29 @@ class MarsEngine {
     return this.memoryBytes.size >>> 0;
   }
 
+  getHeapReservationBytes() {
+    const heapBase = this.memoryMap.heapBase >>> 0;
+    const heapPointer = this.heapPointer >>> 0;
+    if (heapPointer < heapBase) return 0;
+    return (heapPointer - heapBase) >>> 0;
+  }
+
+  getAccountedMemoryUsageBytes() {
+    const used = this.getMemoryUsageBytes();
+    const reservedHeapBytes = this.getHeapReservationBytes();
+    if (!reservedHeapBytes) return used;
+
+    const heapBase = this.memoryMap.heapBase >>> 0;
+    const heapLimit = (heapBase + reservedHeapBytes) >>> 0;
+    let heapMappedBytes = 0;
+    this.memoryBytes.forEach((_value, address) => {
+      const addr = address >>> 0;
+      if (addr >= heapBase && addr < heapLimit) heapMappedBytes += 1;
+    });
+
+    return (used - heapMappedBytes + Math.max(heapMappedBytes, reservedHeapBytes)) >>> 0;
+  }
+
   getMaxMemoryBytes() {
     const configured = Number(this.settings.maxMemoryBytes);
     if (Number.isFinite(configured) && configured > 0) return Math.floor(configured);
@@ -2144,6 +2167,20 @@ class MarsEngine {
     const limit = this.getMaxMemoryBytes();
     if (!Number.isFinite(limit) || limit <= 0) return;
     const used = this.getMemoryUsageBytes();
+    if ((used + growth) > limit) {
+      throw new Error(translateText("Memory limit exceeded: {requested} bytes requested (limit {limit} bytes).", {
+        requested: used + growth,
+        limit
+      }));
+    }
+  }
+
+  ensureHeapReservation(extraBytes = 0) {
+    const growth = Math.max(0, extraBytes | 0);
+    if (!growth) return;
+    const limit = this.getMaxMemoryBytes();
+    if (!Number.isFinite(limit) || limit <= 0) return;
+    const used = this.getAccountedMemoryUsageBytes();
     if ((used + growth) > limit) {
       throw new Error(translateText("Memory limit exceeded: {requested} bytes requested (limit {limit} bytes).", {
         requested: used + growth,
@@ -2428,8 +2465,8 @@ class MarsEngine {
     return output;
   }
 
-  expandPseudoFromReference(statement, firstPass = false) {
-    if (!this.settings.extendedAssembler) return null;
+  expandPseudoFromReference(statement, firstPass = false, allowExtendedAssembler = this.settings.extendedAssembler) {
+    if (!allowExtendedAssembler) return null;
 
     const sourceTokens = tokenizePseudoSourceStatement(statement);
     if (!sourceTokens.length) return null;
@@ -2461,7 +2498,7 @@ class MarsEngine {
     return null;
   }
 
-  expandPseudo(statement, firstPass = false) {
+  expandPseudo(statement, firstPass = false, setOptions = null) {
     const tokens = tokenizeStatement(statement);
     if (!tokens.length) return [];
 
@@ -2522,10 +2559,11 @@ class MarsEngine {
       return `${prefix}${delta >= 0 ? "+" : ""}${delta}(${base})`;
     };
 
-    if (!this.settings.extendedAssembler) return [statement];
+    const allowExtendedAssembler = this.settings.extendedAssembler && (setOptions?.macro !== false);
+    if (!allowExtendedAssembler) return [statement];
 
     if (!MANUAL_PSEUDO_EXPANSION_OPS.has(op)) {
-      const referenceExpanded = this.expandPseudoFromReference(statement, firstPass);
+      const referenceExpanded = this.expandPseudoFromReference(statement, firstPass, allowExtendedAssembler);
       if (Array.isArray(referenceExpanded) && referenceExpanded.length) return referenceExpanded;
     }
 
@@ -3095,9 +3133,53 @@ class MarsEngine {
     }
 
     if (directive === ".set") {
-      if (sizeOnly) {
-        warnings.push({ line: lineNumber, message: translateText("MARS currently ignores the .set directive.") });
+      if (!(state.setOptions && typeof state.setOptions === "object")) {
+        state.setOptions = {
+          reorder: true,
+          at: true,
+          macro: true
+        };
       }
+      if (args.length < 1) {
+        errors.push({ line: lineNumber, message: translateText('".set" requires at least one argument.') });
+        return;
+      }
+
+      const option = String(args[0] || "").trim().toLowerCase();
+      if (!option) {
+        errors.push({ line: lineNumber, message: translateText('".set" requires at least one argument.') });
+        return;
+      }
+
+      if (option === "reorder") {
+        state.setOptions.reorder = true;
+        return;
+      }
+      if (option === "noreorder") {
+        state.setOptions.reorder = false;
+        return;
+      }
+      if (option === "at") {
+        state.setOptions.at = true;
+        return;
+      }
+      if (option === "noat") {
+        state.setOptions.at = false;
+        return;
+      }
+      if (option === "macro") {
+        state.setOptions.macro = true;
+        return;
+      }
+      if (option === "nomacro") {
+        state.setOptions.macro = false;
+        return;
+      }
+
+      warnings.push({
+        line: lineNumber,
+        message: translateText('Unsupported ".set" option "{option}" (ignored).', { option })
+      });
       return;
     }
 
@@ -3489,7 +3571,12 @@ class MarsEngine {
       autoAlignData: true,
       autoAlignKernelData: true,
       currentDataDirective: ".word",
-      labelsMap: labels
+      labelsMap: labels,
+      setOptions: {
+        reorder: true,
+        at: true,
+        macro: true
+      }
     };
     const strictEnabled = this.isStrictMarsCompatibilityEnabled();
     const validateStrictSegmentRange = (segmentName, address, byteLength, lineNumber, contextLabel) => {
@@ -3555,6 +3642,11 @@ class MarsEngine {
       ".ascii", ".asciiz", ".align", ".space", ".extern", ".globl", ".set", ".eqv",
       ".macro", ".end_macro", ".include"
     ]);
+    const hasAtRegister = (statementText) => /(^|[^\w$.])\$at([^\w$.]|$)/i.test(String(statementText || ""));
+    const emitsAtFromPseudo = (sourceStatement, expandedStatements) => {
+      const sourceUsesAt = hasAtRegister(sourceStatement);
+      return expandedStatements.some((item) => hasAtRegister(item)) && !sourceUsesAt;
+    };
 
     lines.forEach((entry) => {
       let statement = entry.statement;
@@ -3617,7 +3709,14 @@ class MarsEngine {
         errors.push({ line: entry.lineNumber, message: translateText("Instruction found in non-text segment.") });
         return;
       }
-      const expanded = this.expandPseudo(statement, true);
+      const expanded = this.expandPseudo(statement, true, pass1State.setOptions);
+      if (pass1State.setOptions?.at === false && emitsAtFromPseudo(statement, expanded)) {
+        errors.push({
+          line: entry.lineNumber,
+          message: translateText('".set noat" forbids pseudo expansion that uses $at.')
+        });
+        return;
+      }
       if (pass1State.segment === "text") {
         if (!validateStrictSegmentRange("text", pass1State.textAddress, expanded.length * 4, entry.lineNumber, "instruction expansion")) return;
         pass1State.textAddress = (pass1State.textAddress + expanded.length * 4) >>> 0;
@@ -3640,7 +3739,12 @@ class MarsEngine {
       autoAlignData: true,
       autoAlignKernelData: true,
       currentDataDirective: ".word",
-      labelsMap: labels
+      labelsMap: labels,
+      setOptions: {
+        reorder: true,
+        at: true,
+        macro: true
+      }
     };
     const unresolvedFixups = [];
 
@@ -3690,7 +3794,14 @@ class MarsEngine {
       }
       if (pass2State.segment !== "text" && pass2State.segment !== "ktext") return;
 
-      const expanded = this.expandPseudo(statement, false);
+      const expanded = this.expandPseudo(statement, false, pass2State.setOptions);
+      if (pass2State.setOptions?.at === false && emitsAtFromPseudo(statement, expanded)) {
+        errors.push({
+          line: entry.lineNumber,
+          message: translateText('".set noat" forbids pseudo expansion that uses $at.')
+        });
+        return;
+      }
       const currentTextAddress = pass2State.segment === "text" ? pass2State.textAddress : pass2State.kernelTextAddress;
       const currentTextSegment = pass2State.segment === "text" ? "text" : "ktext";
       if (!validateStrictSegmentRange(currentTextSegment, currentTextAddress, expanded.length * 4, entry.lineNumber, "instruction emission")) {
@@ -4318,7 +4429,19 @@ class MarsEngine {
         const bytes = this.registers[4] | 0;
         if (bytes < 0) return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("sbrk with negative byte count"));
         const oldHeap = this.heapPointer >>> 0;
-        this.heapPointer = (this.heapPointer + bytes) >>> 0;
+        try {
+          this.ensureHeapReservation(bytes);
+        } catch (error) {
+          return this.raiseException(
+            EXCEPTION_CODES.SYSCALL,
+            error instanceof Error ? error.message : String(error)
+          );
+        }
+        const nextHeap = (this.heapPointer + bytes) >>> 0;
+        if (nextHeap < oldHeap) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("sbrk with negative byte count"));
+        }
+        this.heapPointer = nextHeap;
         this.registers[2] = clamp32(oldHeap);
         return {};
       }
@@ -5222,7 +5345,6 @@ class MarsEngine {
 function createMarsEngine(options = {}) {
   const settings = options?.settings || {};
   const backend = String(settings.coreBackend || DEFAULT_SETTINGS.coreBackend || "js").trim().toLowerCase();
-  const strictCompatibility = settings?.strictMarsCompatibility === true;
   const wasmFactory = typeof window !== "undefined" ? window.WebMarsWasmCore : null;
 
   const wrapBackend = (engine, backendInfo = {}) => {
@@ -5348,7 +5470,7 @@ function createMarsEngine(options = {}) {
     };
   };
 
-  if (!strictCompatibility && backend === "wasm" && wasmFactory && typeof wasmFactory.createEngineSync === "function") {
+  if (backend === "wasm" && wasmFactory && typeof wasmFactory.createEngineSync === "function") {
     try {
       const wasmEngine = wasmFactory.createEngineSync(options);
       if (wasmEngine) {
@@ -5365,7 +5487,7 @@ function createMarsEngine(options = {}) {
 
   return wrapBackend(new MarsEngine(options), {
     backend: "js",
-    backendName: strictCompatibility ? "js-core-strict" : "js-core",
+    backendName: "js-core",
     native: false
   });
 }

@@ -212,21 +212,21 @@ function buildBrowserSuiteSource() {
       const messages = JSON.stringify(assembled.errors || []);
       assert(/strict mars|segment limit/i.test(messages), "Expected strict mode segment limit error.");
       const backend = engine.getBackendInfo ? engine.getBackendInfo() : null;
-      assert(backend && backend.native === false, "Strict mode should disable native execution path.");
+      assert(backend && backend.backend === "wasm", "Expected WASM backend in strict validation path.");
       return {
         backend,
         errors: assembled.errors
       };
     });
 
-    addCase("set_directive_is_ignored_with_warning", async () => {
+    addCase("set_directive_is_parsed_natively", async () => {
       const engine = await createEngineWithWarmup("wasm");
       const assembled = engine.assemble(".set noreorder\n.text\nmain:\nli $v0, 10\nsyscall\n", {
-        sourceName: "set-directive.s"
+        sourceName: "set-directive-native.s"
       });
-      assert(assembled.ok === true, ".set directive should not fail assembly in MARS-compatible mode.");
+      assert(assembled.ok === true, ".set noreorder should assemble successfully.");
       const warningsText = JSON.stringify(assembled.warnings || []);
-      assert(/ignores the \.set directive/i.test(warningsText), "Expected .set ignored warning.");
+      assert(!/ignores the \.set directive/i.test(warningsText), "Legacy '.set ignored' warning should not be emitted.");
       return {
         warnings: assembled.warnings || []
       };

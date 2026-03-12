@@ -93,6 +93,36 @@
   <h1>webMARS · changelog</h1>
   <p class="subtitle">https://github.com/codigoavulso/webMARS/</p>
  
+  <!-- 0.4.2 (2026) -->
+  <section class="release">
+    <div class="release-header"><span>v0.4.2</span><span>2026-03-12</span></div>
+    <div class="release-body">
+      <h3>Mejoras de UI y Usabilidad</h3>
+      <ul>
+        <li>El snap de ventanas fue refinado (distancia pegajosa de 20 px) con arrastre libre por p&iacute;xel fuera de zonas de snap, eliminando el efecto de rejilla forzada.</li>
+        <li>Se unificaron los botones de maximizar entre popups y tools, con mejor comportamiento de clamp en desktop/mobile.</li>
+        <li>La configuraci&oacute;n de Bitmap Display se compact&oacute;, se reordenaron controles y se ajust&oacute; el tama&ntilde;o inicial para una mejor ergonom&iacute;a al abrir.</li>
+        <li>Se mejor&oacute; la legibilidad de Data Segment en pantallas peque&ntilde;as (simplificaci&oacute;n de encabezados y estrategia de crop), junto con pulido visual del modo separado de <code>Mars Messages</code>/<code>Run I/O</code>.</li>
+      </ul>
+
+      <h3>Correcci&oacute;n de Errores Durante la Simulaci&oacute;n</h3>
+      <ul>
+        <li>Se corrigieron casos l&iacute;mite en los controles de ejecuci&oacute;n (<code>Go</code>, <code>Pause</code>, <code>Step</code>, <code>Backstep</code> y <code>Stop</code>) tras assemble, restauraci&oacute;n de sesi&oacute;n y espera de entrada.</li>
+        <li>Se resolvi&oacute; la regresi&oacute;n del popup de syscall de entrada en modo step-by-step: tras enviar el valor, los botones se recuperan correctamente sin entrar en estado roto de ejecuci&oacute;n.</li>
+        <li>El runtime qued&oacute; m&aacute;s resistente ante excepciones de render UI que pod&iacute;an dejar controles deshabilitados.</li>
+        <li>Se normaliz&oacute; la emisi&oacute;n de l&iacute;neas en <code>Mars Messages</code> y <code>Run I/O</code>, reduciendo saltos de l&iacute;nea en blanco excesivos.</li>
+      </ul>
+
+      <h3>&Uacute;ltimos Ajustes de Paridad MARS MIPS 4.5</h3>
+      <ul>
+        <li>Se completaron las Settings pendientes: <code>Show Labels Window</code> y <code>Program arguments provided to MIPS program</code>, incluyendo conexi&oacute;n completa con runtime.</li>
+        <li>El flujo de argumentos de programa se aline&oacute; con el comportamiento esperado en MARS Java y se document&oacute; con ejemplos de prueba multiling&uuml;es.</li>
+        <li>La restauraci&oacute;n por autoload ahora reabre el c&oacute;digo en modo Edit y exige <code>Assemble</code> expl&iacute;cito, evitando recuperar estados assembled obsoletos.</li>
+        <li>Se aplicaron ajustes finales de consistencia en men&uacute;s y di&aacute;logos respecto al patr&oacute;n de interacci&oacute;n de MARS Java.</li>
+      </ul>
+    </div>
+  </section>
+
   <!-- 0.4.1 (2026) -->
   <section class="release">
     <div class="release-header"><span>v0.4.1</span><span>2026-03-11</span></div>

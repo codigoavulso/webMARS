@@ -1020,6 +1020,6 @@
   referenceData.meta = {
       ...(referenceData.meta || {}),
       source: "../Syscall.properties + mars/mips/instructions/syscalls/*.java",
-      generatedAt: "2026-03-10T20:29:57.625Z",
+      generatedAt: "2026-03-11T21:12:17.970Z",
   };
 })();

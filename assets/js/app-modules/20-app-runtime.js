@@ -129,12 +129,54 @@ const initialMemoryMap = {
 
 const refs = renderLayout(document.querySelector("#app"));
 const windowManager = createWindowManager(refs);
-const dialogSystem = createDialogSystem(windowManager, refs.windows.desktop);
-const SESSION_STORAGE_KEY = "mars45-web-session-v2";
+const transientDialogSystems = new Set();
+let transientDialogCounter = 0;
+
+function createTransientDialogSystem(windowOptions = {}) {
+  transientDialogCounter += 1;
+  const prefix = String(windowOptions.windowIdPrefix || "window-dialog-system").trim() || "window-dialog-system";
+  const { windowIdPrefix, ...rest } = windowOptions;
+  const dialogSystem = createDialogSystem(windowManager, refs.windows.desktop, {
+    ...rest,
+    windowId: `${prefix}-${transientDialogCounter}`
+  });
+  transientDialogSystems.add(dialogSystem);
+  return dialogSystem;
+}
+
+async function runDialogPrompt(options = {}, windowOptions = {}) {
+  const dialogSystem = createTransientDialogSystem(windowOptions);
+  try {
+    return await dialogSystem.prompt(options);
+  } finally {
+    transientDialogSystems.delete(dialogSystem);
+    dialogSystem.destroy?.();
+  }
+}
+
+async function runDialogConfirm(options = {}, windowOptions = {}) {
+  const dialogSystem = createTransientDialogSystem(windowOptions);
+  try {
+    return await dialogSystem.confirm(options);
+  } finally {
+    transientDialogSystems.delete(dialogSystem);
+    dialogSystem.destroy?.();
+  }
+}
+
+async function runDialogForm(options = {}, windowOptions = {}) {
+  const dialogSystem = createTransientDialogSystem(windowOptions);
+  try {
+    return await dialogSystem.form(options);
+  } finally {
+    transientDialogSystems.delete(dialogSystem);
+    dialogSystem.destroy?.();
+  }
+}
+const SESSION_STORAGE_KEY = "mars45-web-session-v3";
 const LEGACY_SESSION_STORAGE_KEY = "mars45-web-session-v1";
 const SESSION_SERVER_DRAFT_KEY = "mars45-web-session-server-draft-v1";
-const SESSION_SCHEMA_VERSION = 2;
-const SESSION_MACHINE_SCHEMA_VERSION = 1;
+const SESSION_SCHEMA_VERSION = 3;
 const SESSION_MAX_AUTOSAVED_BACKSTEPS = 10;
 const SESSION_PERSIST_DEBOUNCE_MS = 180;
 const SESSION_PERSIST_INTERVAL_MS = 2 * 60 * 1000;
@@ -143,6 +185,15 @@ const ABOUT_VISITED_KEY = "mars45-web-about-visited-v1";
 const ONLINE_SOURCE_STORAGE_KEY = "mars45-web-online-source-folder-v1";
 const ONLINE_SOURCE_MAX_BYTES = 50 * 1024;
 const textEncoder = typeof TextEncoder === "function" ? new TextEncoder() : null;
+
+function getExperimentalFlags() {
+  const scope = typeof window !== "undefined" ? window : globalThis;
+  return (scope && typeof scope.WebMarsExperimental === "object" && scope.WebMarsExperimental) || {};
+}
+
+function isMachineSessionAutosaveEnabled() {
+  return getExperimentalFlags().machineSessionAutosave === true;
+}
 
 
 function showAboutOnFirstVisit() {
@@ -176,23 +227,6 @@ function normalizeMachineStateEntry(state) {
   return state;
 }
 
-function normalizeMachineSessionData(machine) {
-  if (!machine || typeof machine !== "object") return null;
-  const current = normalizeMachineStateEntry(machine.current);
-  if (!current) return null;
-  const backsteps = Array.isArray(machine.backsteps)
-    ? machine.backsteps
-        .map((entry) => normalizeMachineStateEntry(entry))
-        .filter(Boolean)
-        .slice(-SESSION_MAX_AUTOSAVED_BACKSTEPS)
-    : [];
-  return {
-    version: Number.isFinite(machine.version) ? (machine.version | 0) : SESSION_MACHINE_SCHEMA_VERSION,
-    current,
-    backsteps
-  };
-}
-
 function normalizeWindowSessionData(windowState) {
   if (!windowState || typeof windowState !== "object") return null;
   const windows = Array.isArray(windowState.windows)
@@ -223,9 +257,8 @@ function loadWorkspaceSession() {
       if (!files.length) continue;
       const activeFileId = String(parsed.activeFileId || files[0].id);
       const active = files.find((file) => file.id === activeFileId) || files[0];
-      const machine = normalizeMachineSessionData(parsed.machine);
       const windowState = normalizeWindowSessionData(parsed.windowState);
-      return { files, activeFileId: active.id, active, machine, windowState };
+      return { files, activeFileId: active.id, active, windowState };
     } catch {
       // Try next key.
     }
@@ -264,12 +297,20 @@ const postMarsRaw = (template, variables = {}, options = {}) => (
 const postMarsMessage = (template, variables = {}, options = {}) => (
   messagesPane.postMars(`${translateText(template, variables)}\n`, { translate: false, ...options })
 );
+const postMarsSystemLine = (template, variables = {}, options = {}) => {
+  const prefix = messagesPane.marsEndsWithNewline?.() === false ? "\n" : "";
+  messagesPane.postMars(`${prefix}${translateText(template, variables)}\n`, { translate: false, ...options });
+};
 const postRunRaw = (template, variables = {}, options = {}) => (
   messagesPane.postRun(translateText(template, variables), { translate: false, ...options })
 );
 const postRunMessage = (template, variables = {}, options = {}) => (
   messagesPane.postRun(`${translateText(template, variables)}\n`, { translate: false, ...options })
 );
+const postRunSystemLine = (template, variables = {}, options = {}) => {
+  const prefix = messagesPane.runEndsWithNewline?.() === false ? "\n" : "";
+  messagesPane.postRun(`${prefix}${translateText(template, variables)}\n`, { translate: false, ...options });
+};
 const helpSystem = createHelpSystem(refs, messagesPane, windowManager);
 const engine = createMarsEngine({ settings: runtimeSettings, memoryMap: initialMemoryMap });
 let activeMemoryConfigId = memoryPresets[initialMemorySelection.id] ? initialMemorySelection.id : "Default";
@@ -298,6 +339,7 @@ let runStepCarry = 0;
 let runLastUiSyncAt = 0;
 let runPausedForInput = false;
 let resumeRunAfterInput = false;
+let backstepDepthEstimate = 0;
 let allowPageUnload = false;
 const RUN_LOOP_INTERVAL_MS = 16;
 const RUN_LOOP_MAX_BATCH = 240;
@@ -309,14 +351,18 @@ const RUN_LOOP_TIME_BUDGET_MS_FAST = 6;
 const RUN_LOOP_UI_SYNC_INTERVAL_MS_INTERACTIVE = 66;
 const RUN_LOOP_UI_SYNC_INTERVAL_MS_FAST = 33;
 const RUN_LOOP_MACHINE_CAPTURE_INTERVAL_MS = 220;
+const RUN_LOOP_MACHINE_FULL_CAPTURE_INTERVAL_MS = 2200;
+const RUN_LOOP_TOOL_SYNC_INTERVAL_MS_NO_INTERACTION = 120;
 
 let machineCurrentState = null;
 let machineCurrentSignature = "";
 let machineBackstepHistory = [];
 let lastMachineCaptureAt = 0;
+let lastMachineFullCaptureAt = 0;
 let machineCurrentProgramMarker = "";
 let lastMachinePersistScheduleAt = 0;
 let autosaveBackstepFallbackArmed = false;
+let restoredBackstepFallbackActive = false;
 let persistTimer = null;
 let lastTrackedFilesRef = store.getState().files;
 let lastTrackedActiveId = store.getState().activeFileId;
@@ -373,9 +419,11 @@ function resetMachineSessionTracking() {
   machineCurrentSignature = "";
   machineBackstepHistory = [];
   lastMachineCaptureAt = 0;
+  lastMachineFullCaptureAt = 0;
   machineCurrentProgramMarker = "";
   lastMachinePersistScheduleAt = 0;
   autosaveBackstepFallbackArmed = false;
+  restoredBackstepFallbackActive = false;
 }
 
 function getSnapshotProgramMarker(snapshot) {
@@ -391,6 +439,7 @@ function getSnapshotProgramMarker(snapshot) {
 }
 
 function trackMachineStateCheckpoint(snapshot = null, options = {}) {
+  if (!isMachineSessionAutosaveEnabled()) return;
   if (!canPersistMachineState()) return;
   const effectiveSnapshot = snapshot || engine.getSnapshot({
     includeDataRows: false,
@@ -421,6 +470,14 @@ function trackMachineStateCheckpoint(snapshot = null, options = {}) {
       ? RUN_LOOP_MACHINE_CAPTURE_INTERVAL_MS
       : 0);
   if (interval > 0 && (now - lastMachineCaptureAt) < interval) return;
+  if (
+    options.force !== true
+    && (runActive || options.fastMode === true || options.noInteraction === true)
+    && (now - lastMachineFullCaptureAt) < RUN_LOOP_MACHINE_FULL_CAPTURE_INTERVAL_MS
+  ) {
+    lastMachineCaptureAt = now;
+    return;
+  }
 
   const state = exportMachineState({
     includeProgram: false,
@@ -445,6 +502,7 @@ function trackMachineStateCheckpoint(snapshot = null, options = {}) {
   machineCurrentState = state;
   machineCurrentSignature = signature;
   lastMachineCaptureAt = now;
+  lastMachineFullCaptureAt = now;
   machineCurrentProgramMarker = marker || machineCurrentProgramMarker;
   if (!options.skipPersistSchedule) {
     const minPersistInterval = runActive ? 1500 : 0;
@@ -453,6 +511,12 @@ function trackMachineStateCheckpoint(snapshot = null, options = {}) {
       scheduleWorkspacePersist();
     }
   }
+}
+
+function forceMachineStateCheckpoint() {
+  if (!isMachineSessionAutosaveEnabled()) return;
+  if (!canPersistMachineState()) return;
+  trackMachineStateCheckpoint(null, { force: true });
 }
 
 function stateHasSerializedProgram(state) {
@@ -477,6 +541,7 @@ function ensureProgramLoadedForStateRestore() {
 
 function restoreMachineSession(machineSession) {
   autosaveBackstepFallbackArmed = false;
+  restoredBackstepFallbackActive = false;
   if (!canPersistMachineState()) return false;
   if (!machineSession || typeof machineSession !== "object") return false;
   const current = normalizeMachineStateEntry(machineSession.current);
@@ -526,9 +591,11 @@ function restoreMachineSession(machineSession) {
   });
   machineCurrentSignature = computeMachineStateSignature(machineCurrentState);
   lastMachineCaptureAt = Date.now();
+  lastMachineFullCaptureAt = lastMachineCaptureAt;
   lastMachinePersistScheduleAt = lastMachineCaptureAt;
   machineCurrentProgramMarker = getSnapshotProgramMarker(restoredSnapshot);
   autosaveBackstepFallbackArmed = machineBackstepHistory.length > 0;
+  restoredBackstepFallbackActive = machineBackstepHistory.length > 0;
   return true;
 }
 
@@ -536,6 +603,7 @@ function backstepFromAutosaveHistory() {
   if (!canPersistMachineState() || !machineBackstepHistory.length) return false;
   if (!ensureProgramLoadedForStateRestore()) {
     machineBackstepHistory = [];
+    restoredBackstepFallbackActive = false;
     scheduleWorkspacePersist();
     return false;
   }
@@ -547,14 +615,19 @@ function backstepFromAutosaveHistory() {
   if (!restored) {
     machineBackstepHistory = [];
     autosaveBackstepFallbackArmed = false;
+    restoredBackstepFallbackActive = false;
     scheduleWorkspacePersist();
     return false;
   }
   machineBackstepHistory.pop();
-  if (!machineBackstepHistory.length) autosaveBackstepFallbackArmed = false;
+  if (!machineBackstepHistory.length) {
+    autosaveBackstepFallbackArmed = false;
+    restoredBackstepFallbackActive = false;
+  }
   machineCurrentState = previous;
   machineCurrentSignature = computeMachineStateSignature(previous);
   lastMachineCaptureAt = Date.now();
+  lastMachineFullCaptureAt = lastMachineCaptureAt;
   lastMachinePersistScheduleAt = lastMachineCaptureAt;
   machineCurrentProgramMarker = getSnapshotProgramMarker(engine.getSnapshot({
     includeDataRows: false,
@@ -565,27 +638,8 @@ function backstepFromAutosaveHistory() {
   return true;
 }
 
-function buildMachineSessionPayload() {
-  if (!canPersistMachineState()) return null;
-  trackMachineStateCheckpoint(null, { force: true, skipPersistSchedule: true });
-  const current = exportMachineState({
-    includeProgram: true,
-    includeBreakpoints: true,
-    includeExecutionPlan: false
-  });
-  if (!current || !current.assembled) return null;
-
-  return {
-    version: SESSION_MACHINE_SCHEMA_VERSION,
-    updatedAt: Date.now(),
-    current,
-    backsteps: machineBackstepHistory.slice(-SESSION_MAX_AUTOSAVED_BACKSTEPS)
-  };
-}
-
 function buildServerDraftPayload(payload) {
   const files = Array.isArray(payload?.files) ? payload.files : [];
-  const machine = payload?.machine && typeof payload.machine === "object" ? payload.machine : null;
   const windowState = payload?.windowState && typeof payload.windowState === "object" ? payload.windowState : null;
   const windowEntries = Array.isArray(windowState?.windows) ? windowState.windows : [];
   const openToolIds = windowEntries
@@ -600,15 +654,6 @@ function buildServerDraftPayload(payload) {
       name: String(file.name || ""),
       bytes: String(file.source || "").length
     })),
-    machine: machine
-      ? {
-          assembled: machine.current?.assembled === true,
-          halted: machine.current?.halted === true,
-          steps: Number.isFinite(machine.current?.steps) ? (machine.current.steps | 0) : 0,
-          pc: Number.isFinite(machine.current?.pc) ? (machine.current.pc >>> 0) : 0,
-          backsteps: Array.isArray(machine.backsteps) ? machine.backsteps.length : 0
-        }
-      : null,
     windows: {
       total: windowEntries.length,
       openToolIds
@@ -678,19 +723,19 @@ function formatDiagnosticMessage(kind, diagnostic, fallbackFileName = "") {
 
 function postExecutionSuccess(actionLabel, haltReason = "exit") {
   if (haltReason === "cliff") {
-    postMarsRaw(
+    postMarsSystemLine(
       actionLabel === translateText("Step")
-        ? "{action}: execution terminated due to null instruction.\n\n"
-        : "{action}: execution terminated by null instruction.\n\n",
+        ? "{action}: execution terminated due to null instruction."
+        : "{action}: execution terminated by null instruction.",
       { action: actionLabel }
     );
-    postRunRaw("\n-- program is finished running (dropped off bottom) --\n\n");
+    postRunSystemLine("-- program is finished running (dropped off bottom) --");
     messagesPane.selectRunTab?.();
     return;
   }
 
-  postMarsRaw("{action}: execution completed successfully.\n\n", { action: actionLabel });
-  postRunRaw("\n-- program is finished running --\n\n");
+  postMarsSystemLine("{action}: execution completed successfully.", { action: actionLabel });
+  postRunSystemLine("-- program is finished running --");
   messagesPane.selectRunTab?.();
 }
 
@@ -700,7 +745,7 @@ function postExecutionError(actionLabel, message) {
       message: formatDiagnosticMessage("error", { line: 0, message })
     });
   }
-  postMarsRaw("{action}: execution terminated with errors.\n\n", { action: actionLabel });
+  postMarsSystemLine("{action}: execution terminated with errors.", { action: actionLabel });
   messagesPane.selectMarsTab?.();
 }
 
@@ -786,14 +831,21 @@ function markPausedForInput(autoResume = false) {
   runLastUiSyncAt = 0;
   runPausedForInput = true;
   resumeRunAfterInput = autoResume === true;
-  syncSnapshot(engine.getSnapshot());
+  syncSnapshot(engine.getSnapshot(), { force: true });
 }
 
 function tryResumeRunAfterInput() {
-  if (!runPausedForInput || !resumeRunAfterInput || runActive) return;
+  if (!runPausedForInput || runActive) return;
+  if (!resumeRunAfterInput) {
+    const snapshot = engine.getSnapshot();
+    clearInputPauseState();
+    refreshRuntimeControls(snapshot);
+    return;
+  }
   const snapshot = engine.getSnapshot();
   if (!snapshot.assembled || snapshot.halted) {
     clearInputPauseState();
+    refreshRuntimeControls(snapshot);
     return;
   }
   runPausedForInput = false;
@@ -802,7 +854,7 @@ function tryResumeRunAfterInput() {
   runLastTickAt = performance.now();
   runStepCarry = 0;
   runLastUiSyncAt = 0;
-  syncButtons(snapshot);
+  refreshRuntimeControls(snapshot);
   runLoopTick();
 }
 
@@ -812,7 +864,7 @@ function echoPopupInput(value) {
 }
 
 function getPopupRunIoContext() {
-  const recent = messagesPane.getRecentRunLines?.(4) || "";
+  const recent = messagesPane.getRecentRunLines?.(3) || "";
   return recent.trim().length ? recent : "";
 }
 
@@ -825,14 +877,16 @@ function consumePopupPrompt(request, label, fallback) {
       value: null
     };
     popupDialogState.input = ticket;
-    void dialogSystem.prompt({
+    void runDialogPrompt({
       title: translateText("Input syscall {service}", { service: request.service || "" }).trim(),
       message: label || translateText("Input"),
       contextText: getPopupRunIoContext(),
-      contextLabel: translateText("Recent Run I/O"),
+      contextLabel: "",
       defaultValue: fallback,
       confirmLabel: translateText("Send"),
       cancelLabel: translateText("Cancel")
+    }, {
+      windowIdPrefix: "window-popup-input"
     }).then((result) => {
       if (popupDialogState.input !== ticket) return;
       ticket.ready = true;
@@ -864,12 +918,14 @@ function consumePopupConfirm(request, message) {
       value: 2
     };
     popupDialogState.confirm = ticket;
-    void dialogSystem.prompt({
+    void runDialogPrompt({
       title: translateText("Confirm syscall {service}", { service: request.service || "" }).trim(),
       message: translateText("{message}\n\nType: yes, no, or cancel", { message }),
       defaultValue: "yes",
       confirmLabel: translateText("Send"),
       cancelLabel: translateText("Cancel")
+    }, {
+      windowIdPrefix: "window-popup-confirm"
     }).then((result) => {
       if (popupDialogState.confirm !== ticket) return;
       ticket.ready = true;
@@ -907,7 +963,7 @@ function consumePopupMessage(request) {
           : messageType === 4 ? "Question"
             : "Message";
 
-    void dialogSystem.confirm({
+    void runDialogConfirm({
       title: translateText("{typeLabel} syscall {service}", {
         typeLabel: translateText(typeLabel),
         service: request?.service || ""
@@ -915,6 +971,8 @@ function consumePopupMessage(request) {
       message,
       confirmLabel: translateText("OK"),
       cancelLabel: translateText("Close")
+    }, {
+      windowIdPrefix: "window-popup-message"
     }).then(() => {
       if (popupDialogState.message !== ticket) return;
       ticket.ready = true;
@@ -1002,6 +1060,7 @@ messagesPane.setInputSubmittedHandler(() => {
 
 function applyUiPreferences(nextPreferences) {
   refs.root.classList.toggle("hide-labels-window", !nextPreferences.showLabelsWindow);
+  refs.root.classList.toggle("split-messages-runio", nextPreferences.splitMessagesRunIo === true);
 
   if (refs.execute.dataHexAddresses) {
     refs.execute.dataHexAddresses.checked = nextPreferences.displayAddressesHex;
@@ -1094,6 +1153,58 @@ function updateNoInteractionUiMode() {
   refs.root.classList.toggle("run-no-interaction", runActive && isNoInteractionMode());
 }
 
+let lastControlSyncDebug = null;
+let lastControlSyncError = null;
+let backstepButtonRecoveryPending = false;
+let runtimeControlRecoveryTimer = null;
+
+function refreshRuntimeControls(snapshot = null) {
+  const effectiveSnapshot = snapshot ?? engine.getSnapshot();
+  lastControlSyncDebug = {
+    source: snapshot ? "provided" : "engine",
+    steps: Number(effectiveSnapshot?.steps) || 0,
+    backstepDepth: Number(effectiveSnapshot?.backstepDepth) || 0,
+    canBackstep: hasAvailableBackstep(effectiveSnapshot)
+  };
+  syncButtons(effectiveSnapshot);
+  updateNoInteractionUiMode();
+}
+
+function scheduleBackstepButtonRecovery() {
+  if (!refs?.buttons?.backstep) return;
+  if (backstepButtonRecoveryPending) return;
+  backstepButtonRecoveryPending = true;
+  Promise.resolve().then(() => {
+    backstepButtonRecoveryPending = false;
+    const liveSnapshot = engine.getSnapshot();
+    const runBusy = runActive || runPausedForInput;
+    refs.buttons.backstep.disabled = runBusy || !hasAvailableBackstep(liveSnapshot);
+  });
+}
+
+function scheduleRuntimeControlRecovery(maxAttempts = 8, delayMs = 25) {
+  if (typeof window === "undefined") return;
+  if (runtimeControlRecoveryTimer !== null) {
+    window.clearTimeout(runtimeControlRecoveryTimer);
+    runtimeControlRecoveryTimer = null;
+  }
+
+  let attempts = 0;
+  const runRecovery = () => {
+    attempts += 1;
+    refreshRuntimeControls();
+    const liveSnapshot = engine.getSnapshot();
+    const desiredBackstepDisabled = (runActive || runPausedForInput) || !hasAvailableBackstep(liveSnapshot);
+    if (refs?.buttons?.backstep?.disabled !== desiredBackstepDisabled && attempts < maxAttempts) {
+      runtimeControlRecoveryTimer = window.setTimeout(runRecovery, Math.max(0, delayMs | 0));
+      return;
+    }
+    runtimeControlRecoveryTimer = null;
+  };
+
+  runtimeControlRecoveryTimer = window.setTimeout(runRecovery, 0);
+}
+
 function isMobileRunSpeedDropdownVisible() {
   const select = refs.controls.runSpeedSelectMobile;
   if (!select || typeof window === "undefined") return false;
@@ -1134,10 +1245,8 @@ function syncButtons(snapshot) {
   const halted = snapshot?.halted === true;
   const hasProgramRows = Array.isArray(snapshot?.textRows) && snapshot.textRows.length > 0;
   const runBusy = runActive || runPausedForInput;
-  const backstepDepth = Number(snapshot?.backstepDepth) || 0;
-  const autosavedBackstepDepth = autosaveBackstepFallbackArmed ? machineBackstepHistory.length : 0;
   const canExecute = assembled && hasProgramRows && !halted;
-  const canBackstep = assembled && hasProgramRows && ((backstepDepth > 0) || (autosavedBackstepDepth > 0));
+  const canBackstep = hasAvailableBackstep(snapshot);
 
   refs.buttons.assemble.disabled = runBusy;
   refs.buttons.reset.disabled = runBusy || !assembled;
@@ -1145,12 +1254,115 @@ function syncButtons(snapshot) {
   refs.buttons.step.disabled = runBusy || !canExecute;
   refs.buttons.backstep.disabled = runBusy || !canBackstep;
   refs.buttons.pause.disabled = !runActive;
-  refs.buttons.stop.disabled = !(runActive || runPausedForInput || assembled);
+  refs.buttons.stop.disabled = !(runActive || runPausedForInput);
   if (refs.buttons.undo) refs.buttons.undo.disabled = runBusy;
   if (refs.buttons.redo) refs.buttons.redo.disabled = runBusy;
 }
 
 let previousSnapshot = null;
+
+function getBackstepHistoryLimit() {
+  const parsed = Number(runtimeSettings?.maxBacksteps);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return Math.max(0, Math.floor(parsed));
+}
+
+function clampBackstepEstimate(value) {
+  const limit = getBackstepHistoryLimit();
+  if (limit <= 0) return 0;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return Math.min(limit, Math.floor(parsed));
+}
+
+function incrementBackstepEstimate(delta = 1) {
+  const parsed = Number(delta);
+  if (!Number.isFinite(parsed) || parsed <= 0) return;
+  backstepDepthEstimate = clampBackstepEstimate(backstepDepthEstimate + parsed);
+}
+
+function decrementBackstepEstimate(delta = 1) {
+  const parsed = Number(delta);
+  if (!Number.isFinite(parsed) || parsed <= 0) return;
+  backstepDepthEstimate = clampBackstepEstimate(Math.max(0, backstepDepthEstimate - parsed));
+}
+
+function syncBackstepEstimateFromSnapshot(snapshot) {
+  if (snapshot?.assembled !== true || getBackstepHistoryLimit() <= 0) {
+    backstepDepthEstimate = 0;
+    return;
+  }
+
+  const snapshotDepth = clampBackstepEstimate(Number(snapshot?.backstepDepth) || 0);
+  if (snapshotDepth > 0) {
+    backstepDepthEstimate = snapshotDepth;
+    return;
+  }
+
+  if ((Number(snapshot?.steps) || 0) === 0) {
+    backstepDepthEstimate = 0;
+    return;
+  }
+
+  backstepDepthEstimate = clampBackstepEstimate(backstepDepthEstimate);
+}
+
+function hasAvailableBackstep(snapshot) {
+  const assembled = snapshot?.assembled === true;
+  const hasProgramRows = Array.isArray(snapshot?.textRows) && snapshot.textRows.length > 0;
+  if (!assembled || !hasProgramRows) return false;
+  const backstepDepth = Number(snapshot?.backstepDepth) || 0;
+  if (backstepDepth > 0) return true;
+  return getBackstepHistoryLimit() > 0 && clampBackstepEstimate(backstepDepthEstimate) > 0;
+}
+
+function updateBackstepButtonImmediate(enabled) {
+  if (!refs?.buttons?.backstep) return;
+  const runBusy = runActive || runPausedForInput;
+  refs.buttons.backstep.disabled = runBusy || enabled !== true;
+}
+
+function chooseFresherSnapshot(preferredSnapshot = null, liveSnapshot = null) {
+  const preferred = preferredSnapshot && typeof preferredSnapshot === "object" ? preferredSnapshot : null;
+  const live = liveSnapshot && typeof liveSnapshot === "object" ? liveSnapshot : null;
+  if (!preferred) return live;
+  if (!live) return preferred;
+
+  const preferredSteps = Number(preferred.steps) || 0;
+  const liveSteps = Number(live.steps) || 0;
+  if (liveSteps !== preferredSteps) {
+    return liveSteps > preferredSteps ? live : preferred;
+  }
+
+  const preferredBackstepDepth = Number(preferred.backstepDepth) || 0;
+  const liveBackstepDepth = Number(live.backstepDepth) || 0;
+  if (liveBackstepDepth !== preferredBackstepDepth) {
+    return liveBackstepDepth > preferredBackstepDepth ? live : preferred;
+  }
+
+  const preferredRows = Array.isArray(preferred.textRows) ? preferred.textRows.length : 0;
+  const liveRows = Array.isArray(live.textRows) ? live.textRows.length : 0;
+  if (liveRows !== preferredRows) {
+    return liveRows > preferredRows ? live : preferred;
+  }
+
+  return preferred;
+}
+
+function resolveStableRuntimeSnapshot(preferredSnapshot = null, options = {}) {
+  let resolved = chooseFresherSnapshot(preferredSnapshot, engine.getSnapshot());
+  const expectBackstep = options.expectBackstep === true;
+  if (!expectBackstep || hasAvailableBackstep(resolved)) {
+    return resolved;
+  }
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    resolved = chooseFresherSnapshot(resolved, engine.getSnapshot());
+    if (hasAvailableBackstep(resolved)) return resolved;
+  }
+
+  return resolved;
+}
 
 function computeSnapshotDiff(snapshot, options = {}) {
   const changedRegisters = new Set();
@@ -1183,8 +1395,25 @@ function computeSnapshotDiff(snapshot, options = {}) {
     return { changedRegisters, changedDataAddresses };
   }
 
+  const previousSteps = Number(previousSnapshot.steps) || 0;
+  const currentSteps = Number(snapshot?.steps) || 0;
   const previousData = previousSnapshot.memoryWords ?? new Map();
   const currentData = snapshot.memoryWords ?? new Map();
+  const lastWriteAddress = Number.isFinite(snapshot?.lastMemoryWriteAddress)
+    ? (snapshot.lastMemoryWriteAddress >>> 0)
+    : null;
+
+  if (lastWriteAddress != null) {
+    const before = previousData.get(lastWriteAddress) ?? 0;
+    const after = currentData.get(lastWriteAddress) ?? 0;
+    if (before !== after) changedDataAddresses.add(lastWriteAddress);
+    return { changedRegisters, changedDataAddresses };
+  }
+
+  if (currentSteps > previousSteps) {
+    return { changedRegisters, changedDataAddresses };
+  }
+
   const candidateAddresses = new Set([...previousData.keys(), ...currentData.keys()]);
   candidateAddresses.forEach((address) => {
     const before = previousData.get(address) ?? 0;
@@ -1202,6 +1431,7 @@ function createSnapshotDiffBaseline(snapshot, options = {}) {
     : new Map();
 
   return {
+    steps: Number(snapshot?.steps) || 0,
     registers: Array.isArray(snapshot.registers)
       ? snapshot.registers.map((register) => ({ ...register }))
       : [],
@@ -1217,47 +1447,89 @@ function syncSnapshot(snapshot, options = {}) {
   const suppressPulse = options.suppressPulse === true;
   const skipToolSync = options.skipToolSync === true;
   const preservePreviousSnapshot = options.preservePreviousSnapshot === true;
+  let syncError = null;
+  const captureSyncError = (error) => {
+    const message = error instanceof Error ? (error.stack || error.message) : String(error);
+    if (!syncError) syncError = message;
+    if (typeof console !== "undefined" && typeof console.error === "function") {
+      console.error(error);
+    }
+  };
   const diff = computeSnapshotDiff(snapshot, {
     ...options,
     skipDiff: skipHeavyRender
   });
+  const currentPreferences = store.getState().preferences || preferences;
+
+  syncBackstepEstimateFromSnapshot(snapshot);
+  syncButtons(snapshot);
+  lastControlSyncDebug = {
+    source: "syncSnapshot",
+    steps: Number(snapshot?.steps) || 0,
+    backstepDepth: Number(snapshot?.backstepDepth) || 0,
+    canBackstep: hasAvailableBackstep(snapshot)
+  };
+  updateNoInteractionUiMode();
 
   if (!skipHeavyRender) {
-    executePane.render(snapshot, {
-      changedDataAddresses: diff.changedDataAddresses,
-      focusDataAddress: snapshot.lastMemoryWriteAddress,
-      disableHighlights: noInteraction,
-      disableAutoScroll: noInteraction
-    });
-    registersPane.render(snapshot, diff.changedRegisters, {
-      disableHighlights: noInteraction,
-      disableAutoScroll: noInteraction,
-      displayValuesHex: preferences.displayValuesHex === true
-    });
-  }
-
-  refs.status.runtimePc.textContent = translateText("PC: {pc}", { pc: snapshot.pcHex });
-  refs.status.runtimeSteps.textContent = translateText("steps: {steps}", { steps: snapshot.steps });
-
-  if (!snapshot.assembled) setAssemblyTag("warn", "not assembled");
-  else if (snapshot.errors.length) setAssemblyTag("error", "assembly errors");
-  else if (snapshot.warnings.length) setAssemblyTag("warn", "assembled with warnings");
-  else if (snapshot.halted) setAssemblyTag("warn", "program halted");
-  else setAssemblyTag("ok", "assembled");
-
-  if (!suppressPulse && !skipHeavyRender) {
-    if (snapshot.textRows.some((row) => row.isCurrent) || diff.changedDataAddresses.size) {
-      windowManager.pulse("window-main");
+    try {
+      executePane.render(snapshot, {
+        changedDataAddresses: diff.changedDataAddresses,
+        focusDataAddress: snapshot.lastMemoryWriteAddress,
+        disableHighlights: noInteraction,
+        disableAutoScroll: noInteraction,
+        displayAddressesHex: currentPreferences.displayAddressesHex === true
+      });
+    } catch (error) {
+      captureSyncError(error);
     }
-    if (diff.changedRegisters.size) windowManager.pulse("window-registers");
+    try {
+      registersPane.render(snapshot, diff.changedRegisters, {
+        disableHighlights: noInteraction,
+        disableAutoScroll: noInteraction,
+        displayValuesHex: currentPreferences.displayValuesHex === true
+      });
+    } catch (error) {
+      captureSyncError(error);
+    }
   }
 
-  syncButtons(snapshot);
-  updateNoInteractionUiMode();
-  if (!skipToolSync) toolManager.onSnapshot(snapshot);
-  trackMachineStateCheckpoint(snapshot, options);
-  store.setState({ assembled: snapshot.assembled, halted: snapshot.halted, running: runActive });
-  if (!preservePreviousSnapshot) previousSnapshot = createSnapshotDiffBaseline(snapshot, options);
+  try {
+    refs.status.runtimePc.textContent = translateText("PC: {pc}", {
+      pc: formatRuntimeAddress(snapshot.pc, snapshot.pcHex, currentPreferences.displayAddressesHex === true)
+    });
+    refs.status.runtimeSteps.textContent = translateText("steps: {steps}", { steps: snapshot.steps });
+
+    if (!snapshot.assembled) setAssemblyTag("warn", "not assembled");
+    else if (snapshot.errors.length) setAssemblyTag("error", "assembly errors");
+    else if (snapshot.warnings.length) setAssemblyTag("warn", "assembled with warnings");
+    else if (snapshot.halted) setAssemblyTag("warn", "program halted");
+    else setAssemblyTag("ok", "assembled");
+
+    if (!suppressPulse && !skipHeavyRender) {
+      if (snapshot.textRows.some((row) => row.isCurrent) || diff.changedDataAddresses.size) {
+        windowManager.pulse("window-main");
+      }
+      if (diff.changedRegisters.size) windowManager.pulse("window-registers");
+    }
+  } catch (error) {
+    captureSyncError(error);
+  }
+
+  try {
+    if (!skipToolSync) toolManager.onSnapshot(snapshot);
+    trackMachineStateCheckpoint(snapshot, options);
+    store.setState({ assembled: snapshot.assembled, halted: snapshot.halted, running: runActive });
+  } catch (error) {
+    captureSyncError(error);
+  }
+  try {
+    if (!preservePreviousSnapshot) previousSnapshot = createSnapshotDiffBaseline(snapshot, options);
+  } catch (error) {
+    captureSyncError(error);
+  }
+  lastControlSyncError = syncError;
+  scheduleBackstepButtonRecovery();
 }
 
 function reportDiagnostics(result, assemblyContext = null) {
@@ -1308,7 +1580,9 @@ function applyPreferences(nextPreferences) {
     }
   }
   if (typeof engine.getMemoryUsageBytes === "function") {
-    const currentUsage = engine.getMemoryUsageBytes();
+    const currentUsage = typeof engine.getAccountedMemoryUsageBytes === "function"
+      ? engine.getAccountedMemoryUsageBytes()
+      : engine.getMemoryUsageBytes();
     if (Number.isFinite(currentUsage) && currentUsage > runtimeSettings.maxMemoryBytes) {
       postMarsMessage("[warn] Current memory usage exceeds configured limit; new allocations may fail until usage decreases.");
     }
@@ -1389,6 +1663,7 @@ function runLoopTick() {
 
   const runOutputMessages = [];
   let waitingForInput = false;
+  let forceCriticalCheckpoint = false;
   let deferredDelayMs = 0;
   let stopReason = "";
   let lastStepResult = null;
@@ -1406,11 +1681,15 @@ function runLoopTick() {
         stopReason = "error";
         runStopRequested = true;
       } else {
-        if (result.runIo && result.message) {
-          runOutputMessages.push({ text: result.message, translate: false });
+        const executedInBatch = Math.max(0, Number(result.stepsExecuted) || 0);
+        if (executedInBatch > 0) incrementBackstepEstimate(executedInBatch);
+        if (result.runIo) {
+          forceCriticalCheckpoint = true;
+          if (result.message) runOutputMessages.push({ text: result.message, translate: false });
         }
         if (result.waitingForInput) {
           waitingForInput = true;
+          forceCriticalCheckpoint = true;
         }
         if (interactive) {
           const nowSync = performance.now();
@@ -1462,15 +1741,20 @@ function runLoopTick() {
         runStopRequested = true;
         break;
       }
+      restoredBackstepFallbackActive = false;
 
-      if (result.runIo && result.message) {
-        runOutputMessages.push({ text: result.message, translate: false });
+      if (result.runIo) {
+        forceCriticalCheckpoint = true;
+        if (result.message) runOutputMessages.push({ text: result.message, translate: false });
       }
 
       if (result.waitingForInput) {
         waitingForInput = true;
+        forceCriticalCheckpoint = true;
         break;
       }
+
+      incrementBackstepEstimate(1);
 
       if (interactive) {
         const nowSync = performance.now();
@@ -1515,6 +1799,7 @@ function runLoopTick() {
   }
 
   flushRunOutputMessages(runOutputMessages);
+  if (forceCriticalCheckpoint) forceMachineStateCheckpoint();
 
   if (waitingForInput) {
     markPausedForInput(true);
@@ -1530,12 +1815,12 @@ function runLoopTick() {
     runStepCarry = 0;
     runLastUiSyncAt = 0;
     clearInputPauseState();
-    syncSnapshot(engine.getSnapshot());
+    syncSnapshot(engine.getSnapshot(), { force: true });
     if (stopReason === "user") {
-      postMarsRaw("{action}: execution terminated by user.\n\n", { action: translateText("Go") });
+      postMarsSystemLine("{action}: execution terminated by user.", { action: translateText("Go") });
       messagesPane.selectMarsTab?.();
     } else if (stopReason === "breakpoint") {
-      postMarsRaw("{action}: execution paused at breakpoint: {name}\n\n", {
+      postMarsSystemLine("{action}: execution paused at breakpoint: {name}", {
         action: translateText("Go"),
         name: getCurrentProgramName()
       });
@@ -1550,14 +1835,19 @@ function runLoopTick() {
 
   if (!interactive) {
     const nowSync = performance.now();
-    if ((nowSync - runLastUiSyncAt) >= RUN_LOOP_UI_SYNC_INTERVAL_MS_FAST) {
+    if ((nowSync - runLastUiSyncAt) >= RUN_LOOP_TOOL_SYNC_INTERVAL_MS_NO_INTERACTION) {
       syncSnapshot(engine.getSnapshot({
+        includeTextRows: false,
+        includeLabels: false,
         includeDataRows: false,
+        includeRegisters: false,
         shareMemoryWords: true
       }), {
+        skipHeavyRender: true,
         fastMode: true,
         suppressPulse: true,
-        noInteraction: true
+        noInteraction: true,
+        preservePreviousSnapshot: true
       });
       runLastUiSyncAt = nowSync;
     }
@@ -1613,24 +1903,28 @@ async function openLanguagePreferencesDialog() {
 }
 
 async function requestTextDialog(title, message, defaultValue = "", options = {}) {
-  const result = await dialogSystem.prompt({
+  const result = await runDialogPrompt({
     title: translateText(title),
     message: translateText(message),
     defaultValue,
     confirmLabel: translateText(options.confirmLabel || "OK"),
     cancelLabel: translateText(options.cancelLabel || "Cancel"),
     placeholder: translateText(options.placeholder || "")
+  }, {
+    windowIdPrefix: "window-dialog-system"
   });
   if (!result?.ok) return null;
   return String(result.value ?? "");
 }
 
 async function requestConfirmDialog(title, message, options = {}) {
-  return dialogSystem.confirm({
+  return runDialogConfirm({
     title: translateText(title),
     message: translateText(message),
     confirmLabel: translateText(options.confirmLabel || "OK"),
     cancelLabel: translateText(options.cancelLabel || "Cancel")
+  }, {
+    windowIdPrefix: "window-dialog-system"
   });
 }
 
@@ -1645,7 +1939,7 @@ function parseBooleanPreferenceToken(value, fallback = false) {
 async function openInterfacePreferencesPanel() {
   const current = store.getState().preferences;
   const languages = getAvailableLanguages();
-  const result = await dialogSystem.form({
+  const result = await runDialogForm({
     title: translateText("Interface Preferences"),
     message: translateText("Adjust language, editor, and highlighting settings."),
     confirmLabel: translateText("OK"),
@@ -1712,6 +2006,12 @@ async function openInterfacePreferencesPanel() {
         ]
       }
     ]
+  }, {
+    windowIdPrefix: "window-interface-preferences",
+    left: "120px",
+    top: "90px",
+    width: "540px",
+    height: "470px"
   });
   if (!result?.ok) return;
 
@@ -1755,7 +2055,7 @@ async function openRuntimeMemoryPreferencesPanel() {
   );
   const originalExceptionText = current.exceptionHandlerAddress || toHex(fallbackAddress);
 
-  const result = await dialogSystem.form({
+  const result = await runDialogForm({
     title: translateText("Runtime & Memory Preferences"),
     message: translateText("Adjust exception handler, memory configuration, and memory limits."),
     confirmLabel: translateText("OK"),
@@ -1809,16 +2109,16 @@ async function openRuntimeMemoryPreferencesPanel() {
             max: MAX_MAX_BACKSTEPS,
             step: 1,
             value: String(defaultBacksteps)
-          },
-          {
-            name: "strictMarsCompatibility",
-            label: translateText("Strict MARS 4.5 compatibility mode"),
-            type: "checkbox",
-            value: current.strictMarsCompatibility === true
           }
         ]
       }
     ]
+  }, {
+    windowIdPrefix: "window-runtime-memory-preferences",
+    left: "210px",
+    top: "130px",
+    width: "560px",
+    height: "470px"
   });
   if (!result?.ok) return;
 
@@ -1844,8 +2144,7 @@ async function openRuntimeMemoryPreferencesPanel() {
     exceptionHandlerAddress: toHex(parsedException),
     memoryConfiguration: selectedId,
     maxMemoryGb: parsedMemoryGb,
-    maxBacksteps: parsedBacksteps,
-    strictMarsCompatibility: parseBooleanPreferenceToken(values.strictMarsCompatibility, current.strictMarsCompatibility === true)
+    maxBacksteps: parsedBacksteps
   }, "Runtime and memory preferences updated.");
 }
 
@@ -2109,6 +2408,16 @@ document.body.appendChild(fileInput);
 function buildAssemblyContext() {
   const files = editor.getFiles();
   const active = editor.getActiveFile() || files[0] || { name: "untitled.s", source: store.getState().sourceCode || "" };
+  const normalizeAssemblyPath = (name) => String(name || "").replace(/\\/g, "/");
+  const getDirectoryName = (name) => {
+    const normalized = normalizeAssemblyPath(name);
+    const cut = normalized.lastIndexOf("/");
+    return cut >= 0 ? normalized.slice(0, cut) : "";
+  };
+  const activeDirectory = getDirectoryName(active.name);
+  const assemblyFiles = runtimeSettings.assembleAll
+    ? files.filter((file) => getDirectoryName(file.name) === activeDirectory)
+    : [active];
   const includeMap = new Map();
   files.forEach((file) => {
     includeMap.set(file.name, file.source);
@@ -2116,14 +2425,14 @@ function buildAssemblyContext() {
   engine.setSourceFiles(includeMap);
 
   if (runtimeSettings.assembleAll) {
-    const mergedSource = files
+    const mergedSource = assemblyFiles
       .map((file) => `# -- file: ${file.name}\n${file.source}`)
       .join("\n\n");
     return {
       source: mergedSource,
       sourceName: active.name,
       includeMap,
-      fileCount: files.length,
+      fileCount: assemblyFiles.length,
       activeFile: active
     };
   }
@@ -2146,6 +2455,20 @@ function assembleFromEditor() {
     programArguments: runtimeSettings.programArgumentsLine
   });
   return { result, assemblyContext };
+}
+
+function maybeAssembleAfterOpen() {
+  if (store.getState().preferences.assembleOnOpen) {
+    commands.assemble();
+  }
+}
+
+function formatRuntimeAddress(address, addressHex, displayAddressesHex) {
+  if (displayAddressesHex !== false) {
+    if (typeof addressHex === "string" && addressHex.trim().length) return addressHex;
+    return toHex(Number.isFinite(address) ? (address >>> 0) : 0);
+  }
+  return `${Number.isFinite(address) ? (address >>> 0) : 0}`;
 }
 
 const commands = {
@@ -2176,6 +2499,7 @@ const commands = {
     windowManager.focus("window-editor");
     editor.focus();
     postMarsMessage("Opened '{name}' from browser storage.", { name: opened.name });
+    maybeAssembleAfterOpen();
   },
 
   openFile() {
@@ -2309,11 +2633,12 @@ const commands = {
     runLastTickAt = 0;
     runStepCarry = 0;
     runLastUiSyncAt = 0;
+    backstepDepthEstimate = 0;
     clearInputPauseState();
     windowManager.focus("window-text"); windowManager.focus("window-data");
 
     const assemblyContext = buildAssemblyContext();
-    postMarsRaw("{action}: assembling {sources}\n\n", {
+    postMarsSystemLine("{action}: assembling {sources}", {
       action: translateText("Assemble"),
       sources: describeAssemblySources(assemblyContext)
     });
@@ -2327,11 +2652,12 @@ const commands = {
 
     if (!result.ok) {
       setAssemblyTag("error", "assembly failed");
-      postMarsRaw("{action}: operation completed with errors.\n\n", { action: translateText("Assemble") });
+      postMarsSystemLine("{action}: operation completed with errors.", { action: translateText("Assemble") });
     } else {
-      postMarsRaw("{action}: operation completed successfully.\n\n", { action: translateText("Assemble") });
+      postMarsSystemLine("{action}: operation completed successfully.", { action: translateText("Assemble") });
     }
 
+    restoredBackstepFallbackActive = false;
     syncSnapshot(engine.getSnapshot());
   },
   step() {
@@ -2356,16 +2682,26 @@ const commands = {
     if (result.runIo && result.message) {
       messagesPane.postRun(result.message, { translate: false });
     }
-    syncSnapshot(result.snapshot ?? engine.getSnapshot());
-
     if (result.waitingForInput) {
       runPausedForInput = true;
       resumeRunAfterInput = false;
+    } else {
+      clearInputPauseState();
+      incrementBackstepEstimate(1);
+    }
+    scheduleRuntimeControlRecovery();
+    restoredBackstepFallbackActive = false;
+    const nextSnapshot = resolveStableRuntimeSnapshot(result.snapshot, { expectBackstep: true });
+    syncSnapshot(nextSnapshot, {
+      force: result.runIo === true || result.waitingForInput === true
+    });
+    refreshRuntimeControls(nextSnapshot);
+    updateBackstepButtonImmediate(getBackstepHistoryLimit() > 0 && clampBackstepEstimate(backstepDepthEstimate) > 0);
+
+    if (result.waitingForInput) {
       messagesPane.focusRunInput();
       return;
     }
-
-    clearInputPauseState();
     if (result.done) {
       if (result.exception) {
         postExecutionError(translateText("Step"), result.message);
@@ -2389,12 +2725,14 @@ const commands = {
     clearInputPauseState();
     runStopRequested = false;
     runActive = true;
+    restoredBackstepFallbackActive = false;
     runLastTickAt = performance.now();
     runStepCarry = 0;
     runLastUiSyncAt = 0;
+    forceMachineStateCheckpoint();
     syncButtons(snapshot);
     updateNoInteractionUiMode();
-    postMarsRaw("{action}: running {name}\n\n", {
+    postMarsSystemLine("{action}: running {name}", {
       action: translateText("Go"),
       name: getCurrentProgramName()
     }, { activate: false });
@@ -2413,8 +2751,8 @@ const commands = {
     runStepCarry = 0;
     runLastUiSyncAt = 0;
     clearInputPauseState();
-    syncSnapshot(engine.getSnapshot());
-    postMarsRaw("{action}: execution paused by user: {name}\n\n", {
+    syncSnapshot(engine.getSnapshot(), { force: true });
+    postMarsSystemLine("{action}: execution paused by user: {name}", {
       action: translateText("Go"),
       name: getCurrentProgramName()
     });
@@ -2432,10 +2770,12 @@ const commands = {
       return;
     }
 
-    if (typeof engine.stop === "function") engine.stop();
+    const result = typeof engine.stop === "function" ? engine.stop() : null;
     clearInputPauseState();
-    syncSnapshot(engine.getSnapshot());
-    postMarsRaw("{action}: execution terminated by user.\n\n", { action: translateText("Go") });
+    const nextSnapshot = resolveStableRuntimeSnapshot(result?.snapshot);
+    syncSnapshot(nextSnapshot, { force: true });
+    refreshRuntimeControls(nextSnapshot);
+    postMarsSystemLine("{action}: execution terminated by user.", { action: translateText("Go") });
     messagesPane.selectMarsTab?.();
   },
   backstep() {
@@ -2448,18 +2788,25 @@ const commands = {
     runLastUiSyncAt = 0;
     clearInputPauseState();
     windowManager.focus("window-text"); windowManager.focus("window-data");
+    const snapshot = engine.getSnapshot();
+    if (!snapshot.assembled || !Array.isArray(snapshot?.textRows) || snapshot.textRows.length === 0) {
+      refreshRuntimeControls(snapshot);
+      return;
+    }
     const result = engine.backstep();
     if (!result.ok) {
-      if (autosaveBackstepFallbackArmed && backstepFromAutosaveHistory()) {
-        syncSnapshot(engine.getSnapshot());
-        postMarsMessage("Backstep restored from autosave history.");
-        return;
-      }
-      syncSnapshot(engine.getSnapshot());
+      backstepDepthEstimate = 0;
+      scheduleRuntimeControlRecovery();
+      refreshRuntimeControls(snapshot);
       postMarsMessage("[warn] {message}", { message: result.message });
       return;
     }
-    syncSnapshot(result.snapshot ?? engine.getSnapshot());
+    decrementBackstepEstimate(1);
+    scheduleRuntimeControlRecovery();
+    const nextSnapshot = resolveStableRuntimeSnapshot(result.snapshot);
+    syncSnapshot(nextSnapshot);
+    refreshRuntimeControls(nextSnapshot);
+    updateBackstepButtonImmediate(hasAvailableBackstep(nextSnapshot));
   },
   reset() {
     modeController.setMode("execute");
@@ -2469,6 +2816,7 @@ const commands = {
     runLastTickAt = 0;
     runStepCarry = 0;
     runLastUiSyncAt = 0;
+    backstepDepthEstimate = 0;
     clearInputPauseState();
     engine.reset();
     messagesPane.clearInputRequest();
@@ -2481,11 +2829,12 @@ const commands = {
       if (!assembleResult.ok) {
         postMarsRaw("Unable to reset.  Please close file then re-open and re-assemble.\n");
       } else {
-        postRunRaw("\n{action}: reset completed.\n\n", { action: translateText("Reset") });
+        postRunSystemLine("{action}: reset completed.", { action: translateText("Reset") });
         messagesPane.selectRunTab?.();
       }
     }
 
+    restoredBackstepFallbackActive = false;
     syncSnapshot(engine.getSnapshot());
   },
   undo() {
@@ -2521,7 +2870,40 @@ const commands = {
     refs.editor.focus();
     refs.editor.setSelectionRange(idx, idx + query.length);
     postMarsMessage("Found '{query}' at offset {offset}.", { query, offset: idx });
-  },  togglePopupSyscallInput() { togglePreference("popupSyscallInput", "Popup dialog for input syscalls"); },
+  },
+  toggleShowLabelsWindow() { togglePreference("showLabelsWindow", "Show Labels Window (symbol table)"); },
+  async toggleProgramArguments() {
+    const current = store.getState().preferences;
+    if (current.programArguments) {
+      updatePreferencesPatch({
+        programArguments: false
+      }, translateText("Setting updated: {label} = {value}.", {
+        label: translateText("Program arguments provided to MIPS program"),
+        value: false
+      }));
+      return;
+    }
+
+    const args = await requestTextDialog(
+      "Program Arguments",
+      "Program arguments provided to MIPS program",
+      current.programArgumentsText || "",
+      {
+        placeholder: translateText("arg1 arg2 \"arg with spaces\"")
+      }
+    );
+    if (args == null) return;
+
+    updatePreferencesPatch({
+      programArguments: true,
+      programArgumentsText: String(args)
+    });
+    postMarsMessage("Program arguments enabled: {args}.", {
+      args: String(args || "").trim() || '""'
+    });
+  },
+  togglePopupSyscallInput() { togglePreference("popupSyscallInput", "Popup dialog for input syscalls"); },
+  toggleSplitMessagesRunIo() { togglePreference("splitMessagesRunIo", "Separate Mars Messages from Run I/O"); },
   toggleAddressDisplayBase() { togglePreference("displayAddressesHex", "Addresses displayed in hexadecimal"); },
   toggleValueDisplayBase() { togglePreference("displayValuesHex", "Values displayed in hexadecimal"); },
   toggleAssembleOnOpen() { togglePreference("assembleOnOpen", "Assemble file upon opening"); },
@@ -2543,6 +2925,68 @@ const commands = {
   showMemoryUsagePreferences() { openMemoryUsagePreferencesDialog(); },
 
   openTool(toolId) { toolManager.open(toolId); },
+  revealWindow(windowId, toolId = "") {
+    const windowIdText = String(windowId || "").trim();
+    const toolIdText = String(toolId || "").trim();
+    if (toolIdText) toolManager.open(toolIdText);
+    const revealOptions = { show: true, scroll: true, behavior: "smooth" };
+    const revealed = typeof windowManager.reveal === "function"
+      ? windowManager.reveal(windowIdText, revealOptions)
+      : false;
+
+    if (revealed) return;
+    if (!windowIdText) return;
+
+    if (typeof windowManager.show === "function") windowManager.show(windowIdText);
+    if (typeof windowManager.focus === "function") windowManager.focus(windowIdText);
+
+    const node = document.getElementById(windowIdText);
+    const stacked = refs.root?.classList?.contains("desktop-stacked") === true
+      || refs.windows?.desktop?.classList?.contains("desktop-stacked") === true;
+    if (stacked && node instanceof HTMLElement) {
+      node.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+    }
+  },
+  getViewMenuItems() {
+    const entries = typeof windowManager.getWindowEntries === "function"
+      ? windowManager.getWindowEntries()
+      : [];
+    if (!entries.length) return [];
+
+    const nativeOrder = ["window-main", "window-messages", "window-registers"];
+    const alwaysHiddenIds = new Set(["window-help-doc"]);
+
+    const listedEntries = entries.filter((entry) => {
+      if (!entry || alwaysHiddenIds.has(String(entry.id || ""))) return false;
+      if (nativeOrder.includes(String(entry.id || ""))) return true;
+      // For non-base windows, list only when they are actually open.
+      return entry.hidden !== true;
+    });
+    if (!listedEntries.length) return [];
+
+    const fixedOrder = ["window-browser-storage", "window-help", "window-help-about"];
+
+    const score = (entry) => {
+      const nativeIndex = nativeOrder.indexOf(entry.id);
+      if (nativeIndex >= 0) return nativeIndex;
+      const fixedIndex = fixedOrder.indexOf(entry.id);
+      if (fixedIndex >= 0) return 10 + fixedIndex;
+      if (entry.kind === "tool") return 30;
+      return 20;
+    };
+
+    const sorted = [...listedEntries].sort((a, b) => {
+      const scoreDelta = score(a) - score(b);
+      if (scoreDelta !== 0) return scoreDelta;
+      return String(a.title || a.id).localeCompare(String(b.title || b.id));
+    });
+
+    return sorted.map((entry) => ({
+      label: entry.title || entry.id,
+      command: () => commands.revealWindow(entry.id, entry.toolId || ""),
+      check: () => entry.hidden !== true
+    }));
+  },
 
   getExampleMenuItems() {
     const categoryOrder = [
@@ -2582,6 +3026,7 @@ const commands = {
       windowManager.focus("window-editor");
       editor.focus();
       postMarsMessage("Opened example '{name}'.", { name: opened.name });
+      maybeAssembleAfterOpen();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       postMarsMessage("[error] Failed to open example '{label}': {message}", {
@@ -2608,7 +3053,7 @@ getI18nApi()?.subscribe?.(() => {
   refs.refreshTranslations?.();
   messagesPane.refreshTranslations?.();
   editor.refreshStatus?.();
-  dialogSystem.refreshTranslations?.();
+  transientDialogSystems.forEach((dialog) => dialog.refreshTranslations?.());
   helpSystem.refreshTranslations?.();
   browserStorageManager.refreshTranslations?.();
   updateRunSpeedLabel();
@@ -2632,26 +3077,12 @@ function persistWorkspaceSession() {
         source: file.source,
         savedSource: typeof file.savedSource === "string" ? file.savedSource : file.source
       })),
-      machine: buildMachineSessionPayload(),
       windowState: typeof windowManager.exportSessionWindowState === "function"
         ? windowManager.exportSessionWindowState()
         : null
     };
 
     const candidates = [basePayload];
-    if (basePayload.machine) {
-      candidates.push({
-        ...basePayload,
-        machine: {
-          ...basePayload.machine,
-          backsteps: []
-        }
-      });
-      candidates.push({
-        ...basePayload,
-        machine: null
-      });
-    }
 
     for (let i = 0; i < candidates.length; i += 1) {
       const payload = candidates[i];
@@ -2919,18 +3350,95 @@ if (restoredWindowState && typeof windowManager.applySessionWindowState === "fun
   }
 }
 
-const machineSessionRestored = restoreMachineSession(restoredSession?.machine);
-if (machineSessionRestored) {
-  postMarsMessage("Machine state restored ({count} autosaved backstep(s)).", {
-    count: machineBackstepHistory.length
-  });
-} else if (restoredSession?.machine) {
-  postMarsMessage("[warn] Saved machine snapshot could not be fully restored.");
-}
+resetMachineSessionTracking();
 modeController.setMode("edit");
 syncSnapshot(engine.getSnapshot());
+if (restoredSession && store.getState().preferences.assembleOnOpen) {
+  maybeAssembleAfterOpen();
+}
 persistWorkspaceSession();
 showAboutOnFirstVisit();
+
+if (typeof window !== "undefined") {
+  window.WebMarsRuntimeDebug = {
+    getSnapshot(options = {}) {
+      return engine.getSnapshot(options);
+    },
+    getButtonState() {
+      return {
+        assembleDisabled: refs.buttons.assemble?.disabled === true,
+        goDisabled: refs.buttons.go?.disabled === true,
+        stepDisabled: refs.buttons.step?.disabled === true,
+        backstepDisabled: refs.buttons.backstep?.disabled === true,
+        resetDisabled: refs.buttons.reset?.disabled === true,
+        pauseDisabled: refs.buttons.pause?.disabled === true,
+        stopDisabled: refs.buttons.stop?.disabled === true
+      };
+    },
+    getRunFlags() {
+      return {
+        runActive,
+        runPausedForInput,
+        resumeRunAfterInput
+      };
+    },
+    getControlInputs() {
+      const snapshot = engine.getSnapshot();
+      const assembled = snapshot?.assembled === true;
+      const halted = snapshot?.halted === true;
+      const hasProgramRows = Array.isArray(snapshot?.textRows) && snapshot.textRows.length > 0;
+      const runBusy = runActive || runPausedForInput;
+      const canExecute = assembled && hasProgramRows && !halted;
+      const canBackstep = hasAvailableBackstep(snapshot);
+      return {
+        assembled,
+        halted,
+        hasProgramRows,
+        runBusy,
+        canExecute,
+        canBackstep,
+        backstepDepth: Number(snapshot?.backstepDepth) || 0
+      };
+    },
+    getControlDomState() {
+      const liveBackstep = document.getElementById("btn-backstep");
+      const livePause = document.getElementById("btn-pause");
+      const liveStop = document.getElementById("btn-stop");
+      return {
+        backstepCount: document.querySelectorAll("#btn-backstep").length,
+        pauseCount: document.querySelectorAll("#btn-pause").length,
+        stopCount: document.querySelectorAll("#btn-stop").length,
+        refBackstepDisabled: refs.buttons.backstep?.disabled === true,
+        liveBackstepDisabled: liveBackstep?.disabled === true,
+        refBackstepConnected: refs.buttons.backstep?.isConnected === true,
+        liveBackstepConnected: liveBackstep?.isConnected === true,
+        sameBackstepNode: liveBackstep === refs.buttons.backstep,
+        refPauseDisabled: refs.buttons.pause?.disabled === true,
+        livePauseDisabled: livePause?.disabled === true,
+        samePauseNode: livePause === refs.buttons.pause,
+        refStopDisabled: refs.buttons.stop?.disabled === true,
+        liveStopDisabled: liveStop?.disabled === true,
+        sameStopNode: liveStop === refs.buttons.stop
+      };
+    },
+    getLastControlSyncDebug() {
+      return lastControlSyncDebug ? { ...lastControlSyncDebug } : null;
+    },
+    getBackstepRuntimeDebug() {
+      return {
+        maxBacksteps: Number(runtimeSettings?.maxBacksteps) || 0,
+        backstepDepthEstimate
+      };
+    },
+    getLastControlSyncError() {
+      return lastControlSyncError;
+    },
+    refreshControls() {
+      refreshRuntimeControls();
+      return this.getButtonState();
+    }
+  };
+}
 
 
 

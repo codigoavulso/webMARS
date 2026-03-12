@@ -93,6 +93,36 @@
   <h1>webMARS · changelog</h1>
   <p class="subtitle">https://github.com/codigoavulso/webMARS/</p>
  
+  <!-- 0.4.2 (2026) -->
+  <section class="release">
+    <div class="release-header"><span>v0.4.2</span><span>2026-03-12</span></div>
+    <div class="release-body">
+      <h3>Melhorias de UI e Usabilidade</h3>
+      <ul>
+        <li>O snap de janelas foi refinado (dist&acirc;ncia pegajosa de 20 px) com arrasto livre ao pixel fora das zonas de snap, removendo o efeito de grelha for&ccedil;ada.</li>
+        <li>Os bot&otilde;es de maximizar foram uniformizados entre popups e tools, com melhor comportamento de clamp em desktop/mobile.</li>
+        <li>Os settings do Bitmap Display ficaram mais compactos, com inputs reorganizados e tamanho inicial da janela afinado para melhor ergonomia.</li>
+        <li>A legibilidade do Data Segment em ecr&atilde;s pequenos foi melhorada (simplifica&ccedil;&atilde;o de cabe&ccedil;alhos e estrat&eacute;gia de crop), incluindo polimento visual no modo separado de <code>Mars Messages</code>/<code>Run I/O</code>.</li>
+      </ul>
+
+      <h3>Corre&ccedil;&atilde;o de Erros Durante a Simula&ccedil;&atilde;o</h3>
+      <ul>
+        <li>Foram corrigidos casos limite nos controlos de execu&ccedil;&atilde;o (<code>Go</code>, <code>Pause</code>, <code>Step</code>, <code>Backstep</code> e <code>Stop</code>) ap&oacute;s assemble, restauro de sess&atilde;o e espera de input.</li>
+        <li>Foi resolvida a regress&atilde;o de popup de input syscall em modo step-by-step: ap&oacute;s submeter input, os bot&otilde;es recuperam corretamente sem entrar em estado de execu&ccedil;&atilde;o quebrado.</li>
+        <li>O runtime ficou mais resiliente a exce&ccedil;&otilde;es de render da UI que podiam deixar os bot&otilde;es desativados.</li>
+        <li>Foi normalizada a emiss&atilde;o de linhas em <code>Mars Messages</code> e <code>Run I/O</code>, reduzindo quebras em branco excessivas.</li>
+      </ul>
+
+      <h3>&Uacute;ltimos Ajustes de Paridade MARS MIPS 4.5</h3>
+      <ul>
+        <li>Foram conclu&iacute;das as settings em falta: <code>Show Labels Window</code> e <code>Program arguments provided to MIPS program</code>, incluindo liga&ccedil;&atilde;o completa ao runtime.</li>
+        <li>O fluxo de argumentos de programa foi alinhado com o comportamento esperado do MARS Java e documentado com exemplos de teste multilingue.</li>
+        <li>O autoload de sess&atilde;o passou a reabrir c&oacute;digo em modo Edit e a exigir <code>Assemble</code> expl&iacute;cito, evitando restauros de estado assembled obsoletos.</li>
+        <li>Menus e di&aacute;logos receberam ajustes finais de consist&ecirc;ncia com os padr&otilde;es de intera&ccedil;&atilde;o do MARS Java.</li>
+      </ul>
+    </div>
+  </section>
+
   <!-- 0.4.1 (2026) -->
   <section class="release">
     <div class="release-header"><span>v0.4.1</span><span>2026-03-11</span></div>

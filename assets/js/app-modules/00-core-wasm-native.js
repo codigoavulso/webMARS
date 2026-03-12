@@ -96,6 +96,29 @@
     return normalized;
   }
 
+  function copyNumericArrayInto(target, source) {
+    if (!target || !source) return;
+    const limit = Math.min(target.length >>> 0, source.length >>> 0);
+    for (let i = 0; i < limit; i += 1) {
+      target[i] = Number(source[i]) | 0;
+    }
+  }
+
+  function applyWordToHelperMemory(helper, address, value) {
+    if (!helper) return;
+    const addr = Number(address) >>> 0;
+    const word = Number(value) | 0;
+    if (!(helper.memoryWords instanceof Map)) helper.memoryWords = new Map();
+    if (word === 0) helper.memoryWords.delete(addr);
+    else helper.memoryWords.set(addr, word);
+    if (typeof helper.setByteRaw === "function") {
+      helper.setByteRaw(addr, (word >>> 24) & 0xff);
+      helper.setByteRaw(addr + 1, (word >>> 16) & 0xff);
+      helper.setByteRaw(addr + 2, (word >>> 8) & 0xff);
+      helper.setByteRaw(addr + 3, word & 0xff);
+    }
+  }
+
   class HybridNativeMarsEngine {
     constructor(options = {}) {
       this.options = options;
@@ -129,13 +152,10 @@
     }
 
     getBackendInfo() {
-      const strict = this.isStrictCompatibilityEnabled();
       return {
         backend: "wasm",
-        backendName: strict
-          ? "wasm-cpp-hybrid-strict-js"
-          : (this.nativeSynchronized ? "wasm-cpp-native" : "wasm-cpp-hybrid"),
-        native: strict ? false : this.nativeSynchronized
+        backendName: this.nativeSynchronized ? "wasm-cpp-native" : "wasm-cpp-hybrid",
+        native: this.nativeSynchronized
       };
     }
 
@@ -175,7 +195,6 @@
     }
 
     ensureNativeSync() {
-      if (this.isStrictCompatibilityEnabled()) return false;
       if (!this.nativeEngine) return false;
       if (this.nativeSynchronized) return true;
       const snapshot = this.helper.getSnapshot({
@@ -189,22 +208,63 @@
       return this.syncNativeFromHelper(!this.nativeProgramLoaded);
     }
 
-    exportRawNativeState(includeProgram = false) {
+    exportRawNativeState(includeProgram = false, includeBreakpoints = false) {
       if (!this.nativeEngine || !this.nativeSynchronized) return null;
       if (!includeProgram && !this.helperDirtyFromNative && this.cachedRawState) return this.cachedRawState;
-      const raw = this.nativeEngine.exportState(includeProgram, true);
+      const raw = (!includeProgram && typeof this.nativeEngine.exportRuntimeState === "function")
+        ? this.nativeEngine.exportRuntimeState(includeBreakpoints === true)
+        : this.nativeEngine.exportState(includeProgram, includeBreakpoints === true);
       if (!includeProgram) this.cachedRawState = raw;
       return raw;
     }
 
+    applyRuntimeDeltaToHelper(raw) {
+      if (!raw || typeof raw !== "object") return false;
+      if (!Array.isArray(raw.memoryDelta)) return false;
+      if (!this.helper || typeof this.helper !== "object") return false;
+      const helper = this.helper;
+
+      helper.assembled = Boolean(raw.assembled);
+      helper.halted = Boolean(raw.halted);
+      helper.pc = Number.isFinite(raw.pc) ? (raw.pc >>> 0) : (helper.pc >>> 0);
+      helper.steps = Number.isFinite(raw.steps) ? (raw.steps | 0) : (helper.steps | 0);
+      helper.heapPointer = Number.isFinite(raw.heapPointer) ? (raw.heapPointer >>> 0) : (helper.heapPointer >>> 0);
+      helper.delayedBranchTarget = raw.delayedBranchTarget == null ? null : (Number(raw.delayedBranchTarget) >>> 0);
+      helper.lastMemoryWriteAddress = raw.lastMemoryWriteAddress == null ? null : (Number(raw.lastMemoryWriteAddress) >>> 0);
+
+      copyNumericArrayInto(helper.registers, Array.isArray(raw.registers) ? raw.registers : []);
+      copyNumericArrayInto(helper.cop0Registers, Array.isArray(raw.cop0) ? raw.cop0 : []);
+      copyNumericArrayInto(helper.cop1Registers, Array.isArray(raw.cop1) ? raw.cop1 : []);
+      if (helper.fpuConditionFlags && Array.isArray(raw.fpuFlags)) {
+        const count = Math.min(helper.fpuConditionFlags.length >>> 0, raw.fpuFlags.length >>> 0);
+        for (let i = 0; i < count; i += 1) {
+          helper.fpuConditionFlags[i] = Number(raw.fpuFlags[i]) ? 1 : 0;
+        }
+      }
+
+      raw.memoryDelta.forEach((entry) => {
+        if (!Array.isArray(entry) || entry.length < 2) return;
+        applyWordToHelperMemory(helper, entry[0], entry[1]);
+      });
+      if (raw.memoryDelta.length === 0 && Number.isFinite(raw.lastMemoryWriteAddress) && Number.isFinite(raw.lastMemoryWriteValue)) {
+        applyWordToHelperMemory(helper, raw.lastMemoryWriteAddress, raw.lastMemoryWriteValue);
+      }
+
+      if (typeof helper.forceZeroRegister === "function") helper.forceZeroRegister();
+      return true;
+    }
+
     syncHelperFromNative(snapshotOptions = {}) {
       if (!this.nativeEngine || !this.nativeSynchronized) return this.helper.getSnapshot(snapshotOptions);
-      const raw = this.exportRawNativeState(false);
+      const raw = this.exportRawNativeState(false, false);
       if (raw) {
-        this.helper.importNativeState(raw, {
-          preserveProgram: true,
-          preserveBreakpoints: false
-        });
+        const appliedRuntimeDelta = this.applyRuntimeDeltaToHelper(raw);
+        if (!appliedRuntimeDelta) {
+          this.helper.importNativeState(raw, {
+            preserveProgram: true,
+            preserveBreakpoints: false
+          });
+        }
         this.helperDirtyFromNative = false;
       }
       const snapshot = this.helper.getSnapshot(snapshotOptions);
@@ -231,9 +291,10 @@
     }
 
     performDelegatedStep(options = {}, nativeCurrentState = null) {
-      const previous = nativeCurrentState && typeof nativeCurrentState === "object"
-        ? nativeCurrentState
-        : this.exportRawNativeState(false);
+      const requiresFullState = !(nativeCurrentState && Array.isArray(nativeCurrentState.memoryWords));
+      const previous = requiresFullState
+        ? this.nativeEngine.exportState(false, true)
+        : nativeCurrentState;
       if (previous) {
         this.helper.importNativeState(previous, {
           preserveProgram: true,
@@ -261,7 +322,7 @@
         });
       }
 
-      if (!this.isStrictCompatibilityEnabled() && this.nativeEngine && typeof this.nativeEngine.assemble === "function") {
+      if (this.nativeEngine && typeof this.nativeEngine.assemble === "function") {
         const nativeResult = this.nativeEngine.assemble(String(source ?? ""), {
           sourceName: options.sourceName || this.helper?.activeSourceName || this.helper?.defaultSourceName || "main.s",
           includeFiles,
@@ -297,10 +358,9 @@
         this.markNativeStale(true);
         return result;
       }
-      const strictMode = this.isStrictCompatibilityEnabled();
-      if (this.nativeEngine && !strictMode) {
+      if (this.nativeEngine) {
         this.syncNativeFromHelper(true);
-      } else if (!strictMode) {
+      } else {
         void this.whenReady().then(() => this.syncNativeFromHelper(true));
       }
       return {
@@ -342,23 +402,21 @@
         };
       }
 
-      const beforeRaw = this.exportRawNativeState(false);
-      const stepsBefore = Number.isFinite(beforeRaw?.steps) ? (beforeRaw.steps | 0) : 0;
       const nativeResult = normalizeNativeResult(this.nativeEngine.go(limit));
-      const afterRaw = this.nativeEngine.exportState(false, true);
-      const nativeExecuted = Math.max(0, (Number.isFinite(afterRaw?.steps) ? (afterRaw.steps | 0) : stepsBefore) - stepsBefore);
+      const nativeExecuted = Math.max(0, Number.isFinite(nativeResult?.stepsExecuted) ? (nativeResult.stepsExecuted | 0) : 0);
       if (nativeResult?.delegate) {
+        const afterRaw = this.nativeEngine.exportState(false, true);
         this.cachedRawState = afterRaw;
         const delegated = this.performDelegatedStep({ includeSnapshot: false }, afterRaw);
+        delegated.stepsExecuted = nativeExecuted + 1;
         return {
           ...delegated,
-          stepsExecuted: nativeExecuted + 1,
           snapshot: options.includeSnapshot === false ? undefined : this.getSnapshot(options.snapshotOptions || {})
         };
       }
 
       this.helperDirtyFromNative = true;
-      this.cachedRawState = afterRaw;
+      this.cachedRawState = null;
       nativeResult.stepsExecuted = nativeExecuted;
       if (options.includeSnapshot !== false) {
         nativeResult.snapshot = this.getSnapshot(options.snapshotOptions || {});
@@ -498,6 +556,14 @@
     }
 
     exportNativeState(options = {}) {
+      const includeProgram = options.includeProgram !== false;
+      const includeExecutionPlan = includeProgram && options.includeExecutionPlan === true;
+      const includeBreakpoints = options.includeBreakpoints === true;
+      if (this.nativeSynchronized && this.nativeEngine && !includeProgram && !includeExecutionPlan) {
+        const raw = this.nativeEngine.exportState(false, includeBreakpoints);
+        this.cachedRawState = raw;
+        return raw;
+      }
       if (this.nativeSynchronized && this.helperDirtyFromNative) {
         this.syncHelperFromNative({
           includeTextRows: false,

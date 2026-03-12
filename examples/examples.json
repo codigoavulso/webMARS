@@ -36,6 +36,7 @@
     { "label": "string_strlen_strcpy.asm", "path": "string_strlen_strcpy.asm", "category": "Learn" },
 
     { "label": "test_delay_slot_exception.asm", "path": "test_delay_slot_exception.asm", "category": "Tests" },
+    { "label": "test_program_arguments.asm", "path": "test_program_arguments.asm", "category": "Tests" },
     { "label": "test_jalr_register_order.asm", "path": "test_jalr_register_order.asm", "category": "Tests" },
     { "label": "test_pseudo_ops_lowering.asm", "path": "test_pseudo_ops_lowering.asm", "category": "Tests" },
     { "label": "test_start_at_main.asm", "path": "test_start_at_main.asm", "category": "Tests" },

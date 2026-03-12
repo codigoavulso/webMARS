@@ -105,15 +105,6 @@
         min-height: 300px;
       }
 
-      .mars-java-help-window .window-controls [data-win-action="min"],
-      .mars-java-help-window .window-controls [data-win-action="max"],
-      .mars-java-about-window .window-controls [data-win-action="min"],
-      .mars-java-about-window .window-controls [data-win-action="max"],
-      .mars-java-doc-window .window-controls [data-win-action="min"],
-      .mars-java-doc-window .window-controls [data-win-action="max"] {
-        display: inline-flex;
-      }
-
       .mars-help-window-content,
       .mars-help-doc-content,
       .mars-help-about-content {
@@ -666,8 +657,8 @@
       "window-help-about",
       "mars-java-about-window dialog-window",
       ABOUT_MARS_TITLE,
-      500,
-      340,
+      625,
+      425,
       `
         <div class="window-content mars-help-about-content">
           <div class="mars-help-about-main" id="mars-help-about-host"></div>

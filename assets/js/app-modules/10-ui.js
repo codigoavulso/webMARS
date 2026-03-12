@@ -21,6 +21,7 @@ function renderLayout(root) {
         <span class="menu-logo" aria-hidden="true">&#128640;</span>
         <button class="menu-item" type="button" data-menu="File">File</button>
         <button class="menu-item" type="button" data-menu="Edit">Edit</button>
+        <button class="menu-item" type="button" data-menu="View">View</button>
         <button class="menu-item" type="button" data-menu="Run">Run</button>
         <button class="menu-item" type="button" data-menu="Settings">Settings</button>
         <button class="menu-item" type="button" data-menu="Tools">Tools</button>
@@ -125,14 +126,14 @@ function renderLayout(root) {
                         <thead>
                           <tr>
                             <th>Address</th>
-                            <th>Value (+0)</th>
-                            <th>Value (+4)</th>
-                            <th>Value (+8)</th>
-                            <th>Value (+c)</th>
-                            <th>Value (+10)</th>
-                            <th>Value (+14)</th>
-                            <th>Value (+18)</th>
-                            <th>Value (+1c)</th>
+                            <th id="data-col-0">Value (+0)</th>
+                            <th id="data-col-4">Value (+4)</th>
+                            <th id="data-col-8">Value (+8)</th>
+                            <th id="data-col-c">Value (+c)</th>
+                            <th id="data-col-10">Value (+10)</th>
+                            <th id="data-col-14">Value (+14)</th>
+                            <th id="data-col-18">Value (+18)</th>
+                            <th id="data-col-1c">Value (+1c)</th>
                           </tr>
                         </thead>
                         <tbody id="data-segment-body"></tbody>
@@ -151,8 +152,8 @@ function renderLayout(root) {
                         <option value="kdata">0x90000000 (.kdata)</option>
                         <option value="mmio">0xffff0000 (MMIO)</option>
                       </select>
-                      <label><input id="data-hex-addresses" type="checkbox" checked> Hexadecimal Addresses</label>
-                      <label><input id="data-hex-values" type="checkbox" checked> Hexadecimal Values</label>
+                      <label id="data-hex-addresses-label"><input id="data-hex-addresses" type="checkbox" checked> Hexadecimal Addresses</label>
+                      <label id="data-hex-values-label"><input id="data-hex-values" type="checkbox" checked> Hexadecimal Values</label>
                       <label><input id="data-ascii" type="checkbox"> ASCII</label>
                     </div>
                   </div>
@@ -279,7 +280,19 @@ function renderLayout(root) {
       dataNavPrev: root.querySelector("#data-nav-prev"),
       dataNavNext: root.querySelector("#data-nav-next"),
       dataBaseSelect: root.querySelector("#data-base-select"),
+      dataHeaders: [
+        root.querySelector("#data-col-0"),
+        root.querySelector("#data-col-4"),
+        root.querySelector("#data-col-8"),
+        root.querySelector("#data-col-c"),
+        root.querySelector("#data-col-10"),
+        root.querySelector("#data-col-14"),
+        root.querySelector("#data-col-18"),
+        root.querySelector("#data-col-1c")
+      ],
+      dataHexAddressesLabel: root.querySelector("#data-hex-addresses-label"),
       dataHexAddresses: root.querySelector("#data-hex-addresses"),
+      dataHexValuesLabel: root.querySelector("#data-hex-values-label"),
       dataHexValues: root.querySelector("#data-hex-values"),
       dataAscii: root.querySelector("#data-ascii")
     },
@@ -328,7 +341,8 @@ function createWindowManager(refs) {
   const TOOL_Z_BASE = 920;
   const NATIVE_Z_MAX = TOOL_Z_BASE - 12;
   const TOOL_Z_MAX = 1150;
-  const SNAP_DISTANCE_PX = 10;
+  const SNAP_DISTANCE_PX = 20;
+  const MOVE_SNAP_MIN_SPAN_PX = 24;
   const EDGE_TOUCH_TOLERANCE_PX = 1.5;
   const SHARED_SPLITTER_THICKNESS_PX = 6;
   const SHARED_SPLITTER_MIN_SPAN_PX = 48;
@@ -814,6 +828,7 @@ function createWindowManager(refs) {
   function updateNormalizedBounds(entry) {
     if (!entry || entry.maximized) return;
     if (isStackedMode() && isStackedFlowEntry(entry)) return;
+    if (isStackedMode() && entry.element?.classList?.contains("dialog-window")) return;
     const desktopRect = getDesktopRect();
     if (!(desktopRect.width > 0) || !(desktopRect.height > 0)) return;
     const metrics = readWindowMetrics(entry);
@@ -967,6 +982,11 @@ function createWindowManager(refs) {
       if (entry.element.classList.contains("window-hidden")) return;
       entry.maximized = false;
       entry.element.classList.remove("window-maximized");
+      if (entry.element.classList.contains("dialog-window")) {
+        if (!applyToolDesktopPreferredBounds(entry)) return;
+        clampWindow(entry, true, false);
+        return;
+      }
       if (!applyToolDesktopPreferredBounds(entry)) {
         if (!entry.normalizedBounds) return;
         applyNormalizedBounds(entry);
@@ -991,6 +1011,12 @@ function createWindowManager(refs) {
       clearStackedToolZoom(entry);
       if (entry.desktopMinWidth > 0) entry.element.style.minWidth = `${Math.round(entry.desktopMinWidth)}px`;
       if (entry.desktopMinHeight > 0) entry.element.style.minHeight = `${Math.round(entry.desktopMinHeight)}px`;
+      if (entry.element.classList.contains("dialog-window")) {
+        if (applyToolDesktopPreferredBounds(entry)) {
+          clampWindow(entry, true, false);
+        }
+        return;
+      }
 
       const bounds = entry.normalizedBounds;
       const hasUsableNormalizedBounds = Boolean(
@@ -1095,7 +1121,7 @@ function createWindowManager(refs) {
     entry.element.style.top = px(metrics.top);
     entry.element.style.width = px(metrics.width);
     entry.element.style.height = px(metrics.height);
-    if (!isStackedMode() && entry.kind === "tool" && !entry.maximized && !entry.minimized) {
+    if (persistNormalized && !isStackedMode() && entry.kind === "tool" && !entry.maximized && !entry.minimized) {
       entry.desktopPreferredBounds = {
         left: Number(metrics.left) || 0,
         top: Number(metrics.top) || 0,
@@ -1103,9 +1129,14 @@ function createWindowManager(refs) {
         height: Number(metrics.height) || 0
       };
     }
-    if (persistNormalized && !(isStackedMode() && isStackedFlowEntry(entry))) updateNormalizedBounds(entry);
-    scheduleSharedSplitterRefresh();
-    if (!isStackedMode()) scheduleDesktopLayoutSave(220);
+    if (persistNormalized && !(isStackedMode() && isStackedFlowEntry(entry)) && !(isStackedMode() && entry.element?.classList?.contains("dialog-window"))) {
+      updateNormalizedBounds(entry);
+    }
+    const interactionActive = Boolean(dragging || resizing || sharedDragging);
+    if (!interactionActive) {
+      scheduleSharedSplitterRefresh();
+      if (!isStackedMode()) scheduleDesktopLayoutSave(220);
+    }
   }
 
   function clampMetrics(entry, metrics) {
@@ -1295,7 +1326,15 @@ function createWindowManager(refs) {
   function applySnapToMetrics(entry, baseMetrics, directions = "") {
     const metrics = clampMetrics(entry, baseMetrics);
     const desktopRect = getDesktopRect();
-    const targets = [...windows.values()].filter((candidate) => candidate !== entry && isVisibleEntry(candidate));
+    const isMoveOperation = directions === "move";
+    const hasWest = !isMoveOperation && directions.includes("w");
+    const hasEast = !isMoveOperation && directions.includes("e");
+    const hasNorth = !isMoveOperation && directions.includes("n");
+    const hasSouth = !isMoveOperation && directions.includes("s");
+    const targets = [...windows.values()].filter((candidate) => {
+      if (candidate === entry || !isVisibleEntry(candidate)) return false;
+      return true;
+    });
 
     const current = {
       left: metrics.left,
@@ -1307,13 +1346,26 @@ function createWindowManager(refs) {
     const currentRight = () => current.left + current.width;
     const currentBottom = () => current.top + current.height;
 
-    const moveLeft = directions.includes("move") || directions.includes("w");
-    const moveRight = directions.includes("move") || directions.includes("e");
-    const moveTop = directions.includes("move") || directions.includes("n");
-    const moveBottom = directions.includes("move") || directions.includes("s");
+    const moveLeft = isMoveOperation || hasWest;
+    const moveRight = isMoveOperation || hasEast;
+    const moveTop = isMoveOperation || hasNorth;
+    const moveBottom = isMoveOperation || hasSouth;
+    const originalLeft = current.left;
+    const originalRight = currentRight();
+    const originalTop = current.top;
+    const originalBottom = currentBottom();
+
+    const chooseClosestSnap = (candidates) => {
+      let best = null;
+      candidates.forEach((candidate) => {
+        if (!candidate || !Number.isFinite(candidate.distance) || candidate.distance > SNAP_DISTANCE_PX) return;
+        if (!best || candidate.distance < best.distance) best = candidate;
+      });
+      return best;
+    };
 
     const snapLeftTo = (targetLeft) => {
-      if (directions.includes("w") && !directions.includes("e")) {
+      if (hasWest && !hasEast) {
         const nextWidth = currentRight() - targetLeft;
         if (nextWidth >= getMinSize(entry).minWidth) {
           current.left = targetLeft;
@@ -1325,7 +1377,7 @@ function createWindowManager(refs) {
     };
 
     const snapRightTo = (targetRight) => {
-      if (directions.includes("e") && !directions.includes("w")) {
+      if (hasEast && !hasWest) {
         current.width = Math.max(getMinSize(entry).minWidth, targetRight - current.left);
         return;
       }
@@ -1333,7 +1385,7 @@ function createWindowManager(refs) {
     };
 
     const snapTopTo = (targetTop) => {
-      if (directions.includes("n") && !directions.includes("s")) {
+      if (hasNorth && !hasSouth) {
         const nextHeight = currentBottom() - targetTop;
         if (nextHeight >= getMinSize(entry).minHeight) {
           current.top = targetTop;
@@ -1345,39 +1397,94 @@ function createWindowManager(refs) {
     };
 
     const snapBottomTo = (targetBottom) => {
-      if (directions.includes("s") && !directions.includes("n")) {
+      if (hasSouth && !hasNorth) {
         current.height = Math.max(getMinSize(entry).minHeight, targetBottom - current.top);
         return;
       }
       current.top = targetBottom - current.height;
     };
 
-    if (moveLeft && Math.abs(current.left) <= SNAP_DISTANCE_PX) snapLeftTo(0);
-    if (moveRight && Math.abs(desktopRect.width - currentRight()) <= SNAP_DISTANCE_PX) snapRightTo(desktopRect.width);
-    if (moveTop && Math.abs(current.top) <= SNAP_DISTANCE_PX) snapTopTo(0);
-    if (moveBottom && Math.abs(desktopRect.height - currentBottom()) <= SNAP_DISTANCE_PX) snapBottomTo(desktopRect.height);
+    const leftCandidates = [];
+    const rightCandidates = [];
+    const topCandidates = [];
+    const bottomCandidates = [];
+
+    if (!isMoveOperation) {
+      if (moveLeft) leftCandidates.push({ target: 0, distance: Math.abs(originalLeft) });
+      if (moveRight) rightCandidates.push({ target: desktopRect.width, distance: Math.abs(desktopRect.width - originalRight) });
+      if (moveTop) topCandidates.push({ target: 0, distance: Math.abs(originalTop) });
+      if (moveBottom) bottomCandidates.push({ target: desktopRect.height, distance: Math.abs(desktopRect.height - originalBottom) });
+    }
 
     targets.forEach((targetEntry) => {
       const target = readWindowMetrics(targetEntry);
+      const targetLeft = target.left;
+      const targetRight = target.left + target.width;
+      const targetTop = target.top;
+      const targetBottom = target.top + target.height;
+
       if (moveLeft || moveRight) {
-        const verticalOverlap = overlapSize(current.top, currentBottom(), target.top, target.top + target.height);
-        if (verticalOverlap > 0) {
-          if (moveLeft && Math.abs(current.left - target.left) <= SNAP_DISTANCE_PX) snapLeftTo(target.left);
-          if (moveLeft && Math.abs(current.left - (target.left + target.width)) <= SNAP_DISTANCE_PX) snapLeftTo(target.left + target.width);
-          if (moveRight && Math.abs(currentRight() - target.left) <= SNAP_DISTANCE_PX) snapRightTo(target.left);
-          if (moveRight && Math.abs(currentRight() - (target.left + target.width)) <= SNAP_DISTANCE_PX) snapRightTo(target.left + target.width);
+        const verticalOverlap = overlapSize(originalTop, originalBottom, targetTop, targetBottom);
+        const enoughVerticalOverlap = isMoveOperation ? verticalOverlap >= MOVE_SNAP_MIN_SPAN_PX : verticalOverlap > 0;
+        if (enoughVerticalOverlap) {
+          if (moveLeft) {
+            leftCandidates.push({ target: targetLeft, distance: Math.abs(originalLeft - targetLeft) });
+            leftCandidates.push({ target: targetRight, distance: Math.abs(originalLeft - targetRight) });
+          }
+          if (moveRight) {
+            rightCandidates.push({ target: targetLeft, distance: Math.abs(originalRight - targetLeft) });
+            rightCandidates.push({ target: targetRight, distance: Math.abs(originalRight - targetRight) });
+          }
         }
       }
+
       if (moveTop || moveBottom) {
-        const horizontalOverlap = overlapSize(current.left, currentRight(), target.left, target.left + target.width);
-        if (horizontalOverlap > 0) {
-          if (moveTop && Math.abs(current.top - target.top) <= SNAP_DISTANCE_PX) snapTopTo(target.top);
-          if (moveTop && Math.abs(current.top - (target.top + target.height)) <= SNAP_DISTANCE_PX) snapTopTo(target.top + target.height);
-          if (moveBottom && Math.abs(currentBottom() - target.top) <= SNAP_DISTANCE_PX) snapBottomTo(target.top);
-          if (moveBottom && Math.abs(currentBottom() - (target.top + target.height)) <= SNAP_DISTANCE_PX) snapBottomTo(target.top + target.height);
+        const horizontalOverlap = overlapSize(originalLeft, originalRight, targetLeft, targetRight);
+        const enoughHorizontalOverlap = isMoveOperation ? horizontalOverlap >= MOVE_SNAP_MIN_SPAN_PX : horizontalOverlap > 0;
+        if (enoughHorizontalOverlap) {
+          if (moveTop) {
+            topCandidates.push({ target: targetTop, distance: Math.abs(originalTop - targetTop) });
+            topCandidates.push({ target: targetBottom, distance: Math.abs(originalTop - targetBottom) });
+          }
+          if (moveBottom) {
+            bottomCandidates.push({ target: targetTop, distance: Math.abs(originalBottom - targetTop) });
+            bottomCandidates.push({ target: targetBottom, distance: Math.abs(originalBottom - targetBottom) });
+          }
         }
       }
     });
+
+    if (isMoveOperation) {
+      const horizontalSnap = chooseClosestSnap([
+        ...leftCandidates.map((candidate) => ({ axis: "left", ...candidate })),
+        ...rightCandidates.map((candidate) => ({ axis: "right", ...candidate }))
+      ]);
+      const verticalSnap = chooseClosestSnap([
+        ...topCandidates.map((candidate) => ({ axis: "top", ...candidate })),
+        ...bottomCandidates.map((candidate) => ({ axis: "bottom", ...candidate }))
+      ]);
+
+      if (horizontalSnap) {
+        if (horizontalSnap.axis === "left") snapLeftTo(horizontalSnap.target);
+        else snapRightTo(horizontalSnap.target);
+      }
+      if (verticalSnap) {
+        if (verticalSnap.axis === "top") snapTopTo(verticalSnap.target);
+        else snapBottomTo(verticalSnap.target);
+      }
+      return clampMetrics(entry, current);
+    }
+
+    const leftSnap = moveLeft ? chooseClosestSnap(leftCandidates) : null;
+    const rightSnap = moveRight ? chooseClosestSnap(rightCandidates) : null;
+    const topSnap = moveTop ? chooseClosestSnap(topCandidates) : null;
+    const bottomSnap = moveBottom ? chooseClosestSnap(bottomCandidates) : null;
+
+    if (leftSnap && (!rightSnap || leftSnap.distance <= rightSnap.distance)) snapLeftTo(leftSnap.target);
+    else if (rightSnap) snapRightTo(rightSnap.target);
+
+    if (topSnap && (!bottomSnap || topSnap.distance <= bottomSnap.distance)) snapTopTo(topSnap.target);
+    else if (bottomSnap) snapBottomTo(bottomSnap.target);
 
     return clampMetrics(entry, current);
   }
@@ -1389,28 +1496,46 @@ function createWindowManager(refs) {
     setWindowMetrics(entry, nextMetrics, persistNormalized);
   }
 
-  function onPointerMove(event) {
-    if (!dragging || dragging.maximized) return;
-    if (isStackedMode() && isStackedFlowEntry(dragging)) return;
+  function clampDialogPosition(entry) {
+    if (!entry || !entry.element.classList.contains("dialog-window")) return false;
     const desktopRect = getDesktopRect();
-    const metrics = readWindowMetrics(dragging);
-    const nextMetrics = applySnapToMetrics(dragging, {
+    if (!(desktopRect.width > 0) || !(desktopRect.height > 0)) return false;
+    const metrics = readWindowMetrics(entry);
+    const width = Number.isFinite(metrics.width) ? metrics.width : 0;
+    const height = Number.isFinite(metrics.height) ? metrics.height : 0;
+    const leftLimit = Math.max(0, desktopRect.width - Math.min(width, desktopRect.width));
+    const topLimit = Math.max(0, desktopRect.height - Math.min(height, desktopRect.height));
+    entry.element.style.left = px(Math.max(0, Math.min(leftLimit, metrics.left)));
+    entry.element.style.top = px(Math.max(0, Math.min(topLimit, metrics.top)));
+    return true;
+  }
+
+  function onPointerMove(event) {
+    if (!dragging) return;
+    const activeEntry = dragging.entry;
+    if (!activeEntry || activeEntry.maximized) return;
+    if (isStackedMode() && isStackedFlowEntry(activeEntry)) return;
+    const desktopRect = getDesktopRect();
+    const metrics = readWindowMetrics(activeEntry);
+    const nextMetrics = applySnapToMetrics(activeEntry, {
       left: event.clientX - desktopRect.left - dragging.offsetX,
       top: event.clientY - desktopRect.top - dragging.offsetY,
       width: metrics.width,
       height: metrics.height
     }, "move");
-    setWindowMetrics(dragging, nextMetrics, false);
+    setWindowMetrics(activeEntry, nextMetrics, false);
   }
 
   function stopDragging() {
     if (!dragging) return;
-    dragging.element.classList.remove("window-dragging");
+    const activeEntry = dragging.entry;
+    if (!activeEntry) return;
+    activeEntry.element.classList.remove("window-dragging");
     if (!isStackedMode()) {
-      const snapped = applySnapToMetrics(dragging, readWindowMetrics(dragging), "move");
-      setWindowMetrics(dragging, snapped, true);
+      const snapped = applySnapToMetrics(activeEntry, readWindowMetrics(activeEntry), "move");
+      setWindowMetrics(activeEntry, snapped, true);
     }
-    clampWindow(dragging, true, true);
+    clampWindow(activeEntry, true, true);
     dragging = null;
     document.removeEventListener("pointermove", onPointerMove);
     document.removeEventListener("pointerup", stopDragging);
@@ -1697,7 +1822,7 @@ function createWindowManager(refs) {
 
       const rect = entry.element.getBoundingClientRect();
       dragging = {
-        ...entry,
+        entry,
         offsetX: event.clientX - rect.left,
         offsetY: event.clientY - rect.top
       };
@@ -1950,6 +2075,32 @@ function createWindowManager(refs) {
     clampWindow(entry, true, true);
   }
 
+  function unregisterWindow(windowId) {
+    const resolvedId = resolveWindowId(windowId);
+    const entry = windows.get(resolvedId);
+    if (!entry) return false;
+    if (entry.kind === "native") return false;
+
+    if (dragging?.entry === entry) stopDragging();
+    if (resizing?.entry === entry) stopResizing();
+    if (sharedDragging && (sharedDragging.first === entry || sharedDragging.second === entry)) {
+      stopSharedSplitterDragging();
+    }
+
+    if (entry.resizeFrame !== null) {
+      window.cancelAnimationFrame(entry.resizeFrame);
+      entry.resizeFrame = null;
+    }
+
+    pendingSessionWindowState.delete(entry.id);
+    windows.delete(entry.id);
+    if (entry.element instanceof HTMLElement) entry.element.remove();
+
+    scheduleSharedSplitterRefresh();
+    if (!isStackedMode()) scheduleDesktopLayoutSave(120);
+    return true;
+  }
+
   function show(windowId) {
     const resolvedId = resolveWindowId(windowId);
     const entry = windows.get(resolvedId);
@@ -1958,6 +2109,17 @@ function createWindowManager(refs) {
     if (entry.minimized) {
       entry.minimized = false;
       entry.element.classList.remove("window-minimized");
+    }
+    if (entry.element.classList.contains("dialog-window") && !entry.maximized) {
+      const metrics = readWindowMetrics(entry);
+      if (Number.isFinite(metrics.width) && metrics.width > 0 && Number.isFinite(metrics.height) && metrics.height > 0) {
+        entry.desktopPreferredBounds = {
+          left: Number(metrics.left) || 0,
+          top: Number(metrics.top) || 0,
+          width: Number(metrics.width) || 0,
+          height: Number(metrics.height) || 0
+        };
+      }
     }
     focus(windowId);
     scheduleSharedSplitterRefresh();
@@ -2092,6 +2254,56 @@ function createWindowManager(refs) {
     return openIds;
   }
 
+  function getWindowTitle(entry) {
+    if (!entry || !(entry.element instanceof HTMLElement)) return "";
+    const titleNode = entry.element.querySelector(".window-title");
+    const title = String(titleNode?.textContent || "").trim();
+    return title || entry.id;
+  }
+
+  function getWindowEntries() {
+    return [...windows.values()].map((entry) => {
+      const metrics = readWindowMetrics(entry);
+      const hidden = entry.element.classList.contains("window-hidden");
+      return {
+        id: entry.id,
+        kind: entry.kind,
+        title: getWindowTitle(entry),
+        hidden,
+        minimized: Boolean(entry.minimized),
+        maximized: Boolean(entry.maximized),
+        visible: !hidden && !entry.minimized,
+        isDialog: entry.element.classList.contains("dialog-window"),
+        toolId: String(entry.element.dataset.toolId || "").trim(),
+        metrics: {
+          left: metrics.left,
+          top: metrics.top,
+          width: metrics.width,
+          height: metrics.height
+        }
+      };
+    });
+  }
+
+  function reveal(windowId, options = {}) {
+    const resolvedId = resolveWindowId(windowId);
+    const entry = windows.get(resolvedId);
+    if (!entry) return false;
+
+    if (options.show !== false) show(resolvedId);
+    else focus(resolvedId, { skipRestore: true });
+
+    if (isStackedMode() && options.scroll !== false && entry.element instanceof HTMLElement) {
+      const behavior = options.behavior === "smooth" ? "smooth" : "auto";
+      entry.element.scrollIntoView({
+        behavior,
+        block: "start",
+        inline: "nearest"
+      });
+    }
+    return true;
+  }
+
   desktop.querySelectorAll(".desktop-window").forEach((win) => registerWindow(win));
   windows.forEach((entry) => ensureDesktopNormalizedBounds(entry));
   applyResponsiveClasses();
@@ -2148,6 +2360,10 @@ function createWindowManager(refs) {
         entry.element.style.top = "0px";
         return;
       }
+      if (entry.element.classList.contains("dialog-window")) {
+        clampDialogPosition(entry);
+        return;
+      }
       if (!restoredDesktopLayout) {
         if (entry.kind === "tool") {
           if (!applyToolDesktopPreferredBounds(entry)) applyNormalizedBounds(entry);
@@ -2168,13 +2384,16 @@ function createWindowManager(refs) {
     focus,
     pulse,
     registerWindow,
+    unregisterWindow,
     show,
+    reveal,
     hide,
     toggleMinimize,
     toggleMaximize,
     exportSessionWindowState,
     applySessionWindowState,
-    getOpenToolWindowIds
+    getOpenToolWindowIds,
+    getWindowEntries
   };
 }
 
@@ -2629,28 +2848,34 @@ function setupEditor(refs, store) {
   };
 }
 
-function createDialogSystem(windowManager, desktop) {
+function createDialogSystem(windowManager, desktop, options = {}) {
+  const windowId = String(options.windowId || "window-dialog-system").trim() || "window-dialog-system";
+  const defaultLeft = String(options.left || "220px");
+  const defaultTop = String(options.top || "150px");
+  const defaultWidth = String(options.width || "460px");
+  const defaultHeight = String(options.height || "200px");
+  const windowTitle = String(options.title || "Dialog");
   const win = document.createElement("section");
   win.className = "desktop-window window-hidden tool-window dialog-window";
-  win.id = "window-dialog-system";
-  win.style.left = "220px";
-  win.style.top = "150px";
-  win.style.width = "460px";
-  win.style.height = "200px";
+  win.id = windowId;
+  win.style.left = defaultLeft;
+  win.style.top = defaultTop;
+  win.style.width = defaultWidth;
+  win.style.height = defaultHeight;
   win.innerHTML = `
     <div class="window-titlebar">
-      <span class="window-title" id="dialog-title">Dialog</span>
+      <span class="window-title" data-dialog-role="title">${escapeHtml(windowTitle)}</span>
       <div class="window-controls">
         <button class="win-btn win-btn-close" data-win-action="close" type="button">x</button>
       </div>
     </div>
     <div class="window-content dialog-window-content">
-      <div class="dialog-message" id="dialog-message"></div>
-      <div id="dialog-form" class="dialog-form" hidden></div>
-      <input id="dialog-input" class="run-io-input dialog-input" type="text" autocomplete="off">
+      <div class="dialog-message" data-dialog-role="message"></div>
+      <div data-dialog-role="form" class="dialog-form" hidden></div>
+      <input data-dialog-role="input" class="run-io-input dialog-input" type="text" autocomplete="off">
       <div class="dialog-actions">
-        <button class="tool-btn" id="dialog-cancel" type="button">Cancel</button>
-        <button class="tool-btn primary" id="dialog-confirm" type="button">OK</button>
+        <button class="tool-btn" data-dialog-role="cancel" type="button">Cancel</button>
+        <button class="tool-btn primary" data-dialog-role="confirm" type="button">OK</button>
       </div>
     </div>
   `;
@@ -2659,16 +2884,17 @@ function createDialogSystem(windowManager, desktop) {
   windowManager.registerWindow(win);
   const refreshDialogTranslations = translateStaticTree(win);
 
-  const titleNode = win.querySelector("#dialog-title");
-  const messageNode = win.querySelector("#dialog-message");
-  const formNode = win.querySelector("#dialog-form");
-  const inputNode = win.querySelector("#dialog-input");
-  const confirmButton = win.querySelector("#dialog-confirm");
-  const cancelButton = win.querySelector("#dialog-cancel");
+  const titleNode = win.querySelector('[data-dialog-role="title"]');
+  const messageNode = win.querySelector('[data-dialog-role="message"]');
+  const formNode = win.querySelector('[data-dialog-role="form"]');
+  const inputNode = win.querySelector('[data-dialog-role="input"]');
+  const confirmButton = win.querySelector('[data-dialog-role="confirm"]');
+  const cancelButton = win.querySelector('[data-dialog-role="cancel"]');
   const titleCloseButton = win.querySelector('[data-win-action="close"]');
 
   const queue = [];
   let active = null;
+  const fieldIdPrefix = `dialog-field-${windowId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
   const defaultSize = {
     width: win.style.width || "460px",
     height: win.style.height || "200px"
@@ -2682,7 +2908,7 @@ function createDialogSystem(windowManager, desktop) {
       const description = String(section?.description || "").trim();
       const fields = Array.isArray(section?.fields) ? section.fields : [];
       const fieldsMarkup = fields.map((field, fieldIndex) => {
-        const fieldId = `dialog-field-${sectionIndex}-${fieldIndex}`;
+        const fieldId = `${fieldIdPrefix}-${sectionIndex}-${fieldIndex}`;
         const type = String(field?.type || "text");
         const label = escapeHtml(String(field?.label || field?.name || ""));
         const help = String(field?.help || "").trim();
@@ -2764,9 +2990,15 @@ function createDialogSystem(windowManager, desktop) {
     win.style.width = active.width || defaultSize.width;
     win.style.height = active.height || defaultSize.height;
     titleNode.textContent = active.title || "Dialog";
-    messageNode.textContent = active.contextText
-      ? `${active.message || ""}\n\n${active.contextLabel || translateText("Recent Run I/O")}:\n${active.contextText}`
-      : (active.message || "");
+    const baseMessage = String(active.message || "");
+    const contextText = String(active.contextText || "");
+    const contextLabel = String(active.contextLabel || "");
+    if (!contextText) {
+      messageNode.textContent = baseMessage;
+    } else {
+      const contextBlock = contextLabel ? `${contextLabel}:\n${contextText}` : contextText;
+      messageNode.textContent = baseMessage ? `${baseMessage}\n\n${contextBlock}` : contextBlock;
+    }
     confirmButton.textContent = active.confirmLabel || "OK";
     cancelButton.textContent = active.cancelLabel || "Cancel";
 
@@ -2874,7 +3106,9 @@ function createDialogSystem(windowManager, desktop) {
           title: String(options.title || translateText("Input")),
           message: String(options.message || ""),
           contextText: String(options.contextText || ""),
-          contextLabel: String(options.contextLabel || translateText("Recent Run I/O")),
+          contextLabel: options.contextLabel === undefined
+            ? translateText("Recent Run I/O")
+            : String(options.contextLabel ?? ""),
           defaultValue: String(options.defaultValue || ""),
           placeholder: String(options.placeholder || ""),
           confirmLabel: String(options.confirmLabel || translateText("OK")),
@@ -2891,7 +3125,9 @@ function createDialogSystem(windowManager, desktop) {
           title: String(options.title || translateText("Confirm")),
           message: String(options.message || ""),
           contextText: String(options.contextText || ""),
-          contextLabel: String(options.contextLabel || translateText("Recent Run I/O")),
+          contextLabel: options.contextLabel === undefined
+            ? translateText("Recent Run I/O")
+            : String(options.contextLabel ?? ""),
           confirmLabel: String(options.confirmLabel || translateText("OK")),
           cancelLabel: String(options.cancelLabel || translateText("Cancel")),
           resolve
@@ -2906,7 +3142,9 @@ function createDialogSystem(windowManager, desktop) {
           title: String(options.title || translateText("Dialog")),
           message: String(options.message || ""),
           contextText: String(options.contextText || ""),
-          contextLabel: String(options.contextLabel || translateText("Recent Run I/O")),
+          contextLabel: options.contextLabel === undefined
+            ? translateText("Recent Run I/O")
+            : String(options.contextLabel ?? ""),
           confirmLabel: String(options.confirmLabel || translateText("OK")),
           cancelLabel: String(options.cancelLabel || translateText("Cancel")),
           width: String(options.width || "520px"),
@@ -2921,6 +3159,16 @@ function createDialogSystem(windowManager, desktop) {
       closeAsCancel();
       queue.length = 0;
       windowManager.hide(win.id);
+    },
+    destroy() {
+      queue.length = 0;
+      closeAsCancel();
+      windowManager.hide(win.id);
+      if (typeof windowManager.unregisterWindow === "function") {
+        windowManager.unregisterWindow(win.id);
+      } else {
+        win.remove();
+      }
     },
     refreshTranslations() {
       refreshDialogTranslations();
@@ -2962,6 +3210,27 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function scrollElementWithinContainer(target, container, options = {}) {
+  if (!(target instanceof HTMLElement) || !(container instanceof HTMLElement)) return;
+  const topInset = Number.isFinite(options.topInset) ? Math.max(0, options.topInset) : 0;
+  const bottomInset = Number.isFinite(options.bottomInset) ? Math.max(0, options.bottomInset) : 0;
+  const margin = Number.isFinite(options.margin) ? Math.max(0, options.margin) : 4;
+  const containerRect = container.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const targetTop = targetRect.top - containerRect.top + container.scrollTop;
+  const targetBottom = targetRect.bottom - containerRect.top + container.scrollTop;
+  const viewTop = container.scrollTop + topInset;
+  const viewBottom = container.scrollTop + container.clientHeight - bottomInset;
+
+  if ((targetTop - margin) < viewTop) {
+    container.scrollTop = Math.max(0, targetTop - topInset - margin);
+    return;
+  }
+  if ((targetBottom + margin) > viewBottom) {
+    container.scrollTop = Math.max(0, targetBottom + bottomInset + margin - container.clientHeight);
+  }
 }
 
   function createExecutePane(refs, engine) {
@@ -3120,6 +3389,14 @@ function escapeHtml(value) {
     return dataState.hexAddresses ? toHex(address >>> 0) : `${address >>> 0}`;
   }
 
+  function formatProgramAddress(address, addressHex, displayAddressesHex) {
+    if (displayAddressesHex !== false) {
+      if (typeof addressHex === "string" && addressHex.trim().length) return addressHex;
+      return toHex(Number.isFinite(address) ? (address >>> 0) : 0);
+    }
+    return `${Number.isFinite(address) ? (address >>> 0) : 0}`;
+  }
+
   function formatValue(value) {
     if (dataState.ascii) return asciiFromWord(value >>> 0);
     return dataState.hexValues ? toHex(value >>> 0) : `${signed32(value)}`;
@@ -3180,6 +3457,31 @@ function escapeHtml(value) {
     return latest;
   }
 
+  function isCompactDataControlsMode() {
+    return refs.root?.classList?.contains("desktop-stacked") === true
+      || refs.windows?.desktop?.classList?.contains("desktop-stacked") === true
+      || (window.innerWidth || 0) < 800;
+  }
+
+  function refreshDataControlLabels() {
+    const compact = isCompactDataControlsMode();
+    if (execute.dataHexAddressesLabel instanceof HTMLElement) {
+      execute.dataHexAddressesLabel.lastChild?.remove?.();
+      execute.dataHexAddressesLabel.append(` ${translateText(compact ? "Hex Addr." : "Hexadecimal Addresses")}`);
+    }
+    if (execute.dataHexValuesLabel instanceof HTMLElement) {
+      execute.dataHexValuesLabel.lastChild?.remove?.();
+      execute.dataHexValuesLabel.append(` ${translateText(compact ? "Hex. Val." : "Hexadecimal Values")}`);
+    }
+
+    const suffixes = ["0", "4", "8", "c", "10", "14", "18", "1c"];
+    execute.dataHeaders?.forEach((header, index) => {
+      if (!(header instanceof HTMLElement)) return;
+      const suffix = suffixes[index] || "0";
+      header.textContent = compact ? `Value+${suffix}` : `Value (+${suffix})`;
+    });
+  }
+
   execute.dataNavPrev?.addEventListener("click", () => {
     dataState.pageOffset = Math.max(0, dataState.pageOffset - DATA_PAGE_BYTES);
     rerender();
@@ -3211,12 +3513,15 @@ function escapeHtml(value) {
     rerender();
   });
 
+  window.addEventListener("resize", refreshDataControlLabels);
+
   const api = {
     render(snapshot, options = {}) {
       const changedDataAddresses = options.changedDataAddresses ?? new Set();
       const focusDataAddress = Number.isFinite(options.focusDataAddress) ? (options.focusDataAddress >>> 0) : null;
       const disableHighlights = options.disableHighlights === true;
       const disableAutoScroll = options.disableAutoScroll === true;
+      const displayAddressesHex = options.displayAddressesHex !== false;
       lastSnapshot = snapshot;
       lastRenderOptions = {
         ...options,
@@ -3230,27 +3535,31 @@ function escapeHtml(value) {
             const classes = [];
             if (row.isCurrent && !disableHighlights) classes.push("current-row", "updated-row");
             const cls = classes.join(" ");
-            return `<tr class="${cls}" data-text-address="${row.address}"><td><input type="checkbox" data-breakpoint-address="${row.address}" ${checked}></td><td>${row.addressHex}</td><td>${row.code}</td><td>${escapeHtml(row.basic)}</td><td>${escapeHtml(row.source)}</td></tr>`;
+            return `<tr class="${cls}" data-text-address="${row.address}"><td><input type="checkbox" data-breakpoint-address="${row.address}" ${checked}></td><td>${formatProgramAddress(row.address, row.addressHex, displayAddressesHex)}</td><td>${row.code}</td><td>${escapeHtml(row.basic)}</td><td>${escapeHtml(row.source)}</td></tr>`;
           }).join("")
         : `<tr><td colspan="5" class="muted">${escapeHtml(translateText("No text segment loaded."))}</td></tr>`;
 
       execute.labelsList.innerHTML = snapshot.labels.length
-        ? snapshot.labels.map((entry) => `<li>${escapeHtml(entry.label)} = ${entry.addressHex}</li>`).join("")
+        ? snapshot.labels.map((entry) => `<li>${escapeHtml(entry.label)} = ${formatProgramAddress(entry.address, entry.addressHex, displayAddressesHex)}</li>`).join("")
         : `<li class="muted">${escapeHtml(translateText("No labels"))}</li>`;
 
       refreshBaseOptions(snapshot);
 
-      const targetAddress = focusDataAddress ?? getLatestChangedAddress(changedDataAddresses);
-      if (targetAddress != null) {
-        const nextSelection = pickSelectionForAddress(targetAddress, snapshot);
+      const latestChangedAddress = getLatestChangedAddress(changedDataAddresses);
+      const activeDataAddress = focusDataAddress ?? latestChangedAddress;
+      const currentWriteAddress = changedDataAddresses.size
+        ? ((focusDataAddress != null && changedDataAddresses.has(focusDataAddress)) ? focusDataAddress : latestChangedAddress)
+        : null;
+      if (currentWriteAddress != null) {
+        const nextSelection = pickSelectionForAddress(currentWriteAddress, snapshot);
         if (nextSelection !== dataState.baseSelection) {
           dataState.baseSelection = nextSelection;
           if (execute.dataBaseSelect) execute.dataBaseSelect.value = nextSelection;
         }
 
         const baseAddress = resolveBaseAddress(dataState.baseSelection, snapshot);
-        if (targetAddress >= baseAddress && (targetAddress - baseAddress) < DATA_VIEW_MAX_RANGE) {
-          const relative = targetAddress - baseAddress;
+        if (currentWriteAddress >= baseAddress && (currentWriteAddress - baseAddress) < DATA_VIEW_MAX_RANGE) {
+          const relative = currentWriteAddress - baseAddress;
           dataState.pageOffset = Math.floor(relative / DATA_PAGE_BYTES) * DATA_PAGE_BYTES;
         }
       }
@@ -3260,39 +3569,57 @@ function escapeHtml(value) {
       const rows = [];
       for (let rowIndex = 0; rowIndex < DATA_ROWS_PER_PAGE; rowIndex += 1) {
         const rowAddress = (pageStart + rowIndex * DATA_COLUMNS * WORD_SIZE_BYTES) >>> 0;
-        let rowChanged = false;
         const valueCells = [];
 
         for (let col = 0; col < DATA_COLUMNS; col += 1) {
           const cellAddress = (rowAddress + col * WORD_SIZE_BYTES) >>> 0;
           const rawValue = memoryWords.get(cellAddress) ?? 0;
-          const cellUpdated = changedDataAddresses.has(cellAddress);
-          if (cellUpdated && !disableHighlights) rowChanged = true;
+          const isActiveCell = activeDataAddress != null && cellAddress === activeDataAddress;
+          const cellUpdated = currentWriteAddress != null && cellAddress === currentWriteAddress;
 
           const cellClasses = [];
-          if (!disableHighlights && cellUpdated) cellClasses.push("updated-row", "updated-cell");
-          if (!disableHighlights && targetAddress != null && cellAddress === targetAddress) cellClasses.push("updated-row", "updated-cell");
+          if (!disableHighlights && isActiveCell) cellClasses.push("active-data-cell");
+          if (!disableHighlights && cellUpdated) cellClasses.push("updated-cell");
           const cellClass = cellClasses.join(" ");
 
-          valueCells.push(`<td class="${cellClass}" data-data-address="${cellAddress}">${escapeHtml(formatValue(rawValue))}</td>`);
+          valueCells.push(`<td class="${cellClass}" data-data-address="${cellAddress}"><span class="data-cell-text">${escapeHtml(formatValue(rawValue))}</span></td>`);
         }
 
-        const rowClass = (!disableHighlights && rowChanged) ? "updated-row" : "";
-        rows.push(`<tr class="${rowClass}" data-row-address="${rowAddress}"><td>${formatAddress(rowAddress)}</td>${valueCells.join("")}</tr>`);
+        rows.push(`<tr data-row-address="${rowAddress}"><td>${formatAddress(rowAddress)}</td>${valueCells.join("")}</tr>`);
       }
 
       execute.dataBody.innerHTML = rows.join("");
+      refreshDataControlLabels();
 
       if (!disableAutoScroll) {
         const currentRow = execute.textBody.querySelector("tr.current-row");
-        if (currentRow) currentRow.scrollIntoView({ block: "nearest" });
+        const textTableWrap = execute.textBody.closest(".text-table-wrap");
+        const textHeader = textTableWrap?.querySelector("thead");
+        if (currentRow && textTableWrap) {
+          scrollElementWithinContainer(currentRow, textTableWrap, {
+            topInset: textHeader instanceof HTMLElement ? textHeader.getBoundingClientRect().height : 0,
+            margin: 6
+          });
+        }
 
-        const focusCell = targetAddress == null ? null : execute.dataBody.querySelector(`td[data-data-address="${targetAddress}"]`);
+        const focusCell = currentWriteAddress == null ? null : execute.dataBody.querySelector(`td[data-data-address="${currentWriteAddress}"]`);
+        const dataTableWrap = execute.dataBody.closest(".data-table-wrap");
+        const dataHeader = dataTableWrap?.querySelector("thead");
         if (focusCell) {
-          focusCell.scrollIntoView({ block: "nearest" });
+          if (dataTableWrap) {
+            scrollElementWithinContainer(focusCell, dataTableWrap, {
+              topInset: dataHeader instanceof HTMLElement ? dataHeader.getBoundingClientRect().height : 0,
+              margin: 6
+            });
+          }
         } else {
-          const changedDataRow = execute.dataBody.querySelector("td.updated-cell, tr.updated-row");
-          if (changedDataRow) changedDataRow.scrollIntoView({ block: "nearest" });
+          const changedDataRow = currentWriteAddress == null ? null : execute.dataBody.querySelector(`td[data-data-address="${currentWriteAddress}"]`);
+          if (changedDataRow && dataTableWrap) {
+            scrollElementWithinContainer(changedDataRow, dataTableWrap, {
+              topInset: dataHeader instanceof HTMLElement ? dataHeader.getBoundingClientRect().height : 0,
+              margin: 6
+            });
+          }
         }
       }
 
@@ -3365,6 +3692,10 @@ function createRegistersPane(refs) {
       return aName.localeCompare(bName);
     });
   };
+  const isStackedLayout = () => (
+    refs.root?.classList?.contains("desktop-stacked") === true
+    || refs.windows?.desktop?.classList?.contains("desktop-stacked") === true
+  );
 
   let previousCop0 = null;
   let previousCop1 = null;
@@ -3408,7 +3739,10 @@ function createRegistersPane(refs) {
 
       if (!disableAutoScroll) {
         const changedRow = refs.registers.body.querySelector("tr.updated-row");
-        if (changedRow) changedRow.scrollIntoView({ block: "nearest" });
+        if (changedRow && !isStackedLayout()) {
+          const registerBody = changedRow.closest(".register-body");
+          if (registerBody) scrollElementWithinContainer(changedRow, registerBody);
+        }
       }
 
       const cop1Values = Array.isArray(snapshot.cop1) ? snapshot.cop1 : [];
@@ -3634,6 +3968,14 @@ function createMessagesPane(refs, limit) {
     setInputSubmittedHandler(handler) {
       onInputSubmitted = typeof handler === "function" ? handler : null;
     },
+    marsEndsWithNewline() {
+      const text = getBuffer(refs.messages.mars);
+      return !text || text.endsWith("\n");
+    },
+    runEndsWithNewline() {
+      const text = getBuffer(refs.messages.run);
+      return !text || text.endsWith("\n");
+    },
     getRecentRunLines
   };
 }
@@ -3653,6 +3995,7 @@ const DEFAULT_PREFERENCES = {
   delayedBranching: false,
   strictMarsCompatibility: false,
   selfModifyingCode: false,
+  splitMessagesRunIo: false,
   programArgumentsText: "",
   editorFontSize: 12,
   editorLineHeight: 1.25,
@@ -4287,13 +4630,18 @@ function injectRuntimeStyles() {
       background: #d1e8ff;
     }
 
+    .active-data-cell {
+      background: #d1e8ff;
+    }
+
     .updated-cell {
-      background: #c1e3ff;
+      animation: rowFlash 0.85s ease;
+      background: #d1e8ff;
     }
 
     .disable-text-highlight #text-segment-body tr.updated-row,
     .disable-text-highlight #text-segment-body tr.current-row,
-    .disable-data-highlight #data-segment-body tr.updated-row,
+    .disable-data-highlight #data-segment-body td.active-data-cell,
     .disable-data-highlight #data-segment-body td.updated-cell,
     .disable-register-highlight #registers-body tr.updated-row {
       animation: none;
@@ -4302,7 +4650,7 @@ function injectRuntimeStyles() {
 
     .run-no-interaction #text-segment-body tr.updated-row,
     .run-no-interaction #text-segment-body tr.current-row,
-    .run-no-interaction #data-segment-body tr.updated-row,
+    .run-no-interaction #data-segment-body td.active-data-cell,
     .run-no-interaction #data-segment-body td.updated-cell,
     .run-no-interaction #registers-body tr.updated-row {
       animation: none;
@@ -4496,6 +4844,7 @@ function injectRuntimeStyles() {
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .data-segment-table th:first-child,
@@ -4508,6 +4857,16 @@ function injectRuntimeStyles() {
     .data-segment-table td:not(:first-child) {
       width: 11%;
       font-family: "Cascadia Code", "Consolas", monospace;
+    }
+
+    .data-cell-text {
+      display: inline-block;
+      max-width: 100%;
+      white-space: nowrap;
+      vertical-align: top;
+      overflow: hidden;
+      direction: rtl;
+      text-align: left;
     }
 
     .data-nav {
@@ -4572,6 +4931,70 @@ function injectRuntimeStyles() {
     #window-messages .messages-subtab-panel.active {
       display: grid;
       min-height: 0;
+    }
+
+    .split-messages-runio .desktop:not(.desktop-stacked) #window-messages .messages-pane {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
+      column-gap: 4px;
+      row-gap: 2px;
+      padding: 4px;
+    }
+
+    .split-messages-runio .desktop:not(.desktop-stacked) #window-messages .messages-pane > .subtabs {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-column: 1 / span 2;
+      grid-row: 1;
+      gap: 4px;
+      padding: 0;
+      margin: 0;
+      align-items: end;
+    }
+
+    .split-messages-runio .desktop:not(.desktop-stacked) #window-messages .messages-pane > .subtabs {
+      --messages-tab-offset: 54px;
+    }
+
+    .split-messages-runio .desktop:not(.desktop-stacked) #window-messages .messages-pane > .subtabs .subtab-btn {
+      width: max-content;
+      max-width: 100%;
+      justify-self: start;
+      margin-left: var(--messages-tab-offset);
+      pointer-events: none;
+      cursor: default;
+      border-color: var(--accent);
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .split-messages-runio .desktop:not(.desktop-stacked) #window-messages .messages-pane > .subtabs .subtab-btn:nth-child(1) {
+      grid-column: 1;
+    }
+
+    .split-messages-runio .desktop:not(.desktop-stacked) #window-messages .messages-pane > .subtabs .subtab-btn:nth-child(2) {
+      grid-column: 2;
+    }
+
+    .split-messages-runio .desktop:not(.desktop-stacked) #window-messages .messages-subtab-panel {
+      display: grid;
+      min-height: 0;
+      grid-row: 2;
+    }
+
+    .split-messages-runio .desktop:not(.desktop-stacked) #window-messages #panel-mars-messages {
+      grid-column: 1;
+      border-right: 1px solid #b7c4d4;
+      padding-right: 2px;
+    }
+
+    .split-messages-runio .desktop:not(.desktop-stacked) #window-messages #panel-run-io {
+      grid-column: 2;
+      padding-left: 2px;
+    }
+
+    .split-messages-runio .desktop:not(.desktop-stacked) #window-messages .messages-tab-shell {
+      padding: 0;
     }
 
     .messages-tab-shell {
@@ -5281,8 +5704,8 @@ function injectRuntimeStyles() {
 
     .bitmap-footer .tool-btn { min-width: 116px; }
 
-    .hide-labels-window .labels-panel { display: none; }
-    .hide-labels-window .execute-top { grid-template-columns: 1fr; }
+    .hide-labels-window .desktop:not(.desktop-stacked) .labels-panel { display: none; }
+    .hide-labels-window .desktop:not(.desktop-stacked) .execute-top { grid-template-columns: 1fr; }
 
     @media (max-width: 1250px) {
       .toolbar-speed-group { min-width: 100%; grid-template-columns: auto 1fr; }

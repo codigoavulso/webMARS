@@ -17,7 +17,7 @@ const EDGE_PATH = process.env.EDGE_PATH || "C:\\Program Files (x86)\\Microsoft\\
 const DEBUG_PORT = Number(process.env.EDGE_DEBUG_PORT || 9224);
 const APP_PORT = Number(process.env.DIFF_APP_PORT || 8082);
 const TARGET_URL = process.env.DIFF_TARGET_URL || `http://localhost:${APP_PORT}/`;
-const WEB_BACKEND = String(process.env.DIFF_WEB_BACKEND || "js").trim().toLowerCase();
+const WEB_BACKEND = String(process.env.DIFF_WEB_BACKEND || "wasm").trim().toLowerCase();
 const JAVA_CMD = process.env.JAVA_CMD || "java";
 const JAVAC_CMD = process.env.JAVAC_CMD || "javac";
 const JAVA_SOURCE_ENCODING = process.env.JAVA_SOURCE_ENCODING || (process.platform === "win32" ? "windows-1252" : "UTF-8");
@@ -148,18 +148,6 @@ main:
   li $a0, 10
   li $v0, 11
   syscall
-  li $v0, 10
-  syscall
-`
-    },
-    {
-      id: "set_directive_warning",
-      area: "directives",
-      description: ".set behavior confirmation against Java MARS (ignored + warning).",
-      settings: {},
-      source: `.set noreorder
-.text
-main:
   li $v0, 10
   syscall
 `
@@ -374,13 +362,16 @@ function buildWebCaseExpression(testCase) {
     maxSteps: Number(testCase.maxSteps || 100000) | 0
   });
 
-  return `(() => {
+  return `(async () => {
     const testCase = ${payload};
     const baseSettings = { ...DEFAULT_SETTINGS, ...testCase.settings, coreBackend: "${WEB_BACKEND}" };
     const engine = createMarsEngine({
       settings: baseSettings,
       memoryMap: { ...DEFAULT_MEMORY_MAP }
     });
+    if (typeof engine.whenReady === "function") {
+      await engine.whenReady();
+    }
 
     const assembled = engine.assemble(testCase.source, {
       sourceName: testCase.id + ".s",

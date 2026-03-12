@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-10T20:29:57.644Z",
+  "generatedAt": "2026-03-11T21:12:17.985Z",
   "source": {
     "basicInstructions": "../mars/mips/instructions/InstructionSet.java",
     "extendedInstructions": "../PseudoOps.txt",

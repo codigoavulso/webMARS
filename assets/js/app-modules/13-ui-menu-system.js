@@ -14,6 +14,8 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
   const definitions = () => {
     const examples = typeof handlers.getExampleMenuItems === "function" ? handlers.getExampleMenuItems() : [];
     const exampleItems = examples.length ? examples : [{ label: "(no examples)", enabled: () => false }];
+    const windows = typeof handlers.getViewMenuItems === "function" ? handlers.getViewMenuItems() : [];
+    const viewItems = windows.length ? windows : [{ label: "(no windows)", enabled: () => false }];
     return {
       File: [
         { label: "New", command: "newFile", shortcut: "Ctrl+N" },
@@ -55,6 +57,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Show Labels Window (symbol table)", command: "toggleShowLabelsWindow", check: (st) => st.preferences.showLabelsWindow },
         { label: "Program arguments provided to MIPS program", command: "toggleProgramArguments", check: (st) => st.preferences.programArguments },
         { label: "Popup dialog for input syscalls", command: "togglePopupSyscallInput", check: (st) => st.preferences.popupSyscallInput },
+        { label: "Separate Mars Messages from Run I/O", command: "toggleSplitMessagesRunIo", check: (st) => st.preferences.splitMessagesRunIo },
         { label: "Addresses displayed in hexadecimal", command: "toggleAddressDisplayBase", check: (st) => st.preferences.displayAddressesHex },
         { label: "Values displayed in hexadecimal", command: "toggleValueDisplayBase", check: (st) => st.preferences.displayValuesHex },
         "-",
@@ -64,12 +67,12 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Initialize Program Counter to global 'main' if defined", command: "toggleStartAtMain", check: (st) => st.preferences.startAtMain },
         { label: "Permit extended (pseudo) instructions and formats", command: "toggleExtendedAssembler", check: (st) => st.preferences.extendedAssembler },
         { label: "Delayed branching", command: "toggleDelayedBranching", check: (st) => st.preferences.delayedBranching },
-        { label: "Strict MARS 4.5 compatibility mode", command: "toggleStrictMarsCompatibility", check: (st) => st.preferences.strictMarsCompatibility },
         { label: "Self-modifying code", command: "toggleSelfModifyingCode", check: (st) => st.preferences.selfModifyingCode },
         "-",
         { label: "Interface...", command: "showInterfacePreferences" },
         { label: "Runtime & Memory...", command: "showRuntimeMemoryPreferences" }
       ],
+      View: viewItems,
       Tools: toolManager.getTools().map((tool) => ({
         label: tool.label,
         command: () => handlers.openTool(tool.id)

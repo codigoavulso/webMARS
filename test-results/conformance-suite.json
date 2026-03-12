@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-03-11T19:41:12.705Z",
+  "generatedAt": "2026-03-11T21:30:55.434Z",
   "targetUrl": "http://localhost:8082/",
-  "totalCases": 7,
-  "passedCases": 7,
+  "totalCases": 6,
+  "passedCases": 6,
   "failedCases": 0,
   "cases": [
     {
@@ -14,8 +14,8 @@
       "mismatches": [],
       "sampledAddressCount": 22,
       "webBackend": {
-        "backend": "js",
-        "backendName": "js-core",
+        "backend": "wasm",
+        "backendName": "wasm-cpp-hybrid",
         "native": false
       }
     },
@@ -28,8 +28,8 @@
       "mismatches": [],
       "sampledAddressCount": 22,
       "webBackend": {
-        "backend": "js",
-        "backendName": "js-core",
+        "backend": "wasm",
+        "backendName": "wasm-cpp-hybrid",
         "native": false
       }
     },
@@ -42,8 +42,8 @@
       "mismatches": [],
       "sampledAddressCount": 22,
       "webBackend": {
-        "backend": "js",
-        "backendName": "js-core",
+        "backend": "wasm",
+        "backendName": "wasm-cpp-hybrid",
         "native": false
       }
     },
@@ -56,8 +56,8 @@
       "mismatches": [],
       "sampledAddressCount": 21,
       "webBackend": {
-        "backend": "js",
-        "backendName": "js-core",
+        "backend": "wasm",
+        "backendName": "wasm-cpp-hybrid",
         "native": false
       }
     },
@@ -70,8 +70,8 @@
       "mismatches": [],
       "sampledAddressCount": 25,
       "webBackend": {
-        "backend": "js",
-        "backendName": "js-core",
+        "backend": "wasm",
+        "backendName": "wasm-cpp-hybrid",
         "native": false
       }
     },
@@ -84,22 +84,8 @@
       "mismatches": [],
       "sampledAddressCount": 24,
       "webBackend": {
-        "backend": "js",
-        "backendName": "js-core",
-        "native": false
-      }
-    },
-    {
-      "caseId": "set_directive_warning",
-      "area": "directives",
-      "description": ".set behavior confirmation against Java MARS (ignored + warning).",
-      "pass": true,
-      "mismatchCount": 0,
-      "mismatches": [],
-      "sampledAddressCount": 18,
-      "webBackend": {
-        "backend": "js",
-        "backendName": "js-core",
+        "backend": "wasm",
+        "backendName": "wasm-cpp-hybrid",
         "native": false
       }
     }
@@ -126,11 +112,6 @@
       "failed": 0
     },
     "syscall-side-effects": {
-      "total": 1,
-      "passed": 1,
-      "failed": 0
-    },
-    "directives": {
       "total": 1,
       "passed": 1,
       "failed": 0

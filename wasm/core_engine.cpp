@@ -87,6 +87,7 @@ struct Settings {
   bool startAtMain = false;
   bool extendedAssembler = true;
   bool delayedBranching = false;
+  bool strictMarsCompatibility = false;
   bool selfModifyingCode = false;
   bool warningsAreErrors = false;
   std::int32_t maxBacksteps = 100;
@@ -297,6 +298,7 @@ class NativeMarsEngine {
   void loadState(val snapshot);
   void replaceStateFromHost(val snapshot, val previousState);
   val exportState(bool includeProgram, bool includeBreakpoints) const;
+  val exportRuntimeState(bool includeBreakpoints);
   val step();
   val go(std::int32_t maxSteps);
   val backstep();
@@ -320,6 +322,7 @@ class NativeMarsEngine {
   std::uint32_t getBackstepHistoryBudgetBytes() const;
   void pushExecutionHistory(HistoryEntry entry);
   void recordWordChange(std::uint32_t baseAddress);
+  void markDirtyWord(std::uint32_t baseAddress);
   StepResult executeInstruction(const ProgramRow& row);
   StepResult stepInternal();
   StepResult raiseException(std::int32_t cause, const std::string& messageKey, bool hasBadAddress = false, std::uint32_t badAddress = 0);
@@ -356,6 +359,7 @@ class NativeMarsEngine {
   std::vector<ProgramRow> programRows_ {};
   std::unordered_map<std::uint32_t, std::size_t> programIndex_ {};
   std::unordered_set<std::uint32_t> breakpoints_ {};
+  std::unordered_set<std::uint32_t> dirtyWordAddresses_ {};
   std::deque<HistoryEntry> executionHistory_ {};
   std::uint32_t executionHistoryBytes_ = 0;
   HistoryEntry* activeHistory_ = nullptr;
@@ -1039,6 +1043,7 @@ void NativeMarsEngine::configure(val settings, val memoryMap) {
   settings_.startAtMain = bool_or(settings, "startAtMain", settings_.startAtMain);
   settings_.extendedAssembler = bool_or(settings, "extendedAssembler", settings_.extendedAssembler);
   settings_.delayedBranching = bool_or(settings, "delayedBranching", settings_.delayedBranching);
+  settings_.strictMarsCompatibility = bool_or(settings, "strictMarsCompatibility", settings_.strictMarsCompatibility);
   settings_.selfModifyingCode = bool_or(settings, "selfModifyingCode", settings_.selfModifyingCode);
   settings_.warningsAreErrors = bool_or(settings, "warningsAreErrors", settings_.warningsAreErrors);
   settings_.maxBacksteps = int_or(settings, "maxBacksteps", settings_.maxBacksteps);
@@ -1078,6 +1083,7 @@ void NativeMarsEngine::resetRuntimeState() {
   cop1_.fill(0);
   fpuFlags_.fill(0);
   memoryWords_.clear();
+  dirtyWordAddresses_.clear();
   memoryBytesUsed_ = 0;
   clearExecutionHistory();
 }
@@ -1178,6 +1184,7 @@ void NativeMarsEngine::importState(val snapshot, bool preserveProgram, bool pres
   }
 
   memoryWords_.clear();
+  dirtyWordAddresses_.clear();
   memoryBytesUsed_ = 0;
   const auto memoryWords = snapshot["memoryWords"];
   for (std::uint32_t i = 0; i < array_length(memoryWords); i += 1u) {
@@ -1363,6 +1370,65 @@ val NativeMarsEngine::exportState(bool includeProgram, bool includeBreakpoints) 
   return snapshot;
 }
 
+val NativeMarsEngine::exportRuntimeState(bool includeBreakpoints) {
+  val snapshot = val::object();
+  snapshot.set("assembled", assembled_);
+  snapshot.set("halted", halted_);
+  snapshot.set("pc", pc_);
+  snapshot.set("steps", steps_);
+  snapshot.set("heapPointer", heapPointer_);
+  snapshot.set("delayedBranchTarget", delayedBranchTarget_ >= 0 ? val(static_cast<double>(static_cast<std::uint32_t>(delayedBranchTarget_))) : val::null());
+  snapshot.set("lastMemoryWriteAddress", lastMemoryWriteAddress_ >= 0 ? val(static_cast<double>(static_cast<std::uint32_t>(lastMemoryWriteAddress_))) : val::null());
+  if (lastMemoryWriteAddress_ >= 0) {
+    const auto lastWriteAddress = static_cast<std::uint32_t>(lastMemoryWriteAddress_);
+    const auto lastWriteValueIt = memoryWords_.find(lastWriteAddress);
+    const auto lastWriteValue = lastWriteValueIt == memoryWords_.end() ? 0 : lastWriteValueIt->second;
+    snapshot.set("lastMemoryWriteValue", lastWriteValue);
+  } else {
+    snapshot.set("lastMemoryWriteValue", val::null());
+  }
+  snapshot.set("memoryUsageBytes", memoryBytesUsed_);
+  snapshot.set("maxMemoryBytes", settings_.maxMemoryBytes);
+  snapshot.set("backstepDepth", static_cast<std::uint32_t>(executionHistory_.size()));
+  snapshot.set("backstepHistoryBytes", executionHistoryBytes_);
+  snapshot.set("backstepHistoryBudgetBytes", getBackstepHistoryBudgetBytes());
+
+  val registers = val::array();
+  for (std::uint32_t i = 0; i < registers_.size(); i += 1u) registers.set(i, registers_[i]);
+  snapshot.set("registers", registers);
+  val cop0 = val::array();
+  for (std::uint32_t i = 0; i < cop0_.size(); i += 1u) cop0.set(i, cop0_[i]);
+  snapshot.set("cop0", cop0);
+  val cop1 = val::array();
+  for (std::uint32_t i = 0; i < cop1_.size(); i += 1u) cop1.set(i, cop1_[i]);
+  snapshot.set("cop1", cop1);
+  val flags = val::array();
+  for (std::uint32_t i = 0; i < fpuFlags_.size(); i += 1u) flags.set(i, fpuFlags_[i]);
+  snapshot.set("fpuFlags", flags);
+
+  val memoryDelta = val::array();
+  std::uint32_t deltaIndex = 0;
+  for (const auto address : dirtyWordAddresses_) {
+    const auto entry = memoryWords_.find(address);
+    const auto value = entry == memoryWords_.end() ? 0 : entry->second;
+    val pair = val::array();
+    pair.set(0u, address);
+    pair.set(1u, value);
+    memoryDelta.set(deltaIndex++, pair);
+  }
+  snapshot.set("memoryDelta", memoryDelta);
+  dirtyWordAddresses_.clear();
+
+  if (includeBreakpoints) {
+    val breakpoints = val::array();
+    std::uint32_t index = 0;
+    for (const auto address : breakpoints_) breakpoints.set(index++, address);
+    snapshot.set("breakpoints", breakpoints);
+  }
+
+  return snapshot;
+}
+
 HistoryEntry NativeMarsEngine::captureHistoryEntry() const {
   HistoryEntry entry;
   entry.pc = pc_;
@@ -1401,6 +1467,7 @@ void NativeMarsEngine::restoreHistoryEntry(const HistoryEntry& entry) {
       memoryWords_[change.first] = change.second.value;
       memoryBytesUsed_ += count_non_zero_bytes(change.second.value);
     }
+    markDirtyWord(change.first);
   }
 
   forceZeroRegister();
@@ -1454,6 +1521,10 @@ void NativeMarsEngine::recordWordChange(std::uint32_t baseAddress) {
     return;
   }
   activeHistory_->memoryChanges.insert({ baseAddress, WordChange{ true, current->second } });
+}
+
+void NativeMarsEngine::markDirtyWord(std::uint32_t baseAddress) {
+  dirtyWordAddresses_.insert(baseAddress);
 }
 
 void NativeMarsEngine::ensureMemoryCapacity(std::uint32_t additionalNonZeroBytes) const {
@@ -1514,6 +1585,7 @@ void NativeMarsEngine::setByte(std::uint32_t address, std::uint8_t value) {
     memoryBytesUsed_ += count_non_zero_bytes(newWord);
   }
   lastMemoryWriteAddress_ = static_cast<std::int32_t>(base);
+  markDirtyWord(base);
 }
 
 std::int32_t NativeMarsEngine::readByte(std::uint32_t address, bool signedRead) const {
@@ -1576,6 +1648,7 @@ void NativeMarsEngine::writeWord(std::uint32_t address, std::int32_t value) {
     memoryBytesUsed_ += newCount;
   }
   lastMemoryWriteAddress_ = static_cast<std::int32_t>(address);
+  markDirtyWord(address);
 }
 
 void NativeMarsEngine::forceZeroRegister() {
@@ -2215,6 +2288,7 @@ EMSCRIPTEN_BINDINGS(webmars_native_engine) {
     .function("loadState", &NativeMarsEngine::loadState)
     .function("replaceStateFromHost", &NativeMarsEngine::replaceStateFromHost)
     .function("exportState", &NativeMarsEngine::exportState)
+    .function("exportRuntimeState", &NativeMarsEngine::exportRuntimeState)
     .function("step", &NativeMarsEngine::step)
     .function("go", &NativeMarsEngine::go)
     .function("backstep", &NativeMarsEngine::backstep)
