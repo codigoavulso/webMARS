@@ -12,18 +12,30 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
   document.body.appendChild(submenuPopupLevel2);
 
   const definitions = () => {
+    const state = getState();
+    const hasOpenProject = state?.project?.isOpen === true;
     const examples = typeof handlers.getExampleMenuItems === "function" ? handlers.getExampleMenuItems() : [];
     const exampleItems = examples.length ? examples : [{ label: "(no examples)", enabled: () => false }];
     const windows = typeof handlers.getViewMenuItems === "function" ? handlers.getViewMenuItems() : [];
     const viewItems = windows.length ? windows : [{ label: "(no windows)", enabled: () => false }];
+    const newMenuItems = [{ label: "Project", command: "newProject", shortcut: "Ctrl+N" }];
+    if (hasOpenProject) {
+      newMenuItems.push(
+        { label: "c file", command: "newC0File" },
+        { label: "s file", command: "newSFile" }
+      );
+    }
+    const closeMenuItems = [
+      { label: "Active file", command: "closeFile", shortcut: "Ctrl+W", enabled: () => hasOpenProject },
+      { label: "Close project", command: "closeProject", enabled: () => hasOpenProject }
+    ];
     return {
       File: [
-        { label: "New", command: "newFile", shortcut: "Ctrl+N" },
+        { label: "New", submenu: newMenuItems },
         { label: "Open from Disk...", command: "openFileFromDisk", shortcut: "Ctrl+O" },
         { label: "Open from Browser Storage...", command: "openFileFromBrowserStorage" },
         "-",
-        { label: "Close", command: "closeFile", shortcut: "Ctrl+W" },
-        { label: "Close All", command: "closeAllFiles" },
+        { label: "Close", submenu: closeMenuItems },
         "-",
         { label: "Download", command: "saveFileToDisk", shortcut: "Ctrl+S" },
         { label: "Download As...", command: "saveFileToDiskAs", shortcut: "Ctrl+Shift+S" },
@@ -45,6 +57,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Select All", command: "selectAll", shortcut: "Ctrl+A" }
       ],
       Run: [
+        { label: "Compile C0", command: "compileC0", shortcut: "F4" },
         { label: "Assemble", command: "assemble", shortcut: "F3" },
         { label: "Go", command: "go", shortcut: "F5" },
         { label: "Pause", command: "pause" },
@@ -69,6 +82,12 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Delayed branching", command: "toggleDelayedBranching", check: (st) => st.preferences.delayedBranching },
         { label: "Self-modifying code", command: "toggleSelfModifyingCode", check: (st) => st.preferences.selfModifyingCode },
         "-",
+        { label: "Open Mini-C output window after compile", command: "toggleMiniCOutputWindow", check: (st) => st.preferences.miniCOpenOutputWindow },
+        { label: "Mini-C (C0) Compiler...", command: "showMiniCCompilerPreferences" },
+        "-",
+        { label: "Store/Load state...", command: "manageProjectStates" },
+        { label: "Clear localStorage and loaded states...", command: "clearLocalData" },
+        "-",
         { label: "Interface...", command: "showInterfacePreferences" },
         { label: "Runtime & Memory...", command: "showRuntimeMemoryPreferences" }
       ],
@@ -86,6 +105,10 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
   };
 
   let activeMenu = null;
+
+  function isMenuDockedBottom() {
+    return refs.root?.classList?.contains("menu-at-bottom") === true;
+  }
 
   function hideDeepSubmenu() {
     submenuPopupLevel2.classList.add("hidden");
@@ -150,12 +173,26 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
           childPopup.style.top = `${Math.round(rowRect.top)}px`;
           childPopup.classList.remove("hidden");
 
-          const subRect = childPopup.getBoundingClientRect();
+          let subRect = childPopup.getBoundingClientRect();
+          if (isMenuDockedBottom()) {
+            childPopup.style.top = `${Math.round(rowRect.bottom - subRect.height)}px`;
+            subRect = childPopup.getBoundingClientRect();
+          }
+
           if (subRect.right > window.innerWidth - 4) {
             childPopup.style.left = `${Math.max(4, Math.round(rowRect.left - subRect.width + 2))}px`;
+            subRect = childPopup.getBoundingClientRect();
+          }
+          if (subRect.left < 4) {
+            childPopup.style.left = "4px";
+            subRect = childPopup.getBoundingClientRect();
           }
           if (subRect.bottom > window.innerHeight - 4) {
             childPopup.style.top = `${Math.max(4, Math.round(window.innerHeight - subRect.height - 4))}px`;
+            subRect = childPopup.getBoundingClientRect();
+          }
+          if (subRect.top < 4) {
+            childPopup.style.top = "4px";
           }
         };
 
@@ -189,9 +226,25 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
     popup.style.top = `${Math.round(rect.bottom + 2)}px`;
     popup.classList.remove("hidden");
 
-    const popupRect = popup.getBoundingClientRect();
+    let popupRect = popup.getBoundingClientRect();
+    if (isMenuDockedBottom()) {
+      popup.style.top = `${Math.max(4, Math.round(rect.top - popupRect.height - 2))}px`;
+      popupRect = popup.getBoundingClientRect();
+    }
     if (popupRect.right > window.innerWidth - 4) {
       popup.style.left = `${Math.max(4, Math.round(window.innerWidth - popupRect.width - 4))}px`;
+      popupRect = popup.getBoundingClientRect();
+    }
+    if (popupRect.left < 4) {
+      popup.style.left = "4px";
+      popupRect = popup.getBoundingClientRect();
+    }
+    if (popupRect.bottom > window.innerHeight - 4) {
+      popup.style.top = `${Math.max(4, Math.round(window.innerHeight - popupRect.height - 4))}px`;
+      popupRect = popup.getBoundingClientRect();
+    }
+    if (popupRect.top < 4) {
+      popup.style.top = "4px";
     }
 
     refs.root.querySelectorAll(".menu-item").forEach((button) => {

@@ -22,6 +22,7 @@
     "./assets/js/app-modules/12-ui-tool-manager.js",
     "./assets/js/app-modules/13-ui-menu-system.js",
     "./assets/js/app-modules/15-help-system.js",
+    "./assets/js/app-modules/17-mini-c-compiler.js",
     "./assets/js/app-modules/18-runtime-browser-storage.js",
     "./assets/js/app-modules/19-runtime-settings.js",
     "./assets/js/app-modules/20-app-runtime.js"
@@ -33,6 +34,11 @@
   function loadSequential(moduleScripts, index) {
     if (index >= moduleScripts.length) {
       window.__marsWebAppBootstrapped = true;
+      try {
+        window.dispatchEvent(new CustomEvent("webmars:ready"));
+      } catch {
+        window.dispatchEvent(new Event("webmars:ready"));
+      }
       return;
     }
 
@@ -49,6 +55,11 @@
       msg.style.color = "#8b0000";
       msg.style.padding = "8px";
       root.appendChild(msg);
+      try {
+        window.dispatchEvent(new CustomEvent("webmars:ready"));
+      } catch {
+        window.dispatchEvent(new Event("webmars:ready"));
+      }
     };
     document.head.appendChild(script);
   }

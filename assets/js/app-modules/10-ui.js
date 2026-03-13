@@ -38,6 +38,7 @@ function renderLayout(root) {
         </div>
 
         <div class="toolbar-group">
+          <button class="tool-btn" id="btn-compile-c0" type="button">Compile</button>
           <button class="tool-btn" id="btn-assemble" type="button">Assemble</button>
           <button class="tool-btn primary" id="btn-go" type="button">Go</button>
           <button class="tool-btn" id="btn-step" type="button">Step</button>
@@ -71,26 +72,50 @@ function renderLayout(root) {
           <div class="window-titlebar"><span class="window-title">Main</span><div class="window-controls"><button class="win-btn" data-win-action="min" type="button">_</button><button class="win-btn" data-win-action="max" type="button">[]</button></div></div>
           <div class="window-content main-window-content">
             <div class="mode-tabs">
-              <button class="mode-tab-btn active" id="mode-edit" type="button">Edit</button>
+              <button class="mode-tab-btn" id="mode-project" type="button">Project</button>
+              <button class="mode-tab-btn" id="mode-c0" type="button">C0</button>
+              <button class="mode-tab-btn active" id="mode-assembly" type="button">Assembly</button>
               <button class="mode-tab-btn" id="mode-execute" type="button">Execute</button>
             </div>
 
-            <section id="main-panel-edit" class="main-tab-panel active">
-              <div class="subtabs editor-file-tabs" id="editor-file-tabs"></div>
-              <div class="editor-wrap">
-                <div class="editor-surface" id="editor-surface">
-                  <div class="editor-gutter" id="editor-gutter" aria-hidden="true"><pre id="editor-gutter-lines"></pre></div>
-                  <div class="editor-code-wrap">
-                    <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"></pre>
-                    <textarea id="source-editor" spellcheck="false"></textarea>
+            <section id="main-panel-project" class="main-tab-panel">
+              <div class="project-tree-pane project-tree-pane-main">
+                <div class="project-tree-header">
+                  <div class="project-tree-actions" role="group" aria-label="Project actions">
+                    <button id="project-main-new-folder" class="project-tree-action-btn" type="button" data-project-action="new-folder">New Folder</button>
+                    <button id="project-main-rename" class="project-tree-action-btn" type="button" data-project-action="rename">Rename</button>
+                    <button id="project-main-delete" class="project-tree-action-btn project-tree-action-btn-danger" type="button" data-project-action="delete">Delete</button>
                   </div>
+                  <span id="project-tree-main-root-label" class="project-tree-root-label">/</span>
                 </div>
+                <div id="project-tree-main" class="project-tree-container" role="tree" aria-label="Project files"></div>
               </div>
-              <div class="status-bar">
-                <span id="editor-lines">lines: 0</span>
-                <span id="editor-caret">Ln 1, Col 1</span>
-                <span id="runtime-pc">PC: 0x00400000</span>
-                <span id="runtime-steps">steps: 0</span>
+            </section>
+
+            <section id="main-panel-c0" class="main-tab-panel">
+              <div id="c0-editor-host" class="editor-host"></div>
+            </section>
+
+            <section id="main-panel-assembly" class="main-tab-panel active">
+              <div id="assembly-editor-host" class="editor-host">
+                <section id="main-editor-workspace" class="main-editor-workspace">
+                  <div class="subtabs editor-file-tabs" id="editor-file-tabs"></div>
+                  <div class="editor-wrap">
+                    <div class="editor-surface" id="editor-surface">
+                      <div class="editor-gutter" id="editor-gutter" aria-hidden="true"><pre id="editor-gutter-lines"></pre></div>
+                      <div class="editor-code-wrap">
+                        <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"></pre>
+                        <textarea id="source-editor" spellcheck="false"></textarea>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="status-bar">
+                    <span id="editor-lines">lines: 0</span>
+                    <span id="editor-caret">Ln 1, Col 1</span>
+                    <span id="runtime-pc">PC: 0x00400000</span>
+                    <span id="runtime-steps">steps: 0</span>
+                  </div>
+                </section>
               </div>
             </section>
 
@@ -215,6 +240,56 @@ function renderLayout(root) {
             <div id="panel-coprocessor0" class="subtab-panel"><div class="register-body"><table><thead><tr><th>Name</th><th>Number</th><th>Value</th></tr></thead><tbody id="cop0-body"></tbody></table></div></div>
           </div>
         </section>
+
+        <section class="desktop-window tool-window window-hidden" id="window-project" style="left:90px; top:80px; width:320px; height:420px;">
+          <div class="window-titlebar">
+            <span class="window-title">Project</span>
+            <div class="window-controls">
+              <button class="win-btn" data-win-action="min" type="button">_</button>
+              <button class="win-btn" data-win-action="max" type="button">[]</button>
+              <button class="win-btn win-btn-close" data-win-action="close" type="button">x</button>
+            </div>
+          </div>
+          <div class="window-content project-tree-pane">
+            <div class="project-tree-header">
+              <div class="project-tree-actions" role="group" aria-label="Project actions">
+                <button id="project-tool-new-folder" class="project-tree-action-btn" type="button" data-project-action="new-folder">New Folder</button>
+                <button id="project-tool-rename" class="project-tree-action-btn" type="button" data-project-action="rename">Rename</button>
+                <button id="project-tool-delete" class="project-tree-action-btn project-tree-action-btn-danger" type="button" data-project-action="delete">Delete</button>
+              </div>
+              <span id="project-tree-root-label" class="project-tree-root-label">project.p</span>
+            </div>
+            <div id="project-tree" class="project-tree-container" role="tree" aria-label="Project files"></div>
+          </div>
+        </section>
+
+        <section class="desktop-window tool-window window-hidden" id="window-mini-c" style="left:170px; top:95px; width:760px; height:520px;">
+          <div class="window-titlebar">
+            <span class="window-title">Mini-C Compiler</span>
+            <div class="window-controls">
+              <button class="win-btn" data-win-action="min" type="button">_</button>
+              <button class="win-btn" data-win-action="max" type="button">[]</button>
+              <button class="win-btn win-btn-close" data-win-action="close" type="button">x</button>
+            </div>
+          </div>
+          <div class="window-content mini-c-pane">
+            <div class="subtabs">
+              <button class="subtab-btn active" type="button" data-panel="panel-mini-c-log">Compiler Log</button>
+              <button class="subtab-btn" type="button" data-panel="panel-mini-c-asm">Generated MIPS</button>
+            </div>
+            <div id="panel-mini-c-log" class="subtab-panel active mini-c-subtab-panel">
+              <textarea id="mini-c-log" class="mini-c-textarea" readonly spellcheck="false" wrap="off"></textarea>
+            </div>
+            <div id="panel-mini-c-asm" class="subtab-panel mini-c-subtab-panel">
+              <textarea id="mini-c-asm" class="mini-c-textarea" readonly spellcheck="false" wrap="off"></textarea>
+            </div>
+            <div class="mini-c-actions">
+              <button class="tool-btn" id="mini-c-open-asm" type="button">Open ASM as new file</button>
+              <button class="tool-btn" id="mini-c-copy-asm" type="button">Copy ASM</button>
+              <button class="tool-btn" id="mini-c-clear" type="button">Clear</button>
+            </div>
+          </div>
+        </section>
       </section>
     </div>`;
   const refreshTranslations = translateStaticTree(root);
@@ -224,13 +299,21 @@ function renderLayout(root) {
     refreshTranslations,
     tabs: {
       messages: tabController(root, "#window-messages .subtab-btn", "#window-messages .subtab-panel"),
-      registers: tabController(root, "#window-registers .subtab-btn", "#window-registers .subtab-panel")
+      registers: tabController(root, "#window-registers .subtab-btn", "#window-registers .subtab-panel"),
+      miniC: tabController(root, "#window-mini-c .subtab-btn", "#window-mini-c .subtab-panel")
     },
     mode: {
-      edit: root.querySelector("#mode-edit"),
+      project: root.querySelector("#mode-project"),
+      c0: root.querySelector("#mode-c0"),
+      assembly: root.querySelector("#mode-assembly"),
       execute: root.querySelector("#mode-execute"),
-      panelEdit: root.querySelector("#main-panel-edit"),
-      panelExecute: root.querySelector("#main-panel-execute")
+      panelProject: root.querySelector("#main-panel-project"),
+      panelC0: root.querySelector("#main-panel-c0"),
+      panelAssembly: root.querySelector("#main-panel-assembly"),
+      panelExecute: root.querySelector("#main-panel-execute"),
+      editorWorkspace: root.querySelector("#main-editor-workspace"),
+      hostC0: root.querySelector("#c0-editor-host"),
+      hostAssembly: root.querySelector("#assembly-editor-host")
     },
     windows: {
       desktop: root.querySelector("#mars-desktop"),
@@ -239,7 +322,9 @@ function renderLayout(root) {
       text: root.querySelector("#window-main"),
       data: root.querySelector("#window-main"),
       messages: root.querySelector("#window-messages"),
-      registers: root.querySelector("#window-registers")
+      registers: root.querySelector("#window-registers"),
+      project: root.querySelector("#window-project"),
+      miniC: root.querySelector("#window-mini-c")
     },
     buttons: {
       newFile: root.querySelector("#btn-new"),
@@ -248,6 +333,7 @@ function renderLayout(root) {
       undo: root.querySelector("#btn-undo"),
       redo: root.querySelector("#btn-redo"),
       assemble: root.querySelector("#btn-assemble"),
+      compileC0: root.querySelector("#btn-compile-c0"),
       go: root.querySelector("#btn-go"),
       step: root.querySelector("#btn-step"),
       backstep: root.querySelector("#btn-backstep"),
@@ -304,6 +390,25 @@ function renderLayout(root) {
       clearMars: root.querySelector("#messages-clear-mars"),
       clearRun: root.querySelector("#messages-clear-run")
     },
+    miniC: {
+      log: root.querySelector("#mini-c-log"),
+      asm: root.querySelector("#mini-c-asm"),
+      openAsm: root.querySelector("#mini-c-open-asm"),
+      copyAsm: root.querySelector("#mini-c-copy-asm"),
+      clear: root.querySelector("#mini-c-clear")
+    },
+    project: {
+      mainRootLabel: root.querySelector("#project-tree-main-root-label"),
+      mainTree: root.querySelector("#project-tree-main"),
+      mainNewFolder: root.querySelector("#project-main-new-folder"),
+      mainRename: root.querySelector("#project-main-rename"),
+      mainDelete: root.querySelector("#project-main-delete"),
+      toolRootLabel: root.querySelector("#project-tree-root-label"),
+      toolTree: root.querySelector("#project-tree"),
+      toolNewFolder: root.querySelector("#project-tool-new-folder"),
+      toolRename: root.querySelector("#project-tool-rename"),
+      toolDelete: root.querySelector("#project-tool-delete")
+    },
     registers: {
       body: root.querySelector("#registers-body"),
       cop1Body: root.querySelector("#cop1-body"),
@@ -342,6 +447,7 @@ function createWindowManager(refs) {
   const NATIVE_Z_MAX = TOOL_Z_BASE - 12;
   const TOOL_Z_MAX = 1150;
   const SNAP_DISTANCE_PX = 20;
+  const LINKED_EDGE_TOLERANCE_PX = 6;
   const MOVE_SNAP_MIN_SPAN_PX = 24;
   const EDGE_TOUCH_TOLERANCE_PX = 1.5;
   const SHARED_SPLITTER_THICKNESS_PX = 6;
@@ -353,10 +459,12 @@ function createWindowManager(refs) {
   const HELP_DESKTOP_ABSOLUTE_MAX_WIDTH_PX = 1040;
   const DESKTOP_LAYOUT_HISTORY_LIMIT = 4;
   const DESKTOP_LAYOUT_STORAGE_KEY = "mars45-window-layout-history-v1";
+  const SAVED_LAYOUT_STORAGE_KEY = "mars45-window-layout-saved-v1";
   const STACK_BREAKPOINT_PX = layoutConfig.stackedBreakpointPx;
   const COMPACT_BREAKPOINT_PX = layoutConfig.compactBreakpointPx;
   const STACKED_WINDOW_ORDER = ["window-main", "window-messages", "window-registers"];
   const DESKTOP_NATIVE_ORDER = ["window-main", "window-messages", "window-registers"];
+  const DESKTOP_LINKED_RESIZE_IDS = new Set(DESKTOP_NATIVE_ORDER);
   const STACKED_DEFAULT_HEIGHTS = {
     "window-main": 440,
     "window-messages": 230,
@@ -377,6 +485,7 @@ function createWindowManager(refs) {
   let layoutMode = window.innerWidth < STACK_BREAKPOINT_PX ? "stacked" : "desktop";
   let desktopLayoutHistory = [];
   const pendingSessionWindowState = new Map();
+  const pendingSavedLayoutState = new Map();
   const sharedSplitters = new Set();
 
   const getKind = (win) => (win.classList.contains("tool-window") ? "tool" : "native");
@@ -389,6 +498,7 @@ function createWindowManager(refs) {
   const clamp01 = (value) => Math.max(0, Math.min(1, value));
   const px = (value) => `${Number.isFinite(value) ? value.toFixed(3) : "0"}px`;
   const nearlyEqual = (a, b, tolerance = EDGE_TOUCH_TOLERANCE_PX) => Math.abs(a - b) <= tolerance;
+  const nearlyLinkedEdge = (a, b) => nearlyEqual(a, b, LINKED_EDGE_TOLERANCE_PX);
   const isHiddenEntry = (entry) => Boolean(!entry || entry.element.classList.contains("window-hidden"));
   const isVisibleEntry = (entry) => Boolean(entry && !isHiddenEntry(entry) && !entry.minimized);
   const getDesktopRect = () => desktop.getBoundingClientRect();
@@ -1496,6 +1606,214 @@ function createWindowManager(refs) {
     setWindowMetrics(entry, nextMetrics, persistNormalized);
   }
 
+  function canUseDesktopLinkedResize(entry) {
+    if (!entry || isStackedMode()) return false;
+    if (entry.kind !== "native") return false;
+    if (!DESKTOP_LINKED_RESIZE_IDS.has(entry.id)) return false;
+    if (entry.maximized || entry.minimized || isHiddenEntry(entry)) return false;
+    return true;
+  }
+
+  function edgeNodeKey(windowId, edge) {
+    return `${windowId}:${edge}`;
+  }
+
+  function parseEdgeNodeKey(key) {
+    const separator = String(key).lastIndexOf(":");
+    if (separator <= 0) return null;
+    return {
+      id: key.slice(0, separator),
+      edge: key.slice(separator + 1)
+    };
+  }
+
+  function getEdgeCoordinate(metrics, edge) {
+    if (edge === "w") return metrics.left;
+    if (edge === "e") return metrics.left + metrics.width;
+    if (edge === "n") return metrics.top;
+    return metrics.top + metrics.height;
+  }
+
+  function edgesCanClampTogether(aMetrics, aEdge, bMetrics, bEdge) {
+    const aVertical = aEdge === "w" || aEdge === "e";
+    const bVertical = bEdge === "w" || bEdge === "e";
+    if (aVertical !== bVertical) return false;
+
+    if (aVertical) {
+      const oppositeSides = (aEdge === "e" && bEdge === "w") || (aEdge === "w" && bEdge === "e");
+      if (!oppositeSides) return false;
+      if (!nearlyLinkedEdge(getEdgeCoordinate(aMetrics, aEdge), getEdgeCoordinate(bMetrics, bEdge))) return false;
+      const overlap = overlapSize(
+        aMetrics.top,
+        aMetrics.top + aMetrics.height,
+        bMetrics.top,
+        bMetrics.top + bMetrics.height
+      );
+      return overlap >= SHARED_SPLITTER_MIN_SPAN_PX;
+    }
+
+    const oppositeSides = (aEdge === "s" && bEdge === "n") || (aEdge === "n" && bEdge === "s");
+    if (!oppositeSides) return false;
+    if (!nearlyLinkedEdge(getEdgeCoordinate(aMetrics, aEdge), getEdgeCoordinate(bMetrics, bEdge))) return false;
+    const overlap = overlapSize(
+      aMetrics.left,
+      aMetrics.left + aMetrics.width,
+      bMetrics.left,
+      bMetrics.left + bMetrics.width
+    );
+    return overlap >= SHARED_SPLITTER_MIN_SPAN_PX;
+  }
+
+  function connectEdgeNodes(adjacency, fromKey, toKey) {
+    if (!adjacency.has(fromKey)) adjacency.set(fromKey, new Set());
+    if (!adjacency.has(toKey)) adjacency.set(toKey, new Set());
+    adjacency.get(fromKey).add(toKey);
+    adjacency.get(toKey).add(fromKey);
+  }
+
+  function collectConnectedEdgeNodes(adjacency, startKey) {
+    if (!adjacency.has(startKey)) return [];
+    const visited = new Set([startKey]);
+    const queue = [startKey];
+    while (queue.length) {
+      const current = queue.shift();
+      const neighbors = adjacency.get(current);
+      if (!neighbors) continue;
+      neighbors.forEach((neighbor) => {
+        if (visited.has(neighbor)) return;
+        visited.add(neighbor);
+        queue.push(neighbor);
+      });
+    }
+    return [...visited];
+  }
+
+  function shiftMetricsEdge(metrics, edge, delta) {
+    if (!metrics || !Number.isFinite(delta) || delta === 0) return;
+    if (edge === "w") {
+      metrics.left += delta;
+      metrics.width -= delta;
+      return;
+    }
+    if (edge === "e") {
+      metrics.width += delta;
+      return;
+    }
+    if (edge === "n") {
+      metrics.top += delta;
+      metrics.height -= delta;
+      return;
+    }
+    metrics.height += delta;
+  }
+
+  function buildLinkedResizeState(entry, direction) {
+    if (!canUseDesktopLinkedResize(entry)) return null;
+    const edges = new Set(direction.split(""));
+    if (!edges.size) return null;
+
+    const startMetricsById = {};
+    DESKTOP_NATIVE_ORDER.forEach((id) => {
+      const target = windows.get(id);
+      if (!target || target.maximized || target.minimized || isHiddenEntry(target)) return;
+      startMetricsById[id] = readWindowMetrics(target);
+    });
+    if (!startMetricsById[entry.id]) return null;
+
+    const sourceStart = startMetricsById[entry.id];
+    const adjacency = new Map();
+    const ids = Object.keys(startMetricsById);
+    ids.forEach((id) => {
+      ["w", "e", "n", "s"].forEach((edge) => {
+        const key = edgeNodeKey(id, edge);
+        if (!adjacency.has(key)) adjacency.set(key, new Set());
+      });
+    });
+
+    for (let i = 0; i < ids.length; i += 1) {
+      for (let j = i + 1; j < ids.length; j += 1) {
+        const idA = ids[i];
+        const idB = ids[j];
+        const metricsA = startMetricsById[idA];
+        const metricsB = startMetricsById[idB];
+        const pairs = [
+          ["e", "w"],
+          ["w", "e"],
+          ["s", "n"],
+          ["n", "s"]
+        ];
+        pairs.forEach(([edgeA, edgeB]) => {
+          if (!edgesCanClampTogether(metricsA, edgeA, metricsB, edgeB)) return;
+          connectEdgeNodes(
+            adjacency,
+            edgeNodeKey(idA, edgeA),
+            edgeNodeKey(idB, edgeB)
+          );
+        });
+      }
+    }
+
+    const sourceEdges = [...edges].filter((edge) => ["w", "e", "n", "s"].includes(edge));
+    if (!sourceEdges.length) return null;
+
+    const edgeGroups = sourceEdges.map((sourceEdge) => {
+      const sourceKey = edgeNodeKey(entry.id, sourceEdge);
+      const nodes = collectConnectedEdgeNodes(adjacency, sourceKey);
+      return {
+        sourceEdge,
+        nodes
+      };
+    }).filter((group) => group.nodes.length > 0);
+    if (!edgeGroups.length) return null;
+
+    return {
+      sourceId: entry.id,
+      sourceDirection: direction,
+      sourceStart,
+      startMetricsById,
+      edgeGroups
+    };
+  }
+
+  function applyLinkedResizeState(linkedResize, sourceMetrics) {
+    if (!linkedResize || !sourceMetrics) return;
+    const sourceStart = linkedResize.sourceStart;
+    const delta = {
+      w: sourceMetrics.left - sourceStart.left,
+      e: (sourceMetrics.left + sourceMetrics.width) - (sourceStart.left + sourceStart.width),
+      n: sourceMetrics.top - sourceStart.top,
+      s: (sourceMetrics.top + sourceMetrics.height) - (sourceStart.top + sourceStart.height)
+    };
+
+    const nextById = {};
+    Object.entries(linkedResize.startMetricsById).forEach(([id, metrics]) => {
+      nextById[id] = { ...metrics };
+    });
+
+    linkedResize.edgeGroups.forEach((group) => {
+      const d = delta[group.sourceEdge] || 0;
+      if (!d) return;
+      group.nodes.forEach((nodeKey) => {
+        const parsed = parseEdgeNodeKey(nodeKey);
+        if (!parsed) return;
+        if (parsed.id === linkedResize.sourceId && parsed.edge === group.sourceEdge) return;
+        const target = windows.get(parsed.id);
+        if (!canUseDesktopLinkedResize(target)) return;
+        const next = nextById[parsed.id];
+        if (!next) return;
+        shiftMetricsEdge(next, parsed.edge, d);
+      });
+    });
+
+    Object.entries(nextById).forEach(([id, metrics]) => {
+      if (id === linkedResize.sourceId) return;
+      const target = windows.get(id);
+      if (!canUseDesktopLinkedResize(target)) return;
+      const clamped = clampMetrics(target, metrics);
+      setWindowMetrics(target, clamped, false);
+    });
+  }
+
   function clampDialogPosition(entry) {
     if (!entry || !entry.element.classList.contains("dialog-window")) return false;
     const desktopRect = getDesktopRect();
@@ -1570,6 +1888,7 @@ function createWindowManager(refs) {
 
     const snapped = applySnapToMetrics(resizing.entry, next, directions);
     setWindowMetrics(resizing.entry, snapped, false);
+    applyLinkedResizeState(resizing.linkedResize, snapped);
   }
 
   function stopResizing() {
@@ -1853,7 +2172,8 @@ function createWindowManager(refs) {
           direction,
           startX: event.clientX,
           startY: event.clientY,
-          startMetrics: readWindowMetrics(entry)
+          startMetrics: readWindowMetrics(entry),
+          linkedResize: buildLinkedResizeState(entry, direction)
         };
         document.addEventListener("pointermove", onResizePointerMove);
         document.addEventListener("pointerup", stopResizing);
@@ -2072,6 +2392,15 @@ function createWindowManager(refs) {
       pendingSessionWindowState.delete(entry.id);
     }
 
+    const pendingSavedState = pendingSavedLayoutState.get(entry.id);
+    if (pendingSavedState) {
+      applySavedLayoutEntry(entry, pendingSavedState, {
+        skipLayoutRefresh: true,
+        skipDesktopPersist: true
+      });
+      pendingSavedLayoutState.delete(entry.id);
+    }
+
     clampWindow(entry, true, true);
   }
 
@@ -2093,6 +2422,7 @@ function createWindowManager(refs) {
     }
 
     pendingSessionWindowState.delete(entry.id);
+    pendingSavedLayoutState.delete(entry.id);
     windows.delete(entry.id);
     if (entry.element instanceof HTMLElement) entry.element.remove();
 
@@ -2141,6 +2471,33 @@ function createWindowManager(refs) {
     return true;
   }
 
+  function shouldPersistSavedLayoutWindow(entry) {
+    if (!entry) return false;
+    if (entry.element.classList.contains("dialog-window")) return false;
+    return true;
+  }
+
+  function normalizeSavedLayoutSnapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== "object") return null;
+    const windowsPayload = Array.isArray(snapshot.windows)
+      ? snapshot.windows.filter((entry) => entry && typeof entry === "object")
+      : [];
+    if (!windowsPayload.length) return null;
+    return {
+      version: Number.isFinite(snapshot.version) ? (snapshot.version | 0) : 1,
+      layoutMode: String(snapshot.layoutMode || ""),
+      windows: windowsPayload
+    };
+  }
+
+  function isNativeLayoutModeCompatible(savedLayoutMode) {
+    const savedMode = String(savedLayoutMode || "").trim().toLowerCase();
+    if (!savedMode) return true;
+    const currentIsDesktop = !isStackedMode();
+    const savedIsDesktop = savedMode === "desktop";
+    return currentIsDesktop === savedIsDesktop;
+  }
+
   function exportSessionWindowState() {
     const payload = {
       version: 1,
@@ -2149,6 +2506,35 @@ function createWindowManager(refs) {
     };
     windows.forEach((entry) => {
       if (!shouldPersistSessionWindow(entry)) return;
+      const metrics = readWindowMetrics(entry);
+      payload.windows.push({
+        id: entry.id,
+        kind: entry.kind,
+        toolId: String(entry.element.dataset.toolId || ""),
+        hidden: Boolean(entry.element.classList.contains("window-hidden")),
+        minimized: Boolean(entry.minimized),
+        maximized: Boolean(entry.maximized),
+        zIndex: Number.parseInt(entry.element.style.zIndex || "0", 10) || 0,
+        left: metrics.left,
+        top: metrics.top,
+        width: metrics.width,
+        height: metrics.height,
+        stackedHeight: Number.isFinite(entry.stackedHeight) ? entry.stackedHeight : 0,
+        stackedExpandedHeight: Number.isFinite(entry.stackedExpandedHeight) ? entry.stackedExpandedHeight : 0,
+        stackedMaximized: Boolean(entry.stackedMaximized)
+      });
+    });
+    return payload;
+  }
+
+  function exportSavedLayoutState() {
+    const payload = {
+      version: 1,
+      layoutMode,
+      windows: []
+    };
+    windows.forEach((entry) => {
+      if (!shouldPersistSavedLayoutWindow(entry)) return;
       const metrics = readWindowMetrics(entry);
       payload.windows.push({
         id: entry.id,
@@ -2219,9 +2605,69 @@ function createWindowManager(refs) {
     if (!isStackedMode() && !options.skipDesktopPersist) scheduleDesktopLayoutSave(80);
   }
 
+  function applySavedLayoutEntry(entry, saved, options = {}) {
+    if (!entry || !saved || typeof saved !== "object") return;
+    if (!shouldPersistSavedLayoutWindow(entry)) return;
+
+    entry.maximized = false;
+    entry.element.classList.remove("window-maximized");
+
+    const left = Number(saved.left);
+    const top = Number(saved.top);
+    const width = Number(saved.width);
+    const height = Number(saved.height);
+    if (Number.isFinite(left) && Number.isFinite(top) && Number.isFinite(width) && Number.isFinite(height) && width > 8 && height > 8) {
+      entry.element.style.left = px(left);
+      entry.element.style.top = px(top);
+      entry.element.style.width = px(width);
+      entry.element.style.height = px(height);
+      if (entry.kind === "tool") {
+        entry.desktopPreferredBounds = { left, top, width, height };
+      }
+    }
+
+    entry.stackedHeight = Number.isFinite(saved.stackedHeight) ? Math.max(0, saved.stackedHeight) : entry.stackedHeight;
+    entry.stackedExpandedHeight = Number.isFinite(saved.stackedExpandedHeight) ? Math.max(0, saved.stackedExpandedHeight) : entry.stackedExpandedHeight;
+    entry.stackedMaximized = Boolean(saved.stackedMaximized);
+
+    if (entry.kind === "native") {
+      entry.minimized = false;
+      entry.element.classList.remove("window-minimized");
+      entry.element.classList.remove("window-hidden");
+    } else {
+      entry.minimized = Boolean(saved.minimized);
+      entry.element.classList.toggle("window-minimized", entry.minimized);
+      if (saved.hidden) entry.element.classList.add("window-hidden");
+      else entry.element.classList.remove("window-hidden");
+    }
+
+    const hidden = entry.element.classList.contains("window-hidden");
+    if (!isStackedMode() && !entry.minimized && !hidden && saved.maximized) {
+      const metrics = readWindowMetrics(entry);
+      entry.restoreBounds = { ...metrics };
+      entry.maximized = true;
+      entry.element.classList.add("window-maximized");
+      const desktopRect = getDesktopRect();
+      entry.element.style.left = "0px";
+      entry.element.style.top = "0px";
+      entry.element.style.width = `${Math.round(desktopRect.width)}px`;
+      entry.element.style.height = `${Math.round(desktopRect.height)}px`;
+    }
+
+    if (Number.isFinite(saved.zIndex)) {
+      entry.element.style.zIndex = `${saved.zIndex | 0}`;
+    }
+
+    clampWindow(entry, true, false);
+    updateNormalizedBounds(entry);
+    if (!options.skipLayoutRefresh) scheduleSharedSplitterRefresh();
+    if (!isStackedMode() && !options.skipDesktopPersist) scheduleDesktopLayoutSave(80);
+  }
+
   function applySessionWindowState(snapshot, options = {}) {
     if (!snapshot || typeof snapshot !== "object") return false;
     const savedWindows = Array.isArray(snapshot.windows) ? snapshot.windows : [];
+    const nativeModeCompatible = isNativeLayoutModeCompatible(snapshot.layoutMode);
     pendingSessionWindowState.clear();
 
     savedWindows.forEach((saved) => {
@@ -2231,6 +2677,7 @@ function createWindowManager(refs) {
       pendingSessionWindowState.set(id, saved);
       const existing = windows.get(id);
       if (existing) {
+        if (!nativeModeCompatible && existing.kind === "native") return;
         applySessionWindowEntry(existing, saved, {
           skipLayoutRefresh: true,
           skipDesktopPersist: true
@@ -2238,7 +2685,110 @@ function createWindowManager(refs) {
       }
     });
 
+    if (!isStackedMode()) {
+      enforceNativeDesktopDocking(false);
+    }
     if (!options.skipLayoutRefresh) scheduleSharedSplitterRefresh();
+    return true;
+  }
+
+  function applySavedLayoutState(snapshot, options = {}) {
+    const normalized = normalizeSavedLayoutSnapshot(snapshot);
+    if (!normalized) return false;
+    const savedWindows = normalized.windows;
+    const nativeModeCompatible = isNativeLayoutModeCompatible(normalized.layoutMode);
+    pendingSavedLayoutState.clear();
+
+    savedWindows.forEach((saved) => {
+      const id = String(saved.id || "");
+      if (!id) return;
+      pendingSavedLayoutState.set(id, saved);
+      const existing = windows.get(id);
+      if (existing) {
+        if (!nativeModeCompatible && existing.kind === "native") return;
+        applySavedLayoutEntry(existing, saved, {
+          skipLayoutRefresh: true,
+          skipDesktopPersist: true
+        });
+      }
+    });
+
+    if (!isStackedMode()) {
+      enforceNativeDesktopDocking(false);
+    }
+    if (!options.skipLayoutRefresh) scheduleSharedSplitterRefresh();
+    if (!isStackedMode() && !options.skipDesktopPersist) scheduleDesktopLayoutSave(120);
+    return true;
+  }
+
+  function saveLayoutToStorage() {
+    const snapshot = exportSavedLayoutState();
+    try {
+      localStorage.setItem(SAVED_LAYOUT_STORAGE_KEY, JSON.stringify(snapshot));
+      return { saved: true, snapshot };
+    } catch {
+      return { saved: false, snapshot: null };
+    }
+  }
+
+  function loadLayoutFromStorage(options = {}) {
+    try {
+      const raw = localStorage.getItem(SAVED_LAYOUT_STORAGE_KEY);
+      if (!raw) return { loaded: false, snapshot: null };
+      const snapshot = normalizeSavedLayoutSnapshot(JSON.parse(raw));
+      if (!snapshot) return { loaded: false, snapshot: null };
+      if (options.apply !== false) {
+        applySavedLayoutState(snapshot, options);
+      }
+      return { loaded: true, snapshot };
+    } catch {
+      return { loaded: false, snapshot: null };
+    }
+  }
+
+  function resetBaseLayoutToDefault(options = {}) {
+    pendingSavedLayoutState.clear();
+    DESKTOP_NATIVE_ORDER.forEach((id) => {
+      const entry = windows.get(id);
+      if (!entry) return;
+      const normalized = DEFAULT_DESKTOP_NATIVE_BOUNDS[id];
+      if (normalized) {
+        entry.normalizedBounds = {
+          left: clamp01(normalized.left),
+          top: clamp01(normalized.top),
+          width: clamp01(normalized.width),
+          height: clamp01(normalized.height)
+        };
+      }
+      entry.maximized = false;
+      entry.minimized = false;
+      entry.stackedMaximized = false;
+      entry.element.classList.remove("window-maximized");
+      entry.element.classList.remove("window-minimized");
+      entry.element.classList.remove("window-hidden");
+    });
+
+    if (isStackedMode()) {
+      DESKTOP_NATIVE_ORDER.forEach((id) => {
+        const entry = windows.get(id);
+        if (!entry) return;
+        entry.stackedUserSized = false;
+        entry.stackedMaximized = false;
+        entry.stackedRestoreHeight = 0;
+        const minHeight = getStackedMinHeight(entry);
+        const fallback = STACKED_DEFAULT_HEIGHTS[id] ?? minHeight;
+        const height = Math.max(minHeight, fallback);
+        entry.stackedHeight = height;
+        entry.stackedExpandedHeight = height;
+      });
+      layoutStackedWindows(true);
+      if (!options.skipLayoutRefresh) scheduleSharedSplitterRefresh();
+      return true;
+    }
+
+    applyDefaultNativeDesktopLayout();
+    if (!options.skipLayoutRefresh) scheduleSharedSplitterRefresh();
+    if (!options.skipDesktopPersist) scheduleDesktopLayoutSave(120);
     return true;
   }
 
@@ -2392,16 +2942,23 @@ function createWindowManager(refs) {
     toggleMaximize,
     exportSessionWindowState,
     applySessionWindowState,
+    exportSavedLayoutState,
+    applySavedLayoutState,
+    saveLayoutToStorage,
+    loadLayoutFromStorage,
+    resetBaseLayoutToDefault,
     getOpenToolWindowIds,
     getWindowEntries
   };
 }
 
-function setupEditor(refs, store) {
+function setupEditor(refs, store, options = {}) {
   const { editor, editorHighlight, editorGutter, editorGutterLines, editorTabs, status } = refs;
   const HISTORY_LIMIT = 500;
   let fileCounter = 0;
   let suppressInput = false;
+  let activeFileChangeHandler = typeof options.onActiveFileChange === "function" ? options.onActiveFileChange : null;
+  let lastActiveFileChangeKey = "";
 
   function createFileId() {
     fileCounter += 1;
@@ -2504,6 +3061,18 @@ function setupEditor(refs, store) {
     }
 
     return { files, activeFileId, active };
+  }
+
+  function notifyActiveFileChange(file) {
+    if (typeof activeFileChangeHandler !== "function" || !file) return;
+    const key = `${String(file.id || "")}|${String(file.name || "")}`;
+    if (key === lastActiveFileChangeKey) return;
+    lastActiveFileChangeKey = key;
+    try {
+      activeFileChangeHandler({ ...file });
+    } catch {
+      // Ignore callback errors to keep editor responsive.
+    }
   }
 
   function highlightCodeFragment(fragment) {
@@ -2651,6 +3220,7 @@ function setupEditor(refs, store) {
       sourceCode: safeActive.source,
       fileName: safeActive.name
     });
+    notifyActiveFileChange(safeActive);
     renderTabs();
     if (syncEditor) syncEditorFromActive();
     else updateStatus();
@@ -2724,6 +3294,21 @@ function setupEditor(refs, store) {
     setSource(source) {
       updateActiveSource(source, { pushHistory: true });
       syncEditorFromActive();
+    },
+    setFiles(files, activeFileId = "") {
+      const input = Array.isArray(files) ? files : [];
+      const normalized = [];
+      input.forEach((file) => {
+        const next = normalizeFile(file, normalized);
+        normalized.push(next);
+      });
+      if (!normalized.length) {
+        normalized.push(normalizeFile({ id: createFileId(), name: "untitled.s", source: "" }, normalized));
+      }
+      const target = String(activeFileId || "").trim();
+      const active = normalized.find((file) => file.id === target || file.name === target) || normalized[0];
+      applyFiles(normalized, active.id, true);
+      return { ...active };
     },
     createFile({ name = "untitled.s", source = "" } = {}) {
       const state = ensureState();
@@ -2839,8 +3424,26 @@ function setupEditor(refs, store) {
       state.files.forEach((file) => map.set(file.name, file.source));
       return map;
     },
+    activateFile(fileId) {
+      activateFile(fileId);
+      return ensureState().active;
+    },
+    activateFileByName(fileName) {
+      const { files, activeFileId } = ensureState();
+      const target = files.find((file) => file.name === String(fileName || "").trim());
+      if (!target) return null;
+      if (target.id !== activeFileId) activateFile(target.id);
+      return ensureState().active;
+    },
     refreshStatus() {
       updateStatus();
+    },
+    setActiveFileChangeHandler(handler, options = {}) {
+      activeFileChangeHandler = typeof handler === "function" ? handler : null;
+      lastActiveFileChangeKey = "";
+      if (activeFileChangeHandler && options.emitCurrent !== false) {
+        notifyActiveFileChange(ensureState().active);
+      }
     },
     focus() {
       editor.focus();
@@ -3177,30 +3780,82 @@ function createDialogSystem(windowManager, desktop, options = {}) {
   };
 }
 function createModeController(refs, windowManager) {
-  const editButton = refs.mode.edit;
+  const projectButton = refs.mode.project;
+  const c0Button = refs.mode.c0;
+  const assemblyButton = refs.mode.assembly;
   const executeButton = refs.mode.execute;
-  const editPanel = refs.mode.panelEdit;
+  const projectPanel = refs.mode.panelProject;
+  const c0Panel = refs.mode.panelC0;
+  const assemblyPanel = refs.mode.panelAssembly;
   const executePanel = refs.mode.panelExecute;
-  let mode = "edit";
+  const editorWorkspace = refs.mode.editorWorkspace;
+  const c0Host = refs.mode.hostC0;
+  const assemblyHost = refs.mode.hostAssembly;
+  let authoringMode = "assembly";
+  let mode = "assembly";
+
+  function normalizeMode(nextMode) {
+    const raw = String(nextMode || "").trim().toLowerCase();
+    if (raw === "edit" || raw === "authoring") return authoringMode;
+    if (raw === "assembly" || raw === "execute" || raw === "project" || raw === "c0") return raw;
+    if (raw === "run") return "execute";
+    return authoringMode;
+  }
+
+  function moveEditorWorkspace(nextMode) {
+    if (!(editorWorkspace instanceof HTMLElement)) return;
+    let targetHost = null;
+    if (nextMode === "c0") targetHost = c0Host;
+    else if (nextMode === "assembly") targetHost = assemblyHost;
+    if (!(targetHost instanceof HTMLElement)) return;
+    if (editorWorkspace.parentElement === targetHost) return;
+    targetHost.appendChild(editorWorkspace);
+  }
 
   function apply(nextMode) {
-    mode = nextMode === "execute" ? "execute" : "edit";
-    const editMode = mode === "edit";
+    mode = normalizeMode(nextMode);
+    if (mode === "c0" || mode === "assembly") {
+      authoringMode = mode;
+      moveEditorWorkspace(mode);
+    }
 
-    editButton?.classList.toggle("active", editMode);
-    executeButton?.classList.toggle("active", !editMode);
-    editPanel?.classList.toggle("active", editMode);
-    executePanel?.classList.toggle("active", !editMode);
+    projectButton?.classList.toggle("active", mode === "project");
+    c0Button?.classList.toggle("active", mode === "c0");
+    assemblyButton?.classList.toggle("active", mode === "assembly");
+    executeButton?.classList.toggle("active", mode === "execute");
+
+    projectPanel?.classList.toggle("active", mode === "project");
+    c0Panel?.classList.toggle("active", mode === "c0");
+    assemblyPanel?.classList.toggle("active", mode === "assembly");
+    executePanel?.classList.toggle("active", mode === "execute");
 
     windowManager.focus("window-main");
   }
 
-  editButton?.addEventListener("click", () => apply("edit"));
+  function syncForFileName(fileName, options = {}) {
+    const name = String(fileName || "").trim();
+    if (!name) return authoringMode;
+    let target = null;
+    if (/\.(c|c0)$/i.test(name)) target = "c0";
+    else if (/\.(s|asm)$/i.test(name)) target = "assembly";
+    if (!target) return authoringMode;
+    authoringMode = target;
+    if (options.activate !== false) apply(target);
+    return target;
+  }
+
+  projectButton?.addEventListener("click", () => apply("project"));
+  c0Button?.addEventListener("click", () => apply("c0"));
+  assemblyButton?.addEventListener("click", () => apply("assembly"));
   executeButton?.addEventListener("click", () => apply("execute"));
+
+  apply("assembly");
 
   return {
     setMode: apply,
-    getMode: () => mode
+    getMode: () => mode,
+    getAuthoringMode: () => authoringMode,
+    syncForFileName
   };
 }
 function escapeHtml(value) {
@@ -3982,6 +4637,7 @@ function createMessagesPane(refs, limit) {
 const STORAGE_KEY = "mars45-web-preferences";
 const DEFAULT_PREFERENCES = {
   language: "en",
+  menuPosition: "top",
   showLabelsWindow: true,
   programArguments: false,
   popupSyscallInput: false,
@@ -4005,7 +4661,11 @@ const DEFAULT_PREFERENCES = {
   exceptionHandlerAddress: "0x80000180",
   memoryConfiguration: "Default",
   maxMemoryGb: 2,
-  maxBacksteps: 100
+  maxBacksteps: 100,
+  miniCSubset: "C0-S4",
+  miniCTargetAbi: "o32",
+  miniCOpenOutputWindow: true,
+  miniCEmitScaffoldingComments: true
 };
 
 function loadPreferences() {
@@ -4041,7 +4701,7 @@ function downloadText(filename, content) {
 function normalizeFilename(name) {
   const value = (name || "").trim();
   if (!value) return "untitled.s";
-  if (/\.(asm|s)$/i.test(value)) return value;
+  if (/\.(asm|s|c|c0|h|p)$/i.test(value)) return value;
   return `${value}.s`;
 }
 
@@ -4153,9 +4813,26 @@ function injectRuntimeStyles() {
     html, body { overflow: hidden; }
 
     .shell {
+      display: grid;
       height: 100vh;
       overflow: hidden;
       grid-template-rows: auto auto 1fr;
+      grid-template-areas:
+        "menu"
+        "toolbar"
+        "desktop";
+    }
+
+    .menu-bar { grid-area: menu; }
+    .toolbar { grid-area: toolbar; }
+    .desktop { grid-area: desktop; }
+
+    .menu-at-bottom .shell {
+      grid-template-rows: 1fr auto auto;
+      grid-template-areas:
+        "desktop"
+        "toolbar"
+        "menu";
     }
 
     .mode-tabs {
@@ -4693,13 +5370,262 @@ function injectRuntimeStyles() {
       display: grid;
     }
 
-    #main-panel-edit {
-      grid-template-rows: auto minmax(0, 1fr) auto;
+    #main-panel-project {
+      padding: 0;
       min-height: 0;
       overflow: hidden;
     }
 
-    #main-panel-edit .editor-wrap {
+    .project-tree-pane-main {
+      height: 100%;
+    }
+
+    .project-tree-pane {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-height: 0;
+      background: #eef3f9;
+    }
+
+    .project-tree-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 4px;
+      min-height: 24px;
+      padding: 4px 6px 5px;
+      border-bottom: 1px solid #b9c6d6;
+      background: linear-gradient(180deg, #f9fcff, #dde7f3);
+      font-size: 12px;
+      font-weight: 600;
+      color: #1c3552;
+    }
+
+    .project-tree-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .project-tree-action-btn {
+      border: 1px solid #97abc2;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #fefefe, #dbe6f3);
+      color: #153451;
+      padding: 1px 7px;
+      font-size: 11px;
+      line-height: 1.5;
+      cursor: pointer;
+    }
+
+    .project-tree-action-btn:hover:enabled {
+      border-color: #6f8ca9;
+      background: linear-gradient(180deg, #ffffff, #d1dff0);
+    }
+
+    .project-tree-action-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .project-tree-action-btn.project-tree-action-btn-danger {
+      color: #6f1d1d;
+    }
+
+    .project-tree-root-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-height: 16px;
+      font-size: 11px;
+      color: #35516c;
+    }
+
+    .project-tree-container {
+      min-height: 0;
+      overflow: auto;
+      padding: 6px 6px 8px;
+      font-family: "Consolas", "Cascadia Code", "Courier New", monospace;
+      font-size: 12px;
+      color: #1a324d;
+    }
+
+    .project-tree-list {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 0 14px;
+    }
+
+    .project-tree-list.root {
+      padding-left: 0;
+    }
+
+    .project-tree-item {
+      margin: 1px 0;
+    }
+
+    .project-tree-row {
+      display: grid;
+      grid-template-columns: 14px minmax(0, 1fr);
+      align-items: center;
+      column-gap: 2px;
+      min-height: 18px;
+    }
+
+    .project-tree-toggle {
+      width: 14px;
+      height: 14px;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      background: transparent;
+      color: #33536f;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      line-height: 1;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .project-tree-toggle:hover {
+      border-color: #9aadc3;
+      background: #dbe7f6;
+    }
+
+    .project-tree-toggle.spacer {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .project-tree-root,
+    .project-tree-project,
+    .project-tree-folder,
+    .project-tree-file,
+    .project-tree-libs-root,
+    .project-tree-libs-folder,
+    .project-tree-libs-file {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      font-weight: 600;
+      align-items: center;
+      column-gap: 6px;
+      width: 100%;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      padding: 1px 4px;
+      background: transparent;
+      color: #204769;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+      min-height: 18px;
+    }
+
+    .project-tree-root {
+      cursor: default;
+      color: #1b3f5f;
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .project-tree-project,
+    .project-tree-folder,
+    .project-tree-libs-root,
+    .project-tree-libs-folder {
+      color: #1b4469;
+    }
+
+    .project-tree-file,
+    .project-tree-libs-file {
+      font-weight: 500;
+      color: #1a324d;
+    }
+
+    .project-tree-project:hover,
+    .project-tree-folder:hover,
+    .project-tree-file:hover,
+    .project-tree-libs-root:hover,
+    .project-tree-libs-folder:hover,
+    .project-tree-libs-file:hover {
+      border-color: #8fa6bf;
+      background: #dce8f7;
+    }
+
+    .project-tree-project.active,
+    .project-tree-file.active {
+      border-color: #6f89a8;
+      background: #c8dbf1;
+      color: #0f2f4d;
+      font-weight: 700;
+    }
+
+    .project-tree-project.selected,
+    .project-tree-folder.selected,
+    .project-tree-file.selected,
+    .project-tree-libs-root.selected,
+    .project-tree-libs-folder.selected,
+    .project-tree-libs-file.selected {
+      border-color: #5f7e9f;
+      background: #d2e2f5;
+      color: #11314e;
+    }
+
+    .project-tree-project.drop-target,
+    .project-tree-folder.drop-target {
+      border-color: #3f6f9f;
+      background: #c3daf5;
+      box-shadow: inset 0 0 0 1px #7ca3ca;
+    }
+
+    .project-tree-file.dragging {
+      opacity: 0.55;
+    }
+
+    .project-tree-libs-root,
+    .project-tree-libs-folder,
+    .project-tree-libs-file {
+      color: #38536f;
+    }
+
+    .project-tree-libs-root.readonly,
+    .project-tree-libs-folder.readonly,
+    .project-tree-libs-file.readonly {
+      color: #4f657c;
+    }
+
+    .project-tree-node-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .project-tree-meta {
+      color: #5f7288;
+      font-size: 11px;
+      font-weight: 400;
+      white-space: nowrap;
+    }
+
+    .project-tree-file.active .project-tree-meta,
+    .project-tree-project.active .project-tree-meta {
+      color: #2e5576;
+    }
+
+    .project-tree-empty {
+      color: #647993;
+      padding: 4px 2px;
+      font-style: italic;
+    }
+
+    #main-panel-c0,
+    #main-panel-assembly {
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    #main-panel-c0 .editor-host,
+    #main-panel-assembly .editor-host {
       display: grid;
       grid-template-rows: minmax(0, 1fr);
       min-height: 0;
@@ -4707,8 +5633,23 @@ function injectRuntimeStyles() {
       overflow: hidden;
     }
 
-    #main-panel-edit .editor-surface,
-    #main-panel-edit .editor-code-wrap {
+    .main-editor-workspace {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .main-editor-workspace .editor-wrap {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr);
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .main-editor-workspace .editor-surface,
+    .main-editor-workspace .editor-code-wrap {
       min-height: 0;
     }
 
@@ -5298,6 +6239,7 @@ function injectRuntimeStyles() {
     #btn-undo,
     #btn-redo,
     #btn-assemble,
+    #btn-compile-c0,
     #btn-go,
     #btn-step,
     #btn-backstep,
@@ -5316,6 +6258,7 @@ function injectRuntimeStyles() {
     #btn-undo { background-image: url("./assets/images/Undo16.png"); }
     #btn-redo { background-image: url("./assets/images/Redo16.png"); }
     #btn-assemble { background-image: url("./assets/images/Assemble16.png"); }
+    #btn-compile-c0 { background-image: url("./assets/images/Assemble16.png"); }
     #btn-go { background-image: url("./assets/images/Play16.png"); }
     #btn-step { background-image: url("./assets/images/StepForward16.png"); }
     #btn-backstep { background-image: url("./assets/images/StepBack16.png"); }
@@ -5360,6 +6303,44 @@ function injectRuntimeStyles() {
     .menu-shortcut { color: #59687b; font-size: 11px; }
     .menu-arrow { color: #47586e; font-size: 10px; text-align: right; }
     .menu-separator { height: 1px; background: #c0cad7; margin: 4px 4px; }
+
+    .mini-c-pane {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      min-height: 0;
+      overflow: hidden;
+      background: #e7edf6;
+    }
+
+    .mini-c-subtab-panel.active {
+      display: block;
+      min-height: 0;
+      height: 100%;
+      padding: 4px;
+    }
+
+    .mini-c-textarea {
+      width: 100%;
+      height: 100%;
+      resize: none;
+      border: 1px solid #8ea6c2;
+      background: #f9fcff;
+      color: #17273c;
+      font-family: "Cascadia Code", "Consolas", "Lucida Console", monospace;
+      font-size: 12px;
+      line-height: 1.25;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    .mini-c-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      padding: 5px 6px 7px;
+      border-top: 1px solid #b3c2d4;
+      background: #e2e9f2;
+    }
 
     .help-window {
       min-width: 760px;

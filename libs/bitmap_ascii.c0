@@ -1,0 +1,278 @@
+#use <bitmap_rect>
+
+int bitmap_ascii_normalize(int ch) {
+  if (ch >= 97 && ch <= 122) return ch - 32;
+  return ch;
+}
+
+int bitmap_ascii_row_bits(int ch, int row) {
+  if (row < 0 || row > 6) return 0;
+  if (ch == 32) return 0;
+
+  if (ch == 64) {
+    if (row == 0) return 14;
+    if (row == 1) return 17;
+    if (row == 2) return 23;
+    if (row == 3) return 21;
+    if (row == 4) return 23;
+    if (row == 5) return 16;
+    if (row == 6) return 14;
+    return 0;
+  }
+
+  if (ch == 48) {
+    if (row == 0) return 14;
+    if (row == 1) return 17;
+    if (row == 2) return 19;
+    if (row == 3) return 21;
+    if (row == 4) return 25;
+    if (row == 5) return 17;
+    if (row == 6) return 14;
+    return 0;
+  }
+
+  if (ch == 50) {
+    if (row == 0) return 14;
+    if (row == 1) return 17;
+    if (row == 2) return 1;
+    if (row == 3) return 2;
+    if (row == 4) return 4;
+    if (row == 5) return 8;
+    if (row == 6) return 31;
+    return 0;
+  }
+
+  if (ch == 54) {
+    if (row == 0) return 6;
+    if (row == 1) return 8;
+    if (row == 2) return 16;
+    if (row == 3) return 30;
+    if (row == 4) return 17;
+    if (row == 5) return 17;
+    if (row == 6) return 14;
+    return 0;
+  }
+
+  if (ch == 65) {
+    if (row == 0) return 14;
+    if (row == 1) return 17;
+    if (row == 2) return 17;
+    if (row == 3) return 31;
+    if (row == 4) return 17;
+    if (row == 5) return 17;
+    if (row == 6) return 17;
+    return 0;
+  }
+
+  if (ch == 66) {
+    if (row == 0) return 30;
+    if (row == 1) return 17;
+    if (row == 2) return 17;
+    if (row == 3) return 30;
+    if (row == 4) return 17;
+    if (row == 5) return 17;
+    if (row == 6) return 30;
+    return 0;
+  }
+
+  if (ch == 67) {
+    if (row == 0) return 14;
+    if (row == 1) return 17;
+    if (row == 2) return 16;
+    if (row == 3) return 16;
+    if (row == 4) return 16;
+    if (row == 5) return 17;
+    if (row == 6) return 14;
+    return 0;
+  }
+
+  if (ch == 68) {
+    if (row == 0) return 30;
+    if (row == 1) return 17;
+    if (row == 2) return 17;
+    if (row == 3) return 17;
+    if (row == 4) return 17;
+    if (row == 5) return 17;
+    if (row == 6) return 30;
+    return 0;
+  }
+
+  if (ch == 69) {
+    if (row == 0) return 31;
+    if (row == 1) return 16;
+    if (row == 2) return 16;
+    if (row == 3) return 30;
+    if (row == 4) return 16;
+    if (row == 5) return 16;
+    if (row == 6) return 31;
+    return 0;
+  }
+
+  if (ch == 70) {
+    if (row == 0) return 31;
+    if (row == 1) return 16;
+    if (row == 2) return 16;
+    if (row == 3) return 30;
+    if (row == 4) return 16;
+    if (row == 5) return 16;
+    if (row == 6) return 16;
+    return 0;
+  }
+
+  if (ch == 72) {
+    if (row == 0) return 17;
+    if (row == 1) return 17;
+    if (row == 2) return 17;
+    if (row == 3) return 31;
+    if (row == 4) return 17;
+    if (row == 5) return 17;
+    if (row == 6) return 17;
+    return 0;
+  }
+
+  if (ch == 73) {
+    if (row == 0) return 14;
+    if (row == 1) return 4;
+    if (row == 2) return 4;
+    if (row == 3) return 4;
+    if (row == 4) return 4;
+    if (row == 5) return 4;
+    if (row == 6) return 14;
+    return 0;
+  }
+
+  if (ch == 76) {
+    if (row == 0) return 16;
+    if (row == 1) return 16;
+    if (row == 2) return 16;
+    if (row == 3) return 16;
+    if (row == 4) return 16;
+    if (row == 5) return 16;
+    if (row == 6) return 31;
+    return 0;
+  }
+
+  if (ch == 77) {
+    if (row == 0) return 17;
+    if (row == 1) return 27;
+    if (row == 2) return 21;
+    if (row == 3) return 21;
+    if (row == 4) return 17;
+    if (row == 5) return 17;
+    if (row == 6) return 17;
+    return 0;
+  }
+
+  if (ch == 78) {
+    if (row == 0) return 17;
+    if (row == 1) return 25;
+    if (row == 2) return 21;
+    if (row == 3) return 19;
+    if (row == 4) return 17;
+    if (row == 5) return 17;
+    if (row == 6) return 17;
+    return 0;
+  }
+
+  if (ch == 79) {
+    if (row == 0) return 14;
+    if (row == 1) return 17;
+    if (row == 2) return 17;
+    if (row == 3) return 17;
+    if (row == 4) return 17;
+    if (row == 5) return 17;
+    if (row == 6) return 14;
+    return 0;
+  }
+
+  if (ch == 80) {
+    if (row == 0) return 30;
+    if (row == 1) return 17;
+    if (row == 2) return 17;
+    if (row == 3) return 30;
+    if (row == 4) return 16;
+    if (row == 5) return 16;
+    if (row == 6) return 16;
+    return 0;
+  }
+
+  if (ch == 82) {
+    if (row == 0) return 30;
+    if (row == 1) return 17;
+    if (row == 2) return 17;
+    if (row == 3) return 30;
+    if (row == 4) return 20;
+    if (row == 5) return 18;
+    if (row == 6) return 17;
+    return 0;
+  }
+
+  if (ch == 83) {
+    if (row == 0) return 15;
+    if (row == 1) return 16;
+    if (row == 2) return 16;
+    if (row == 3) return 14;
+    if (row == 4) return 1;
+    if (row == 5) return 1;
+    if (row == 6) return 30;
+    return 0;
+  }
+
+  if (ch == 84) {
+    if (row == 0) return 31;
+    if (row == 1) return 4;
+    if (row == 2) return 4;
+    if (row == 3) return 4;
+    if (row == 4) return 4;
+    if (row == 5) return 4;
+    if (row == 6) return 4;
+    return 0;
+  }
+
+  if (ch == 87) {
+    if (row == 0) return 17;
+    if (row == 1) return 17;
+    if (row == 2) return 17;
+    if (row == 3) return 21;
+    if (row == 4) return 21;
+    if (row == 5) return 21;
+    if (row == 6) return 10;
+    return 0;
+  }
+
+  if (ch == 89) {
+    if (row == 0) return 17;
+    if (row == 1) return 17;
+    if (row == 2) return 10;
+    if (row == 3) return 4;
+    if (row == 4) return 4;
+    if (row == 5) return 4;
+    if (row == 6) return 4;
+    return 0;
+  }
+
+  return 0;
+}
+
+void bitmap_ascii_put_char(int x, int y, int cols, int rows, int ch, int fgColor, int bgColor) {
+  int normalized = bitmap_ascii_normalize(ch);
+  int* fb = bitmap_framebuffer_base();
+  int row = 0;
+  while (row < 7) {
+    int bits = bitmap_ascii_row_bits(normalized, row);
+    int col = 0;
+    while (col < 5) {
+      int mask = 1 << (4 - col);
+      int px = x + col;
+      int py = y + row;
+      int color = bgColor;
+      if ((bits & mask) != 0) color = fgColor;
+      if (bitmap_point_in_bounds(px, py, cols, rows) != 0) {
+        fb[py * cols + px] = color;
+      }
+      col = col + 1;
+    }
+    row = row + 1;
+  }
+}
+

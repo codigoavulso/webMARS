@@ -6,6 +6,7 @@ const runtimeSettings = { ...DEFAULT_SETTINGS };
 const moduleRegistry = (typeof window !== "undefined" ? window.WebMarsModules : globalThis.WebMarsModules) || {};
 const runtimeCoreStoreModule = moduleRegistry.coreStore || {};
 const runtimeSettingsModule = moduleRegistry.runtimeSettings || {};
+const miniCCompilerModule = moduleRegistry.miniCCompiler || {};
 
 const runtimeCreateStore = typeof runtimeCoreStoreModule.createStore === "function"
   ? runtimeCoreStoreModule.createStore
@@ -184,6 +185,50 @@ const SESSION_STORAGE_TARGET_MAX_CHARS = 3600000;
 const ABOUT_VISITED_KEY = "mars45-web-about-visited-v1";
 const ONLINE_SOURCE_STORAGE_KEY = "mars45-web-online-source-folder-v1";
 const ONLINE_SOURCE_MAX_BYTES = 50 * 1024;
+const PROJECT_STORAGE_KEY = "mars45-web-project-v1";
+const PROJECT_LIBRARY_STORAGE_KEY = "mars45-web-project-library-v1";
+const RESETTABLE_LOCAL_STORAGE_KEYS = Object.freeze([
+  SESSION_STORAGE_KEY,
+  LEGACY_SESSION_STORAGE_KEY,
+  SESSION_SERVER_DRAFT_KEY,
+  ABOUT_VISITED_KEY,
+  ONLINE_SOURCE_STORAGE_KEY,
+  PROJECT_STORAGE_KEY,
+  PROJECT_LIBRARY_STORAGE_KEY,
+  "mars45-web-preferences",
+  "webmars-language-v1",
+  "mars45-window-layout-history-v1",
+  "mars45-window-layout-saved-v1",
+  "webmars-vfs-v1"
+]);
+const STARTUP_RECOVERY_LOCAL_STORAGE_KEYS = Object.freeze([
+  SESSION_STORAGE_KEY,
+  LEGACY_SESSION_STORAGE_KEY,
+  SESSION_SERVER_DRAFT_KEY,
+  ONLINE_SOURCE_STORAGE_KEY,
+  PROJECT_STORAGE_KEY,
+  PROJECT_LIBRARY_STORAGE_KEY,
+  "webmars-vfs-v1"
+]);
+const STARTUP_RECOVERY_SKIP_SESSION_KEY = "mars45-startup-skip-recovery-once-v1";
+const PROJECT_SCHEMA_VERSION = 1;
+const PROJECT_LIBRARY_SCHEMA_VERSION = 1;
+const PROJECT_STATE_SLOT_COUNT = 5;
+const SUPPORTED_PROJECT_FILE_EXTENSIONS = new Set([".asm", ".s", ".c", ".c0", ".h", ".txt"]);
+const DEFAULT_PROJECT_C_TEMPLATE = [
+  "int main(void) {",
+  "  int n = 5;",
+  "  int acc = 1;",
+  "  while (n > 1) {",
+  "    acc = acc * n;",
+  "    n = n - 1;",
+  "  }",
+  "  print_int(acc);",
+  "  print_char(10);",
+  "  return 0;",
+  "}",
+  ""
+].join("\n");
 const textEncoder = typeof TextEncoder === "function" ? new TextEncoder() : null;
 
 function getExperimentalFlags() {
@@ -240,6 +285,443 @@ function normalizeWindowSessionData(windowState) {
   };
 }
 
+function normalizeProjectName(name) {
+  const raw = String(name || "").trim();
+  if (!raw) return "project";
+  return raw.replace(/[\\/:*?"<>|]+/g, "_");
+}
+
+function normalizeProjectRootKey(rootPath) {
+  return String(rootPath || "").trim().toLowerCase();
+}
+
+function getPathExtension(pathValue) {
+  const normalized = String(pathValue || "").trim().toLowerCase();
+  const slash = normalized.lastIndexOf("/");
+  const base = slash >= 0 ? normalized.slice(slash + 1) : normalized;
+  const dot = base.lastIndexOf(".");
+  if (dot <= 0) return "";
+  return base.slice(dot);
+}
+
+function isSupportedProjectFilePath(pathValue) {
+  const extension = getPathExtension(pathValue);
+  return SUPPORTED_PROJECT_FILE_EXTENSIONS.has(extension);
+}
+
+function normalizeProjectRootPath(rootPath, fallbackName = "project") {
+  const safeFallback = `${normalizeProjectName(fallbackName)}.p`;
+  const raw = String(rootPath || "").trim().replace(/\\/g, "/").replace(/^\.\/+/, "").replace(/^\/+/, "");
+  if (!raw) return safeFallback;
+  return /\.p$/i.test(raw) ? raw : `${raw}.p`;
+}
+
+function normalizeProjectPath(pathValue, fallbackName = "untitled.s") {
+  const raw = String(pathValue || "")
+    .trim()
+    .replace(/\\/g, "/")
+    .replace(/^\.\/+/, "")
+    .replace(/^\/+/, "");
+  const candidate = raw || fallbackName;
+  return normalizeFilename(candidate);
+}
+
+function splitProjectPathSegments(pathValue = "") {
+  return String(pathValue || "")
+    .trim()
+    .replace(/\\/g, "/")
+    .split("/")
+    .map((segment) => String(segment || "").trim())
+    .filter(Boolean);
+}
+
+function joinProjectPathSegments(segments = []) {
+  return segments
+    .map((segment) => String(segment || "").trim())
+    .filter(Boolean)
+    .join("/");
+}
+
+function projectPathBasename(pathValue = "") {
+  const segments = splitProjectPathSegments(pathValue);
+  return segments.length ? segments[segments.length - 1] : "";
+}
+
+function projectPathDirname(pathValue = "") {
+  const segments = splitProjectPathSegments(pathValue);
+  if (segments.length <= 1) return "";
+  return joinProjectPathSegments(segments.slice(0, -1));
+}
+
+function normalizeProjectFolderSegment(value, fallbackValue = "folder") {
+  const raw = String(value || "").trim();
+  const fallback = String(fallbackValue || "folder").trim() || "folder";
+  const candidate = raw || fallback;
+  const sanitized = candidate
+    .replace(/[\u0000-\u001f]+/g, "")
+    .replace(/[\\/:*?"<>|]+/g, "_")
+    .replace(/\s+/g, " ")
+    .trim();
+  return sanitized || fallback;
+}
+
+function normalizeProjectFolderPath(pathValue, fallbackName = "folder") {
+  const rawSegments = splitProjectPathSegments(pathValue);
+  const fallback = normalizeProjectFolderSegment(fallbackName, "folder");
+  const segments = (rawSegments.length ? rawSegments : [fallback])
+    .map((segment) => normalizeProjectFolderSegment(segment, fallback))
+    .map((segment) => String(segment || "").trim())
+    .filter(Boolean);
+  return joinProjectPathSegments(segments);
+}
+
+function normalizeProjectFolderPaths(paths, files = []) {
+  const normalized = new Set();
+  (Array.isArray(paths) ? paths : []).forEach((entry, index) => {
+    const folderPath = normalizeProjectFolderPath(entry, `folder_${index + 1}`);
+    const parts = splitProjectPathSegments(folderPath);
+    if (!parts.length) return;
+    for (let cursor = 1; cursor <= parts.length; cursor += 1) {
+      normalized.add(joinProjectPathSegments(parts.slice(0, cursor)));
+    }
+  });
+  normalizeProjectFiles(files).forEach((file) => {
+    const filePath = normalizeProjectPath(file?.path, "untitled.s");
+    const parts = splitProjectPathSegments(filePath);
+    if (parts.length <= 1) return;
+    for (let cursor = 1; cursor < parts.length; cursor += 1) {
+      normalized.add(joinProjectPathSegments(parts.slice(0, cursor)));
+    }
+  });
+  return [...normalized].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+}
+
+function normalizeProjectFileEntry(file, index = 0) {
+  if (!file || typeof file !== "object") return null;
+  const source = String(file.source ?? "");
+  const savedSource = typeof file.savedSource === "string" ? String(file.savedSource) : source;
+  const path = normalizeProjectPath(file.path || file.name, `src/file_${index + 1}.s`);
+  const updatedAtRaw = Number(file.updatedAt);
+  const updatedAt = Number.isFinite(updatedAtRaw) && updatedAtRaw > 0
+    ? Math.floor(updatedAtRaw)
+    : Date.now();
+  return {
+    id: String(file.id || `project-file-${index + 1}`),
+    path,
+    source,
+    savedSource,
+    updatedAt
+  };
+}
+
+function normalizeProjectFiles(files) {
+  const entries = Array.isArray(files) ? files : [];
+  const usedPaths = new Set();
+  const normalized = [];
+  entries.forEach((entry, index) => {
+    const next = normalizeProjectFileEntry(entry, index);
+    if (!next) return;
+    let candidate = next.path;
+    let suffix = 1;
+    while (usedPaths.has(candidate)) {
+      const dot = next.path.lastIndexOf(".");
+      const stem = dot > 0 ? next.path.slice(0, dot) : next.path;
+      const ext = dot > 0 ? next.path.slice(dot) : "";
+      candidate = `${stem}_${suffix}${ext}`;
+      suffix += 1;
+    }
+    usedPaths.add(candidate);
+    normalized.push({
+      ...next,
+      path: candidate
+    });
+  });
+  return normalized;
+}
+
+function normalizeProjectStateSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== "object") return null;
+  const files = normalizeProjectFiles(snapshot.files);
+  if (!files.length) return null;
+  const activeFileId = String(snapshot.activeFileId || files[0].id);
+  return {
+    files,
+    activeFileId,
+    preferences: snapshot.preferences && typeof snapshot.preferences === "object"
+      ? { ...snapshot.preferences }
+      : null,
+    windowState: normalizeWindowSessionData(snapshot.windowState),
+    layoutState: normalizeWindowSessionData(snapshot.layoutState),
+    mode: String(snapshot.mode || "")
+  };
+}
+
+function normalizeProjectStateSlots(slots) {
+  const out = Array.from({ length: PROJECT_STATE_SLOT_COUNT }, () => null);
+  if (!Array.isArray(slots)) return out;
+  for (let index = 0; index < PROJECT_STATE_SLOT_COUNT; index += 1) {
+    const slot = slots[index];
+    if (!slot || typeof slot !== "object") continue;
+    const snapshot = normalizeProjectStateSnapshot(slot.snapshot);
+    if (!snapshot) continue;
+    out[index] = {
+      label: String(slot.label || "").trim(),
+      savedAt: Number(slot.savedAt) || Date.now(),
+      snapshot
+    };
+  }
+  return out;
+}
+
+function normalizeProjectData(project) {
+  if (!project || typeof project !== "object") return null;
+  const name = normalizeProjectName(project.name || "project");
+  const files = normalizeProjectFiles(project.files);
+  const folderPaths = normalizeProjectFolderPaths(project.folderPaths, files);
+  const activeFileId = String(project.activeFileId || files[0]?.id || "");
+  return {
+    version: Number.isFinite(project.version) ? (project.version | 0) : PROJECT_SCHEMA_VERSION,
+    isOpen: project.isOpen !== false,
+    name,
+    description: String(project.description || ""),
+    rootPath: normalizeProjectRootPath(project.rootPath, name),
+    folderPaths,
+    files,
+    activeFileId,
+    settings: project.settings && typeof project.settings === "object"
+      ? { ...project.settings }
+      : {},
+    layout: normalizeWindowSessionData(project.layout),
+    states: normalizeProjectStateSlots(project.states),
+    updatedAt: Number(project.updatedAt) || Date.now()
+  };
+}
+
+function normalizeProjectLibraryData(library) {
+  const payload = library && typeof library === "object" ? library : {};
+  const sourceProjects = Array.isArray(payload.projects) ? payload.projects : [];
+  const projects = [];
+  const seenRoots = new Set();
+  sourceProjects.forEach((entry) => {
+    const normalized = normalizeProjectData(entry);
+    if (!normalized) return;
+    const rootKey = normalizeProjectRootKey(normalized.rootPath);
+    if (!rootKey || seenRoots.has(rootKey)) return;
+    seenRoots.add(rootKey);
+    projects.push(normalized);
+  });
+  projects.sort((a, b) => String(a.rootPath || "").localeCompare(String(b.rootPath || ""), undefined, { sensitivity: "base" }));
+  if (!projects.length) {
+    return {
+      version: PROJECT_LIBRARY_SCHEMA_VERSION,
+      activeRootPath: "",
+      projects: []
+    };
+  }
+  const rawActiveRootPath = normalizeProjectRootPath(payload.activeRootPath || projects[0].rootPath, projects[0].name);
+  const activeRootKey = normalizeProjectRootKey(rawActiveRootPath);
+  const activeProject = projects.find((entry) => normalizeProjectRootKey(entry.rootPath) === activeRootKey) || projects[0];
+  return {
+    version: Number.isFinite(payload.version) ? (payload.version | 0) : PROJECT_LIBRARY_SCHEMA_VERSION,
+    activeRootPath: activeProject.rootPath,
+    projects
+  };
+}
+
+function saveProjectLibraryData(library) {
+  try {
+    window.localStorage.setItem(PROJECT_LIBRARY_STORAGE_KEY, JSON.stringify(library));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function loadProjectLibraryData() {
+  try {
+    const raw = window.localStorage.getItem(PROJECT_LIBRARY_STORAGE_KEY);
+    if (!raw) return null;
+    return normalizeProjectLibraryData(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+function saveProjectData(project) {
+  try {
+    window.localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(project));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function loadProjectData() {
+  try {
+    const raw = window.localStorage.getItem(PROJECT_STORAGE_KEY);
+    if (!raw) return null;
+    return normalizeProjectData(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+function clearRecoverableLocalStorageData() {
+  let removed = 0;
+  try {
+    if (!window.localStorage) return 0;
+    RESETTABLE_LOCAL_STORAGE_KEYS.forEach((key) => {
+      const existing = window.localStorage.getItem(key);
+      if (existing == null) return;
+      window.localStorage.removeItem(key);
+      removed += 1;
+    });
+  } catch {
+    // Ignore storage errors.
+  }
+  return removed;
+}
+
+function enterResetReloadMode() {
+  suppressPersistenceForResetReload = true;
+  allowPageUnload = true;
+  if (persistTimer !== null) {
+    window.clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+  if (projectPersistTimer !== null) {
+    window.clearTimeout(projectPersistTimer);
+    projectPersistTimer = null;
+  }
+  projectPersistWantsEditorSync = false;
+}
+
+function hasStartupRecoverableLocalStorageData() {
+  try {
+    if (!window.localStorage) return false;
+    return STARTUP_RECOVERY_LOCAL_STORAGE_KEYS.some((key) => {
+      const value = window.localStorage.getItem(key);
+      return value != null && String(value).trim() !== "";
+    });
+  } catch {
+    return false;
+  }
+}
+
+function markSkipStartupRecoveryPromptOnce() {
+  try {
+    window.sessionStorage?.setItem(STARTUP_RECOVERY_SKIP_SESSION_KEY, "1");
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
+function consumeStartupRecoverySkipFlag() {
+  try {
+    const shouldSkip = window.sessionStorage?.getItem(STARTUP_RECOVERY_SKIP_SESSION_KEY) === "1";
+    if (shouldSkip) {
+      window.sessionStorage?.removeItem(STARTUP_RECOVERY_SKIP_SESSION_KEY);
+    }
+    return shouldSkip;
+  } catch {
+    return false;
+  }
+}
+
+function createDefaultProjectData(options = {}) {
+  const name = normalizeProjectName(options.name || "project");
+  const seedFiles = normalizeProjectFiles(options.files);
+  const files = seedFiles.length
+    ? seedFiles
+    : normalizeProjectFiles([
+      {
+        id: "project-file-c0",
+        path: "src/main.c",
+        source: DEFAULT_PROJECT_C_TEMPLATE,
+        savedSource: DEFAULT_PROJECT_C_TEMPLATE
+      },
+      {
+        id: "project-file-asm",
+        path: "src/main.s",
+        source: INITIAL_SOURCE,
+        savedSource: INITIAL_SOURCE
+      }
+    ]);
+  const activeFileId = String(options.activeFileId || files[0]?.id || "");
+  const folderPaths = normalizeProjectFolderPaths(options.folderPaths, files);
+  return normalizeProjectData({
+    version: PROJECT_SCHEMA_VERSION,
+    isOpen: true,
+    name,
+    description: String(options.description || ""),
+    rootPath: normalizeProjectRootPath(options.rootPath, name),
+    folderPaths,
+    files,
+    activeFileId,
+    settings: options.settings && typeof options.settings === "object" ? options.settings : {},
+    layout: options.layout || null,
+    states: Array.from({ length: PROJECT_STATE_SLOT_COUNT }, () => null),
+    updatedAt: Date.now()
+  });
+}
+
+function mapProjectFilesToEditorFiles(projectFiles, fallbackFiles = []) {
+  const fallbackByName = new Map(
+    (Array.isArray(fallbackFiles) ? fallbackFiles : [])
+      .filter((entry) => entry && typeof entry === "object")
+      .map((entry) => [String(entry.name || ""), entry])
+  );
+  const rawEntriesByPath = new Map(
+    (Array.isArray(projectFiles) ? projectFiles : [])
+      .filter((entry) => entry && typeof entry === "object")
+      .map((entry, index) => [
+        normalizeProjectPath(entry.path || entry.name, `src/file_${index + 1}.s`),
+        entry
+      ])
+  );
+  const normalized = normalizeProjectFiles(projectFiles);
+  return normalized.map((file, index) => {
+    const fallback = fallbackByName.get(file.path);
+    const rawEntry = rawEntriesByPath.get(file.path);
+    const hasRawSource = Boolean(rawEntry && Object.prototype.hasOwnProperty.call(rawEntry, "source"));
+    const hasRawSavedSource = Boolean(rawEntry && Object.prototype.hasOwnProperty.call(rawEntry, "savedSource"));
+    const source = hasRawSource
+      ? String(rawEntry.source ?? "")
+      : String(fallback?.source ?? "");
+    const savedSource = hasRawSavedSource
+      ? String(rawEntry.savedSource ?? source)
+      : (typeof fallback?.savedSource === "string" ? fallback.savedSource : source);
+    return {
+      id: String(file.id || `file-project-${index + 1}`),
+      name: file.path,
+      source,
+      savedSource,
+      undoStack: [source],
+      redoStack: []
+    };
+  });
+}
+
+function buildProjectStoreState(project) {
+  const slots = Array.isArray(project?.states)
+    ? project.states.map((slot) => (
+      slot && typeof slot === "object"
+        ? {
+          label: String(slot.label || "").trim(),
+          savedAt: Number(slot.savedAt) || 0
+        }
+        : null
+    ))
+    : Array.from({ length: PROJECT_STATE_SLOT_COUNT }, () => null);
+  return {
+    isOpen: project?.isOpen === true,
+    name: String(project?.name || "project"),
+    description: String(project?.description || ""),
+    rootPath: String(project?.rootPath || "project.p"),
+    states: slots
+  };
+}
+
 function loadWorkspaceSession() {
   const candidateKeys = [SESSION_STORAGE_KEY, LEGACY_SESSION_STORAGE_KEY];
   for (let i = 0; i < candidateKeys.length; i += 1) {
@@ -266,17 +748,73 @@ function loadWorkspaceSession() {
   return null;
 }
 
+const startupHadRecoverableLocalData = hasStartupRecoverableLocalStorageData() && !consumeStartupRecoverySkipFlag();
 const restoredSession = loadWorkspaceSession();
-const initialFileId = restoredSession?.activeFileId || "file-initial";
-const initialFiles = restoredSession?.files || [{
-  id: initialFileId,
-  name: "untitled.s",
+const storedProject = loadProjectData();
+const fallbackBootstrapProject = storedProject || createDefaultProjectData({
+  files: restoredSession?.files?.map((file) => ({
+    id: file.id,
+    path: file.name,
+    source: file.source,
+    savedSource: file.savedSource
+  })),
+  activeFileId: restoredSession?.activeFileId || "",
+  settings: preferences
+});
+const storedProjectLibrary = loadProjectLibraryData();
+let bootstrapProjectLibrary = (
+  storedProjectLibrary && Array.isArray(storedProjectLibrary.projects) && storedProjectLibrary.projects.length
+    ? storedProjectLibrary
+    : normalizeProjectLibraryData({
+      version: PROJECT_LIBRARY_SCHEMA_VERSION,
+      activeRootPath: fallbackBootstrapProject.rootPath,
+      projects: [fallbackBootstrapProject]
+    })
+);
+const storedProjectRootKey = normalizeProjectRootKey(storedProject?.rootPath || "");
+if (storedProjectRootKey) {
+  const hasStoredProject = bootstrapProjectLibrary.projects.some((entry) => (
+    normalizeProjectRootKey(entry.rootPath) === storedProjectRootKey
+  ));
+  if (!hasStoredProject) {
+    bootstrapProjectLibrary = normalizeProjectLibraryData({
+      ...bootstrapProjectLibrary,
+      activeRootPath: storedProject.rootPath,
+      projects: [...bootstrapProjectLibrary.projects, storedProject]
+    });
+  }
+}
+if (!Array.isArray(bootstrapProjectLibrary.projects) || !bootstrapProjectLibrary.projects.length) {
+  bootstrapProjectLibrary = normalizeProjectLibraryData({
+    version: PROJECT_LIBRARY_SCHEMA_VERSION,
+    activeRootPath: fallbackBootstrapProject.rootPath,
+    projects: [fallbackBootstrapProject]
+  });
+}
+const bootstrapProject = bootstrapProjectLibrary.projects.find((entry) => (
+  normalizeProjectRootKey(entry.rootPath) === normalizeProjectRootKey(bootstrapProjectLibrary.activeRootPath)
+)) || fallbackBootstrapProject;
+saveProjectData(bootstrapProject);
+saveProjectLibraryData(bootstrapProjectLibrary);
+
+const fallbackInitialFileId = restoredSession?.activeFileId || "file-initial";
+const fallbackInitialFiles = restoredSession?.files || [{
+  id: fallbackInitialFileId,
+  name: "src/main.s",
   source: INITIAL_SOURCE,
   savedSource: INITIAL_SOURCE,
   undoStack: [INITIAL_SOURCE],
   redoStack: []
 }];
-const initialActiveFile = restoredSession?.active || initialFiles[0];
+const initialFiles = (bootstrapProject.isOpen === true)
+  ? (mapProjectFilesToEditorFiles(bootstrapProject.files, fallbackInitialFiles).length
+    ? mapProjectFilesToEditorFiles(bootstrapProject.files, fallbackInitialFiles)
+    : fallbackInitialFiles)
+  : fallbackInitialFiles;
+const preferredInitialActiveId = bootstrapProject.isOpen === true
+  ? String(bootstrapProject.activeFileId || "")
+  : String(restoredSession?.activeFileId || "");
+const initialActiveFile = initialFiles.find((file) => file.id === preferredInitialActiveId) || initialFiles[0];
 
 const store = runtimeCreateStore({
   sourceCode: initialActiveFile.source,
@@ -286,7 +824,8 @@ const store = runtimeCreateStore({
   assembled: false,
   halted: false,
   running: false,
-  preferences
+  preferences,
+  project: buildProjectStoreState(bootstrapProject)
 });
 
 const editor = setupEditor(refs, store);
@@ -318,6 +857,9 @@ const executePane = createExecutePane(refs, engine);
 const registersPane = createRegistersPane(refs);
 const toolManager = createToolManager(engine, messagesPane, windowManager, refs.windows.desktop);
 const modeController = createModeController(refs, windowManager);
+editor.setActiveFileChangeHandler?.((file) => {
+  modeController.syncForFileName?.(file?.name || "");
+});
 const browserStorageManager = createBrowserStorageManager(refs, windowManager);
 const RUN_SPEED_INDEX_MAX = 40;
 const RUN_SPEED_INDEX_INTERACTION_LIMIT = 35;
@@ -341,6 +883,8 @@ let runPausedForInput = false;
 let resumeRunAfterInput = false;
 let backstepDepthEstimate = 0;
 let allowPageUnload = false;
+let suppressPersistenceForResetReload = false;
+let startupRecoveryDecisionPrompted = false;
 const RUN_LOOP_INTERVAL_MS = 16;
 const RUN_LOOP_MAX_BATCH = 240;
 const RUN_LOOP_MAX_BATCH_UNLIMITED = 720;
@@ -353,6 +897,378 @@ const RUN_LOOP_UI_SYNC_INTERVAL_MS_FAST = 33;
 const RUN_LOOP_MACHINE_CAPTURE_INTERVAL_MS = 220;
 const RUN_LOOP_MACHINE_FULL_CAPTURE_INTERVAL_MS = 2200;
 const RUN_LOOP_TOOL_SYNC_INTERVAL_MS_NO_INTERACTION = 120;
+const MINI_C_SOURCE_EXTENSION_PATTERN = /\.(c|c0)$/i;
+const MINI_C_DEFAULT_TEMPLATE = (typeof miniCCompilerModule.defaultTemplate === "string" && miniCCompilerModule.defaultTemplate.trim())
+  ? miniCCompilerModule.defaultTemplate
+  : DEFAULT_PROJECT_C_TEMPLATE;
+const MINI_C_BITMAP_DEFAULT_BASE = 0x10010000;
+const MINI_C_NATIVE_LIB_BITMAP_RECT = [
+  "void bitmap_set_base_address(int baseAddress) {",
+  "  if (baseAddress == 0) {",
+  "    return;",
+  "  }",
+  "}",
+  "",
+  "int bitmap_get_base_address(void) {",
+  `  return ${MINI_C_BITMAP_DEFAULT_BASE};`,
+  "}",
+  "",
+  "int* bitmap_framebuffer_base(void) {",
+  `  return (int*)${MINI_C_BITMAP_DEFAULT_BASE};`,
+  "}",
+  "",
+  "int bitmap_point_in_bounds(int x, int y, int cols, int rows) {",
+  "  if (x < 0) return 0;",
+  "  if (y < 0) return 0;",
+  "  if (x >= cols) return 0;",
+  "  if (y >= rows) return 0;",
+  "  return 1;",
+  "}",
+  "",
+  "void bitmap_put_pixel(int x, int y, int cols, int rows, int color) {",
+  "  if (bitmap_point_in_bounds(x, y, cols, rows) == 0) return;",
+  "  int* fb = bitmap_framebuffer_base();",
+  "  fb[y * cols + x] = color;",
+  "}",
+  "",
+  "void bitmap_fill_rect(int x, int y, int width, int height, int cols, int rows, int color) {",
+  "  if (width <= 0) return;",
+  "  if (height <= 0) return;",
+  "  int x0 = x;",
+  "  int y0 = y;",
+  "  int x1 = x + width;",
+  "  int y1 = y + height;",
+  "  if (x0 < 0) x0 = 0;",
+  "  if (y0 < 0) y0 = 0;",
+  "  if (x1 > cols) x1 = cols;",
+  "  if (y1 > rows) y1 = rows;",
+  "  if (x0 >= x1) return;",
+  "  if (y0 >= y1) return;",
+  "  int* fb = bitmap_framebuffer_base();",
+  "  int span = x1 - x0;",
+  "  int yy = y0;",
+  "  while (yy < y1) {",
+  "    int index = yy * cols + x0;",
+  "    int remaining = span;",
+  "    while (remaining >= 4) {",
+  "      fb[index] = color;",
+  "      fb[index + 1] = color;",
+  "      fb[index + 2] = color;",
+  "      fb[index + 3] = color;",
+  "      index = index + 4;",
+  "      remaining = remaining - 4;",
+  "    }",
+  "    while (remaining > 0) {",
+  "      fb[index] = color;",
+  "      index = index + 1;",
+  "      remaining = remaining - 1;",
+  "    }",
+  "    yy = yy + 1;",
+  "  }",
+  "}",
+  ""
+].join("\n");
+const MINI_C_NATIVE_LIB_BITMAP_ASCII = [
+  "#use <bitmap_rect>",
+  "",
+  "int bitmap_ascii_normalize(int ch) {",
+  "  if (ch >= 97 && ch <= 122) return ch - 32;",
+  "  return ch;",
+  "}",
+  "",
+  "int bitmap_ascii_row_bits(int ch, int row) {",
+  "  if (row < 0 || row > 6) return 0;",
+  "  if (ch == 32) return 0;",
+  "",
+  "  if (ch == 64) {",
+  "    if (row == 0) return 14;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 23;",
+  "    if (row == 3) return 21;",
+  "    if (row == 4) return 23;",
+  "    if (row == 5) return 16;",
+  "    if (row == 6) return 14;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 48) {",
+  "    if (row == 0) return 14;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 19;",
+  "    if (row == 3) return 21;",
+  "    if (row == 4) return 25;",
+  "    if (row == 5) return 17;",
+  "    if (row == 6) return 14;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 50) {",
+  "    if (row == 0) return 14;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 1;",
+  "    if (row == 3) return 2;",
+  "    if (row == 4) return 4;",
+  "    if (row == 5) return 8;",
+  "    if (row == 6) return 31;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 54) {",
+  "    if (row == 0) return 6;",
+  "    if (row == 1) return 8;",
+  "    if (row == 2) return 16;",
+  "    if (row == 3) return 30;",
+  "    if (row == 4) return 17;",
+  "    if (row == 5) return 17;",
+  "    if (row == 6) return 14;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 65) {",
+  "    if (row == 0) return 14;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 17;",
+  "    if (row == 3) return 31;",
+  "    if (row == 4) return 17;",
+  "    if (row == 5) return 17;",
+  "    if (row == 6) return 17;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 66) {",
+  "    if (row == 0) return 30;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 17;",
+  "    if (row == 3) return 30;",
+  "    if (row == 4) return 17;",
+  "    if (row == 5) return 17;",
+  "    if (row == 6) return 30;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 67) {",
+  "    if (row == 0) return 14;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 16;",
+  "    if (row == 3) return 16;",
+  "    if (row == 4) return 16;",
+  "    if (row == 5) return 17;",
+  "    if (row == 6) return 14;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 68) {",
+  "    if (row == 0) return 30;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 17;",
+  "    if (row == 3) return 17;",
+  "    if (row == 4) return 17;",
+  "    if (row == 5) return 17;",
+  "    if (row == 6) return 30;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 69) {",
+  "    if (row == 0) return 31;",
+  "    if (row == 1) return 16;",
+  "    if (row == 2) return 16;",
+  "    if (row == 3) return 30;",
+  "    if (row == 4) return 16;",
+  "    if (row == 5) return 16;",
+  "    if (row == 6) return 31;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 70) {",
+  "    if (row == 0) return 31;",
+  "    if (row == 1) return 16;",
+  "    if (row == 2) return 16;",
+  "    if (row == 3) return 30;",
+  "    if (row == 4) return 16;",
+  "    if (row == 5) return 16;",
+  "    if (row == 6) return 16;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 72) {",
+  "    if (row == 0) return 17;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 17;",
+  "    if (row == 3) return 31;",
+  "    if (row == 4) return 17;",
+  "    if (row == 5) return 17;",
+  "    if (row == 6) return 17;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 73) {",
+  "    if (row == 0) return 14;",
+  "    if (row == 1) return 4;",
+  "    if (row == 2) return 4;",
+  "    if (row == 3) return 4;",
+  "    if (row == 4) return 4;",
+  "    if (row == 5) return 4;",
+  "    if (row == 6) return 14;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 76) {",
+  "    if (row == 0) return 16;",
+  "    if (row == 1) return 16;",
+  "    if (row == 2) return 16;",
+  "    if (row == 3) return 16;",
+  "    if (row == 4) return 16;",
+  "    if (row == 5) return 16;",
+  "    if (row == 6) return 31;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 77) {",
+  "    if (row == 0) return 17;",
+  "    if (row == 1) return 27;",
+  "    if (row == 2) return 21;",
+  "    if (row == 3) return 21;",
+  "    if (row == 4) return 17;",
+  "    if (row == 5) return 17;",
+  "    if (row == 6) return 17;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 78) {",
+  "    if (row == 0) return 17;",
+  "    if (row == 1) return 25;",
+  "    if (row == 2) return 21;",
+  "    if (row == 3) return 19;",
+  "    if (row == 4) return 17;",
+  "    if (row == 5) return 17;",
+  "    if (row == 6) return 17;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 79) {",
+  "    if (row == 0) return 14;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 17;",
+  "    if (row == 3) return 17;",
+  "    if (row == 4) return 17;",
+  "    if (row == 5) return 17;",
+  "    if (row == 6) return 14;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 80) {",
+  "    if (row == 0) return 30;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 17;",
+  "    if (row == 3) return 30;",
+  "    if (row == 4) return 16;",
+  "    if (row == 5) return 16;",
+  "    if (row == 6) return 16;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 82) {",
+  "    if (row == 0) return 30;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 17;",
+  "    if (row == 3) return 30;",
+  "    if (row == 4) return 20;",
+  "    if (row == 5) return 18;",
+  "    if (row == 6) return 17;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 83) {",
+  "    if (row == 0) return 15;",
+  "    if (row == 1) return 16;",
+  "    if (row == 2) return 16;",
+  "    if (row == 3) return 14;",
+  "    if (row == 4) return 1;",
+  "    if (row == 5) return 1;",
+  "    if (row == 6) return 30;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 84) {",
+  "    if (row == 0) return 31;",
+  "    if (row == 1) return 4;",
+  "    if (row == 2) return 4;",
+  "    if (row == 3) return 4;",
+  "    if (row == 4) return 4;",
+  "    if (row == 5) return 4;",
+  "    if (row == 6) return 4;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 87) {",
+  "    if (row == 0) return 17;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 17;",
+  "    if (row == 3) return 21;",
+  "    if (row == 4) return 21;",
+  "    if (row == 5) return 21;",
+  "    if (row == 6) return 10;",
+  "    return 0;",
+  "  }",
+  "",
+  "  if (ch == 89) {",
+  "    if (row == 0) return 17;",
+  "    if (row == 1) return 17;",
+  "    if (row == 2) return 10;",
+  "    if (row == 3) return 4;",
+  "    if (row == 4) return 4;",
+  "    if (row == 5) return 4;",
+  "    if (row == 6) return 4;",
+  "    return 0;",
+  "  }",
+  "",
+  "  return 0;",
+  "}",
+  "",
+  "void bitmap_ascii_put_char(int x, int y, int cols, int rows, int ch, int fgColor, int bgColor) {",
+  "  int normalized = bitmap_ascii_normalize(ch);",
+  "  int* fb = bitmap_framebuffer_base();",
+  "  int row = 0;",
+  "  while (row < 7) {",
+  "    int bits = bitmap_ascii_row_bits(normalized, row);",
+    "    int col = 0;",
+  "    while (col < 5) {",
+  "      int mask = 1 << (4 - col);",
+  "      int px = x + col;",
+  "      int py = y + row;",
+  "      int color = bgColor;",
+  "      if ((bits & mask) != 0) color = fgColor;",
+  "      if (bitmap_point_in_bounds(px, py, cols, rows) != 0) {",
+  "        fb[py * cols + px] = color;",
+  "      }",
+  "      col = col + 1;",
+  "    }",
+  "    row = row + 1;",
+  "  }",
+  "}",
+  ""
+].join("\n");
+const MINI_C_NATIVE_LIBRARY_SOURCES = Object.freeze({
+  stdio: "",
+  bitmap_rect: MINI_C_NATIVE_LIB_BITMAP_RECT,
+  bitmap_ascii: MINI_C_NATIVE_LIB_BITMAP_ASCII
+});
+const MINI_C_GLOBAL_LIBRARIES_ROOT = "./libs";
+const MINI_C_GLOBAL_LIBRARIES_MANIFEST_PATH = `${MINI_C_GLOBAL_LIBRARIES_ROOT}/manifest.json`;
+const MINI_C_LIBRARY_EXTENSION_PATTERN = /\.(h0|h|c0|c)$/i;
+const MINI_C_GLOBAL_LIBRARY_FALLBACK_ENTRIES = Object.freeze(
+  Object.keys(MINI_C_NATIVE_LIBRARY_SOURCES || {}).map((name) => {
+    const normalized = String(name || "").trim().toLowerCase();
+    return {
+      name: normalized.replace(MINI_C_LIBRARY_EXTENSION_PATTERN, ""),
+      path: `${normalized}.c0`
+    };
+  })
+);
+const miniCGlobalLibrarySources = new Map();
+let miniCGlobalLibraryEntries = MINI_C_GLOBAL_LIBRARY_FALLBACK_ENTRIES.map((entry) => ({ ...entry }));
+let miniCGlobalLibrariesReady = false;
+let miniCGlobalLibrariesPromise = null;
 
 let machineCurrentState = null;
 let machineCurrentSignature = "";
@@ -367,6 +1283,1925 @@ let persistTimer = null;
 let lastTrackedFilesRef = store.getState().files;
 let lastTrackedActiveId = store.getState().activeFileId;
 let lastTrackedSource = store.getState().sourceCode;
+let lastObservedProjectFileSignature = getProjectTreePathSignature(
+  (Array.isArray(store.getState().files) ? store.getState().files : [])
+    .map((file) => ({ path: String(file?.name || ""), updatedAt: 0 }))
+);
+let lastObservedProjectActivePath = String(store.getState().fileName || "");
+const miniCCompilerState = {
+  lastSourceName: "",
+  lastGeneratedAsmName: "",
+  lastGeneratedAsm: "",
+  lastCompilerLog: "",
+  lastCompiledAt: 0
+};
+let projectLibraryState = normalizeProjectLibraryData(bootstrapProjectLibrary);
+let projectState = normalizeProjectData(bootstrapProject) || createDefaultProjectData({ settings: preferences });
+let projectPersistTimer = null;
+let projectPersistWantsEditorSync = true;
+let lastProjectTreePathSignature = "";
+let lastProjectTreeActivePath = "";
+let lastProjectTreeLibrarySignature = "";
+let lastProjectTreeGlobalLibrarySignature = "";
+const projectTreeExpandedNodes = new Set();
+const projectTreeKnownNodes = new Set();
+let projectTreeSelectedNode = null;
+let projectTreeDragPayload = null;
+
+function projectIsOpen() {
+  return projectState?.isOpen === true;
+}
+
+function updateProjectStoreState() {
+  store.setState({ project: buildProjectStoreState(projectState) });
+}
+
+function collectProjectFilesFromEditor() {
+  const previousFiles = normalizeProjectFiles(projectState?.files);
+  const previousById = new Map(previousFiles.map((entry) => [String(entry.id), entry]));
+  const previousByPath = new Map(previousFiles.map((entry) => [String(entry.path), entry]));
+  const now = Date.now();
+  return normalizeProjectFiles(
+    editor.getFiles().map((file) => {
+      const normalizedPath = normalizeProjectPath(file.name, "untitled.s");
+      const previous = previousById.get(String(file.id)) || previousByPath.get(normalizedPath);
+      const source = String(file.source ?? "");
+      const savedSource = String(file.savedSource ?? source);
+      const changed = !previous
+        || String(previous.source ?? "") !== source
+        || String(previous.savedSource ?? source) !== savedSource;
+      return {
+        id: file.id,
+        path: normalizedPath,
+        source,
+        savedSource,
+        updatedAt: changed ? now : Number(previous?.updatedAt || now)
+      };
+    })
+  );
+}
+
+function getProjectTreePathSignature(files) {
+  return (Array.isArray(files) ? files : [])
+    .map((entry) => `${String(entry?.path || "")}|${Number(entry?.updatedAt || 0)}`)
+    .join("\u0001");
+}
+
+function getProjectLibrarySignature(library) {
+  const projects = Array.isArray(library?.projects) ? library.projects : [];
+  return projects.map((project) => {
+    const rootPath = String(project?.rootPath || "");
+    const updatedAt = Number(project?.updatedAt || 0);
+    const fileSignature = getProjectTreePathSignature(project?.files);
+    const folderSignature = (Array.isArray(project?.folderPaths) ? project.folderPaths : [])
+      .map((entry) => normalizeProjectFolderPath(entry, "folder"))
+      .join("\u0001");
+    return `${rootPath}|${updatedAt}|${folderSignature}|${fileSignature}`;
+  }).join("\u0002");
+}
+
+function getProjectTreeTargets() {
+  const targets = [];
+  if (refs.project?.mainTree instanceof HTMLElement) {
+    targets.push({
+      tree: refs.project.mainTree,
+      rootLabel: refs.project.mainRootLabel
+    });
+  }
+  if (refs.project?.toolTree instanceof HTMLElement) {
+    targets.push({
+      tree: refs.project.toolTree,
+      rootLabel: refs.project.toolRootLabel
+    });
+  }
+  return targets;
+}
+
+function formatProjectTimestamp(value) {
+  const timestamp = Number(value);
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return "";
+  try {
+    return new Date(timestamp).toLocaleString();
+  } catch {
+    return "";
+  }
+}
+
+function findProjectInLibrary(rootPath) {
+  const rootKey = normalizeProjectRootKey(rootPath);
+  if (!rootKey) return null;
+  const projects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+  return projects.find((entry) => normalizeProjectRootKey(entry?.rootPath) === rootKey) || null;
+}
+
+function upsertProjectInLibrary(project, options = {}) {
+  const normalizedProject = normalizeProjectData(project);
+  if (!normalizedProject) return null;
+  const makeActive = options.makeActive !== false;
+  const nextProjects = Array.isArray(projectLibraryState?.projects)
+    ? projectLibraryState.projects.slice()
+    : [];
+  const rootKey = normalizeProjectRootKey(normalizedProject.rootPath);
+  const existingIndex = nextProjects.findIndex((entry) => normalizeProjectRootKey(entry?.rootPath) === rootKey);
+  if (existingIndex >= 0) nextProjects[existingIndex] = normalizedProject;
+  else nextProjects.push(normalizedProject);
+  projectLibraryState = normalizeProjectLibraryData({
+    version: projectLibraryState?.version || PROJECT_LIBRARY_SCHEMA_VERSION,
+    activeRootPath: makeActive
+      ? normalizedProject.rootPath
+      : (projectLibraryState?.activeRootPath || normalizedProject.rootPath),
+    projects: nextProjects
+  });
+  saveProjectLibraryData(projectLibraryState);
+  return normalizedProject;
+}
+
+function replaceProjectInLibrary(previousRootPath, nextProject, options = {}) {
+  const normalizedProject = normalizeProjectData(nextProject);
+  if (!normalizedProject) return null;
+  const previousRootKey = normalizeProjectRootKey(previousRootPath);
+  const nextRootKey = normalizeProjectRootKey(normalizedProject.rootPath);
+  const sourceProjects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+  const projects = sourceProjects.filter((entry) => {
+    const rootKey = normalizeProjectRootKey(entry?.rootPath);
+    if (!rootKey) return false;
+    if (previousRootKey && rootKey === previousRootKey) return false;
+    if (nextRootKey && rootKey === nextRootKey) return false;
+    return true;
+  });
+  projects.push(normalizedProject);
+  const previousActiveKey = normalizeProjectRootKey(projectLibraryState?.activeRootPath || "");
+  const makeActive = options.makeActive === true || (previousRootKey && previousActiveKey === previousRootKey);
+  projectLibraryState = normalizeProjectLibraryData({
+    version: projectLibraryState?.version || PROJECT_LIBRARY_SCHEMA_VERSION,
+    activeRootPath: makeActive ? normalizedProject.rootPath : (projectLibraryState?.activeRootPath || normalizedProject.rootPath),
+    projects
+  });
+  saveProjectLibraryData(projectLibraryState);
+  return normalizedProject;
+}
+
+function removeProjectFromLibrary(rootPath) {
+  const rootKey = normalizeProjectRootKey(rootPath);
+  if (!rootKey) return false;
+  const sourceProjects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+  const projects = sourceProjects.filter((entry) => normalizeProjectRootKey(entry?.rootPath) !== rootKey);
+  if (projects.length === sourceProjects.length) return false;
+  const activeRootKey = normalizeProjectRootKey(projectLibraryState?.activeRootPath || "");
+  const nextActiveRoot = (
+    projects.length
+      ? (activeRootKey === rootKey ? projects[0].rootPath : (projectLibraryState?.activeRootPath || projects[0].rootPath))
+      : ""
+  );
+  projectLibraryState = normalizeProjectLibraryData({
+    version: projectLibraryState?.version || PROJECT_LIBRARY_SCHEMA_VERSION,
+    activeRootPath: nextActiveRoot,
+    projects
+  });
+  saveProjectLibraryData(projectLibraryState);
+  return true;
+}
+
+function persistProjectStorageFromLibrary(preferredRootPath = "") {
+  const projects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+  if (!projects.length) {
+    try {
+      window.localStorage.removeItem(PROJECT_STORAGE_KEY);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  const preferredKey = normalizeProjectRootKey(preferredRootPath);
+  const activeKey = normalizeProjectRootKey(projectLibraryState?.activeRootPath || "");
+  const preferredProject = projects.find((entry) => normalizeProjectRootKey(entry?.rootPath) === preferredKey)
+    || projects.find((entry) => normalizeProjectRootKey(entry?.rootPath) === activeKey)
+    || projects[0];
+  return saveProjectData(preferredProject);
+}
+
+function activateProjectInLibrary(rootPath) {
+  const rootKey = normalizeProjectRootKey(rootPath);
+  const projects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+  if (!rootKey || !projects.length) return;
+  const project = projects.find((entry) => normalizeProjectRootKey(entry?.rootPath) === rootKey);
+  if (!project) return;
+  projectLibraryState = normalizeProjectLibraryData({
+    ...projectLibraryState,
+    activeRootPath: project.rootPath,
+    projects
+  });
+  saveProjectLibraryData(projectLibraryState);
+}
+
+function createProjectTreeBranchNode() {
+  return { folders: new Map(), files: [] };
+}
+
+function ensureProjectTreeBranchFolder(node, folderName) {
+  if (!node.folders.has(folderName)) {
+    node.folders.set(folderName, createProjectTreeBranchNode());
+  }
+  return node.folders.get(folderName);
+}
+
+function buildProjectTreeModel(project) {
+  const root = createProjectTreeBranchNode();
+  const files = normalizeProjectFiles(project?.files);
+  const folderPaths = normalizeProjectFolderPaths(project?.folderPaths, files);
+
+  folderPaths.forEach((folderPath) => {
+    const parts = splitProjectPathSegments(folderPath);
+    if (!parts.length) return;
+    let node = root;
+    parts.forEach((segment) => {
+      node = ensureProjectTreeBranchFolder(node, segment);
+    });
+  });
+
+  files.forEach((entry) => {
+    const path = normalizeProjectPath(entry?.path, "untitled.s");
+    const parts = splitProjectPathSegments(path);
+    if (!parts.length) return;
+    const fileUpdatedAt = Number(entry?.updatedAt || 0) || Date.now();
+    let node = root;
+    for (let index = 0; index < parts.length; index += 1) {
+      const segment = parts[index];
+      const isFile = index === parts.length - 1;
+      if (isFile) {
+        node.files.push({ name: segment, path, updatedAt: fileUpdatedAt });
+      } else {
+        node = ensureProjectTreeBranchFolder(node, segment);
+      }
+    }
+  });
+
+  return root;
+}
+
+function getProjectTreeGlobalLibraryEntries() {
+  const entries = Array.isArray(miniCGlobalLibraryEntries) && miniCGlobalLibraryEntries.length
+    ? miniCGlobalLibraryEntries
+    : MINI_C_GLOBAL_LIBRARY_FALLBACK_ENTRIES;
+  const out = [];
+  const seen = new Set();
+  entries.forEach((entry) => {
+    const normalizedPath = normalizeMiniCLibraryIdentifier(entry?.path || "");
+    if (!normalizedPath) return;
+    if (!MINI_C_LIBRARY_EXTENSION_PATTERN.test(normalizedPath)) return;
+    if (seen.has(normalizedPath)) return;
+    seen.add(normalizedPath);
+    out.push({
+      path: normalizedPath,
+      name: normalizedPath.split("/").pop() || normalizedPath
+    });
+  });
+  out.sort((a, b) => String(a.path || "").localeCompare(String(b.path || ""), undefined, { sensitivity: "base" }));
+  return out;
+}
+
+function buildGlobalLibraryTreeModel() {
+  const root = createProjectTreeBranchNode();
+  getProjectTreeGlobalLibraryEntries().forEach((entry) => {
+    const path = normalizeMiniCLibraryIdentifier(entry.path || "");
+    const parts = splitProjectPathSegments(path);
+    if (!parts.length) return;
+    let node = root;
+    for (let index = 0; index < parts.length; index += 1) {
+      const segment = parts[index];
+      const isFile = index === parts.length - 1;
+      if (isFile) {
+        node.files.push({
+          name: segment,
+          path
+        });
+      } else {
+        node = ensureProjectTreeBranchFolder(node, segment);
+      }
+    }
+  });
+  return root;
+}
+
+function getProjectTreeGlobalLibrarySignature() {
+  return getProjectTreeGlobalLibraryEntries()
+    .map((entry) => entry.path)
+    .join("\u0001");
+}
+
+function getProjectTreeNodeKey(type, projectRootPath = "", nodePath = "") {
+  const nodeType = String(type || "").trim().toLowerCase();
+  if (nodeType === "root") return "root:/";
+  if (nodeType === "libs-root") return "libs-root:libs";
+  if (nodeType === "project") {
+    return `project:${normalizeProjectRootKey(projectRootPath)}`;
+  }
+  if (nodeType === "folder") {
+    return `folder:${normalizeProjectRootKey(projectRootPath)}:${normalizeProjectFolderPath(nodePath, "folder").toLowerCase()}`;
+  }
+  if (nodeType === "file") {
+    return `file:${normalizeProjectRootKey(projectRootPath)}:${normalizeProjectPath(nodePath, "untitled.s").toLowerCase()}`;
+  }
+  if (nodeType === "libs-folder") {
+    return `libs-folder:${normalizeMiniCLibraryIdentifier(nodePath)}`;
+  }
+  if (nodeType === "libs-file") {
+    return `libs-file:${normalizeMiniCLibraryIdentifier(nodePath)}`;
+  }
+  return `${nodeType}:${normalizeProjectRootKey(projectRootPath)}:${String(nodePath || "").trim().toLowerCase()}`;
+}
+
+function isProjectTreeNodeExpanded(nodeKey, defaultExpanded = true) {
+  const key = String(nodeKey || "").trim();
+  if (!key) return false;
+  if (projectTreeExpandedNodes.has(key)) return true;
+  if (!projectTreeKnownNodes.has(key)) {
+    projectTreeKnownNodes.add(key);
+    if (defaultExpanded) {
+      projectTreeExpandedNodes.add(key);
+      return true;
+    }
+  }
+  return false;
+}
+
+function toggleProjectTreeNodeExpanded(nodeKey) {
+  const key = String(nodeKey || "").trim();
+  if (!key) return;
+  projectTreeKnownNodes.add(key);
+  if (projectTreeExpandedNodes.has(key)) projectTreeExpandedNodes.delete(key);
+  else projectTreeExpandedNodes.add(key);
+}
+
+function setProjectTreeSelection(selection) {
+  if (!selection || typeof selection !== "object") {
+    projectTreeSelectedNode = null;
+  } else {
+    const type = String(selection.type || "").trim();
+    const rootPath = String(selection.rootPath || "").trim();
+    const path = String(selection.path || "").trim();
+    projectTreeSelectedNode = {
+      key: getProjectTreeNodeKey(type, rootPath, path),
+      type,
+      rootPath,
+      path,
+      readOnly: selection.readOnly === true
+    };
+  }
+  updateProjectTreeActionButtons();
+}
+
+function updateProjectTreeActionButtons() {
+  const buttons = [
+    refs.project?.mainNewFolder,
+    refs.project?.mainRename,
+    refs.project?.mainDelete,
+    refs.project?.toolNewFolder,
+    refs.project?.toolRename,
+    refs.project?.toolDelete
+  ].filter((button) => button instanceof HTMLButtonElement);
+  if (!buttons.length) return;
+
+  const selection = projectTreeSelectedNode;
+  const hasSelection = Boolean(selection?.type);
+  const selectionType = String(selection?.type || "");
+  const isReadOnly = selection?.readOnly === true || selectionType.startsWith("libs-");
+  const canCreateFolder = (
+    (!hasSelection && projectIsOpen())
+    || (selectionType === "root" && projectIsOpen())
+    || (!isReadOnly && (selectionType === "project" || selectionType === "folder" || selectionType === "file"))
+  );
+  const canRename = !isReadOnly && (selectionType === "project" || selectionType === "folder" || selectionType === "file");
+  const canDelete = !isReadOnly && (selectionType === "project" || selectionType === "folder" || selectionType === "file");
+
+  buttons.forEach((button) => {
+    const action = String(button.dataset.projectAction || "");
+    if (action === "new-folder") {
+      button.disabled = !canCreateFolder;
+    } else if (action === "rename") {
+      button.disabled = !canRename;
+    } else if (action === "delete") {
+      button.disabled = !canDelete;
+    }
+  });
+}
+
+function clearProjectTreeDropTargets() {
+  const targets = getProjectTreeTargets();
+  targets.forEach((entry) => {
+    if (!(entry.tree instanceof HTMLElement)) return;
+    entry.tree.querySelectorAll(".project-tree-project.drop-target, .project-tree-folder.drop-target")
+      .forEach((node) => node.classList.remove("drop-target"));
+  });
+}
+
+function renderProjectTreeRow(options = {}) {
+  const type = String(options.type || "file").trim();
+  const nodeKey = String(options.nodeKey || "").trim();
+  const label = String(options.label || "");
+  const meta = String(options.meta || "");
+  const rootPath = String(options.rootPath || "");
+  const path = String(options.path || "");
+  const hasChildren = options.hasChildren === true;
+  const expanded = options.expanded === true;
+  const active = options.active === true;
+  const selected = options.selected === true;
+  const readOnly = options.readOnly === true;
+  const draggable = options.draggable === true;
+  const title = String(options.title || label || path || rootPath || "");
+  const toggle = hasChildren
+    ? `<button class="project-tree-toggle" type="button" data-tree-toggle="1" data-tree-node-key="${escapeHtml(nodeKey)}" aria-label="${expanded ? escapeHtml(translateText("Collapse")) : escapeHtml(translateText("Expand"))}">${expanded ? "v" : ">"}</button>`
+    : `<span class="project-tree-toggle spacer" aria-hidden="true">.</span>`;
+  const classes = [
+    `project-tree-${type}`,
+    active ? "active" : "",
+    selected ? "selected" : "",
+    readOnly ? "readonly" : ""
+  ].filter(Boolean).join(" ");
+  const attrs = [
+    "type=\"button\"",
+    `class="${classes}"`,
+    `data-tree-node-key="${escapeHtml(nodeKey)}"`,
+    `data-tree-node-type="${escapeHtml(type)}"`,
+    rootPath ? `data-project-root="${escapeHtml(rootPath)}"` : "",
+    path ? `data-project-path="${escapeHtml(path)}"` : "",
+    readOnly ? "data-tree-readonly=\"true\"" : "",
+    draggable ? "draggable=\"true\"" : "",
+    `title="${escapeHtml(title)}"`
+  ].filter(Boolean).join(" ");
+  return `<div class="project-tree-row">${toggle}<button ${attrs}><span class="project-tree-node-label">${escapeHtml(label)}</span>${meta ? `<span class="project-tree-meta">${escapeHtml(meta)}</span>` : ""}</button></div>`;
+}
+
+function renderProjectTreeBranch(node, context, parentPath = "") {
+  const folders = [...node.folders.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const files = [...node.files].sort((a, b) => a.name.localeCompare(b.name));
+  let html = "<ul class=\"project-tree-list\">";
+
+  folders.forEach(([folderName, childNode]) => {
+    const folderPath = parentPath ? `${parentPath}/${folderName}` : folderName;
+    const nodeKey = getProjectTreeNodeKey("folder", context.rootPath, folderPath);
+    const hasChildren = childNode.folders.size > 0 || childNode.files.length > 0;
+    const expanded = isProjectTreeNodeExpanded(nodeKey, true);
+    const selected = projectTreeSelectedNode?.key === nodeKey;
+    html += "<li class=\"project-tree-item\">";
+    html += renderProjectTreeRow({
+      type: "folder",
+      nodeKey,
+      label: folderName,
+      rootPath: context.rootPath,
+      path: folderPath,
+      hasChildren,
+      expanded,
+      selected,
+      title: folderPath
+    });
+    if (hasChildren && expanded) {
+      html += renderProjectTreeBranch(childNode, context, folderPath);
+    }
+    html += "</li>";
+  });
+
+  files.forEach((file) => {
+    const nodeKey = getProjectTreeNodeKey("file", context.rootPath, file.path);
+    const isActive = context.projectKey === context.activeProjectKey && context.activePath === file.path;
+    const selected = projectTreeSelectedNode?.key === nodeKey;
+    const updatedLabel = formatProjectTimestamp(file.updatedAt);
+    const title = updatedLabel
+      ? `${file.path} - ${translateText("Last write: {date}", { date: updatedLabel })}`
+      : file.path;
+    html += "<li class=\"project-tree-item\">";
+    html += renderProjectTreeRow({
+      type: "file",
+      nodeKey,
+      label: file.name,
+      meta: updatedLabel,
+      rootPath: context.rootPath,
+      path: file.path,
+      active: isActive,
+      selected,
+      draggable: true,
+      title
+    });
+    html += "</li>";
+  });
+
+  html += "</ul>";
+  return html;
+}
+
+function renderGlobalLibraryTreeBranch(node, parentPath = "") {
+  const folders = [...node.folders.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const files = [...node.files].sort((a, b) => a.name.localeCompare(b.name));
+  let html = "<ul class=\"project-tree-list\">";
+
+  folders.forEach(([folderName, childNode]) => {
+    const folderPath = parentPath ? `${parentPath}/${folderName}` : folderName;
+    const nodeKey = getProjectTreeNodeKey("libs-folder", "", folderPath);
+    const hasChildren = childNode.folders.size > 0 || childNode.files.length > 0;
+    const expanded = isProjectTreeNodeExpanded(nodeKey, true);
+    const selected = projectTreeSelectedNode?.key === nodeKey;
+    html += "<li class=\"project-tree-item\">";
+    html += renderProjectTreeRow({
+      type: "libs-folder",
+      nodeKey,
+      label: folderName,
+      path: folderPath,
+      hasChildren,
+      expanded,
+      selected,
+      readOnly: true,
+      title: `libs/${folderPath}`
+    });
+    if (hasChildren && expanded) {
+      html += renderGlobalLibraryTreeBranch(childNode, folderPath);
+    }
+    html += "</li>";
+  });
+
+  files.forEach((file) => {
+    const nodeKey = getProjectTreeNodeKey("libs-file", "", file.path);
+    const selected = projectTreeSelectedNode?.key === nodeKey;
+    html += "<li class=\"project-tree-item\">";
+    html += renderProjectTreeRow({
+      type: "libs-file",
+      nodeKey,
+      label: file.name,
+      path: file.path,
+      selected,
+      readOnly: true,
+      title: `libs/${file.path}`
+    });
+    html += "</li>";
+  });
+
+  html += "</ul>";
+  return html;
+}
+
+function renderProjectTree(force = false) {
+  const targets = getProjectTreeTargets();
+  if (!targets.length) return;
+
+  const activeProjectKey = projectIsOpen()
+    ? normalizeProjectRootKey(projectState.rootPath)
+    : normalizeProjectRootKey(projectLibraryState?.activeRootPath || "");
+  const activePath = projectIsOpen() ? String(editor.getActiveFile()?.name || "") : "";
+  const librarySignature = getProjectLibrarySignature(projectLibraryState);
+  const globalLibrarySignature = getProjectTreeGlobalLibrarySignature();
+  if (
+    !force
+    && librarySignature === lastProjectTreeLibrarySignature
+    && globalLibrarySignature === lastProjectTreeGlobalLibrarySignature
+    && activePath === lastProjectTreeActivePath
+    && activeProjectKey === lastProjectTreePathSignature
+  ) {
+    return;
+  }
+
+  const projects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+  const projectRows = projects
+    .slice()
+    .sort((a, b) => String(a.rootPath || "").localeCompare(String(b.rootPath || ""), undefined, { sensitivity: "base" }))
+    .map((project) => {
+      const rootPath = String(project.rootPath || "project.p");
+      const projectKey = normalizeProjectRootKey(rootPath);
+      const nodeKey = getProjectTreeNodeKey("project", rootPath);
+      const isActiveProject = projectKey === activeProjectKey;
+      const selected = projectTreeSelectedNode?.key === nodeKey;
+      const updatedLabel = formatProjectTimestamp(project.updatedAt);
+      const model = buildProjectTreeModel(project);
+      const hasChildren = model.folders.size > 0 || model.files.length > 0;
+      const expanded = isProjectTreeNodeExpanded(nodeKey, true);
+      let branchHtml = "";
+      if (hasChildren && expanded) {
+        branchHtml = renderProjectTreeBranch(model, {
+          rootPath,
+          projectKey,
+          activeProjectKey,
+          activePath
+        });
+      } else if (!hasChildren) {
+        branchHtml = `<div class="project-tree-empty">${escapeHtml(translateText("No files in project."))}</div>`;
+      }
+      return `<li class="project-tree-item">${renderProjectTreeRow({
+        type: "project",
+        nodeKey,
+        label: rootPath,
+        meta: updatedLabel,
+        rootPath,
+        active: isActiveProject,
+        selected,
+        hasChildren,
+        expanded,
+        title: rootPath
+      })}${branchHtml}</li>`;
+    })
+    .join("");
+
+  const libsNodeKey = getProjectTreeNodeKey("libs-root", "", "libs");
+  const libsModel = buildGlobalLibraryTreeModel();
+  const libsHasChildren = libsModel.folders.size > 0 || libsModel.files.length > 0;
+  const libsExpanded = isProjectTreeNodeExpanded(libsNodeKey, true);
+  const libsSelected = projectTreeSelectedNode?.key === libsNodeKey;
+  const libsBranchHtml = libsHasChildren && libsExpanded
+    ? renderGlobalLibraryTreeBranch(libsModel)
+    : (!libsHasChildren
+      ? `<div class="project-tree-empty">${escapeHtml(translateText("No global libraries."))}</div>`
+      : "");
+
+  const rootNodeKey = getProjectTreeNodeKey("root", "", "/");
+  const rootSelected = projectTreeSelectedNode?.key === rootNodeKey;
+  const treeHtml = `<ul class="project-tree-list root"><li class="project-tree-item">${renderProjectTreeRow({
+    type: "root",
+    nodeKey: rootNodeKey,
+    label: "/",
+    selected: rootSelected,
+    title: "/"
+  })}<ul class="project-tree-list">${projectRows}<li class="project-tree-item">${renderProjectTreeRow({
+    type: "libs-root",
+    nodeKey: libsNodeKey,
+    label: "libs/",
+    hasChildren: libsHasChildren,
+    expanded: libsExpanded,
+    selected: libsSelected,
+    readOnly: true,
+    path: "libs",
+    title: "Global libraries (read-only)"
+  })}${libsBranchHtml}</li></ul></li></ul>`;
+
+  targets.forEach((target) => {
+    if (!(target.tree instanceof HTMLElement)) return;
+    if (target.rootLabel instanceof HTMLElement) target.rootLabel.textContent = "/";
+    target.tree.innerHTML = treeHtml;
+  });
+  updateProjectTreeActionButtons();
+  lastProjectTreeGlobalLibrarySignature = globalLibrarySignature;
+  lastProjectTreeLibrarySignature = librarySignature;
+  lastProjectTreePathSignature = activeProjectKey;
+  lastProjectTreeActivePath = activePath;
+}
+
+function persistProjectNow(options = {}) {
+  if (suppressPersistenceForResetReload) return false;
+  const syncFromEditor = options.syncFromEditor !== false;
+  if (!projectState || typeof projectState !== "object") return false;
+
+  if (projectIsOpen() && syncFromEditor) {
+    const files = collectProjectFilesFromEditor();
+    const active = editor.getActiveFile();
+    projectState.files = files;
+    projectState.activeFileId = String(active?.id || files[0]?.id || "");
+    projectState.settings = {
+      ...(store.getState().preferences || preferences)
+    };
+    if (typeof windowManager.exportSavedLayoutState === "function") {
+      const layoutSnapshot = normalizeWindowSessionData(windowManager.exportSavedLayoutState());
+      if (layoutSnapshot && String(layoutSnapshot.layoutMode || "").toLowerCase() === "desktop") {
+        projectState.layout = layoutSnapshot;
+      }
+    }
+  }
+
+  const closedProjectExistsInLibrary = Boolean(findProjectInLibrary(projectState.rootPath));
+  if (!projectIsOpen() && !closedProjectExistsInLibrary) {
+    updateProjectStoreState();
+    renderProjectTree();
+    const savedActive = persistProjectStorageFromLibrary(projectLibraryState?.activeRootPath || "");
+    const savedLibrary = saveProjectLibraryData(projectLibraryState);
+    return savedActive && savedLibrary;
+  }
+
+  projectState.updatedAt = Date.now();
+  projectState = normalizeProjectData(projectState) || projectState;
+  upsertProjectInLibrary(projectState, { makeActive: projectIsOpen() });
+  if (projectIsOpen()) activateProjectInLibrary(projectState.rootPath);
+  updateProjectStoreState();
+  renderProjectTree();
+  const savedActive = saveProjectData(projectState);
+  const savedLibrary = saveProjectLibraryData(projectLibraryState);
+  return savedActive && savedLibrary;
+}
+
+function scheduleProjectPersist(options = {}) {
+  if (suppressPersistenceForResetReload) return;
+  const syncFromEditor = options.syncFromEditor !== false;
+  projectPersistWantsEditorSync = projectPersistWantsEditorSync || syncFromEditor;
+  if (projectPersistTimer !== null) window.clearTimeout(projectPersistTimer);
+  projectPersistTimer = window.setTimeout(() => {
+    projectPersistTimer = null;
+    const shouldSync = projectPersistWantsEditorSync;
+    projectPersistWantsEditorSync = false;
+    persistProjectNow({ syncFromEditor: shouldSync });
+  }, 240);
+}
+
+function syncProjectFromEditor(forceRender = false) {
+  if (!projectIsOpen()) {
+    renderProjectTree(forceRender);
+    return;
+  }
+  const files = collectProjectFilesFromEditor();
+  const signature = getProjectTreePathSignature(files);
+  const previousSignature = getProjectTreePathSignature(projectState?.files);
+  const active = editor.getActiveFile();
+  const activePath = String(active?.name || "");
+  const activeRootKey = normalizeProjectRootKey(projectState?.rootPath || "");
+  if (
+    !forceRender
+    && signature === previousSignature
+    && activePath === lastProjectTreeActivePath
+    && activeRootKey === lastProjectTreePathSignature
+  ) {
+    return;
+  }
+  projectState.files = files;
+  projectState.activeFileId = String(active?.id || files[0]?.id || "");
+  projectState.updatedAt = Date.now();
+  upsertProjectInLibrary(projectState, { makeActive: true });
+  renderProjectTree(true);
+}
+
+function extractVisibleToolIds(windowState) {
+  if (!windowState || typeof windowState !== "object") return [];
+  const windowsPayload = Array.isArray(windowState.windows) ? windowState.windows : [];
+  return Array.from(new Set(
+    windowsPayload
+      .filter((entry) => entry && typeof entry === "object" && entry.hidden !== true)
+      .map((entry) => String(entry.toolId || "").trim())
+      .filter(Boolean)
+  ));
+}
+
+function buildProjectStateSnapshot() {
+  const files = collectProjectFilesFromEditor();
+  if (!files.length) return null;
+  const active = editor.getActiveFile();
+  return normalizeProjectStateSnapshot({
+    files,
+    activeFileId: String(active?.id || files[0].id),
+    preferences: {
+      ...(store.getState().preferences || preferences)
+    },
+    windowState: typeof windowManager.exportSessionWindowState === "function"
+      ? windowManager.exportSessionWindowState()
+      : null,
+    layoutState: typeof windowManager.exportSavedLayoutState === "function"
+      ? windowManager.exportSavedLayoutState()
+      : null,
+    mode: modeController.getMode?.() || "assembly"
+  });
+}
+
+function applyProjectStateSnapshot(snapshot) {
+  const normalized = normalizeProjectStateSnapshot(snapshot);
+  if (!normalized) return false;
+
+  if (normalized.preferences && typeof normalized.preferences === "object") {
+    applyPreferences({
+      ...(store.getState().preferences || preferences),
+      ...normalized.preferences
+    });
+  }
+
+  const files = mapProjectFilesToEditorFiles(normalized.files);
+  if (!files.length) return false;
+  const activeFile = editor.setFiles(files, normalized.activeFileId || files[0].id);
+  if (normalized.mode) modeController.setMode(normalized.mode);
+  else modeController.syncForFileName?.(activeFile?.name || "");
+
+  const stateToolIds = extractVisibleToolIds(normalized.windowState);
+  const layoutToolIds = extractVisibleToolIds(normalized.layoutState);
+  [...new Set([...stateToolIds, ...layoutToolIds])].forEach((toolId) => toolManager.open(toolId));
+
+  if (normalized.layoutState && typeof windowManager.applySavedLayoutState === "function") {
+    windowManager.applySavedLayoutState(normalized.layoutState, {
+      skipLayoutRefresh: false,
+      skipDesktopPersist: true
+    });
+  }
+  if (normalized.windowState && typeof windowManager.applySessionWindowState === "function") {
+    windowManager.applySessionWindowState(normalized.windowState, {
+      skipLayoutRefresh: false,
+      skipDesktopPersist: true
+    });
+  }
+
+  if (projectIsOpen()) {
+    projectState.files = normalizeProjectFiles(normalized.files);
+    projectState.activeFileId = String(activeFile?.id || normalized.activeFileId || projectState.files[0]?.id || "");
+  }
+
+  syncProjectFromEditor(true);
+  scheduleWorkspacePersist();
+  scheduleProjectPersist({ syncFromEditor: true });
+  return true;
+}
+
+function ensureProjectOpenForAction(actionLabel = "") {
+  if (projectIsOpen()) return true;
+  if (actionLabel) {
+    postMarsMessage("[warn] No project open. Use New > Project before {action}.", {
+      action: translateText(actionLabel)
+    });
+  } else {
+    postMarsMessage("[warn] No project open.");
+  }
+  return false;
+}
+
+function resolveUniqueProjectName(baseName = "project") {
+  const seed = normalizeProjectName(baseName || "project");
+  const ignoredRootKey = "";
+  const existingRoots = new Set(
+    (Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [])
+      .map((entry) => normalizeProjectRootKey(entry?.rootPath))
+      .filter((rootKey) => rootKey && rootKey !== ignoredRootKey)
+  );
+  let candidate = seed;
+  let suffix = 1;
+  while (existingRoots.has(normalizeProjectRootKey(normalizeProjectRootPath(candidate, candidate)))) {
+    candidate = `${seed}_${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
+function resolveUniqueProjectNameExcept(baseName = "project", ignoredRootPath = "") {
+  const seed = normalizeProjectName(baseName || "project");
+  const ignoredRootKey = normalizeProjectRootKey(ignoredRootPath);
+  const existingRoots = new Set(
+    (Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [])
+      .map((entry) => normalizeProjectRootKey(entry?.rootPath))
+      .filter((rootKey) => rootKey && rootKey !== ignoredRootKey)
+  );
+  let candidate = seed;
+  let suffix = 1;
+  while (existingRoots.has(normalizeProjectRootKey(normalizeProjectRootPath(candidate, candidate)))) {
+    candidate = `${seed}_${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
+function createEmptyOpenProject(name = "project") {
+  const uniqueName = resolveUniqueProjectName(name);
+  const exportedLayout = typeof windowManager.exportSavedLayoutState === "function"
+    ? normalizeWindowSessionData(windowManager.exportSavedLayoutState())
+    : null;
+  const desktopLayout = (
+    exportedLayout && String(exportedLayout.layoutMode || "").toLowerCase() === "desktop"
+  ) ? exportedLayout : null;
+  const next = createDefaultProjectData({
+    name: uniqueName,
+    files: [],
+    activeFileId: "",
+    settings: {
+      ...(store.getState().preferences || preferences)
+    },
+    layout: desktopLayout
+  });
+  next.files = [];
+  next.activeFileId = "";
+  return normalizeProjectData(next) || next;
+}
+
+function ensureProjectForIncomingFiles(nameHint = "project") {
+  if (projectIsOpen()) return;
+  projectState = createEmptyOpenProject(nameHint);
+  projectState.isOpen = true;
+  projectState.updatedAt = Date.now();
+  upsertProjectInLibrary(projectState, { makeActive: true });
+  activateProjectInLibrary(projectState.rootPath);
+  updateProjectStoreState();
+  modeController.setMode("project");
+  windowManager.focus("window-main");
+  renderProjectTree(true);
+  scheduleProjectPersist({ syncFromEditor: false });
+}
+
+function openProjectWorkspace(nextProject, options = {}) {
+  const normalized = normalizeProjectData(nextProject);
+  if (!normalized) return false;
+  normalized.isOpen = true;
+  projectState = normalized;
+  activateProjectInLibrary(projectState.rootPath);
+  upsertProjectInLibrary(projectState, { makeActive: true });
+  updateProjectStoreState();
+
+  if (options.applySettings === true && projectState.settings && typeof projectState.settings === "object") {
+    applyPreferences({
+      ...(store.getState().preferences || preferences),
+      ...projectState.settings
+    });
+  }
+
+  const editorFiles = mapProjectFilesToEditorFiles(projectState.files, editor.getFiles());
+  const loadedFile = editorFiles.length
+    ? editor.setFiles(editorFiles, projectState.activeFileId || editorFiles[0].id)
+    : editor.setFiles([{
+      id: "project-file-c0",
+      name: "src/main.c",
+      source: MINI_C_DEFAULT_TEMPLATE,
+      savedSource: MINI_C_DEFAULT_TEMPLATE
+    }], "project-file-c0");
+
+  modeController.syncForFileName?.(loadedFile?.name || "", { activate: true });
+
+  if (options.applyLayout === true && projectState.layout && typeof windowManager.applySavedLayoutState === "function") {
+    const toolIdsToRestore = extractVisibleToolIds(projectState.layout);
+    toolIdsToRestore.forEach((toolId) => toolManager.open(toolId));
+    windowManager.applySavedLayoutState(projectState.layout, {
+      skipLayoutRefresh: false,
+      skipDesktopPersist: true
+    });
+  }
+
+  syncProjectFromEditor(true);
+  scheduleWorkspacePersist();
+  scheduleProjectPersist({ syncFromEditor: true });
+  return true;
+}
+
+async function closeProjectWorkspace() {
+  if (!projectIsOpen()) return false;
+  const dirtyFiles = editor.getDirtyFiles();
+  const ok = await confirmCloseDirtyFiles(dirtyFiles, translateText("Close project?"));
+  if (!ok) return false;
+
+  projectState.isOpen = false;
+  projectState.settings = {
+    ...(store.getState().preferences || preferences)
+  };
+  projectState.updatedAt = Date.now();
+  upsertProjectInLibrary(projectState, { makeActive: false });
+  updateProjectStoreState();
+  editor.setFiles([{
+    id: "project-closed-scratch",
+    name: "untitled.s",
+    source: "",
+    savedSource: ""
+  }], "project-closed-scratch");
+  modeController.setMode("project");
+  renderProjectTree(true);
+  scheduleWorkspacePersist();
+  scheduleProjectPersist({ syncFromEditor: false });
+  return true;
+}
+
+function resolveProjectFileEntry(project, filePath) {
+  const normalizedPath = normalizeProjectPath(filePath, "untitled.s");
+  const files = Array.isArray(project?.files) ? project.files : [];
+  for (let index = 0; index < files.length; index += 1) {
+    const entry = files[index];
+    const entryPath = normalizeProjectPath(entry?.path || entry?.name, `src/file_${index + 1}.s`);
+    if (entryPath !== normalizedPath) continue;
+    return {
+      path: entryPath,
+      file: entry
+    };
+  }
+  return null;
+}
+
+function classifyProjectFileContent(pathValue, sourceText) {
+  const path = normalizeProjectPath(pathValue, "untitled.s");
+  if (!isSupportedProjectFilePath(path)) {
+    return { ok: false, reason: "unsupported", path };
+  }
+  const text = String(sourceText ?? "");
+  if (text.includes("\u0000")) {
+    return { ok: false, reason: "binary", path };
+  }
+  const replacementMatches = text.match(/\uFFFD/g);
+  const replacementCount = replacementMatches ? replacementMatches.length : 0;
+  if (replacementCount > 0) {
+    const ratio = replacementCount / Math.max(1, text.length);
+    if (ratio > 0.005 || replacementCount > 12) {
+      return { ok: false, reason: "corrupted", path };
+    }
+  }
+  return { ok: true, reason: "", path };
+}
+
+async function showUnsupportedProjectFileDialog(pathValue, reason) {
+  const name = String(pathValue || "file");
+  let title = "Unsupported file";
+  let message = "This file cannot be opened in the editor.";
+  if (reason === "binary") {
+    title = "Binary file detected";
+    message = "The selected file appears to be binary and cannot be opened as text.";
+  } else if (reason === "corrupted") {
+    title = "Corrupted text detected";
+    message = "The selected file appears to be corrupted or encoded in an unsupported format.";
+  } else if (reason === "unsupported") {
+    title = "Unsupported file type";
+    message = "Only .asm, .s, .c, .c0, .h and .txt files can be opened.";
+  }
+  await runDialogConfirm({
+    title: translateText(title),
+    message: `${translateText(message)}\n${translateText("File")}: ${name}`,
+    confirmLabel: translateText("OK"),
+    cancelLabel: translateText("Close")
+  }, {
+    windowIdPrefix: "window-project-file-open-warning",
+    left: "220px",
+    top: "140px",
+    width: "520px",
+    height: "240px"
+  });
+}
+
+async function openProjectFileFromTree(projectRootPath, filePath) {
+  const rootPath = normalizeProjectRootPath(projectRootPath || "project.p");
+  const normalizedPath = normalizeProjectPath(filePath, "untitled.s");
+  const project = findProjectInLibrary(rootPath);
+  if (!project) {
+    postMarsMessage("[warn] Project '{name}' not found.", { name: rootPath });
+    return;
+  }
+  const entry = resolveProjectFileEntry(project, normalizedPath);
+  if (!entry || !entry.file) {
+    postMarsMessage("[warn] File '{name}' not found in project.", { name: normalizedPath });
+    return;
+  }
+  const sourceText = String(entry.file.source ?? "");
+  const classification = classifyProjectFileContent(normalizedPath, sourceText);
+  if (!classification.ok) {
+    await showUnsupportedProjectFileDialog(normalizedPath, classification.reason);
+    return;
+  }
+
+  const sameProject = projectIsOpen()
+    && normalizeProjectRootKey(projectState.rootPath) === normalizeProjectRootKey(project.rootPath);
+  if (!sameProject) {
+    const opened = openProjectWorkspace(project, {
+      applySettings: true,
+      applyLayout: true
+    });
+    if (!opened) {
+      postMarsMessage("[error] Failed to open project '{name}'.", { name: project.rootPath });
+      return;
+    }
+    postMarsMessage("Project loaded: {name}.", { name: project.rootPath });
+  }
+
+  let activated = editor.activateFileByName?.(normalizedPath);
+  if (!activated) {
+    activated = editor.openFile(normalizedPath, sourceText, true);
+  }
+  modeController.syncForFileName?.(activated?.name || normalizedPath, { activate: true });
+  windowManager.focus("window-main");
+  editor.focus();
+  renderProjectTree(true);
+}
+
+function isSameProjectRootPath(a, b) {
+  return normalizeProjectRootKey(a) === normalizeProjectRootKey(b);
+}
+
+function resolveProjectTreeNodeFromElement(element) {
+  if (!(element instanceof HTMLElement)) return null;
+  const type = String(element.dataset.treeNodeType || "").trim();
+  if (!type) return null;
+  const rootPath = String(element.dataset.projectRoot || "").trim();
+  const path = String(element.dataset.projectPath || "").trim();
+  return {
+    type,
+    rootPath,
+    path,
+    key: getProjectTreeNodeKey(type, rootPath, path),
+    readOnly: element.dataset.treeReadonly === "true" || type.startsWith("libs-")
+  };
+}
+
+function resolveProjectActionRootPath() {
+  const selected = projectTreeSelectedNode;
+  if (selected && !selected.readOnly && (selected.type === "project" || selected.type === "folder" || selected.type === "file")) {
+    return normalizeProjectRootPath(selected.rootPath || projectState?.rootPath || "project.p");
+  }
+  if (projectIsOpen()) return normalizeProjectRootPath(projectState.rootPath, projectState.name || "project");
+  const activeRoot = String(projectLibraryState?.activeRootPath || "").trim();
+  return activeRoot ? normalizeProjectRootPath(activeRoot, "project") : "";
+}
+
+function applyProjectMutation(projectRootPath, mutate, options = {}) {
+  const rootPath = normalizeProjectRootPath(projectRootPath || "project.p");
+  const sourceProject = findProjectInLibrary(rootPath);
+  if (!sourceProject) return null;
+  const working = normalizeProjectData(sourceProject);
+  if (!working) return null;
+  const changed = mutate(working);
+  if (!changed) return null;
+  working.updatedAt = Date.now();
+  const normalized = normalizeProjectData(working);
+  if (!normalized) return null;
+
+  const isOpenProject = projectIsOpen() && isSameProjectRootPath(projectState.rootPath, rootPath);
+  if (isOpenProject) {
+    projectState = normalized;
+    const editorFiles = mapProjectFilesToEditorFiles(projectState.files, editor.getFiles());
+    const preferredActivePath = String(options.preferredActivePath || editor.getActiveFile()?.name || "");
+    const preferredByPath = editorFiles.find((file) => file.name === preferredActivePath);
+    const preferredById = editorFiles.find((file) => String(file.id) === String(projectState.activeFileId || ""));
+    const nextActiveId = String(preferredByPath?.id || preferredById?.id || editorFiles[0]?.id || "");
+    const active = editor.setFiles(editorFiles, nextActiveId);
+    projectState.activeFileId = String(active?.id || editorFiles[0]?.id || "");
+    modeController.syncForFileName?.(active?.name || "", { activate: false });
+    persistProjectNow({ syncFromEditor: false });
+    return projectState;
+  }
+
+  upsertProjectInLibrary(normalized, {
+    makeActive: isSameProjectRootPath(projectLibraryState?.activeRootPath || "", rootPath)
+  });
+  if (!projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", rootPath)) {
+    projectState = normalized;
+    updateProjectStoreState();
+  }
+  if (isSameProjectRootPath(projectLibraryState?.activeRootPath || "", rootPath)) {
+    saveProjectData(normalized);
+  }
+  saveProjectLibraryData(projectLibraryState);
+  renderProjectTree(true);
+  return normalized;
+}
+
+function isPathInsideFolder(pathValue, folderPath) {
+  const normalizedPath = normalizeProjectPath(pathValue, "untitled.s");
+  const normalizedFolder = normalizeProjectFolderPath(folderPath, "folder");
+  return normalizedPath.startsWith(`${normalizedFolder}/`);
+}
+
+function resolveUniqueProjectFilePath(project, desiredPath, ignorePath = "") {
+  const normalizedDesired = normalizeProjectPath(desiredPath, "untitled.s");
+  const normalizedIgnore = ignorePath ? normalizeProjectPath(ignorePath, "untitled.s") : "";
+  const existing = new Set(
+    normalizeProjectFiles(project?.files)
+      .map((entry) => normalizeProjectPath(entry.path, "untitled.s"))
+      .filter((entry) => entry && entry !== normalizedIgnore)
+  );
+  if (!existing.has(normalizedDesired)) return normalizedDesired;
+
+  const dot = normalizedDesired.lastIndexOf(".");
+  const stem = dot > 0 ? normalizedDesired.slice(0, dot) : normalizedDesired;
+  const ext = dot > 0 ? normalizedDesired.slice(dot) : "";
+  let suffix = 1;
+  let candidate = normalizedDesired;
+  while (existing.has(candidate)) {
+    candidate = `${stem}_${suffix}${ext}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
+function normalizeProjectFileBasename(nameValue, fallbackFilePath = "untitled.s") {
+  const raw = String(nameValue || "").trim().replace(/\\/g, "/");
+  const rawBase = raw.split("/").filter(Boolean).pop() || "";
+  const fallbackPath = normalizeProjectPath(fallbackFilePath, "untitled.s");
+  const fallbackBase = projectPathBasename(fallbackPath) || "untitled.s";
+  const fallbackExt = getPathExtension(fallbackBase);
+  let candidate = rawBase || fallbackBase;
+  if (!getPathExtension(candidate) && fallbackExt) {
+    candidate = `${candidate}${fallbackExt}`;
+  }
+  return projectPathBasename(normalizeProjectPath(candidate, fallbackBase));
+}
+
+function buildProjectFileCopyId(existingFiles = []) {
+  const existingIds = new Set(
+    (Array.isArray(existingFiles) ? existingFiles : [])
+      .map((entry) => String(entry?.id || "").trim())
+      .filter(Boolean)
+  );
+  let id = "";
+  do {
+    id = `project-file-copy-${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+  } while (existingIds.has(id));
+  return id;
+}
+
+async function resolveCopyTargetPathWithPrompt(destinationProject, destinationFolderPath, sourceFilePath) {
+  const destinationFolder = String(destinationFolderPath || "").trim()
+    ? normalizeProjectFolderPath(destinationFolderPath, "folder")
+    : "";
+  const sourceBase = projectPathBasename(normalizeProjectPath(sourceFilePath, "untitled.s"));
+  const existing = new Set(
+    normalizeProjectFiles(destinationProject?.files)
+      .map((entry) => normalizeProjectPath(entry.path, "untitled.s"))
+  );
+  const makeTargetPath = (baseName) => (
+    destinationFolder
+      ? normalizeProjectPath(`${destinationFolder}/${baseName}`, sourceBase)
+      : normalizeProjectPath(baseName, sourceBase)
+  );
+
+  let targetPath = makeTargetPath(sourceBase);
+  if (!existing.has(targetPath)) return targetPath;
+
+  const dot = sourceBase.lastIndexOf(".");
+  const stem = dot > 0 ? sourceBase.slice(0, dot) : sourceBase;
+  const ext = dot > 0 ? sourceBase.slice(dot) : "";
+  let suggestedBase = `${stem}_copy${ext}`;
+
+  while (existing.has(targetPath)) {
+    const candidate = await requestTextDialog(
+      "Copy File",
+      translateText("A file with this name already exists in destination folder. New file name"),
+      suggestedBase,
+      {
+        confirmLabel: "Copy",
+        cancelLabel: "Cancel"
+      }
+    );
+    if (candidate == null) return null;
+    const nextBase = normalizeProjectFileBasename(candidate, sourceBase);
+    targetPath = makeTargetPath(nextBase);
+    suggestedBase = nextBase;
+    if (existing.has(targetPath)) {
+      postMarsMessage("[warn] A file with that name already exists in destination folder.");
+    }
+  }
+
+  return targetPath;
+}
+
+function moveProjectFileToFolder(projectRootPath, filePath, destinationFolderPath = "") {
+  const rootPath = normalizeProjectRootPath(projectRootPath || "project.p");
+  const normalizedFilePath = normalizeProjectPath(filePath, "untitled.s");
+  const destinationFolder = String(destinationFolderPath || "").trim()
+    ? normalizeProjectFolderPath(destinationFolderPath, "folder")
+    : "";
+  const basename = projectPathBasename(normalizedFilePath);
+  const targetPathRaw = destinationFolder ? `${destinationFolder}/${basename}` : basename;
+
+  let resolvedTargetPath = "";
+  const updated = applyProjectMutation(rootPath, (project) => {
+    const files = normalizeProjectFiles(project.files);
+    const index = files.findIndex((entry) => normalizeProjectPath(entry.path, "untitled.s") === normalizedFilePath);
+    if (index < 0) return false;
+    const uniqueTarget = resolveUniqueProjectFilePath(project, targetPathRaw, normalizedFilePath);
+    if (uniqueTarget === normalizedFilePath) return false;
+    files[index] = {
+      ...files[index],
+      path: uniqueTarget,
+      updatedAt: Date.now()
+    };
+    project.files = files;
+    resolvedTargetPath = uniqueTarget;
+    return true;
+  }, {
+    preferredActivePath: normalizedFilePath
+  });
+
+  if (!updated || !resolvedTargetPath) return null;
+  setProjectTreeSelection({
+    type: "file",
+    rootPath,
+    path: resolvedTargetPath,
+    readOnly: false
+  });
+  renderProjectTree(true);
+  return resolvedTargetPath;
+}
+
+async function copyProjectFileToProjectFolder(sourceProjectRootPath, sourceFilePath, destinationProjectRootPath, destinationFolderPath = "") {
+  const sourceRootPath = normalizeProjectRootPath(sourceProjectRootPath || "project.p");
+  const destinationRootPath = normalizeProjectRootPath(destinationProjectRootPath || "project.p");
+  const normalizedSourcePath = normalizeProjectPath(sourceFilePath, "untitled.s");
+
+  const sourceProject = findProjectInLibrary(sourceRootPath);
+  if (!sourceProject) {
+    postMarsMessage("[warn] Source project '{name}' not found.", { name: sourceRootPath });
+    return null;
+  }
+  const sourceEntry = resolveProjectFileEntry(sourceProject, normalizedSourcePath);
+  if (!sourceEntry || !sourceEntry.file) {
+    postMarsMessage("[warn] File '{name}' not found in source project.", { name: normalizedSourcePath });
+    return null;
+  }
+
+  const destinationProject = findProjectInLibrary(destinationRootPath);
+  if (!destinationProject) {
+    postMarsMessage("[warn] Destination project '{name}' not found.", { name: destinationRootPath });
+    return null;
+  }
+
+  const targetPath = await resolveCopyTargetPathWithPrompt(
+    destinationProject,
+    destinationFolderPath,
+    sourceEntry.path
+  );
+  if (!targetPath) return null;
+
+  const copiedSource = String(sourceEntry.file.source ?? "");
+  const copiedSavedSource = typeof sourceEntry.file.savedSource === "string"
+    ? String(sourceEntry.file.savedSource)
+    : copiedSource;
+  const updated = applyProjectMutation(destinationRootPath, (project) => {
+    const files = normalizeProjectFiles(project.files);
+    if (files.some((entry) => normalizeProjectPath(entry.path, "untitled.s") === targetPath)) {
+      return false;
+    }
+    const id = buildProjectFileCopyId(files);
+    files.push({
+      id,
+      path: targetPath,
+      source: copiedSource,
+      savedSource: copiedSavedSource,
+      updatedAt: Date.now()
+    });
+    project.files = files;
+    return true;
+  });
+
+  if (!updated) {
+    postMarsMessage("[warn] Failed to copy file to destination project.");
+    return null;
+  }
+
+  setProjectTreeSelection({
+    type: "file",
+    rootPath: destinationRootPath,
+    path: targetPath,
+    readOnly: false
+  });
+  renderProjectTree(true);
+  return targetPath;
+}
+
+async function handleProjectTreeCreateFolderAction() {
+  const selected = projectTreeSelectedNode;
+  const rootPath = resolveProjectActionRootPath();
+  if (!rootPath) {
+    postMarsMessage("[warn] No project selected.");
+    return;
+  }
+
+  let baseFolder = "";
+  if (selected && !selected.readOnly) {
+    if (selected.type === "folder") {
+      baseFolder = normalizeProjectFolderPath(selected.path, "folder");
+    } else if (selected.type === "file") {
+      baseFolder = projectPathDirname(normalizeProjectPath(selected.path, "untitled.s"));
+    }
+  }
+  const suggested = baseFolder ? `${baseFolder}/new_folder` : "new_folder";
+  const candidate = await requestTextDialog("New Folder", "Folder name", suggested, {
+    confirmLabel: "Create",
+    cancelLabel: "Cancel"
+  });
+  if (candidate == null) return;
+  const trimmed = String(candidate || "").trim();
+  if (!trimmed) return;
+
+  const folderPath = normalizeProjectFolderPath(
+    trimmed.includes("/")
+      ? trimmed
+      : (baseFolder ? `${baseFolder}/${trimmed}` : trimmed),
+    "new_folder"
+  );
+
+  let reason = "";
+  const updated = applyProjectMutation(rootPath, (project) => {
+    const allFolders = new Set(normalizeProjectFolderPaths(project.folderPaths, project.files));
+    if (allFolders.has(folderPath)) {
+      reason = "exists";
+      return false;
+    }
+    project.folderPaths = [
+      ...(Array.isArray(project.folderPaths) ? project.folderPaths : []),
+      folderPath
+    ];
+    return true;
+  });
+  if (!updated) {
+    if (reason === "exists") {
+      postMarsMessage("[warn] Folder already exists: {name}.", { name: folderPath });
+    }
+    return;
+  }
+  setProjectTreeSelection({
+    type: "folder",
+    rootPath,
+    path: folderPath,
+    readOnly: false
+  });
+  renderProjectTree(true);
+  postMarsMessage("Folder created: {name}.", { name: folderPath });
+}
+
+async function handleProjectTreeRenameAction() {
+  const selected = projectTreeSelectedNode;
+  if (!selected || selected.readOnly || (selected.type !== "project" && selected.type !== "file" && selected.type !== "folder")) {
+    return;
+  }
+  const rootPath = normalizeProjectRootPath(selected.rootPath || "project.p");
+  if (selected.type === "project") {
+    const project = findProjectInLibrary(rootPath);
+    if (!project) {
+      postMarsMessage("[warn] Project '{name}' not found.", { name: rootPath });
+      return;
+    }
+    const defaultName = normalizeProjectName(project.name || String(project.rootPath || "").replace(/\.p$/i, "") || "project");
+    const candidate = await requestTextDialog("Rename Project", "Project name", defaultName, {
+      confirmLabel: "Rename",
+      cancelLabel: "Cancel"
+    });
+    if (candidate == null) return;
+    const requestedName = normalizeProjectName(candidate);
+    if (!requestedName) return;
+    const uniqueName = resolveUniqueProjectNameExcept(requestedName, rootPath);
+    const nextRootPath = normalizeProjectRootPath(uniqueName, uniqueName);
+    if (nextRootPath === rootPath && uniqueName === defaultName) return;
+
+    const nextProject = normalizeProjectData({
+      ...project,
+      name: uniqueName,
+      rootPath: nextRootPath,
+      updatedAt: Date.now()
+    });
+    if (!nextProject) return;
+
+    replaceProjectInLibrary(rootPath, nextProject, {
+      makeActive: isSameProjectRootPath(projectLibraryState?.activeRootPath || "", rootPath)
+    });
+
+    const renamedOpenProject = projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", rootPath);
+    if (renamedOpenProject) {
+      projectState = normalizeProjectData({
+        ...projectState,
+        name: uniqueName,
+        rootPath: nextRootPath,
+        updatedAt: Date.now()
+      }) || projectState;
+      updateProjectStoreState();
+      saveProjectData(projectState);
+    } else {
+      persistProjectStorageFromLibrary(nextRootPath);
+    }
+
+    setProjectTreeSelection({
+      type: "project",
+      rootPath: nextRootPath,
+      path: "",
+      readOnly: false
+    });
+    renderProjectTree(true);
+    if (uniqueName !== requestedName) {
+      postMarsMessage("[warn] Project name already exists. Renamed to '{name}' instead.", { name: nextRootPath });
+    } else {
+      postMarsMessage("Project renamed: {from} -> {to}.", { from: rootPath, to: nextRootPath });
+    }
+    return;
+  }
+
+  if (selected.type === "file") {
+    const oldPath = normalizeProjectPath(selected.path, "untitled.s");
+    const parentPath = projectPathDirname(oldPath);
+    const defaultName = projectPathBasename(oldPath);
+    const candidate = await requestTextDialog("Rename File", "New file name", defaultName, {
+      confirmLabel: "Rename",
+      cancelLabel: "Cancel"
+    });
+    if (candidate == null) return;
+    const trimmed = String(candidate || "").trim();
+    if (!trimmed) return;
+    const nextPath = normalizeProjectPath(
+      trimmed.includes("/")
+        ? trimmed
+        : (parentPath ? `${parentPath}/${trimmed}` : trimmed),
+      defaultName
+    );
+    if (nextPath === oldPath) return;
+
+    let reason = "";
+    const updated = applyProjectMutation(rootPath, (project) => {
+      const files = normalizeProjectFiles(project.files);
+      const index = files.findIndex((entry) => normalizeProjectPath(entry.path, "untitled.s") === oldPath);
+      if (index < 0) {
+        reason = "missing";
+        return false;
+      }
+      const exists = files.some((entry, cursor) => (
+        cursor !== index && normalizeProjectPath(entry.path, "untitled.s") === nextPath
+      ));
+      if (exists) {
+        reason = "exists";
+        return false;
+      }
+      files[index] = {
+        ...files[index],
+        path: nextPath,
+        updatedAt: Date.now()
+      };
+      project.files = files;
+      return true;
+    }, {
+      preferredActivePath: oldPath
+    });
+    if (!updated) {
+      if (reason === "exists") postMarsMessage("[warn] A file with that name already exists.");
+      return;
+    }
+    setProjectTreeSelection({
+      type: "file",
+      rootPath,
+      path: nextPath,
+      readOnly: false
+    });
+    renderProjectTree(true);
+    postMarsMessage("Renamed file: {from} -> {to}.", { from: oldPath, to: nextPath });
+    return;
+  }
+
+  const oldFolder = normalizeProjectFolderPath(selected.path, "folder");
+  const oldBaseName = projectPathBasename(oldFolder);
+  const parentFolder = projectPathDirname(oldFolder);
+  const candidate = await requestTextDialog("Rename Folder", "New folder name", oldBaseName, {
+    confirmLabel: "Rename",
+    cancelLabel: "Cancel"
+  });
+  if (candidate == null) return;
+  const trimmed = String(candidate || "").trim();
+  if (!trimmed) return;
+  const nextFolder = normalizeProjectFolderPath(
+    trimmed.includes("/")
+      ? trimmed
+      : (parentFolder ? `${parentFolder}/${trimmed}` : trimmed),
+    oldBaseName
+  );
+  if (nextFolder === oldFolder) return;
+  if (nextFolder.startsWith(`${oldFolder}/`)) {
+    postMarsMessage("[warn] Folder cannot be renamed into its own child.");
+    return;
+  }
+
+  let reason = "";
+  const updated = applyProjectMutation(rootPath, (project) => {
+    const allFolders = normalizeProjectFolderPaths(project.folderPaths, project.files);
+    if (allFolders.includes(nextFolder)) {
+      reason = "exists";
+      return false;
+    }
+    const files = normalizeProjectFiles(project.files).map((entry) => {
+      const currentPath = normalizeProjectPath(entry.path, "untitled.s");
+      if (!isPathInsideFolder(currentPath, oldFolder)) return entry;
+      const suffix = currentPath.slice(oldFolder.length + 1);
+      return {
+        ...entry,
+        path: normalizeProjectPath(`${nextFolder}/${suffix}`, projectPathBasename(currentPath)),
+        updatedAt: Date.now()
+      };
+    });
+    const folderPaths = (Array.isArray(project.folderPaths) ? project.folderPaths : [])
+      .map((folderPath) => {
+        const normalizedFolder = normalizeProjectFolderPath(folderPath, "folder");
+        if (normalizedFolder === oldFolder) return nextFolder;
+        if (!normalizedFolder.startsWith(`${oldFolder}/`)) return normalizedFolder;
+        const suffix = normalizedFolder.slice(oldFolder.length + 1);
+        return normalizeProjectFolderPath(`${nextFolder}/${suffix}`, suffix || "folder");
+      });
+    project.files = files;
+    project.folderPaths = folderPaths;
+    return true;
+  });
+  if (!updated) {
+    if (reason === "exists") postMarsMessage("[warn] A folder with that name already exists.");
+    return;
+  }
+  setProjectTreeSelection({
+    type: "folder",
+    rootPath,
+    path: nextFolder,
+    readOnly: false
+  });
+  renderProjectTree(true);
+  postMarsMessage("Renamed folder: {from} -> {to}.", { from: oldFolder, to: nextFolder });
+}
+
+async function handleProjectTreeDeleteAction() {
+  const selected = projectTreeSelectedNode;
+  if (!selected || selected.readOnly || (selected.type !== "project" && selected.type !== "file" && selected.type !== "folder")) {
+    return;
+  }
+  const rootPath = normalizeProjectRootPath(selected.rootPath || "project.p");
+  if (selected.type === "project") {
+    const project = findProjectInLibrary(rootPath);
+    if (!project) {
+      postMarsMessage("[warn] Project '{name}' not found.", { name: rootPath });
+      return;
+    }
+    const isOpenSelectedProject = projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", rootPath);
+    const confirmMessage = translateText("Delete project '{name}'?", { name: rootPath });
+    const ok = isOpenSelectedProject
+      ? await confirmCloseDirtyFiles(editor.getDirtyFiles(), confirmMessage)
+      : await requestConfirmDialog("Delete Project", confirmMessage, {
+        confirmLabel: "Delete",
+        cancelLabel: "Cancel"
+      });
+    if (!ok) return;
+
+    const removed = removeProjectFromLibrary(rootPath);
+    if (!removed) return;
+
+    if (isOpenSelectedProject) {
+      const libraryProjects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+      const fallbackProject = libraryProjects.find((entry) => (
+        normalizeProjectRootKey(entry?.rootPath) === normalizeProjectRootKey(projectLibraryState?.activeRootPath || "")
+      )) || libraryProjects[0] || null;
+      if (fallbackProject) {
+        projectState = normalizeProjectData({
+          ...fallbackProject,
+          isOpen: false,
+          settings: {
+            ...(store.getState().preferences || preferences)
+          },
+          updatedAt: Date.now()
+        }) || projectState;
+      } else {
+        projectState = normalizeProjectData({
+          version: PROJECT_SCHEMA_VERSION,
+          isOpen: false,
+          name: "project",
+          description: "",
+          rootPath: normalizeProjectRootPath("project", "project"),
+          folderPaths: [],
+          files: [],
+          activeFileId: "",
+          settings: {
+            ...(store.getState().preferences || preferences)
+          },
+          layout: null,
+          states: Array.from({ length: PROJECT_STATE_SLOT_COUNT }, () => null),
+          updatedAt: Date.now()
+        }) || projectState;
+      }
+      updateProjectStoreState();
+      editor.setFiles([{
+        id: "project-closed-scratch",
+        name: "untitled.s",
+        source: "",
+        savedSource: ""
+      }], "project-closed-scratch");
+      modeController.setMode("project");
+      scheduleWorkspacePersist();
+    }
+
+    persistProjectStorageFromLibrary(projectLibraryState?.activeRootPath || "");
+    setProjectTreeSelection(null);
+    renderProjectTree(true);
+    postMarsMessage("Project deleted: {name}.", { name: rootPath });
+    return;
+  }
+
+  if (selected.type === "file") {
+    const filePath = normalizeProjectPath(selected.path, "untitled.s");
+    const confirm = await requestConfirmDialog("Delete File", translateText("Delete '{name}'?", { name: filePath }), {
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel"
+    });
+    if (!confirm) return;
+
+    let reason = "";
+    const updated = applyProjectMutation(rootPath, (project) => {
+      const files = normalizeProjectFiles(project.files);
+      const index = files.findIndex((entry) => normalizeProjectPath(entry.path, "untitled.s") === filePath);
+      if (index < 0) {
+        reason = "missing";
+        return false;
+      }
+      if (files.length <= 1) {
+        reason = "last-file";
+        return false;
+      }
+      const removed = files[index];
+      const nextFiles = files.filter((_, cursor) => cursor !== index);
+      if (String(project.activeFileId || "") === String(removed.id || "")) {
+        project.activeFileId = String(nextFiles[0]?.id || "");
+      }
+      project.files = nextFiles;
+      return true;
+    }, {
+      preferredActivePath: editor.getActiveFile()?.name || ""
+    });
+    if (!updated) {
+      if (reason === "last-file") postMarsMessage("[warn] Keep at least one file in the project.");
+      return;
+    }
+    setProjectTreeSelection(null);
+    renderProjectTree(true);
+    postMarsMessage("Deleted file: {name}.", { name: filePath });
+    return;
+  }
+
+  const folderPath = normalizeProjectFolderPath(selected.path, "folder");
+  const confirm = await requestConfirmDialog(
+    "Delete Folder",
+    translateText("Delete folder '{name}' and contained files?", { name: folderPath }),
+    {
+    confirmLabel: "Delete",
+    cancelLabel: "Cancel"
+    }
+  );
+  if (!confirm) return;
+
+  let reason = "";
+  const updated = applyProjectMutation(rootPath, (project) => {
+    const files = normalizeProjectFiles(project.files);
+    const filesToRemove = files.filter((entry) => isPathInsideFolder(entry.path, folderPath));
+    const remainingCount = files.length - filesToRemove.length;
+    if (filesToRemove.length > 0 && remainingCount <= 0) {
+      reason = "last-file";
+      return false;
+    }
+    const nextFiles = files.filter((entry) => !isPathInsideFolder(entry.path, folderPath));
+    const nextFolders = (Array.isArray(project.folderPaths) ? project.folderPaths : [])
+      .filter((entry) => {
+        const normalizedFolder = normalizeProjectFolderPath(entry, "folder");
+        return normalizedFolder !== folderPath && !normalizedFolder.startsWith(`${folderPath}/`);
+      });
+    const previousFolderCount = Array.isArray(project.folderPaths) ? project.folderPaths.length : 0;
+    const removedActive = filesToRemove.some((entry) => String(entry.id || "") === String(project.activeFileId || ""));
+    if (removedActive) project.activeFileId = String(nextFiles[0]?.id || "");
+    project.files = nextFiles;
+    project.folderPaths = nextFolders;
+    return filesToRemove.length > 0 || nextFolders.length !== previousFolderCount;
+  }, {
+    preferredActivePath: editor.getActiveFile()?.name || ""
+  });
+  if (!updated) {
+    if (reason === "last-file") postMarsMessage("[warn] Keep at least one file in the project.");
+    return;
+  }
+  setProjectTreeSelection(null);
+  renderProjectTree(true);
+  postMarsMessage("Deleted folder: {name}.", { name: folderPath });
+}
+
+async function handleProjectTreeAction(action) {
+  const normalizedAction = String(action || "").trim().toLowerCase();
+  if (normalizedAction === "new-folder") {
+    await handleProjectTreeCreateFolderAction();
+    return;
+  }
+  if (normalizedAction === "rename") {
+    await handleProjectTreeRenameAction();
+    return;
+  }
+  if (normalizedAction === "delete") {
+    await handleProjectTreeDeleteAction();
+  }
+}
+
+function resolveProjectTreeDropTarget(target) {
+  if (!(target instanceof HTMLElement)) return null;
+  const node = target.closest("[data-tree-node-type]");
+  if (!(node instanceof HTMLElement)) return null;
+  const info = resolveProjectTreeNodeFromElement(node);
+  if (!info || info.readOnly) return null;
+  if (info.type !== "project" && info.type !== "folder") return null;
+  return { node, info };
+}
+
+const projectTreeNodes = [refs.project?.mainTree, refs.project?.toolTree]
+  .filter((node) => node instanceof HTMLElement);
+projectTreeNodes.forEach((treeNode) => {
+  treeNode.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const toggle = target.closest("[data-tree-toggle]");
+    if (toggle instanceof HTMLElement) {
+      const key = String(toggle.dataset.treeNodeKey || "").trim();
+      if (key) {
+        toggleProjectTreeNodeExpanded(key);
+        renderProjectTree(true);
+      }
+      return;
+    }
+    const node = target.closest("[data-tree-node-type]");
+    if (!(node instanceof HTMLElement)) return;
+    const info = resolveProjectTreeNodeFromElement(node);
+    if (!info) return;
+    setProjectTreeSelection(info);
+    if (info.type === "project" && info.rootPath) {
+      activateProjectInLibrary(info.rootPath);
+    }
+    renderProjectTree(true);
+  });
+
+  treeNode.addEventListener("dblclick", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const node = target.closest("[data-tree-node-type]");
+    if (!(node instanceof HTMLElement)) return;
+    const info = resolveProjectTreeNodeFromElement(node);
+    if (!info) return;
+    if (info.type === "file" && info.rootPath && info.path) {
+      void openProjectFileFromTree(info.rootPath, info.path);
+      return;
+    }
+    if (info.type === "project" || info.type === "folder" || info.type === "libs-root" || info.type === "libs-folder") {
+      toggleProjectTreeNodeExpanded(info.key);
+      renderProjectTree(true);
+      return;
+    }
+    if (info.type === "libs-file") {
+      postMarsMessage("[info] Global libraries are read-only.");
+    }
+  });
+
+  treeNode.addEventListener("dragstart", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const node = target.closest("[data-tree-node-type='file']");
+    if (!(node instanceof HTMLElement)) return;
+    const info = resolveProjectTreeNodeFromElement(node);
+    if (!info || !info.rootPath || !info.path) return;
+    projectTreeDragPayload = {
+      rootPath: info.rootPath,
+      path: normalizeProjectPath(info.path, "untitled.s")
+    };
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "copyMove";
+      event.dataTransfer.setData("text/plain", `${projectTreeDragPayload.rootPath}|${projectTreeDragPayload.path}`);
+    }
+    node.classList.add("dragging");
+  });
+
+  treeNode.addEventListener("dragover", (event) => {
+    if (!projectTreeDragPayload) return;
+    const dropTarget = resolveProjectTreeDropTarget(event.target);
+    clearProjectTreeDropTargets();
+    if (!dropTarget) return;
+    event.preventDefault();
+    const isSameProject = isSameProjectRootPath(dropTarget.info.rootPath, projectTreeDragPayload.rootPath);
+    if (event.dataTransfer) event.dataTransfer.dropEffect = isSameProject ? "move" : "copy";
+    dropTarget.node.classList.add("drop-target");
+  });
+
+  treeNode.addEventListener("drop", async (event) => {
+    if (!projectTreeDragPayload) return;
+    event.preventDefault();
+    const dropTarget = resolveProjectTreeDropTarget(event.target);
+    clearProjectTreeDropTargets();
+    if (!dropTarget) return;
+    const destinationFolder = dropTarget.info.type === "folder"
+      ? normalizeProjectFolderPath(dropTarget.info.path, "folder")
+      : "";
+    const sameProject = isSameProjectRootPath(dropTarget.info.rootPath, projectTreeDragPayload.rootPath);
+    if (sameProject) {
+      const movedPath = moveProjectFileToFolder(
+        projectTreeDragPayload.rootPath,
+        projectTreeDragPayload.path,
+        destinationFolder
+      );
+      if (movedPath && movedPath !== projectTreeDragPayload.path) {
+        postMarsMessage("Moved file to: {path}.", { path: movedPath });
+      }
+    } else {
+      const copiedPath = await copyProjectFileToProjectFolder(
+        projectTreeDragPayload.rootPath,
+        projectTreeDragPayload.path,
+        dropTarget.info.rootPath,
+        destinationFolder
+      );
+      if (copiedPath) {
+        postMarsMessage("Copied file to: {path}.", { path: copiedPath });
+      }
+    }
+    projectTreeDragPayload = null;
+    treeNode.querySelectorAll(".project-tree-file.dragging").forEach((node) => node.classList.remove("dragging"));
+  });
+
+  treeNode.addEventListener("dragend", () => {
+    projectTreeDragPayload = null;
+    clearProjectTreeDropTargets();
+    treeNode.querySelectorAll(".project-tree-file.dragging").forEach((node) => node.classList.remove("dragging"));
+  });
+});
+
+const projectTreeActionButtons = [
+  refs.project?.mainNewFolder,
+  refs.project?.mainRename,
+  refs.project?.mainDelete,
+  refs.project?.toolNewFolder,
+  refs.project?.toolRename,
+  refs.project?.toolDelete
+].filter((button) => button instanceof HTMLButtonElement);
+projectTreeActionButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    void handleProjectTreeAction(button.dataset.projectAction || "");
+  });
+});
+
+renderProjectTree(true);
+void ensureMiniCGlobalLibrariesLoaded()
+  .then(() => {
+    renderProjectTree(true);
+  })
+  .catch(() => {
+    // Ignore global library loading errors for tree rendering.
+  });
 
 function canPersistMachineState() {
   return typeof engine.exportNativeState === "function" && typeof engine.importNativeState === "function";
@@ -1061,6 +3896,8 @@ messagesPane.setInputSubmittedHandler(() => {
 function applyUiPreferences(nextPreferences) {
   refs.root.classList.toggle("hide-labels-window", !nextPreferences.showLabelsWindow);
   refs.root.classList.toggle("split-messages-runio", nextPreferences.splitMessagesRunIo === true);
+  const menuPosition = String(nextPreferences.menuPosition || "top").trim().toLowerCase();
+  refs.root.classList.toggle("menu-at-bottom", menuPosition === "bottom");
 
   if (refs.execute.dataHexAddresses) {
     refs.execute.dataHexAddresses.checked = nextPreferences.displayAddressesHex;
@@ -1249,6 +4086,7 @@ function syncButtons(snapshot) {
   const canBackstep = hasAvailableBackstep(snapshot);
 
   refs.buttons.assemble.disabled = runBusy;
+  if (refs.buttons.compileC0) refs.buttons.compileC0.disabled = runBusy;
   refs.buttons.reset.disabled = runBusy || !assembled;
   refs.buttons.go.disabled = runBusy || !canExecute;
   refs.buttons.step.disabled = runBusy || !canExecute;
@@ -1620,6 +4458,10 @@ function applyPreferences(nextPreferences) {
     updateRunSpeedLabel();
   }
   if (memoryChanged) previousSnapshot = null;
+  if (projectState && typeof projectState === "object") {
+    projectState.settings = { ...nextPreferences };
+    scheduleProjectPersist({ syncFromEditor: false });
+  }
   syncSnapshot(engine.getSnapshot());
 }
 function stopRunLoop() {
@@ -1928,6 +4770,47 @@ async function requestConfirmDialog(title, message, options = {}) {
   });
 }
 
+async function promptStartupRecoveryChoiceIfNeeded() {
+  if (startupRecoveryDecisionPrompted) return;
+  startupRecoveryDecisionPrompted = true;
+  if (!startupHadRecoverableLocalData) return;
+
+  const recoverExisting = await requestConfirmDialog(
+    "Recover Local Data",
+    translateText("Local storage data was found. Recover it?"),
+    {
+      confirmLabel: "Recover",
+      cancelLabel: "Start New Project"
+    }
+  );
+
+  if (recoverExisting) {
+    postMarsMessage("Recovered local data.");
+    return;
+  }
+
+  const clearAndRestart = await requestConfirmDialog(
+    "Start New Project",
+    translateText("This will clear local data and restart with a clean default project. Continue?"),
+    {
+      confirmLabel: "Clear and Restart",
+      cancelLabel: "Cancel"
+    }
+  );
+  if (!clearAndRestart) {
+    postMarsMessage("Kept current local data.");
+    return;
+  }
+
+  enterResetReloadMode();
+  const removedCount = clearRecoverableLocalStorageData();
+  postMarsMessage("Starting new project. Cleared local data entries: {count}.", { count: removedCount });
+  markSkipStartupRecoveryPromptOnce();
+  window.setTimeout(() => {
+    window.location.reload();
+  }, 40);
+}
+
 function parseBooleanPreferenceToken(value, fallback = false) {
   if (typeof value === "boolean") return value;
   const normalized = String(value ?? "").trim().toLowerCase();
@@ -1945,7 +4828,7 @@ async function openInterfacePreferencesPanel() {
     confirmLabel: translateText("OK"),
     cancelLabel: translateText("Cancel"),
     width: "540px",
-    height: "470px",
+    height: "520px",
     sections: [
       {
         title: translateText("Language"),
@@ -1956,6 +4839,21 @@ async function openInterfacePreferencesPanel() {
             type: "select",
             value: current.language || "en",
             options: languages.map((language) => ({ value: language, label: language }))
+          }
+        ]
+      },
+      {
+        title: translateText("Layout"),
+        fields: [
+          {
+            name: "menuPosition",
+            label: translateText("Menu position"),
+            type: "select",
+            value: (String(current.menuPosition || "top").trim().toLowerCase() === "bottom") ? "bottom" : "top",
+            options: [
+              { value: "top", label: translateText("Top") },
+              { value: "bottom", label: translateText("Bottom") }
+            ]
           }
         ]
       },
@@ -2011,7 +4909,7 @@ async function openInterfacePreferencesPanel() {
     left: "120px",
     top: "90px",
     width: "540px",
-    height: "470px"
+    height: "520px"
   });
   if (!result?.ok) return;
 
@@ -2021,6 +4919,9 @@ async function openInterfacePreferencesPanel() {
     : (current.language || "en");
   const parsedFont = Number(values.editorFontSize);
   const parsedLineHeight = Number(values.editorLineHeight);
+  const parsedMenuPosition = String(values.menuPosition || current.menuPosition || "top").trim().toLowerCase() === "bottom"
+    ? "bottom"
+    : "top";
   if (!Number.isFinite(parsedFont) || !Number.isFinite(parsedLineHeight)) {
     postMarsMessage("[warn] Invalid editor preferences.");
     return;
@@ -2028,6 +4929,7 @@ async function openInterfacePreferencesPanel() {
 
   updatePreferencesPatch({
     language: selectedLanguage,
+    menuPosition: parsedMenuPosition,
     editorFontSize: Math.max(9, Math.min(22, parsedFont)),
     editorLineHeight: Math.max(1, Math.min(2.2, parsedLineHeight)),
     highlightTextUpdates: parseBooleanPreferenceToken(values.highlightTextUpdates, current.highlightTextUpdates),
@@ -2146,6 +5048,81 @@ async function openRuntimeMemoryPreferencesPanel() {
     maxMemoryGb: parsedMemoryGb,
     maxBacksteps: parsedBacksteps
   }, "Runtime and memory preferences updated.");
+}
+
+async function openMiniCCompilerPreferencesPanel() {
+  const current = store.getState().preferences || preferences;
+  const result = await runDialogForm({
+    title: translateText("Mini-C (C0) Compiler Preferences"),
+    message: translateText("Configure Mini-C frontend settings."),
+    confirmLabel: translateText("OK"),
+    cancelLabel: translateText("Cancel"),
+    width: "520px",
+    height: "410px",
+    sections: [
+      {
+        title: translateText("Compilation Target"),
+        fields: [
+          {
+            name: "miniCTargetAbi",
+            label: translateText("Target ABI"),
+            type: "select",
+            value: String(current.miniCTargetAbi || "o32").toLowerCase(),
+            options: [
+              { value: "o32", label: translateText("MIPS O32 (recommended)") }
+            ]
+          },
+          {
+            name: "miniCSubset",
+            label: translateText("Subset profile"),
+            type: "select",
+            value: String(current.miniCSubset || "C0-S4"),
+            options: [
+              { value: "C0-S0", label: "C0-S0 (phase 2 baseline)" },
+              { value: "C0-S1", label: "C0-S1 (phase 3 I/O + strings)" },
+              { value: "C0-S2", label: "C0-S2 (phase 4 loops control)" },
+              { value: "C0-S3", label: "C0-S3 (phase 5 arrays + indexing)" },
+              { value: "C0-S4", label: "C0-S4 (native types)" }
+            ]
+          }
+        ]
+      },
+      {
+        title: translateText("Output"),
+        fields: [
+          {
+            name: "miniCOpenOutputWindow",
+            label: translateText("Open Mini-C output window after compile"),
+            type: "checkbox",
+            value: current.miniCOpenOutputWindow !== false
+          },
+          {
+            name: "miniCEmitScaffoldingComments",
+            label: translateText("Emit scaffold comments in generated ASM"),
+            type: "checkbox",
+            value: current.miniCEmitScaffoldingComments !== false
+          }
+        ]
+      }
+    ]
+  }, {
+    windowIdPrefix: "window-mini-c-preferences",
+    left: "210px",
+    top: "120px",
+    width: "520px",
+    height: "410px"
+  });
+  if (!result?.ok) return;
+
+  const values = result.value || {};
+  const nextTargetAbi = String(values.miniCTargetAbi || "o32").toLowerCase() === "o32" ? "o32" : "o32";
+  const nextSubset = String(values.miniCSubset || "C0-S4").trim() || "C0-S4";
+  updatePreferencesPatch({
+    miniCTargetAbi: nextTargetAbi,
+    miniCSubset: nextSubset,
+    miniCOpenOutputWindow: parseBooleanPreferenceToken(values.miniCOpenOutputWindow, current.miniCOpenOutputWindow !== false),
+    miniCEmitScaffoldingComments: parseBooleanPreferenceToken(values.miniCEmitScaffoldingComments, current.miniCEmitScaffoldingComments !== false)
+  }, "Mini-C compiler preferences updated.");
 }
 
 function normalizeLanguageCode(language) {
@@ -2398,12 +5375,69 @@ async function discoverExampleFiles() {
 }
 
 void discoverExampleFiles();
+void ensureMiniCGlobalLibrariesLoaded();
 const fileInput = document.createElement("input");
 fileInput.type = "file";
-fileInput.accept = ".asm,.s,.txt";
+fileInput.accept = "";
 fileInput.multiple = true;
 fileInput.hidden = true;
 document.body.appendChild(fileInput);
+
+function normalizeDiskImportPath(pathValue, fallbackName = "untitled") {
+  const raw = String(pathValue || "")
+    .trim()
+    .replace(/\\/g, "/")
+    .replace(/^\.\/+/, "")
+    .replace(/^\/+/, "");
+  return raw || fallbackName;
+}
+
+async function loadProjectDescriptorFromFile(file) {
+  try {
+    const descriptorText = await file.text();
+    const parsed = JSON.parse(descriptorText);
+    const importedProject = normalizeProjectData(parsed);
+    if (!importedProject) return null;
+    upsertProjectInLibrary(importedProject, { makeActive: true });
+    return importedProject;
+  } catch {
+    return null;
+  }
+}
+
+async function readSourceFileFromDisk(file) {
+  const sourceName = normalizeDiskImportPath(file?.name, "untitled");
+  if (!isSupportedProjectFilePath(sourceName)) {
+    return {
+      ok: false,
+      reason: "unsupported",
+      path: sourceName
+    };
+  }
+  let content = "";
+  try {
+    content = await file.text();
+  } catch {
+    return {
+      ok: false,
+      reason: "corrupted",
+      path: sourceName
+    };
+  }
+  const classification = classifyProjectFileContent(sourceName, content);
+  if (!classification.ok) {
+    return {
+      ok: false,
+      reason: classification.reason,
+      path: sourceName
+    };
+  }
+  return {
+    ok: true,
+    path: normalizeFilename(sourceName),
+    source: content
+  };
+}
 
 function buildAssemblyContext() {
   const files = editor.getFiles();
@@ -2458,6 +5492,11 @@ function assembleFromEditor() {
 }
 
 function maybeAssembleAfterOpen() {
+  const active = editor.getActiveFile();
+  if (active && isMiniCSourceFile(active.name)) {
+    postMarsMessage("[mini-c] Auto-assemble skipped for C0 source. Use Compile C0.");
+    return;
+  }
   if (store.getState().preferences.assembleOnOpen) {
     commands.assemble();
   }
@@ -2471,17 +5510,584 @@ function formatRuntimeAddress(address, addressHex, displayAddressesHex) {
   return `${Number.isFinite(address) ? (address >>> 0) : 0}`;
 }
 
+function isMiniCSourceFile(fileName = "") {
+  if (typeof miniCCompilerModule.isSourceFile === "function") {
+    return miniCCompilerModule.isSourceFile(fileName);
+  }
+  return MINI_C_SOURCE_EXTENSION_PATTERN.test(String(fileName || "").trim());
+}
+
+function deriveMiniCGeneratedAsmName(fileName = "untitled.c") {
+  if (typeof miniCCompilerModule.deriveGeneratedAsmName === "function") {
+    return String(miniCCompilerModule.deriveGeneratedAsmName(fileName) || "program.generated.s");
+  }
+  const baseName = String(fileName || "untitled.c").trim().replace(/\\/g, "/").split("/").pop() || "untitled.c";
+  const stem = baseName.replace(/\.[^.]+$/g, "");
+  return `${stem || "program"}.generated.s`;
+}
+
+function normalizeMiniCIncludePath(pathValue = "") {
+  const raw = String(pathValue || "").trim().replace(/\\/g, "/");
+  if (!raw.length) return "";
+  const parts = [];
+  raw.split("/").forEach((segment) => {
+    const part = String(segment || "").trim();
+    if (!part || part === ".") return;
+    if (part === "..") {
+      if (parts.length) parts.pop();
+      return;
+    }
+    parts.push(part);
+  });
+  return parts.join("/");
+}
+
+function miniCIncludeDirname(pathValue = "") {
+  const normalized = normalizeMiniCIncludePath(pathValue);
+  const splitIndex = normalized.lastIndexOf("/");
+  return splitIndex >= 0 ? normalized.slice(0, splitIndex) : "";
+}
+
+function miniCIncludeJoin(baseDir = "", relativePath = "") {
+  const base = normalizeMiniCIncludePath(baseDir);
+  const rel = normalizeMiniCIncludePath(relativePath);
+  if (!base) return rel;
+  if (!rel) return base;
+  return normalizeMiniCIncludePath(`${base}/${rel}`);
+}
+
+function normalizeMiniCLibraryIdentifier(value = "") {
+  return normalizeMiniCIncludePath(value).toLowerCase();
+}
+
+function registerMiniCGlobalLibrarySource(identifier = "", sourceText = "") {
+  const normalized = normalizeMiniCLibraryIdentifier(identifier);
+  if (!normalized) return;
+  const source = String(sourceText ?? "");
+  const withoutExtension = normalized.replace(MINI_C_LIBRARY_EXTENSION_PATTERN, "");
+  const leafWithExtension = normalized.split("/").pop() || "";
+  const leaf = withoutExtension.split("/").pop() || "";
+  if (normalized) miniCGlobalLibrarySources.set(normalized, source);
+  if (withoutExtension) miniCGlobalLibrarySources.set(withoutExtension, source);
+  if (leafWithExtension) miniCGlobalLibrarySources.set(leafWithExtension, source);
+  if (leaf) miniCGlobalLibrarySources.set(leaf, source);
+}
+
+function resolveMiniCGlobalLibrarySource(aliasCandidates = []) {
+  const seen = new Set();
+  for (let index = 0; index < aliasCandidates.length; index += 1) {
+    const raw = String(aliasCandidates[index] || "").trim();
+    if (!raw) continue;
+    const normalized = normalizeMiniCLibraryIdentifier(raw);
+    if (!normalized) continue;
+    const withoutExtension = normalized.replace(MINI_C_LIBRARY_EXTENSION_PATTERN, "");
+    const leafWithExtension = normalized.split("/").pop() || "";
+    const leaf = withoutExtension.split("/").pop() || "";
+    const lookupKeys = [normalized, withoutExtension, leafWithExtension, leaf];
+    for (let cursor = 0; cursor < lookupKeys.length; cursor += 1) {
+      const key = String(lookupKeys[cursor] || "").trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      if (!miniCGlobalLibrarySources.has(key)) continue;
+      return String(miniCGlobalLibrarySources.get(key) || "");
+    }
+  }
+  return null;
+}
+
+function normalizeMiniCGlobalLibraryManifestEntries(manifestPayload) {
+  const entries = Array.isArray(manifestPayload)
+    ? manifestPayload
+    : (Array.isArray(manifestPayload?.libraries) ? manifestPayload.libraries : []);
+  const normalizedEntries = [];
+  const seen = new Set();
+
+  entries.forEach((entry) => {
+    const rawPath = typeof entry === "string"
+      ? entry
+      : String(entry?.path || entry?.file || entry?.name || "");
+    let path = normalizeMiniCIncludePath(rawPath);
+    if (!path) return;
+    path = path.replace(/^(?:\.\/)+/, "");
+    path = path.replace(/^libs?\//i, "");
+    if (!MINI_C_LIBRARY_EXTENSION_PATTERN.test(path)) {
+      path = `${path}.c0`;
+    }
+    const normalizedPath = normalizeMiniCLibraryIdentifier(path);
+    if (!normalizedPath) return;
+
+    const rawName = typeof entry === "object" && entry
+      ? String(entry.name || "")
+      : "";
+    const fallbackName = normalizedPath.replace(MINI_C_LIBRARY_EXTENSION_PATTERN, "").split("/").pop() || "";
+    const normalizedName = normalizeMiniCLibraryIdentifier(rawName || fallbackName).replace(MINI_C_LIBRARY_EXTENSION_PATTERN, "");
+    const key = `${normalizedName}|${normalizedPath}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    normalizedEntries.push({
+      name: normalizedName || fallbackName,
+      path: normalizedPath
+    });
+  });
+
+  return normalizedEntries;
+}
+
+async function ensureMiniCGlobalLibrariesLoaded() {
+  if (miniCGlobalLibrariesReady) return miniCGlobalLibrarySources;
+  if (miniCGlobalLibrariesPromise) return miniCGlobalLibrariesPromise;
+
+  miniCGlobalLibrariesPromise = (async () => {
+    let entries = [];
+    try {
+      const manifestText = await loadTextResource(MINI_C_GLOBAL_LIBRARIES_MANIFEST_PATH);
+      const manifestPayload = JSON.parse(manifestText);
+      entries = normalizeMiniCGlobalLibraryManifestEntries(manifestPayload);
+    } catch {
+      entries = [];
+    }
+    if (!entries.length) entries = MINI_C_GLOBAL_LIBRARY_FALLBACK_ENTRIES.map((entry) => ({ ...entry }));
+    miniCGlobalLibraryEntries = entries.map((entry) => ({
+      name: normalizeMiniCLibraryIdentifier(entry.name || "").replace(MINI_C_LIBRARY_EXTENSION_PATTERN, ""),
+      path: normalizeMiniCLibraryIdentifier(entry.path || "")
+    }));
+
+    for (let index = 0; index < entries.length; index += 1) {
+      const entry = entries[index];
+      const relativePath = normalizeMiniCIncludePath(entry.path || "");
+      if (!relativePath) continue;
+      const resourcePath = `${MINI_C_GLOBAL_LIBRARIES_ROOT}/${relativePath}`;
+      try {
+        const source = await loadTextResource(resourcePath);
+        registerMiniCGlobalLibrarySource(relativePath, source);
+        registerMiniCGlobalLibrarySource(entry.name, source);
+      } catch {
+        // Keep fallback libraries available when server-side resources are missing.
+      }
+    }
+
+    miniCGlobalLibrariesReady = true;
+    return miniCGlobalLibrarySources;
+  })().finally(() => {
+    miniCGlobalLibrariesPromise = null;
+  });
+
+  return miniCGlobalLibrariesPromise;
+}
+
+function collectMiniCIncludeSourceMap() {
+  const normalizedMap = new Map();
+  const projectFiles = Array.isArray(projectState?.files) ? projectState.files : [];
+  projectFiles.forEach((file, index) => {
+    const key = normalizeMiniCIncludePath(
+      normalizeProjectPath(file?.path || file?.name, `src/file_${index + 1}.s`)
+    );
+    if (!key) return;
+    normalizedMap.set(key, String(file?.source ?? ""));
+  });
+  editor.getFiles().forEach((file) => {
+    const key = normalizeMiniCIncludePath(file?.name || "");
+    if (!key) return;
+    normalizedMap.set(key, String(file?.source || ""));
+  });
+  return normalizedMap;
+}
+
+function buildMiniCUseLibrarySources(includeSourceMap = null) {
+  const sourceMap = includeSourceMap instanceof Map
+    ? includeSourceMap
+    : collectMiniCIncludeSourceMap();
+  const librarySources = {};
+  const setLibraryAlias = (alias, sourceText) => {
+    const normalizedAlias = normalizeMiniCLibraryIdentifier(alias).replace(MINI_C_LIBRARY_EXTENSION_PATTERN, "");
+    if (!normalizedAlias) return;
+    const source = String(sourceText ?? "");
+    librarySources[normalizedAlias] = source;
+    const leaf = normalizedAlias.split("/").pop() || "";
+    if (leaf) librarySources[leaf] = source;
+  };
+
+  sourceMap.forEach((sourceText, pathValue) => {
+    const normalizedPath = normalizeMiniCIncludePath(pathValue || "");
+    if (!/\.(h0|h|c0|c)$/i.test(normalizedPath)) return;
+    const basePath = normalizedPath.replace(/\.(h0|h|c0|c)$/i, "");
+    const fileName = basePath.split("/").pop() || "";
+    const source = String(sourceText ?? "");
+    if (basePath) setLibraryAlias(basePath, source);
+    if (fileName) setLibraryAlias(fileName, source);
+  });
+
+  // Built-in fallback libraries keep priority over project/user sources when names collide.
+  Object.keys(MINI_C_NATIVE_LIBRARY_SOURCES || {}).forEach((name) => {
+    const key = String(name || "").trim().toLowerCase();
+    if (!key) return;
+    setLibraryAlias(key, MINI_C_NATIVE_LIBRARY_SOURCES[key]);
+  });
+
+  // Global libraries from ./libs override fallback implementations.
+  miniCGlobalLibrarySources.forEach((sourceText, key) => {
+    setLibraryAlias(key, sourceText);
+  });
+
+  return librarySources;
+}
+
+function createMiniCIncludeResolver(sourceName = "", includeSourceMap = null) {
+  const normalizedMap = includeSourceMap instanceof Map
+    ? includeSourceMap
+    : collectMiniCIncludeSourceMap();
+
+  const readFromCandidates = (candidates = []) => {
+    for (let i = 0; i < candidates.length; i += 1) {
+      const candidate = normalizeMiniCIncludePath(candidates[i]);
+      if (!candidate) continue;
+      if (!normalizedMap.has(candidate)) continue;
+      return { sourceName: candidate, source: normalizedMap.get(candidate) };
+    }
+    return null;
+  };
+
+  const pathsByLeaf = new Map();
+  normalizedMap.forEach((_source, key) => {
+    const leaf = key.split("/").pop() || "";
+    if (!leaf) return;
+    const list = pathsByLeaf.get(leaf) || [];
+    list.push(key);
+    pathsByLeaf.set(leaf, list);
+  });
+
+  const readUniqueLeafCandidate = (leafCandidates = []) => {
+    for (let i = 0; i < leafCandidates.length; i += 1) {
+      const leaf = String(leafCandidates[i] || "").trim();
+      if (!leaf) continue;
+      const matches = pathsByLeaf.get(leaf) || [];
+      if (matches.length !== 1) continue;
+      const match = matches[0];
+      if (!normalizedMap.has(match)) continue;
+      return { sourceName: match, source: normalizedMap.get(match) };
+    }
+    return null;
+  };
+
+  const builtInLibraries = new Set(
+    Object.keys(MINI_C_NATIVE_LIBRARY_SOURCES || {}).map((entry) => String(entry || "").trim().toLowerCase())
+  );
+
+  return ({ kind, target, fromSourceName }) => {
+    const resolvedKind = String(kind || "").trim().toLowerCase();
+    const normalizedTarget = normalizeMiniCIncludePath(target || "");
+    if (!normalizedTarget) return null;
+    const normalizedFrom = normalizeMiniCIncludePath(fromSourceName || sourceName || "");
+
+    if (resolvedKind === "lib") {
+      const libraryBase = normalizedTarget.replace(/\.(h0|h|c0|c)$/i, "").toLowerCase();
+      const libSuffixes = [".h0", ".c0", ".h", ".c"];
+      const libPrefixes = ["", "lib/", "libs/", "include/", "src/", "src/lib/", "src/libs/"];
+      const libCandidates = [
+        ...libSuffixes.map((suffix) => `${libraryBase}${suffix}`),
+        ...libPrefixes.flatMap((prefix) => libSuffixes.map((suffix) => `${prefix}${libraryBase}${suffix}`))
+      ];
+      const resolved = readFromCandidates(libCandidates);
+      if (resolved) return resolved;
+      const leafResolved = readUniqueLeafCandidate(libSuffixes.map((suffix) => `${libraryBase}${suffix}`));
+      if (leafResolved) return leafResolved;
+      const globalSource = resolveMiniCGlobalLibrarySource([
+        libraryBase,
+        ...libCandidates
+      ]);
+      if (typeof globalSource === "string") {
+        return {
+          sourceName: `<${libraryBase}>`,
+          source: globalSource
+        };
+      }
+      if (builtInLibraries.has(libraryBase)) {
+        return {
+          sourceName: `<${libraryBase}>`,
+          source: String(MINI_C_NATIVE_LIBRARY_SOURCES[libraryBase] || "")
+        };
+      }
+      return null;
+    }
+
+    const fromDir = miniCIncludeDirname(normalizedFrom);
+    const directCandidates = [normalizedTarget];
+    if (fromDir) directCandidates.push(miniCIncludeJoin(fromDir, normalizedTarget));
+    if (!/\.[a-z0-9]+$/i.test(normalizedTarget)) {
+      const extensionCandidates = [".c0", ".c", ".h0", ".h"];
+      extensionCandidates.forEach((suffix) => {
+        directCandidates.push(`${normalizedTarget}${suffix}`);
+        if (fromDir) directCandidates.push(miniCIncludeJoin(fromDir, `${normalizedTarget}${suffix}`));
+      });
+    }
+    return readFromCandidates(directCandidates);
+  };
+}
+
+function formatMiniCDiagnosticEntry(diagnostic, index = 0) {
+  const isObjectDiagnostic = diagnostic && typeof diagnostic === "object";
+  const line = Number.isFinite(diagnostic?.line) ? diagnostic.line : 0;
+  const column = Number.isFinite(diagnostic?.column) ? diagnostic.column : 0;
+  const phase = String(isObjectDiagnostic && diagnostic.phase ? diagnostic.phase : "mini-c");
+  const message = typeof diagnostic === "string"
+    ? diagnostic
+    : String((isObjectDiagnostic && diagnostic.message) || "Unknown Mini-C compiler error.");
+  const marker = `E${index + 1}`;
+  const output = [];
+  if (line > 0 && column > 0) output.push(`[${marker}] [${phase}] ${line}:${column} ${message}`);
+  else if (line > 0) output.push(`[${marker}] [${phase}] ${line}:1 ${message}`);
+  else output.push(`[${marker}] [${phase}] ${message}`);
+
+  const suggestionValue = isObjectDiagnostic ? diagnostic.suggestion : null;
+  if (suggestionValue && typeof suggestionValue === "object") {
+    const suggestionCode = String(suggestionValue.code || "").trim();
+    const suggestionMessage = String(suggestionValue.message || "").trim();
+    const suggestionAction = String(suggestionValue.action || "").trim();
+    if (suggestionCode || suggestionMessage) {
+      const suggestionLabel = suggestionCode ? `suggestion[${suggestionCode}]` : "suggestion";
+      output.push(`    ${suggestionLabel}: ${suggestionMessage || suggestionAction}`);
+    }
+    if (suggestionAction && suggestionAction !== suggestionMessage) {
+      output.push(`    action: ${suggestionAction}`);
+    }
+  } else if (typeof suggestionValue === "string" && suggestionValue.trim().length) {
+    output.push(`    suggestion: ${suggestionValue.trim()}`);
+  }
+
+  const snippet = isObjectDiagnostic && typeof diagnostic.snippet === "string"
+    ? diagnostic.snippet
+    : "";
+  if (snippet.trim().length) {
+    output.push("    snippet:");
+    snippet.split("\n").forEach((lineText) => output.push(`      ${lineText}`));
+  }
+
+  return output.join("\n");
+}
+
+async function buildMiniCOutput(activeFile, sourceText, compilerPreferences) {
+  const sourceName = String(activeFile?.name || "untitled.c");
+  const source = String(sourceText || "");
+  const targetAbi = String(compilerPreferences?.miniCTargetAbi || "o32").toLowerCase() === "o32" ? "o32" : "o32";
+  const subset = String(compilerPreferences?.miniCSubset || "C0-S4").trim() || "C0-S4";
+  const emitComments = compilerPreferences?.miniCEmitScaffoldingComments !== false;
+  const generatedAsmName = deriveMiniCGeneratedAsmName(sourceName);
+  const compiler = (typeof miniCCompilerModule.compile === "function") ? miniCCompilerModule : null;
+  if (!compiler) {
+    const asmLines = [];
+    if (emitComments) {
+      asmLines.push("# mini-c fallback scaffold output");
+      asmLines.push(`# source: ${sourceName}`);
+      asmLines.push(`# target abi: ${targetAbi}`);
+      asmLines.push(`# subset: ${subset}`);
+      asmLines.push("# warning: mini-c compiler module unavailable.");
+      asmLines.push("");
+    }
+    asmLines.push(".text");
+    asmLines.push(".globl main");
+    asmLines.push("main:");
+    asmLines.push("  li $v0, 10");
+    asmLines.push("  syscall");
+    asmLines.push("");
+    const fallbackWarning = "Mini-C compiler module unavailable. Generated fallback scaffold output.";
+    return {
+      ok: true,
+      sourceName,
+      generatedAsmName,
+      targetAbi,
+      subset,
+      asm: asmLines.join("\n"),
+      log: `[mini-c] ${fallbackWarning}\n`,
+      warnings: [fallbackWarning],
+      errors: []
+    };
+  }
+
+  let compileResult = null;
+  try {
+    await ensureMiniCGlobalLibrariesLoaded();
+    const includeSourceMap = collectMiniCIncludeSourceMap();
+    const includeResolver = createMiniCIncludeResolver(sourceName, includeSourceMap);
+    const useLibrarySources = buildMiniCUseLibrarySources(includeSourceMap);
+    compileResult = compiler.compile(source, {
+      sourceName,
+      subset,
+      targetAbi,
+      emitComments,
+      includeResolver,
+      useLibrarySources
+    });
+  } catch (error) {
+    const message = (error && typeof error === "object" && typeof error.message === "string")
+      ? error.message
+      : String(error || "Unknown Mini-C compiler error.");
+    const diagnostic = { message, line: 0, column: 0, phase: "mini-c" };
+    compileResult = {
+      ok: false,
+      sourceName,
+      generatedAsmName,
+      asm: "",
+      subset,
+      targetAbi,
+      logs: [],
+      warnings: [],
+      errors: [diagnostic]
+    };
+  }
+
+  const normalized = compileResult && typeof compileResult === "object" ? compileResult : {};
+  const ok = normalized.ok === true;
+  const warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+  const errors = Array.isArray(normalized.errors) ? normalized.errors : [];
+  const logLines = [];
+  const logs = Array.isArray(normalized.logs) ? normalized.logs : [];
+
+  logs.forEach((entry) => {
+    const line = String(entry || "").trim();
+    if (line) logLines.push(line);
+  });
+
+  if (warnings.length) {
+    if (logLines.length) logLines.push("");
+    logLines.push(`Warnings (${warnings.length}):`);
+    warnings.forEach((warning, index) => {
+      logLines.push(formatMiniCDiagnosticEntry(warning, index));
+    });
+  }
+
+  if (errors.length) {
+    if (logLines.length) logLines.push("");
+    logLines.push(`Errors (${errors.length}):`);
+    errors.forEach((error, index) => {
+      logLines.push(formatMiniCDiagnosticEntry(error, index));
+    });
+  }
+
+  if (!logLines.length) {
+    logLines.push(ok ? "Mini-C compile succeeded." : "Mini-C compile failed.");
+  }
+
+  return {
+    ok,
+    sourceName: String(normalized.sourceName || sourceName),
+    generatedAsmName: String(normalized.generatedAsmName || generatedAsmName),
+    targetAbi: String(normalized.targetAbi || targetAbi),
+    subset: String(normalized.subset || subset),
+    asm: ok ? String(normalized.asm || "") : "",
+    log: `${logLines.join("\n")}\n`,
+    warnings,
+    errors
+  };
+}
+
+function writeMiniCCompilerOutput(logText = "", asmText = "") {
+  if (refs.miniC?.log) refs.miniC.log.value = String(logText || "");
+  if (refs.miniC?.asm) refs.miniC.asm.value = String(asmText || "");
+  refs.tabs.miniC?.activate?.("panel-mini-c-log");
+}
+
+function revealMiniCCompilerWindow() {
+  const windowId = "window-mini-c";
+  if (typeof windowManager.show === "function") windowManager.show(windowId);
+  if (typeof windowManager.focus === "function") windowManager.focus(windowId);
+}
+
 const commands = {
   newFile() {
+    if (!projectIsOpen()) {
+      void commands.newProject();
+      return;
+    }
+    commands.newSFile();
+  },
+
+  async newProject() {
+    if (runActive) stopRunLoop();
+    const defaultName = normalizeProjectName(projectState?.name || "project");
+    const rawName = await requestTextDialog("New Project", "Project name", defaultName, {
+      confirmLabel: "Create",
+      cancelLabel: "Cancel"
+    });
+    if (rawName == null) return;
+
+    if (projectIsOpen()) {
+      const dirtyFiles = editor.getDirtyFiles();
+      const ok = await confirmCloseDirtyFiles(dirtyFiles, translateText("Create new project?"));
+      if (!ok) return;
+    }
+
+    const requestedName = normalizeProjectName(rawName);
+    const name = resolveUniqueProjectName(requestedName);
+    const exportedLayout = typeof windowManager.exportSavedLayoutState === "function"
+      ? normalizeWindowSessionData(windowManager.exportSavedLayoutState())
+      : null;
+    const desktopLayout = (
+      exportedLayout && String(exportedLayout.layoutMode || "").toLowerCase() === "desktop"
+    ) ? exportedLayout : null;
+    const createdProject = createDefaultProjectData({
+      name,
+      files: [
+        {
+          id: "project-file-c0",
+          path: "src/main.c",
+          source: MINI_C_DEFAULT_TEMPLATE,
+          savedSource: MINI_C_DEFAULT_TEMPLATE
+        },
+        {
+          id: "project-file-asm",
+          path: "src/main.s",
+          source: INITIAL_SOURCE,
+          savedSource: INITIAL_SOURCE
+        }
+      ],
+      activeFileId: "project-file-c0",
+      settings: {
+        ...(store.getState().preferences || preferences)
+      },
+      layout: desktopLayout
+    });
+    const opened = openProjectWorkspace(createdProject, { applySettings: false, applyLayout: false });
+    if (!opened) {
+      postMarsMessage("[error] Failed to create project.");
+      return;
+    }
+    modeController.setMode("c0");
+    windowManager.focus("window-main");
+    editor.focus();
+    if (name !== requestedName) {
+      postMarsMessage("[warn] Project name already exists. Created '{name}' instead.", { name: createdProject.rootPath });
+    }
+    postMarsMessage("Project created: {name}.", { name: createdProject.rootPath });
+  },
+
+  newSFile() {
+    if (!ensureProjectOpenForAction("creating files")) return;
     if (runActive) stopRunLoop();
     const created = editor.createFile({
-      name: "untitled.s",
+      name: "src/untitled.s",
       source: "# new MIPS file\n.text\nmain:\n"
     });
     modeController.setMode("edit");
     windowManager.focus("window-editor");
     editor.focus();
     postMarsMessage("New source buffer created: {name}.", { name: created.name });
+    syncProjectFromEditor(true);
+    scheduleProjectPersist({ syncFromEditor: true });
+  },
+
+  newC0File() {
+    if (!ensureProjectOpenForAction("creating files")) return;
+    if (runActive) stopRunLoop();
+    const created = editor.createFile({
+      name: "src/untitled.c",
+      source: MINI_C_DEFAULT_TEMPLATE
+    });
+    modeController.setMode("edit");
+    windowManager.focus("window-editor");
+    editor.focus();
+    postMarsMessage("New C0 source buffer created: {name}.", { name: created.name });
+    syncProjectFromEditor(true);
+    scheduleProjectPersist({ syncFromEditor: true });
   },
 
   openFileFromDisk() {
@@ -2494,11 +6100,21 @@ const commands = {
     if (runActive) stopRunLoop();
     const selection = await browserStorageManager.openForLoad();
     if (!selection?.file) return;
-    const opened = editor.openFile(selection.file.name, selection.file.source, true);
-    modeController.setMode("edit");
-    windowManager.focus("window-editor");
+    const path = normalizeDiskImportPath(selection.file.name, "untitled.s");
+    const classification = classifyProjectFileContent(path, selection.file.source);
+    if (!classification.ok) {
+      await showUnsupportedProjectFileDialog(path, classification.reason);
+      postMarsMessage("[warn] Skipped unsupported file '{name}'.", { name: path });
+      return;
+    }
+    ensureProjectForIncomingFiles("project");
+    const opened = editor.openFile(path, selection.file.source, true);
+    modeController.syncForFileName?.(opened?.name || path, { activate: true });
+    windowManager.focus("window-main");
     editor.focus();
     postMarsMessage("Opened '{name}' from browser storage.", { name: opened.name });
+    syncProjectFromEditor(true);
+    scheduleProjectPersist({ syncFromEditor: true });
     maybeAssembleAfterOpen();
   },
 
@@ -2509,6 +6125,7 @@ const commands = {
   },
 
   async closeFile() {
+    if (!ensureProjectOpenForAction("closing files")) return;
     if (runActive) stopRunLoop();
     const active = editor.getActiveFile();
     if (active && editor.isActiveDirty()) {
@@ -2522,9 +6139,12 @@ const commands = {
     windowManager.focus("window-editor");
     editor.focus();
     postMarsMessage("Closed '{name}'.", { name: result.closed.name });
+    syncProjectFromEditor(true);
+    scheduleProjectPersist({ syncFromEditor: true });
   },
 
   async closeAllFiles() {
+    if (!ensureProjectOpenForAction("closing files")) return;
     if (runActive) stopRunLoop();
     const dirtyFiles = editor.getDirtyFiles();
     const ok = await confirmCloseDirtyFiles(dirtyFiles, translateText("Close all files?"));
@@ -2535,6 +6155,15 @@ const commands = {
     windowManager.focus("window-editor");
     editor.focus();
     postMarsMessage("Closed {count} file(s).", { count: result.closedCount });
+    syncProjectFromEditor(true);
+    scheduleProjectPersist({ syncFromEditor: true });
+  },
+
+  async closeProject() {
+    if (runActive) stopRunLoop();
+    const closed = await closeProjectWorkspace();
+    if (!closed) return;
+    postMarsMessage("Project closed.");
   },
 
   saveFileToDisk() {
@@ -2636,6 +6265,11 @@ const commands = {
     backstepDepthEstimate = 0;
     clearInputPauseState();
     windowManager.focus("window-text"); windowManager.focus("window-data");
+    const activeSource = editor.getActiveFile();
+    if (activeSource && isMiniCSourceFile(activeSource.name)) {
+      postMarsMessage("[warn] Active file appears to be C0. Use Compile C0 before Assemble.");
+      return;
+    }
 
     const assemblyContext = buildAssemblyContext();
     postMarsSystemLine("{action}: assembling {sources}", {
@@ -2659,6 +6293,68 @@ const commands = {
 
     restoredBackstepFallbackActive = false;
     syncSnapshot(engine.getSnapshot());
+  },
+  async compileC0() {
+    try {
+      if (runActive) stopRunLoop();
+      const active = editor.getActiveFile();
+      if (!active) {
+        postMarsMessage("[warn] No active source file.");
+        return;
+      }
+      if (!isMiniCSourceFile(active.name)) {
+        postMarsMessage("[warn] Active file is not a C0 source (.c/.c0): {name}.", {
+          name: active.name
+        });
+        postMarsMessage("Use 'New C0 File' or open a .c/.c0 file before compiling.");
+        return;
+      }
+
+      const source = String(active.source || "");
+      if (!source.trim()) {
+        postMarsMessage("[warn] C0 source is empty.");
+        return;
+      }
+
+      const currentPreferences = store.getState().preferences || preferences;
+      const output = await buildMiniCOutput(active, source, currentPreferences);
+      miniCCompilerState.lastSourceName = output.sourceName;
+      miniCCompilerState.lastGeneratedAsmName = output.generatedAsmName;
+      miniCCompilerState.lastGeneratedAsm = output.asm;
+      miniCCompilerState.lastCompilerLog = output.log;
+      miniCCompilerState.lastCompiledAt = Date.now();
+      writeMiniCCompilerOutput(output.log, output.asm);
+
+      if (currentPreferences.miniCOpenOutputWindow !== false || output.ok !== true) {
+        revealMiniCCompilerWindow();
+      }
+
+      if (output.ok !== true) {
+        const errorCount = Array.isArray(output.errors) ? output.errors.length : 1;
+        postMarsMessage("Compile C0 failed: {count} error(s).", { count: errorCount });
+        postMarsMessage("[mini-c] Compilation failed for '{name}'.", { name: output.sourceName });
+        (output.errors || []).slice(0, 8).forEach((diagnostic, index) => {
+          postMarsMessage("[mini-c] {entry}", { entry: formatMiniCDiagnosticEntry(diagnostic, index) });
+        });
+        return;
+      }
+
+      postMarsMessage("Compile C0: output generated as '{name}'.", { name: output.generatedAsmName });
+      postMarsMessage("[mini-c] {source} -> {target} ({subset}/{abi})", {
+        source: output.sourceName,
+        target: output.generatedAsmName,
+        subset: output.subset,
+        abi: output.targetAbi.toUpperCase()
+      });
+      if (Array.isArray(output.warnings) && output.warnings.length) {
+        postMarsMessage("[mini-c] Compilation finished with {count} warning(s).", {
+          count: output.warnings.length
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error || "Unknown compile error.");
+      postMarsMessage("[error] Compile C0 failed unexpectedly: {message}", { message });
+    }
   },
   step() {
     modeController.setMode("execute");
@@ -2853,6 +6549,54 @@ const commands = {
     refs.editor.focus();
     refs.editor.select();
   },
+  openMiniCAsmAsFile() {
+    const asm = String(miniCCompilerState.lastGeneratedAsm || "").trim();
+    if (!asm) {
+      postMarsMessage("[warn] No generated Mini-C output to open.");
+      return;
+    }
+    ensureProjectForIncomingFiles("project");
+    const fileName = miniCCompilerState.lastGeneratedAsmName || "program.generated.s";
+    const opened = editor.openFile(fileName, `${miniCCompilerState.lastGeneratedAsm}`, true);
+    modeController.setMode("edit");
+    windowManager.focus("window-editor");
+    editor.focus();
+    postMarsMessage("Opened generated ASM as '{name}'.", { name: opened.name });
+    syncProjectFromEditor(true);
+    scheduleProjectPersist({ syncFromEditor: true });
+  },
+  async copyMiniCAsm() {
+    const asm = String(miniCCompilerState.lastGeneratedAsm || "");
+    if (!asm.trim()) {
+      postMarsMessage("[warn] No generated Mini-C output to copy.");
+      return;
+    }
+    let copied = false;
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        await navigator.clipboard.writeText(asm);
+        copied = true;
+      }
+    } catch {
+      copied = false;
+    }
+    if (!copied && refs.miniC?.asm) {
+      refs.miniC.asm.focus();
+      refs.miniC.asm.select();
+      copied = document.execCommand("copy") === true;
+    }
+    if (copied) postMarsMessage("Generated ASM copied to clipboard.");
+    else postMarsMessage("[warn] Could not copy generated ASM to clipboard.");
+  },
+  clearMiniCOutput() {
+    miniCCompilerState.lastSourceName = "";
+    miniCCompilerState.lastGeneratedAsmName = "";
+    miniCCompilerState.lastGeneratedAsm = "";
+    miniCCompilerState.lastCompilerLog = "";
+    miniCCompilerState.lastCompiledAt = 0;
+    writeMiniCCompilerOutput("", "");
+    postMarsMessage("Mini-C output cleared.");
+  },
   async find() {
     const query = await requestTextDialog("Find", "Find text", "");
     if (!query) return;
@@ -2914,9 +6658,197 @@ const commands = {
   toggleDelayedBranching() { togglePreference("delayedBranching", "Delayed branching"); },
   toggleStrictMarsCompatibility() { togglePreference("strictMarsCompatibility", "Strict MARS 4.5 compatibility mode"); },
   toggleSelfModifyingCode() { togglePreference("selfModifyingCode", "Self-modifying code"); },
+  toggleMiniCOutputWindow() { togglePreference("miniCOpenOutputWindow", "Open Mini-C output window after compile"); },
+  async clearLocalData() {
+    const confirmed = await requestConfirmDialog(
+      "Reset Local Data",
+      translateText("Delete localStorage data and loaded states, then restart with a clean default project?"),
+      {
+        confirmLabel: "Delete and Restart",
+        cancelLabel: "Cancel"
+      }
+    );
+    if (!confirmed) return;
+
+    clearRunTimer();
+    runActive = false;
+    runStopRequested = false;
+    runPausedForInput = false;
+    resumeRunAfterInput = false;
+    messagesPane.clearInputRequest();
+
+    enterResetReloadMode();
+    const removedCount = clearRecoverableLocalStorageData();
+    postMarsMessage("Cleared local data entries: {count}. Restarting...", { count: removedCount });
+    markSkipStartupRecoveryPromptOnce();
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 40);
+  },
+  async manageProjectStates() {
+    if (!ensureProjectOpenForAction("managing state slots")) return;
+    const slotOptions = Array.from({ length: PROJECT_STATE_SLOT_COUNT }, (_entry, index) => {
+      const slot = projectState.states?.[index];
+      const label = slot?.label ? `#${index + 1} - ${slot.label}` : `#${index + 1}`;
+      return {
+        value: String(index + 1),
+        label
+      };
+    });
+    const result = await runDialogForm({
+      title: translateText("Store/Load state"),
+      message: translateText("Manage up to 5 saved state slots for this project."),
+      confirmLabel: translateText("Apply"),
+      cancelLabel: translateText("Cancel"),
+      width: "500px",
+      height: "330px",
+      sections: [
+        {
+          title: translateText("Action"),
+          fields: [
+            {
+              name: "action",
+              label: translateText("Action"),
+              type: "select",
+              value: "store",
+              options: [
+                { value: "store", label: translateText("Store") },
+                { value: "load", label: translateText("Load") }
+              ]
+            },
+            {
+              name: "slot",
+              label: translateText("Slot"),
+              type: "select",
+              value: "1",
+              options: slotOptions
+            },
+            {
+              name: "label",
+              label: translateText("Label"),
+              type: "text",
+              value: ""
+            }
+          ]
+        }
+      ]
+    }, {
+      windowIdPrefix: "window-project-states",
+      left: "230px",
+      top: "130px",
+      width: "500px",
+      height: "330px"
+    });
+    if (!result?.ok) return;
+
+    const values = result.value || {};
+    const action = String(values.action || "store").trim().toLowerCase() === "load" ? "load" : "store";
+    const parsedSlot = Number.parseInt(String(values.slot || "1"), 10);
+    const slotIndex = Math.max(0, Math.min(PROJECT_STATE_SLOT_COUNT - 1, (Number.isFinite(parsedSlot) ? parsedSlot : 1) - 1));
+    if (action === "store") {
+      const snapshot = buildProjectStateSnapshot();
+      if (!snapshot) {
+        postMarsMessage("[warn] Failed to capture project state.");
+        return;
+      }
+      const rawLabel = String(values.label || "").trim();
+      const label = rawLabel || new Date().toLocaleString();
+      if (!Array.isArray(projectState.states)) {
+        projectState.states = Array.from({ length: PROJECT_STATE_SLOT_COUNT }, () => null);
+      }
+      projectState.states[slotIndex] = {
+        label,
+        savedAt: Date.now(),
+        snapshot
+      };
+      persistProjectNow({ syncFromEditor: true });
+      postMarsMessage("State stored in slot {slot}.", { slot: slotIndex + 1 });
+      return;
+    }
+
+    const slot = Array.isArray(projectState.states) ? projectState.states[slotIndex] : null;
+    if (!slot || !slot.snapshot) {
+      postMarsMessage("[warn] Slot {slot} is empty.", { slot: slotIndex + 1 });
+      return;
+    }
+    const loaded = applyProjectStateSnapshot(slot.snapshot);
+    if (!loaded) {
+      postMarsMessage("[error] Failed to load slot {slot}.", { slot: slotIndex + 1 });
+      return;
+    }
+    postMarsMessage("State loaded from slot {slot}.", { slot: slotIndex + 1 });
+  },
+  resetLayout() {
+    if (typeof windowManager.resetBaseLayoutToDefault !== "function") return;
+    windowManager.resetBaseLayoutToDefault();
+    postMarsMessage("Layout reset to default.");
+    scheduleWorkspacePersist();
+    scheduleProjectPersist({ syncFromEditor: false });
+  },
+  saveLayout() {
+    if (typeof windowManager.saveLayoutToStorage !== "function") return;
+    const result = windowManager.saveLayoutToStorage();
+    if (!result?.saved || !result.snapshot) {
+      postMarsMessage("[error] Failed to save layout.");
+      return;
+    }
+    postMarsMessage("Layout saved ({count} window(s)).", {
+      count: Array.isArray(result.snapshot.windows) ? result.snapshot.windows.length : 0
+    });
+    scheduleWorkspacePersist();
+    scheduleProjectPersist({ syncFromEditor: false });
+  },
+  loadLayout() {
+    const supportsLoad = typeof windowManager.loadLayoutFromStorage === "function";
+    const supportsApply = typeof windowManager.applySavedLayoutState === "function";
+    if (!supportsLoad || !supportsApply) return;
+
+    const loaded = windowManager.loadLayoutFromStorage({
+      skipLayoutRefresh: true,
+      skipDesktopPersist: true
+    });
+    if (!loaded?.loaded || !loaded.snapshot) {
+      if (typeof windowManager.resetBaseLayoutToDefault === "function") {
+        windowManager.resetBaseLayoutToDefault();
+      }
+      postMarsMessage("[warn] No saved layout found. Default layout loaded.");
+      scheduleWorkspacePersist();
+      scheduleProjectPersist({ syncFromEditor: false });
+      return;
+    }
+
+    const toolIdsToRestore = Array.from(new Set(
+      loaded.snapshot.windows
+        .filter((entry) => entry && typeof entry === "object" && entry.hidden !== true)
+        .map((entry) => String(entry.toolId || "").trim())
+        .filter(Boolean)
+    ));
+    toolIdsToRestore.forEach((toolId) => toolManager.open(toolId));
+
+    windowManager.applySavedLayoutState(loaded.snapshot, {
+      skipLayoutRefresh: false,
+      skipDesktopPersist: true
+    });
+    if (toolIdsToRestore.length) {
+      window.setTimeout(() => {
+        windowManager.applySavedLayoutState(loaded.snapshot, {
+          skipLayoutRefresh: false,
+          skipDesktopPersist: true
+        });
+        persistWorkspaceSession();
+      }, 420);
+    }
+
+    postMarsMessage("Saved layout loaded ({count} window(s)).", {
+      count: Array.isArray(loaded.snapshot.windows) ? loaded.snapshot.windows.length : 0
+    });
+    scheduleWorkspacePersist();
+    scheduleProjectPersist({ syncFromEditor: false });
+  },
 
   showInterfacePreferences() { openInterfacePreferencesPanel(); },
   showRuntimeMemoryPreferences() { openRuntimeMemoryPreferencesPanel(); },
+  showMiniCCompilerPreferences() { openMiniCCompilerPreferencesPanel(); },
   showLanguagePreferences() { openLanguagePreferencesDialog(); },
   showEditorPreferences() { openEditorPreferencesDialog(); },
   showHighlightingPreferences() { openHighlightingPreferencesDialog(); },
@@ -2951,9 +6883,14 @@ const commands = {
     const entries = typeof windowManager.getWindowEntries === "function"
       ? windowManager.getWindowEntries()
       : [];
-    if (!entries.length) return [];
+    const actions = [
+      { label: "Reset layout", command: "resetLayout" },
+      { label: "Save layout", command: "saveLayout" },
+      { label: "Load layout", command: "loadLayout" }
+    ];
+    if (!entries.length) return actions;
 
-    const nativeOrder = ["window-main", "window-messages", "window-registers"];
+    const nativeOrder = ["window-main", "window-messages", "window-registers", "window-project"];
     const alwaysHiddenIds = new Set(["window-help-doc"]);
 
     const listedEntries = entries.filter((entry) => {
@@ -2962,7 +6899,7 @@ const commands = {
       // For non-base windows, list only when they are actually open.
       return entry.hidden !== true;
     });
-    if (!listedEntries.length) return [];
+    if (!listedEntries.length) return actions;
 
     const fixedOrder = ["window-browser-storage", "window-help", "window-help-about"];
 
@@ -2981,11 +6918,12 @@ const commands = {
       return String(a.title || a.id).localeCompare(String(b.title || b.id));
     });
 
-    return sorted.map((entry) => ({
+    const windowItems = sorted.map((entry) => ({
       label: entry.title || entry.id,
       command: () => commands.revealWindow(entry.id, entry.toolId || ""),
       check: () => entry.hidden !== true
     }));
+    return [...actions, "-", ...windowItems];
   },
 
   getExampleMenuItems() {
@@ -3016,16 +6954,19 @@ const commands = {
   async openExample(example) {
     if (runActive) stopRunLoop();
     try {
+      ensureProjectForIncomingFiles("project");
       const variant = await loadLocalizedExample(example);
       const files = Array.isArray(variant?.files) ? variant.files : [];
       const mainFile = files.find((file) => file.main) || files[0];
       if (!mainFile) throw new Error(translateText("Failed to load file."));
       const openedFiles = files.map((file) => editor.openFile(file.name, file.source, file === mainFile));
       const opened = openedFiles.find((file) => file.name === mainFile.name) || openedFiles[0];
-      modeController.setMode("edit");
+      modeController.syncForFileName?.(opened?.name || mainFile.name, { activate: true });
       windowManager.focus("window-editor");
       editor.focus();
       postMarsMessage("Opened example '{name}'.", { name: opened.name });
+      syncProjectFromEditor(true);
+      scheduleProjectPersist({ syncFromEditor: true });
       maybeAssembleAfterOpen();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -3063,6 +7004,7 @@ getI18nApi()?.subscribe?.(() => {
 });
 
 function persistWorkspaceSession() {
+  if (suppressPersistenceForResetReload) return;
   try {
     const files = editor.getFiles();
     if (!Array.isArray(files) || !files.length) return;
@@ -3140,6 +7082,7 @@ if (typeof window !== "undefined") {
 }
 
 function scheduleWorkspacePersist() {
+  if (suppressPersistenceForResetReload) return;
   if (persistTimer !== null) window.clearTimeout(persistTimer);
   persistTimer = window.setTimeout(() => {
     persistTimer = null;
@@ -3153,6 +7096,27 @@ store.subscribe((state) => {
   lastTrackedActiveId = state.activeFileId;
   lastTrackedSource = state.sourceCode;
   scheduleWorkspacePersist();
+
+  const nextSignature = getProjectTreePathSignature(
+    (Array.isArray(state.files) ? state.files : [])
+      .map((file) => ({ path: String(file?.name || ""), updatedAt: 0 }))
+  );
+  const nextActivePath = String(state.fileName || "");
+  const structureChanged = nextSignature !== lastObservedProjectFileSignature
+    || nextActivePath !== lastObservedProjectActivePath;
+  lastObservedProjectFileSignature = nextSignature;
+  lastObservedProjectActivePath = nextActivePath;
+
+  if (projectIsOpen()) {
+    if (structureChanged) {
+      syncProjectFromEditor(true);
+    }
+    scheduleProjectPersist({ syncFromEditor: true });
+  } else {
+    if (!structureChanged) return;
+    renderProjectTree(true);
+    scheduleProjectPersist({ syncFromEditor: false });
+  }
 });
 
 refs.buttons.newFile.addEventListener("click", commands.newFile);
@@ -3161,12 +7125,16 @@ refs.buttons.save.addEventListener("click", commands.saveFile);
 refs.buttons.undo.addEventListener("click", commands.undo);
 refs.buttons.redo.addEventListener("click", commands.redo);
 refs.buttons.assemble.addEventListener("click", commands.assemble);
+if (refs.buttons.compileC0) refs.buttons.compileC0.addEventListener("click", () => { void commands.compileC0(); });
 refs.buttons.go.addEventListener("click", commands.go);
 refs.buttons.step.addEventListener("click", commands.step);
 refs.buttons.backstep.addEventListener("click", commands.backstep);
 refs.buttons.reset.addEventListener("click", commands.reset);
 refs.buttons.pause.addEventListener("click", commands.pause);
 refs.buttons.stop.addEventListener("click", commands.stop);
+if (refs.miniC?.openAsm) refs.miniC.openAsm.addEventListener("click", commands.openMiniCAsmAsFile);
+if (refs.miniC?.copyAsm) refs.miniC.copyAsm.addEventListener("click", () => { void commands.copyMiniCAsm(); });
+if (refs.miniC?.clear) refs.miniC.clear.addEventListener("click", commands.clearMiniCOutput);
 
 refs.controls.runSpeedSlider.addEventListener("input", updateRunSpeedLabel);
 refs.controls.runSpeedSlider.addEventListener("change", updateRunSpeedLabel);
@@ -3184,18 +7152,66 @@ fileInput.addEventListener("change", async (event) => {
   if (!(target instanceof HTMLInputElement) || !target.files || !target.files.length) return;
 
   const files = [...target.files];
-  for (let index = 0; index < files.length; index += 1) {
-    const file = files[index];
-    const content = await file.text();
-    const activate = index === files.length - 1;
-    editor.openFile(normalizeFilename(file.name), content, activate);
-    postMarsMessage("Opened '{name}'.", { name: file.name });
+  const descriptorFiles = files.filter((file) => /\.p$/i.test(String(file?.name || "").trim()));
+  if (files.length === 1 && descriptorFiles.length === 1) {
+    const importedProject = await loadProjectDescriptorFromFile(descriptorFiles[0]);
+    if (!importedProject) {
+      await showUnsupportedProjectFileDialog(String(descriptorFiles[0]?.name || "project.p"), "corrupted");
+      postMarsMessage("[warn] Failed to load project descriptor '{name}'.", { name: descriptorFiles[0].name });
+      target.value = "";
+      return;
+    }
+    const opened = openProjectWorkspace(importedProject, {
+      applySettings: true,
+      applyLayout: true
+    });
+    if (opened) {
+      postMarsMessage("Project loaded: {name}.", { name: importedProject.rootPath });
+      target.value = "";
+      return;
+    }
+    postMarsMessage("[warn] Failed to load project descriptor '{name}'.", { name: descriptorFiles[0].name });
+    target.value = "";
+    return;
+  }
+  if (descriptorFiles.length > 0) {
+    postMarsMessage("[warn] Ignored {count} project descriptor file(s). Open .p files separately.", {
+      count: descriptorFiles.length
+    });
   }
 
-  modeController.setMode("edit");
-  windowManager.focus("window-editor");
+  const sourceCandidates = files.filter((file) => !/\.p$/i.test(String(file?.name || "").trim()));
+  const acceptedSources = [];
+  for (let index = 0; index < sourceCandidates.length; index += 1) {
+    const file = sourceCandidates[index];
+    const result = await readSourceFileFromDisk(file);
+    if (!result.ok) {
+      await showUnsupportedProjectFileDialog(result.path || file.name, result.reason);
+      postMarsMessage("[warn] Skipped unsupported file '{name}'.", { name: result.path || file.name });
+      continue;
+    }
+    acceptedSources.push(result);
+  }
+  if (!acceptedSources.length) {
+    target.value = "";
+    renderProjectTree(true);
+    return;
+  }
+
+  ensureProjectForIncomingFiles("project");
+  for (let index = 0; index < acceptedSources.length; index += 1) {
+    const sourceFile = acceptedSources[index];
+    const activate = index === acceptedSources.length - 1;
+    editor.openFile(sourceFile.path, sourceFile.source, activate);
+    postMarsMessage("Opened '{name}'.", { name: sourceFile.path });
+  }
+
+  modeController.syncForFileName?.(editor.getActiveFile()?.name || "", { activate: true });
+  windowManager.focus("window-main");
   editor.focus();
-  if (store.getState().preferences.assembleOnOpen) commands.assemble();
+  syncProjectFromEditor(true);
+  scheduleProjectPersist({ syncFromEditor: true });
+  if (store.getState().preferences.assembleOnOpen) maybeAssembleAfterOpen();
   target.value = "";
 });
 executePane.onToggleBreakpoint((address) => {
@@ -3275,6 +7291,7 @@ window.addEventListener("keydown", async (event) => {
 
   if (event.key === "F1") { event.preventDefault(); void commands.helpHub(); }
   if (event.key === "F3") { event.preventDefault(); void commands.assemble(); }
+  if (event.key === "F4") { event.preventDefault(); void commands.compileC0(); }
   if (event.key === "F5") { event.preventDefault(); void commands.go(); }
   if (event.key === "F7") { event.preventDefault(); void commands.step(); }
   if (event.key === "Escape") {
@@ -3283,30 +7300,60 @@ window.addEventListener("keydown", async (event) => {
 });
 
 function handleBeforeUnload(event) {
+  if (suppressPersistenceForResetReload || allowPageUnload) return;
   persistWorkspaceSession();
-  if (allowPageUnload) return;
   if (!editor.hasDirtyFiles()) return;
   event.preventDefault();
   event.returnValue = "";
 }
 
+function handlePageHidePersist() {
+  if (suppressPersistenceForResetReload || allowPageUnload) return;
+  persistWorkspaceSession();
+}
+
+function handleVisibilityPersist() {
+  if (document.visibilityState !== "hidden") return;
+  if (suppressPersistenceForResetReload || allowPageUnload) return;
+  persistWorkspaceSession();
+}
+
+function handlePeriodicPersist() {
+  if (suppressPersistenceForResetReload || allowPageUnload) return;
+  persistWorkspaceSession();
+}
+
 window.addEventListener("beforeunload", handleBeforeUnload);
 window.onbeforeunload = handleBeforeUnload;
-window.addEventListener("pagehide", persistWorkspaceSession);
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "hidden") persistWorkspaceSession();
-});
+window.addEventListener("pagehide", handlePageHidePersist);
+document.addEventListener("visibilitychange", handleVisibilityPersist);
 window.setInterval(() => {
-  persistWorkspaceSession();
+  handlePeriodicPersist();
 }, SESSION_PERSIST_INTERVAL_MS);
 
-applyUiPreferences(preferences);
+const startupPreferences = (
+  projectIsOpen()
+  && projectState.settings
+  && typeof projectState.settings === "object"
+  && Object.keys(projectState.settings).length
+)
+  ? { ...preferences, ...projectState.settings }
+  : preferences;
+if (startupPreferences !== preferences) {
+  applyPreferences(startupPreferences);
+} else {
+  applyUiPreferences(preferences);
+}
 updateRunSpeedLabel();
-if (!restoredSession) {
+if (!restoredSession && !projectIsOpen()) {
   editor.setSource(INITIAL_SOURCE);
 } else {
   editor.refreshView?.();
-  postMarsMessage("Workspace restored ({count} file(s)).", { count: restoredSession.files.length });
+  if (restoredSession?.files?.length) {
+    postMarsMessage("Workspace restored ({count} file(s)).", { count: restoredSession.files.length });
+  } else if (projectIsOpen()) {
+    postMarsMessage("Project loaded: {name}.", { name: projectState.rootPath });
+  }
 }
 
 const restoredWindowState = normalizeWindowSessionData(restoredSession?.windowState);
@@ -3350,14 +7397,81 @@ if (restoredWindowState && typeof windowManager.applySessionWindowState === "fun
   }
 }
 
+const startupSavedLayout = typeof windowManager.loadLayoutFromStorage === "function"
+  ? windowManager.loadLayoutFromStorage({
+      skipLayoutRefresh: true,
+      skipDesktopPersist: true
+    })
+  : { loaded: false, snapshot: null };
+if (startupSavedLayout?.loaded && startupSavedLayout.snapshot && typeof windowManager.applySavedLayoutState === "function") {
+  const toolIdsToRestoreFromLayout = Array.from(new Set(
+    startupSavedLayout.snapshot.windows
+      .filter((entry) => entry && typeof entry === "object" && entry.hidden !== true)
+      .map((entry) => String(entry.toolId || "").trim())
+      .filter(Boolean)
+  ));
+  toolIdsToRestoreFromLayout.forEach((toolId) => {
+    toolManager.open(toolId);
+  });
+  windowManager.applySavedLayoutState(startupSavedLayout.snapshot, {
+    skipLayoutRefresh: false,
+    skipDesktopPersist: true
+  });
+  if (toolIdsToRestoreFromLayout.length) {
+    window.setTimeout(() => {
+      windowManager.applySavedLayoutState(startupSavedLayout.snapshot, {
+        skipLayoutRefresh: false,
+        skipDesktopPersist: true
+      });
+      persistWorkspaceSession();
+    }, 420);
+  }
+  postMarsMessage("Saved layout loaded ({count} window(s)).", {
+    count: Array.isArray(startupSavedLayout.snapshot.windows) ? startupSavedLayout.snapshot.windows.length : 0
+  });
+} else if (projectState?.layout && typeof windowManager.applySavedLayoutState === "function") {
+  const toolIdsToRestoreFromProjectLayout = extractVisibleToolIds(projectState.layout);
+  toolIdsToRestoreFromProjectLayout.forEach((toolId) => {
+    toolManager.open(toolId);
+  });
+  windowManager.applySavedLayoutState(projectState.layout, {
+    skipLayoutRefresh: false,
+    skipDesktopPersist: true
+  });
+  if (toolIdsToRestoreFromProjectLayout.length) {
+    window.setTimeout(() => {
+      windowManager.applySavedLayoutState(projectState.layout, {
+        skipLayoutRefresh: false,
+        skipDesktopPersist: true
+      });
+      persistWorkspaceSession();
+    }, 420);
+  }
+  postMarsMessage("Project layout loaded ({count} window(s)).", {
+    count: Array.isArray(projectState.layout.windows) ? projectState.layout.windows.length : 0
+  });
+}
+
 resetMachineSessionTracking();
-modeController.setMode("edit");
+modeController.setMode(projectIsOpen() ? "edit" : "project");
 syncSnapshot(engine.getSnapshot());
 if (restoredSession && store.getState().preferences.assembleOnOpen) {
   maybeAssembleAfterOpen();
 }
 persistWorkspaceSession();
+persistProjectNow({ syncFromEditor: projectIsOpen() });
 showAboutOnFirstVisit();
+if (typeof window !== "undefined") {
+  window.__webMarsRuntimeReady = true;
+  try {
+    window.dispatchEvent(new CustomEvent("webmars:ready"));
+  } catch {
+    window.dispatchEvent(new Event("webmars:ready"));
+  }
+  window.setTimeout(() => {
+    void promptStartupRecoveryChoiceIfNeeded();
+  }, 0);
+}
 
 if (typeof window !== "undefined") {
   window.WebMarsRuntimeDebug = {

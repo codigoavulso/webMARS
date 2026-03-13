@@ -1,32 +1,185 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>webMARS 0.4.0 – MIPS Simulator and Assembler in the Browser</title>
+  <title>webMARS __WEBMARS_APP_VERSION__ - MIPS Simulator and Assembler in the Browser</title>
 
   <meta name="description" content="webMARS is a browser-based MIPS assembler and simulator inspired by MARS 4.5. Write, assemble and run MIPS code directly in your browser.">
   <meta name="keywords" content="MIPS simulator, MIPS assembler, MARS MIPS, MIPS online, MIPS IDE, MIPS assembly simulator">
   <meta name="author" content="codigoavulso">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <meta property="og:title" content="webMARS – MIPS Simulator in the Browser">
+  <meta property="og:title" content="webMARS - MIPS Simulator in the Browser">
   <meta property="og:description" content="Run MIPS assembly code directly in your browser with a MARS-style IDE.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://webmars.nfiles.top/">
   <meta property="og:image" content="https://webmars.nfiles.top/assets/images/screenshot-main.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="webMARS – MIPS Simulator">
+  <meta name="twitter:title" content="webMARS - MIPS Simulator">
   <meta name="twitter:description" content="MIPS assembler and simulator inspired by MARS. Runs directly in your browser.">
   <meta name="twitter:image" content="https://webmars.nfiles.top/assets/images/screenshot-main.png">
 
   <link rel="icon" href="./favicon.ico" type="image/x-icon" />
   <link rel="stylesheet" href="./assets/css/styles.css" />
+  <script src="./assets/js/app-version.js"></script>
+  <style>
+    .webmars-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(1200px 600px at 75% -10%, rgba(91, 139, 202, 0.22), transparent 70%),
+        radial-gradient(900px 600px at -10% 110%, rgba(65, 118, 186, 0.22), transparent 65%),
+        linear-gradient(180deg, #f6f9fd, #e7eef6);
+      transition: opacity 220ms ease, visibility 220ms ease;
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .webmars-loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .webmars-loader-card {
+      width: min(92vw, 430px);
+      border: 1px solid #9bb0c8;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 18px 55px rgba(34, 62, 96, 0.2);
+      padding: 18px 18px 14px;
+      color: #17395a;
+      font: 500 14px/1.45 "Segoe UI", "Tahoma", sans-serif;
+    }
+
+    .webmars-loader-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .webmars-loader-spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(52, 105, 173, 0.28);
+      border-top-color: #356baa;
+      animation: webmarsSpin 1s linear infinite;
+      flex: 0 0 auto;
+    }
+
+    .webmars-loader-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1f4c77;
+    }
+
+    .webmars-loader-text {
+      margin: 0;
+      color: #2b4b6d;
+    }
+
+    @keyframes webmarsSpin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 <body>
+  <div id="webmars-loader" class="webmars-loader" aria-live="polite" aria-busy="true">
+    <div class="webmars-loader-card">
+      <div class="webmars-loader-head">
+        <span class="webmars-loader-spinner" aria-hidden="true"></span>
+        <h1 id="webmars-loader-title" class="webmars-loader-title">Loading webMARS</h1>
+      </div>
+      <p id="webmars-loader-text" class="webmars-loader-text">Preparing modules...</p>
+    </div>
+  </div>
+
   <div id="app"></div>
-  <script src="./assets/js/app.bundle.js"></script>
+
+  <script>
+    (function bootstrapWebMars() {
+      const APP_BUNDLE_SRC = "./assets/js/app.bundle.js";
+      const SPLASH_MAX_MS = 4500;
+      const loader = document.getElementById("webmars-loader");
+      const loaderTitle = document.getElementById("webmars-loader-title");
+      const loaderText = document.getElementById("webmars-loader-text");
+      const appRoot = document.getElementById("app");
+      let appScriptLoading = false;
+      let loaderHidden = false;
+      let splashTimer = null;
+
+      function setLoaderText(message) {
+        if (loaderText) loaderText.textContent = String(message || "");
+      }
+
+      function setLoaderTitle(message) {
+        if (loaderTitle) loaderTitle.textContent = String(message || "");
+      }
+
+      function hideLoader() {
+        if (loaderHidden || !(loader instanceof HTMLElement)) return;
+        loaderHidden = true;
+        if (splashTimer !== null) {
+          window.clearTimeout(splashTimer);
+          splashTimer = null;
+        }
+        loader.classList.add("hidden");
+        window.setTimeout(() => loader.remove(), 260);
+      }
+
+      function loadAppBundle() {
+        if (appScriptLoading) return;
+        appScriptLoading = true;
+        setLoaderTitle("Loading webMARS");
+        setLoaderText("Downloading modules and initializing interface...");
+
+        const script = document.createElement("script");
+        script.src = APP_BUNDLE_SRC;
+        script.async = false;
+        script.onerror = () => {
+          setLoaderTitle("Load error");
+          setLoaderText("Failed to load application modules. Check browser console for details.");
+        };
+        document.body.appendChild(script);
+      }
+
+      window.addEventListener("webmars:ready", () => {
+        hideLoader();
+      }, { once: true });
+      window.addEventListener("load", () => {
+        if (loaderHidden) return;
+        window.setTimeout(hideLoader, 200);
+      }, { once: true });
+      window.addEventListener("error", () => {
+        if (loaderHidden) return;
+        hideLoader();
+      });
+      if (appRoot instanceof HTMLElement) {
+        const observer = new MutationObserver(() => {
+          if (appRoot.childElementCount > 0) {
+            window.setTimeout(hideLoader, 80);
+            observer.disconnect();
+          }
+        });
+        observer.observe(appRoot, { childList: true });
+      }
+      splashTimer = window.setTimeout(() => {
+        if (loaderHidden) return;
+        setLoaderText("Continuing startup...");
+        hideLoader();
+      }, SPLASH_MAX_MS);
+      loadAppBundle();
+    })();
+  </script>
 </body>
 </html>
-

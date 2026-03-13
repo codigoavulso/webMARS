@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS = {
   maxMessageCharacters: 200_000,
   maxErrors: 200,
   maxBacksteps: 2000,
-  fileExtensions: ["asm", "s"],
+  fileExtensions: ["asm", "s", "c", "c0"],
   asciiNonPrint: "."
 };
 

@@ -1,0 +1,74 @@
+webMARS Mini-C TODO por Subset (baseado no report CMU)
+Data: 2026-03-12
+
+S0
+|- Estado
+|  |- [x] Nucleo int + funcoes + comandos base.
+|  `- [x] Operadores arit/bitwise/shift/comparacao base.
+|
+`- Falta fechar
+   |- [ ] Ternario (? :).
+   |- [ ] assert(e) como comando de linguagem.
+   |- [ ] Ponteiros (t*, NULL, deref, lvalue *lv).
+   |- [ ] Structs/typedef (inclui . e ->).
+   |- [ ] alloc/alloc_array.
+   |- [ ] Bounds checking runtime de arrays.
+   `- [ ] Contratos/anotacoes (\result, \old, \length, requires/ensures/invariant).
+
+S1
+|- Estado
+|  |- [x] Intrinsecos S1 funcionais.
+|  `- [x] #use <lib> e #use "file" funcionais (com gate de subset).
+|
+`- Melhorias
+   |- [ ] Bibliotecas padrao reais para #use (além de stub/builtin minimo).
+   `- [ ] Include path/politica de resolucao mais completa.
+
+S2
+|- Estado
+|  |- [x] for / break / continue.
+|  |- [x] ++/-- (pre e pos) com gate S2.
+|  `- [x] Restricoes negativas cobertas na suite.
+|
+`- Melhorias
+   `- [ ] Mais casos extremos de loops aninhados em regressao.
+
+S3
+|- Estado
+|  |- [x] Arrays locais/globais webMARS.
+|  |- [x] Multidimensionais, init em lista, passing para funcoes.
+|  `- [x] Compatibilidade de shape em params.
+|
+`- Falta fechar
+   |- [ ] alloc_array com semantica C0.
+   |- [ ] Bounds checking runtime (alinhado ao C0 academico).
+   `- [ ] \length(e) integrado ao modelo final de contratos.
+
+S4
+|- Estado
+|  |- [x] bool/char/string e intrinsecos associados.
+|  |- [x] Curto-circuito && e ||.
+|  `- [x] Restricao de comparacao direta de strings.
+|
+`- Falta fechar
+   |- [ ] Escapes adicionais de char do C0 (completude total).
+   `- [ ] Default estrito de string conforme referencia C0.
+
+S5
+|- Estado atual
+|  `- [ ] Nao definido formalmente no report (ainda sem contrato fechado).
+|
+`- Proposta de escopo
+   |- [ ] Contratos completos (requires/ensures/loop_invariant/@assert).
+   |- [ ] Runtime checks para cumprir o modelo de seguranca C0.
+   `- [ ] Matriz de conformidade dedicada para recursos de contratos.
+
+S6+
+|- Evolucao avancada (apos C0 base)
+|  |- [ ] C1 15.1 Advanced Control Constructs.
+|  |- [ ] C1 15.2 Generic Pointers.
+|  `- [ ] C1 15.3 Function Pointers.
+|
+`- Qualidade/Release
+   |- [ ] Matriz formal por subset (S0..Sn) por release.
+   `- [ ] Relatorio de conformidade automaticamente gerado (diff vs referencia CMU).

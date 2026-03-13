@@ -7,6 +7,8 @@
   ],
   "examples": [
     { "label": "bitmap_display_bars.asm", "path": "bitmap_display_bars.asm", "category": "Tools" },
+    { "label": "bitmap_ascii.c", "path": "bitmap_ascii.c", "category": "Tools" },
+    { "label": "bitmap_rectangles.c", "path": "bitmap_rectangles.c", "category": "Tools" },
     { "label": "branch_predictor_bht_demo.asm", "path": "branch_predictor_bht_demo.asm", "category": "Tools" },
     { "label": "cache_stride_benchmark.asm", "path": "cache_stride_benchmark.asm", "category": "Tools" },
     { "label": "digital_lab_sim_demo.asm", "path": "digital_lab_sim_demo.asm", "category": "Tools" },
@@ -23,6 +25,30 @@
     { "label": "bubble_sort_array.asm", "path": "bubble_sort_array.asm", "category": "Learn" },
     { "label": "guess_number.asm", "path": "guess_number.asm", "category": "Learn" },
     { "label": "hello_world_runio.asm", "path": "hello_world_runio.asm", "category": "Learn" },
+    {
+      "label": "abi_stack_heap_demo.c",
+      "path": "abi_stack_heap_demo.c",
+      "category": "Learn",
+      "languages": ["en", "pt", "es"]
+    },
+    {
+      "label": "stdio_console_basics.c",
+      "path": "stdio_console_basics.c",
+      "category": "Learn",
+      "languages": ["en", "pt", "es"]
+    },
+    {
+      "label": "stdio_line_parse.c",
+      "path": "stdio_line_parse.c",
+      "category": "Learn",
+      "languages": ["en", "pt", "es"]
+    },
+    {
+      "label": "stdio_file_roundtrip.c",
+      "path": "stdio_file_roundtrip.c",
+      "category": "Learn",
+      "languages": ["en", "pt", "es"]
+    },
     {
       "label": "multi_file_number_analyzer.asm",
       "path": "learn/multi_file_number_analyzer/main.asm",

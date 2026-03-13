@@ -1,0 +1,64 @@
+void bitmap_set_base_address(int baseAddress) {
+  if (baseAddress == 0) {
+    return;
+  }
+}
+
+int bitmap_get_base_address(void) {
+  return 268500992;
+}
+
+int* bitmap_framebuffer_base(void) {
+  return (int*)268500992;
+}
+
+int bitmap_point_in_bounds(int x, int y, int cols, int rows) {
+  if (x < 0) return 0;
+  if (y < 0) return 0;
+  if (x >= cols) return 0;
+  if (y >= rows) return 0;
+  return 1;
+}
+
+void bitmap_put_pixel(int x, int y, int cols, int rows, int color) {
+  if (bitmap_point_in_bounds(x, y, cols, rows) == 0) return;
+  int* fb = bitmap_framebuffer_base();
+  fb[y * cols + x] = color;
+}
+
+void bitmap_fill_rect(int x, int y, int width, int height, int cols, int rows, int color) {
+  if (width <= 0) return;
+  if (height <= 0) return;
+  int x0 = x;
+  int y0 = y;
+  int x1 = x + width;
+  int y1 = y + height;
+  if (x0 < 0) x0 = 0;
+  if (y0 < 0) y0 = 0;
+  if (x1 > cols) x1 = cols;
+  if (y1 > rows) y1 = rows;
+  if (x0 >= x1) return;
+  if (y0 >= y1) return;
+  int* fb = bitmap_framebuffer_base();
+  int span = x1 - x0;
+  int yy = y0;
+  while (yy < y1) {
+    int index = yy * cols + x0;
+    int remaining = span;
+    while (remaining >= 4) {
+      fb[index] = color;
+      fb[index + 1] = color;
+      fb[index + 2] = color;
+      fb[index + 3] = color;
+      index = index + 4;
+      remaining = remaining - 4;
+    }
+    while (remaining > 0) {
+      fb[index] = color;
+      index = index + 1;
+      remaining = remaining - 1;
+    }
+    yy = yy + 1;
+  }
+}
+

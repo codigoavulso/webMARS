@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "libraries": [
+    {
+      "name": "stdio",
+      "path": "stdio.h"
+    },
+    {
+      "name": "bitmap_rect",
+      "path": "bitmap_rect.c0"
+    },
+    {
+      "name": "bitmap_ascii",
+      "path": "bitmap_ascii.c0"
+    }
+  ]
+}

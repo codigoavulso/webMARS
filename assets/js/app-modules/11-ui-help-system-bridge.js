@@ -9,6 +9,8 @@ function createHelpSystem(refs, messagesPane, windowManager) {
       ${body}
     </article>`;
   const renderParagraph = (message) => `<p>${escapeHtml(translateText(message))}</p>`;
+  const appVersion = String((typeof window !== "undefined" ? window.WebMarsAppVersion?.version : "") || "").trim();
+  const helpBrandTitle = appVersion ? `webMARS ${appVersion}` : "webMARS";
   const ABOUT_INFO_PAGE_PATH = "./help/info.html";
   const groups = [
     {
@@ -101,7 +103,7 @@ function createHelpSystem(refs, messagesPane, windowManager) {
   win.style.height = "732px";
   win.innerHTML = `
     <div class="window-titlebar">
-      <span class="window-title" id="help-title">webMARS 0.3 Help</span>
+      <span class="window-title" id="help-title">${helpBrandTitle} Help</span>
       <div class="window-controls">
         <button class="win-btn" data-win-action="min" type="button">_</button>
         <button class="win-btn" data-win-action="max" type="button">[]</button>
@@ -204,10 +206,7 @@ function createHelpSystem(refs, messagesPane, windowManager) {
   const getGroup = (groupId) => groups.find((group) => group.id === groupId) || groups[0];
   const getPage = (group, pageId) => group.pages.find((page) => page.id === pageId) || group.pages[0];
   const updateTitle = (group, page) => {
-    titleNode.textContent = translateText("webMARS 0.3 [{groupLabel} / {pageLabel}]", {
-      groupLabel: translateText(group.label),
-      pageLabel: translateText(page.label)
-    });
+    titleNode.textContent = `${helpBrandTitle} [${translateText(group.label)} / ${translateText(page.label)}]`;
   };
 
   function cleanupView() {
