@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>webMARS – Technical Changelog</title>
+  <title>webMARS â€“ Technical Changelog</title>
   <style>
     body {
       margin: 0;
@@ -90,9 +90,31 @@
   </style>
 </head>
 <body>
-  <h1>webMARS · changelog</h1>
+  <h1>webMARS Â· changelog</h1>
   <p class="subtitle">https://github.com/codigoavulso/webMARS/</p>
  
+  <!-- __WEBMARS_APP_VERSION__ (2026) -->
+  <section class="release">
+    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-13</span></div>
+    <div class="release-body">
+      <h3>Mini-C Compiler (C0 S0-S4) Integrated</h3>
+      <ul>
+        <li>Implemented and integrated the Mini-C compiler pipeline with incremental C0 subsets from <code>S0</code> to <code>S4</code>.</li>
+        <li>Added parser/type-check/codegen coverage for core language features used in teaching and tooling workflows: expressions, control flow, functions, arrays, pointers, and project-level multi-file flows.</li>
+        <li>Expanded native and project libraries integration, including <code>#use</code> resolution through global <code>libs/</code> and project sources.</li>
+        <li>Improved diagnostics and output usability, with cleaner compile output and better generated ASM inspection flow.</li>
+      </ul>
+
+      <h3>UI Renewal and Workflow Modernization</h3>
+      <ul>
+        <li>Main workflow reorganized around project-first operation, with dedicated tabs for <code>Project</code>, <code>C0</code>, <code>Assembly</code>, and <code>Execute</code>.</li>
+        <li>Project explorer evolved to a practical tree workflow (expand/collapse, rename, delete with confirmation, drag/drop move and cross-project copy behaviors).</li>
+        <li>Layout management matured with save/load/reset options, better clamp/snap handling between base windows, and safer desktop restore behavior.</li>
+        <li>Startup and recovery UX were reworked (lightweight splash + local data recovery flow), with clear local data/reset controls in Settings.</li>
+      </ul>
+    </div>
+  </section>
+
   <!-- 0.4.2 (2026) -->
   <section class="release">
     <div class="release-header"><span>v0.4.2</span><span>2026-03-12</span></div>
@@ -230,14 +252,14 @@
     <div class="release-body">
       <h3>Runtime limits, examples manifest hardening & WASM-ready core bootstrap</h3>
       <ul>
-        <li>Added settings dialog <code>Settings &gt; Uso máximo de Memória...</code> to configure two runtime caps in a single prompt: memory budget (GB) and max backsteps.</li>
+        <li>Added settings dialog <code>Settings &gt; Uso mÃ¡ximo de MemÃ³ria...</code> to configure two runtime caps in a single prompt: memory budget (GB) and max backsteps.</li>
         <li>New persisted preferences: <code>maxMemoryGb</code> (default 2) and <code>maxBacksteps</code> (default 100), wired directly into engine settings.</li>
         <li>Engine memory writes now enforce <code>maxMemoryBytes</code>; over-limit allocations raise a controlled runtime error instead of runaway growth.</li>
         <li>Backstep history pruning now obeys dynamic limits during preference changes and supports zero-history mode.</li>
         <li>Example loading now trusts only <code>examples/examples.json</code>; removed server-dependent directory autodiscovery to guarantee deterministic menus on all hosts.</li>
         <li>Switched runtime engine bootstrap to <code>createMarsEngine()</code> factory (JS fallback by default, WASM selectable via backend setting).</li>
         <li>Introduced <code>00-core-wasm-bridge.js</code> with <code>window.WebMarsWasmCore</code> API (<code>init</code>, <code>registerFactory</code>, <code>createEngineSync</code>) to support future C++/WebAssembly core migration without refactoring UI/runtime modules.</li>
-        <li>Added no-interaction rendering mode in max speed: UI highlights and auto-scroll are disabled while running at “Run speed at max (no interaction)” to reduce layout thrash and keep the browser responsive.</li>
+        <li>Added no-interaction rendering mode in max speed: UI highlights and auto-scroll are disabled while running at â€œRun speed at max (no interaction)â€ to reduce layout thrash and keep the browser responsive.</li>
         <li>Run loop tuning for responsiveness: smaller unlimited batches, tighter cooperative time budget, and throttled UI sync in non-interactive mode.</li>
         <li>Initial C++ hotpath module scaffold added (<code>web/wasm/core_hotpath.cpp</code>) plus browser loader <code>00-core-wasm-hotpath.js</code> and build script <code>node wasm/build-wasm-core.mjs</code> (Emscripten).</li>
         <li>Updated bootstrap module order in <code>app.bundle.js</code> to load WASM bridge before UI/runtime.</li>
@@ -251,10 +273,10 @@
     <div class="release-body">
       <h3>Documentation, onboarding & final parity</h3>
       <ul>
-        <li>First‑visit “About” dialog and improved example discovery (nested directories).</li>
-        <li>Full support for all MARS 4.5 pseudo‑instructions and exception codes.</li>
+        <li>Firstâ€‘visit â€œAboutâ€ dialog and improved example discovery (nested directories).</li>
+        <li>Full support for all MARS 4.5 pseudoâ€‘instructions and exception codes.</li>
         <li>Memory configuration presets (<code>MEMORY_CONFIG_PRESETS</code>) and dynamic exception handler address.</li>
-        <li>Core feature parity achieved: all syscalls, coprocessors, macros, and the complete MIPS‑32 instruction set (excluding some privileged).</li>
+        <li>Core feature parity achieved: all syscalls, coprocessors, macros, and the complete MIPSâ€‘32 instruction set (excluding some privileged).</li>
       </ul>
     </div>
   </section>
@@ -266,8 +288,8 @@
       <h3>Performance & UI polishing</h3>
       <ul>
         <li>Run loop now uses <code>requestAnimationFrame</code> for batched DOM updates, reducing jank.</li>
-        <li>Snapshot diffing optimized: only changed registers/memory are re‑rendered.</li>
-        <li>“Unsaved changes” guard on page close (<code>beforeunload</code>) and tab refresh.</li>
+        <li>Snapshot diffing optimized: only changed registers/memory are reâ€‘rendered.</li>
+        <li>â€œUnsaved changesâ€ guard on page close (<code>beforeunload</code>) and tab refresh.</li>
         <li>Workspace session automatically persisted to localStorage (<code>SESSION_STORAGE_KEY</code>).</li>
       </ul>
     </div>
@@ -293,7 +315,7 @@
     <div class="release-body">
       <h3>Coprocessor 0/1 & exception handling</h3>
       <ul>
-        <li>Full COP0 register set (<code>vaddr</code>, <code>status</code>, <code>cause</code>, <code>epc</code>) and COP1 floating‑point registers.</li>
+        <li>Full COP0 register set (<code>vaddr</code>, <code>status</code>, <code>cause</code>, <code>epc</code>) and COP1 floatingâ€‘point registers.</li>
         <li>FPU instructions: <code>add.s</code>, <code>mul.d</code>, <code>cvt.w.s</code>, <code>movf</code>, condition flags.</li>
         <li><code class="func">raiseException()</code> injects exceptions and redirects to handler (if present) or halts.</li>
         <li>Added <code>eret</code> instruction and exception handler address configuration.</li>
@@ -308,7 +330,7 @@
       <h3>Data segment navigation & memory views</h3>
       <ul>
         <li><code class="func">createExecutePane()</code> now renders a paginated data table with base address selection (<code>.data</code>, heap, stack, <code>$gp</code>).</li>
-        <li>Memory words cached in <code>memoryWords</code> map for fast look‑up.</li>
+        <li>Memory words cached in <code>memoryWords</code> map for fast lookâ€‘up.</li>
         <li>Navigation buttons and ASCII/hex/decimal formatting options.</li>
         <li>Automatic scroll to last written address (<code>lastMemoryWriteAddress</code>).</li>
       </ul>
@@ -322,7 +344,7 @@
       <h3>Run speed control & cooperative loop</h3>
       <ul>
         <li>Speed slider with <code>RUN_SPEED_TABLE</code> (0.05 inst/s to unlimited).</li>
-        <li>Cooperative run loop <code class="func">runLoopTick()</code> with time budgeting, step carrying, and UI sync every 66 ms.</li>
+        <li>Cooperative run loop <code class="func">runLoopTick()</code> with time budgeting, step carrying, and UI sync every 66â€¯ms.</li>
         <li>Play (<code class="func">go</code>), pause, stop commands with proper cancellation.</li>
         <li>Interactive mode shows execution messages, fast mode batches up to 1400 steps.</li>
       </ul>
@@ -349,7 +371,7 @@
     <div class="release-body">
       <h3>MDI window system & layout persistence</h3>
       <ul>
-        <li><code class="func">createWindowManager()</code> provides draggable, resizable, minimizable windows with z‑order stacking.</li>
+        <li><code class="func">createWindowManager()</code> provides draggable, resizable, minimizable windows with zâ€‘order stacking.</li>
         <li>Default desktop with three windows: Main (editor/execute), Registers, Messages.</li>
         <li>Layout state saved as normalized bounds, restored on resize (<code>applyNormalizedBounds</code>).</li>
         <li>Splitter between Text and Data panes in execute view (<code>createExecutePane</code>).</li>
@@ -363,8 +385,8 @@
     <div class="release-body">
       <h3>Syscall I/O and virtual file system</h3>
       <ul>
-        <li>Full <code class="func">executeSyscall()</code> with support for print (1–4), read (5–8), sbrk (9), exit (10), file operations (13–16).</li>
-        <li>In‑memory virtual file system (<code class="func">setVirtualFileBytes()</code>) persisted to localStorage (<code>VFS_STORAGE_KEY</code>).</li>
+        <li>Full <code class="func">executeSyscall()</code> with support for print (1â€“4), read (5â€“8), sbrk (9), exit (10), file operations (13â€“16).</li>
+        <li>Inâ€‘memory virtual file system (<code class="func">setVirtualFileBytes()</code>) persisted to localStorage (<code>VFS_STORAGE_KEY</code>).</li>
         <li>Run I/O panel (<code class="func">createMessagesPane()</code>) with input queue and asynchronous reading via <code>consumeInput()</code>.</li>
         <li>Implemented <code>MIDI</code> syscalls (31,33) using Web Audio API (<code>playMidiTone</code>).</li>
       </ul>
@@ -375,9 +397,9 @@
   <section class="release">
     <div class="release-header"><span>v0.2.1</span><span>2022-07-22</span></div>
     <div class="release-body">
-      <h3>Pseudo‑instructions & macro support</h3>
+      <h3>Pseudoâ€‘instructions & macro support</h3>
       <ul>
-        <li>Extended <code class="func">expandPseudo()</code> to cover all MARS pseudo‑ops: <code>abs</code>, <code>neg</code>, <code>ble</code>, <code>bgt</code>, <code>rol</code>, <code>mul</code>, etc.</li>
+        <li>Extended <code class="func">expandPseudo()</code> to cover all MARS pseudoâ€‘ops: <code>abs</code>, <code>neg</code>, <code>ble</code>, <code>bgt</code>, <code>rol</code>, <code>mul</code>, etc.</li>
         <li>Implemented <code>.macro</code>/<code>.end_macro</code> parsing with argument substitution and unique label generation.</li>
         <li>Added <code>.eqv</code> directive handling and <code class="func">applyEqv()</code> for text substitution.</li>
       </ul>
@@ -388,9 +410,9 @@
   <section class="release">
     <div class="release-header"><span>v0.2.0</span><span>2022-03-10</span></div>
     <div class="release-body">
-      <h3>Multi‑file editing & syntax highlighting</h3>
+      <h3>Multiâ€‘file editing & syntax highlighting</h3>
       <ul>
-        <li><code class="func">setupEditor()</code> creates a full‑featured code editor with gutter, line numbers, and real‑time highlighting.</li>
+        <li><code class="func">setupEditor()</code> creates a fullâ€‘featured code editor with gutter, line numbers, and realâ€‘time highlighting.</li>
         <li>Syntax tokens: registers (<code class="func">editor-token-register</code>), directives, labels, comments, strings.</li>
         <li>Introduced <code class="func">createStore()</code> for central state (files, active file, preferences).</li>
         <li>File tabs with dirty indicators and basic file operations (new, open, save).</li>
@@ -404,7 +426,7 @@
     <div class="release-body">
       <h3>Assembler foundation & directives</h3>
       <ul>
-        <li>Two‑pass assembler inside <code class="func">assemble()</code>: first pass collects labels, second pass generates binary.</li>
+        <li>Twoâ€‘pass assembler inside <code class="func">assemble()</code>: first pass collects labels, second pass generates binary.</li>
         <li>Support for <code>.text</code>, <code>.data</code>, <code>.word</code>, <code>.byte</code> directives via <code class="func">processDataDirective()</code>.</li>
         <li><code class="func">preprocessSourceLines()</code> strips comments and handles simple <code>.include</code>.</li>
         <li>First version of <code class="func">expandPseudo()</code> for <code>nop</code>, <code>move</code>, <code>li</code> (using <code>addiu</code>/<code>ori</code>).</li>
@@ -418,7 +440,7 @@
     <div class="release-body">
       <h3>Core execution engine</h3>
       <ul>
-        <li>Implemented <code class="func">executeInstruction()</code> for R‑type (add, sub, and, or, slt) and I‑type (addi, lw, sw) instructions.</li>
+        <li>Implemented <code class="func">executeInstruction()</code> for Râ€‘type (add, sub, and, or, slt) and Iâ€‘type (addi, lw, sw) instructions.</li>
         <li>Added memory access methods <code class="func">readByte()</code>, <code class="func">writeWord()</code> with alignment checks.</li>
         <li>Introduced <code class="func">forceZeroRegister()</code> to keep <code>$zero</code> at 0 after every instruction.</li>
         <li>Basic program counter flow and halt detection.</li>
@@ -431,7 +453,7 @@
     <div class="release-body">
       <h3>Project foundation</h3>
       <ul>
-        <li>Repository setup and initial prototype: bare‑metal MIPS parser in JavaScript.</li>
+        <li>Repository setup and initial prototype: bareâ€‘metal MIPS parser in JavaScript.</li>
         <li>Experimental <code class="func">tokenizeStatement()</code> and <code class="func">parseImmediate()</code> for basic instruction recognition.</li>
         <li>First version of <code class="func">MarsEngine</code> skeleton with register file (Int32Array) and dummy memory maps.</li>
       </ul>
@@ -439,7 +461,12 @@
   </section>
 
   <p class="footnote">
-    ⚙️ Nélson Ferreira - nels.ferreira@sapo.pt
+    âš™ï¸ NÃ©lson Ferreira - nels.ferreira@sapo.pt
   </p>
+<script src="../../assets/js/app-version.js"></script>
 </body>
 </html>
+
+
+
+

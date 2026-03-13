@@ -1,4 +1,4 @@
-# webMARS v0.4.2
+# webMARS v0.4.3
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -26,19 +26,16 @@ Browser port of MARS MIPS 4.5 (IDE + assembler + simulator), with a desktop/mobi
 - Browser storage for ASM sources (virtual folders, quota control).
 - Session restore (files, machine state, tool windows).
 
-## What's New in v0.4.2
+## What's New in v0.4.3
 
-- UI improvements:
-  - Window snap/drag behavior refined (20 px sticky distance without forced movement grid outside snap zones).
-  - Popup/tool maximize controls normalized and dialog/window sizing behavior polished.
-  - Bitmap Display settings layout compacted and tuned for better default usability.
-- Simulation error fixes:
-  - Runtime controls (`Go`, `Pause`, `Step`, `Backstep`, `Stop`) stabilized across assemble/restore/input-wait flows.
-  - Step-by-step popup input regressions fixed so controls recover correctly after syscall input submission.
-  - Mars Messages / Run I/O output normalization to reduce excessive blank-line noise.
-- Final parity adjustments with MARS MIPS 4.5:
-  - Completed missing settings handlers (`Show Labels Window`, `Program arguments provided to MIPS program`).
-  - Program arguments flow and restore behavior aligned more closely with Java MARS expectations.
+- Mini-C/C0 compiler integration:
+  - Mini-C pipeline integrated with incremental C0 subsets from `S0` to `S4`.
+  - Expanded parser/type-check/codegen coverage for expressions, control flow, functions, arrays and pointers.
+  - Better `#use`-based library flow with global `libs/` and project-level sources.
+- UI renewal and workflow improvements:
+  - Project-first workflow consolidated around `Project`, `C0`, `Assembly` and `Execute`.
+  - Project tree improved with practical file/folder operations and drag/drop project workflows.
+  - Layout/save/load/reset and startup/recovery flows refined for more stable desktop behavior.
 
 ## Compatibility Controls
 
@@ -110,6 +107,7 @@ Reports:
 
 ## Release Line
 
+- `v0.4.3`: Mini-C/C0 compiler (S0-S4) integration + UI renewal and project-first workflow
 - `v0.4.2`: UI polish + simulation runtime bug fixes + final MARS 4.5 parity adjustments
 - `v0.3.7`: initial git baseline
 - `v0.3.8`: core fixes and UI improvements
