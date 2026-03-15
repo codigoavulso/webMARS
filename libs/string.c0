@@ -1,0 +1,113 @@
+#include <stddef.h>
+
+int string_length(string s) {
+  return __wm_string_length(s);
+}
+
+//@requires 0 <= idx && idx < string_length(s);
+char string_charat(string s, int idx) {
+  return __wm_string_charat(s, idx);
+}
+
+//@ensures string_length(\result) == string_length(a) + string_length(b);
+string string_join(string a, string b) {
+  return __wm_string_join(a, b);
+}
+
+//@requires 0 <= start && start <= end && end <= string_length(a);
+//@ensures string_length(\result) == end - start;
+string string_sub(string a, int start, int end) {
+  return __wm_string_sub(a, start, end);
+}
+
+bool string_equal(string a, string b) {
+  return __wm_string_compare(a, b) == 0;
+}
+
+int string_compare(string a, string b) {
+  return __wm_string_compare(a, b);
+}
+
+string string_fromint(int i) {
+  return __wm_string_fromint(i);
+}
+
+string string_frombool(bool b) {
+  if (b) return "true";
+  return "false";
+}
+
+//@requires c != '\0';
+//@ensures string_length(\result) == 1;
+//@ensures string_charat(\result, 0) == c;
+string string_fromchar(char c) {
+  return __wm_string_fromchar(c);
+}
+
+string string_tolower(string s) {
+  return __wm_string_tolower(s);
+}
+
+//@requires 0 <= n && n <= \length(A);
+bool string_terminated(char* A, int n) {
+  return __wm_string_terminated(A, n);
+}
+
+//@ensures \length(\result) >= string_length(s) + 1;
+//@ensures string_terminated(\result, string_length(s) + 1);
+char* string_to_chararray(string s) {
+  return __wm_string_to_chararray(s);
+}
+
+//@requires string_terminated(A, \length(A));
+//@ensures string_length(\result) + 1 <= \length(A);
+string string_from_chararray(char* A) {
+  return __wm_string_from_chararray(A);
+}
+
+//@ensures 0 <= \result && \result <= 127;
+int char_ord(char c) {
+  return (int)c;
+}
+
+//@requires 0 <= n && n <= 127;
+char char_chr(int n) {
+  return __wm_char_chr(n);
+}
+
+size_t strlen(string s) {
+  return string_length(s);
+}
+
+int strcmp(string a, string b) {
+  return string_compare(a, b);
+}
+
+int strncmp(string a, string b, int count) {
+  if (count <= 0) return 0;
+
+  int aLen = string_length(a);
+  int bLen = string_length(b);
+  int index = 0;
+
+  while (index < count) {
+    bool aEnd = index >= aLen;
+    bool bEnd = index >= bLen;
+    if (aEnd || bEnd) {
+      if (aEnd && bEnd) return 0;
+      if (aEnd) return -1;
+      return 1;
+    }
+
+    char left = string_charat(a, index);
+    char right = string_charat(b, index);
+    if (left != right) {
+      if ((int)left < (int)right) return -1;
+      return 1;
+    }
+
+    index = index + 1;
+  }
+
+  return 0;
+}

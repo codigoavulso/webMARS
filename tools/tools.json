@@ -74,6 +74,11 @@
                       "label":  "Screen Magnifier",
                       "script":  "./tools/screen-magnifier.js",
                       "id":  "screen-magnifier"
+                  },
+                  {
+                      "label":  "TTY Device + ANSI Terminal",
+                      "script":  "./tools/tty-ansi-terminal.js",
+                      "id":  "tty-ansi-terminal"
                   }
               ]
 }

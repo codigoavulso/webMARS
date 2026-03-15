@@ -59,7 +59,7 @@ const SUBSET_CASES = [
     id: "s0_struct_typedef_member_access",
     name: "Struct + typedef + member/arrow",
     minSubset: "C0-S0",
-    source: "struct Pair { int x; int y; }; typedef struct Pair Pair; int main(void){ Pair p; p.x=1; p.y=2; Pair* q=alloc(Pair); q->x=p.x; q->y=p.y; return q->x+q->y; }"
+    source: "struct Pair { int x; int y; }; typedef struct Pair* Pair; int main(void){ Pair q=alloc(struct Pair); q->x=1; q->y=2; return q->x+q->y; }"
   },
   {
     id: "s0_contract_annotation_assert",
@@ -77,7 +77,10 @@ const SUBSET_CASES = [
     id: "s1_use_library_directive",
     name: "#use <lib> directive",
     minSubset: "C0-S1",
-    source: "#use <stdio>\nint main(void){ print_int(1); return 0; }"
+    source: "#use <helper>\nint main(void){ return helper(); }",
+    compileOptions: {
+      useLibrarySources: { helper: "int helper(void){ return 9; }" }
+    }
   },
   {
     id: "s1_use_file_directive",
@@ -86,6 +89,19 @@ const SUBSET_CASES = [
     source: "#use \"helper.c0\"\nint main(void){ return helper(); }",
     compileOptions: {
       includeResolver: ({ target }) => (target === "helper.c0" ? "int helper(void){ return 7; }" : null)
+    }
+  },
+  {
+    id: "s1_use_must_precede_declarations",
+    name: "#use must precede declarations",
+    minSubset: "C0-S1",
+    source: "int helper(void){ return 1; }\n#use <stdio>\nint main(void){ return helper(); }",
+    expectedBySubset: {
+      "C0-S0": false,
+      "C0-S1": false,
+      "C0-S2": false,
+      "C0-S3": false,
+      "C0-S4": false
     }
   },
   {
@@ -111,6 +127,12 @@ const SUBSET_CASES = [
     name: "Break and continue",
     minSubset: "C0-S2",
     source: "int main(void){ int i=0; int s=0; while(i<6){ i++; if(i==3) continue; if(i==5) break; s+=i; } return s; }"
+  },
+  {
+    id: "s2_nested_loops_break_continue",
+    name: "Nested loops keep break/continue scoped correctly",
+    minSubset: "C0-S2",
+    source: "int main(void){ int outer=0; int total=0; while(outer<3){ int inner=0; outer++; while(inner<5){ inner++; if(inner==2) continue; if(inner==4) break; total += outer * 10 + inner; } } return total; }"
   },
   {
     id: "s2_break_outside_loop_forbidden",
@@ -155,31 +177,92 @@ const SUBSET_CASES = [
     id: "s3_arrays",
     name: "Local arrays and indexing",
     minSubset: "C0-S3",
-    source: "int main(void){ int a[] = {1,2,3}; a[1]++; return a[0] + a[1] + a[2]; }"
+    source: "int main(void){ int a[] = {1,2,3}; a[1]++; return a[0] + a[1] + a[2]; }",
+    expectedBySubset: {
+      "C0-S0": false,
+      "C0-S1": false,
+      "C0-S2": true,
+      "C0-S3": true,
+      "C0-S4": true
+    }
   },
   {
     id: "s3_array_param",
     name: "Array parameter passing",
     minSubset: "C0-S3",
-    source: "int sum(int xs[], int n){ int i=0; int s=0; while(i<n){ s+=xs[i]; i++; } return s; } int main(void){ int a[] = {4,5,6}; return sum(a,3); }"
+    source: "int sum(int xs[], int n){ int i=0; int s=0; while(i<n){ s+=xs[i]; i=i+1; } return s; } int main(void){ int a[] = {4,5,6}; return sum(a,3); }",
+    expectedBySubset: {
+      "C0-S0": true,
+      "C0-S1": true,
+      "C0-S2": true,
+      "C0-S3": true,
+      "C0-S4": true
+    }
   },
   {
     id: "s3_multidim_local",
     name: "Multidimensional local arrays",
     minSubset: "C0-S3",
-    source: "int main(void){ int m[2][3]={{1,2,3},{4,5,6}}; m[1][2]=m[0][1]+7; return m[1][2]; }"
+    source: "int main(void){ int m[2][3]={{1,2,3},{4,5,6}}; m[1][2]=m[0][1]+7; return m[1][2]; }",
+    expectedBySubset: {
+      "C0-S0": true,
+      "C0-S1": true,
+      "C0-S2": true,
+      "C0-S3": true,
+      "C0-S4": true
+    }
   },
   {
     id: "s3_multidim_param",
     name: "Multidimensional array parameter",
     minSubset: "C0-S3",
-    source: "int sum2(int m[][3], int rows){ int r=0; int c=0; int s=0; while(r<rows){ c=0; while(c<3){ s+=m[r][c]; c++; } r++; } return s; } int main(void){ int m[2][3]={{1,2,3},{4,5,6}}; return sum2(m,2); }"
+    source: "int sum2(int m[][3], int rows){ int r=0; int c=0; int s=0; while(r<rows){ c=0; while(c<3){ s+=m[r][c]; c=c+1; } r=r+1; } return s; } int main(void){ int m[2][3]={{1,2,3},{4,5,6}}; return sum2(m,2); }",
+    expectedBySubset: {
+      "C0-S0": true,
+      "C0-S1": true,
+      "C0-S2": true,
+      "C0-S3": true,
+      "C0-S4": true
+    }
   },
   {
     id: "s3_array_decay_intrinsic_address",
     name: "Array decay to address-like intrinsic parameter",
     minSubset: "C0-S3",
-    source: "int main(void){ int buf[8]; read_string(buf, 8); return 0; }"
+    source: "int main(void){ int buf[8]; read_string(buf, 8); return 0; }",
+    expectedBySubset: {
+      "C0-S0": true,
+      "C0-S1": true,
+      "C0-S2": true,
+      "C0-S3": true,
+      "C0-S4": true
+    }
+  },
+  {
+    id: "s3_multidim_shape_mismatch_rejected",
+    name: "Mismatched multidimensional shape is rejected",
+    minSubset: "C0-S3",
+    source: "int sum2(int m[][3], int rows){ return m[rows-1][2]; } int main(void){ int bad[2][2]={{1,2},{3,4}}; return sum2(bad,2); }",
+    expectedBySubset: {
+      "C0-S0": false,
+      "C0-S1": false,
+      "C0-S2": false,
+      "C0-S3": false,
+      "C0-S4": false
+    }
+  },
+  {
+    id: "s3_array_param_mutates_caller",
+    name: "Array parameter mutation updates caller storage",
+    minSubset: "C0-S3",
+    source: "void bump(int xs[], int n){ int i=0; while(i<n){ xs[i] = xs[i] + 1; i=i+1; } return; } int main(void){ int xs[3]={4,5,6}; bump(xs,3); return xs[0] + xs[1] + xs[2]; }",
+    expectedBySubset: {
+      "C0-S0": true,
+      "C0-S1": true,
+      "C0-S2": true,
+      "C0-S3": true,
+      "C0-S4": true
+    }
   },
   {
     id: "s4_bool_and_string_types",
@@ -192,6 +275,44 @@ const SUBSET_CASES = [
     name: "Intrinsic print_bool",
     minSubset: "C0-S4",
     source: "int main(void){ bool flag=false; print_bool(flag); return 0; }"
+  },
+  {
+    id: "s4_char_escape_set",
+    name: "Full C0 char escape set",
+    minSubset: "C0-S4",
+    source: "int main(void){ char a='\\a'; char b='\\b'; char f='\\f'; char n='\\n'; char r='\\r'; char t='\\t'; char v='\\v'; char q='\\''; char d='\\\"'; char z='\\0'; return a+b+f+n+r+t+v+q+d+z; }"
+  },
+  {
+    id: "s4_string_default_empty",
+    name: "Default string value is empty string",
+    minSubset: "C0-S4",
+    source: "int main(void){ string s; print_string(s); return 0; }"
+  },
+  {
+    id: "s4_string_null_escape_rejected",
+    name: "String literal rejects null escape",
+    minSubset: "C0-S4",
+    source: String.raw`int main(void){ string s="bad\0"; return 0; }`,
+    expectedBySubset: {
+      "C0-S0": false,
+      "C0-S1": false,
+      "C0-S2": false,
+      "C0-S3": false,
+      "C0-S4": false
+    }
+  },
+  {
+    id: "s4_string_direct_compare_rejected",
+    name: "Direct string comparison remains rejected",
+    minSubset: "C0-S4",
+    source: "int main(void){ string a=\"x\"; string b=\"y\"; return a == b; }",
+    expectedBySubset: {
+      "C0-S0": false,
+      "C0-S1": false,
+      "C0-S2": false,
+      "C0-S3": false,
+      "C0-S4": false
+    }
   }
 ];
 
@@ -209,9 +330,19 @@ function runSubsetMatrix() {
       const expectedBySubset = (entry.expectedBySubset && typeof entry.expectedBySubset === "object")
         ? entry.expectedBySubset
         : null;
-      const expectedOk = expectedBySubset && Object.prototype.hasOwnProperty.call(expectedBySubset, subset)
-        ? expectedBySubset[subset] === true
-        : currentLevel >= minLevel;
+      let expectedOk = currentLevel >= minLevel;
+      if (expectedBySubset) {
+        if (Object.prototype.hasOwnProperty.call(expectedBySubset, subset)) {
+          expectedOk = expectedBySubset[subset] === true;
+        } else {
+          for (let i = currentLevel; i >= 0; i -= 1) {
+            const inheritedSubset = SUBSET_ORDER[i];
+            if (!Object.prototype.hasOwnProperty.call(expectedBySubset, inheritedSubset)) continue;
+            expectedOk = expectedBySubset[inheritedSubset] === true;
+            break;
+          }
+        }
+      }
       const result = compiler.compile(entry.source, {
         sourceName: `${entry.id}.${subset.toLowerCase()}.c`,
         subset,

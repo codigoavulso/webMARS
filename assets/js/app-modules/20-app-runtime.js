@@ -7,6 +7,7 @@ const moduleRegistry = (typeof window !== "undefined" ? window.WebMarsModules : 
 const runtimeCoreStoreModule = moduleRegistry.coreStore || {};
 const runtimeSettingsModule = moduleRegistry.runtimeSettings || {};
 const miniCCompilerModule = moduleRegistry.miniCCompiler || {};
+const fileKindsModule = moduleRegistry.fileKinds || {};
 
 const runtimeCreateStore = typeof runtimeCoreStoreModule.createStore === "function"
   ? runtimeCoreStoreModule.createStore
@@ -37,6 +38,11 @@ const MIN_MAX_BACKSTEPS = Number.isFinite(runtimeSettingsModule.MIN_MAX_BACKSTEP
 const MAX_MAX_BACKSTEPS = Number.isFinite(runtimeSettingsModule.MAX_MAX_BACKSTEPS)
   ? runtimeSettingsModule.MAX_MAX_BACKSTEPS
   : 1000000;
+const BACKEND_MODE_JS = String(runtimeSettingsModule.BACKEND_MODE_JS || "js").trim().toLowerCase() === "hybrid" ? "hybrid" : "js";
+const BACKEND_MODE_HYBRID = String(runtimeSettingsModule.BACKEND_MODE_HYBRID || "hybrid").trim().toLowerCase() === "js" ? "js" : "hybrid";
+const DEFAULT_BACKEND_MODE = String(runtimeSettingsModule.DEFAULT_BACKEND_MODE || BACKEND_MODE_JS).trim().toLowerCase() === BACKEND_MODE_HYBRID
+  ? BACKEND_MODE_HYBRID
+  : BACKEND_MODE_JS;
 
 const sanitizeMemoryGb = typeof runtimeSettingsModule.sanitizeMemoryGb === "function"
   ? runtimeSettingsModule.sanitizeMemoryGb
@@ -52,6 +58,14 @@ const sanitizeMaxBacksteps = typeof runtimeSettingsModule.sanitizeMaxBacksteps =
       const parsed = Number.parseInt(String(value ?? ""), 10);
       if (!Number.isFinite(parsed)) return fallback;
       return Math.max(MIN_MAX_BACKSTEPS, Math.min(MAX_MAX_BACKSTEPS, parsed));
+    };
+
+const sanitizeBackendMode = typeof runtimeSettingsModule.sanitizeBackendMode === "function"
+  ? runtimeSettingsModule.sanitizeBackendMode
+  : function sanitizeBackendModeFallback(value, fallback = DEFAULT_BACKEND_MODE) {
+      return String(value || fallback || DEFAULT_BACKEND_MODE).trim().toLowerCase() === BACKEND_MODE_HYBRID
+        ? BACKEND_MODE_HYBRID
+        : BACKEND_MODE_JS;
     };
 
 const memoryGbToBytes = typeof runtimeSettingsModule.memoryGbToBytes === "function"
@@ -98,6 +112,9 @@ runtimeSettings.programArguments = preferences.programArguments;
 runtimeSettings.programArgumentsLine = preferences.programArgumentsText || "";
 runtimeSettings.maxBacksteps = sanitizeMaxBacksteps(preferences.maxBacksteps, DEFAULT_SETTINGS.maxBacksteps);
 runtimeSettings.maxMemoryBytes = memoryGbToBytes(preferences.maxMemoryGb ?? DEFAULT_MEMORY_GB);
+runtimeSettings.assemblerBackendMode = sanitizeBackendMode(preferences.assemblerBackendMode, DEFAULT_BACKEND_MODE);
+runtimeSettings.simulatorBackendMode = sanitizeBackendMode(preferences.simulatorBackendMode, DEFAULT_BACKEND_MODE);
+runtimeSettings.coreBackend = runtimeSettings.simulatorBackendMode === BACKEND_MODE_HYBRID ? "wasm" : "js";
 
 const memoryPresets = (typeof MEMORY_CONFIG_PRESETS === "object" && MEMORY_CONFIG_PRESETS) || {};
 
@@ -139,7 +156,9 @@ function createTransientDialogSystem(windowOptions = {}) {
   const { windowIdPrefix, ...rest } = windowOptions;
   const dialogSystem = createDialogSystem(windowManager, refs.windows.desktop, {
     ...rest,
-    windowId: `${prefix}-${transientDialogCounter}`
+    windowId: prefix === "window-dialog-system"
+      ? prefix
+      : `${prefix}-${transientDialogCounter}`
   });
   transientDialogSystems.add(dialogSystem);
   return dialogSystem;
@@ -187,6 +206,9 @@ const ONLINE_SOURCE_STORAGE_KEY = "mars45-web-online-source-folder-v1";
 const ONLINE_SOURCE_MAX_BYTES = 50 * 1024;
 const PROJECT_STORAGE_KEY = "mars45-web-project-v1";
 const PROJECT_LIBRARY_STORAGE_KEY = "mars45-web-project-library-v1";
+const CLOUD_PROJECT_DOCUMENT_KIND = "webmars-project";
+const CLOUD_PROJECT_DOCUMENT_VERSION = 1;
+const CLOUD_LOCAL_DEV_API_BASE = "http://localhost:5000/api";
 const RESETTABLE_LOCAL_STORAGE_KEYS = Object.freeze([
   SESSION_STORAGE_KEY,
   LEGACY_SESSION_STORAGE_KEY,
@@ -214,7 +236,16 @@ const STARTUP_RECOVERY_SKIP_SESSION_KEY = "mars45-startup-skip-recovery-once-v1"
 const PROJECT_SCHEMA_VERSION = 1;
 const PROJECT_LIBRARY_SCHEMA_VERSION = 1;
 const PROJECT_STATE_SLOT_COUNT = 5;
-const SUPPORTED_PROJECT_FILE_EXTENSIONS = new Set([".asm", ".s", ".c", ".c0", ".h", ".txt"]);
+const C_SOURCE_FILE_EXTENSIONS = normalizeExtensionAliasList(fileKindsModule.cSourceExtensions, [".c", ".c0"]);
+const C_HEADER_FILE_EXTENSIONS = normalizeExtensionAliasList(fileKindsModule.cHeaderExtensions, [".h", ".h0"]);
+const ASM_SOURCE_FILE_EXTENSIONS = normalizeExtensionAliasList(fileKindsModule.asmSourceExtensions, [".s", ".asm", ".mips"]);
+const OPENABLE_TEXT_FILE_EXTENSIONS = normalizeExtensionAliasList(fileKindsModule.openableTextExtensions, [".txt"]);
+const SUPPORTED_PROJECT_FILE_EXTENSIONS = new Set([
+  ...ASM_SOURCE_FILE_EXTENSIONS,
+  ...C_SOURCE_FILE_EXTENSIONS,
+  ...C_HEADER_FILE_EXTENSIONS,
+  ...OPENABLE_TEXT_FILE_EXTENSIONS
+]);
 const DEFAULT_PROJECT_C_TEMPLATE = [
   "int main(void) {",
   "  int n = 5;",
@@ -230,6 +261,13 @@ const DEFAULT_PROJECT_C_TEMPLATE = [
   ""
 ].join("\n");
 const textEncoder = typeof TextEncoder === "function" ? new TextEncoder() : null;
+let cloudApiBase = resolveCloudApiBase();
+let cloudAuthState = "unknown";
+let cloudUser = null;
+let cloudLastError = "";
+let cloudSyncInFlight = false;
+let cloudLastSyncAt = 0;
+let cloudSessionRefreshPromise = null;
 
 function getExperimentalFlags() {
   const scope = typeof window !== "undefined" ? window : globalThis;
@@ -238,6 +276,66 @@ function getExperimentalFlags() {
 
 function isMachineSessionAutosaveEnabled() {
   return getExperimentalFlags().machineSessionAutosave === true;
+}
+
+function resolveDefaultCloudApiBase() {
+  if (typeof window === "undefined" || !window.location) return "/api";
+  const host = String(window.location.hostname || "").trim().toLowerCase();
+  const port = String(window.location.port || "").trim();
+  if ((host === "localhost" || host === "127.0.0.1") && port === "8080") {
+    return CLOUD_LOCAL_DEV_API_BASE;
+  }
+  return "/api";
+}
+
+function resolveCloudApiBase() {
+  const scope = typeof window !== "undefined" ? window : globalThis;
+  const config = (scope && typeof scope.WebMarsCloudConfig === "object" && scope.WebMarsCloudConfig) || {};
+  const configured = String(config.baseUrl || "").trim();
+  const selected = configured || resolveDefaultCloudApiBase();
+  return selected.replace(/\/+$/g, "");
+}
+
+function parseTimestampValue(value, fallback = 0) {
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && numeric > 0) return Math.floor(numeric);
+  const parsed = Date.parse(String(value || ""));
+  return Number.isFinite(parsed) ? Math.floor(parsed) : fallback;
+}
+
+function formatTimestampForDisplay(value) {
+  const timestamp = parseTimestampValue(value, 0);
+  if (!timestamp) return "unknown";
+  try {
+    return new Date(timestamp).toLocaleString();
+  } catch {
+    return String(value || "unknown");
+  }
+}
+
+function describeCloudError(error, fallback = "Cloud request failed.") {
+  if (error && typeof error === "object" && typeof error.message === "string" && error.message.trim()) {
+    return error.message.trim();
+  }
+  return fallback;
+}
+
+function buildCloudStoreState() {
+  return {
+    apiBase: cloudApiBase,
+    authState: cloudAuthState,
+    authenticated: cloudAuthState === "authenticated",
+    user: cloudUser && typeof cloudUser === "object"
+      ? {
+        id: Number(cloudUser.id) || 0,
+        username: String(cloudUser.username || ""),
+        email: String(cloudUser.email || "")
+      }
+      : null,
+    syncInFlight: cloudSyncInFlight === true,
+    lastSyncAt: Number(cloudLastSyncAt) || 0,
+    lastError: String(cloudLastError || "")
+  };
 }
 
 
@@ -294,6 +392,52 @@ function normalizeProjectName(name) {
 function normalizeProjectRootKey(rootPath) {
   return String(rootPath || "").trim().toLowerCase();
 }
+
+function normalizeExtensionAliasList(values, fallback) {
+  const source = Array.isArray(values) && values.length ? values : fallback;
+  return Array.from(new Set(
+    source
+      .map((value) => String(value || "").trim().toLowerCase())
+      .filter(Boolean)
+      .map((value) => (value.startsWith(".") ? value : `.${value}`))
+  ));
+}
+
+function classifyWorkspaceFileFallback(fileName = "") {
+  const extension = getPathExtension(fileName);
+  const cSourceSet = new Set(C_SOURCE_FILE_EXTENSIONS);
+  const cHeaderSet = new Set(C_HEADER_FILE_EXTENSIONS);
+  const asmSourceSet = new Set(ASM_SOURCE_FILE_EXTENSIONS);
+  const textSet = new Set(OPENABLE_TEXT_FILE_EXTENSIONS);
+  const isCSource = cSourceSet.has(extension);
+  const isCHeader = cHeaderSet.has(extension);
+  const isCFamily = isCSource || isCHeader;
+  const isAssemblySource = asmSourceSet.has(extension);
+  const isOpenableText = textSet.has(extension);
+  return {
+    extension,
+    family: isAssemblySource ? "asm" : (isCFamily ? "c" : (isOpenableText ? "text" : "unknown")),
+    isCSource,
+    isCHeader,
+    isCFamily,
+    isAssemblySource,
+    isOpenableText,
+    isSupportedProjectFile: isAssemblySource || isCFamily || isOpenableText
+  };
+}
+
+const classifyWorkspaceFile = typeof fileKindsModule.classifyFileName === "function"
+  ? (fileName = "") => fileKindsModule.classifyFileName(fileName)
+  : classifyWorkspaceFileFallback;
+const isCSourceFile = typeof fileKindsModule.isCSourceFile === "function"
+  ? (fileName = "") => fileKindsModule.isCSourceFile(fileName)
+  : (fileName = "") => classifyWorkspaceFileFallback(fileName).isCSource;
+const isCFamilyFile = typeof fileKindsModule.isCFamilyFile === "function"
+  ? (fileName = "") => fileKindsModule.isCFamilyFile(fileName)
+  : (fileName = "") => classifyWorkspaceFileFallback(fileName).isCFamily;
+const isAssemblySourceFile = typeof fileKindsModule.isAssemblySourceFile === "function"
+  ? (fileName = "") => fileKindsModule.isAssemblySourceFile(fileName)
+  : (fileName = "") => classifyWorkspaceFileFallback(fileName).isAssemblySource;
 
 function getPathExtension(pathValue) {
   const normalized = String(pathValue || "").trim().toLowerCase();
@@ -825,7 +969,8 @@ const store = runtimeCreateStore({
   halted: false,
   running: false,
   preferences,
-  project: buildProjectStoreState(bootstrapProject)
+  project: buildProjectStoreState(bootstrapProject),
+  cloud: buildCloudStoreState()
 });
 
 const editor = setupEditor(refs, store);
@@ -859,6 +1004,9 @@ const toolManager = createToolManager(engine, messagesPane, windowManager, refs.
 const modeController = createModeController(refs, windowManager);
 editor.setActiveFileChangeHandler?.((file) => {
   modeController.syncForFileName?.(file?.name || "");
+  Promise.resolve().then(() => {
+    refreshRuntimeControls();
+  });
 });
 const browserStorageManager = createBrowserStorageManager(refs, windowManager);
 const RUN_SPEED_INDEX_MAX = 40;
@@ -897,7 +1045,7 @@ const RUN_LOOP_UI_SYNC_INTERVAL_MS_FAST = 33;
 const RUN_LOOP_MACHINE_CAPTURE_INTERVAL_MS = 220;
 const RUN_LOOP_MACHINE_FULL_CAPTURE_INTERVAL_MS = 2200;
 const RUN_LOOP_TOOL_SYNC_INTERVAL_MS_NO_INTERACTION = 120;
-const MINI_C_SOURCE_EXTENSION_PATTERN = /\.(c|c0)$/i;
+const MINI_C_SOURCE_EXTENSION_PATTERN = new RegExp(`(${C_SOURCE_FILE_EXTENSIONS.map((extension) => extension.replace(".", "\\.")).join("|")})$`, "i");
 const MINI_C_DEFAULT_TEMPLATE = (typeof miniCCompilerModule.defaultTemplate === "string" && miniCCompilerModule.defaultTemplate.trim())
   ? miniCCompilerModule.defaultTemplate
   : DEFAULT_PROJECT_C_TEMPLATE;
@@ -1280,6 +1428,11 @@ let lastMachinePersistScheduleAt = 0;
 let autosaveBackstepFallbackArmed = false;
 let restoredBackstepFallbackActive = false;
 let persistTimer = null;
+let lastSuccessfulAssemblyContext = null;
+let lastSuccessfulAssemblySelection = {
+  fileId: "",
+  sourceName: ""
+};
 let lastTrackedFilesRef = store.getState().files;
 let lastTrackedActiveId = store.getState().activeFileId;
 let lastTrackedSource = store.getState().sourceCode;
@@ -1314,6 +1467,474 @@ function projectIsOpen() {
 
 function updateProjectStoreState() {
   store.setState({ project: buildProjectStoreState(projectState) });
+}
+
+function updateCloudStoreState() {
+  store.setState({ cloud: buildCloudStoreState() });
+}
+
+function getCloudUserDisplayName(user = cloudUser) {
+  const username = String(user?.username || "").trim();
+  const email = String(user?.email || "").trim();
+  return username || email || "user";
+}
+
+function setCloudSessionState(nextState, user = null, errorMessage = "") {
+  cloudAuthState = String(nextState || "unknown").trim().toLowerCase() || "unknown";
+  cloudUser = user && typeof user === "object" ? { ...user } : null;
+  cloudLastError = String(errorMessage || "");
+  updateCloudStoreState();
+}
+
+function setCloudSyncState(active, errorMessage = "", options = {}) {
+  cloudSyncInFlight = active === true;
+  cloudLastError = String(errorMessage || "");
+  if (options.updateTimestamp === true) {
+    cloudLastSyncAt = Date.now();
+  }
+  updateCloudStoreState();
+}
+
+async function cloudRequestJson(path, options = {}) {
+  const method = String(options.method || "GET").trim().toUpperCase() || "GET";
+  const rawPath = String(path || "").trim();
+  const url = /^https?:\/\//i.test(rawPath) ? rawPath : `${cloudApiBase}${rawPath.startsWith("/") ? rawPath : `/${rawPath}`}`;
+  const headers = {
+    Accept: "application/json",
+    ...(options.headers && typeof options.headers === "object" ? options.headers : {})
+  };
+  const hasBody = Object.prototype.hasOwnProperty.call(options, "body");
+  if (hasBody && !Object.keys(headers).some((key) => key.toLowerCase() === "content-type")) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers,
+      credentials: "include",
+      mode: /^https?:\/\//i.test(url) ? "cors" : "same-origin",
+      body: hasBody
+        ? (typeof options.body === "string" ? options.body : JSON.stringify(options.body))
+        : undefined
+    });
+  } catch (error) {
+    throw new Error(`Could not reach cloud service at ${cloudApiBase}. ${describeCloudError(error, "")}`.trim());
+  }
+
+  const rawText = await response.text();
+  let payload = null;
+  try {
+    payload = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    const error = new Error(String(payload?.error || `HTTP ${response.status}`));
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
+  }
+
+  return payload;
+}
+
+async function refreshCloudSession(options = {}) {
+  const silent = options.silent === true;
+  if (cloudSessionRefreshPromise) return cloudSessionRefreshPromise;
+  cloudSessionRefreshPromise = (async () => {
+    try {
+      const payload = await cloudRequestJson("/me");
+      if (payload?.authenticated === true && payload.user && typeof payload.user === "object") {
+        setCloudSessionState("authenticated", payload.user, "");
+        if (!silent) {
+          postMarsMessage("Cloud session ready: {name}.", { name: getCloudUserDisplayName(payload.user) });
+        }
+      } else {
+        setCloudSessionState("anonymous", null, "");
+        if (!silent) {
+          postMarsMessage("[info] Cloud session is not signed in.");
+        }
+      }
+      return buildCloudStoreState();
+    } catch (error) {
+      const message = describeCloudError(error, "Cloud session check failed.");
+      setCloudSessionState("error", null, message);
+      if (!silent) {
+        postMarsMessage("[warn] Cloud session check failed: {message}", { message });
+      }
+      return buildCloudStoreState();
+    } finally {
+      cloudSessionRefreshPromise = null;
+    }
+  })();
+  return cloudSessionRefreshPromise;
+}
+
+function serializeProjectForCloud(project) {
+  const normalized = normalizeProjectData(project);
+  if (!normalized) return null;
+  return {
+    kind: CLOUD_PROJECT_DOCUMENT_KIND,
+    version: CLOUD_PROJECT_DOCUMENT_VERSION,
+    savedAt: new Date().toISOString(),
+    project: normalized
+  };
+}
+
+function deserializeProjectFromCloudDocument(documentPayload, fallbackRootPath = "project.p") {
+  let payload = documentPayload;
+  if (
+    payload
+    && typeof payload === "object"
+    && String(payload.kind || "").trim() === CLOUD_PROJECT_DOCUMENT_KIND
+    && payload.project
+    && typeof payload.project === "object"
+  ) {
+    payload = payload.project;
+  }
+  if (!payload || typeof payload !== "object") return null;
+
+  let files = Array.isArray(payload.files) ? payload.files : [];
+  let activeFileId = String(payload.activeFileId || "");
+  if (!files.length && payload.files && typeof payload.files === "object") {
+    const fileEntries = Object.entries(payload.files);
+    files = fileEntries.map(([path, source], index) => ({
+      id: `cloud-file-${index + 1}`,
+      path,
+      source: String(source ?? ""),
+      savedSource: String(source ?? ""),
+      updatedAt: parseTimestampValue(payload.updatedAt, Date.now()) || Date.now()
+    }));
+    const activePath = typeof payload.activeFile === "string" ? normalizeProjectPath(payload.activeFile, "src/main.s") : "";
+    const activeEntry = activePath
+      ? files.find((entry) => normalizeProjectPath(entry.path, entry.path) === activePath)
+      : files[0];
+    activeFileId = String(activeEntry?.id || files[0]?.id || "");
+  }
+
+  const normalized = normalizeProjectData({
+    ...payload,
+    rootPath: normalizeProjectRootPath(payload.rootPath || fallbackRootPath, payload.name || fallbackRootPath),
+    files,
+    activeFileId
+  });
+  return normalized;
+}
+
+function chooseLatestRemoteProjectByName(projects = []) {
+  const out = new Map();
+  projects.forEach((project) => {
+    const key = String(project?.name || "").trim();
+    if (!key) return;
+    const existing = out.get(key);
+    if (!existing || parseTimestampValue(project.updatedAt, 0) >= parseTimestampValue(existing.updatedAt, 0)) {
+      out.set(key, project);
+    }
+  });
+  return out;
+}
+
+async function listCloudProjects() {
+  const payload = await cloudRequestJson("/projects");
+  return Array.isArray(payload?.projects) ? payload.projects.filter((entry) => entry && typeof entry === "object") : [];
+}
+
+async function loadCloudProject(projectId) {
+  const payload = await cloudRequestJson(`/projects/${projectId}`);
+  return payload?.project && typeof payload.project === "object" ? payload.project : null;
+}
+
+function importCloudProjectRecord(projectRecord, options = {}) {
+  const fallbackRootPath = String(projectRecord?.name || "project.p").trim() || "project.p";
+  const normalized = deserializeProjectFromCloudDocument(projectRecord?.project, fallbackRootPath);
+  if (!normalized) return null;
+
+  const shouldOpen = options.open === true
+    || (projectIsOpen() && isSameProjectRootPath(projectState.rootPath, normalized.rootPath));
+  if (shouldOpen) {
+    const opened = openProjectWorkspace(normalized, {
+      applySettings: false,
+      applyLayout: false
+    });
+    return opened ? normalized : null;
+  }
+
+  upsertProjectInLibrary(normalized, {
+    makeActive: isSameProjectRootPath(projectLibraryState?.activeRootPath || "", normalized.rootPath)
+  });
+  if (!projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", normalized.rootPath)) {
+    projectState = normalized;
+    updateProjectStoreState();
+  }
+  renderProjectTree(true);
+  scheduleProjectPersist({ syncFromEditor: false });
+  return normalized;
+}
+
+async function saveProjectToCloud(project, remoteProjectsByName = null) {
+  const normalized = normalizeProjectData(project);
+  if (!normalized) throw new Error("Active project is not valid.");
+  const document = serializeProjectForCloud(normalized);
+  if (!document) throw new Error("Failed to serialize project for cloud sync.");
+
+  const projectName = normalized.rootPath;
+  const existing = remoteProjectsByName instanceof Map ? remoteProjectsByName.get(projectName) : null;
+  if (existing && Number.isFinite(Number(existing.id))) {
+    const payload = await cloudRequestJson(`/projects/${existing.id}`, {
+      method: "PUT",
+      body: {
+        name: projectName,
+        project: document
+      }
+    });
+    return {
+      created: false,
+      project: payload?.project || null
+    };
+  }
+
+  const payload = await cloudRequestJson("/projects", {
+    method: "POST",
+    body: {
+      name: projectName,
+      project: document
+    }
+  });
+  return {
+    created: true,
+    project: payload?.project || null
+  };
+}
+
+async function chooseCloudProjectId(projects = []) {
+  if (!projects.length) return null;
+  const options = projects.map((project) => ({
+    value: String(project.id),
+    label: `${project.name} (${formatTimestampForDisplay(project.updatedAt)})`
+  }));
+  const result = await runDialogForm({
+    title: translateText("Open Cloud Project"),
+    message: translateText("Choose a remote project to load into the workspace."),
+    confirmLabel: translateText("Open"),
+    cancelLabel: translateText("Cancel"),
+    width: "520px",
+    height: "260px",
+    sections: [
+      {
+        title: translateText("Projects"),
+        fields: [
+          {
+            name: "projectId",
+            label: translateText("Project"),
+            type: "select",
+            value: String(projects[0].id),
+            options
+          }
+        ]
+      }
+    ]
+  }, {
+    windowIdPrefix: "window-dialog-system",
+    left: "240px",
+    top: "130px",
+    width: "520px",
+    height: "260px"
+  });
+  if (!result?.ok) return null;
+  const parsed = Number.parseInt(String(result.value?.projectId || ""), 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function openCloudLoginDialog() {
+  const result = await runDialogForm({
+    title: translateText("Cloud Login"),
+    message: translateText("Sign in to the WebMARS cloud workspace service."),
+    confirmLabel: translateText("Login"),
+    cancelLabel: translateText("Cancel"),
+    width: "460px",
+    height: "300px",
+    sections: [
+      {
+        title: translateText("Credentials"),
+        layout: "table",
+        fields: [
+          {
+            name: "username",
+            label: translateText("Username"),
+            type: "text",
+            value: ""
+          },
+          {
+            name: "password",
+            label: translateText("Password"),
+            type: "password",
+            value: ""
+          }
+        ]
+      }
+    ]
+  }, {
+    windowIdPrefix: "window-dialog-system",
+    left: "250px",
+    top: "130px",
+    width: "460px",
+    height: "300px"
+  });
+  if (!result?.ok) return false;
+
+  const username = String(result.value?.username || "").trim();
+  const password = String(result.value?.password || "");
+  if (!username || !password) {
+    postMarsMessage("[warn] Username and password are required.");
+    return false;
+  }
+
+  try {
+    const payload = await cloudRequestJson("/login", {
+      method: "POST",
+      body: { username, password }
+    });
+    setCloudSessionState("authenticated", payload?.user || { username }, "");
+    postMarsMessage("Cloud login successful: {name}.", { name: getCloudUserDisplayName(payload?.user || { username }) });
+    return true;
+  } catch (error) {
+    const message = describeCloudError(error, "Cloud login failed.");
+    setCloudSessionState("error", null, message);
+    postMarsMessage("[error] Cloud login failed: {message}", { message });
+    return false;
+  }
+}
+
+async function ensureCloudAuthenticated(actionLabel = "using cloud features") {
+  const state = await refreshCloudSession({ silent: true });
+  if (state?.authenticated === true) return true;
+  postMarsMessage("[info] Cloud login required before {action}.", { action: translateText(actionLabel) });
+  return openCloudLoginDialog();
+}
+
+function syncOpenProjectBeforeCloudAction() {
+  if (!projectIsOpen()) return null;
+  syncProjectFromEditor(true);
+  persistProjectNow({ syncFromEditor: true });
+  return normalizeProjectData(projectState);
+}
+
+async function saveActiveProjectToCloud() {
+  if (!ensureProjectOpenForAction("saving the active project")) return { ok: false, cancelled: true };
+  if (!await ensureCloudAuthenticated("saving the active project")) return { ok: false, cancelled: true };
+
+  setCloudSyncState(true, "");
+  try {
+    const localProject = syncOpenProjectBeforeCloudAction();
+    const remoteProjects = await listCloudProjects();
+    const remoteByName = chooseLatestRemoteProjectByName(remoteProjects);
+    const result = await saveProjectToCloud(localProject, remoteByName);
+    setCloudSyncState(false, "", { updateTimestamp: true });
+    postMarsMessage("Cloud project saved: {name}.", { name: localProject.rootPath });
+    return {
+      ok: true,
+      created: result.created === true,
+      name: localProject.rootPath
+    };
+  } catch (error) {
+    const message = describeCloudError(error, "Cloud save failed.");
+    setCloudSyncState(false, message);
+    postMarsMessage("[error] Cloud save failed: {message}", { message });
+    return { ok: false, message };
+  }
+}
+
+async function openProjectFromCloud() {
+  if (!await ensureCloudAuthenticated("opening a cloud project")) return { ok: false, cancelled: true };
+  try {
+    if (runActive) stopRunLoop();
+    const projects = await listCloudProjects();
+    if (!projects.length) {
+      postMarsMessage("[warn] No cloud projects available.");
+      return { ok: false, empty: true };
+    }
+    const selectedId = await chooseCloudProjectId(projects);
+    if (selectedId == null) return { ok: false, cancelled: true };
+    syncOpenProjectBeforeCloudAction();
+    const projectRecord = await loadCloudProject(selectedId);
+    const imported = importCloudProjectRecord(projectRecord, { open: true });
+    if (!imported) throw new Error("Cloud project payload is invalid.");
+    setCloudSyncState(false, "", { updateTimestamp: true });
+    postMarsMessage("Cloud project opened: {name}.", { name: imported.rootPath });
+    return { ok: true, name: imported.rootPath };
+  } catch (error) {
+    const message = describeCloudError(error, "Cloud project open failed.");
+    setCloudSyncState(false, message);
+    postMarsMessage("[error] Cloud project open failed: {message}", { message });
+    return { ok: false, message };
+  }
+}
+
+async function syncAllProjectsWithCloud() {
+  if (!await ensureCloudAuthenticated("syncing all projects")) return { ok: false, cancelled: true };
+
+  setCloudSyncState(true, "");
+  try {
+    if (runActive) stopRunLoop();
+    syncOpenProjectBeforeCloudAction();
+    const localProjects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+    const remoteProjects = await listCloudProjects();
+    const remoteByName = chooseLatestRemoteProjectByName(remoteProjects);
+    let uploaded = 0;
+    let downloaded = 0;
+    let skipped = 0;
+
+    for (let index = 0; index < localProjects.length; index += 1) {
+      const localProject = normalizeProjectData(localProjects[index]);
+      if (!localProject) {
+        skipped += 1;
+        continue;
+      }
+
+      const remoteMeta = remoteByName.get(localProject.rootPath);
+      if (!remoteMeta) {
+        await saveProjectToCloud(localProject);
+        uploaded += 1;
+        continue;
+      }
+
+      const remoteUpdatedAt = parseTimestampValue(remoteMeta.updatedAt, 0);
+      const localUpdatedAt = parseTimestampValue(localProject.updatedAt, 0);
+      if (remoteUpdatedAt > localUpdatedAt + 1000) {
+        const projectRecord = await loadCloudProject(remoteMeta.id);
+        const imported = importCloudProjectRecord(projectRecord, { open: false });
+        if (imported) downloaded += 1;
+        else skipped += 1;
+      } else {
+        await saveProjectToCloud(localProject, remoteByName);
+        uploaded += 1;
+      }
+      remoteByName.delete(localProject.rootPath);
+    }
+
+    for (const remoteMeta of remoteByName.values()) {
+      const projectRecord = await loadCloudProject(remoteMeta.id);
+      const imported = importCloudProjectRecord(projectRecord, { open: false });
+      if (imported) downloaded += 1;
+      else skipped += 1;
+    }
+
+    setCloudSyncState(false, "", { updateTimestamp: true });
+    postMarsMessage("Cloud sync complete: {uploaded} uploaded, {downloaded} downloaded, {skipped} skipped.", {
+      uploaded,
+      downloaded,
+      skipped
+    });
+    return { ok: true, uploaded, downloaded, skipped };
+  } catch (error) {
+    const message = describeCloudError(error, "Cloud sync failed.");
+    setCloudSyncState(false, message);
+    postMarsMessage("[error] Cloud sync failed: {message}", { message });
+    return { ok: false, message };
+  }
 }
 
 function collectProjectFilesFromEditor() {
@@ -2295,7 +2916,7 @@ async function showUnsupportedProjectFileDialog(pathValue, reason) {
     message = "The selected file appears to be corrupted or encoded in an unsupported format.";
   } else if (reason === "unsupported") {
     title = "Unsupported file type";
-    message = "Only .asm, .s, .c, .c0, .h and .txt files can be opened.";
+    message = `Only ${Array.from(SUPPORTED_PROJECT_FILE_EXTENSIONS).sort().join(", ")} files can be opened.`;
   }
   await runDialogConfirm({
     title: translateText(title),
@@ -3506,8 +4127,8 @@ function describeAssemblySources(assemblyContext) {
   if (assemblyContext.fileCount <= 1) {
     return normalizeFilename(assemblyContext.activeFile?.name || assemblyContext.sourceName || getCurrentProgramName());
   }
-  const names = Array.from(assemblyContext.includeMap?.keys?.() ?? [])
-    .map((name) => normalizeFilename(name))
+  const names = (Array.isArray(assemblyContext.sourceFiles) ? assemblyContext.sourceFiles : [])
+    .map((file) => normalizeFilename(file?.name || ""))
     .filter(Boolean);
   return names.join(", ");
 }
@@ -4084,9 +4705,18 @@ function syncButtons(snapshot) {
   const runBusy = runActive || runPausedForInput;
   const canExecute = assembled && hasProgramRows && !halted;
   const canBackstep = hasAvailableBackstep(snapshot);
+  const actionState = getActiveFileActionState();
 
-  refs.buttons.assemble.disabled = runBusy;
-  if (refs.buttons.compileC0) refs.buttons.compileC0.disabled = runBusy;
+  refs.buttons.assemble.disabled = runBusy || !actionState.canAssemble;
+  refs.buttons.assemble.title = actionState.canAssemble
+    ? "Assemble active assembly source."
+    : "Open an assembly source (.s, .asm, .mips) to assemble.";
+  if (refs.buttons.compileC0) {
+    refs.buttons.compileC0.disabled = runBusy || !actionState.canCompile;
+    refs.buttons.compileC0.title = actionState.canCompile
+      ? "Compile active C0 source."
+      : "Open a .c or .c0 source file to compile.";
+  }
   refs.buttons.reset.disabled = runBusy || !assembled;
   refs.buttons.go.disabled = runBusy || !canExecute;
   refs.buttons.step.disabled = runBusy || !canExecute;
@@ -4406,6 +5036,9 @@ function applyPreferences(nextPreferences) {
   runtimeSettings.programArgumentsLine = nextPreferences.programArgumentsText || "";
   runtimeSettings.maxBacksteps = sanitizeMaxBacksteps(nextPreferences.maxBacksteps, runtimeSettings.maxBacksteps);
   runtimeSettings.maxMemoryBytes = memoryGbToBytes(nextPreferences.maxMemoryGb ?? DEFAULT_MEMORY_GB);
+  runtimeSettings.assemblerBackendMode = sanitizeBackendMode(nextPreferences.assemblerBackendMode, runtimeSettings.assemblerBackendMode || DEFAULT_BACKEND_MODE);
+  runtimeSettings.simulatorBackendMode = sanitizeBackendMode(nextPreferences.simulatorBackendMode, runtimeSettings.simulatorBackendMode || DEFAULT_BACKEND_MODE);
+  runtimeSettings.coreBackend = runtimeSettings.simulatorBackendMode === BACKEND_MODE_HYBRID ? "wasm" : "js";
 
   if (typeof engine.trimExecutionHistory === "function") {
     engine.trimExecutionHistory();
@@ -4956,29 +5589,51 @@ async function openRuntimeMemoryPreferencesPanel() {
     runtimeMemoryMap.exceptionHandlerAddress ?? DEFAULT_MEMORY_MAP.exceptionHandlerAddress
   );
   const originalExceptionText = current.exceptionHandlerAddress || toHex(fallbackAddress);
+  const backendOptions = [
+    { value: BACKEND_MODE_JS, label: translateText("only JS") },
+    { value: BACKEND_MODE_HYBRID, label: translateText("experimental JS + C++") }
+  ];
+  const defaultAssemblerBackend = sanitizeBackendMode(current.assemblerBackendMode, DEFAULT_BACKEND_MODE);
+  const defaultSimulatorBackend = sanitizeBackendMode(current.simulatorBackendMode, DEFAULT_BACKEND_MODE);
 
   const result = await runDialogForm({
     title: translateText("Runtime & Memory Preferences"),
     message: translateText("Adjust exception handler, memory configuration, and memory limits."),
     confirmLabel: translateText("OK"),
     cancelLabel: translateText("Cancel"),
-    width: "560px",
-    height: "470px",
+    width: "520px",
+    height: "390px",
     sections: [
       {
-        title: translateText("Exception Handler"),
+        title: translateText("Runtime Engines"),
+        layout: "table",
+        fields: [
+          {
+            name: "assemblerBackendMode",
+            label: translateText("Assembler"),
+            type: "select",
+            value: defaultAssemblerBackend,
+            options: backendOptions
+          },
+          {
+            name: "simulatorBackendMode",
+            label: translateText("Simulator"),
+            type: "select",
+            value: defaultSimulatorBackend,
+            options: backendOptions
+          }
+        ]
+      },
+      {
+        title: translateText("Memory Configuration"),
+        layout: "table",
         fields: [
           {
             name: "exceptionHandlerAddress",
             label: translateText("Exception handler address"),
             type: "text",
             value: originalExceptionText
-          }
-        ]
-      },
-      {
-        title: translateText("Memory Configuration"),
-        fields: [
+          },
           {
             name: "memoryConfiguration",
             label: translateText("Memory configuration"),
@@ -4993,6 +5648,7 @@ async function openRuntimeMemoryPreferencesPanel() {
       },
       {
         title: translateText("Memory Limits"),
+        layout: "table",
         fields: [
           {
             name: "maxMemoryGb",
@@ -5019,8 +5675,8 @@ async function openRuntimeMemoryPreferencesPanel() {
     windowIdPrefix: "window-runtime-memory-preferences",
     left: "210px",
     top: "130px",
-    width: "560px",
-    height: "470px"
+    width: "520px",
+    height: "390px"
   });
   if (!result?.ok) return;
 
@@ -5041,19 +5697,41 @@ async function openRuntimeMemoryPreferencesPanel() {
   );
   const parsedMemoryGb = sanitizeMemoryGb(values.maxMemoryGb, defaultMemoryGb);
   const parsedBacksteps = sanitizeMaxBacksteps(values.maxBacksteps, defaultBacksteps);
+  const parsedAssemblerBackend = sanitizeBackendMode(values.assemblerBackendMode, defaultAssemblerBackend);
+  const parsedSimulatorBackend = sanitizeBackendMode(values.simulatorBackendMode, defaultSimulatorBackend);
 
   updatePreferencesPatch({
     exceptionHandlerAddress: toHex(parsedException),
     memoryConfiguration: selectedId,
     maxMemoryGb: parsedMemoryGb,
-    maxBacksteps: parsedBacksteps
+    maxBacksteps: parsedBacksteps,
+    assemblerBackendMode: parsedAssemblerBackend,
+    simulatorBackendMode: parsedSimulatorBackend
   }, "Runtime and memory preferences updated.");
+}
+
+function normalizeMiniCSubsetPreferenceToken(value) {
+  const raw = String(value || "C1-NATIVE").trim().toUpperCase();
+  if (!raw) return "C1-NATIVE";
+  if (raw === "C0-S1-") return "C0-S1";
+  if (raw === "C0-S2-") return "C0-S2";
+  if (raw === "C0-S3-") return "C0-S3";
+  if (raw === "C0-S4-") return "C0-S4";
+  if (raw === "C1" || raw === "C1-" || raw === "C1-NATIVE-" || raw === "C1/NATIVE" || raw === "C1_NATIVE") {
+    return "C1-NATIVE";
+  }
+  return raw;
+}
+
+function isMiniCNativeSubset(value) {
+  return normalizeMiniCSubsetPreferenceToken(value) === "C1-NATIVE";
 }
 
 async function openMiniCCompilerPreferencesPanel() {
   const current = store.getState().preferences || preferences;
+  const currentSubsetToken = normalizeMiniCSubsetPreferenceToken(current.miniCSubset || "C1-NATIVE");
   const result = await runDialogForm({
-    title: translateText("Mini-C (C0) Compiler Preferences"),
+    title: translateText("Mini-C Compiler Preferences"),
     message: translateText("Configure Mini-C frontend settings."),
     confirmLabel: translateText("OK"),
     cancelLabel: translateText("Cancel"),
@@ -5076,13 +5754,14 @@ async function openMiniCCompilerPreferencesPanel() {
             name: "miniCSubset",
             label: translateText("Subset profile"),
             type: "select",
-            value: String(current.miniCSubset || "C0-S4"),
+            value: currentSubsetToken,
             options: [
               { value: "C0-S0", label: "C0-S0 (phase 2 baseline)" },
-              { value: "C0-S1", label: "C0-S1 (phase 3 I/O + strings)" },
-              { value: "C0-S2", label: "C0-S2 (phase 4 loops control)" },
-              { value: "C0-S3", label: "C0-S3 (phase 5 arrays + indexing)" },
-              { value: "C0-S4", label: "C0-S4 (native types)" }
+              { value: "C0-S1", label: "C0-S1 (S0 + dialogs/files/includes)" },
+              { value: "C0-S2", label: "C0-S2 (loop control profile)" },
+              { value: "C0-S3", label: "C0-S3 (array-centric profile)" },
+              { value: "C0-S4", label: "C0-S4 (full academic C0 layer)" },
+              { value: "C1-NATIVE", label: "C1/native (byte-addressed char*, argv, native string helpers)" }
             ]
           }
         ]
@@ -5116,7 +5795,7 @@ async function openMiniCCompilerPreferencesPanel() {
 
   const values = result.value || {};
   const nextTargetAbi = String(values.miniCTargetAbi || "o32").toLowerCase() === "o32" ? "o32" : "o32";
-  const nextSubset = String(values.miniCSubset || "C0-S4").trim() || "C0-S4";
+  const nextSubset = normalizeMiniCSubsetPreferenceToken(values.miniCSubset || "C1-NATIVE");
   updatePreferencesPatch({
     miniCTargetAbi: nextTargetAbi,
     miniCSubset: nextSubset,
@@ -5439,19 +6118,35 @@ async function readSourceFileFromDisk(file) {
   };
 }
 
-function buildAssemblyContext() {
+function buildAssemblyContext(options = {}) {
   const files = editor.getFiles();
-  const active = editor.getActiveFile() || files[0] || { name: "untitled.s", source: store.getState().sourceCode || "" };
+  const activeByEditor = editor.getActiveFile() || files[0] || null;
   const normalizeAssemblyPath = (name) => String(name || "").replace(/\\/g, "/");
+  const normalizeAssemblyKey = (name) => normalizeAssemblyPath(name).trim().toLowerCase();
   const getDirectoryName = (name) => {
     const normalized = normalizeAssemblyPath(name);
     const cut = normalized.lastIndexOf("/");
     return cut >= 0 ? normalized.slice(0, cut) : "";
   };
+  const preferredFileId = String(options.preferredFileId || "").trim();
+  const preferredSourceName = String(options.preferredSourceName || "").trim();
+  let active = activeByEditor;
+  if (preferredFileId) {
+    active = files.find((file) => String(file?.id || "") === preferredFileId) || active;
+  }
+  if (preferredSourceName) {
+    const preferredKey = normalizeAssemblyKey(preferredSourceName);
+    active = files.find((file) => normalizeAssemblyKey(file?.name || "") === preferredKey) || active;
+  }
+  if (!active || !isAssemblySourceFile(active.name)) return null;
   const activeDirectory = getDirectoryName(active.name);
   const assemblyFiles = runtimeSettings.assembleAll
-    ? files.filter((file) => getDirectoryName(file.name) === activeDirectory)
+    ? files.filter((file) => (
+        isAssemblySourceFile(file?.name || "")
+        && getDirectoryName(file.name) === activeDirectory
+      ))
     : [active];
+  if (!assemblyFiles.length) return null;
   const includeMap = new Map();
   files.forEach((file) => {
     includeMap.set(file.name, file.source);
@@ -5467,7 +6162,8 @@ function buildAssemblyContext() {
       sourceName: active.name,
       includeMap,
       fileCount: assemblyFiles.length,
-      activeFile: active
+      activeFile: active,
+      sourceFiles: assemblyFiles.map((file) => ({ ...file }))
     };
   }
 
@@ -5476,12 +6172,14 @@ function buildAssemblyContext() {
     sourceName: active.name,
     includeMap,
     fileCount: 1,
-    activeFile: active
+    activeFile: active,
+    sourceFiles: [{ ...active }]
   };
 }
 
-function assembleFromEditor() {
-  const assemblyContext = buildAssemblyContext();
+function assembleFromEditor(options = {}) {
+  const assemblyContext = buildAssemblyContext(options);
+  if (!assemblyContext) return { result: null, assemblyContext: null };
   const result = engine.assemble(assemblyContext.source, {
     sourceName: assemblyContext.sourceName,
     includeMap: assemblyContext.includeMap,
@@ -5493,10 +6191,12 @@ function assembleFromEditor() {
 
 function maybeAssembleAfterOpen() {
   const active = editor.getActiveFile();
-  if (active && isMiniCSourceFile(active.name)) {
+  if (!active) return;
+  if (isMiniCSourceFile(active.name)) {
     postMarsMessage("[mini-c] Auto-assemble skipped for C0 source. Use Compile C0.");
     return;
   }
+  if (!isAssemblySourceFile(active.name)) return;
   if (store.getState().preferences.assembleOnOpen) {
     commands.assemble();
   }
@@ -5514,7 +6214,55 @@ function isMiniCSourceFile(fileName = "") {
   if (typeof miniCCompilerModule.isSourceFile === "function") {
     return miniCCompilerModule.isSourceFile(fileName);
   }
-  return MINI_C_SOURCE_EXTENSION_PATTERN.test(String(fileName || "").trim());
+  return isCSourceFile(fileName) || MINI_C_SOURCE_EXTENSION_PATTERN.test(String(fileName || "").trim());
+}
+
+function getActiveFileActionState() {
+  const activeFile = editor.getActiveFile() || null;
+  const classification = classifyWorkspaceFile(activeFile?.name || "");
+  return {
+    activeFile,
+    classification,
+    canAssemble: Boolean(activeFile && classification.isAssemblySource),
+    canCompile: Boolean(activeFile && classification.isCSource),
+    isCFamily: Boolean(activeFile && classification.isCFamily)
+  };
+}
+
+function rememberSuccessfulAssemblyContext(assemblyContext) {
+  if (!assemblyContext?.activeFile) return;
+  lastSuccessfulAssemblyContext = {
+    source: String(assemblyContext.source || ""),
+    sourceName: String(assemblyContext.sourceName || assemblyContext.activeFile.name || ""),
+    includeMapEntries: Array.from(assemblyContext.includeMap?.entries?.() ?? [])
+      .map(([name, source]) => [String(name || ""), String(source || "")]),
+    fileCount: Number(assemblyContext.fileCount || 0),
+    activeFile: { ...assemblyContext.activeFile },
+    sourceFiles: (Array.isArray(assemblyContext.sourceFiles) ? assemblyContext.sourceFiles : [])
+      .map((file) => ({ ...file }))
+  };
+  lastSuccessfulAssemblySelection = {
+    fileId: String(assemblyContext.activeFile.id || ""),
+    sourceName: String(assemblyContext.sourceName || assemblyContext.activeFile.name || "")
+  };
+}
+
+function buildLastSuccessfulAssemblyContext() {
+  if (!lastSuccessfulAssemblyContext) return null;
+  const includeMap = new Map(
+    (Array.isArray(lastSuccessfulAssemblyContext.includeMapEntries) ? lastSuccessfulAssemblyContext.includeMapEntries : [])
+      .map(([name, source]) => [String(name || ""), String(source || "")])
+  );
+  engine.setSourceFiles(includeMap);
+  return {
+    source: String(lastSuccessfulAssemblyContext.source || ""),
+    sourceName: String(lastSuccessfulAssemblyContext.sourceName || ""),
+    includeMap,
+    fileCount: Number(lastSuccessfulAssemblyContext.fileCount || 0),
+    activeFile: lastSuccessfulAssemblyContext.activeFile ? { ...lastSuccessfulAssemblyContext.activeFile } : null,
+    sourceFiles: (Array.isArray(lastSuccessfulAssemblyContext.sourceFiles) ? lastSuccessfulAssemblyContext.sourceFiles : [])
+      .map((file) => ({ ...file }))
+  };
 }
 
 function deriveMiniCGeneratedAsmName(fileName = "untitled.c") {
@@ -5633,7 +6381,15 @@ function normalizeMiniCGlobalLibraryManifestEntries(manifestPayload) {
   return normalizedEntries;
 }
 
-async function ensureMiniCGlobalLibrariesLoaded() {
+function invalidateMiniCGlobalLibrariesCache() {
+  miniCGlobalLibrarySources.clear();
+  miniCGlobalLibraryEntries = MINI_C_GLOBAL_LIBRARY_FALLBACK_ENTRIES.map((entry) => ({ ...entry }));
+  miniCGlobalLibrariesReady = false;
+  miniCGlobalLibrariesPromise = null;
+}
+
+async function ensureMiniCGlobalLibrariesLoaded(forceReload = false) {
+  if (forceReload) invalidateMiniCGlobalLibrariesCache();
   if (miniCGlobalLibrariesReady) return miniCGlobalLibrarySources;
   if (miniCGlobalLibrariesPromise) return miniCGlobalLibrariesPromise;
 
@@ -5693,7 +6449,7 @@ function collectMiniCIncludeSourceMap() {
   return normalizedMap;
 }
 
-function buildMiniCUseLibrarySources(includeSourceMap = null) {
+function buildMiniCUseLibrarySources(includeSourceMap = null, subset = "C1-NATIVE") {
   const sourceMap = includeSourceMap instanceof Map
     ? includeSourceMap
     : collectMiniCIncludeSourceMap();
@@ -5728,6 +6484,12 @@ function buildMiniCUseLibrarySources(includeSourceMap = null) {
   miniCGlobalLibrarySources.forEach((sourceText, key) => {
     setLibraryAlias(key, sourceText);
   });
+
+  if (isMiniCNativeSubset(subset) && miniCGlobalLibrarySources.has("string_native")) {
+    const nativeStringSource = String(miniCGlobalLibrarySources.get("string_native") || "");
+    setLibraryAlias("string", nativeStringSource);
+    setLibraryAlias("string.h", nativeStringSource);
+  }
 
   return librarySources;
 }
@@ -5869,7 +6631,7 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences) {
   const sourceName = String(activeFile?.name || "untitled.c");
   const source = String(sourceText || "");
   const targetAbi = String(compilerPreferences?.miniCTargetAbi || "o32").toLowerCase() === "o32" ? "o32" : "o32";
-  const subset = String(compilerPreferences?.miniCSubset || "C0-S4").trim() || "C0-S4";
+  const subset = normalizeMiniCSubsetPreferenceToken(compilerPreferences?.miniCSubset || "C1-NATIVE");
   const emitComments = compilerPreferences?.miniCEmitScaffoldingComments !== false;
   const generatedAsmName = deriveMiniCGeneratedAsmName(sourceName);
   const compiler = (typeof miniCCompilerModule.compile === "function") ? miniCCompilerModule : null;
@@ -5905,10 +6667,10 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences) {
 
   let compileResult = null;
   try {
-    await ensureMiniCGlobalLibrariesLoaded();
+    await ensureMiniCGlobalLibrariesLoaded(true);
     const includeSourceMap = collectMiniCIncludeSourceMap();
     const includeResolver = createMiniCIncludeResolver(sourceName, includeSourceMap);
-    const useLibrarySources = buildMiniCUseLibrarySources(includeSourceMap);
+    const useLibrarySources = buildMiniCUseLibrarySources(includeSourceMap, subset);
     compileResult = compiler.compile(source, {
       sourceName,
       subset,
@@ -6124,6 +6886,48 @@ const commands = {
     fileInput.click();
   },
 
+  async cloudRefreshSession() {
+    await refreshCloudSession({ silent: false });
+  },
+
+  async cloudLogin() {
+    if (cloudAuthState === "authenticated" && cloudUser) {
+      postMarsMessage("Cloud session ready: {name}.", { name: getCloudUserDisplayName(cloudUser) });
+      return true;
+    }
+    return openCloudLoginDialog();
+  },
+
+  async cloudLogout() {
+    if (cloudAuthState !== "authenticated") {
+      postMarsMessage("[info] Cloud session is not signed in.");
+      return true;
+    }
+    try {
+      await cloudRequestJson("/logout", { method: "POST", body: {} });
+      setCloudSessionState("anonymous", null, "");
+      postMarsMessage("Cloud logout complete.");
+      return true;
+    } catch (error) {
+      const message = describeCloudError(error, "Cloud logout failed.");
+      setCloudSessionState("error", null, message);
+      postMarsMessage("[error] Cloud logout failed: {message}", { message });
+      return false;
+    }
+  },
+
+  async cloudOpenProject() {
+    return openProjectFromCloud();
+  },
+
+  async cloudSaveProject() {
+    return saveActiveProjectToCloud();
+  },
+
+  async cloudSyncAllProjects() {
+    return syncAllProjectsWithCloud();
+  },
+
   async closeFile() {
     if (!ensureProjectOpenForAction("closing files")) return;
     if (runActive) stopRunLoop();
@@ -6255,6 +7059,20 @@ const commands = {
   },
 
   assemble() {
+    const actionState = getActiveFileActionState();
+    if (runActive || runPausedForInput) return;
+    if (actionState.activeFile && isMiniCSourceFile(actionState.activeFile.name)) {
+      postMarsMessage("[warn] Active file appears to be C0. Use Compile C0 before Assemble.");
+      return;
+    }
+
+    const assemblyContext = buildAssemblyContext();
+    if (!assemblyContext) {
+      postMarsMessage("[warn] Open an assembly source (.s/.asm/.mips) before assembling.");
+      refreshRuntimeControls();
+      return;
+    }
+
     modeController.setMode("execute");
     clearRunTimer();
     runActive = false;
@@ -6265,13 +7083,6 @@ const commands = {
     backstepDepthEstimate = 0;
     clearInputPauseState();
     windowManager.focus("window-text"); windowManager.focus("window-data");
-    const activeSource = editor.getActiveFile();
-    if (activeSource && isMiniCSourceFile(activeSource.name)) {
-      postMarsMessage("[warn] Active file appears to be C0. Use Compile C0 before Assemble.");
-      return;
-    }
-
-    const assemblyContext = buildAssemblyContext();
     postMarsSystemLine("{action}: assembling {sources}", {
       action: translateText("Assemble"),
       sources: describeAssemblySources(assemblyContext)
@@ -6288,6 +7099,7 @@ const commands = {
       setAssemblyTag("error", "assembly failed");
       postMarsSystemLine("{action}: operation completed with errors.", { action: translateText("Assemble") });
     } else {
+      rememberSuccessfulAssemblyContext(assemblyContext);
       postMarsSystemLine("{action}: operation completed successfully.", { action: translateText("Assemble") });
     }
 
@@ -6296,7 +7108,7 @@ const commands = {
   },
   async compileC0() {
     try {
-      if (runActive) stopRunLoop();
+      if (runActive || runPausedForInput) return;
       const active = editor.getActiveFile();
       if (!active) {
         postMarsMessage("[warn] No active source file.");
@@ -6517,14 +7329,31 @@ const commands = {
     engine.reset();
     messagesPane.clearInputRequest();
 
-    const activeFile = editor.getActiveFile();
-    const source = activeFile?.source ?? store.getState().sourceCode;
-    if (source.trim().length) {
-      const { result: assembleResult, assemblyContext } = assembleFromEditor();
+    let assemblyContext = buildLastSuccessfulAssemblyContext();
+    let assembleResult = null;
+    if (assemblyContext) {
+      assembleResult = engine.assemble(assemblyContext.source, {
+        sourceName: assemblyContext.sourceName,
+        includeMap: assemblyContext.includeMap,
+        programArgumentsEnabled: runtimeSettings.programArguments,
+        programArguments: runtimeSettings.programArgumentsLine
+      });
+    } else {
+      const activeFile = editor.getActiveFile();
+      const preferredAssemblyTarget = (activeFile && isAssemblySourceFile(activeFile.name))
+        ? {
+            preferredFileId: String(activeFile.id || ""),
+            preferredSourceName: String(activeFile.name || "")
+          }
+        : lastSuccessfulAssemblySelection;
+      ({ result: assembleResult, assemblyContext } = assembleFromEditor(preferredAssemblyTarget));
+    }
+    if (assemblyContext && assembleResult) {
       reportDiagnostics(assembleResult, assemblyContext);
       if (!assembleResult.ok) {
         postMarsRaw("Unable to reset.  Please close file then re-open and re-assemble.\n");
       } else {
+        rememberSuccessfulAssemblyContext(assemblyContext);
         postRunSystemLine("{action}: reset completed.", { action: translateText("Reset") });
         messagesPane.selectRunTab?.();
       }
@@ -6990,6 +7819,7 @@ const commands = {
 };
 
 const menuSystem = createMenuSystem(refs, commands, () => store.getState(), toolManager);
+void refreshCloudSession({ silent: true });
 getI18nApi()?.subscribe?.(() => {
   refs.refreshTranslations?.();
   messagesPane.refreshTranslations?.();
@@ -7077,6 +7907,20 @@ if (typeof window !== "undefined") {
           message: error instanceof Error ? error.message : String(error)
         };
       }
+    }
+  };
+  window.WebMarsCloudBridge = {
+    getState() {
+      return buildCloudStoreState();
+    },
+    async refreshSession() {
+      return refreshCloudSession({ silent: false });
+    },
+    async saveActiveProject() {
+      return saveActiveProjectToCloud();
+    },
+    async syncAllProjects() {
+      return syncAllProjectsWithCloud();
     }
   };
 }
@@ -7478,8 +8322,46 @@ if (typeof window !== "undefined") {
     getSnapshot(options = {}) {
       return engine.getSnapshot(options);
     },
+    readByte(address) {
+      try {
+        return engine.readByte(Number(address) >>> 0, false) & 0xff;
+      } catch {
+        return null;
+      }
+    },
+    readWord(address) {
+      try {
+        return engine.readWord(Number(address) >>> 0) | 0;
+      } catch {
+        return null;
+      }
+    },
+    getBackendInfo() {
+      return typeof engine.getBackendInfo === "function" ? engine.getBackendInfo() : null;
+    },
+    getBackendSelection() {
+      const currentPreferences = store.getState().preferences || {};
+      return {
+        assemblerBackendMode: sanitizeBackendMode(currentPreferences.assemblerBackendMode, DEFAULT_BACKEND_MODE),
+        simulatorBackendMode: sanitizeBackendMode(currentPreferences.simulatorBackendMode, DEFAULT_BACKEND_MODE)
+      };
+    },
+    setBackendSelection(nextModes = {}) {
+      const currentPreferences = store.getState().preferences || {};
+      const nextPreferences = {
+        ...currentPreferences,
+        assemblerBackendMode: sanitizeBackendMode(nextModes.assemblerBackendMode, currentPreferences.assemblerBackendMode || DEFAULT_BACKEND_MODE),
+        simulatorBackendMode: sanitizeBackendMode(nextModes.simulatorBackendMode, currentPreferences.simulatorBackendMode || DEFAULT_BACKEND_MODE)
+      };
+      applyPreferences(nextPreferences);
+      return {
+        selection: this.getBackendSelection(),
+        backend: this.getBackendInfo()
+      };
+    },
     getButtonState() {
       return {
+        compileDisabled: refs.buttons.compileC0?.disabled === true,
         assembleDisabled: refs.buttons.assemble?.disabled === true,
         goDisabled: refs.buttons.go?.disabled === true,
         stepDisabled: refs.buttons.step?.disabled === true,
@@ -7509,6 +8391,8 @@ if (typeof window !== "undefined") {
         halted,
         hasProgramRows,
         runBusy,
+        canAssemble: getActiveFileActionState().canAssemble,
+        canCompile: getActiveFileActionState().canCompile,
         canExecute,
         canBackstep,
         backstepDepth: Number(snapshot?.backstepDepth) || 0
@@ -7546,6 +8430,27 @@ if (typeof window !== "undefined") {
     },
     getLastControlSyncError() {
       return lastControlSyncError;
+    },
+    setEditorFiles(files, activeFileId = "") {
+      const normalizedFiles = (Array.isArray(files) ? files : []).map((file, index) => ({
+        id: String(file?.id || `debug-file-${index + 1}`),
+        name: normalizeFilename(file?.name || `debug_${index + 1}.txt`),
+        source: String(file?.source ?? ""),
+        savedSource: typeof file?.savedSource === "string" ? String(file.savedSource) : String(file?.source ?? "")
+      }));
+      const active = editor.setFiles(normalizedFiles, activeFileId);
+      modeController.syncForFileName?.(active?.name || "", { activate: true });
+      refreshRuntimeControls();
+      return {
+        activeFile: active ? { ...active } : null,
+        files: editor.getFiles()
+      };
+    },
+    openTool(toolId) {
+      const normalized = String(toolId || "").trim();
+      if (!normalized) return false;
+      toolManager.open(normalized);
+      return true;
     },
     refreshControls() {
       refreshRuntimeControls();

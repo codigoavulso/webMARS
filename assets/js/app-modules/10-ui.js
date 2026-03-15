@@ -1,3 +1,69 @@
+((rootScope) => {
+  const registry = rootScope.WebMarsModules || (rootScope.WebMarsModules = {});
+  if (registry.fileKinds) return;
+
+  const C_SOURCE_EXTENSIONS = Object.freeze([".c", ".c0"]);
+  const C_HEADER_EXTENSIONS = Object.freeze([".h", ".h0"]);
+  const ASM_SOURCE_EXTENSIONS = Object.freeze([".s", ".asm", ".mips"]);
+  const OPENABLE_TEXT_EXTENSIONS = Object.freeze([".txt"]);
+  const cSourceSet = new Set(C_SOURCE_EXTENSIONS);
+  const cHeaderSet = new Set(C_HEADER_EXTENSIONS);
+  const asmSourceSet = new Set(ASM_SOURCE_EXTENSIONS);
+  const openableTextSet = new Set(OPENABLE_TEXT_EXTENSIONS);
+
+  function getPathExtension(fileName = "") {
+    const normalized = String(fileName || "").trim().toLowerCase().replace(/\\/g, "/");
+    const slashIndex = normalized.lastIndexOf("/");
+    const baseName = slashIndex >= 0 ? normalized.slice(slashIndex + 1) : normalized;
+    const dotIndex = baseName.lastIndexOf(".");
+    if (dotIndex <= 0) return "";
+    return baseName.slice(dotIndex);
+  }
+
+  function classifyFileName(fileName = "") {
+    const extension = getPathExtension(fileName);
+    const isCSource = cSourceSet.has(extension);
+    const isCHeader = cHeaderSet.has(extension);
+    const isCFamily = isCSource || isCHeader;
+    const isAssemblySource = asmSourceSet.has(extension);
+    const isOpenableText = openableTextSet.has(extension);
+    return {
+      extension,
+      family: isAssemblySource ? "asm" : (isCFamily ? "c" : (isOpenableText ? "text" : "unknown")),
+      isCSource,
+      isCHeader,
+      isCFamily,
+      isAssemblySource,
+      isOpenableText,
+      isSupportedProjectFile: isAssemblySource || isCFamily || isOpenableText
+    };
+  }
+
+  registry.fileKinds = Object.freeze({
+    cSourceExtensions: C_SOURCE_EXTENSIONS,
+    cHeaderExtensions: C_HEADER_EXTENSIONS,
+    asmSourceExtensions: ASM_SOURCE_EXTENSIONS,
+    openableTextExtensions: OPENABLE_TEXT_EXTENSIONS,
+    supportedProjectExtensions: Object.freeze([
+      ...ASM_SOURCE_EXTENSIONS,
+      ...C_SOURCE_EXTENSIONS,
+      ...C_HEADER_EXTENSIONS,
+      ...OPENABLE_TEXT_EXTENSIONS
+    ]),
+    getPathExtension,
+    classifyFileName,
+    isCSourceFile(fileName = "") {
+      return classifyFileName(fileName).isCSource;
+    },
+    isCFamilyFile(fileName = "") {
+      return classifyFileName(fileName).isCFamily;
+    },
+    isAssemblySourceFile(fileName = "") {
+      return classifyFileName(fileName).isAssemblySource;
+    }
+  });
+})(typeof window !== "undefined" ? window : globalThis);
+
 function tabController(root, buttonSelector, panelSelector) {
   const buttons = [...root.querySelectorAll(buttonSelector)];
   const panels = [...root.querySelectorAll(panelSelector)];
@@ -20,6 +86,7 @@ function renderLayout(root) {
       <nav class="menu-bar panel">
         <span class="menu-logo" aria-hidden="true">&#128640;</span>
         <button class="menu-item" type="button" data-menu="File">File</button>
+        <button class="menu-item" type="button" data-menu="Cloud">Cloud</button>
         <button class="menu-item" type="button" data-menu="Edit">Edit</button>
         <button class="menu-item" type="button" data-menu="View">View</button>
         <button class="menu-item" type="button" data-menu="Run">Run</button>
@@ -3509,7 +3576,18 @@ function createDialogSystem(windowManager, desktop, options = {}) {
     formNode.innerHTML = sections.map((section, sectionIndex) => {
       const title = String(section?.title || "").trim();
       const description = String(section?.description || "").trim();
+      const sectionLayout = String(section?.layout || "").trim().toLowerCase();
+      const sectionClassName = String(section?.className || "").trim();
       const fields = Array.isArray(section?.fields) ? section.fields : [];
+      const sectionClasses = [
+        "dialog-form-section",
+        sectionLayout === "table" ? "dialog-form-section-table" : "",
+        sectionClassName
+      ].filter(Boolean).join(" ");
+      const fieldsClasses = [
+        "dialog-form-fields",
+        sectionLayout === "table" ? "dialog-form-fields-table" : ""
+      ].filter(Boolean).join(" ");
       const fieldsMarkup = fields.map((field, fieldIndex) => {
         const fieldId = `${fieldIdPrefix}-${sectionIndex}-${fieldIndex}`;
         const type = String(field?.type || "text");
@@ -3528,8 +3606,8 @@ function createDialogSystem(windowManager, desktop, options = {}) {
         if (type === "select") {
           const options = Array.isArray(field?.options) ? field.options : [];
           return `
-            <label class="dialog-form-row" for="${fieldId}">
-              <span>${label}</span>
+            <label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
+              <span class="dialog-form-label">${label}</span>
               <select id="${fieldId}" data-field-name="${escapeHtml(String(field?.name || ""))}" class="dialog-form-control">
                 ${options.map((option) => {
                   const optionValue = String(option?.value ?? "");
@@ -3544,10 +3622,12 @@ function createDialogSystem(windowManager, desktop, options = {}) {
         const min = Number.isFinite(field?.min) ? ` min="${field.min}"` : "";
         const max = Number.isFinite(field?.max) ? ` max="${field.max}"` : "";
         const step = Number.isFinite(field?.step) ? ` step="${field.step}"` : "";
-        const inputType = type === "number" ? "number" : "text";
+        const inputType = type === "number"
+          ? "number"
+          : (type === "password" ? "password" : "text");
         return `
-          <label class="dialog-form-row" for="${fieldId}">
-            <span>${label}</span>
+          <label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
+            <span class="dialog-form-label">${label}</span>
             <input
               id="${fieldId}"
               data-field-name="${escapeHtml(String(field?.name || ""))}"
@@ -3561,10 +3641,10 @@ function createDialogSystem(windowManager, desktop, options = {}) {
         `;
       }).join("");
       return `
-        <section class="dialog-form-section">
+        <section class="${sectionClasses}">
           ${title ? `<h3 class="dialog-form-section-title">${escapeHtml(title)}</h3>` : ""}
           ${description ? `<p class="dialog-form-section-description">${escapeHtml(description)}</p>` : ""}
-          <div class="dialog-form-fields">${fieldsMarkup}</div>
+          <div class="${fieldsClasses}">${fieldsMarkup}</div>
         </section>
       `;
     }).join("");
@@ -3780,6 +3860,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
   };
 }
 function createModeController(refs, windowManager) {
+  const fileKindsModule = ((typeof window !== "undefined" ? window.WebMarsModules : globalThis.WebMarsModules) || {}).fileKinds || {};
   const projectButton = refs.mode.project;
   const c0Button = refs.mode.c0;
   const assemblyButton = refs.mode.assembly;
@@ -3836,8 +3917,14 @@ function createModeController(refs, windowManager) {
     const name = String(fileName || "").trim();
     if (!name) return authoringMode;
     let target = null;
-    if (/\.(c|c0)$/i.test(name)) target = "c0";
-    else if (/\.(s|asm)$/i.test(name)) target = "assembly";
+    const classification = typeof fileKindsModule.classifyFileName === "function"
+      ? fileKindsModule.classifyFileName(name)
+      : {
+          isCFamily: /\.(c|c0|h|h0)$/i.test(name),
+          isAssemblySource: /\.(s|asm|mips)$/i.test(name)
+        };
+    if (classification.isCFamily) target = "c0";
+    else if (classification.isAssemblySource) target = "assembly";
     if (!target) return authoringMode;
     authoringMode = target;
     if (options.activate !== false) apply(target);
@@ -4651,6 +4738,8 @@ const DEFAULT_PREFERENCES = {
   delayedBranching: false,
   strictMarsCompatibility: false,
   selfModifyingCode: false,
+  assemblerBackendMode: "js",
+  simulatorBackendMode: "js",
   splitMessagesRunIo: false,
   programArgumentsText: "",
   editorFontSize: 12,
@@ -4662,7 +4751,7 @@ const DEFAULT_PREFERENCES = {
   memoryConfiguration: "Default",
   maxMemoryGb: 2,
   maxBacksteps: 100,
-  miniCSubset: "C0-S4",
+  miniCSubset: "C1-NATIVE",
   miniCTargetAbi: "o32",
   miniCOpenOutputWindow: true,
   miniCEmitScaffoldingComments: true
@@ -4701,7 +4790,7 @@ function downloadText(filename, content) {
 function normalizeFilename(name) {
   const value = (name || "").trim();
   if (!value) return "untitled.s";
-  if (/\.(asm|s|c|c0|h|p)$/i.test(value)) return value;
+  if (/\.(asm|s|mips|c|c0|h|h0|txt|p)$/i.test(value)) return value;
   return `${value}.s`;
 }
 
@@ -6072,6 +6161,25 @@ function injectRuntimeStyles() {
       gap: 4px;
       font-size: 11px;
       color: #1f2d3b;
+    }
+
+    .dialog-form-fields-table {
+      gap: 6px;
+    }
+
+    .dialog-form-row-inline {
+      grid-template-columns: minmax(150px, 1fr) minmax(0, 1.35fr);
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dialog-form-row-inline .dialog-form-label {
+      display: block;
+    }
+
+    .dialog-form-section-table {
+      padding: 7px 8px;
+      gap: 6px;
     }
 
     .dialog-form-check {

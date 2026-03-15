@@ -3,6 +3,7 @@
   const TOOLS = __TOOLS__;
   const INV = {
     File: ["New", "Open from Disk...", "Open from Browser Storage...", "Close", "Close All", "Download", "Download As...", "Save to Browser Storage", "Save to Browser Storage As...", "Examples", "Dump Run I/O"],
+    Cloud: ["Not signed in", "Login...", "Open Cloud Project...", "Save Active Project", "Sync All Projects", "Refresh Session"],
     Edit: ["Undo", "Redo", "Cut", "Copy", "Paste", "Find", "Select All"],
     Run: ["Assemble", "Go", "Pause", "Stop", "Step", "Backstep", "Reset"],
     Settings: ["Show Labels Window (symbol table)", "Program arguments provided to MIPS program", "Popup dialog for input syscalls", "Addresses displayed in hexadecimal", "Values displayed in hexadecimal", "Assemble file upon opening", "Assemble all files in directory", "Assembler warnings are considered errors", "Initialize Program Counter to global 'main' if defined", "Permit extended (pseudo) instructions and formats", "Delayed branching", "Self-modifying code", "Interface...", "Runtime & Memory..."],
@@ -141,12 +142,13 @@
     await wait(120);
   };
 
-  const dialog = () => document.getElementById("window-dialog-system");
+  const dialog = () => document.getElementById("window-dialog-system") || document.querySelector('[id^="window-dialog-system"]');
   const dialogVisible = () => dialog() instanceof HTMLElement && !dialog().classList.contains("window-hidden");
-  const dialogTitle = () => dialog()?.querySelector("#dialog-title")?.textContent?.trim() || "";
+  const dialogTitle = () => dialog()?.querySelector("#dialog-title, [data-dialog-role='title']")?.textContent?.trim() || "";
   const waitDialog = (title) => waitFor(() => dialogVisible() && dialogTitle() === title, 2500, "dialog " + title);
   const setDialogInput = async (value) => {
-    const el = byId("dialog-input");
+    const el = dialog()?.querySelector("#dialog-input, [data-dialog-role='input']");
+    assert(el instanceof HTMLInputElement, "Missing dialog input");
     el.focus();
     el.value = String(value);
     el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -169,11 +171,15 @@
     return el instanceof HTMLInputElement && el.type === "checkbox" ? el.checked : el.value;
   };
   const okDialog = async () => {
-    await click(byId("dialog-confirm"));
+    const button = dialog()?.querySelector("#dialog-confirm, [data-dialog-role='confirm']");
+    assert(button instanceof HTMLElement, "Missing dialog confirm button");
+    await click(button);
     await waitFor(() => !dialogVisible(), 2500, "dialog close");
   };
   const cancelDialog = async () => {
-    await click(byId("dialog-cancel"));
+    const button = dialog()?.querySelector("#dialog-cancel, [data-dialog-role='cancel']");
+    assert(button instanceof HTMLElement, "Missing dialog cancel button");
+    await click(button);
     await waitFor(() => !dialogVisible(), 2500, "dialog cancel");
   };
 
@@ -268,9 +274,9 @@
     await waitFor(() => !winVisible(id), 2500, "close " + id);
   };
   const closeAll = async () => {
-    await menu("File", ["Close All"]);
+    await menu("File", ["Close", "Close project"]);
     if (dialogVisible()) await okDialog();
-    await waitFor(() => tabCount() === 1, 2500, "close all");
+    await waitFor(() => tabCount() === 1, 2500, "close project");
   };
   const assemble = async () => {
     await menu("Run", ["Assemble"]);
@@ -353,8 +359,8 @@
       await closeAll();
       await setSrc(".text\nmain:\n  li $v0, 10\n  syscall\n");
       const before = tabCount();
-      await menu("File", ["New"]);
-      mark("File > New");
+      await menu("File", ["New", "s file"]);
+      mark("File > New > s file");
       await waitFor(() => tabCount() === before + 1, 2000, "new tab");
 
       filePicker.count = 0;
@@ -402,19 +408,19 @@
       assert(downloads[downloads.length - 1].download === "menu_downloaded.asm", "Download As name mismatch.");
 
       const countBeforeClose = tabCount();
-      await menu("File", ["New"]);
+      await menu("File", ["New", "s file"]);
       await waitFor(() => tabCount() === countBeforeClose + 1, 1500, "extra tab");
-      await menu("File", ["Close"]);
-      mark("File > Close");
+      await menu("File", ["Close", "Active file"]);
+      mark("File > Close > Active file");
       if (dialogVisible()) await okDialog();
       await waitFor(() => tabCount() === countBeforeClose, 2000, "close");
 
-      await menu("File", ["New"]);
+      await menu("File", ["New", "s file"]);
       await waitFor(() => tabCount() >= 2, 1500, "tab before close all");
-      await menu("File", ["Close All"]);
-      mark("File > Close All");
+      await menu("File", ["Close", "Close project"]);
+      mark("File > Close > Close project");
       if (dialogVisible()) await okDialog();
-      await waitFor(() => tabCount() === 1, 2500, "close all done");
+      await waitFor(() => tabCount() === 1, 2500, "close project done");
 
       byId("run-messages").value = "hello";
       downloads.length = 0;
@@ -434,6 +440,31 @@
       if (exMenuSmoke.fileCount > 1) assert(tabCount() >= exMenuSmoke.fileCount, "Multi-file example should open all files.");
       assert(activeTab().replace(/^\*/, "").endsWith(expected), "Active tab mismatch for " + exMenuSmoke.label);
       return { example: `${exMenuSmoke.category} > ${exMenuSmoke.label}` };
+    });
+
+    await runCase("Cloud menu entries", async () => {
+      await openMenu("Cloud");
+      const statusRow = findRow("Not signed in") || rows().find((row) => rlabel(row).startsWith("Signed in as "));
+      const authRow = findRow("Login...") || rows().find((row) => rlabel(row).startsWith("Logout"));
+      assert(statusRow, "Cloud status row missing.");
+      assert(authRow, "Cloud auth row missing.");
+      assert(findRow("Open Cloud Project..."), "Cloud open row missing.");
+      assert(findRow("Save Active Project"), "Cloud save row missing.");
+      assert(findRow("Sync All Projects"), "Cloud sync row missing.");
+      assert(findRow("Refresh Session"), "Cloud refresh row missing.");
+      if (rlabel(authRow) === "Login...") {
+        await click(authRow);
+        await waitDialog("Cloud Login");
+        await cancelDialog();
+        mark("Cloud > Login...");
+      } else {
+        await hideMenus();
+        mark("Cloud > Logout");
+      }
+      return {
+        status: true,
+        dialog: true
+      };
     });
 
     await runCase("Edit menu entries", async () => {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>webMARS __WEBMARS_APP_VERSION__ - MIPS Simulator and Assembler in the Browser</title>
+  <title>webMARS - MIPS Simulator and Assembler in the Browser</title>
 
   <meta name="description" content="webMARS is a browser-based MIPS assembler and simulator inspired by MARS 4.5. Write, assemble and run MIPS code directly in your browser.">
   <meta name="keywords" content="MIPS simulator, MIPS assembler, MARS MIPS, MIPS online, MIPS IDE, MIPS assembly simulator">
@@ -113,7 +113,6 @@
       const loader = document.getElementById("webmars-loader");
       const loaderTitle = document.getElementById("webmars-loader-title");
       const loaderText = document.getElementById("webmars-loader-text");
-      const appRoot = document.getElementById("app");
       let appScriptLoading = false;
       let loaderHidden = false;
       let splashTimer = null;
@@ -153,29 +152,26 @@
         document.body.appendChild(script);
       }
 
-      window.addEventListener("webmars:ready", () => {
+      window.addEventListener("webmars:tools-manifest-load-start", () => {
+        setLoaderText("Loading tools manifest...");
+      }, { once: true });
+      window.addEventListener("webmars:tools-manifest-loaded", () => {
         hideLoader();
+      }, { once: true });
+      window.addEventListener("webmars:scripts-loaded", () => {
+        setLoaderText("Initializing runtime and drawing interface...");
       }, { once: true });
       window.addEventListener("load", () => {
         if (loaderHidden) return;
-        window.setTimeout(hideLoader, 200);
+        setLoaderText("Finalizing interface...");
       }, { once: true });
       window.addEventListener("error", () => {
         if (loaderHidden) return;
         hideLoader();
       });
-      if (appRoot instanceof HTMLElement) {
-        const observer = new MutationObserver(() => {
-          if (appRoot.childElementCount > 0) {
-            window.setTimeout(hideLoader, 80);
-            observer.disconnect();
-          }
-        });
-        observer.observe(appRoot, { childList: true });
-      }
       splashTimer = window.setTimeout(() => {
         if (loaderHidden) return;
-        setLoaderText("Continuing startup...");
+        setLoaderText("Startup is taking longer than usual. Continuing...");
         hideLoader();
       }, SPLASH_MAX_MS);
       loadAppBundle();

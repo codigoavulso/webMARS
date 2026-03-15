@@ -1,0 +1,22 @@
+struct __webmars_rand_state {
+  int stream;
+};
+
+typedef struct __webmars_rand_state* rand_t;
+
+int __webmars_rand_next_stream = 1;
+
+//@requires seed != 0;
+//@ensures \result != NULL;
+rand_t init_rand(int seed) {
+  rand_t gen = alloc(struct __webmars_rand_state);
+  gen->stream = __webmars_rand_next_stream;
+  __webmars_rand_next_stream = __webmars_rand_next_stream + 1;
+  rand_seed(gen->stream, seed);
+  return gen;
+}
+
+//@requires gen != NULL;
+int rand(rand_t gen) {
+  return rand_int(gen->stream);
+}

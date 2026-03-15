@@ -1,0 +1,397 @@
+﻿Mini-C Manual for webMARS
+Draft 0.1 - 2026-03-14
+
+1. Overview
+
+Mini-C in webMARS is a teaching-oriented C-like language that compiles to MIPS.
+The current webMARS implementation provides a closed and operational internal C0
+environment up to the cumulative profile C0-S4-.
+
+This manual is a quick project-oriented draft. It does not try to reproduce the
+academic reference word by word. Instead, it explains the language as it exists
+in webMARS today.
+
+Reference documents:
+- docs/c0-reference.txt
+- docs/c0-libraries.txt
+- docs/c0-status-report-2026-03-14.md
+
+
+2. Current language scope
+
+The currently closed Mini-C / C0 universe in webMARS includes:
+- int, bool, char, string
+- functions and return values
+- local and global declarations
+- assignment and expression statements
+- if / else
+- while
+- assert(e)
+- error("message")
+- ternary operator ?: 
+- arrays and multidimensional arrays
+- alloc(t) and alloc_array(t, n)
+- pointers, NULL, dereference
+- struct, typedef, ., ->
+- #use directives
+- contracts used by the current runtime model
+
+The closed runtime profile exposed today is:
+- C0-S4-
+
+This means the cumulative project profiles S0 through S4 are available together.
+
+
+3. Internal subset model used by webMARS
+
+webMARS organizes Mini-C in cumulative internal profiles:
+- C0-S0
+- C0-S1
+- C0-S2
+- C0-S3
+- C0-S4
+- C0-S4-  = cumulative profile from S0 to S4
+
+Important note:
+These are project profiles. They are useful for pedagogy, testing, and staged
+compiler work, but they are not identical to the academic CMU layering.
+
+Quick summary:
+- S0: core control flow, expressions, arrays, pointers, structs, contracts base
+- S1: #use and library resolution pipeline
+- S2: for, break, continue, ++, --
+- S3: array-focused profile and multidimensional usage conventions
+- S4: bool, char, string, short-circuit logic and string-oriented usage
+
+Important nuance:
+Some features that conceptually belong to S3 are already accepted below that
+profile in the current compiler. So S3 is currently best understood as a profile
+boundary and documentation layer, not always as a strict parser gate.
+
+
+4. Entry point
+
+A Mini-C program starts from:
+
+  int main(void) {
+    return 0;
+  }
+
+Current webMARS code generation targets MIPS and emits a terminating exit syscall.
+
+
+5. Basic syntax
+
+5.1 Variables
+
+  int x = 10;
+  bool ok = true;
+  char c = 'A';
+  string s = "hello";
+
+5.2 Expressions
+
+Supported expression families include:
+- arithmetic: + - * / %
+- comparison: == != < <= > >=
+- bitwise: & | ^ ~ << >>
+- logical: ! && ||
+- ternary: cond ? a : b
+
+5.3 Control flow
+
+  if (x > 0) {
+    x = x - 1;
+  } else {
+    x = 0;
+  }
+
+  while (x < 10) {
+    x = x + 1;
+  }
+
+  for (int i = 0; i < 10; i++) {
+    if (i == 4) continue;
+    if (i == 8) break;
+  }
+
+5.4 Functions
+
+  int add(int a, int b) {
+    return a + b;
+  }
+
+
+6. Assertions and errors
+
+6.1 assert
+
+  assert(x >= 0);
+
+Use assert when a condition must hold during execution. If the condition fails,
+the runtime reports an error and stops.
+
+6.2 error
+
+  error("invalid input");
+
+Use error when execution should stop immediately with a message.
+
+
+7. Arrays
+
+7.1 Local arrays
+
+  int a[3] = {1, 2, 3};
+
+7.2 Multidimensional arrays
+
+  int m[2][3] = {{1, 2, 3}, {4, 5, 6}};
+
+7.3 Array access
+
+  int x = a[1];
+  m[1][2] = 9;
+
+7.4 Heap allocation
+
+  int* xs = alloc_array(int, 8);
+  xs[0] = 42;
+
+webMARS tracks array length metadata for runtime checking and for \length.
+
+
+8. Pointers
+
+8.1 Pointer declarations
+
+  int* p = NULL;
+  p = alloc(int);
+  *p = 7;
+
+8.2 Null checks
+
+The runtime performs safety checks for invalid dereference in the supported C0
+runtime model.
+
+
+9. Structs and typedef
+
+  struct point {
+    int x;
+    int y;
+  };
+
+  typedef struct point* point_t;
+
+  int main(void) {
+    point_t p = alloc(struct point);
+    p->x = 10;
+    p->y = 20;
+    return p->x + p->y;
+  }
+
+Supported access operators:
+- .   for direct field access
+- ->  for pointer-to-struct field access
+
+
+10. Contracts
+
+webMARS supports the contract-oriented layer used by the current runtime model.
+Common forms include:
+- //@requires condition;
+- //@ensures condition;
+- //@loop_invariant condition;
+
+Example:
+
+  //@requires 0 <= n && n <= \length(a);
+  //@ensures \result >= 0;
+  int sum(int a[], int n) {
+    int i = 0;
+    int s = 0;
+    //@loop_invariant 0 <= i && i <= n;
+    while (i < n) {
+      s += a[i];
+      i++;
+    }
+    return s;
+  }
+
+Contract vocabulary currently supported by the webMARS C0 layer includes:
+- \length
+- \result
+- requires / ensures / loop_invariant
+
+
+11. Libraries and #use
+
+11.1 Importing libraries
+
+Use project or global libraries with #use or #include.
+
+Examples:
+
+  #use <conio>
+  #use <string>
+  #use "helper.c0"
+  #include <stdio.h>
+  #include <string.h>
+
+11.2 Resolution model
+
+webMARS resolves #use / #include directives from:
+- project files
+- global libs/ shipped with webMARS
+
+Cycle detection and duplicate handling are part of the import pipeline.
+
+11.3 Currently documented libraries
+
+The current implementation covers the libraries described in docs/c0-libraries.txt:
+- conio
+- file
+- args
+- parse
+- string
+- img
+- rand
+- util
+
+webMARS also ships compatibility headers intended to make simple console-style C sources easier to port:
+- stdio.h
+- stdlib.h
+- ctype.h
+- stddef.h
+- stdbool.h
+
+Notes:
+- #include <string.h> resolves to the same core string library shipped for #use <string>, plus C-style aliases such as strlen/strcmp/strncmp
+- these compatibility headers sit on top of the current S4 profile; they do not yet constitute a full native libc layer
+
+Examples:
+- conio: console-oriented helpers
+- string: string helpers and formatting support
+- file: file access helpers
+- img: image-oriented helper layer for the webMARS environment
+
+
+12. Console output and input
+
+Typical output options:
+- print_int(x)
+- print_char(c)
+- print_string(s)
+
+Using conio wrappers:
+- printint(x)
+- printchar(c)
+- print(s)
+- println(s)
+
+Example:
+
+  #use <conio>
+
+  int main(void) {
+    print("Result: ");
+    printint(42);
+    printchar('\n');
+    return 0;
+  }
+
+
+13. Strings and chars
+
+Strings are available in the current S4 layer.
+
+Examples:
+
+  string s = "hello";
+  char c = '!';
+  print_string(s);
+  print_char(c);
+
+The lexer/compiler supports the usual escape family used by the current runtime,
+including escaped newline and quote forms.
+
+
+14. Runtime model notes specific to webMARS
+
+The webMARS implementation intentionally includes project-specific adaptations.
+Important examples:
+- some library APIs that are academically described with array returns are
+  represented internally with pointer-backed arrays
+- these arrays still preserve length metadata and runtime bounds behavior
+- args parsing is wired into the webMARS runtime instead of a native CLI process
+- memory allocation behavior relies on the webMARS MIPS runtime and aligned sbrk
+
+These are not accidental differences. They are part of making C0 practical in
+this web environment.
+
+
+15. Recommended profiles
+
+Use these profiles depending on your goal:
+- C0-S0     : smallest teaching core
+- C0-S2-    : structured control-flow teaching with for/break/continue
+- C0-S4-    : full currently closed C0 layer in webMARS
+
+For most real examples in the current project, prefer:
+- C0-S4-
+
+
+16. Example progression
+
+Suggested order for learning:
+1. simple arithmetic and return values
+2. if / while
+3. functions with parameters
+4. arrays and \length
+5. pointers and alloc
+6. structs and typedef
+7. contracts
+8. #use and libraries
+9. strings and full C0-S4-
+
+See examples/Compiler for practical samples.
+
+
+17. Known boundary
+
+The currently closed scope is C0 through the project profile S4-.
+C1-style features remain outside this closed scope, including for example:
+- generic pointers
+- function pointers
+- the academic C1-only control model
+
+
+18. Short example
+
+  #use <conio>
+
+  int square(int x) {
+    return x * x;
+  }
+
+  int main(void) {
+    int value = 5;
+    print("square = ");
+    printint(square(value));
+    printchar('\n');
+    return 0;
+  }
+
+
+19. Next improvements planned for this manual
+
+Future revisions should add:
+- precise grammar summary
+- exact subset-by-feature table
+- full library API reference
+- worked examples with generated MIPS excerpts
+- differences vs academic C0 and C1
+- troubleshooting section
+
+End of draft.

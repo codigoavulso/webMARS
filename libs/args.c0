@@ -1,0 +1,26 @@
+struct args {
+  int argc;
+  string* argv;
+};
+
+typedef struct args* args_t;
+
+//@requires ptr != NULL;
+void args_flag(string name, bool* ptr) {
+  __wm_args_flag(name, ptr);
+}
+
+//@requires ptr != NULL;
+void args_int(string name, int* ptr) {
+  __wm_args_int(name, ptr);
+}
+
+//@requires ptr != NULL;
+void args_string(string name, string* ptr) {
+  __wm_args_string(name, ptr);
+}
+
+//@ensures \result == NULL || \result->argc == \length(\result->argv);
+args_t args_parse(void) {
+  return __wm_args_parse();
+}

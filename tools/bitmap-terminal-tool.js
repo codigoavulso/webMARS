@@ -119,6 +119,7 @@
       let fullRedrawNeeded = true;
       let framePending = false;
       let keyQueue = [];
+      let detachMemoryObserver = () => {};
 
       function mmioBase() {
         return (ctx.engine?.memoryMap?.mmioBase ?? ctx.defaultMemoryMap?.mmioBase ?? 0xffff0000) >>> 0;
@@ -137,17 +138,17 @@
         mmioLabel.textContent = `ReceiverCtrl=${toHex32(RECEIVER_CONTROL)} ReceiverData=${toHex32(RECEIVER_DATA)}`;
       }
 
-      function readWordSafe(address) {
+      function readByteSafe(address) {
         try {
-          return ctx.engine.readWord(address >>> 0) | 0;
+          return ctx.engine.readByte(address >>> 0, false) & 0xff;
         } catch {
           return 0;
         }
       }
 
-      function writeWordSafe(address, value) {
+      function writeByteSafe(address, value) {
         try {
-          ctx.engine.writeWord(address >>> 0, value | 0);
+          ctx.engine.writeByte(address >>> 0, value & 0xff);
           return true;
         } catch {
           return false;
@@ -155,15 +156,15 @@
       }
 
       function readyBitSet(address) {
-        return (readWordSafe(address) | 1) | 0;
+        return (readByteSafe(address) | 1) & 0xff;
       }
 
       function readyBitCleared(address) {
-        return (readWordSafe(address) & ~1) | 0;
+        return (readByteSafe(address) & ~1) & 0xff;
       }
 
       function isReadyBitSet(address) {
-        return (readWordSafe(address) & 1) === 1;
+        return (readByteSafe(address) & 1) === 1;
       }
 
       function feedReceiver() {
@@ -171,8 +172,34 @@
         const { RECEIVER_CONTROL, RECEIVER_DATA } = addresses();
         if (isReadyBitSet(RECEIVER_CONTROL)) return;
         const next = keyQueue.shift() | 0;
-        writeWordSafe(RECEIVER_DATA, next & 0xff);
-        writeWordSafe(RECEIVER_CONTROL, readyBitSet(RECEIVER_CONTROL));
+        writeByteSafe(RECEIVER_DATA, next & 0xff);
+        writeByteSafe(RECEIVER_CONTROL, readyBitSet(RECEIVER_CONTROL));
+      }
+
+      function detachMmioObserver() {
+        try {
+          detachMemoryObserver();
+        } catch {
+          // Ignore observer detach failures.
+        }
+        detachMemoryObserver = () => {};
+      }
+
+      function attachMmioObserver() {
+        detachMmioObserver();
+        if (!ctx.engine || typeof ctx.engine.registerMemoryObserver !== "function") return;
+        const { RECEIVER_DATA, RECEIVER_CONTROL } = addresses();
+        detachMemoryObserver = ctx.engine.registerMemoryObserver({
+          start: RECEIVER_DATA,
+          end: RECEIVER_DATA,
+          onRead(detail) {
+            if (!connected) return;
+            if ((detail?.address >>> 0) !== (RECEIVER_DATA >>> 0)) return;
+            writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
+            writeByteSafe(RECEIVER_DATA, 0);
+            feedReceiver();
+          }
+        });
       }
 
       function queueChar(charCode) {
@@ -312,11 +339,13 @@
         connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
         if (connected) {
           const { RECEIVER_CONTROL } = addresses();
-          writeWordSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
+          writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
+          attachMmioObserver();
           feedReceiver();
           scheduleRender();
           kbInput.focus();
         } else {
+          detachMmioObserver();
           clearDisplay();
         }
       });
@@ -330,12 +359,20 @@
         baseAddressSelect.value = String(config.baseAddress);
         keyQueue = [];
         const { RECEIVER_CONTROL } = addresses();
-        writeWordSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
+        detachMmioObserver();
+        writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
         readConfig();
         clearDisplay();
+        if (connected) {
+          attachMmioObserver();
+          feedReceiver();
+        }
       });
 
-      closeButton.addEventListener("click", shell.close);
+      closeButton.addEventListener("click", () => {
+        detachMmioObserver();
+        shell.close();
+      });
 
       readConfig();
       updateMmioLabel();
@@ -345,19 +382,20 @@
         open() {
           shell.open();
           updateMmioLabel();
-          if (connected) scheduleRender();
+          if (connected) {
+            attachMmioObserver();
+            scheduleRender();
+          }
         },
-        close: shell.close,
+        close() {
+          detachMmioObserver();
+          shell.close();
+        },
         onSnapshot(snapshot) {
           latestSnapshot = snapshot;
           if (!connected) return;
 
-          const { RECEIVER_DATA, RECEIVER_CONTROL } = addresses();
           const writeAddress = Number.isFinite(snapshot?.lastMemoryWriteAddress) ? (snapshot.lastMemoryWriteAddress >>> 0) : null;
-          if (writeAddress === RECEIVER_DATA) {
-            writeWordSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
-            feedReceiver();
-          }
 
           if (writeAddress != null) {
             const range = getRange();

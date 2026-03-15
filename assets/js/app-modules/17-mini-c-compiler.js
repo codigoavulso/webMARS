@@ -27,7 +27,7 @@
     "const",
     "true", "false",
     "NULL", "alloc", "alloc_array",
-    "assert", "requires", "ensures", "invariant", "loop_invariant",
+    "assert", "error", "requires", "ensures", "invariant", "loop_invariant",
     "return", "if", "else", "while", "for", "break", "continue"
   ]);
   const MULTI_CHAR_PUNCT = [
@@ -57,17 +57,42 @@
     ">>=": ">>"
   });
   const TEMP_REGS = ["$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7"];
+  const VOID_PTR_TAG_MAGIC = 0x574d5631;
 
   const SUBSET_LEVELS = Object.freeze({
     "C0-S0": 0,
     "C0-S1": 1,
     "C0-S2": 2,
     "C0-S3": 3,
-    "C0-S4": 4
+    "C0-S4": 4,
+    "C1-NATIVE": 5
+  });
+
+  const SUBSET_ALIASES = Object.freeze({
+    "S0": "C0-S0",
+    "S0-": "C0-S0",
+    "C0-S0-": "C0-S0",
+    "S1": "C0-S1",
+    "S1-": "C0-S1",
+    "C0-S1-": "C0-S1",
+    "S2": "C0-S2",
+    "S2-": "C0-S2",
+    "C0-S2-": "C0-S2",
+    "S3": "C0-S3",
+    "S3-": "C0-S3",
+    "C0-S3-": "C0-S3",
+    "S4": "C0-S4",
+    "S4-": "C0-S4",
+    "C0-S4-": "C0-S4",
+    "C1": "C1-NATIVE",
+    "C1-": "C1-NATIVE",
+    "C1-NATIVE-": "C1-NATIVE",
+    "C1/NATIVE": "C1-NATIVE",
+    "C1_NATIVE": "C1-NATIVE"
   });
 
   const FUNCTION_RETURN_TYPES = new Set(["void", "int", "bool", "char", "string"]);
-  const DECLARATION_TYPES = new Set(["int", "bool", "char", "string"]);
+  const DECLARATION_TYPES = new Set(["int", "void", "bool", "char", "string"]);
 
   const INTRINSICS = Object.freeze({
     print_int: { name: "print_int", params: 1, paramTypes: ["int"], returnType: "void", minSubset: "C0-S0" },
@@ -115,13 +140,232 @@
     message_dialog_string: { name: "message_dialog_string", params: 2, paramTypes: ["string", "string"], returnType: "void", minSubset: "C0-S1" },
     contract_length: { name: "contract_length", params: 1, paramTypes: [["int", "bool", "char"]], paramKinds: ["address"], returnType: "int", minSubset: "C0-S0" },
     contract_old: { name: "contract_old", params: 1, paramTypes: ["int"], returnType: "int", minSubset: "C0-S0" },
-    contract_result: { name: "contract_result", params: 0, paramTypes: [], returnType: "int", minSubset: "C0-S0" }
+    contract_result: { name: "contract_result", params: 0, paramTypes: [], returnType: "int", minSubset: "C0-S0" },
+    contract_hastag: { name: "contract_hastag", params: 2, paramTypes: ["string", "void*"], returnType: "bool", minSubset: "C1-NATIVE" },
+
+    __wm_flush: { name: "__wm_flush", params: 0, paramTypes: [], returnType: "void", minSubset: "C0-S4" },
+    __wm_eof: { name: "__wm_eof", params: 0, paramTypes: [], returnType: "bool", minSubset: "C0-S4" },
+    __wm_readline: { name: "__wm_readline", params: 0, paramTypes: [], returnType: "string", minSubset: "C0-S4" },
+
+    __wm_file_closed: {
+      name: "__wm_file_closed",
+      params: 1,
+      paramTypes: ["struct __c0_file_handle*"],
+      returnType: "bool",
+      minSubset: "C0-S4"
+    },
+    __wm_file_read: {
+      name: "__wm_file_read",
+      params: 1,
+      paramTypes: ["string"],
+      returnType: "struct __c0_file_handle*",
+      minSubset: "C0-S4"
+    },
+    __wm_file_close: {
+      name: "__wm_file_close",
+      params: 1,
+      paramTypes: ["struct __c0_file_handle*"],
+      returnType: "void",
+      minSubset: "C0-S4"
+    },
+    __wm_file_eof: {
+      name: "__wm_file_eof",
+      params: 1,
+      paramTypes: ["struct __c0_file_handle*"],
+      returnType: "bool",
+      minSubset: "C0-S4"
+    },
+    __wm_file_readline: {
+      name: "__wm_file_readline",
+      params: 1,
+      paramTypes: ["struct __c0_file_handle*"],
+      returnType: "string",
+      minSubset: "C0-S4"
+    },
+
+    __wm_args_flag: {
+      name: "__wm_args_flag",
+      params: 2,
+      paramTypes: ["string", "bool*"],
+      paramKinds: ["scalar", "address"],
+      returnType: "void",
+      minSubset: "C0-S4"
+    },
+    __wm_args_int: {
+      name: "__wm_args_int",
+      params: 2,
+      paramTypes: ["string", "int*"],
+      paramKinds: ["scalar", "address"],
+      returnType: "void",
+      minSubset: "C0-S4"
+    },
+    __wm_args_string: {
+      name: "__wm_args_string",
+      params: 2,
+      paramTypes: ["string", "string*"],
+      paramKinds: ["scalar", "address"],
+      returnType: "void",
+      minSubset: "C0-S4"
+    },
+    __wm_args_parse: {
+      name: "__wm_args_parse",
+      params: 0,
+      paramTypes: [],
+      returnType: "struct args*",
+      minSubset: "C0-S4"
+    },
+
+    __wm_string_length: { name: "__wm_string_length", params: 1, paramTypes: ["string"], returnType: "int", minSubset: "C0-S4" },
+    __wm_string_charat: { name: "__wm_string_charat", params: 2, paramTypes: ["string", "int"], returnType: "char", minSubset: "C0-S4" },
+    __wm_string_join: { name: "__wm_string_join", params: 2, paramTypes: ["string", "string"], returnType: "string", minSubset: "C0-S4" },
+    __wm_string_sub: { name: "__wm_string_sub", params: 3, paramTypes: ["string", "int", "int"], returnType: "string", minSubset: "C0-S4" },
+    __wm_string_compare: { name: "__wm_string_compare", params: 2, paramTypes: ["string", "string"], returnType: "int", minSubset: "C0-S4" },
+    __wm_string_fromint: { name: "__wm_string_fromint", params: 1, paramTypes: ["int"], returnType: "string", minSubset: "C0-S4" },
+    __wm_string_fromchar: { name: "__wm_string_fromchar", params: 1, paramTypes: ["char"], returnType: "string", minSubset: "C0-S4" },
+    __wm_string_tolower: { name: "__wm_string_tolower", params: 1, paramTypes: ["string"], returnType: "string", minSubset: "C0-S4" },
+    __wm_string_terminated: {
+      name: "__wm_string_terminated",
+      params: 2,
+      paramTypes: ["char*", "int"],
+      paramKinds: ["address", "scalar"],
+      returnType: "bool",
+      minSubset: "C0-S4"
+    },
+    __wm_string_to_chararray: { name: "__wm_string_to_chararray", params: 1, paramTypes: ["string"], returnType: "char*", minSubset: "C0-S4" },
+    __wm_string_from_chararray: {
+      name: "__wm_string_from_chararray",
+      params: 1,
+      paramTypes: ["char*"],
+      paramKinds: ["address"],
+      returnType: "string",
+      minSubset: "C0-S4"
+    },
+    __wm_cstr_terminated: {
+      name: "__wm_cstr_terminated",
+      params: 2,
+      paramTypes: ["char*", "int"],
+      returnType: "bool",
+      minSubset: "C1-NATIVE"
+    },
+    __wm_cstr_from_string: {
+      name: "__wm_cstr_from_string",
+      params: 1,
+      paramTypes: ["string"],
+      returnType: "char*",
+      minSubset: "C1-NATIVE"
+    },
+    __wm_string_from_cstr: {
+      name: "__wm_string_from_cstr",
+      params: 1,
+      paramTypes: ["char*"],
+      returnType: "string",
+      minSubset: "C1-NATIVE"
+    },
+    __wm_char_chr: { name: "__wm_char_chr", params: 1, paramTypes: ["int"], returnType: "char", minSubset: "C0-S4" },
+    __wm_parse_bool: { name: "__wm_parse_bool", params: 1, paramTypes: ["string"], returnType: "bool*", minSubset: "C0-S4" },
+    __wm_parse_int: { name: "__wm_parse_int", params: 2, paramTypes: ["string", "int"], returnType: "int*", minSubset: "C0-S4" },
+    __wm_num_tokens: { name: "__wm_num_tokens", params: 1, paramTypes: ["string"], returnType: "int", minSubset: "C0-S4" },
+    __wm_int_tokens: { name: "__wm_int_tokens", params: 2, paramTypes: ["string", "int"], returnType: "bool", minSubset: "C0-S4" },
+    __wm_parse_tokens: { name: "__wm_parse_tokens", params: 1, paramTypes: ["string"], returnType: "string*", minSubset: "C0-S4" },
+    __wm_parse_ints: { name: "__wm_parse_ints", params: 2, paramTypes: ["string", "int"], returnType: "int*", minSubset: "C0-S4" },
+    __wm_int2hex: { name: "__wm_int2hex", params: 1, paramTypes: ["int"], returnType: "string", minSubset: "C0-S4" },
+
+    __wm_image_width: {
+      name: "__wm_image_width",
+      params: 1,
+      paramTypes: ["struct __c0_image_handle*"],
+      returnType: "int",
+      minSubset: "C0-S4"
+    },
+    __wm_image_height: {
+      name: "__wm_image_height",
+      params: 1,
+      paramTypes: ["struct __c0_image_handle*"],
+      returnType: "int",
+      minSubset: "C0-S4"
+    },
+    __wm_image_create: {
+      name: "__wm_image_create",
+      params: 2,
+      paramTypes: ["int", "int"],
+      returnType: "struct __c0_image_handle*",
+      minSubset: "C0-S4"
+    },
+    __wm_image_clone: {
+      name: "__wm_image_clone",
+      params: 1,
+      paramTypes: ["struct __c0_image_handle*"],
+      returnType: "struct __c0_image_handle*",
+      minSubset: "C0-S4"
+    },
+    __wm_image_subimage: {
+      name: "__wm_image_subimage",
+      params: 5,
+      paramTypes: ["struct __c0_image_handle*", "int", "int", "int", "int"],
+      returnType: "struct __c0_image_handle*",
+      minSubset: "C0-S4"
+    },
+    __wm_image_load: {
+      name: "__wm_image_load",
+      params: 1,
+      paramTypes: ["string"],
+      returnType: "struct __c0_image_handle*",
+      minSubset: "C0-S4"
+    },
+    __wm_image_save: {
+      name: "__wm_image_save",
+      params: 2,
+      paramTypes: ["struct __c0_image_handle*", "string"],
+      returnType: "void",
+      minSubset: "C0-S4"
+    },
+    __wm_image_data: {
+      name: "__wm_image_data",
+      params: 1,
+      paramTypes: ["struct __c0_image_handle*"],
+      returnType: "int*",
+      minSubset: "C0-S4"
+    },
+
+    printf: {
+      name: "printf",
+      params: 1,
+      paramTypes: ["string"],
+      returnType: "void",
+      minSubset: "C0-S4",
+      variadic: true
+    },
+    format: {
+      name: "format",
+      params: 1,
+      paramTypes: ["string"],
+      returnType: "string",
+      minSubset: "C0-S4",
+      variadic: true
+    }
   });
 
   function normalizeSubsetName(value) {
-    const normalized = String(value || "C0-S4").trim().toUpperCase();
+    const normalized = String(value || "C1-NATIVE").trim().toUpperCase();
     if (Object.prototype.hasOwnProperty.call(SUBSET_LEVELS, normalized)) return normalized;
+    if (Object.prototype.hasOwnProperty.call(SUBSET_ALIASES, normalized)) return SUBSET_ALIASES[normalized];
+    if (normalized.endsWith("-")) {
+      const withoutDash = normalized.slice(0, -1);
+      if (Object.prototype.hasOwnProperty.call(SUBSET_LEVELS, withoutDash)) return withoutDash;
+    }
     return "C0-S0";
+  }
+
+  function isRecognizedSubsetToken(value) {
+    const normalized = String(value || "").trim().toUpperCase();
+    if (!normalized) return false;
+    if (Object.prototype.hasOwnProperty.call(SUBSET_LEVELS, normalized)) return true;
+    if (Object.prototype.hasOwnProperty.call(SUBSET_ALIASES, normalized)) return true;
+    if (normalized.endsWith("-")) {
+      const withoutDash = normalized.slice(0, -1);
+      if (Object.prototype.hasOwnProperty.call(SUBSET_LEVELS, withoutDash)) return true;
+    }
+    return false;
   }
 
   function subsetLevel(value) {
@@ -131,6 +375,18 @@
   function normalizeTypeName(value) {
     const raw = String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
     if (!raw) return "int";
+    if (raw.startsWith("fnptr:")) return raw;
+    if (raw.endsWith("]")) {
+      let base = raw;
+      let arrayDepth = 0;
+      while (base.endsWith("[]")) {
+        base = base.slice(0, -2).trim();
+        arrayDepth += 1;
+      }
+      if (arrayDepth > 0) {
+        return `${normalizeTypeName(base)}${"*".repeat(arrayDepth)}`;
+      }
+    }
     const pointerMatch = raw.match(/^(.*?)(\*+)$/);
     if (pointerMatch) {
       const base = normalizeTypeName(pointerMatch[1]);
@@ -141,6 +397,18 @@
     if (FUNCTION_RETURN_TYPES.has(raw)) return raw;
     // Typedef aliases and unresolved custom names are preserved.
     return raw;
+  }
+
+  function runtimeVoidTagId(typeName) {
+    const normalized = normalizeTypeName(typeName);
+    let hash = 2166136261;
+    for (let i = 0; i < normalized.length; i += 1) {
+      hash ^= normalized.charCodeAt(i);
+      hash = Math.imul(hash, 16777619) >>> 0;
+    }
+    hash = (hash & 0x7fffffff) >>> 0;
+    if (hash === 0 || hash === VOID_PTR_TAG_MAGIC) hash = (hash ^ 0x13579bdf) >>> 0;
+    return hash | 0;
   }
 
   function isPointerTypeName(typeName) {
@@ -158,8 +426,55 @@
     return `${normalizeTypeName(baseType)}${"*".repeat(count)}`;
   }
 
+  function functionPointerTypeName(returnType, paramTypes = []) {
+    const normalizedReturnType = normalizeTypeName(returnType || "int");
+    const normalizedParams = Array.isArray(paramTypes)
+      ? paramTypes.map((entry) => normalizeTypeName(entry || "int"))
+      : [];
+    return `fnptr:${normalizedReturnType}(${normalizedParams.join(",")})`;
+  }
+
+  function isFunctionPointerTypeName(typeName) {
+    return normalizeTypeName(typeName).startsWith("fnptr:");
+  }
+
+  function parseFunctionPointerTypeName(typeName) {
+    const normalized = normalizeTypeName(typeName);
+    if (!normalized.startsWith("fnptr:")) return null;
+    const separatorIndex = normalized.indexOf("(");
+    const closingIndex = normalized.lastIndexOf(")");
+    if (separatorIndex < 0 || closingIndex < separatorIndex) return null;
+    const returnType = normalizeTypeName(normalized.slice(6, separatorIndex));
+    const rawParams = normalized.slice(separatorIndex + 1, closingIndex).trim();
+    const paramTypes = !rawParams
+      ? []
+      : rawParams.split(",").map((entry) => normalizeTypeName(entry));
+    return {
+      returnType,
+      paramTypes
+    };
+  }
+
+  function isVoidType(typeName) {
+    return normalizeTypeName(typeName) === "void";
+  }
+
+  function isVoidPointerTypeName(typeName) {
+    return normalizeTypeName(typeName) === "void*";
+  }
+
+  function isObjectPointerTypeName(typeName) {
+    const normalized = normalizeTypeName(typeName);
+    return isPointerTypeName(normalized) && !isFunctionPointerTypeName(normalized);
+  }
+
   function isStructTypeName(typeName) {
     return normalizeTypeName(typeName).startsWith("struct ");
+  }
+
+  function isLargeStructTypeName(typeName) {
+    const normalized = normalizeTypeName(typeName);
+    return isStructTypeName(normalized) && !isPointerTypeName(normalized);
   }
 
   function isNullTypeName(typeName) {
@@ -171,6 +486,7 @@
     if (DECLARATION_TYPES.has(raw)) return true;
     if (raw === "struct") return true;
     if (isPointerTypeName(raw)) return true;
+    if (isFunctionPointerTypeName(raw)) return true;
     if (isStructTypeName(raw)) return true;
     return false;
   }
@@ -193,6 +509,38 @@
     return t === "bool" || t === "char" || t === "string";
   }
 
+  function requiresC1SubsetType(typeName) {
+    const normalized = normalizeTypeName(typeName);
+    if (normalized === "void") return false;
+    if (isVoidPointerTypeName(normalized)) return true;
+    if (isFunctionPointerTypeName(normalized)) return true;
+    return false;
+  }
+
+  function parsePrintfFormatSpecifiers(formatText) {
+    const text = String(formatText || "");
+    const specifiers = [];
+    for (let i = 0; i < text.length; i += 1) {
+      if (text[i] !== "%") continue;
+      if ((i + 1) >= text.length) {
+        return { ok: false, message: "Format string cannot end with '%'." };
+      }
+      const next = text[i + 1];
+      if (next === "%") {
+        i += 1;
+        continue;
+      }
+      if (next === "s") specifiers.push({ code: "s", expectedType: "string" });
+      else if (next === "d") specifiers.push({ code: "d", expectedType: "int" });
+      else if (next === "c") specifiers.push({ code: "c", expectedType: "char" });
+      else {
+        return { ok: false, message: `Unsupported format specifier '%${next}'.` };
+      }
+      i += 1;
+    }
+    return { ok: true, specifiers };
+  }
+
   function normalizeParamKind(value) {
     const normalized = String(value || "scalar").trim().toLowerCase();
     if (normalized === "array") return "array";
@@ -202,12 +550,17 @@
 
   function normalizeArrayShape(shapeValue, fallback = [1]) {
     const source = Array.isArray(shapeValue) ? shapeValue : [];
-    if (!source.length) return Array.isArray(fallback) && fallback.length ? [...fallback] : [1];
+    if (!source.length) {
+      if (Array.isArray(fallback)) return fallback.length ? [...fallback] : [];
+      return [1];
+    }
     const normalized = source.map((entry) => {
       const value = Number(entry);
       return Number.isFinite(value) && value > 0 ? (value | 0) : 0;
     });
-    return normalized.length ? normalized : (Array.isArray(fallback) && fallback.length ? [...fallback] : [1]);
+    if (normalized.length) return normalized;
+    if (Array.isArray(fallback)) return fallback.length ? [...fallback] : [];
+    return [1];
   }
 
   function arrayShapeProduct(shapeValue, startIndex = 0) {
@@ -324,7 +677,7 @@
   }
 
   function preprocessUseDirectives(sourceText, options = {}) {
-    const subset = normalizeSubsetName(options.subset || "C0-S4");
+    const subset = normalizeSubsetName(options.subset || "C1-NATIVE");
     const subsetIsS1OrHigher = subsetLevel(subset) >= subsetLevel("C0-S1");
     const includeResolver = typeof options.includeResolver === "function"
       ? options.includeResolver
@@ -334,6 +687,9 @@
       const key = name.toLowerCase();
       if (!useLibrarySources.has(key)) useLibrarySources.set(key, String(DEFAULT_USE_LIBRARIES[name] ?? ""));
     });
+    if (subsetLevel(subset) >= subsetLevel("C1-NATIVE") && useLibrarySources.has("stdlib_native")) {
+      useLibrarySources.set("stdlib", String(useLibrarySources.get("stdlib_native") ?? ""));
+    }
     const sourceName = String(options.sourceName || "program.c");
     const diagnostics = [];
     const warnings = [];
@@ -392,8 +748,8 @@
         ok: false,
         error: createDiagnostic(
           kind === "lib"
-            ? `Unable to resolve #use <${target}>.`
-            : `Unable to resolve #use \"${target}\".`,
+            ? `Unable to resolve library <${target}>.`
+            : `Unable to resolve include file "${target}".`,
           { line: directive.line, column: directive.column },
           "preprocess"
         )
@@ -403,17 +759,25 @@
     const processUnit = (unitSource, unitName) => {
       const outputLines = [];
       const lines = String(unitSource ?? "").replace(/\r\n/g, "\n").split("\n");
+      let seenNonUseContent = false;
       for (let index = 0; index < lines.length; index += 1) {
         const lineText = lines[index];
         const trimmed = String(lineText || "").trim();
         if (!trimmed.startsWith("#")) {
+          if (trimmed && !trimmed.startsWith("//") && !trimmed.startsWith("/*") && trimmed !== "*/" && !trimmed.startsWith("*")) {
+            seenNonUseContent = true;
+          }
           outputLines.push(lineText);
           continue;
         }
 
         const useLibraryMatch = trimmed.match(/^#use\s*<([^>]+)>\s*$/);
         const useFileMatch = useLibraryMatch ? null : trimmed.match(/^#use\s*\"([^\"]+)\"\s*$/);
-        if (!useLibraryMatch && !useFileMatch) {
+        const includeLibraryMatch = (useLibraryMatch || useFileMatch) ? null : trimmed.match(/^#include\s*<([^>]+)>\s*$/);
+        const includeFileMatch = (useLibraryMatch || useFileMatch || includeLibraryMatch)
+          ? null
+          : trimmed.match(/^#include\s*\"([^\"]+)\"\s*$/);
+        if (!useLibraryMatch && !useFileMatch && !includeLibraryMatch && !includeFileMatch) {
           warnings.push(createDiagnostic(
             `Ignoring unsupported preprocessor directive '${trimmed}'.`,
             { line: index + 1, column: 1 },
@@ -424,7 +788,16 @@
 
         if (!subsetIsS1OrHigher) {
           diagnostics.push(createDiagnostic(
-            `#use directives require subset C0-S1, current subset is ${subset}.`,
+            `#use/#include directives require subset C0-S1, current subset is ${subset}.`,
+            { line: index + 1, column: 1 },
+            "preprocess"
+          ));
+          continue;
+        }
+
+        if (seenNonUseContent) {
+          diagnostics.push(createDiagnostic(
+            "#use/#include directives must appear before all other declarations and statements.",
             { line: index + 1, column: 1 },
             "preprocess"
           ));
@@ -432,8 +805,12 @@
         }
 
         const directive = {
-          kind: useLibraryMatch ? "lib" : "file",
-          target: useLibraryMatch ? useLibraryMatch[1] : useFileMatch[1],
+          kind: (useLibraryMatch || includeLibraryMatch) ? "lib" : "file",
+          target: useLibraryMatch
+            ? useLibraryMatch[1]
+            : (useFileMatch
+              ? useFileMatch[1]
+              : (includeLibraryMatch ? includeLibraryMatch[1] : includeFileMatch[1])),
           line: index + 1,
           column: 1,
           fromSourceName: unitName
@@ -451,7 +828,7 @@
         const loadKey = `${directive.kind}:${resolvedName}`;
         if (activeStack.has(loadKey)) {
           diagnostics.push(createDiagnostic(
-            `Circular #use detected for '${directive.target}'.`,
+            `Circular include detected for '${directive.target}'.`,
             { line: index + 1, column: 1 },
             "preprocess"
           ));
@@ -479,6 +856,12 @@
     const lines = source.split("\n");
     const warnings = [];
     let blockDepth = 0;
+    let pendingFunctionContracts = [];
+    const rewriteContractBuiltins = (input) => String(input || "")
+      .replace(/\\length\s*\(/g, "contract_length(")
+      .replace(/\\old\s*\(/g, "contract_old(")
+      .replace(/\\result/g, "contract_result()")
+      .replace(/\\hastag\s*\(\s*([^,]+?)\s*,/g, (_, typeText) => `contract_hastag("${String(typeText || "").trim()}",`);
     const out = lines.map((rawLine, index) => {
       let line = String(rawLine ?? "");
       const trimmed = line.trim();
@@ -489,24 +872,20 @@
         const mappedKind = kind === "loop_invariant" ? "invariant" : kind;
         let expression = String(match[2] || "").trim();
         if (expression.endsWith(";")) expression = expression.slice(0, -1).trim();
-        expression = expression
-          .replace(/\\length\s*\(/g, "contract_length(")
-          .replace(/\\old\s*\(/g, "contract_old(")
-          .replace(/\\result/g, "contract_result");
+        expression = rewriteContractBuiltins(expression);
         if ((mappedKind === "requires" || mappedKind === "ensures") && blockDepth <= 0) {
-          warnings.push(createDiagnostic(
-            `Ignoring top-level contract annotation '${mappedKind}' (only statement-level contracts are currently enforced).`,
-            { line: index + 1, column: 1 },
-            "preprocess"
-          ));
+          pendingFunctionContracts.push(`${mappedKind}(${expression || "1"});`);
           return "";
         }
         return `${mappedKind}(${expression || "1"});`;
       }
-      line = line
-        .replace(/\\length\s*\(/g, "contract_length(")
-        .replace(/\\old\s*\(/g, "contract_old(")
-        .replace(/\\result/g, "contract_result()");
+      line = rewriteContractBuiltins(line);
+      if (pendingFunctionContracts.length > 0 && blockDepth <= 0 && line.includes("{") && line.includes("(") && line.includes(")")) {
+        const injection = pendingFunctionContracts.map((entry) => ` ${entry}`).join("");
+        const braceIndex = line.indexOf("{");
+        line = `${line.slice(0, braceIndex + 1)}${injection}${line.slice(braceIndex + 1)}`;
+        pendingFunctionContracts = [];
+      }
       for (let i = 0; i < line.length; i += 1) {
         const ch = line[i];
         if (ch === "{") blockDepth += 1;
@@ -514,6 +893,13 @@
       }
       return line;
     });
+    if (pendingFunctionContracts.length > 0) {
+      warnings.push(createDiagnostic(
+        "Dangling function contract annotation without a following function definition.",
+        { line: lines.length, column: 1 },
+        "preprocess"
+      ));
+    }
     return {
       source: out.join("\n"),
       warnings
@@ -645,7 +1031,12 @@
     const target = normalizeTypeName(targetType);
     const source = normalizeTypeName(sourceType);
     if (target === source) return true;
+    if ((target === "int" && source === "char") || (target === "char" && source === "int")) return true;
     if (isPointerTypeName(target) && isNullTypeName(source)) return true;
+    if (isFunctionPointerTypeName(target) && isNullTypeName(source)) return true;
+    if (isFunctionPointerTypeName(target) && isFunctionPointerTypeName(source)) return target === source;
+    if (isVoidPointerTypeName(target) && isObjectPointerTypeName(source)) return true;
+    if (isObjectPointerTypeName(target) && isVoidPointerTypeName(source)) return true;
     if (isPointerTypeName(target) && isPointerTypeName(source)) return target === source;
     return false;
   }
@@ -704,25 +1095,57 @@
     };
     const isIdentifierStart = (ch) => /[A-Za-z_]/.test(ch);
     const isIdentifierPart = (ch) => /[A-Za-z0-9_]/.test(ch);
-    const decodeEscape = (escapeChar) => {
+    const isAsciiCharacter = (value) => {
+      if (typeof value !== "string" || value.length === 0) return false;
+      const code = value.charCodeAt(0);
+      return Number.isFinite(code) && code >= 0 && code <= 127;
+    };
+    const isPrintableAsciiCharacter = (value) => {
+      if (!isAsciiCharacter(value)) return false;
+      const code = value.charCodeAt(0);
+      return code >= 32 && code <= 126;
+    };
+    const decodeEscape = (escapeChar, options = {}) => {
+      const allowNull = options.allowNull !== false;
       switch (escapeChar) {
-        case "n": return "\n";
-        case "r": return "\r";
-        case "t": return "\t";
-        case "0": return "\0";
-        case "\"": return "\"";
-        case "'": return "'";
-        case "\\": return "\\";
-        default: return escapeChar;
+        case "a": return { ok: true, value: String.fromCharCode(7) };
+        case "b": return { ok: true, value: "\b" };
+        case "f": return { ok: true, value: "\f" };
+        case "n": return { ok: true, value: "\n" };
+        case "r": return { ok: true, value: "\r" };
+        case "t": return { ok: true, value: "\t" };
+        case "v": return { ok: true, value: "\v" };
+        case "0":
+          if (!allowNull) {
+            return { ok: false, reason: "Null escape '\\0' is not allowed in string literals." };
+          }
+          return { ok: true, value: "\0" };
+        case "\"": return { ok: true, value: "\"" };
+        case "'": return { ok: true, value: "'" };
+        case "\\": return { ok: true, value: "\\" };
+        default:
+          return { ok: false, reason: `Unknown escape sequence '\\${escapeChar}'.` };
       }
     };
 
-    const readEscapedCharacter = () => {
-      if (atEnd()) return { ok: false, value: "" };
+    const readEscapedCharacter = (options = {}) => {
+      if (atEnd()) return { ok: false, value: "", reason: "Unexpected end of literal." };
       const first = advance();
-      if (first !== "\\") return { ok: true, value: first };
-      if (atEnd()) return { ok: false, value: "" };
-      return { ok: true, value: decodeEscape(advance()) };
+      if (first !== "\\") {
+        if (!isAsciiCharacter(first)) {
+          return { ok: false, value: "", reason: "Only ASCII characters are supported in Mini-C literals." };
+        }
+        if (options.printableOnly !== false && !isPrintableAsciiCharacter(first)) {
+          return {
+            ok: false,
+            value: "",
+            reason: "Literal contains a non-printable ASCII character; use an escape sequence instead."
+          };
+        }
+        return { ok: true, value: first };
+      }
+      if (atEnd()) return { ok: false, value: "", reason: "Incomplete escape sequence at end of literal." };
+      return decodeEscape(advance(), options);
     };
 
     while (!atEnd()) {
@@ -802,7 +1225,7 @@
         }
         const literal = readEscapedCharacter();
         if (!literal.ok) {
-          diagnostics.push(createDiagnostic("Invalid character literal.", { line: tokenLine, column: tokenColumn }));
+          diagnostics.push(createDiagnostic(literal.reason || "Invalid character literal.", { line: tokenLine, column: tokenColumn }));
           continue;
         }
         if (!match("'")) {
@@ -820,6 +1243,7 @@
         advance();
         let value = "";
         let terminated = false;
+        let invalidReason = "";
         while (!atEnd()) {
           if (peek() === "\"") {
             advance();
@@ -827,9 +1251,18 @@
             break;
           }
           if (peek() === "\n") break;
-          const literal = readEscapedCharacter();
-          if (!literal.ok) break;
+          const literal = readEscapedCharacter({ allowNull: false });
+          if (!literal.ok) {
+            invalidReason = literal.reason || "Invalid string literal.";
+            break;
+          }
           value += literal.value;
+        }
+        if (invalidReason) {
+          diagnostics.push(createDiagnostic(invalidReason, { line: tokenLine, column: tokenColumn }));
+          while (!atEnd() && peek() !== "\n" && peek() !== "\"") advance();
+          if (peek() === "\"") advance();
+          continue;
         }
         if (!terminated) {
           diagnostics.push(createDiagnostic("Unterminated string literal.", { line: tokenLine, column: tokenColumn }));
@@ -870,6 +1303,7 @@
     let position = 0;
     const diagnostics = [];
     const typedefNames = new Set();
+    const functionTypedefNames = new Set();
     const structNames = new Set();
 
     const current = () => tokens[position] || tokens[tokens.length - 1];
@@ -956,8 +1390,12 @@
       if (typeToken) {
         let pointerDepth = 0;
         while (match("punct", "*")) pointerDepth += 1;
+        const functionTypedef = functionTypedefNames.has(baseTypeName);
+        const effectivePointerDepth = functionTypedef
+          ? Math.max(0, pointerDepth - 1)
+          : pointerDepth;
         return {
-          typeName: pointerDepth > 0 ? pointerTypeName(baseTypeName, pointerDepth) : baseTypeName,
+          typeName: effectivePointerDepth > 0 ? pointerTypeName(baseTypeName, effectivePointerDepth) : baseTypeName,
           pointerDepth,
           baseTypeName,
           isConst,
@@ -1103,14 +1541,45 @@
     function parseTypedefItem() {
       const typedefToken = consume("keyword", "typedef", "Expected 'typedef'.");
       const aliasedType = parseTypeSpecifier({ allowVoid: false, allowConst: true });
-      const aliasToken = consume("identifier", null, "Expected typedef alias name.");
+      let aliasToken = null;
+      let valueType = normalizeTypeName(aliasedType.typeName || "int");
+      if (check("punct", "(") && peekToken(1)?.type === "punct" && peekToken(1)?.value === "*") {
+        consume("punct", "(", "Expected '(' to start function pointer typedef.");
+        consume("punct", "*", "Expected '*' in function pointer typedef.");
+        aliasToken = consume("identifier", null, "Expected typedef alias name.");
+        consume("punct", ")", "Expected ')' after function pointer typedef name.");
+        consume("punct", "(", "Expected '(' after function pointer typedef name.");
+        const params = parseParameters();
+        consume("punct", ")", "Expected ')' after function pointer typedef parameters.");
+        valueType = functionPointerTypeName(
+          aliasedType.typeName || "int",
+          params.map((param) => (param.declarationKind === "array"
+            ? pointerTypeName(param.valueType || "int", 1)
+            : normalizeTypeName(param.valueType || "int")))
+        );
+      } else {
+        aliasToken = consume("identifier", null, "Expected typedef alias name.");
+        if (check("punct", "(")) {
+          consume("punct", "(", "Expected '(' after typedef function alias.");
+          const params = parseParameters();
+          consume("punct", ")", "Expected ')' after typedef function parameters.");
+          valueType = functionPointerTypeName(
+            aliasedType.typeName || "int",
+            params.map((param) => (param.declarationKind === "array"
+              ? pointerTypeName(param.valueType || "int", 1)
+              : normalizeTypeName(param.valueType || "int")))
+          );
+          const functionAliasName = String(aliasToken?.value || "").trim();
+          if (functionAliasName) functionTypedefNames.add(functionAliasName);
+        }
+      }
       consume("punct", ";", "Expected ';' after typedef declaration.");
       const aliasName = String(aliasToken?.value || "").trim();
       if (aliasName) typedefNames.add(aliasName);
       return {
         type: "typedef_decl",
         alias: aliasName || "__error_typedef",
-        valueType: normalizeTypeName(aliasedType.typeName || "int"),
+        valueType,
         line: typedefToken?.line || current().line,
         column: typedefToken?.column || current().column
       };
@@ -1119,7 +1588,7 @@
     function parseParameters() {
       const params = [];
       if (check("punct", ")")) return params;
-      if (check("keyword", "void")) {
+      if (check("keyword", "void") && peekToken(1)?.type === "punct" && peekToken(1)?.value === ")") {
         advance();
         return params;
       }
@@ -1193,6 +1662,7 @@
         return parseDeclaration(typeSpec);
       }
       if (match("keyword", "assert")) return parseAssert(previous());
+      if (match("keyword", "error")) return parseError(previous());
       if (match("keyword", "requires")
         || match("keyword", "ensures")
         || match("keyword", "invariant")
@@ -1220,6 +1690,19 @@
       consume("punct", ";", "Expected ';' after assert statement.");
       return {
         type: "assert",
+        expression,
+        line: keywordToken?.line || current().line,
+        column: keywordToken?.column || current().column
+      };
+    }
+
+    function parseError(keywordToken) {
+      consume("punct", "(", "Expected '(' after 'error'.");
+      const expression = parseExpression();
+      consume("punct", ")", "Expected ')' after error expression.");
+      consume("punct", ";", "Expected ';' after error statement.");
+      return {
+        type: "error",
         expression,
         line: keywordToken?.line || current().line,
         column: keywordToken?.column || current().column
@@ -1334,6 +1817,8 @@
             } else {
               arrayShape[0] = inferredLeading | 0;
             }
+          } else if (declaredType === "char" && initializer?.type === "string_literal") {
+            arrayShape[0] = Math.max(1, stringToByteList(initializer.value || "").length) | 0;
           } else {
             diagnostics.push(createDiagnostic(`Array '${name}' with omitted leading dimension requires a brace initializer list.`, nameToken || typeToken, "parse"));
             arrayShape[0] = 1;
@@ -1664,12 +2149,84 @@
           column: openToken?.column || current().column
         };
       }
-      if (match("punct", "!") || match("punct", "-") || match("punct", "+") || match("punct", "~") || match("punct", "*")) {
-        const operator = previous();
-        const argument = parseUnary();
-        return { type: "unary", operator: operator.value, argument, line: operator.line, column: operator.column };
-      }
+        if (match("punct", "!") || match("punct", "-") || match("punct", "+") || match("punct", "~") || match("punct", "*") || match("punct", "&")) {
+          const operator = previous();
+          const argument = parseUnary();
+          return { type: "unary", operator: operator.value, argument, line: operator.line, column: operator.column };
+        }
       return parsePrimary();
+    }
+
+    function parsePostfixExpression(baseExpr) {
+      let expr = baseExpr;
+      while (!atEnd()) {
+        if (match("punct", "(")) {
+          const args = [];
+          if (!check("punct", ")")) {
+            while (!atEnd()) {
+              args.push(parseExpression());
+              if (!match("punct", ",")) break;
+            }
+          }
+          consume("punct", ")", "Expected ')' after function arguments.");
+          expr = expr.type === "identifier"
+            ? {
+              type: "call",
+              callee: expr.name,
+              args,
+              line: expr.line,
+              column: expr.column
+            }
+            : {
+              type: "call",
+              callee: null,
+              calleeExpr: expr,
+              args,
+              line: expr?.line || current().line,
+              column: expr?.column || current().column
+            };
+          continue;
+        }
+        if (match("punct", "[")) {
+          const indexExpr = parseExpression();
+          consume("punct", "]", "Expected ']' after index expression.");
+          expr = {
+            type: "index",
+            target: expr,
+            index: indexExpr,
+            line: expr?.line || current().line,
+            column: expr?.column || current().column
+          };
+          continue;
+        }
+        if (match("punct", ".") || match("punct", "->")) {
+          const operator = previous();
+          const fieldToken = consume("identifier", null, "Expected field name after member operator.");
+          expr = {
+            type: "member",
+            target: expr,
+            field: String(fieldToken?.value || "__error_field"),
+            viaPointer: operator.value === "->",
+            line: operator.line || expr?.line || current().line,
+            column: operator.column || expr?.column || current().column
+          };
+          continue;
+        }
+        if (match("punct", "++") || match("punct", "--")) {
+          const operator = previous();
+          expr = {
+            type: "update",
+            operator: operator.value,
+            target: expr,
+            isPostfix: true,
+            line: operator.line,
+            column: operator.column
+          };
+          continue;
+        }
+        break;
+      }
+      return expr;
     }
 
     function parsePrimary() {
@@ -1753,110 +2310,12 @@
       }
       if (match("identifier")) {
         const nameToken = previous();
-        let expr = { type: "identifier", name: nameToken.value, line: nameToken.line, column: nameToken.column };
-        while (!atEnd()) {
-          if (match("punct", "(")) {
-            const args = [];
-            if (!check("punct", ")")) {
-              while (!atEnd()) {
-                args.push(parseExpression());
-                if (!match("punct", ",")) break;
-              }
-            }
-            consume("punct", ")", "Expected ')' after function arguments.");
-            if (expr.type !== "identifier") {
-              diagnostics.push(createDiagnostic("Function call target must be an identifier.", expr, "parse"));
-              expr = {
-                type: "call",
-                callee: "__invalid_call",
-                args,
-                line: expr?.line || nameToken.line,
-                column: expr?.column || nameToken.column
-              };
-            } else {
-              expr = {
-                type: "call",
-                callee: expr.name,
-                args,
-                line: expr.line,
-                column: expr.column
-              };
-            }
-            continue;
-          }
-          if (match("punct", "[")) {
-            const indexExpr = parseExpression();
-            consume("punct", "]", "Expected ']' after index expression.");
-            expr = {
-              type: "index",
-              target: expr,
-              index: indexExpr,
-              line: nameToken.line,
-              column: nameToken.column
-            };
-            continue;
-          }
-          if (match("punct", ".") || match("punct", "->")) {
-            const operator = previous();
-            const fieldToken = consume("identifier", null, "Expected field name after member operator.");
-            expr = {
-              type: "member",
-              target: expr,
-              field: String(fieldToken?.value || "__error_field"),
-              viaPointer: operator.value === "->",
-              line: operator.line || expr?.line || current().line,
-              column: operator.column || expr?.column || current().column
-            };
-            continue;
-          }
-          if (match("punct", "++") || match("punct", "--")) {
-            const operator = previous();
-            expr = {
-              type: "update",
-              operator: operator.value,
-              target: expr,
-              isPostfix: true,
-              line: operator.line,
-              column: operator.column
-            };
-            continue;
-          }
-          break;
-        }
-        return expr;
+        return parsePostfixExpression({ type: "identifier", name: nameToken.value, line: nameToken.line, column: nameToken.column });
       }
       if (match("punct", "(")) {
         const expr = parseExpression();
         consume("punct", ")", "Expected ')' after grouped expression.");
-        let groupedExpr = expr;
-        while (true) {
-          if (match("punct", ".") || match("punct", "->")) {
-            const operator = previous();
-            const fieldToken = consume("identifier", null, "Expected field name after member operator.");
-            groupedExpr = {
-              type: "member",
-              target: groupedExpr,
-              field: String(fieldToken?.value || "__error_field"),
-              viaPointer: operator.value === "->",
-              line: operator.line || groupedExpr?.line || current().line,
-              column: operator.column || groupedExpr?.column || current().column
-            };
-            continue;
-          }
-          break;
-        }
-        while (match("punct", "++") || match("punct", "--")) {
-          const operator = previous();
-          groupedExpr = {
-            type: "update",
-            operator: operator.value,
-            target: groupedExpr,
-            isPostfix: true,
-            line: operator.line,
-            column: operator.column
-          };
-        }
-        return groupedExpr;
+        return parsePostfixExpression(expr);
       }
       const token = current();
       diagnostics.push(createDiagnostic("Expected expression.", token, "parse"));
@@ -1968,10 +2427,100 @@
       case "expr_stmt":
         return estimateExprTemps(node.expression);
       case "assert":
+      case "error":
         return estimateExprTemps(node.expression);
       default:
         return 0;
     }
+  }
+
+  function estimateContractTemps(node) {
+    if (!node || typeof node !== "object") return 0;
+    if (node.type === "while" || node.type === "for") {
+      const invariantPeak = (node.invariants || []).reduce((peak, expr) => Math.max(peak, estimateExprTemps(expr)), 0);
+      const bodyPeak = estimateContractTemps(node.body);
+      return Math.max(invariantPeak, bodyPeak);
+    }
+    if (node.type === "block") {
+      return (node.statements || []).reduce((peak, stmt) => Math.max(peak, estimateContractTemps(stmt)), 0);
+    }
+    if (node.type === "if") {
+      return Math.max(estimateContractTemps(node.thenBranch), estimateContractTemps(node.elseBranch));
+    }
+    return 0;
+  }
+
+  function lowerContractAnnotations(programAst) {
+    const functions = Array.isArray(programAst?.functions) ? programAst.functions : [];
+
+    const transformStatement = (stmt) => {
+      if (!stmt || typeof stmt !== "object") return stmt;
+      if (stmt.type === "block") {
+        const sourceStatements = Array.isArray(stmt.statements) ? stmt.statements : [];
+        const transformed = [];
+        for (let index = 0; index < sourceStatements.length; index += 1) {
+          const current = transformStatement(sourceStatements[index]);
+          if (!current) continue;
+          if (current.type === "assert" && current.contractKind === "invariant") {
+            const nextOriginal = sourceStatements[index + 1];
+            const nextStmt = transformStatement(nextOriginal);
+            if (nextStmt && (nextStmt.type === "while" || nextStmt.type === "for")) {
+              if (!Array.isArray(nextStmt.invariants)) nextStmt.invariants = [];
+              nextStmt.invariants.push(current.expression);
+              transformed.push(nextStmt);
+              index += 1;
+              continue;
+            }
+          }
+          transformed.push(current);
+        }
+        stmt.statements = transformed;
+        return stmt;
+      }
+      if (stmt.type === "if") {
+        stmt.thenBranch = transformStatement(stmt.thenBranch);
+        if (stmt.elseBranch) stmt.elseBranch = transformStatement(stmt.elseBranch);
+        return stmt;
+      }
+      if (stmt.type === "while" || stmt.type === "for") {
+        stmt.body = transformStatement(stmt.body);
+        stmt.invariants = Array.isArray(stmt.invariants) ? stmt.invariants : [];
+        return stmt;
+      }
+      return stmt;
+    };
+
+    functions.forEach((fn) => {
+      if (!fn || typeof fn !== "object" || !fn.body || fn.body.type !== "block") return;
+      const statements = Array.isArray(fn.body.statements) ? fn.body.statements : [];
+      const requires = [];
+      const ensures = [];
+      let cursor = 0;
+      while (cursor < statements.length) {
+        const stmt = statements[cursor];
+        if (stmt?.type !== "assert") break;
+        const kind = String(stmt.contractKind || "").toLowerCase();
+        if (kind === "requires") {
+          requires.push(stmt.expression);
+          cursor += 1;
+          continue;
+        }
+        if (kind === "ensures") {
+          ensures.push(stmt.expression);
+          cursor += 1;
+          continue;
+        }
+        break;
+      }
+      fn.contracts = {
+        requires,
+        ensures
+      };
+      fn.body.statements = statements.slice(cursor);
+      fn.body = transformStatement(fn.body);
+    });
+
+    return programAst;
   }
 
   function analyzeProgram(programAst, options = {}) {
@@ -1981,8 +2530,9 @@
     const globals = Array.isArray(programAst?.globals) ? programAst.globals : [];
     const structDecls = Array.isArray(programAst?.structs) ? programAst.structs : [];
     const typedefDecls = Array.isArray(programAst?.typedefs) ? programAst.typedefs : [];
-    const activeSubset = normalizeSubsetName(options.subset || "C0-S4");
+    const activeSubset = normalizeSubsetName(options.subset || "C1-NATIVE");
     const activeSubsetLevel = subsetLevel(activeSubset);
+    const nativeSubsetEnabled = activeSubsetLevel >= subsetLevel("C1-NATIVE");
     const signatureTable = new Map();
     const globalTable = new Map();
     const structTable = new Map();
@@ -2014,6 +2564,40 @@
       return 1;
     };
 
+    const pointerElementAccessBytes = (pointerTypeNameValue) => {
+      const resolvedPointerType = resolveAliasType(pointerTypeNameValue || "int*");
+      const elementType = resolveAliasType(dereferenceTypeName(resolvedPointerType));
+      if (nativeSubsetEnabled && elementType === "char") return 1;
+      return Math.max(1, typeWordSize(elementType)) * 4;
+    };
+
+    const isNativeByteArray = (typeName, declarationKind, arrayShape) => (
+      nativeSubsetEnabled
+      && declarationKind === "array"
+      && resolveAliasType(typeName || "int") === "char"
+      && normalizeArrayShape(arrayShape, []).length === 1
+    );
+
+    const typeCompatibleProfile = (targetType, sourceType) => {
+      if (typeCompatible(targetType, sourceType)) return true;
+      if (!nativeSubsetEnabled) return false;
+
+      const target = resolveAliasType(targetType);
+      const source = resolveAliasType(sourceType);
+      if ((target === "string" && source === "char*") || (target === "char*" && source === "string")) {
+        return true;
+      }
+      return false;
+    };
+
+    const isDefinedStructType = (typeName) => {
+      const resolved = resolveAliasType(typeName);
+      if (!isLargeStructTypeName(resolved)) return false;
+      const structName = resolved.replace(/^struct\s+/, "");
+      const structInfo = structTable.get(structName);
+      return !!structInfo && structInfo.forward !== true;
+    };
+
     const structFieldInfo = (typeName, fieldName) => {
       const resolved = resolveAliasType(typeName);
       if (!isStructTypeName(resolved)) return null;
@@ -2040,12 +2624,14 @@
       returnType: resolveAliasType(node?.returnType || "int"),
       intrinsic: intrinsic === true,
       defined: intrinsic === true,
-      minSubset: intrinsic === true ? normalizeSubsetName(node?.minSubset || "C0-S0") : "C0-S0"
+      minSubset: intrinsic === true ? normalizeSubsetName(node?.minSubset || "C0-S0") : "C0-S0",
+      variadic: node?.variadic === true
     });
 
     const signaturesCompatible = (left, right) => {
       if (!left || !right) return false;
       if (normalizeTypeName(left.returnType) !== normalizeTypeName(right.returnType)) return false;
+      if (Boolean(left.variadic) !== Boolean(right.variadic)) return false;
       const leftTypes = Array.isArray(left.paramTypes) ? left.paramTypes : [];
       const rightTypes = Array.isArray(right.paramTypes) ? right.paramTypes : [];
       if (leftTypes.length !== rightTypes.length) return false;
@@ -2076,6 +2662,20 @@
       }
       if (typedefTable.has(alias)) {
         diagnostics.push(createDiagnostic(`Duplicate typedef alias '${alias}'.`, entry, "semantic"));
+        return;
+      }
+      if (requiresC1SubsetType(valueType) && !nativeSubsetEnabled) {
+        diagnostics.push(createDiagnostic(
+          `Typedef '${alias}' requires subset C1/native, current subset is ${activeSubset}.`,
+          entry,
+          "semantic"
+        ));
+      }
+      const conflictsWithValueName = globals.some((globalDecl) => normalizeTypeName(globalDecl?.name || "") === alias)
+        || prototypes.some((prototype) => normalizeTypeName(prototype?.name || "") === alias)
+        || functions.some((fn) => normalizeTypeName(fn?.name || "") === alias);
+      if (conflictsWithValueName) {
+        diagnostics.push(createDiagnostic(`Typedef alias '${alias}' conflicts with an existing variable or function name.`, entry, "semantic"));
         return;
       }
       typedefTable.set(alias, valueType);
@@ -2180,10 +2780,19 @@
     } else {
       const mainSignature = signatureTable.get("main");
       const mainNode = functions.find((entry) => entry?.name === "main") || null;
-      if (normalizeTypeName(mainSignature?.returnType || "int") !== "int"
-        || Number(mainSignature?.params || 0) !== 0) {
+      const mainReturnType = normalizeTypeName(mainSignature?.returnType || "int");
+      const mainParamCount = Number(mainSignature?.params || 0);
+      const mainParamTypes = Array.isArray(mainSignature?.paramTypes) ? mainSignature.paramTypes.map((entry) => normalizeTypeName(entry)) : [];
+      const allowNativeArgvSignature = nativeSubsetEnabled
+        && mainParamCount === 2
+        && mainParamTypes[0] === "int"
+        && (mainParamTypes[1] === "char**" || mainParamTypes[1] === "string*");
+      const allowClassicSignature = mainParamCount === 0;
+      if (mainReturnType !== "int" || (!allowClassicSignature && !allowNativeArgvSignature)) {
         diagnostics.push(createDiagnostic(
-          "Function 'main' must match signature 'int main(void)'.",
+          nativeSubsetEnabled
+            ? "Function 'main' must match 'int main(void)' or 'int main(int argc, char** argv)'."
+            : "Function 'main' must match signature 'int main(void)'.",
           mainNode || functions[0] || null,
           "semantic"
         ));
@@ -2325,15 +2934,33 @@
       const elementWordSize = Math.max(1, typeWordSize(resolvedDeclType));
       const normalizedShape = isArray
         ? normalizeArrayShape(globalDecl.arrayShape, [Math.max(1, globalDecl.arrayLength | 0)])
-        : [1];
+        : [];
+      const byteArrayStorage = isNativeByteArray(resolvedDeclType, globalDecl.declarationKind, normalizedShape);
       const arraySlotCount = isArray
         ? Math.max(1, arrayShapeProduct(normalizedShape)) * elementWordSize
         : elementWordSize;
       const isAggregate = isArray || (!isArray && arraySlotCount > 1);
       globalDecl.arrayShape = normalizedShape;
-      globalDecl.arrayLength = normalizedShape[0] || 1;
+      globalDecl.arrayLength = normalizedShape[0] || 0;
       if (!isDeclarationTypeName(resolvedDeclType)) {
         diagnostics.push(createDiagnostic(`Unsupported global declaration type '${declarationType}'.`, globalDecl, "semantic"));
+      }
+      if (resolvedDeclType === "void") {
+        diagnostics.push(createDiagnostic("Global declarations cannot use raw 'void' type.", globalDecl, "semantic"));
+      }
+      if (requiresC1SubsetType(resolvedDeclType) && !nativeSubsetEnabled) {
+        diagnostics.push(createDiagnostic(
+          `Type '${declarationType}' requires subset C1/native, current subset is ${activeSubset}.`,
+          globalDecl,
+          "semantic"
+        ));
+      }
+      if (!isArray && isLargeStructTypeName(resolvedDeclType)) {
+        diagnostics.push(createDiagnostic(
+          `Direct global of type '${resolvedDeclType}' is not supported in C0; use pointer or array.`,
+          globalDecl,
+          "semantic"
+        ));
       }
       if (requiresS4SubsetType(resolvedDeclType) && activeSubsetLevel < subsetLevel("C0-S4")) {
         diagnostics.push(createDiagnostic(
@@ -2342,9 +2969,6 @@
           "semantic"
         ));
       }
-      if (isArray && activeSubsetLevel < subsetLevel("C0-S3")) {
-        diagnostics.push(createDiagnostic(`Array declarations require subset C0-S3, current subset is ${activeSubset}.`, globalDecl, "semantic"));
-      }
       if (signatureTable.has(globalDecl.name)) {
         diagnostics.push(createDiagnostic(`Global '${globalDecl.name}' conflicts with an existing function/intrinsic name.`, globalDecl, "semantic"));
       }
@@ -2352,11 +2976,22 @@
         diagnostics.push(createDiagnostic(`Duplicate global symbol '${globalDecl.name}'.`, globalDecl, "semantic"));
       }
       if (isAggregate && globalDecl.initializer) {
-        if (globalDecl.initializer.type !== "array_initializer") {
+        if (byteArrayStorage && globalDecl.initializer.type === "string_literal") {
+          const byteLength = stringToByteList(globalDecl.initializer.value || "").length;
+          if (byteLength > (globalDecl.arrayLength | 0)) {
+            diagnostics.push(createDiagnostic(
+              `String initializer is longer than array '${globalDecl.name}' capacity.`,
+              globalDecl.initializer,
+              "semantic"
+            ));
+          }
+          globalDecl._byteArrayStringInit = String(globalDecl.initializer.value || "");
+        } else if (globalDecl.initializer.type !== "array_initializer") {
           diagnostics.push(createDiagnostic("Aggregate declarations require brace-based initializer lists.", globalDecl.initializer, "semantic"));
         } else {
           const flatElements = flattenArrayInitializerElements(globalDecl.initializer, []);
-          if (flatElements.length > arraySlotCount) {
+          const aggregateCapacity = byteArrayStorage ? (globalDecl.arrayLength | 0) : arraySlotCount;
+          if (flatElements.length > aggregateCapacity) {
             diagnostics.push(createDiagnostic(`Initializer has more elements than array '${globalDecl.name}' capacity.`, globalDecl.initializer, "semantic"));
           }
           const foldedElements = [];
@@ -2365,7 +3000,7 @@
             foldedElements.push(evaluated);
             if (!evaluated.ok) return;
             const inferredType = evaluated.kind === "string" ? "string" : normalizeTypeName(evaluated.typeName || "int");
-            if (!typeCompatible(declarationType, inferredType)) {
+            if (!typeCompatibleProfile(declarationType, inferredType)) {
               diagnostics.push(createDiagnostic(
                 `Array '${globalDecl.name}' element initializer type '${inferredType}' is incompatible with '${declarationType}'.`,
                 element,
@@ -2382,7 +3017,7 @@
           const evaluated = evaluateStaticExpression(globalDecl.initializer, globalDecl);
           if (evaluated.ok) {
             const inferredType = evaluated.kind === "string" ? "string" : normalizeTypeName(evaluated.typeName || "int");
-            if (!typeCompatible(declarationType, inferredType)) {
+            if (!typeCompatibleProfile(declarationType, inferredType)) {
               diagnostics.push(createDiagnostic(
                 `Cannot initialize global '${globalDecl.name}' of type '${declarationType}' with '${inferredType}'.`,
                 globalDecl,
@@ -2398,22 +3033,28 @@
         name: globalDecl.name,
         kind: isArray
           ? "array"
-          : (isStructTypeName(resolvedDeclType) ? "struct" : (isPointerTypeName(resolvedDeclType) ? "pointer" : "scalar")),
+          : (isPointerTypeName(resolvedDeclType) ? "pointer" : (isLargeStructTypeName(resolvedDeclType) ? "struct" : "scalar")),
         slotCount: arraySlotCount,
-        arrayShape: isArray ? normalizedShape : [1],
+        arrayShape: isArray ? normalizedShape : [],
         elementWordSize,
         typeName: resolvedDeclType,
         storage: "global",
         globalLabel: globalDecl.name,
         isConst: globalDecl.isConst === true,
-        boundLength: 0
+        boundLength: byteArrayStorage ? (normalizedShape[0] | 0) : 0,
+        byteArrayStorage
       };
       globalTable.set(globalDecl.name, info);
       if (info.isConst && !isArray) {
         if (globalDecl._staticInit) {
           globalConstTable.set(globalDecl.name, { ...globalDecl._staticInit });
         } else {
-          globalConstTable.set(globalDecl.name, { ok: true, kind: "int", typeName: declarationType, value: 0 });
+          globalConstTable.set(
+            globalDecl.name,
+            resolvedDeclType === "string"
+              ? { ok: true, kind: "string", typeName: "string", value: "" }
+              : { ok: true, kind: "int", typeName: declarationType, value: 0 }
+          );
         }
       }
       globalDecl.storage = "global";
@@ -2423,11 +3064,13 @@
       globalDecl.arrayShape = info.arrayShape;
       globalDecl.elementWordSize = info.elementWordSize;
       globalDecl.globalLabel = info.globalLabel;
+      globalDecl.byteArrayStorage = info.byteArrayStorage === true;
     });
 
     function bindFunction(fn) {
       const scopeStack = [];
       let nextSlot = 0;
+      const contractOldCaptures = [];
 
       const pushScope = () => scopeStack.push(new Map());
       const popScope = () => scopeStack.pop();
@@ -2446,7 +3089,8 @@
         }
         const scope = currentScope();
         const normalizedSlotCount = Number.isFinite(slotCount) && slotCount > 0 ? (slotCount | 0) : 1;
-        const normalizedShape = normalizeArrayShape(arrayShape, [normalizedSlotCount]);
+        const isArrayLikeKind = kind === "array" || kind === "array_ref";
+        const normalizedShape = normalizeArrayShape(arrayShape, isArrayLikeKind ? [normalizedSlotCount] : []);
         const resolvedType = resolveAliasType(typeName || "int");
         const info = {
           name,
@@ -2457,20 +3101,40 @@
           elementWordSize: Math.max(1, typeWordSize(resolvedType)),
           typeName: resolvedType,
           isConst: isConst === true,
-          boundLength: 0
+          boundLength: 0,
+          boundSlot: null,
+          byteArrayStorage: false
         };
         nextSlot += normalizedSlotCount;
         scope.set(name, info);
         return info;
       };
 
-      const resolve = (name, node) => {
+      const lookup = (name) => {
         for (let i = scopeStack.length - 1; i >= 0; i -= 1) {
           if (scopeStack[i].has(name)) return scopeStack[i].get(name);
         }
         if (globalTable.has(name)) return globalTable.get(name);
+        return null;
+      };
+
+      const resolve = (name, node) => {
+        const symbol = lookup(name);
+        if (symbol) return symbol;
         diagnostics.push(createDiagnostic(`Unknown identifier '${name}'.`, node, "semantic"));
         return null;
+      };
+
+      const registerContractOldCapture = (callExpr, capturedExpr, valueType) => {
+        const capture = {
+          index: contractOldCaptures.length,
+          expr: capturedExpr,
+          valueType: normalizeTypeName(valueType || "int"),
+          slot: null
+        };
+        contractOldCaptures.push(capture);
+        callExpr.contractOldCapture = capture;
+        return capture;
       };
 
       const extractStaticInt = (node, depth = 0) => {
@@ -2542,7 +3206,7 @@
       function bindExpr(expr, exprOptions = {}) {
         if (!expr || typeof expr !== "object") return "int";
         if (expr.type === "identifier") {
-          const symbol = resolve(expr.name, expr);
+          const symbol = lookup(expr.name);
           if (symbol) {
             if (Number.isFinite(symbol.slot)) expr.slot = symbol.slot;
             if (symbol.storage === "global") {
@@ -2551,20 +3215,43 @@
             }
             expr.slotCount = symbol.slotCount;
             expr.symbolKind = symbol.kind;
-            expr.arrayShape = normalizeArrayShape(symbol.arrayShape, [symbol.slotCount || 1]);
+            expr.arrayShape = normalizeArrayShape(
+              symbol.arrayShape,
+              (symbol.kind === "array" || symbol.kind === "array_ref")
+                ? [symbol.slotCount || 1]
+                : []
+            );
             expr.elementWordSize = Number.isFinite(symbol.elementWordSize) ? (symbol.elementWordSize | 0) : 1;
             expr.isConst = symbol.isConst === true;
+            expr.byteArrayStorage = symbol.byteArrayStorage === true;
             expr.inferredType = symbol.typeName;
             if (Number.isFinite(symbol.boundLength) && (symbol.boundLength | 0) > 0) {
               expr.boundLength = symbol.boundLength | 0;
             }
+            if (Number.isFinite(symbol.boundSlot)) {
+              expr.boundSlot = symbol.boundSlot | 0;
+            }
             const isArrayLike = symbol.kind === "array" || symbol.kind === "array_ref";
+            if (isArrayLike && exprOptions.allowArrayDecay === true && symbol.byteArrayStorage === true) {
+              expr.asArrayReference = true;
+              expr.symbolKind = "pointer";
+              expr.inferredType = pointerTypeName(symbol.typeName, 1);
+              return expr.inferredType;
+            }
             if (isArrayLike && exprOptions.allowArrayReference !== true) {
               diagnostics.push(createDiagnostic(`Array '${expr.name}' requires an index expression.`, expr, "semantic"));
             }
             expr.asArrayReference = isArrayLike && exprOptions.allowArrayReference === true;
             return symbol.typeName;
           }
+          const functionSignature = signatureTable.get(String(expr.name || ""));
+          if (nativeSubsetEnabled && functionSignature && functionSignature.intrinsic !== true) {
+            expr.inferredType = functionPointerTypeName(functionSignature.returnType || "int", functionSignature.paramTypes || []);
+            expr.symbolKind = "function";
+            expr.functionLabel = String(expr.name || "");
+            return expr.inferredType;
+          }
+          diagnostics.push(createDiagnostic(`Unknown identifier '${expr.name}'.`, expr, "semantic"));
           expr.inferredType = "int";
           return "int";
         }
@@ -2572,17 +3259,16 @@
           const targetType = bindExpr(expr.target, { allowArrayReference: true });
           const indexType = bindExpr(expr.index);
           let targetKind = String(expr.target?.symbolKind || "");
-          if (expr.target?.type !== "identifier" && expr.target?.type !== "index") {
-            diagnostics.push(createDiagnostic("Array indexing target must be an identifier or indexed array expression.", expr.target || expr, "semantic"));
+          const targetResolvedType = resolveAliasType(targetType || expr.target?.inferredType || "int");
+          const arrayTarget = targetKind === "array" || targetKind === "array_ref";
+          const pointerTarget = !arrayTarget && (targetKind === "pointer" || isPointerTypeName(targetResolvedType));
+          const pointerElementType = pointerTarget ? resolveAliasType(dereferenceTypeName(targetResolvedType)) : null;
+          if (!pointerTarget && expr.target?.type !== "identifier" && expr.target?.type !== "index") {
+            diagnostics.push(createDiagnostic("Array indexing target must be an identifier, indexed array, or pointer expression.", expr.target || expr, "semantic"));
             expr.inferredType = "int";
             return "int";
           }
-          const targetResolvedType = resolveAliasType(targetType || expr.target?.inferredType || "int");
-          const pointerTarget = targetKind === "pointer" || isPointerTypeName(targetResolvedType);
-          if (!pointerTarget && activeSubsetLevel < subsetLevel("C0-S3")) {
-            diagnostics.push(createDiagnostic(`Array indexing requires subset C0-S3, current subset is ${activeSubset}.`, expr, "semantic"));
-          }
-          if (targetKind !== "array" && targetKind !== "array_ref" && !pointerTarget) {
+          if (!arrayTarget && !pointerTarget) {
             diagnostics.push(createDiagnostic("Indexed target is not an array reference.", expr.target || expr, "semantic"));
             expr.inferredType = "int";
             return "int";
@@ -2593,13 +3279,17 @@
             expr.inferredType = "int";
             return "int";
           }
-          const elementWordSize = Number.isFinite(expr.target?.elementWordSize) && expr.target.elementWordSize > 0
-            ? (expr.target.elementWordSize | 0)
-            : 1;
+          const elementWordSize = pointerTarget
+            ? Math.max(1, typeWordSize(pointerElementType || "int"))
+            : (Number.isFinite(expr.target?.elementWordSize) && expr.target.elementWordSize > 0
+              ? (expr.target.elementWordSize | 0)
+              : 1);
           const nextShape = pointerTarget ? [] : targetShape.slice(1);
-          const indexStrideWords = pointerTarget
-            ? Math.max(1, elementWordSize)
-            : Math.max(1, (arrayShapeProduct(targetShape, 1) || 1) * elementWordSize);
+          const indexStrideBytes = pointerTarget
+            ? pointerElementAccessBytes(targetResolvedType)
+            : (expr.target?.byteArrayStorage === true
+              ? 1
+              : Math.max(1, (arrayShapeProduct(targetShape, 1) || 1) * elementWordSize * 4));
           if (expr.target?.type === "identifier") {
             expr.baseIsConst = expr.target.isConst === true;
             if (targetKind === "array_ref" || targetKind === "pointer") {
@@ -2617,16 +3307,20 @@
               expr.baseStorage = "local";
               expr.baseSlot = expr.target.slot;
             }
+          } else if (pointerTarget) {
+            expr.baseIsConst = expr.target?.baseIsConst === true;
+            expr.baseStorage = "computed_pointer";
           } else {
             expr.baseIsConst = expr.target.baseIsConst === true;
             expr.baseStorage = expr.target.baseStorage;
             expr.baseSlot = expr.target.baseSlot;
             expr.baseLabel = expr.target.baseLabel;
           }
-          expr.indexStrideWords = indexStrideWords;
+          expr.indexStrideBytes = indexStrideBytes;
           expr.elementWordSize = elementWordSize;
           expr.arrayShape = nextShape;
           expr.remainingShape = nextShape;
+          expr.byteArrayStorage = expr.target?.byteArrayStorage === true && nextShape.length === 0;
           if (!isNumericType(indexType) && !isBooleanType(indexType)) {
             diagnostics.push(createDiagnostic("Array index must be an integer-compatible expression.", expr.index || expr, "semantic"));
           }
@@ -2642,12 +3336,19 @@
           }
           if (pointerTarget) {
             expr.inferredType = dereferenceTypeName(targetResolvedType);
+            expr.memoryAccessBytes = pointerElementAccessBytes(targetResolvedType);
+            expr.canLoadBoundFromHeader = nativeSubsetEnabled !== true;
             const pointerBound = Number.isFinite(expr.target?.boundLength) ? (expr.target.boundLength | 0) : 0;
             if (pointerBound > 0) expr.boundLength = pointerBound;
+            if (Number.isFinite(expr.target?.boundSlot)) expr.boundSlot = expr.target.boundSlot | 0;
           } else {
             expr.inferredType = normalizeTypeName(targetType || expr.target.inferredType || "int");
+            expr.memoryAccessBytes = expr.target?.byteArrayStorage === true
+              ? 1
+              : Math.max(1, elementWordSize) * 4;
             const bound = Number.isFinite(targetShape[0]) ? (targetShape[0] | 0) : 0;
             if (bound > 0) expr.boundLength = bound;
+            if (!bound && Number.isFinite(expr.target?.boundSlot)) expr.boundSlot = expr.target.boundSlot | 0;
           }
           return expr.inferredType;
         }
@@ -2662,12 +3363,21 @@
         }
         if (expr.type === "string_literal") {
           expr.inferredType = "string";
+          if (nativeSubsetEnabled) {
+            expr.boundLength = stringToByteList(expr.value || "").length;
+          }
           return "string";
         }
         if (expr.type === "alloc") {
           const allocType = resolveAliasType(expr.allocType || "int");
+          if (isStructTypeName(allocType) && !isDefinedStructType(allocType)) {
+            diagnostics.push(createDiagnostic(`Cannot allocate undefined struct type '${allocType}'.`, expr, "semantic"));
+          }
           expr.allocType = allocType;
           expr.elementWordSize = Math.max(1, typeWordSize(allocType));
+          expr.storageByteSize = nativeSubsetEnabled && allocType === "char"
+            ? 1
+            : Math.max(1, expr.elementWordSize) * 4;
           expr.inferredType = pointerTypeName(allocType, 1);
           expr.symbolKind = "pointer";
           return expr.inferredType;
@@ -2678,8 +3388,14 @@
           if (!isNumericType(lengthType) && !isBooleanType(lengthType)) {
             diagnostics.push(createDiagnostic("alloc_array length must be integer-compatible.", expr.length || expr, "semantic"));
           }
+          if (isStructTypeName(allocType) && !isDefinedStructType(allocType)) {
+            diagnostics.push(createDiagnostic(`Cannot allocate undefined struct type '${allocType}'.`, expr, "semantic"));
+          }
           expr.allocType = allocType;
           expr.elementWordSize = Math.max(1, typeWordSize(allocType));
+          expr.storageByteSize = nativeSubsetEnabled && allocType === "char"
+            ? 1
+            : Math.max(1, expr.elementWordSize) * 4;
           expr.inferredType = pointerTypeName(allocType, 1);
           expr.symbolKind = "pointer";
           return expr.inferredType;
@@ -2722,6 +3438,57 @@
         }
         if (expr.type === "unary") {
           const argType = bindExpr(expr.argument);
+          if (expr.operator === "&") {
+            if (expr.argument?.type === "identifier" && expr.argument.symbolKind === "function") {
+              expr.inferredType = argType;
+              expr.symbolKind = "function";
+              expr.functionLabel = expr.argument.functionLabel || expr.argument.name || null;
+              return expr.inferredType;
+            }
+            if (expr.argument?.type === "identifier") {
+              const symbol = resolve(expr.argument.name, expr.argument);
+              if (symbol) {
+                if (Number.isFinite(symbol.slot)) expr.argument.slot = symbol.slot;
+                if (symbol.storage === "global") {
+                  expr.argument.storage = "global";
+                  expr.argument.globalLabel = symbol.globalLabel;
+                }
+                expr.argument.symbolKind = symbol.kind;
+                expr.argument.isConst = symbol.isConst === true;
+                if (symbol.kind === "array" || symbol.kind === "array_ref") {
+                  diagnostics.push(createDiagnostic("Unary '&' cannot take the address of an array identifier.", expr, "semantic"));
+                }
+                expr.inferredType = pointerTypeName(symbol.typeName, 1);
+                expr.symbolKind = "pointer";
+                return expr.inferredType;
+              }
+            } else if (expr.argument?.type === "index") {
+              const elementType = bindExpr(expr.argument, { allowArrayReference: true });
+              if (expr.argument.symbolKind === "array_ref") {
+                diagnostics.push(createDiagnostic("Unary '&' requires a fully indexed array element.", expr, "semantic"));
+              }
+              expr.inferredType = pointerTypeName(elementType, 1);
+              expr.symbolKind = "pointer";
+              return expr.inferredType;
+            } else if (expr.argument?.type === "member") {
+              const fieldType = bindExpr(expr.argument, { allowArrayReference: true });
+              expr.inferredType = pointerTypeName(fieldType, 1);
+              expr.symbolKind = "pointer";
+              return expr.inferredType;
+            } else if (expr.argument?.type === "unary" && expr.argument.operator === "*") {
+              if (!isPointerTypeName(argType)) {
+                diagnostics.push(createDiagnostic("Unary '&' requires an lvalue expression.", expr, "semantic"));
+                expr.inferredType = "int";
+                return "int";
+              }
+              expr.inferredType = argType;
+              expr.symbolKind = "pointer";
+              return argType;
+            }
+            diagnostics.push(createDiagnostic("Unary '&' requires an lvalue (identifier/index/member/*ptr).", expr, "semantic"));
+            expr.inferredType = "int";
+            return "int";
+          }
           if (expr.operator === "-" || expr.operator === "+") {
             if (!isNumericType(argType)) {
               diagnostics.push(createDiagnostic(`Unary '${expr.operator}' requires int or char expression.`, expr, "semantic"));
@@ -2744,13 +3511,20 @@
             return "bool";
           }
           if (expr.operator === "*") {
+            if (isFunctionPointerTypeName(argType)) {
+              expr.inferredType = argType;
+              expr.symbolKind = "function";
+              expr.functionLabel = expr.argument?.functionLabel || null;
+              return expr.inferredType;
+            }
             if (!isPointerTypeName(argType)) {
               diagnostics.push(createDiagnostic("Unary '*' requires pointer expression.", expr, "semantic"));
               expr.inferredType = "int";
               return "int";
             }
             expr.inferredType = dereferenceTypeName(argType);
-            expr.symbolKind = isStructTypeName(expr.inferredType) ? "struct" : "scalar";
+            expr.memoryAccessBytes = pointerElementAccessBytes(argType);
+            expr.symbolKind = isLargeStructTypeName(expr.inferredType) ? "struct" : "scalar";
             return expr.inferredType;
           }
           expr.inferredType = argType;
@@ -2758,13 +3532,33 @@
         }
         if (expr.type === "cast") {
           const targetType = resolveAliasType(expr.targetType || "int");
-          const sourceType = bindExpr(expr.expression);
+          const sourceType = bindExpr(expr.expression, { allowArrayDecay: nativeSubsetEnabled === true });
           if (targetType === "string") {
             if (!isStringType(sourceType)) {
               diagnostics.push(createDiagnostic("Only string expressions can be cast to string.", expr, "semantic"));
             }
           } else if (isStringType(sourceType)) {
             diagnostics.push(createDiagnostic(`Cannot cast string to '${targetType}'.`, expr, "semantic"));
+          } else if (targetType === "void*") {
+            if (sourceType === "void*") {
+              expr.voidPointerCast = null;
+            } else if (!isNullTypeName(sourceType) && !isObjectPointerTypeName(sourceType)) {
+              diagnostics.push(createDiagnostic("Cast to void* requires object pointer or NULL expression.", expr, "semantic"));
+            } else if (!isNullTypeName(sourceType) && exprOptions.skipVoidTagBoxing !== true) {
+              expr.voidPointerCast = {
+                mode: "box",
+                tagType: resolveAliasType(sourceType),
+                tagId: runtimeVoidTagId(resolveAliasType(sourceType))
+              };
+            }
+          } else if (sourceType === "void*" && isObjectPointerTypeName(targetType)) {
+            expr.voidPointerCast = {
+              mode: "unwrap",
+              tagType: resolveAliasType(targetType),
+              tagId: runtimeVoidTagId(resolveAliasType(targetType))
+            };
+          } else if (sourceType === "void*" && !isObjectPointerTypeName(targetType)) {
+            diagnostics.push(createDiagnostic(`Cannot cast void* to '${targetType}'.`, expr, "semantic"));
           }
           expr.inferredType = targetType;
           return targetType;
@@ -2813,13 +3607,15 @@
           } else {
             diagnostics.push(createDiagnostic("Assignment target must be an lvalue (identifier/index/member/*ptr).", expr.target || expr, "semantic"));
           }
-          const valueType = bindExpr(expr.value);
+          const valueType = bindExpr(expr.value, { allowArrayDecay: nativeSubsetEnabled === true });
           if (assignmentOperator === "=" && targetSymbol && targetSymbol.kind === "pointer") {
             const inferredBound = inferPointerBound(expr.value);
             targetSymbol.boundLength = inferredBound > 0 ? inferredBound : 0;
+            targetSymbol.boundSlot = Number.isFinite(expr.value?.boundSlot) ? (expr.value.boundSlot | 0) : null;
             expr.target.boundLength = targetSymbol.boundLength;
+            expr.target.boundSlot = targetSymbol.boundSlot;
           }
-          if (isStructTypeName(targetType) && expr.target?.type === "identifier") {
+          if (isLargeStructTypeName(targetType) && expr.target?.type === "identifier") {
             diagnostics.push(createDiagnostic(
               "Direct struct assignment is not supported; assign fields individually.",
               expr,
@@ -2827,7 +3623,7 @@
             ));
           }
           if (assignmentOperator === "=") {
-            if (!typeCompatible(targetType, valueType)) {
+            if (!typeCompatibleProfile(targetType, valueType)) {
               diagnostics.push(createDiagnostic(
                 `Cannot assign expression of type '${valueType}' to target of type '${targetType}'.`,
                 expr,
@@ -2896,17 +3692,28 @@
           } else {
             diagnostics.push(createDiagnostic("Update target must be an lvalue (identifier/index/member/*ptr).", expr.target || expr, "semantic"));
           }
-          if (!isNumericType(targetType)) {
-            diagnostics.push(createDiagnostic(`Operator '${updateOperator}' requires int/char target.`, expr, "semantic"));
+          const resolvedTargetType = resolveAliasType(targetType);
+          const pointerUpdateAllowed = isPointerTypeName(resolvedTargetType);
+          if (!isNumericType(targetType) && !pointerUpdateAllowed) {
+            diagnostics.push(createDiagnostic(`Operator '${updateOperator}' requires int/char or pointer target.`, expr, "semantic"));
           }
           expr.operator = updateOperator === "--" ? "--" : "++";
           expr.isPostfix = expr.isPostfix === true;
           expr.inferredType = targetType;
+          expr.updateStepBytes = pointerUpdateAllowed
+            ? pointerElementAccessBytes(resolvedTargetType)
+            : 1;
           return targetType;
         }
         if (expr.type === "binary") {
           const leftType = bindExpr(expr.left);
           const rightType = bindExpr(expr.right);
+          const resolvedLeftType = resolveAliasType(leftType);
+          const resolvedRightType = resolveAliasType(rightType);
+          const leftPointer = isPointerTypeName(resolvedLeftType);
+          const rightPointer = isPointerTypeName(resolvedRightType);
+          const leftNumeric = isNumericType(leftType);
+          const rightNumeric = isNumericType(rightType);
           if (expr.operator === "&&" || expr.operator === "||") {
             if (!isBooleanType(leftType) || !isBooleanType(rightType)) {
               diagnostics.push(createDiagnostic(`Operator '${expr.operator}' requires bool operands.`, expr, "semantic"));
@@ -2915,7 +3722,21 @@
             return "bool";
           }
           if (["+", "-", "*", "/", "%"].includes(expr.operator)) {
-            if (!isNumericType(leftType) || !isNumericType(rightType)) {
+            if (expr.operator === "+" || expr.operator === "-") {
+              if (leftPointer && rightNumeric) {
+                expr.inferredType = leftType;
+                expr.pointerArithmeticBytes = pointerElementAccessBytes(resolvedLeftType);
+                expr.pointerArithmeticBase = "left";
+                return expr.inferredType;
+              }
+              if (expr.operator === "+" && leftNumeric && rightPointer) {
+                expr.inferredType = rightType;
+                expr.pointerArithmeticBytes = pointerElementAccessBytes(resolvedRightType);
+                expr.pointerArithmeticBase = "right";
+                return expr.inferredType;
+              }
+            }
+            if (!leftNumeric || !rightNumeric) {
               diagnostics.push(createDiagnostic(`Operator '${expr.operator}' requires int/char operands.`, expr, "semantic"));
             }
             expr.inferredType = "int";
@@ -2937,12 +3758,15 @@
             return "bool";
           }
           if (["==", "!="].includes(expr.operator)) {
-            const normalizedLeft = normalizeTypeName(leftType);
-            const normalizedRight = normalizeTypeName(rightType);
+            const normalizedLeft = resolveAliasType(leftType);
+            const normalizedRight = resolveAliasType(rightType);
             const bothPointers = isPointerTypeName(normalizedLeft) && isPointerTypeName(normalizedRight);
+            const bothFunctionPointers = isFunctionPointerTypeName(normalizedLeft) && isFunctionPointerTypeName(normalizedRight);
             const pointerAndNull = (isPointerTypeName(normalizedLeft) && isNullTypeName(normalizedRight))
-              || (isPointerTypeName(normalizedRight) && isNullTypeName(normalizedLeft));
-            const allowed = ((normalizedLeft === normalizedRight) || bothPointers || pointerAndNull)
+              || (isPointerTypeName(normalizedRight) && isNullTypeName(normalizedLeft))
+              || (isFunctionPointerTypeName(normalizedLeft) && isNullTypeName(normalizedRight))
+              || (isFunctionPointerTypeName(normalizedRight) && isNullTypeName(normalizedLeft));
+            const allowed = ((normalizedLeft === normalizedRight) || bothPointers || bothFunctionPointers || pointerAndNull)
               && !isStringType(normalizedLeft)
               && !isStringType(normalizedRight);
             if (!allowed) {
@@ -2965,7 +3789,7 @@
           }
           const trueType = bindExpr(expr.whenTrue, exprOptions);
           const falseType = bindExpr(expr.whenFalse, exprOptions);
-          if (!typeCompatible(trueType, falseType) && !typeCompatible(falseType, trueType)) {
+          if (!typeCompatibleProfile(trueType, falseType) && !typeCompatibleProfile(falseType, trueType)) {
             diagnostics.push(createDiagnostic(
               `Ternary branches require compatible types; got '${trueType}' and '${falseType}'.`,
               expr,
@@ -2974,25 +3798,173 @@
             expr.inferredType = trueType;
             return trueType;
           }
-          expr.inferredType = typeCompatible(trueType, falseType) ? trueType : falseType;
+          expr.inferredType = typeCompatibleProfile(trueType, falseType) ? trueType : falseType;
           return expr.inferredType;
         }
         if (expr.type === "call") {
-          const signature = signatureTable.get(expr.callee);
+          if (expr.callee === "contract_result") {
+            expr.signature = signatureTable.get(expr.callee) || null;
+            if (normalizeTypeName(fn.returnType || "int") === "void") {
+              diagnostics.push(createDiagnostic("contract_result() cannot be used in void function contracts.", expr, "semantic"));
+              expr.inferredType = "int";
+              return "int";
+            }
+            expr.inferredType = normalizeTypeName(fn.returnType || "int");
+            return expr.inferredType;
+          }
+          if (expr.callee === "contract_old") {
+            expr.signature = signatureTable.get(expr.callee) || null;
+            if (!Array.isArray(expr.args) || expr.args.length !== 1) {
+              diagnostics.push(createDiagnostic("contract_old(...) expects exactly one argument.", expr, "semantic"));
+              expr.inferredType = "int";
+              return "int";
+            }
+            const capturedType = bindExpr(expr.args[0], { allowArrayReference: true });
+            registerContractOldCapture(expr, expr.args[0], capturedType);
+            expr.inferredType = normalizeTypeName(capturedType || "int");
+            return expr.inferredType;
+          }
+          if (expr.callee === "contract_length") {
+            expr.signature = signatureTable.get(expr.callee) || null;
+            if (!Array.isArray(expr.args) || expr.args.length !== 1) {
+              diagnostics.push(createDiagnostic("contract_length(...) expects exactly one argument.", expr, "semantic"));
+              expr.inferredType = "int";
+              return "int";
+            }
+            const argType = bindExpr(expr.args[0], { allowArrayReference: true });
+            const argNode = expr.args[0];
+            const actualKind = String(argNode?.symbolKind || "");
+            const isArrayLike = actualKind === "array" || actualKind === "array_ref";
+            const isPointerLike = isPointerTypeName(argType);
+            if (!isArrayLike && !isPointerLike) {
+              diagnostics.push(createDiagnostic("contract_length(...) requires array or pointer expression.", argNode || expr, "semantic"));
+            }
+            const shape = normalizeArrayShape(argNode?.arrayShape || argNode?.remainingShape, []);
+            if (shape.length && Number.isFinite(shape[0]) && shape[0] > 0) {
+              expr.contractLength = shape[0] | 0;
+            } else if (Number.isFinite(argNode?.boundLength) && (argNode.boundLength | 0) >= 0) {
+              expr.contractLength = argNode.boundLength | 0;
+            } else if (Number.isFinite(argNode?.boundSlot)) {
+              expr.contractLengthSlot = argNode.boundSlot | 0;
+            } else if (isPointerLike) {
+              expr.contractLengthFromHeader = true;
+            }
+            expr.inferredType = "int";
+            return "int";
+          }
+          if (expr.callee === "contract_hastag") {
+            expr.signature = signatureTable.get(expr.callee) || null;
+            if (!Array.isArray(expr.args) || expr.args.length !== 2) {
+              diagnostics.push(createDiagnostic("contract_hastag(...) expects exactly two arguments.", expr, "semantic"));
+              expr.inferredType = "bool";
+              return "bool";
+            }
+            const tagArg = expr.args[0];
+            if (tagArg?.type !== "string_literal") {
+              diagnostics.push(createDiagnostic("contract_hastag(...) requires the first argument to be a type literal.", tagArg || expr, "semantic"));
+            } else {
+              const tagType = resolveAliasType(String(tagArg.value || ""));
+              if (!isObjectPointerTypeName(tagType) || isVoidPointerTypeName(tagType)) {
+                diagnostics.push(createDiagnostic("contract_hastag(...) requires a non-void object pointer tag.", tagArg, "semantic"));
+              } else {
+                expr.contractHasTagType = tagType;
+                expr.contractHasTagId = runtimeVoidTagId(tagType);
+              }
+            }
+            const valueType = bindExpr(expr.args[1], { allowArrayReference: true, allowArrayDecay: nativeSubsetEnabled === true });
+            if (valueType !== "void*" && !isNullTypeName(valueType)) {
+              diagnostics.push(createDiagnostic("contract_hastag(...) requires a void* value.", expr.args[1] || expr, "semantic"));
+            }
+            expr.inferredType = "bool";
+            return "bool";
+          }
+          let signature = expr.callee ? signatureTable.get(expr.callee) : null;
+          let callIndirect = false;
+          if (!signature && nativeSubsetEnabled && expr.calleeExpr) {
+            const calleeType = bindExpr(expr.calleeExpr, { allowArrayReference: true, allowArrayDecay: true });
+            if (isFunctionPointerTypeName(calleeType)) {
+              const parsedFunctionPointer = parseFunctionPointerTypeName(calleeType);
+              if (parsedFunctionPointer) {
+                const paramTypes = parsedFunctionPointer.paramTypes || [];
+                signature = {
+                  name: String(expr.callee || "__indirect_call"),
+                  params: paramTypes.length,
+                  paramTypes,
+                  paramKinds: Array.from({ length: paramTypes.length }, () => "scalar"),
+                  paramArrayShapes: Array.from({ length: paramTypes.length }, () => []),
+                  returnType: parsedFunctionPointer.returnType || "int",
+                  intrinsic: false,
+                  defined: true,
+                  minSubset: "C1-NATIVE",
+                  variadic: false
+                };
+                callIndirect = true;
+                expr.callIndirect = true;
+                expr.indirectCallee = expr.calleeExpr;
+              }
+            }
+          }
+          if (!signature && nativeSubsetEnabled && expr.callee) {
+            const calleeSymbol = lookup(String(expr.callee || ""));
+            if (calleeSymbol && isFunctionPointerTypeName(calleeSymbol.typeName)) {
+              const parsedFunctionPointer = parseFunctionPointerTypeName(calleeSymbol.typeName);
+              if (parsedFunctionPointer) {
+                const paramTypes = parsedFunctionPointer.paramTypes || [];
+                signature = {
+                  name: String(expr.callee || ""),
+                  params: paramTypes.length,
+                  paramTypes,
+                  paramKinds: Array.from({ length: paramTypes.length }, () => "scalar"),
+                  paramArrayShapes: Array.from({ length: paramTypes.length }, () => []),
+                  returnType: parsedFunctionPointer.returnType || "int",
+                  intrinsic: false,
+                  defined: true,
+                  minSubset: "C1-NATIVE",
+                  variadic: false
+                };
+                callIndirect = true;
+                expr.callIndirect = true;
+                expr.indirectCallee = expr.calleeExpr || {
+                  type: "identifier",
+                  name: String(expr.callee || ""),
+                  line: expr.line || 0,
+                  column: expr.column || 0,
+                  slot: Number.isFinite(calleeSymbol.slot) ? (calleeSymbol.slot | 0) : null,
+                  storage: calleeSymbol.storage,
+                  globalLabel: calleeSymbol.globalLabel,
+                  symbolKind: calleeSymbol.kind,
+                  inferredType: calleeSymbol.typeName,
+                  relativeByteOffset: Number.isFinite(calleeSymbol.relativeByteOffset) ? (calleeSymbol.relativeByteOffset | 0) : null
+                };
+              }
+            }
+          }
           const expectedParamKinds = Array.isArray(signature?.paramKinds) ? signature.paramKinds : [];
           const args = Array.isArray(expr.args) ? expr.args : [];
           const argTypes = args.map((arg, index) => {
             const expectedKind = normalizeParamKind(expectedParamKinds[index]);
+            const bypassVoidTagBoxing = nativeSubsetEnabled === true
+              && ((expr.callee === "free" && index === 0)
+                || (expr.callee === "realloc" && index === 0));
             return bindExpr(arg, {
-              allowArrayReference: expectedKind === "array" || expectedKind === "address"
+              allowArrayReference: expectedKind === "array" || expectedKind === "address",
+              allowArrayDecay: nativeSubsetEnabled === true,
+              skipVoidTagBoxing: bypassVoidTagBoxing
             });
           });
           if (!signature) {
-            diagnostics.push(createDiagnostic(`Unknown function '${expr.callee}'.`, expr, "semantic"));
+            diagnostics.push(createDiagnostic(
+              expr.calleeExpr
+                ? "Call target is not a function pointer."
+                : `Unknown function '${expr.callee}'.`,
+              expr,
+              "semantic"
+            ));
             expr.inferredType = "int";
             return "int";
           }
           expr.signature = signature;
+          if (callIndirect) expr.signature.callIndirect = true;
           const requiredSubset = normalizeSubsetName(signature.minSubset || "C0-S0");
           if (subsetLevel(requiredSubset) > activeSubsetLevel) {
             diagnostics.push(createDiagnostic(
@@ -3001,9 +3973,16 @@
               "semantic"
             ));
           }
-          if (signature.params !== (expr.args?.length || 0)) {
+          const actualArgCount = expr.args?.length || 0;
+          if (signature.variadic !== true && signature.params !== actualArgCount) {
             diagnostics.push(createDiagnostic(
-              `Function '${expr.callee}' expects ${signature.params} argument(s), got ${expr.args?.length || 0}.`,
+              `Function '${expr.callee}' expects ${signature.params} argument(s), got ${actualArgCount}.`,
+              expr,
+              "semantic"
+            ));
+          } else if (signature.variadic === true && actualArgCount < signature.params) {
+            diagnostics.push(createDiagnostic(
+              `Function '${expr.callee}' expects at least ${signature.params} argument(s), got ${actualArgCount}.`,
               expr,
               "semantic"
             ));
@@ -3011,8 +3990,10 @@
           const expectedParamTypes = Array.isArray(signature.paramTypes) ? signature.paramTypes : [];
           const expectedParamArrayShapes = Array.isArray(signature.paramArrayShapes) ? signature.paramArrayShapes : [];
           for (let i = 0; i < Math.min(argTypes.length, expectedParamTypes.length); i += 1) {
-            const expected = expectedParamTypes[i];
-            const actual = argTypes[i];
+            const expected = Array.isArray(expectedParamTypes[i])
+              ? expectedParamTypes[i].map((entry) => resolveAliasType(entry))
+              : resolveAliasType(expectedParamTypes[i]);
+            const actual = resolveAliasType(argTypes[i]);
             const expectedKind = normalizeParamKind(expectedParamKinds[i]);
             const argNode = expr.args?.[i] || expr;
             if (expectedKind === "array") {
@@ -3027,7 +4008,7 @@
                   argNode,
                   "semantic"
                 ));
-              } else if (!typeCompatible(expectedElementType, actual)) {
+              } else if (!typeCompatibleProfile(expectedElementType, actual)) {
                 diagnostics.push(createDiagnostic(
                   `Argument ${i + 1} of '${expr.callee}' expects '${expectedElementType}[]', got '${actual}[]'.`,
                   argNode,
@@ -3064,14 +4045,14 @@
             }
             if (Array.isArray(expected)) {
               const accepted = expected.map((entry) => normalizeTypeName(entry));
-              if (!accepted.some((candidate) => typeCompatible(candidate, actual))) {
+              if (!accepted.some((candidate) => typeCompatibleProfile(candidate, actual))) {
                 diagnostics.push(createDiagnostic(
                   `Argument ${i + 1} of '${expr.callee}' expects ${accepted.join(" or ")}, got '${actual}'.`,
                   argNode,
                   "semantic"
                 ));
               }
-            } else if (!typeCompatible(expected, actual)) {
+            } else if (!typeCompatibleProfile(expected, actual)) {
               diagnostics.push(createDiagnostic(
                 `Argument ${i + 1} of '${expr.callee}' expects '${normalizeTypeName(expected)}', got '${actual}'.`,
                 argNode,
@@ -3079,13 +4060,42 @@
               ));
             }
           }
-          if (expr.callee === "contract_length" && expr.args?.length) {
-            const argNode = expr.args[0];
-            const shape = normalizeArrayShape(argNode?.arrayShape || argNode?.remainingShape, []);
-            if (shape.length && Number.isFinite(shape[0]) && shape[0] > 0) {
-              expr.contractLength = shape[0] | 0;
-            } else if (Number.isFinite(argNode?.boundLength) && (argNode.boundLength | 0) > 0) {
-              expr.contractLength = argNode.boundLength | 0;
+          if (signature.variadic === true && signature.intrinsic === true
+            && (expr.callee === "printf" || expr.callee === "format")) {
+            const formatArg = args[0] || null;
+            if (!formatArg || formatArg.type !== "string_literal") {
+              diagnostics.push(createDiagnostic(
+                `Function '${expr.callee}' requires the format message to be a string literal.`,
+                formatArg || expr,
+                "semantic"
+              ));
+            } else {
+              const parsedFormat = parsePrintfFormatSpecifiers(formatArg.value || "");
+              if (!parsedFormat.ok) {
+                diagnostics.push(createDiagnostic(parsedFormat.message, formatArg, "semantic"));
+              } else {
+                const expectedSpecs = parsedFormat.specifiers || [];
+                const providedVarargs = Math.max(0, actualArgCount - 1);
+                if (expectedSpecs.length !== providedVarargs) {
+                  diagnostics.push(createDiagnostic(
+                    `Function '${expr.callee}' expects ${expectedSpecs.length} formatted argument(s) for the given format string, got ${providedVarargs}.`,
+                    expr,
+                    "semantic"
+                  ));
+                } else {
+                  for (let i = 0; i < expectedSpecs.length; i += 1) {
+                    const expectedType = normalizeTypeName(expectedSpecs[i]?.expectedType || "int");
+                    const actualType = normalizeTypeName(argTypes[i + 1] || "int");
+                    if (!typeCompatibleProfile(expectedType, actualType)) {
+                      diagnostics.push(createDiagnostic(
+                        `Format argument ${i + 1} of '${expr.callee}' expects '${expectedType}', got '${actualType}'.`,
+                        args[i + 1] || expr,
+                        "semantic"
+                      ));
+                    }
+                  }
+                }
+              }
             }
           }
           expr.inferredType = normalizeTypeName(signature.returnType || "int");
@@ -3109,17 +4119,32 @@
           if (!isDeclarationTypeName(resolvedDeclType) || resolvedDeclType === "void") {
             diagnostics.push(createDiagnostic(`Unsupported declaration type '${declarationType}'.`, stmt, "semantic"));
           }
+          if (requiresC1SubsetType(resolvedDeclType) && !nativeSubsetEnabled) {
+            diagnostics.push(createDiagnostic(
+              `Type '${declarationType}' requires subset C1/native, current subset is ${activeSubset}.`,
+              stmt,
+              "semantic"
+            ));
+          }
           const isArray = stmt.declarationKind === "array";
+          if (!isArray && isLargeStructTypeName(resolvedDeclType)) {
+            diagnostics.push(createDiagnostic(
+              `Direct variable of type '${resolvedDeclType}' is not supported in C0; use pointer or array.`,
+              stmt,
+              "semantic"
+            ));
+          }
           const elementWordSize = Math.max(1, typeWordSize(resolvedDeclType));
           const normalizedShape = isArray
             ? normalizeArrayShape(stmt.arrayShape, [Math.max(1, stmt.arrayLength | 0)])
-            : [1];
+            : [];
+          const byteArrayStorage = isNativeByteArray(resolvedDeclType, stmt.declarationKind, normalizedShape);
           const slotCount = isArray
             ? Math.max(1, arrayShapeProduct(normalizedShape)) * elementWordSize
             : elementWordSize;
           const isAggregate = isArray || (!isArray && slotCount > 1);
           stmt.arrayShape = normalizedShape;
-          stmt.arrayLength = normalizedShape[0] || 1;
+          stmt.arrayLength = normalizedShape[0] || 0;
           if (requiresS4SubsetType(resolvedDeclType) && activeSubsetLevel < subsetLevel("C0-S4")) {
             diagnostics.push(createDiagnostic(
               `Type '${declarationType}' declarations require subset C0-S4, current subset is ${activeSubset}.`,
@@ -3127,21 +4152,19 @@
               "semantic"
             ));
           }
-          if (isArray && activeSubsetLevel < subsetLevel("C0-S3")) {
-            diagnostics.push(createDiagnostic(`Array declarations require subset C0-S3, current subset is ${activeSubset}.`, stmt, "semantic"));
-          }
           const symbol = declare(
             stmt.name,
             stmt,
             slotCount,
             isArray
               ? "array"
-              : (isStructTypeName(resolvedDeclType) ? "struct" : (isPointerTypeName(resolvedDeclType) ? "pointer" : "scalar")),
+              : (isPointerTypeName(resolvedDeclType) ? "pointer" : (isLargeStructTypeName(resolvedDeclType) ? "struct" : "scalar")),
             resolvedDeclType,
             stmt.isConst === true,
             normalizedShape
           );
           if (symbol) {
+            symbol.byteArrayStorage = byteArrayStorage;
             stmt.slot = symbol.slot;
             stmt.slotCount = symbol.slotCount;
             stmt.symbolKind = symbol.kind;
@@ -3150,19 +4173,30 @@
             stmt.elementWordSize = symbol.elementWordSize;
             stmt.isConst = symbol.isConst === true;
             stmt.boundLength = Number.isFinite(symbol.boundLength) ? (symbol.boundLength | 0) : 0;
+            stmt.byteArrayStorage = symbol.byteArrayStorage === true;
           }
           if (stmt.initializer) {
             if (isAggregate) {
-              if (stmt.initializer.type !== "array_initializer") {
+              if (byteArrayStorage && stmt.initializer.type === "string_literal") {
+                const byteLength = stringToByteList(stmt.initializer.value || "").length;
+                if (byteLength > (stmt.arrayLength | 0)) {
+                  diagnostics.push(createDiagnostic(
+                    `String initializer is longer than array '${stmt.name}' capacity.`,
+                    stmt.initializer,
+                    "semantic"
+                  ));
+                }
+              } else if (stmt.initializer.type !== "array_initializer") {
                 diagnostics.push(createDiagnostic("Aggregate declarations require brace-based initializer lists.", stmt.initializer, "semantic"));
               } else {
                 const flatElements = flattenArrayInitializerElements(stmt.initializer, []);
-                if (flatElements.length > slotCount) {
+                const aggregateCapacity = byteArrayStorage ? (stmt.arrayLength | 0) : slotCount;
+                if (flatElements.length > aggregateCapacity) {
                   diagnostics.push(createDiagnostic(`Initializer has more elements than array '${stmt.name}' capacity.`, stmt.initializer, "semantic"));
                 }
                 flatElements.forEach((element) => {
                   const elementType = bindExpr(element);
-                  if (!typeCompatible(stmt.valueType || declarationType, elementType)) {
+                  if (!typeCompatibleProfile(stmt.valueType || declarationType, elementType)) {
                     diagnostics.push(createDiagnostic(
                       `Cannot initialize array '${stmt.name}' element of type '${stmt.valueType || declarationType}' with '${elementType}'.`,
                       element,
@@ -3175,8 +4209,8 @@
               if (stmt.initializer.type === "array_initializer") {
                 diagnostics.push(createDiagnostic("Scalar declarations cannot use brace initializer lists.", stmt.initializer, "semantic"));
               } else {
-                const initType = bindExpr(stmt.initializer);
-                if (!typeCompatible(stmt.valueType || declarationType, initType)) {
+                const initType = bindExpr(stmt.initializer, { allowArrayDecay: nativeSubsetEnabled === true });
+                if (!typeCompatibleProfile(stmt.valueType || declarationType, initType)) {
                   diagnostics.push(createDiagnostic(
                     `Cannot initialize '${stmt.name}' of type '${stmt.valueType || declarationType}' with '${initType}'.`,
                     stmt,
@@ -3186,18 +4220,26 @@
                 if (symbol && symbol.kind === "pointer") {
                   const inferredBound = inferPointerBound(stmt.initializer);
                   symbol.boundLength = inferredBound > 0 ? inferredBound : 0;
+                  symbol.boundSlot = Number.isFinite(stmt.initializer?.boundSlot) ? (stmt.initializer.boundSlot | 0) : null;
                   stmt.boundLength = symbol.boundLength;
+                  stmt.boundSlot = symbol.boundSlot;
                 }
               }
             }
           } else if (symbol && symbol.kind === "pointer") {
             symbol.boundLength = 0;
+            symbol.boundSlot = null;
             stmt.boundLength = 0;
+            stmt.boundSlot = null;
+          }
+          if (symbol && byteArrayStorage) {
+            symbol.boundLength = stmt.arrayLength | 0;
+            stmt.boundLength = symbol.boundLength;
           }
           return;
         }
         if (stmt.type === "return") {
-          const fnReturnType = normalizeTypeName(fn.returnType || "int");
+          const fnReturnType = resolveAliasType(fn.returnType || "int");
           if (requiresS4SubsetType(fnReturnType) && activeSubsetLevel < subsetLevel("C0-S4")) {
             diagnostics.push(createDiagnostic(
               `Return type '${fnReturnType}' requires subset C0-S4, current subset is ${activeSubset}.`,
@@ -3212,8 +4254,8 @@
             diagnostics.push(createDiagnostic(`${fnReturnType} function must return a value.`, stmt, "semantic"));
           }
           if (stmt.expression) {
-            const returnedType = bindExpr(stmt.expression);
-            if (fnReturnType !== "void" && !typeCompatible(fnReturnType, returnedType)) {
+            const returnedType = bindExpr(stmt.expression, { allowArrayDecay: nativeSubsetEnabled === true });
+            if (fnReturnType !== "void" && !typeCompatibleProfile(fnReturnType, returnedType)) {
               diagnostics.push(createDiagnostic(
                 `Return type mismatch: expected '${fnReturnType}', got '${returnedType}'.`,
                 stmt,
@@ -3233,6 +4275,12 @@
           return;
         }
         if (stmt.type === "while") {
+          (stmt.invariants || []).forEach((invariantExpr) => {
+            const invariantType = bindExpr(invariantExpr);
+            if (!isBooleanType(invariantType) && !isNumericType(invariantType)) {
+              diagnostics.push(createDiagnostic("loop invariant requires bool/int/char expression.", invariantExpr || stmt, "semantic"));
+            }
+          });
           const condType = bindExpr(stmt.condition);
           if (!isBooleanType(condType)) {
             diagnostics.push(createDiagnostic("While condition must be bool expression.", stmt.condition || stmt, "semantic"));
@@ -3249,6 +4297,12 @@
             if (stmt.init.type === "declaration") bindStmt(stmt.init, loopDepth + 1);
             else bindExpr(stmt.init);
           }
+          (stmt.invariants || []).forEach((invariantExpr) => {
+            const invariantType = bindExpr(invariantExpr);
+            if (!isBooleanType(invariantType) && !isNumericType(invariantType)) {
+              diagnostics.push(createDiagnostic("loop invariant requires bool/int/char expression.", invariantExpr || stmt, "semantic"));
+            }
+          });
           if (stmt.condition) {
             const condType = bindExpr(stmt.condition);
             if (!isBooleanType(condType)) {
@@ -3287,11 +4341,33 @@
           if (!isBooleanType(assertType) && !isNumericType(assertType)) {
             diagnostics.push(createDiagnostic("assert(...) requires bool/int/char expression.", stmt.expression || stmt, "semantic"));
           }
+          return;
+        }
+        if (stmt.type === "error") {
+          const errorType = bindExpr(stmt.expression);
+          if (!typeCompatibleProfile(errorType, "string")) {
+            diagnostics.push(createDiagnostic("error(...) requires string expression.", stmt.expression || stmt, "semantic"));
+          }
+          return;
         }
       }
 
       pushScope();
       const functionReturnType = normalizeTypeName(fn.returnType || "int");
+      if (isLargeStructTypeName(functionReturnType)) {
+        diagnostics.push(createDiagnostic(
+          `Function '${fn.name}' cannot return large type '${functionReturnType}'; use pointer or array.`,
+          fn,
+          "semantic"
+        ));
+      }
+      if (requiresC1SubsetType(functionReturnType) && !nativeSubsetEnabled) {
+        diagnostics.push(createDiagnostic(
+          `Function return type '${functionReturnType}' requires subset C1/native, current subset is ${activeSubset}.`,
+          fn,
+          "semantic"
+        ));
+      }
       if (requiresS4SubsetType(functionReturnType) && activeSubsetLevel < subsetLevel("C0-S4")) {
         diagnostics.push(createDiagnostic(
           `Function return type '${functionReturnType}' requires subset C0-S4, current subset is ${activeSubset}.`,
@@ -3303,6 +4379,23 @@
         const paramType = resolveAliasType(param.valueType || "int");
         if (!isDeclarationTypeName(paramType)) {
           diagnostics.push(createDiagnostic(`Unsupported parameter type '${paramType}'.`, param, "semantic"));
+        }
+        if (paramType === "void") {
+          diagnostics.push(createDiagnostic(`Parameter '${param.name}' cannot use raw 'void' type.`, param, "semantic"));
+        }
+        if (requiresC1SubsetType(paramType) && !nativeSubsetEnabled) {
+          diagnostics.push(createDiagnostic(
+            `Parameter type '${paramType}' requires subset C1/native, current subset is ${activeSubset}.`,
+            param,
+            "semantic"
+          ));
+        }
+        if (param.declarationKind !== "array" && isLargeStructTypeName(paramType)) {
+          diagnostics.push(createDiagnostic(
+            `Parameter '${param.name}' cannot use large type '${paramType}' directly; use pointer or array.`,
+            param,
+            "semantic"
+          ));
         }
         if (requiresS4SubsetType(paramType) && activeSubsetLevel < subsetLevel("C0-S4")) {
           diagnostics.push(createDiagnostic(
@@ -3316,14 +4409,14 @@
           : (isPointerTypeName(paramType) ? "address" : "scalar"));
         const paramShape = paramKind === "array"
           ? normalizeArrayShape(param.arrayShape, [0])
-          : [1];
+          : [];
         const symbol = declare(
           param.name,
           param,
           1,
           paramKind === "array"
             ? "array_ref"
-            : (isPointerTypeName(paramType) ? "pointer" : (isStructTypeName(paramType) ? "struct" : "scalar")),
+            : (isPointerTypeName(paramType) ? "pointer" : (isLargeStructTypeName(paramType) ? "struct" : "scalar")),
           paramType,
           param.isConst === true,
           paramShape
@@ -3334,6 +4427,24 @@
           param.isConst = symbol.isConst === true;
           param.symbolKind = symbol.kind;
           param.arrayShape = normalizeArrayShape(symbol.arrayShape, paramShape);
+          if (param.declarationKind === "array") {
+            symbol.boundSlot = nextSlot;
+            nextSlot += 1;
+            param.boundSlot = symbol.boundSlot;
+          }
+        }
+      });
+
+      (fn.contracts?.requires || []).forEach((expr) => {
+        const requireType = bindExpr(expr, { allowArrayReference: true });
+        if (!isBooleanType(requireType) && !isNumericType(requireType)) {
+          diagnostics.push(createDiagnostic("requires contract must be bool/int/char expression.", expr || fn, "semantic"));
+        }
+      });
+      (fn.contracts?.ensures || []).forEach((expr) => {
+        const ensureType = bindExpr(expr, { allowArrayReference: true });
+        if (!isBooleanType(ensureType) && !isNumericType(ensureType)) {
+          diagnostics.push(createDiagnostic("ensures contract must be bool/int/char expression.", expr || fn, "semantic"));
         }
       });
 
@@ -3489,8 +4600,7 @@
           if (stmt.initializer) analyzeExprInitialization(stmt.initializer, state);
           if (stmt.symbolKind === "scalar" && Number.isFinite(stmt.slot)) {
             const slot = stmt.slot | 0;
-            if (stmt.initializer) state.add(slot);
-            else state.delete(slot);
+            state.add(slot);
           }
           return state;
         }
@@ -3503,6 +4613,10 @@
           return state;
         }
         if (stmt.type === "assert") {
+          analyzeExprInitialization(stmt.expression, state);
+          return state;
+        }
+        if (stmt.type === "error") {
           analyzeExprInitialization(stmt.expression, state);
           return state;
         }
@@ -3536,6 +4650,7 @@
       const returnFlow = (stmt) => {
         if (!stmt || typeof stmt !== "object") return { fallsThrough: true };
         if (stmt.type === "return") return { fallsThrough: false };
+        if (stmt.type === "error") return { fallsThrough: false };
         if (stmt.type === "block") {
           const statements = Array.isArray(stmt.statements) ? stmt.statements : [];
           let fallsThrough = true;
@@ -3570,13 +4685,30 @@
           "semantic"
         ));
       }
+      let contractResultSlot = null;
+      if ((fn.contracts?.ensures || []).length > 0 && functionReturnType !== "void") {
+        contractResultSlot = nextSlot;
+        nextSlot += Math.max(1, typeWordSize(functionReturnType));
+      }
+      contractOldCaptures.forEach((capture) => {
+        capture.slot = nextSlot;
+        nextSlot += Math.max(1, typeWordSize(capture.valueType));
+      });
       popScope();
 
       fn._bind = {
         localSlotCount: nextSlot,
-        maxTempWords: Math.max(estimateStmtTemps(fn.body), 8),
+        maxTempWords: Math.max(
+          estimateStmtTemps(fn.body),
+          estimateContractTemps(fn.body),
+          (fn.contracts?.requires || []).reduce((peak, expr) => Math.max(peak, estimateExprTemps(expr)), 0),
+          (fn.contracts?.ensures || []).reduce((peak, expr) => Math.max(peak, estimateExprTemps(expr)), 0),
+          8
+        ),
         returnType: normalizeTypeName(fn.returnType || "int"),
-        name: fn.name
+        name: fn.name,
+        contractOldCaptures,
+        contractResultSlot
       };
     }
 
@@ -3598,14 +4730,162 @@
     return mod === 0 ? value : value + (alignment - mod);
   }
 
-  function escapeAsciiz(value) {
-    return String(value ?? "")
-      .replace(/\\/g, "\\\\")
-      .replace(/"/g, "\\\"")
-      .replace(/\n/g, "\\n")
-      .replace(/\r/g, "\\r")
-      .replace(/\t/g, "\\t")
-      .replace(/\0/g, "\\0");
+  function stringToByteList(value) {
+    const text = String(value ?? "");
+    const bytes = [];
+    for (let i = 0; i < text.length; i += 1) {
+      bytes.push(text.charCodeAt(i) & 0xff);
+    }
+    bytes.push(0);
+    return bytes;
+  }
+
+  function createTypeResolver(typedefTable = null) {
+    return function resolveTypeName(typeName, depth = 0) {
+      const normalized = normalizeTypeName(typeName);
+      if (depth > 32) return normalized;
+      const pointerMatch = normalized.match(/^(.*?)(\*+)$/);
+      if (pointerMatch) {
+        const base = resolveTypeName(pointerMatch[1], depth + 1);
+        return `${base}${pointerMatch[2]}`;
+      }
+      if (typedefTable && typeof typedefTable.get === "function" && typedefTable.has(normalized)) {
+        return resolveTypeName(typedefTable.get(normalized), depth + 1);
+      }
+      return normalized;
+    };
+  }
+
+  function collectStringDefaultWordOffsets(typeName, structTable = null, resolveTypeName = createTypeResolver(), seen = new Set()) {
+    const resolved = resolveTypeName(typeName);
+    if (resolved === "string") return [0];
+    if (!isStructTypeName(resolved)) return [];
+    const structName = resolved.replace(/^struct\s+/, "");
+    if (seen.has(structName)) return [];
+    seen.add(structName);
+    const structInfo = structTable && typeof structTable.get === "function"
+      ? structTable.get(structName)
+      : null;
+    if (!structInfo || !(structInfo.fields instanceof Map)) {
+      seen.delete(structName);
+      return [];
+    }
+    const offsets = [];
+    structInfo.fields.forEach((field) => {
+      const nestedOffsets = collectStringDefaultWordOffsets(field.typeName, structTable, resolveTypeName, seen);
+      nestedOffsets.forEach((offset) => {
+        offsets.push(((field.offsetWords | 0) + (offset | 0)) | 0);
+      });
+    });
+    seen.delete(structName);
+    return Array.from(new Set(offsets)).sort((left, right) => left - right);
+  }
+
+  function defaultScalarWordForType(typeName, emitter, typedefTable = null) {
+    const resolveTypeName = createTypeResolver(typedefTable);
+    const resolved = resolveTypeName(typeName);
+    if (resolved === "string") return emitter.internStringLiteral("");
+    return 0;
+  }
+
+  function emitStoreWordLiteralAtFrame(frameOffsetBytes, wordValue, context, node) {
+    const emitter = context.emitter;
+    if (typeof wordValue === "string") {
+      const reg = allocReg(context, node);
+      emitter.emit(`  la ${reg}, ${wordValue}`);
+      emitter.emit(`  sw ${reg}, ${frameOffsetBytes}($fp)`);
+      freeReg(context, reg);
+      return;
+    }
+    if ((Number(wordValue) | 0) === 0) {
+      emitter.emit(`  sw $zero, ${frameOffsetBytes}($fp)`);
+      return;
+    }
+    const reg = allocReg(context, node);
+    emitter.emit(`  li ${reg}, ${Number(wordValue) | 0}`);
+    emitter.emit(`  sw ${reg}, ${frameOffsetBytes}($fp)`);
+    freeReg(context, reg);
+  }
+
+  function emitStoreByteLiteralAtFrame(frameOffsetBytes, byteValue, context, node) {
+    const emitter = context.emitter;
+    const normalized = Number(byteValue) & 0xff;
+    if (normalized === 0) {
+      emitter.emit(`  sb $zero, ${frameOffsetBytes}($fp)`);
+      return;
+    }
+    const reg = allocReg(context, node);
+    emitter.emit(`  li ${reg}, ${normalized}`);
+    emitter.emit(`  sb ${reg}, ${frameOffsetBytes}($fp)`);
+    freeReg(context, reg);
+  }
+
+  function emitStoreWordLiteralAtAddress(addressReg, offsetBytes, wordValue, context, node) {
+    const emitter = context.emitter;
+    if (typeof wordValue === "string") {
+      const reg = allocReg(context, node);
+      emitter.emit(`  la ${reg}, ${wordValue}`);
+      emitter.emit(`  sw ${reg}, ${offsetBytes}(${addressReg})`);
+      freeReg(context, reg);
+      return;
+    }
+    if ((Number(wordValue) | 0) === 0) {
+      emitter.emit(`  sw $zero, ${offsetBytes}(${addressReg})`);
+      return;
+    }
+    const reg = allocReg(context, node);
+    emitter.emit(`  li ${reg}, ${Number(wordValue) | 0}`);
+    emitter.emit(`  sw ${reg}, ${offsetBytes}(${addressReg})`);
+    freeReg(context, reg);
+  }
+
+  function emitStringDefaultWordsAtFrame(baseOffsetBytes, slotCountWords, elementWordSize, stringOffsets, context, node) {
+    if (!Array.isArray(stringOffsets) || stringOffsets.length === 0) return;
+    const elementWords = Math.max(1, Number(elementWordSize || 1) | 0);
+    const slotCount = Math.max(1, Number(slotCountWords || 1) | 0);
+    const elementCount = Math.max(1, Math.floor(slotCount / elementWords));
+    const emptyStringLabel = context.emitter.internStringLiteral("");
+    for (let elementIndex = 0; elementIndex < elementCount; elementIndex += 1) {
+      for (let i = 0; i < stringOffsets.length; i += 1) {
+        const slotOffset = ((elementIndex * elementWords) + (stringOffsets[i] | 0)) | 0;
+        emitStoreWordLiteralAtFrame(baseOffsetBytes + (slotOffset * 4), emptyStringLabel, context, node);
+      }
+    }
+  }
+
+  function emitStringDefaultWordsAtAddress(baseAddressReg, stringOffsets, context, node) {
+    if (!Array.isArray(stringOffsets) || stringOffsets.length === 0) return;
+    const emptyStringLabel = context.emitter.internStringLiteral("");
+    for (let i = 0; i < stringOffsets.length; i += 1) {
+      emitStoreWordLiteralAtAddress(baseAddressReg, (stringOffsets[i] | 0) * 4, emptyStringLabel, context, node);
+    }
+  }
+
+  function emitStringDefaultWordsInArray(baseAddressReg, lengthReg, elementWordSize, stringOffsets, context, node, labelPrefix = "string_defaults") {
+    if (!Array.isArray(stringOffsets) || stringOffsets.length === 0) return;
+    const emitter = context.emitter;
+    const cursorReg = allocReg(context, node);
+    const remainingReg = allocReg(context, node);
+    const emptyStringReg = allocReg(context, node);
+    const loopLabel = emitter.createLabel(`${labelPrefix}_loop`);
+    const endLabel = emitter.createLabel(`${labelPrefix}_end`);
+    emitter.emit(`  move ${cursorReg}, ${baseAddressReg}`);
+    emitter.emit(`  move ${remainingReg}, ${lengthReg}`);
+    emitter.emit(`  la ${emptyStringReg}, ${emitter.internStringLiteral("")}`);
+    emitter.emit(`${loopLabel}:`);
+    emitter.emit(`  beq ${remainingReg}, $zero, ${endLabel}`);
+    emitter.emit("  nop");
+    for (let i = 0; i < stringOffsets.length; i += 1) {
+      emitter.emit(`  sw ${emptyStringReg}, ${(stringOffsets[i] | 0) * 4}(${cursorReg})`);
+    }
+    emitter.emit(`  addiu ${cursorReg}, ${cursorReg}, ${(Math.max(1, Number(elementWordSize || 1) | 0) * 4) | 0}`);
+    emitter.emit(`  addiu ${remainingReg}, ${remainingReg}, -1`);
+    emitter.emit(`  b ${loopLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`${endLabel}:`);
+    freeReg(context, emptyStringReg);
+    freeReg(context, remainingReg);
+    freeReg(context, cursorReg);
   }
 
   function foldStaticInitializerToWord(node, emitter, fallback = 0) {
@@ -3645,9 +4925,42 @@
     const shape = normalizeArrayShape(globalDecl.arrayShape, [Number(globalDecl.arrayLength || globalDecl.slotCount || 1) | 0]);
     const slotCount = Math.max(1, Number(globalDecl.slotCount || arrayShapeProduct(shape) || globalDecl.arrayLength || 1) | 0);
     const isArray = globalDecl.declarationKind === "array" || globalDecl.symbolKind === "array";
+    const typedefTable = globalDecl._typedefTable || null;
+    const structTable = globalDecl._structTable || null;
+    const resolveTypeName = createTypeResolver(typedefTable);
+    const declarationType = resolveTypeName(globalDecl.valueType || "int");
+    const elementWordSize = Math.max(1, Number(globalDecl.elementWordSize || 1) | 0);
+    const stringOffsets = collectStringDefaultWordOffsets(declarationType, structTable, resolveTypeName);
+    const stringOffsetSet = new Set(stringOffsets);
+    const emptyStringLabel = stringOffsets.length > 0 ? emitter.internStringLiteral("") : null;
     const initializer = globalDecl.initializer;
     const staticInit = globalDecl._staticInit;
     const staticInitElements = Array.isArray(globalDecl._staticInitElements) ? globalDecl._staticInitElements : null;
+
+    if (globalDecl.byteArrayStorage === true) {
+      const byteCapacity = Math.max(1, Number(shape[0] || globalDecl.arrayLength || 1) | 0);
+      const bytes = [];
+      if (typeof globalDecl._byteArrayStringInit === "string") {
+        stringToByteList(globalDecl._byteArrayStringInit).forEach((entry) => bytes.push(Number(entry) & 0xff));
+      } else if ((initializer && initializer.type === "array_initializer") || staticInitElements) {
+        const elements = staticInitElements || flattenArrayInitializerElements(initializer, []);
+        for (let i = 0; i < elements.length; i += 1) {
+          const value = staticInitElements
+            ? staticInitValueToWord(elements[i], emitter, 0)
+            : foldStaticInitializerToWord(elements[i], emitter, 0);
+          bytes.push(Number(value) & 0xff);
+        }
+      }
+      const writeCount = Math.min(byteCapacity, bytes.length);
+      emitter.emit(`${label}:`);
+      if (writeCount > 0) {
+        emitter.emit(`  .byte ${bytes.slice(0, writeCount).join(", ")}`);
+      }
+      if (byteCapacity > writeCount) {
+        emitter.emit(`  .space ${byteCapacity - writeCount}`);
+      }
+      return;
+    }
 
     if (!isArray) {
       if (slotCount > 1) {
@@ -3659,15 +4972,19 @@
             const folded = foldStaticInitializerToWord(elements[i], emitter, 0);
             emitter.emit(`  .word ${folded}`);
           }
-          for (let i = writeCount; i < slotCount; i += 1) emitter.emit("  .word 0");
+          for (let i = writeCount; i < slotCount; i += 1) {
+            emitter.emit(`  .word ${stringOffsetSet.has(i) ? emptyStringLabel : 0}`);
+          }
         } else {
-          for (let i = 0; i < slotCount; i += 1) emitter.emit("  .word 0");
+          for (let i = 0; i < slotCount; i += 1) {
+            emitter.emit(`  .word ${stringOffsetSet.has(i) ? emptyStringLabel : 0}`);
+          }
         }
         return;
       }
       const folded = staticInit
         ? staticInitValueToWord(staticInit, emitter, 0)
-        : (initializer ? foldStaticInitializerToWord(initializer, emitter, 0) : 0);
+        : (initializer ? foldStaticInitializerToWord(initializer, emitter, 0) : defaultScalarWordForType(declarationType, emitter, typedefTable));
       emitter.emit(`${label}: .word ${folded}`);
       return;
     }
@@ -3688,14 +5005,25 @@
           : foldStaticInitializerToWord(elements[i], emitter, 0);
         emitter.emit(`  .word ${folded}`);
       }
-      for (let i = writeCount; i < slotCount; i += 1) emitter.emit("  .word 0");
+      for (let i = writeCount; i < slotCount; i += 1) {
+        emitter.emit(`  .word ${stringOffsetSet.has(i % elementWordSize) ? emptyStringLabel : 0}`);
+      }
       return;
     }
 
     if (initializer) {
       const folded = foldStaticInitializerToWord(initializer, emitter, 0);
       emitter.emit(`  .word ${folded}`);
-      for (let i = 1; i < slotCount; i += 1) emitter.emit("  .word 0");
+      for (let i = 1; i < slotCount; i += 1) {
+        emitter.emit(`  .word ${stringOffsetSet.has(i % elementWordSize) ? emptyStringLabel : 0}`);
+      }
+      return;
+    }
+
+    if (stringOffsets.length > 0) {
+      for (let i = 0; i < slotCount; i += 1) {
+        emitter.emit(`  .word ${stringOffsetSet.has(i % elementWordSize) ? emptyStringLabel : 0}`);
+      }
       return;
     }
 
@@ -3731,7 +5059,8 @@
           out.push("");
           out.push(".data");
           stringPool.forEach((label, value) => {
-            out.push(`${label}: .asciiz "${escapeAsciiz(value)}"`);
+            out.push("  .align 2");
+            out.push(`${label}: .byte ${stringToByteList(value).join(", ")}`);
           });
         }
         return `${out.join("\n")}\n`;
@@ -3743,6 +5072,8 @@
     const emitter = createEmitter();
     const functions = Array.isArray(programAst?.functions) ? [...programAst.functions] : [];
     const globals = Array.isArray(programAst?.globals) ? [...programAst.globals] : [];
+    const structTable = programAst?._structTable || null;
+    const typedefTable = programAst?._typedefTable || null;
     const emitComments = options.emitComments !== false;
     const orderedFunctions = functions.sort((left, right) => {
       if (left?.name === "main") return -1;
@@ -3758,14 +5089,22 @@
     }
     if (globals.length > 0) {
       emitter.emit(".data");
-      globals.forEach((globalDecl) => emitGlobalDeclaration(globalDecl, emitter));
+      globals.forEach((globalDecl) => {
+        globalDecl._structTable = structTable;
+        globalDecl._typedefTable = typedefTable;
+        emitGlobalDeclaration(globalDecl, emitter);
+      });
       emitter.emit("");
     }
     emitter.emit(".text");
     emitter.emit(".globl main");
     emitter.emit("");
 
-    orderedFunctions.forEach((fn) => emitFunction(fn, emitter));
+    orderedFunctions.forEach((fn) => {
+      fn._structTable = structTable;
+      fn._typedefTable = typedefTable;
+      emitFunction(fn, emitter);
+    });
     return emitter.toString();
   }
 
@@ -3790,7 +5129,10 @@
       tempDepth: 0,
       usedRegs: new Set(),
       loopStack: [],
-      returnLabel
+      returnLabel,
+      contractResultSlot: Number.isFinite(bind.contractResultSlot) ? (bind.contractResultSlot | 0) : null,
+      structTable: fn._structTable || null,
+      typedefTable: fn._typedefTable || null
     };
 
     emitter.emit(`${fn.name}:`);
@@ -3799,8 +5141,14 @@
     emitter.emit(`  sw $ra, ${savedRaOffset}($sp)`);
     emitter.emit("  move $fp, $sp");
 
-    (fn.params || []).forEach((param, index) => {
-      const slotOffset = (param.slot || 0) * 4;
+    const incomingEntries = [];
+    (fn.params || []).forEach((param) => {
+      incomingEntries.push({ slot: param.slot || 0 });
+      if (Number.isFinite(param.boundSlot)) incomingEntries.push({ slot: param.boundSlot | 0 });
+    });
+
+    incomingEntries.forEach((entry, index) => {
+      const slotOffset = (entry.slot || 0) * 4;
       if (index < 4) {
         emitter.emit(`  sw $a${index}, ${slotOffset}($fp)`);
         return;
@@ -3809,6 +5157,15 @@
       emitter.emit(`  lw $t0, ${incomingOffset}($sp)`);
       emitter.emit(`  sw $t0, ${slotOffset}($fp)`);
     });
+
+    (bind.contractOldCaptures || []).forEach((capture) => {
+      if (!capture || !Number.isFinite(capture.slot)) return;
+      const reg = emitExpression(capture.expr, context);
+      emitter.emit(`  sw ${reg}, ${(capture.slot | 0) * 4}($fp)`);
+      freeReg(context, reg);
+    });
+
+    (fn.contracts?.requires || []).forEach((expr) => emitContractCheck(expr, context, "require_ok"));
 
     emitStatement(fn.body, context);
 
@@ -3819,6 +5176,13 @@
     emitter.emit("  nop");
 
     emitter.emit(`${returnLabel}:`);
+    if (context.contractResultSlot != null) {
+      emitter.emit(`  sw $v0, ${(context.contractResultSlot | 0) * 4}($fp)`);
+    }
+    (fn.contracts?.ensures || []).forEach((expr) => emitContractCheck(expr, context, "ensure_ok"));
+    if (context.contractResultSlot != null) {
+      emitter.emit(`  lw $v0, ${(context.contractResultSlot | 0) * 4}($fp)`);
+    }
     if (fn.name === "main") {
       emitter.emit("  li $v0, 10");
       emitter.emit("  syscall");
@@ -3879,12 +5243,31 @@
     if (node.type === "declaration") {
       const offset = (node.slot || 0) * 4;
       const slotCount = Math.max(1, (node.slotCount || 1) | 0);
+      const resolveTypeName = createTypeResolver(context.typedefTable);
+      const declarationType = resolveTypeName(node.valueType || "int");
+      const elementWordSize = Math.max(1, Number(node.elementWordSize || 1) | 0);
+      const stringOffsets = collectStringDefaultWordOffsets(declarationType, context.structTable, resolveTypeName);
       if (node.symbolKind === "array" || node.declarationKind === "array" || slotCount > 1) {
         for (let i = 0; i < slotCount; i += 1) {
           emitter.emit(`  sw $zero, ${offset + (i * 4)}($fp)`);
         }
+        emitStringDefaultWordsAtFrame(offset, slotCount, elementWordSize, stringOffsets, context, node);
         if (node.initializer) {
-          if (node.initializer.type === "array_initializer") {
+          if (node.byteArrayStorage === true && node.initializer.type === "string_literal") {
+            const bytes = stringToByteList(node.initializer.value || "");
+            const writeCount = Math.min(bytes.length, Math.max(1, node.arrayLength | 0));
+            for (let i = 0; i < writeCount; i += 1) {
+              emitStoreByteLiteralAtFrame(offset + i, bytes[i], context, node);
+            }
+          } else if (node.byteArrayStorage === true && node.initializer.type === "array_initializer") {
+            const elements = flattenArrayInitializerElements(node.initializer, []);
+            const writeCount = Math.min(elements.length, Math.max(1, node.arrayLength | 0));
+            for (let i = 0; i < writeCount; i += 1) {
+              const initReg = emitExpression(elements[i], context);
+              emitter.emit(`  sb ${initReg}, ${offset + i}($fp)`);
+              freeReg(context, initReg);
+            }
+          } else if (node.initializer.type === "array_initializer") {
             const elements = flattenArrayInitializerElements(node.initializer, []);
             const writeCount = Math.min(elements.length, slotCount);
             for (let i = 0; i < writeCount; i += 1) {
@@ -3903,7 +5286,7 @@
         emitter.emit(`  sw ${reg}, ${offset}($fp)`);
         freeReg(context, reg);
       } else {
-        emitter.emit(`  sw $zero, ${offset}($fp)`);
+        emitStoreWordLiteralAtFrame(offset, defaultScalarWordForType(declarationType, emitter, context.typedefTable), context, node);
       }
       return;
     }
@@ -3923,12 +5306,28 @@
       freeReg(context, condReg);
       return;
     }
+    if (node.type === "error") {
+      const messageReg = emitExpression(node.expression, context);
+      emitter.emit(`  move $a0, ${messageReg}`);
+      emitter.emit("  li $v0, 4");
+      emitter.emit("  syscall");
+      emitter.emit("  li $v0, 10");
+      emitter.emit("  syscall");
+      freeReg(context, messageReg);
+      return;
+    }
     if (node.type === "return") {
       if (node.expression) {
         const reg = emitExpression(node.expression, context);
+        if (context.contractResultSlot != null) {
+          emitter.emit(`  sw ${reg}, ${(context.contractResultSlot | 0) * 4}($fp)`);
+        }
         emitter.emit(`  move $v0, ${reg}`);
         freeReg(context, reg);
       } else {
+        if (context.contractResultSlot != null) {
+          emitter.emit(`  sw $zero, ${(context.contractResultSlot | 0) * 4}($fp)`);
+        }
         emitter.emit("  move $v0, $zero");
       }
       emitter.emit(`  b ${context.returnLabel}`);
@@ -3954,6 +5353,7 @@
       const startLabel = emitter.createLabel("while_start");
       const endLabel = emitter.createLabel("while_end");
       emitter.emit(`${startLabel}:`);
+      (node.invariants || []).forEach((expr) => emitContractCheck(expr, context, "loop_inv_ok"));
       const condReg = emitExpression(node.condition, context);
       emitter.emit(`  beq ${condReg}, $zero, ${endLabel}`);
       emitter.emit("  nop");
@@ -3979,6 +5379,7 @@
         }
       }
       emitter.emit(`${startLabel}:`);
+      (node.invariants || []).forEach((expr) => emitContractCheck(expr, context, "loop_inv_ok"));
       if (node.condition) {
         const condReg = emitExpression(node.condition, context);
         emitter.emit(`  beq ${condReg}, $zero, ${endLabel}`);
@@ -4014,6 +5415,180 @@
     }
   }
 
+  function emitAbortProgram(emitter) {
+    emitter.emit("  li $v0, 10");
+    emitter.emit("  syscall");
+  }
+
+  function emitAbortIfNull(pointerReg, context, node, labelPrefix = "ptr_ok") {
+    const emitter = context.emitter;
+    const okLabel = emitter.createLabel(labelPrefix);
+    emitter.emit(`  bne ${pointerReg}, $zero, ${okLabel}`);
+    emitter.emit("  nop");
+    emitAbortProgram(emitter);
+    emitter.emit(`${okLabel}:`);
+  }
+
+  function emitAbortIfNegative(valueReg, context, node, labelPrefix = "nonneg_ok") {
+    const emitter = context.emitter;
+    const checkReg = allocReg(context, node);
+    const okLabel = emitter.createLabel(labelPrefix);
+    emitter.emit(`  slt ${checkReg}, ${valueReg}, $zero`);
+    emitter.emit(`  beq ${checkReg}, $zero, ${okLabel}`);
+    emitter.emit("  nop");
+    emitAbortProgram(emitter);
+    emitter.emit(`${okLabel}:`);
+    freeReg(context, checkReg);
+  }
+
+  function emitZeroFill(addressReg, sizeBytesReg, context, node, labelPrefix = "memclr") {
+    const emitter = context.emitter;
+    const cursorReg = allocReg(context, node);
+    const remainingReg = allocReg(context, node);
+    const loopLabel = emitter.createLabel(`${labelPrefix}_loop`);
+    const endLabel = emitter.createLabel(`${labelPrefix}_end`);
+    emitter.emit(`  move ${cursorReg}, ${addressReg}`);
+    emitter.emit(`  move ${remainingReg}, ${sizeBytesReg}`);
+    emitter.emit(`${loopLabel}:`);
+    emitter.emit(`  beq ${remainingReg}, $zero, ${endLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`  sb $zero, 0(${cursorReg})`);
+    emitter.emit(`  addiu ${cursorReg}, ${cursorReg}, 1`);
+    emitter.emit(`  addiu ${remainingReg}, ${remainingReg}, -1`);
+    emitter.emit(`  b ${loopLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`${endLabel}:`);
+    freeReg(context, remainingReg);
+    freeReg(context, cursorReg);
+  }
+
+  function emitLoadFromAddress(targetReg, addressReg, accessBytes, emitter) {
+    if ((accessBytes | 0) === 1) {
+      emitter.emit(`  lbu ${targetReg}, 0(${addressReg})`);
+      return;
+    }
+    emitter.emit(`  lw ${targetReg}, 0(${addressReg})`);
+  }
+
+  function emitStoreToAddress(sourceReg, addressReg, accessBytes, emitter) {
+    if ((accessBytes | 0) === 1) {
+      emitter.emit(`  sb ${sourceReg}, 0(${addressReg})`);
+      return;
+    }
+    emitter.emit(`  sw ${sourceReg}, 0(${addressReg})`);
+  }
+
+  function emitBoxVoidPointer(sourceReg, tagId, context, node) {
+    const emitter = context.emitter;
+    const resultReg = allocReg(context, node);
+    const zeroLabel = emitter.createLabel("void_box_zero");
+    const endLabel = emitter.createLabel("void_box_end");
+    const baseReg = allocReg(context, node);
+    const tagReg = allocReg(context, node);
+    emitter.emit(`  beq ${sourceReg}, $zero, ${zeroLabel}`);
+    emitter.emit("  nop");
+    emitter.emit("  li $a0, 12");
+    emitter.emit("  li $v0, 9");
+    emitter.emit("  syscall");
+    emitter.emit(`  move ${baseReg}, $v0`);
+    emitter.emit(`  li ${tagReg}, ${VOID_PTR_TAG_MAGIC | 0}`);
+    emitter.emit(`  sw ${tagReg}, 0(${baseReg})`);
+    emitter.emit(`  li ${tagReg}, ${tagId | 0}`);
+    emitter.emit(`  sw ${tagReg}, 4(${baseReg})`);
+    emitter.emit(`  sw ${sourceReg}, 8(${baseReg})`);
+    emitter.emit(`  move ${resultReg}, ${baseReg}`);
+    emitter.emit(`  b ${endLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`${zeroLabel}:`);
+    emitter.emit(`  move ${resultReg}, $zero`);
+    emitter.emit(`${endLabel}:`);
+    freeReg(context, tagReg);
+    freeReg(context, baseReg);
+    freeReg(context, sourceReg);
+    return resultReg;
+  }
+
+  function emitUnboxVoidPointer(sourceReg, tagId, context, node) {
+    const emitter = context.emitter;
+    const resultReg = allocReg(context, node);
+    const zeroLabel = emitter.createLabel("void_unbox_zero");
+    const rawLabel = emitter.createLabel("void_unbox_raw");
+    const okLabel = emitter.createLabel("void_unbox_ok");
+    const endLabel = emitter.createLabel("void_unbox_end");
+    const magicReg = allocReg(context, node);
+    const tagReg = allocReg(context, node);
+    emitter.emit(`  beq ${sourceReg}, $zero, ${zeroLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`  lw ${magicReg}, 0(${sourceReg})`);
+    emitter.emit(`  li ${tagReg}, ${VOID_PTR_TAG_MAGIC | 0}`);
+    emitter.emit(`  bne ${magicReg}, ${tagReg}, ${rawLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`  lw ${tagReg}, 4(${sourceReg})`);
+    emitter.emit(`  li ${magicReg}, ${tagId | 0}`);
+    emitter.emit(`  beq ${tagReg}, ${magicReg}, ${okLabel}`);
+    emitter.emit("  nop");
+    emitAbortProgram(emitter);
+    emitter.emit(`${okLabel}:`);
+    emitter.emit(`  lw ${resultReg}, 8(${sourceReg})`);
+    emitter.emit(`  b ${endLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`${rawLabel}:`);
+    emitter.emit(`  move ${resultReg}, ${sourceReg}`);
+    emitter.emit(`  b ${endLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`${zeroLabel}:`);
+    emitter.emit(`  move ${resultReg}, $zero`);
+    emitter.emit(`${endLabel}:`);
+    freeReg(context, tagReg);
+    freeReg(context, magicReg);
+    freeReg(context, sourceReg);
+    return resultReg;
+  }
+
+  function emitHasTagVoidPointer(sourceReg, tagId, context, node) {
+    const emitter = context.emitter;
+    const resultReg = allocReg(context, node);
+    const zeroLabel = emitter.createLabel("void_hastag_zero");
+    const falseLabel = emitter.createLabel("void_hastag_false");
+    const endLabel = emitter.createLabel("void_hastag_end");
+    const magicReg = allocReg(context, node);
+    const tagReg = allocReg(context, node);
+    emitter.emit(`  beq ${sourceReg}, $zero, ${zeroLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`  lw ${magicReg}, 0(${sourceReg})`);
+    emitter.emit(`  li ${tagReg}, ${VOID_PTR_TAG_MAGIC | 0}`);
+    emitter.emit(`  bne ${magicReg}, ${tagReg}, ${falseLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`  lw ${tagReg}, 4(${sourceReg})`);
+    emitter.emit(`  li ${magicReg}, ${tagId | 0}`);
+    emitter.emit(`  xor ${resultReg}, ${tagReg}, ${magicReg}`);
+    emitter.emit(`  sltiu ${resultReg}, ${resultReg}, 1`);
+    emitter.emit(`  b ${endLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`${zeroLabel}:`);
+    emitter.emit(`  li ${resultReg}, 1`);
+    emitter.emit(`  b ${endLabel}`);
+    emitter.emit("  nop");
+    emitter.emit(`${falseLabel}:`);
+    emitter.emit(`  move ${resultReg}, $zero`);
+    emitter.emit(`${endLabel}:`);
+    freeReg(context, tagReg);
+    freeReg(context, magicReg);
+    freeReg(context, sourceReg);
+    return resultReg;
+  }
+
+  function emitContractCheck(expression, context, labelPrefix = "contract_ok") {
+    const emitter = context.emitter;
+    const condReg = emitExpression(expression, context);
+    const okLabel = emitter.createLabel(labelPrefix);
+    emitter.emit(`  bne ${condReg}, $zero, ${okLabel}`);
+    emitter.emit("  nop");
+    emitAbortProgram(emitter);
+    emitter.emit(`${okLabel}:`);
+    freeReg(context, condReg);
+  }
+
   function emitIndexAddress(node, context) {
     const emitter = context.emitter;
     if (!node || node.type !== "index") {
@@ -4021,7 +5596,15 @@
     }
     let addressReg = null;
     if (node.target?.type === "index") {
-      addressReg = emitIndexAddress(node.target, context);
+      const targetIsPointerValue = isPointerTypeName(node.target.inferredType || "int")
+        && node.target.symbolKind !== "array_ref"
+        && node.target.asArrayReference !== true;
+      if (targetIsPointerValue || node.baseStorage === "computed_pointer") {
+        addressReg = emitExpression(node.target, context);
+        emitAbortIfNull(addressReg, context, node, "idx_ptr_ok");
+      } else {
+        addressReg = emitIndexAddress(node.target, context);
+      }
     } else if (node.target?.type === "identifier") {
       const isGlobalBase = node.baseStorage === "global";
       const isGlobalPointerBase = node.baseStorage === "global_pointer";
@@ -4037,21 +5620,31 @@
         if (!node.baseLabel) throw createDiagnostic("Missing global pointer label.", node, "codegen");
         emitter.emit(`  la ${addressReg}, ${node.baseLabel}`);
         emitter.emit(`  lw ${addressReg}, 0(${addressReg})`);
+        emitAbortIfNull(addressReg, context, node, "idx_ptr_ok");
       } else if (isGlobalBase) {
         if (!node.baseLabel) throw createDiagnostic("Missing global array label.", node, "codegen");
         emitter.emit(`  la ${addressReg}, ${node.baseLabel}`);
       } else if (isPointerBase) {
         emitter.emit(`  lw ${addressReg}, ${baseSlot * 4}($fp)`);
+        emitAbortIfNull(addressReg, context, node, "idx_ptr_ok");
       } else {
         emitter.emit(`  addiu ${addressReg}, $fp, ${baseSlot * 4}`);
       }
+    } else if (node.baseStorage === "computed_pointer") {
+      addressReg = emitExpression(node.target, context);
+      emitAbortIfNull(addressReg, context, node, "idx_ptr_ok");
     } else {
-      throw createDiagnostic("Array index target must be an identifier or indexed array expression.", node.target || node, "codegen");
+      throw createDiagnostic("Array index target must be an addressable array or pointer expression.", node.target || node, "codegen");
     }
 
     const indexReg = emitExpression(node.index, context);
-    if (Number.isFinite(node.boundLength) && (node.boundLength | 0) > 0) {
-      const bound = node.boundLength | 0;
+    const hasStaticBound = Number.isFinite(node.boundLength) && (node.boundLength | 0) > 0;
+    const hasDynamicBoundSlot = Number.isFinite(node.boundSlot);
+    const canLoadBoundFromHeader = node.canLoadBoundFromHeader === true
+      && (node.baseStorage === "pointer_slot"
+        || node.baseStorage === "global_pointer"
+        || node.baseStorage === "computed_pointer");
+    if (hasStaticBound || hasDynamicBoundSlot || canLoadBoundFromHeader) {
       const boundReg = allocReg(context, node);
       const checkReg = allocReg(context, node);
       const okLabel = emitter.createLabel("idx_ok");
@@ -4059,28 +5652,34 @@
       emitter.emit(`  slt ${checkReg}, ${indexReg}, $zero`);
       emitter.emit(`  beq ${checkReg}, $zero, ${okLabel}`);
       emitter.emit("  nop");
-      emitter.emit("  li $v0, 10");
-      emitter.emit("  syscall");
+      emitAbortProgram(emitter);
       emitter.emit(`${okLabel}:`);
       const upperOkLabel = emitter.createLabel("idx_upper_ok");
-      emitter.emit(`  li ${boundReg}, ${bound}`);
+      if (hasStaticBound) {
+        emitter.emit(`  li ${boundReg}, ${node.boundLength | 0}`);
+      } else if (hasDynamicBoundSlot) {
+        emitter.emit(`  lw ${boundReg}, ${(node.boundSlot | 0) * 4}($fp)`);
+      } else {
+        emitter.emit(`  lw ${boundReg}, -4(${addressReg})`);
+      }
       emitter.emit(`  slt ${checkReg}, ${indexReg}, ${boundReg}`);
       emitter.emit(`  bne ${checkReg}, $zero, ${upperOkLabel}`);
       emitter.emit("  nop");
-      emitter.emit("  li $v0, 10");
-      emitter.emit("  syscall");
+      emitAbortProgram(emitter);
       emitter.emit(`${upperOkLabel}:`);
       freeReg(context, checkReg);
       freeReg(context, boundReg);
     }
-    const strideWords = Number.isFinite(node.indexStrideWords) && node.indexStrideWords > 0
-      ? (node.indexStrideWords | 0)
-      : 1;
-    if (strideWords === 1) {
+    const strideBytes = Number.isFinite(node.indexStrideBytes) && node.indexStrideBytes > 0
+      ? (node.indexStrideBytes | 0)
+      : 4;
+    if (strideBytes === 1) {
+      // Byte-addressed char* in C1/native.
+    } else if (strideBytes === 4) {
       emitter.emit(`  sll ${indexReg}, ${indexReg}, 2`);
     } else {
       const strideReg = allocReg(context, node);
-      emitter.emit(`  li ${strideReg}, ${(strideWords * 4) | 0}`);
+      emitter.emit(`  li ${strideReg}, ${strideBytes | 0}`);
       emitter.emit(`  mul ${indexReg}, ${indexReg}, ${strideReg}`);
       freeReg(context, strideReg);
     }
@@ -4097,6 +5696,7 @@
     let baseAddressReg = null;
     if (node.viaPointer === true) {
       baseAddressReg = emitExpression(node.target, context);
+      emitAbortIfNull(baseAddressReg, context, node, "member_ptr_ok");
     } else if (node.target?.type === "identifier") {
       baseAddressReg = allocReg(context, node);
       if (node.target.storage === "global") {
@@ -4109,6 +5709,7 @@
       baseAddressReg = emitMemberAddress(node.target, context);
     } else if (node.target?.type === "unary" && node.target.operator === "*") {
       baseAddressReg = emitExpression(node.target.argument, context);
+      emitAbortIfNull(baseAddressReg, context, node, "member_ptr_ok");
     } else {
       // Fallback: evaluate expression as address-like value.
       baseAddressReg = emitExpression(node.target, context);
@@ -4118,6 +5719,30 @@
       emitter.emit(`  addiu ${baseAddressReg}, ${baseAddressReg}, ${(fieldOffsetWords * 4) | 0}`);
     }
     return baseAddressReg;
+  }
+
+  function emitLValueAddress(node, context) {
+    const emitter = context.emitter;
+    if (!node || typeof node !== "object") {
+      throw createDiagnostic("Internal compiler error: expected lvalue node.", node, "codegen");
+    }
+    if (node.type === "identifier") {
+      const reg = allocReg(context, node);
+      if (node.storage === "global") {
+        if (!node.globalLabel) throw createDiagnostic(`Missing global label for '${node.name}'.`, node, "codegen");
+        emitter.emit(`  la ${reg}, ${node.globalLabel}`);
+      } else {
+        const offset = (node.slot || 0) * 4;
+        emitter.emit(`  addiu ${reg}, $fp, ${offset}`);
+      }
+      return reg;
+    }
+    if (node.type === "index") return emitIndexAddress(node, context);
+    if (node.type === "member") return emitMemberAddress(node, context);
+    if (node.type === "unary" && node.operator === "*") {
+      return emitExpression(node.argument, context);
+    }
+    throw createDiagnostic("Unsupported lvalue address expression.", node, "codegen");
   }
 
   function emitExpression(node, context) {
@@ -4144,38 +5769,71 @@
     }
 
     if (node.type === "alloc") {
+      const sizeReg = allocReg(context, node);
+      const baseReg = allocReg(context, node);
       const reg = allocReg(context, node);
-      const sizeBytes = Math.max(1, (Number(node.elementWordSize || 1) | 0) * 4);
-      emitter.emit(`  li $a0, ${sizeBytes}`);
+      const headerReg = allocReg(context, node);
+      const resolveTypeName = createTypeResolver(context.typedefTable);
+      const allocType = resolveTypeName(node.allocType || "int");
+      const stringOffsets = collectStringDefaultWordOffsets(allocType, context.structTable, resolveTypeName);
+      const sizeBytes = Math.max(1, Number(node.storageByteSize || ((Number(node.elementWordSize || 1) | 0) * 4)) | 0);
+      emitter.emit(`  li ${sizeReg}, ${sizeBytes + 4}`);
+      emitter.emit(`  move $a0, ${sizeReg}`);
       emitter.emit("  li $v0, 9");
       emitter.emit("  syscall");
-      emitter.emit(`  move ${reg}, $v0`);
+      emitter.emit(`  move ${baseReg}, $v0`);
+      emitter.emit(`  li ${headerReg}, 1`);
+      emitter.emit(`  sw ${headerReg}, 0(${baseReg})`);
+      emitter.emit(`  addiu ${reg}, ${baseReg}, 4`);
+      emitter.emit(`  addiu ${sizeReg}, ${sizeReg}, -4`);
+      emitZeroFill(reg, sizeReg, context, node, "alloc_zero");
+      emitStringDefaultWordsAtAddress(reg, stringOffsets, context, node);
+      freeReg(context, headerReg);
+      freeReg(context, baseReg);
+      freeReg(context, sizeReg);
       return reg;
     }
 
     if (node.type === "alloc_array") {
       const lenReg = emitExpression(node.length, context);
+      emitAbortIfNegative(lenReg, context, node, "alloc_array_nonneg");
       const sizeReg = allocReg(context, node);
-      const wordBytes = Math.max(1, (Number(node.elementWordSize || 1) | 0) * 4);
-      if (wordBytes === 4) {
+      const baseReg = allocReg(context, node);
+      const headerReg = allocReg(context, node);
+      const resolveTypeName = createTypeResolver(context.typedefTable);
+      const allocType = resolveTypeName(node.allocType || "int");
+      const stringOffsets = collectStringDefaultWordOffsets(allocType, context.structTable, resolveTypeName);
+      const elementBytes = Math.max(1, Number(node.storageByteSize || ((Number(node.elementWordSize || 1) | 0) * 4)) | 0);
+      if (elementBytes === 4) {
         emitter.emit(`  sll ${sizeReg}, ${lenReg}, 2`);
       } else {
-        emitter.emit(`  li ${sizeReg}, ${wordBytes}`);
+        emitter.emit(`  li ${sizeReg}, ${elementBytes}`);
         emitter.emit(`  mul ${sizeReg}, ${lenReg}, ${sizeReg}`);
       }
+      emitter.emit(`  move ${headerReg}, ${lenReg}`);
+      emitter.emit(`  addiu ${sizeReg}, ${sizeReg}, 4`);
       emitter.emit(`  move $a0, ${sizeReg}`);
       emitter.emit("  li $v0, 9");
       emitter.emit("  syscall");
-      freeReg(context, sizeReg);
-      freeReg(context, lenReg);
+      emitter.emit(`  move ${baseReg}, $v0`);
+      emitter.emit(`  sw ${headerReg}, 0(${baseReg})`);
       const resultReg = allocReg(context, node);
-      emitter.emit(`  move ${resultReg}, $v0`);
+      emitter.emit(`  addiu ${resultReg}, ${baseReg}, 4`);
+      emitter.emit(`  addiu ${sizeReg}, ${sizeReg}, -4`);
+      emitZeroFill(resultReg, sizeReg, context, node, "alloc_array_zero");
+      emitStringDefaultWordsInArray(resultReg, lenReg, node.elementWordSize || 1, stringOffsets, context, node, "alloc_array_string_defaults");
+      freeReg(context, headerReg);
+      freeReg(context, lenReg);
+      freeReg(context, baseReg);
+      freeReg(context, sizeReg);
       return resultReg;
     }
 
     if (node.type === "identifier") {
       const reg = allocReg(context, node);
-      if (node.asArrayReference === true) {
+      if (node.symbolKind === "function") {
+        emitter.emit(`  la ${reg}, ${node.functionLabel || node.name}`);
+      } else if (node.asArrayReference === true) {
         if (node.storage === "global") {
           if (!node.globalLabel) throw createDiagnostic(`Missing global label for '${node.name}'.`, node, "codegen");
           emitter.emit(`  la ${reg}, ${node.globalLabel}`);
@@ -4203,7 +5861,7 @@
         return addressReg;
       }
       const valueReg = allocReg(context, node);
-      emitter.emit(`  lw ${valueReg}, 0(${addressReg})`);
+      emitLoadFromAddress(valueReg, addressReg, node.memoryAccessBytes || 4, emitter);
       freeReg(context, addressReg);
       return valueReg;
     }
@@ -4217,10 +5875,22 @@
     }
 
     if (node.type === "unary") {
+      if (node.operator === "&") {
+        if (node.argument?.type === "identifier" && node.argument.symbolKind === "function") {
+          const reg = allocReg(context, node);
+          emitter.emit(`  la ${reg}, ${node.argument.functionLabel || node.argument.name}`);
+          return reg;
+        }
+        return emitLValueAddress(node.argument, context);
+      }
       if (node.operator === "*") {
+        if (isFunctionPointerTypeName(node.inferredType || node.argument?.inferredType || "")) {
+          return emitExpression(node.argument, context);
+        }
         const addressReg = emitExpression(node.argument, context);
+        emitAbortIfNull(addressReg, context, node, "deref_ok");
         const valueReg = allocReg(context, node);
-        emitter.emit(`  lw ${valueReg}, 0(${addressReg})`);
+        emitLoadFromAddress(valueReg, addressReg, node.memoryAccessBytes || 4, emitter);
         freeReg(context, addressReg);
         return valueReg;
       }
@@ -4259,6 +5929,12 @@
 
     if (node.type === "cast") {
       const reg = emitExpression(node.expression, context);
+      if (node.voidPointerCast?.mode === "box") {
+        return emitBoxVoidPointer(reg, node.voidPointerCast.tagId | 0, context, node);
+      }
+      if (node.voidPointerCast?.mode === "unwrap") {
+        return emitUnboxVoidPointer(reg, node.voidPointerCast.tagId | 0, context, node);
+      }
       const targetType = normalizeTypeName(node.targetType || "int");
       if (targetType === "bool") {
         emitter.emit(`  sltu ${reg}, $zero, ${reg}`);
@@ -4269,7 +5945,8 @@
     }
 
     if (node.type === "update") {
-      const delta = node.operator === "--" ? -1 : 1;
+      const stepBytes = Math.max(1, Number(node.updateStepBytes || 1) | 0);
+      const delta = (node.operator === "--" ? -1 : 1) * stepBytes;
       if (node.target?.type === "identifier") {
         const resultReg = allocReg(context, node);
         let valueReg = allocReg(context, node);
@@ -4304,14 +5981,14 @@
         const valueReg = allocReg(context, node);
         const loadAddressReg = allocReg(context, node);
         emitter.emit(`  lw ${loadAddressReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
-        emitter.emit(`  lw ${valueReg}, 0(${loadAddressReg})`);
+        emitLoadFromAddress(valueReg, loadAddressReg, node.target.memoryAccessBytes || 4, emitter);
         freeReg(context, loadAddressReg);
 
         if (node.isPostfix) emitter.emit(`  move ${resultReg}, ${valueReg}`);
         emitter.emit(`  addiu ${valueReg}, ${valueReg}, ${delta}`);
         const storeAddressReg = allocReg(context, node);
         emitter.emit(`  lw ${storeAddressReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
-        emitter.emit(`  sw ${valueReg}, 0(${storeAddressReg})`);
+        emitStoreToAddress(valueReg, storeAddressReg, node.target.memoryAccessBytes || 4, emitter);
         freeReg(context, storeAddressReg);
         releaseTempSlot(context);
         if (!node.isPostfix) emitter.emit(`  move ${resultReg}, ${valueReg}`);
@@ -4322,6 +5999,7 @@
         const addressReg = node.target.type === "member"
           ? emitMemberAddress(node.target, context)
           : emitExpression(node.target.argument, context);
+        if (node.target.type !== "member") emitAbortIfNull(addressReg, context, node, "upd_ptr_ok");
         const tempSlot = acquireTempSlot(context, node);
         emitter.emit(`  sw ${addressReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
         freeReg(context, addressReg);
@@ -4330,14 +6008,14 @@
         const valueReg = allocReg(context, node);
         const loadAddressReg = allocReg(context, node);
         emitter.emit(`  lw ${loadAddressReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
-        emitter.emit(`  lw ${valueReg}, 0(${loadAddressReg})`);
+        emitLoadFromAddress(valueReg, loadAddressReg, node.target.memoryAccessBytes || 4, emitter);
         freeReg(context, loadAddressReg);
 
         if (node.isPostfix) emitter.emit(`  move ${resultReg}, ${valueReg}`);
         emitter.emit(`  addiu ${valueReg}, ${valueReg}, ${delta}`);
         const storeAddressReg = allocReg(context, node);
         emitter.emit(`  lw ${storeAddressReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
-        emitter.emit(`  sw ${valueReg}, 0(${storeAddressReg})`);
+        emitStoreToAddress(valueReg, storeAddressReg, node.target.memoryAccessBytes || 4, emitter);
         freeReg(context, storeAddressReg);
         releaseTempSlot(context);
         if (!node.isPostfix) emitter.emit(`  move ${resultReg}, ${valueReg}`);
@@ -4403,7 +6081,7 @@
           }
           const currentReg = allocReg(context, node);
           emitter.emit(`  lw ${currentReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
-          emitter.emit(`  lw ${currentReg}, 0(${currentReg})`);
+          emitLoadFromAddress(currentReg, currentReg, node.target.memoryAccessBytes || 4, emitter);
           const rightReg = emitExpression(node.value, context);
           emitBinaryOperation(compoundBinaryOperator, currentReg, rightReg, emitter, node);
           freeReg(context, rightReg);
@@ -4412,7 +6090,7 @@
         const restoredAddressReg = allocReg(context, node);
         emitter.emit(`  lw ${restoredAddressReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
         releaseTempSlot(context);
-        emitter.emit(`  sw ${valueReg}, 0(${restoredAddressReg})`);
+        emitStoreToAddress(valueReg, restoredAddressReg, node.target.memoryAccessBytes || 4, emitter);
         freeReg(context, restoredAddressReg);
         return valueReg;
       }
@@ -4420,6 +6098,7 @@
         const addressReg = node.target.type === "member"
           ? emitMemberAddress(node.target, context)
           : emitExpression(node.target.argument, context);
+        if (node.target.type !== "member") emitAbortIfNull(addressReg, context, node, "assign_ptr_ok");
         const tempSlot = acquireTempSlot(context, node);
         emitter.emit(`  sw ${addressReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
         freeReg(context, addressReg);
@@ -4432,7 +6111,7 @@
           }
           const currentReg = allocReg(context, node);
           emitter.emit(`  lw ${currentReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
-          emitter.emit(`  lw ${currentReg}, 0(${currentReg})`);
+          emitLoadFromAddress(currentReg, currentReg, node.target.memoryAccessBytes || 4, emitter);
           const rightReg = emitExpression(node.value, context);
           emitBinaryOperation(compoundBinaryOperator, currentReg, rightReg, emitter, node);
           freeReg(context, rightReg);
@@ -4441,7 +6120,7 @@
         const restoredAddressReg = allocReg(context, node);
         emitter.emit(`  lw ${restoredAddressReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
         releaseTempSlot(context);
-        emitter.emit(`  sw ${valueReg}, 0(${restoredAddressReg})`);
+        emitStoreToAddress(valueReg, restoredAddressReg, node.target.memoryAccessBytes || 4, emitter);
         freeReg(context, restoredAddressReg);
         return valueReg;
       }
@@ -4605,6 +6284,25 @@
     emitter.emit(`  lw ${resultReg}, ${tempSlotOffset(context, slot)}($fp)`);
     releaseTempSlot(context);
 
+    if (Number.isFinite(node.pointerArithmeticBytes) && (node.pointerArithmeticBytes | 0) > 0) {
+      const strideBytes = Math.max(1, Number(node.pointerArithmeticBytes) | 0);
+      const scaleReg = node.pointerArithmeticBase === "right" ? resultReg : rightReg;
+      if (strideBytes === 4) {
+        emitter.emit(`  sll ${scaleReg}, ${scaleReg}, 2`);
+      } else if (strideBytes !== 1) {
+        emitter.emit(`  li $t8, ${strideBytes}`);
+        emitter.emit(`  mul ${scaleReg}, ${scaleReg}, $t8`);
+      }
+      if (node.pointerArithmeticBase === "right") {
+        if (node.operator === "+") emitter.emit(`  addu ${resultReg}, ${rightReg}, ${resultReg}`);
+        else emitter.emit(`  subu ${resultReg}, ${rightReg}, ${resultReg}`);
+      } else {
+        emitBinaryOperation(node.operator, resultReg, rightReg, emitter, node);
+      }
+      freeReg(context, rightReg);
+      return resultReg;
+    }
+
     emitBinaryOperation(node.operator, resultReg, rightReg, emitter, node);
 
     freeReg(context, rightReg);
@@ -4614,20 +6312,65 @@
   function emitCallExpression(node, context) {
     const emitter = context.emitter;
     const signature = node.signature || null;
-    if (!signature) throw createDiagnostic(`Unknown call target '${node.callee}'.`, node, "codegen");
+    if (!signature) throw createDiagnostic(`Unknown call target '${node.callee || "__indirect_call"}'.`, node, "codegen");
 
     if (signature.intrinsic) {
       return emitIntrinsicCall(node, context);
     }
 
-    const argSlots = [];
     const args = Array.isArray(node.args) ? node.args : [];
+    const argSlots = [];
+
+    const emitRuntimeArrayBoundReg = (argNode, explicitReg) => {
+      if (Number.isFinite(argNode?.boundLength) && (argNode.boundLength | 0) >= 0) {
+        const reg = allocReg(context, node);
+        emitter.emit(`  li ${reg}, ${argNode.boundLength | 0}`);
+        return reg;
+      }
+      if (Number.isFinite(argNode?.boundSlot)) {
+        const reg = allocReg(context, node);
+        emitter.emit(`  lw ${reg}, ${(argNode.boundSlot | 0) * 4}($fp)`);
+        return reg;
+      }
+      const shape = normalizeArrayShape(argNode?.arrayShape || argNode?.remainingShape, []);
+      if (shape.length && Number.isFinite(shape[0]) && shape[0] >= 0) {
+        const reg = allocReg(context, node);
+        emitter.emit(`  li ${reg}, ${shape[0] | 0}`);
+        return reg;
+      }
+      const reg = allocReg(context, node);
+      emitter.emit(`  lw ${reg}, -4(${explicitReg})`);
+      return reg;
+    };
+
     for (let i = 0; i < args.length; i += 1) {
       const argReg = emitExpression(args[i], context);
-      const slot = acquireTempSlot(context, node);
-      emitter.emit(`  sw ${argReg}, ${tempSlotOffset(context, slot)}($fp)`);
+      const paramKind = normalizeParamKind(signature.paramKinds?.[i]);
+      const boundReg = (paramKind === "array" || paramKind === "address")
+        ? emitRuntimeArrayBoundReg(args[i], argReg)
+        : null;
+
+      const valueSlot = acquireTempSlot(context, node);
+      emitter.emit(`  sw ${argReg}, ${tempSlotOffset(context, valueSlot)}($fp)`);
       freeReg(context, argReg);
-      argSlots.push(slot);
+      argSlots.push(valueSlot);
+
+      if (boundReg) {
+        const boundSlot = acquireTempSlot(context, node);
+        emitter.emit(`  sw ${boundReg}, ${tempSlotOffset(context, boundSlot)}($fp)`);
+        freeReg(context, boundReg);
+        argSlots.push(boundSlot);
+      }
+    }
+
+    let calleeSlot = null;
+    if (node.callIndirect === true) {
+      const calleeNode = node.indirectCallee || node.calleeExpr || null;
+      if (!calleeNode) throw createDiagnostic("Missing indirect call target.", node, "codegen");
+      const calleeReg = emitExpression(calleeNode, context);
+      calleeSlot = acquireTempSlot(context, node);
+      emitter.emit(`  sw ${calleeReg}, ${tempSlotOffset(context, calleeSlot)}($fp)`);
+      freeReg(context, calleeReg);
     }
 
     const registerArgCount = Math.min(argSlots.length, 4);
@@ -4645,14 +6388,22 @@
         emitter.emit(`  sw $t0, ${stackOffset}($sp)`);
       }
     }
-
-    emitter.emit(`  jal ${node.callee}`);
-    emitter.emit("  nop");
+    if (node.callIndirect === true) {
+      emitter.emit(`  lw $t0, ${tempSlotOffset(context, calleeSlot)}($fp)`);
+      emitter.emit("  jalr $t0");
+      emitter.emit("  nop");
+    } else {
+      emitter.emit(`  jal ${node.callee}`);
+      emitter.emit("  nop");
+    }
     if (stackArgBytes > 0) {
       emitter.emit(`  addiu $sp, $sp, ${stackArgBytes}`);
     }
 
     for (let i = argSlots.length - 1; i >= 0; i -= 1) {
+      releaseTempSlot(context);
+    }
+    if (calleeSlot != null) {
       releaseTempSlot(context);
     }
 
@@ -4690,6 +6441,29 @@
     };
     const storeWordToAddress = (valueReg, addressReg) => {
       emitter.emit(`  sw ${valueReg}, 0(${addressReg})`);
+    };
+    const emitGenericSyscallIntrinsic = (serviceNumber, options = {}) => {
+      const slots = stashArgs();
+      loadStashedArgs(slots, ["$a0", "$a1", "$a2", "$a3"]);
+      const stackArgCount = Math.max(0, slots.length - 4);
+      const stackArgBytes = stackArgCount * 4;
+      if (stackArgBytes > 0) {
+        emitter.emit(`  addiu $sp, $sp, -${stackArgBytes}`);
+        for (let i = 4; i < slots.length; i += 1) {
+          emitter.emit(`  lw $t0, ${tempSlotOffset(context, slots[i])}($fp)`);
+          emitter.emit(`  sw $t0, ${(i - 4) * 4}($sp)`);
+        }
+      }
+      emitter.emit(`  li $v0, ${serviceNumber | 0}`);
+      emitter.emit("  syscall");
+      if (stackArgBytes > 0) {
+        emitter.emit(`  addiu $sp, $sp, ${stackArgBytes}`);
+      }
+      releaseStashedArgs(slots);
+      if (options.returnKind === "void") return emitVoidResult();
+      const resultReg = allocReg(context, node);
+      emitter.emit(`  move ${resultReg}, ${options.resultRegister || "$v0"}`);
+      return resultReg;
     };
     if (node.callee === "print_int") {
       const argReg = emitExpression(args[0], context);
@@ -5066,22 +6840,120 @@
       releaseStashedArgs(slots);
       return emitVoidResult();
     }
-    if (node.callee === "contract_old") {
-      const argReg = emitExpression(args[0], context);
+    if (node.callee === "__wm_flush") return emitGenericSyscallIntrinsic(60, { returnKind: "void" });
+    if (node.callee === "__wm_eof") return emitGenericSyscallIntrinsic(61);
+    if (node.callee === "__wm_readline") return emitGenericSyscallIntrinsic(62);
+    if (node.callee === "printf" || node.callee === "format") {
+      const formatReg = emitExpression(args[0], context);
+      const formatSlot = acquireTempSlot(context, node);
+      emitter.emit(`  sw ${formatReg}, ${tempSlotOffset(context, formatSlot)}($fp)`);
+      const varargCount = Math.max(0, args.length - 1);
+      const varargSlots = [];
+      for (let i = 1; i < args.length; i += 1) {
+        const argReg = emitExpression(args[i], context);
+        const slot = acquireTempSlot(context, node);
+        emitter.emit(`  sw ${argReg}, ${tempSlotOffset(context, slot)}($fp)`);
+        freeReg(context, argReg);
+        varargSlots.push(slot);
+      }
+      const varargBytes = varargCount * 4;
+      if (varargBytes > 0) {
+        emitter.emit(`  addiu $sp, $sp, -${varargBytes}`);
+        for (let i = 0; i < varargSlots.length; i += 1) {
+          emitter.emit(`  lw $t0, ${tempSlotOffset(context, varargSlots[i])}($fp)`);
+          emitter.emit(`  sw $t0, ${i * 4}($sp)`);
+        }
+        emitter.emit(`  move $a1, $sp`);
+      } else {
+        emitter.emit("  move $a1, $zero");
+      }
+      emitter.emit(`  lw $t9, ${tempSlotOffset(context, formatSlot)}($fp)`);
+      emitter.emit("  move $a0, $t9");
+      emitter.emit(`  li $a2, ${varargCount | 0}`);
+      emitter.emit(`  li $v0, ${node.callee === "printf" ? 63 : 64}`);
+      emitter.emit("  syscall");
+      if (varargBytes > 0) {
+        emitter.emit(`  addiu $sp, $sp, ${varargBytes}`);
+      }
+      for (let i = varargSlots.length - 1; i >= 0; i -= 1) releaseTempSlot(context);
+      releaseTempSlot(context);
+      freeReg(context, formatReg);
+      if (node.callee === "printf") return emitVoidResult();
       const resultReg = allocReg(context, node);
-      emitter.emit(`  move ${resultReg}, ${argReg}`);
-      freeReg(context, argReg);
+      emitter.emit(`  move ${resultReg}, $v0`);
+      return resultReg;
+    }
+    if (node.callee === "__wm_file_read") return emitGenericSyscallIntrinsic(65);
+    if (node.callee === "__wm_file_closed") return emitGenericSyscallIntrinsic(66);
+    if (node.callee === "__wm_file_close") return emitGenericSyscallIntrinsic(67, { returnKind: "void" });
+    if (node.callee === "__wm_file_eof") return emitGenericSyscallIntrinsic(68);
+    if (node.callee === "__wm_file_readline") return emitGenericSyscallIntrinsic(69);
+    if (node.callee === "__wm_args_flag") return emitGenericSyscallIntrinsic(70, { returnKind: "void" });
+    if (node.callee === "__wm_args_int") return emitGenericSyscallIntrinsic(71, { returnKind: "void" });
+    if (node.callee === "__wm_args_string") return emitGenericSyscallIntrinsic(72, { returnKind: "void" });
+    if (node.callee === "__wm_args_parse") return emitGenericSyscallIntrinsic(73);
+    if (node.callee === "__wm_string_length") return emitGenericSyscallIntrinsic(74);
+    if (node.callee === "__wm_string_charat") return emitGenericSyscallIntrinsic(75);
+    if (node.callee === "__wm_string_join") return emitGenericSyscallIntrinsic(76);
+    if (node.callee === "__wm_string_sub") return emitGenericSyscallIntrinsic(77);
+    if (node.callee === "__wm_string_compare") return emitGenericSyscallIntrinsic(78);
+    if (node.callee === "__wm_string_fromint") return emitGenericSyscallIntrinsic(79);
+    if (node.callee === "__wm_string_fromchar") return emitGenericSyscallIntrinsic(80);
+    if (node.callee === "__wm_string_tolower") return emitGenericSyscallIntrinsic(81);
+    if (node.callee === "__wm_string_terminated") return emitGenericSyscallIntrinsic(82);
+    if (node.callee === "__wm_string_to_chararray") return emitGenericSyscallIntrinsic(83);
+    if (node.callee === "__wm_string_from_chararray") return emitGenericSyscallIntrinsic(84);
+    if (node.callee === "__wm_char_chr") return emitGenericSyscallIntrinsic(85);
+    if (node.callee === "__wm_parse_bool") return emitGenericSyscallIntrinsic(86);
+    if (node.callee === "__wm_parse_int") return emitGenericSyscallIntrinsic(87);
+    if (node.callee === "__wm_num_tokens") return emitGenericSyscallIntrinsic(88);
+    if (node.callee === "__wm_int_tokens") return emitGenericSyscallIntrinsic(89);
+    if (node.callee === "__wm_parse_tokens") return emitGenericSyscallIntrinsic(90);
+    if (node.callee === "__wm_parse_ints") return emitGenericSyscallIntrinsic(91);
+    if (node.callee === "__wm_int2hex") return emitGenericSyscallIntrinsic(92);
+    if (node.callee === "__wm_image_width") return emitGenericSyscallIntrinsic(93);
+    if (node.callee === "__wm_image_height") return emitGenericSyscallIntrinsic(94);
+    if (node.callee === "__wm_image_create") return emitGenericSyscallIntrinsic(95);
+    if (node.callee === "__wm_image_clone") return emitGenericSyscallIntrinsic(96);
+    if (node.callee === "__wm_image_subimage") return emitGenericSyscallIntrinsic(97);
+    if (node.callee === "__wm_image_load") return emitGenericSyscallIntrinsic(98);
+    if (node.callee === "__wm_image_save") return emitGenericSyscallIntrinsic(99, { returnKind: "void" });
+    if (node.callee === "__wm_image_data") return emitGenericSyscallIntrinsic(100);
+    if (node.callee === "__wm_cstr_terminated") return emitGenericSyscallIntrinsic(101);
+    if (node.callee === "__wm_cstr_from_string") return emitGenericSyscallIntrinsic(102);
+    if (node.callee === "__wm_string_from_cstr") return emitGenericSyscallIntrinsic(103);
+    if (node.callee === "contract_old") {
+      const resultReg = allocReg(context, node);
+      if (Number.isFinite(node.contractOldCapture?.slot)) {
+        emitter.emit(`  lw ${resultReg}, ${(node.contractOldCapture.slot | 0) * 4}($fp)`);
+      } else {
+        emitter.emit(`  move ${resultReg}, $zero`);
+      }
       return resultReg;
     }
     if (node.callee === "contract_result") {
       const resultReg = allocReg(context, node);
-      emitter.emit(`  move ${resultReg}, $v0`);
+      if (context.contractResultSlot != null) {
+        emitter.emit(`  lw ${resultReg}, ${(context.contractResultSlot | 0) * 4}($fp)`);
+      } else {
+        emitter.emit(`  move ${resultReg}, $v0`);
+      }
       return resultReg;
+    }
+    if (node.callee === "contract_hastag") {
+      const valueReg = emitExpression(args[1], context);
+      return emitHasTagVoidPointer(valueReg, Number(node.contractHasTagId || 0) | 0, context, node);
     }
     if (node.callee === "contract_length") {
       const resultReg = allocReg(context, node);
       if (Number.isFinite(node.contractLength) && (node.contractLength | 0) >= 0) {
         emitter.emit(`  li ${resultReg}, ${node.contractLength | 0}`);
+      } else if (Number.isFinite(node.contractLengthSlot)) {
+        emitter.emit(`  lw ${resultReg}, ${(node.contractLengthSlot | 0) * 4}($fp)`);
+      } else if (node.contractLengthFromHeader === true && args[0]) {
+        const addressReg = emitExpression(args[0], context);
+        emitter.emit(`  lw ${resultReg}, -4(${addressReg})`);
+        freeReg(context, addressReg);
       } else {
         emitter.emit(`  move ${resultReg}, $zero`);
       }
@@ -5099,13 +6971,16 @@
   function compile(sourceText, options = {}) {
     const rawSource = String(sourceText ?? "");
     const sourceName = String(options.sourceName || "program.c");
-    const requestedSubset = String(options.subset || "C0-S4");
+    const requestedSubset = String(options.subset || "C1-NATIVE");
     const subset = normalizeSubsetName(requestedSubset);
+    const subsetLabel = isRecognizedSubsetToken(requestedSubset)
+      ? String(requestedSubset || subset).trim().toUpperCase()
+      : subset;
     const targetAbi = String(options.targetAbi || "o32").toLowerCase() === "o32" ? "o32" : "o32";
     const logs = [];
     const warnings = [];
 
-    if (requestedSubset.trim().toUpperCase() !== subset) {
+    if (!isRecognizedSubsetToken(requestedSubset)) {
       warnings.push(`Unknown subset '${requestedSubset}'. Falling back to '${subset}'.`);
     }
 
@@ -5151,6 +7026,7 @@
 
     const parser = createParser(tokenized.tokens);
     const ast = parser.parseProgram();
+    lowerContractAnnotations(ast);
     if (parser.diagnostics.length) {
       return {
         ok: false,
@@ -5183,7 +7059,7 @@
     try {
       const asm = generateProgram(ast, {
         sourceName,
-        subset,
+        subset: subsetLabel,
         targetAbi,
         emitComments: options.emitComments !== false
       });

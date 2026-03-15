@@ -193,7 +193,7 @@
     composeWord(b0, b1, b2, b3) {
       const fn = getExport("wm_compose_word");
       if (!fn) {
-        return (((Number(b0) & 0xff) << 24) | ((Number(b1) & 0xff) << 16) | ((Number(b2) & 0xff) << 8) | (Number(b3) & 0xff)) | 0;
+        return (((Number(b3) & 0xff) << 24) | ((Number(b2) & 0xff) << 16) | ((Number(b1) & 0xff) << 8) | (Number(b0) & 0xff)) | 0;
       }
       return fn(
         (Number(b0) || 0) >>> 0,
@@ -204,13 +204,13 @@
     },
     getWordByte(word, index) {
       const fn = getExport("wm_get_word_byte");
-      if (!fn) return ((Number(word) >>> ((3 - (Number(index) & 0x3)) * 8)) & 0xff) >>> 0;
+      if (!fn) return ((Number(word) >>> ((Number(index) & 0x3) * 8)) & 0xff) >>> 0;
       return fn((Number(word) || 0) >>> 0, (Number(index) || 0) >>> 0) >>> 0;
     },
     setWordByte(word, index, byte) {
       const fn = getExport("wm_set_word_byte");
       if (!fn) {
-        const shift = (3 - (Number(index) & 0x3)) * 8;
+        const shift = (Number(index) & 0x3) * 8;
         return (((Number(word) || 0) & ~(0xff << shift)) | (((Number(byte) || 0) & 0xff) << shift)) | 0;
       }
       return fn(

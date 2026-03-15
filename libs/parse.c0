@@ -1,0 +1,29 @@
+bool* parse_bool(string s) {
+  return __wm_parse_bool(s);
+}
+
+//@requires 2 <= base && base <= 36;
+int* parse_int(string s, int base) {
+  return __wm_parse_int(s, base);
+}
+
+//@ensures \result >= 0;
+int num_tokens(string s) {
+  return __wm_num_tokens(s);
+}
+
+//@requires 2 <= base && base <= 36;
+bool int_tokens(string s, int base) {
+  return __wm_int_tokens(s, base);
+}
+
+//@ensures \length(\result) == num_tokens(s);
+string* parse_tokens(string s) {
+  return __wm_parse_tokens(s);
+}
+
+//@requires int_tokens(s, base);
+//@ensures \length(\result) == num_tokens(s);
+int* parse_ints(string s, int base) {
+  return __wm_parse_ints(s, base);
+}

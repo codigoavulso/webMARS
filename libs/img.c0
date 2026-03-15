@@ -1,0 +1,51 @@
+struct __c0_image_handle;
+typedef struct __c0_image_handle* image_t;
+
+//@requires image != NULL;
+//@ensures \result > 0;
+int image_width(image_t image) {
+  return __wm_image_width(image);
+}
+
+//@requires image != NULL;
+//@ensures \result > 0;
+int image_height(image_t image) {
+  return __wm_image_height(image);
+}
+
+//@requires 0 < width && 0 < height;
+//@ensures \result != NULL;
+//@ensures image_width(\result) == width;
+//@ensures image_height(\result) == height;
+image_t image_create(int width, int height) {
+  return __wm_image_create(width, height);
+}
+
+//@requires image != NULL;
+//@ensures image_width(\result) == image_width(image);
+//@ensures image_height(\result) == image_height(image);
+image_t image_clone(image_t image) {
+  return __wm_image_clone(image);
+}
+
+//@requires image != NULL;
+//@ensures image_width(\result) == width;
+//@ensures image_height(\result) == height;
+image_t image_subimage(image_t image, int x, int y, int width, int height) {
+  return __wm_image_subimage(image, x, y, width, height);
+}
+
+image_t image_load(string path) {
+  return __wm_image_load(path);
+}
+
+//@requires image != NULL;
+void image_save(image_t image, string path) {
+  __wm_image_save(image, path);
+}
+
+//@requires image != NULL;
+//@ensures \length(\result) == image_width(image) * image_height(image);
+int* image_data(image_t image) {
+  return __wm_image_data(image);
+}

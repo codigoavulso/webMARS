@@ -86,6 +86,12 @@
   function normalizeNativeResult(result) {
     if (!result || typeof result !== "object") return result;
     const normalized = { ...result };
+    if (!Array.isArray(normalized.errors) && Array.isArray(normalized.snapshot?.errors)) {
+      normalized.errors = normalized.snapshot.errors.map((entry) => ({ ...entry }));
+    }
+    if (!Array.isArray(normalized.warnings) && Array.isArray(normalized.snapshot?.warnings)) {
+      normalized.warnings = normalized.snapshot.warnings.map((entry) => ({ ...entry }));
+    }
     if (!normalized.message && normalized.messageKey) {
       const args = normalized.messageArgs && typeof normalized.messageArgs === "object"
         ? { ...normalized.messageArgs }
@@ -104,6 +110,68 @@
     }
   }
 
+  function toPlainArray(value) {
+    if (Array.isArray(value)) return value.slice();
+    if (value == null || typeof value !== "object") return [];
+    if (typeof value[Symbol.iterator] === "function") {
+      try {
+        return Array.from(value);
+      } catch {
+        // Fall through to numeric-key extraction below.
+      }
+    }
+    const numericLength = Number(value.length);
+    if (Number.isFinite(numericLength) && numericLength >= 0) {
+      const result = [];
+      for (let i = 0; i < numericLength; i += 1) result.push(value[i]);
+      return result;
+    }
+    const numericKeys = Object.keys(value)
+      .filter((key) => /^(0|[1-9]\d*)$/.test(key))
+      .sort((left, right) => Number(left) - Number(right));
+    if (numericKeys.length === 0) return [];
+    return numericKeys.map((key) => value[key]);
+  }
+
+  function toPlainObject(value) {
+    if (!value || typeof value !== "object") return value;
+    const result = {};
+    Object.keys(value).forEach((key) => {
+      result[key] = value[key];
+    });
+    return result;
+  }
+
+  function normalizeNativeCollectionEntries(entries) {
+    return toPlainArray(entries).map((entry) => {
+      if (Array.isArray(entry)) return entry.slice();
+      const normalizedArray = toPlainArray(entry);
+      if (normalizedArray.length > 0) return normalizedArray;
+      return toPlainObject(entry);
+    });
+  }
+
+  function normalizeNativeStateSnapshot(raw) {
+    if (!raw || typeof raw !== "object") return raw;
+    return {
+      ...toPlainObject(raw),
+      registers: toPlainArray(raw.registers),
+      cop0: toPlainArray(raw.cop0),
+      cop1: toPlainArray(raw.cop1),
+      fpuFlags: toPlainArray(raw.fpuFlags),
+      textRows: normalizeNativeCollectionEntries(raw.textRows),
+      labels: normalizeNativeCollectionEntries(raw.labels),
+      dataRows: normalizeNativeCollectionEntries(raw.dataRows),
+      memoryWords: normalizeNativeCollectionEntries(raw.memoryWords),
+      memoryDelta: normalizeNativeCollectionEntries(raw.memoryDelta),
+      breakpoints: toPlainArray(raw.breakpoints),
+      executionPlan: normalizeNativeCollectionEntries(raw.executionPlan),
+      memoryAccesses: normalizeNativeCollectionEntries(raw.memoryAccesses),
+      errors: normalizeNativeCollectionEntries(raw.errors),
+      warnings: normalizeNativeCollectionEntries(raw.warnings)
+    };
+  }
+
   function applyWordToHelperMemory(helper, address, value) {
     if (!helper) return;
     const addr = Number(address) >>> 0;
@@ -112,17 +180,73 @@
     if (word === 0) helper.memoryWords.delete(addr);
     else helper.memoryWords.set(addr, word);
     if (typeof helper.setByteRaw === "function") {
-      helper.setByteRaw(addr, (word >>> 24) & 0xff);
-      helper.setByteRaw(addr + 1, (word >>> 16) & 0xff);
-      helper.setByteRaw(addr + 2, (word >>> 8) & 0xff);
-      helper.setByteRaw(addr + 3, word & 0xff);
+      helper.setByteRaw(addr, word & 0xff);
+      helper.setByteRaw(addr + 1, (word >>> 8) & 0xff);
+      helper.setByteRaw(addr + 2, (word >>> 16) & 0xff);
+      helper.setByteRaw(addr + 3, (word >>> 24) & 0xff);
     }
+  }
+
+  function dispatchMemoryObservers(targetEngine, detail = {}) {
+    const observers = targetEngine?.memoryAccessObservers;
+    if (!(observers instanceof Set) || observers.size === 0) return;
+    const start = Number(detail.address) >>> 0;
+    const size = Math.max(1, Number(detail.size) | 0);
+    const end = (start + size - 1) >>> 0;
+    const kind = String(detail.kind || "read").toLowerCase() === "write" ? "write" : "read";
+    const payload = {
+      kind,
+      address: start >>> 0,
+      size,
+      value: Number(detail.value) | 0,
+      steps: Number.isFinite(detail.steps) ? (Number(detail.steps) | 0) : ((targetEngine?.steps | 0) || 0)
+    };
+    observers.forEach((observer) => {
+      if (!observer) return;
+      if (end < (observer.start >>> 0) || start > (observer.end >>> 0)) return;
+      const handler = kind === "write" ? observer.onWrite : observer.onRead;
+      if (typeof handler !== "function") return;
+      try {
+        handler(payload);
+      } catch {
+        // Ignore observer failures to keep simulation stable.
+      }
+    });
+  }
+
+  function resolveBackendModeValue(rawValue, fallback = "js") {
+    const token = String(rawValue || fallback || "js").trim().toLowerCase();
+    if (token === "hybrid" || token === "wasm" || token === "experimental") return "hybrid";
+    return "js";
+  }
+
+  function buildNativeAssembleOptions(options = {}) {
+    const nativeOptions = { ...options };
+    if (nativeOptions.includeMap instanceof Map) {
+      nativeOptions.includeFiles = Array.from(nativeOptions.includeMap.entries()).map(([name, text]) => [
+        String(name ?? ""),
+        String(text ?? "")
+      ]);
+    }
+    if (!Array.isArray(nativeOptions.referencePseudoOps)) {
+      const referenceData = globalScope.WebMarsReferenceData || null;
+      nativeOptions.referencePseudoOps = Array.isArray(referenceData?.pseudoOps)
+        ? referenceData.pseudoOps
+        : [];
+    }
+    if (!Array.isArray(nativeOptions.referenceBasicInstructions)) {
+      const referenceData = globalScope.WebMarsReferenceData || null;
+      nativeOptions.referenceBasicInstructions = Array.isArray(referenceData?.basicInstructions)
+        ? referenceData.basicInstructions
+        : [];
+    }
+    return nativeOptions;
   }
 
   class HybridNativeMarsEngine {
     constructor(options = {}) {
       this.options = options;
-      this.settings = options?.settings || {};
+      this.settings = { ...DEFAULT_SETTINGS, ...(options?.settings || {}) };
       this.memoryMap = { ...(options?.memoryMap || {}) };
       this.helper = new MarsEngine(options);
       this.nativeModule = null;
@@ -132,6 +256,7 @@
       this.nativeProgramLoaded = false;
       this.helperDirtyFromNative = false;
       this.cachedRawState = null;
+      this.activeMemoryObserverCount = 0;
 
       this.initPromise = loadNativeModule().then((module) => {
         if (!module || typeof module.NativeMarsEngine !== "function") return null;
@@ -152,11 +277,27 @@
     }
 
     getBackendInfo() {
+      const assemblerBackendMode = this.shouldUseNativeAssembler() ? "hybrid" : "js";
+      const simulatorBackendMode = this.shouldUseNativeSimulator() ? "hybrid" : "js";
       return {
-        backend: "wasm",
-        backendName: this.nativeSynchronized ? "wasm-cpp-native" : "wasm-cpp-hybrid",
-        native: this.nativeSynchronized
+        backend: simulatorBackendMode === "hybrid" ? "wasm" : "js",
+        backendName: simulatorBackendMode === "hybrid"
+          ? (this.nativeSynchronized ? "wasm-cpp-native" : "wasm-cpp-hybrid")
+          : "js-core",
+        native: simulatorBackendMode === "hybrid" && this.nativeSynchronized,
+        assemblerBackendMode,
+        simulatorBackendMode
       };
+    }
+
+    shouldUseNativeAssembler() {
+      const legacyBackend = resolveBackendModeValue(this.settings?.coreBackend, "js");
+      return resolveBackendModeValue(this.settings?.assemblerBackendMode, legacyBackend) === "hybrid";
+    }
+
+    shouldUseNativeSimulator() {
+      const legacyBackend = resolveBackendModeValue(this.settings?.coreBackend, "js");
+      return resolveBackendModeValue(this.settings?.simulatorBackendMode, legacyBackend) === "hybrid";
     }
 
     isStrictCompatibilityEnabled() {
@@ -165,6 +306,32 @@
 
     whenReady() {
       return this.initPromise;
+    }
+
+    hasRealtimeMemoryObservers() {
+      return (this.activeMemoryObserverCount | 0) > 0;
+    }
+
+    registerMemoryObserver(observer = {}) {
+      if (!this.helper || typeof this.helper.registerMemoryObserver !== "function") return () => {};
+      if (this.nativeSynchronized && this.helperDirtyFromNative) {
+        this.syncHelperFromNative({
+          includeTextRows: false,
+          includeLabels: false,
+          includeDataRows: false,
+          includeRegisters: false,
+          includeMemoryWords: false
+        });
+      }
+      this.activeMemoryObserverCount += 1;
+      const detachHelperObserver = this.helper.registerMemoryObserver(observer);
+      let detached = false;
+      return () => {
+        if (detached) return;
+        detached = true;
+        this.activeMemoryObserverCount = Math.max(0, (this.activeMemoryObserverCount | 0) - 1);
+        if (typeof detachHelperObserver === "function") detachHelperObserver();
+      };
     }
 
     markNativeStale(clearProgram = false) {
@@ -195,6 +362,7 @@
     }
 
     ensureNativeSync() {
+      if (!this.shouldUseNativeSimulator()) return false;
       if (!this.nativeEngine) return false;
       if (this.nativeSynchronized) return true;
       const snapshot = this.helper.getSnapshot({
@@ -214,8 +382,9 @@
       const raw = (!includeProgram && typeof this.nativeEngine.exportRuntimeState === "function")
         ? this.nativeEngine.exportRuntimeState(includeBreakpoints === true)
         : this.nativeEngine.exportState(includeProgram, includeBreakpoints === true);
-      if (!includeProgram) this.cachedRawState = raw;
-      return raw;
+      const normalized = normalizeNativeStateSnapshot(raw);
+      if (!includeProgram) this.cachedRawState = normalized;
+      return normalized;
     }
 
     applyRuntimeDeltaToHelper(raw) {
@@ -248,6 +417,18 @@
       });
       if (raw.memoryDelta.length === 0 && Number.isFinite(raw.lastMemoryWriteAddress) && Number.isFinite(raw.lastMemoryWriteValue)) {
         applyWordToHelperMemory(helper, raw.lastMemoryWriteAddress, raw.lastMemoryWriteValue);
+      }
+      if (Array.isArray(raw.memoryAccesses)) {
+        raw.memoryAccesses.forEach((entry) => {
+          if (!entry || typeof entry !== "object") return;
+          dispatchMemoryObservers(helper, {
+            kind: entry.kind,
+            address: entry.address,
+            size: entry.size,
+            value: entry.value,
+            steps: entry.steps
+          });
+        });
       }
 
       if (typeof helper.forceZeroRegister === "function") helper.forceZeroRegister();
@@ -291,10 +472,11 @@
     }
 
     performDelegatedStep(options = {}, nativeCurrentState = null) {
-      const requiresFullState = !(nativeCurrentState && Array.isArray(nativeCurrentState.memoryWords));
+      const normalizedCurrentState = normalizeNativeStateSnapshot(nativeCurrentState);
+      const requiresFullState = !(normalizedCurrentState && Array.isArray(normalizedCurrentState.memoryWords));
       const previous = requiresFullState
-        ? this.nativeEngine.exportState(false, true)
-        : nativeCurrentState;
+        ? normalizeNativeStateSnapshot(this.nativeEngine.exportState(false, true))
+        : normalizedCurrentState;
       if (previous) {
         this.helper.importNativeState(previous, {
           preserveProgram: true,
@@ -310,43 +492,39 @@
     }
 
     assemble(source, options = {}) {
-      const includeFiles = [];
-      if (this.helper?.sourceFiles instanceof Map) {
-        this.helper.sourceFiles.forEach((value, key) => {
-          includeFiles.push([String(key), String(value ?? "")]);
-        });
-      }
-      if (options.includeMap instanceof Map) {
-        options.includeMap.forEach((value, key) => {
-          includeFiles.push([String(key), String(value ?? "")]);
-        });
-      }
-
-      if (this.nativeEngine && typeof this.nativeEngine.assemble === "function") {
-        const nativeResult = this.nativeEngine.assemble(String(source ?? ""), {
-          sourceName: options.sourceName || this.helper?.activeSourceName || this.helper?.defaultSourceName || "main.s",
-          includeFiles,
-          referencePseudoOps: Array.isArray(globalScope.WebMarsReferenceData?.pseudoOps) ? globalScope.WebMarsReferenceData.pseudoOps : [],
-          programArgumentsEnabled: options.programArgumentsEnabled ?? this.settings.programArguments,
-          programArguments: options.programArguments ?? this.settings.programArgumentsLine ?? ""
-        });
-        if (!nativeResult?.fallback) {
-          const snapshot = nativeResult?.snapshot && typeof nativeResult.snapshot === "object"
+      if (this.shouldUseNativeAssembler() && this.nativeEngine && typeof this.nativeEngine.assemble === "function") {
+        const allowNativeFallback = options?.nativeAssemblerFallback !== false;
+        const nativeResult = normalizeNativeResult(this.nativeEngine.assemble(source, buildNativeAssembleOptions(options)));
+        this.cachedRawState = null;
+        this.helperDirtyFromNative = false;
+        if (nativeResult?.ok) {
+          const snapshotRaw = nativeResult.snapshot && typeof nativeResult.snapshot === "object"
             ? nativeResult.snapshot
-            : this.nativeEngine.exportState(false, true);
+            : this.nativeEngine.exportState(true, true);
+          const snapshot = normalizeNativeStateSnapshot(snapshotRaw);
           this.helper.importNativeState(snapshot, {
             preserveProgram: false,
             preserveBreakpoints: false
           });
-          this.cachedRawState = this.nativeEngine.exportState(false, true);
-          this.helperDirtyFromNative = false;
-          this.nativeSynchronized = Boolean(snapshot?.assembled);
-          this.nativeProgramLoaded = Array.isArray(snapshot?.textRows) && snapshot.textRows.length > 0;
+          this.nativeSynchronized = true;
+          this.nativeProgramLoaded = true;
           return {
-            ok: Boolean(nativeResult?.ok),
-            native: true,
-            warnings: Array.isArray(snapshot?.warnings) ? snapshot.warnings : [],
-            errors: Array.isArray(snapshot?.errors) ? snapshot.errors : []
+            ...nativeResult,
+            native: true
+          };
+        }
+        if (nativeResult?.fallback === true && !allowNativeFallback) {
+          this.markNativeStale(true);
+          return {
+            ...nativeResult,
+            native: true
+          };
+        }
+        if (nativeResult?.fallback !== true) {
+          this.markNativeStale(true);
+          return {
+            ...nativeResult,
+            native: true
           };
         }
       }
@@ -373,8 +551,13 @@
       if (!this.ensureNativeSync()) return this.helper.step(options);
       const nativeResult = normalizeNativeResult(this.nativeEngine.step());
       if (nativeResult?.delegate) {
-        const currentRaw = this.nativeEngine.exportState(false, true);
+        const currentRaw = this.exportRawNativeState(false, true)
+          || normalizeNativeStateSnapshot(this.nativeEngine.exportState(false, true));
         this.cachedRawState = currentRaw;
+        if (currentRaw) {
+          this.applyRuntimeDeltaToHelper(currentRaw);
+          this.helperDirtyFromNative = false;
+        }
         return this.performDelegatedStep(options, currentRaw);
       }
       this.helperDirtyFromNative = true;
@@ -405,8 +588,13 @@
       const nativeResult = normalizeNativeResult(this.nativeEngine.go(limit));
       const nativeExecuted = Math.max(0, Number.isFinite(nativeResult?.stepsExecuted) ? (nativeResult.stepsExecuted | 0) : 0);
       if (nativeResult?.delegate) {
-        const afterRaw = this.nativeEngine.exportState(false, true);
+        const afterRaw = this.exportRawNativeState(false, true)
+          || normalizeNativeStateSnapshot(this.nativeEngine.exportState(false, true));
         this.cachedRawState = afterRaw;
+        if (afterRaw) {
+          this.applyRuntimeDeltaToHelper(afterRaw);
+          this.helperDirtyFromNative = false;
+        }
         const delegated = this.performDelegatedStep({ includeSnapshot: false }, afterRaw);
         delegated.stepsExecuted = nativeExecuted + 1;
         return {
@@ -510,7 +698,15 @@
     readByte(address, signed = true) {
       const addr = address >>> 0;
       if (this.ensureNativeSync() && this.nativeEngine && typeof this.nativeEngine.readByte === "function") {
-        return this.nativeEngine.readByte(addr, signed !== false) | 0;
+        const result = this.nativeEngine.readByte(addr, signed !== false) | 0;
+        dispatchMemoryObservers(this.helper, {
+          kind: "read",
+          address: addr,
+          size: 1,
+          value: result,
+          steps: this.helper?.steps
+        });
+        return result;
       }
       return this.helper.readByte(addr, signed !== false);
     }
@@ -522,6 +718,13 @@
         this.nativeEngine.writeByte(addr, numeric);
         this.helperDirtyFromNative = true;
         this.cachedRawState = null;
+        dispatchMemoryObservers(this.helper, {
+          kind: "write",
+          address: addr,
+          size: 1,
+          value: numeric,
+          steps: this.helper?.steps
+        });
         return undefined;
       }
       return this.helper.writeByte(addr, numeric);
@@ -530,7 +733,15 @@
     readWord(address) {
       const addr = address >>> 0;
       if (this.ensureNativeSync() && this.nativeEngine && typeof this.nativeEngine.readWord === "function") {
-        return this.nativeEngine.readWord(addr) | 0;
+        const result = this.nativeEngine.readWord(addr) | 0;
+        dispatchMemoryObservers(this.helper, {
+          kind: "read",
+          address: addr,
+          size: 4,
+          value: result,
+          steps: this.helper?.steps
+        });
+        return result;
       }
       return this.helper.readWord(addr);
     }
@@ -542,6 +753,13 @@
         this.nativeEngine.writeWord(addr, numeric);
         this.helperDirtyFromNative = true;
         this.cachedRawState = null;
+        dispatchMemoryObservers(this.helper, {
+          kind: "write",
+          address: addr,
+          size: 4,
+          value: numeric,
+          steps: this.helper?.steps
+        });
         return undefined;
       }
       return this.helper.writeWord(addr, numeric);

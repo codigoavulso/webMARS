@@ -2,8 +2,64 @@
   "version": 1,
   "libraries": [
     {
+      "name": "conio",
+      "path": "conio.c0"
+    },
+    {
+      "name": "file",
+      "path": "file.c0"
+    },
+    {
+      "name": "args",
+      "path": "args.c0"
+    },
+    {
+      "name": "string",
+      "path": "string.c0"
+    },
+    {
+      "name": "string_native",
+      "path": "string_native.h"
+    },
+    {
+      "name": "parse",
+      "path": "parse.c0"
+    },
+    {
+      "name": "img",
+      "path": "img.c0"
+    },
+    {
+      "name": "util",
+      "path": "util.c0"
+    },
+    {
+      "name": "rand",
+      "path": "rand.c0"
+    },
+    {
       "name": "stdio",
       "path": "stdio.h"
+    },
+    {
+      "name": "stddef",
+      "path": "stddef.h"
+    },
+    {
+      "name": "stdbool",
+      "path": "stdbool.h"
+    },
+    {
+      "name": "ctype",
+      "path": "ctype.h"
+    },
+    {
+      "name": "stdlib",
+      "path": "stdlib.h"
+    },
+    {
+      "name": "stdlib_native",
+      "path": "stdlib_native.h"
     },
     {
       "name": "bitmap_rect",
@@ -12,6 +68,10 @@
     {
       "name": "bitmap_ascii",
       "path": "bitmap_ascii.c0"
+    },
+    {
+      "name": "tty",
+      "path": "tty.c0"
     }
   ]
 }

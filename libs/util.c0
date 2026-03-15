@@ -1,0 +1,40 @@
+//@ensures \result == 4;
+int int_size(void) {
+  return 4;
+}
+
+//@ensures \result == 2147483647;
+int int_max(void) {
+  return 0x7fffffff;
+}
+
+//@ensures \result == -2147483648;
+int int_min(void) {
+  return 0x80000000;
+}
+
+//@requires x > int_min();
+//@ensures \result >= 0;
+//@ensures \result == (x < 0 ? -x : x);
+int abs(int x) {
+  if (x < 0) return -x;
+  return x;
+}
+
+//@ensures \result == x || \result == y;
+//@ensures \result >= x && \result >= y;
+int max(int x, int y) {
+  if (x < y) return y;
+  return x;
+}
+
+//@ensures \result == x || \result == y;
+//@ensures \result <= x && \result <= y;
+int min(int x, int y) {
+  if (x < y) return x;
+  return y;
+}
+
+string int2hex(int x) {
+  return __wm_int2hex(x);
+}

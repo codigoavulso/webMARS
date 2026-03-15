@@ -1,4 +1,12 @@
 function createToolManager(engine, messagesPane, windowManager, desktop) {
+  function dispatchToolLoaderEvent(name, detail) {
+    try {
+      window.dispatchEvent(new CustomEvent(name, { detail }));
+    } catch {
+      window.dispatchEvent(new Event(name));
+    }
+  }
+
   const FALLBACK_TOOLS = [
     // Only used if tools.json cannot be loaded.
     { id: "bitmap-display", label: "Bitmap Display", script: "./tools/bitmap-display.js" }
@@ -208,12 +216,25 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
   async function loadManifestAndScripts() {
     let manifestTools = FALLBACK_TOOLS;
     try {
+      dispatchToolLoaderEvent("webmars:tools-manifest-load-start", {
+        path: "./tools/tools.json"
+      });
       const text = await loadText("./tools/tools.json");
       const parsed = JSON.parse(text.replace(/^\uFEFF/, ""));
       const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.tools) ? parsed.tools : [];
       const normalized = list.map(normalizeManifestTool).filter(Boolean);
       if (normalized.length) manifestTools = normalized;
+      dispatchToolLoaderEvent("webmars:tools-manifest-loaded", {
+        path: "./tools/tools.json",
+        ok: true,
+        count: normalized.length
+      });
     } catch {
+      dispatchToolLoaderEvent("webmars:tools-manifest-loaded", {
+        path: "./tools/tools.json",
+        ok: false,
+        count: FALLBACK_TOOLS.length
+      });
       // Fall back to built-in definitions.
     }
 

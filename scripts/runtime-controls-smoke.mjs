@@ -92,7 +92,21 @@ function buildBrowserTestSource() {
       await wait(80);
     };
 
+    const activateAssemblyFile = async () => {
+      const tabs = [...document.querySelectorAll(".editor-file-tab")];
+      const assemblyTab = tabs.find((tab) => {
+        const text = String(tab.textContent || "").trim().toLowerCase();
+        return text.endsWith(".s") || text.endsWith(".asm");
+      });
+      assert(assemblyTab, "Missing assembly editor tab.");
+      assemblyTab.click();
+      await wait(120);
+      const activeText = String(document.querySelector(".editor-file-tab.active")?.textContent || "").trim().toLowerCase();
+      assert(activeText.endsWith(".s") || activeText.endsWith(".asm"), "Failed to activate assembly editor tab.");
+    };
+
     const setEditorSource = async (source) => {
+      await activateAssemblyFile();
       const editor = byId("source-editor");
       editor.focus();
       editor.value = source;

@@ -7,6 +7,7 @@
 #include <deque>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -136,6 +137,14 @@ struct HistoryEntry {
   std::uint32_t estimatedBytes = 0;
 };
 
+struct MemoryAccessEvent {
+  bool write = false;
+  std::uint32_t address = 0;
+  std::int32_t size = 0;
+  std::int32_t value = 0;
+  std::int32_t steps = 0;
+};
+
 struct StepResult {
   bool ok = true;
   bool done = false;
@@ -167,6 +176,7 @@ struct AssembledTextRow {
   std::string source;
   std::string basic;
   std::string code;
+  std::string machineCodeHex;
 };
 
 struct AssembleMessage {
@@ -192,6 +202,12 @@ struct NativeMacroHeader {
   bool valid = false;
 };
 
+struct NativeMacroInvocation {
+  std::string name;
+  std::vector<std::string> args;
+  bool valid = false;
+};
+
 struct NativePseudoLabelExpression {
   std::string label;
   std::int32_t delta = 0;
@@ -203,6 +219,13 @@ struct NativeReferencePseudoEntry {
   std::vector<std::string> sourceTokens;
   std::vector<std::vector<std::string>> defaultTemplateTokens;
   std::vector<std::vector<std::string>> compactTemplateTokens;
+};
+
+struct NativeReferenceInstructionEntry {
+  std::string op;
+  std::int32_t operandCount = 0;
+  std::string example;
+  std::int32_t order = 0;
 };
 
 std::int32_t clamp32(std::uint32_t value) {
@@ -237,20 +260,20 @@ std::uint32_t zero_extend16(std::int32_t value) {
 
 std::int32_t compose_word(std::uint32_t b0, std::uint32_t b1, std::uint32_t b2, std::uint32_t b3) {
   return static_cast<std::int32_t>(
-    ((b0 & 0xffu) << 24u)
-    | ((b1 & 0xffu) << 16u)
-    | ((b2 & 0xffu) << 8u)
-    | (b3 & 0xffu)
+    ((b3 & 0xffu) << 24u)
+    | ((b2 & 0xffu) << 16u)
+    | ((b1 & 0xffu) << 8u)
+    | (b0 & 0xffu)
   );
 }
 
 std::uint32_t get_word_byte(std::uint32_t word, std::uint32_t index) {
-  const auto shift = (3u - (index & 0x3u)) * 8u;
+  const auto shift = (index & 0x3u) * 8u;
   return (word >> shift) & 0xffu;
 }
 
 std::int32_t set_word_byte(std::uint32_t word, std::uint32_t index, std::uint32_t byte) {
-  const auto shift = (3u - (index & 0x3u)) * 8u;
+  const auto shift = (index & 0x3u) * 8u;
   const auto cleared = word & ~(0xffu << shift);
   const auto merged = cleared | ((byte & 0xffu) << shift);
   return static_cast<std::int32_t>(merged);
@@ -307,9 +330,9 @@ class NativeMarsEngine {
   std::uint32_t getMemoryUsageBytes() const;
   void trimExecutionHistory();
   void clear();
-  std::int32_t hostReadByte(std::uint32_t address, bool signedRead) const;
+  std::int32_t hostReadByte(std::uint32_t address, bool signedRead);
   void hostWriteByte(std::uint32_t address, std::int32_t value);
-  std::int32_t hostReadWord(std::uint32_t address) const;
+  std::int32_t hostReadWord(std::uint32_t address);
   void hostWriteWord(std::uint32_t address, std::int32_t value);
 
  private:
@@ -329,11 +352,12 @@ class NativeMarsEngine {
   val toResultVal(const StepResult& result) const;
   std::uint8_t getByte(std::uint32_t address) const;
   void setByte(std::uint32_t address, std::uint8_t value);
-  std::int32_t readByte(std::uint32_t address, bool signedRead) const;
+  void recordMemoryAccess(bool write, std::uint32_t address, std::int32_t size, std::int32_t value);
+  std::int32_t readByte(std::uint32_t address, bool signedRead);
   void writeByte(std::uint32_t address, std::int32_t value);
-  std::int32_t readHalf(std::uint32_t address, bool signedRead) const;
+  std::int32_t readHalf(std::uint32_t address, bool signedRead);
   void writeHalf(std::uint32_t address, std::int32_t value);
-  std::int32_t readWord(std::uint32_t address) const;
+  std::int32_t readWord(std::uint32_t address);
   void writeWord(std::uint32_t address, std::int32_t value);
   void assertWritableAddress(std::uint32_t address, std::uint32_t byteLength) const;
   bool isTextAddress(std::uint32_t address) const;
@@ -360,6 +384,7 @@ class NativeMarsEngine {
   std::unordered_map<std::uint32_t, std::size_t> programIndex_ {};
   std::unordered_set<std::uint32_t> breakpoints_ {};
   std::unordered_set<std::uint32_t> dirtyWordAddresses_ {};
+  std::vector<MemoryAccessEvent> recentMemoryAccesses_ {};
   std::deque<HistoryEntry> executionHistory_ {};
   std::uint32_t executionHistoryBytes_ = 0;
   HistoryEntry* activeHistory_ = nullptr;
@@ -693,6 +718,147 @@ std::string to_hex32(std::uint32_t value) {
   return output;
 }
 
+std::uint32_t encode_r_format_word(std::int32_t rs, std::int32_t rt, std::int32_t rd, std::int32_t shamt, std::uint32_t funct) {
+  return (
+    ((static_cast<std::uint32_t>(rs) & 0x1fu) << 21u)
+    | ((static_cast<std::uint32_t>(rt) & 0x1fu) << 16u)
+    | ((static_cast<std::uint32_t>(rd) & 0x1fu) << 11u)
+    | ((static_cast<std::uint32_t>(shamt) & 0x1fu) << 6u)
+    | (funct & 0x3fu)
+  ) & 0xffffffffu;
+}
+
+std::uint32_t encode_i_format_word(std::uint32_t opcode, std::int32_t rs, std::int32_t rt, std::int32_t immediate) {
+  return (
+    ((opcode & 0x3fu) << 26u)
+    | ((static_cast<std::uint32_t>(rs) & 0x1fu) << 21u)
+    | ((static_cast<std::uint32_t>(rt) & 0x1fu) << 16u)
+    | (static_cast<std::uint32_t>(immediate) & 0xffffu)
+  ) & 0xffffffffu;
+}
+
+std::uint32_t encode_j_format_word(std::uint32_t opcode, std::uint32_t targetAddress) {
+  return (
+    ((opcode & 0x3fu) << 26u)
+    | ((targetAddress >> 2u) & 0x03ffffffu)
+  ) & 0xffffffffu;
+}
+
+std::uint32_t encode_cop_move_word(std::uint32_t opcode, std::int32_t rs, std::int32_t rt, std::int32_t rdOrFs) {
+  return (
+    ((opcode & 0x3fu) << 26u)
+    | ((static_cast<std::uint32_t>(rs) & 0x1fu) << 21u)
+    | ((static_cast<std::uint32_t>(rt) & 0x1fu) << 16u)
+    | ((static_cast<std::uint32_t>(rdOrFs) & 0x1fu) << 11u)
+  ) & 0xffffffffu;
+}
+
+std::int32_t compute_branch_immediate_field(std::uint32_t address, std::uint32_t target) {
+  return static_cast<std::int32_t>((static_cast<std::int64_t>(target) - static_cast<std::int64_t>(address + 4u)) >> 2);
+}
+
+std::optional<std::uint32_t> encode_instruction_word_from_program_row(const ProgramRow& row) {
+  if (row.opcodeName == "syscall") return 0x0000000cu;
+  const auto imm = row.immediate;
+  const auto branch = [&](void) { return compute_branch_immediate_field(row.address, row.target); };
+  switch (row.op) {
+    case Opcode::Nop: return 0u;
+    case Opcode::Eret: return 0x42000018u;
+    case Opcode::Break: return static_cast<std::uint32_t>(((static_cast<std::uint32_t>(imm) & 0xfffffu) << 6u) | 0x0du);
+    case Opcode::Add: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x20u);
+    case Opcode::Addu: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x21u);
+    case Opcode::Sub: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x22u);
+    case Opcode::Subu: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x23u);
+    case Opcode::And: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x24u);
+    case Opcode::Or: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x25u);
+    case Opcode::Xor: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x26u);
+    case Opcode::Nor: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x27u);
+    case Opcode::Slt: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x2au);
+    case Opcode::Sltu: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x2bu);
+    case Opcode::Movn: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x0bu);
+    case Opcode::Movz: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x0au);
+    case Opcode::Sll: return encode_r_format_word(0, row.rt, row.rd, imm, 0x00u);
+    case Opcode::Srl: return encode_r_format_word(0, row.rt, row.rd, imm, 0x02u);
+    case Opcode::Sra: return encode_r_format_word(0, row.rt, row.rd, imm, 0x03u);
+    case Opcode::Sllv: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x04u);
+    case Opcode::Srlv: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x06u);
+    case Opcode::Srav: return encode_r_format_word(row.rs, row.rt, row.rd, 0, 0x07u);
+    case Opcode::Mult: return encode_r_format_word(row.rs, row.rt, 0, 0, 0x18u);
+    case Opcode::Multu: return encode_r_format_word(row.rs, row.rt, 0, 0, 0x19u);
+    case Opcode::Div: return encode_r_format_word(row.rs, row.rt, 0, 0, 0x1au);
+    case Opcode::Divu: return encode_r_format_word(row.rs, row.rt, 0, 0, 0x1bu);
+    case Opcode::Madd: return (((0x1cu) << 26u) | ((static_cast<std::uint32_t>(row.rs) & 0x1fu) << 21u) | ((static_cast<std::uint32_t>(row.rt) & 0x1fu) << 16u) | 0x00u) & 0xffffffffu;
+    case Opcode::Maddu: return (((0x1cu) << 26u) | ((static_cast<std::uint32_t>(row.rs) & 0x1fu) << 21u) | ((static_cast<std::uint32_t>(row.rt) & 0x1fu) << 16u) | 0x01u) & 0xffffffffu;
+    case Opcode::Msub: return (((0x1cu) << 26u) | ((static_cast<std::uint32_t>(row.rs) & 0x1fu) << 21u) | ((static_cast<std::uint32_t>(row.rt) & 0x1fu) << 16u) | 0x04u) & 0xffffffffu;
+    case Opcode::Msubu: return (((0x1cu) << 26u) | ((static_cast<std::uint32_t>(row.rs) & 0x1fu) << 21u) | ((static_cast<std::uint32_t>(row.rt) & 0x1fu) << 16u) | 0x05u) & 0xffffffffu;
+    case Opcode::Mfhi: return encode_r_format_word(0, 0, row.rd, 0, 0x10u);
+    case Opcode::Mflo: return encode_r_format_word(0, 0, row.rd, 0, 0x12u);
+    case Opcode::Mthi: return encode_r_format_word(row.rd, 0, 0, 0, 0x11u);
+    case Opcode::Mtlo: return encode_r_format_word(row.rd, 0, 0, 0, 0x13u);
+    case Opcode::Jr: return encode_r_format_word(row.rs, 0, 0, 0, 0x08u);
+    case Opcode::Jalr: return encode_r_format_word(row.rs, 0, row.rd < 0 ? 31 : row.rd, 0, 0x09u);
+    case Opcode::Teq: return encode_r_format_word(row.rs, row.rt, 0, 0, 0x34u);
+    case Opcode::Tne: return encode_r_format_word(row.rs, row.rt, 0, 0, 0x36u);
+    case Opcode::Tge: return encode_r_format_word(row.rs, row.rt, 0, 0, 0x30u);
+    case Opcode::Tgeu: return encode_r_format_word(row.rs, row.rt, 0, 0, 0x31u);
+    case Opcode::Tlt: return encode_r_format_word(row.rs, row.rt, 0, 0, 0x32u);
+    case Opcode::Tltu: return encode_r_format_word(row.rs, row.rt, 0, 0, 0x33u);
+    case Opcode::Addi: return encode_i_format_word(0x08u, row.rs, row.rt, imm);
+    case Opcode::Addiu: return encode_i_format_word(0x09u, row.rs, row.rt, imm);
+    case Opcode::Andi: return encode_i_format_word(0x0cu, row.rs, row.rt, imm);
+    case Opcode::Ori: return encode_i_format_word(0x0du, row.rs, row.rt, imm);
+    case Opcode::Xori: return encode_i_format_word(0x0eu, row.rs, row.rt, imm);
+    case Opcode::Slti: return encode_i_format_word(0x0au, row.rs, row.rt, imm);
+    case Opcode::Sltiu: return encode_i_format_word(0x0bu, row.rs, row.rt, imm);
+    case Opcode::Lui: return encode_i_format_word(0x0fu, 0, row.rt, imm);
+    case Opcode::Lw: return encode_i_format_word(0x23u, row.base, row.rt, imm);
+    case Opcode::Sw: return encode_i_format_word(0x2bu, row.base, row.rt, imm);
+    case Opcode::Lb: return encode_i_format_word(0x20u, row.base, row.rt, imm);
+    case Opcode::Lbu: return encode_i_format_word(0x24u, row.base, row.rt, imm);
+    case Opcode::Sb: return encode_i_format_word(0x28u, row.base, row.rt, imm);
+    case Opcode::Lh: return encode_i_format_word(0x21u, row.base, row.rt, imm);
+    case Opcode::Lhu: return encode_i_format_word(0x25u, row.base, row.rt, imm);
+    case Opcode::Sh: return encode_i_format_word(0x29u, row.base, row.rt, imm);
+    case Opcode::Ll: return encode_i_format_word(0x30u, row.base, row.rt, imm);
+    case Opcode::Sc: return encode_i_format_word(0x38u, row.base, row.rt, imm);
+    case Opcode::Lwl: return encode_i_format_word(0x22u, row.base, row.rt, imm);
+    case Opcode::Lwr: return encode_i_format_word(0x26u, row.base, row.rt, imm);
+    case Opcode::Swl: return encode_i_format_word(0x2au, row.base, row.rt, imm);
+    case Opcode::Swr: return encode_i_format_word(0x2eu, row.base, row.rt, imm);
+    case Opcode::Beq: return encode_i_format_word(0x04u, row.rs, row.rt, branch());
+    case Opcode::Bne: return encode_i_format_word(0x05u, row.rs, row.rt, branch());
+    case Opcode::Bgtz: return encode_i_format_word(0x07u, row.rs, 0, branch());
+    case Opcode::Blez: return encode_i_format_word(0x06u, row.rs, 0, branch());
+    case Opcode::Bltz: return encode_i_format_word(0x01u, row.rs, 0x00, branch());
+    case Opcode::Bgez: return encode_i_format_word(0x01u, row.rs, 0x01, branch());
+    case Opcode::Bltzal: return encode_i_format_word(0x01u, row.rs, 0x10, branch());
+    case Opcode::Bgezal: return encode_i_format_word(0x01u, row.rs, 0x11, branch());
+    case Opcode::Bc1f: return (((0x11u << 26u) | (0x08u << 21u) | ((static_cast<std::uint32_t>(row.cc) & 0x7u) << 18u) | (branch() & 0xffffu))) & 0xffffffffu;
+    case Opcode::Bc1t: return (((0x11u << 26u) | (0x08u << 21u) | ((static_cast<std::uint32_t>(row.cc) & 0x7u) << 18u) | (0x1u << 16u) | (branch() & 0xffffu))) & 0xffffffffu;
+    case Opcode::J: return encode_j_format_word(0x02u, row.target);
+    case Opcode::Jal: return encode_j_format_word(0x03u, row.target);
+    case Opcode::Mfc0: return encode_cop_move_word(0x10u, 0x00, row.rt, row.rd);
+    case Opcode::Mtc0: return encode_cop_move_word(0x10u, 0x04, row.rt, row.rd);
+    case Opcode::Mfc1: return encode_cop_move_word(0x11u, 0x00, row.rt, row.fs);
+    case Opcode::Mtc1: return encode_cop_move_word(0x11u, 0x04, row.rt, row.fs);
+    case Opcode::Lwc1: return encode_i_format_word(0x31u, row.base, row.fs, imm);
+    case Opcode::Swc1: return encode_i_format_word(0x39u, row.base, row.fs, imm);
+    case Opcode::Teqi: return encode_i_format_word(0x01u, row.rs, 0x0cu, imm);
+    case Opcode::Tnei: return encode_i_format_word(0x01u, row.rs, 0x0eu, imm);
+    case Opcode::Tgei: return encode_i_format_word(0x01u, row.rs, 0x08u, imm);
+    case Opcode::Tgeiu: return encode_i_format_word(0x01u, row.rs, 0x09u, imm);
+    case Opcode::Tlti: return encode_i_format_word(0x01u, row.rs, 0x0au, imm);
+    case Opcode::Tltiu: return encode_i_format_word(0x01u, row.rs, 0x0bu, imm);
+    case Opcode::Mul: return (((0x1cu) << 26u) | ((static_cast<std::uint32_t>(row.rs) & 0x1fu) << 21u) | ((static_cast<std::uint32_t>(row.rt) & 0x1fu) << 16u) | ((static_cast<std::uint32_t>(row.rd) & 0x1fu) << 11u) | 0x02u) & 0xffffffffu;
+    case Opcode::Clz: return (((0x1cu) << 26u) | ((static_cast<std::uint32_t>(row.rs) & 0x1fu) << 21u) | ((static_cast<std::uint32_t>(row.rd) & 0x1fu) << 11u) | 0x20u) & 0xffffffffu;
+    case Opcode::Clo: return (((0x1cu) << 26u) | ((static_cast<std::uint32_t>(row.rs) & 0x1fu) << 21u) | ((static_cast<std::uint32_t>(row.rd) & 0x1fu) << 11u) | 0x21u) & 0xffffffffu;
+    case Opcode::Movf: return (((0x00u) << 26u) | ((static_cast<std::uint32_t>(row.rs) & 0x1fu) << 21u) | ((static_cast<std::uint32_t>(row.rd) & 0x1fu) << 11u) | ((static_cast<std::uint32_t>(row.cc) & 0x7u) << 18u) | 0x01u) & 0xffffffffu;
+    case Opcode::Movt: return (((0x00u) << 26u) | ((static_cast<std::uint32_t>(row.rs) & 0x1fu) << 21u) | ((static_cast<std::uint32_t>(row.rd) & 0x1fu) << 11u) | ((static_cast<std::uint32_t>(row.cc) & 0x7u) << 18u) | (1u << 16u) | 0x01u) & 0xffffffffu;
+    case Opcode::Delegate: return std::nullopt;
+  }
+  return std::nullopt;
+}
+
 bool is_identifier_char(char ch) {
   return std::isalnum(static_cast<unsigned char>(ch)) != 0 || ch == '_' || ch == '.' || ch == '$';
 }
@@ -701,25 +867,49 @@ std::string replace_identifier_tokens(std::string text, const std::string& from,
   if (from.empty()) return text;
   std::string output;
   output.reserve(text.size());
+  bool inSingle = false;
+  bool inDouble = false;
   std::size_t cursor = 0;
   while (cursor < text.size()) {
-    const auto index = text.find(from, cursor);
-    if (index == std::string::npos) {
+    const char ch = text[cursor];
+    const char prev = cursor > 0 ? text[cursor - 1] : '\0';
+
+    if (!inSingle && !inDouble && ch == '#') {
       output.append(text.substr(cursor));
       break;
     }
-    const char left = index > 0 ? text[index - 1] : '\0';
-    const char right = index + from.size() < text.size() ? text[index + from.size()] : '\0';
-    const bool leftOk = index == 0 || !is_identifier_char(left);
-    const bool rightOk = index + from.size() >= text.size() || !is_identifier_char(right);
-    if (leftOk && rightOk) {
-      output.append(text.substr(cursor, index - cursor));
-      output.append(to);
-      cursor = index + from.size();
-    } else {
-      output.append(text.substr(cursor, index - cursor + from.size()));
-      cursor = index + from.size();
+    if (ch == '"' && !inSingle && prev != '\\') {
+      inDouble = !inDouble;
+      output.push_back(ch);
+      cursor += 1u;
+      continue;
     }
+    if (ch == '\'' && !inDouble && prev != '\\') {
+      inSingle = !inSingle;
+      output.push_back(ch);
+      cursor += 1u;
+      continue;
+    }
+    if (inSingle || inDouble) {
+      output.push_back(ch);
+      cursor += 1u;
+      continue;
+    }
+
+    if (cursor + from.size() <= text.size() && text.compare(cursor, from.size(), from) == 0) {
+      const char left = cursor > 0 ? text[cursor - 1] : '\0';
+      const char right = cursor + from.size() < text.size() ? text[cursor + from.size()] : '\0';
+      const bool leftOk = cursor == 0 || !is_identifier_char(left);
+      const bool rightOk = cursor + from.size() >= text.size() || !is_identifier_char(right);
+      if (leftOk && rightOk) {
+        output.append(to);
+        cursor += from.size();
+        continue;
+      }
+    }
+
+    output.push_back(ch);
+    cursor += 1u;
   }
   return output;
 }
@@ -739,7 +929,7 @@ bool is_delegate_basic_opcode(const std::string& opcode) {
 
 bool is_known_pseudo_opcode(const std::string& opcode) {
   static const std::unordered_set<std::string> known = {
-    "nop", "move", "clear", "not", "abs", "neg", "negu", "li", "la", "b", "beqz", "bnez",
+    "nop", "move", "not", "abs", "neg", "negu", "li", "la", "b", "beqz", "bnez",
     "blt", "bltu", "bgt", "bgtu", "ble", "bleu", "bge", "bgeu", "mfc1.d", "mtc1.d",
     "l.s", "s.s", "l.d", "s.d", "ld", "sd", "ulw", "usw", "ulh", "ulhu", "ush",
     "seq", "sne", "sgt", "sgtu", "sge", "sgeu", "sle", "sleu",
@@ -860,13 +1050,36 @@ NativeMacroHeader parse_macro_header_native(const std::string& statement) {
   return header;
 }
 
-std::vector<std::string> parse_macro_invocation_arguments_native(const std::string& statement, const std::string& name) {
-  auto argsText = trim_copy(statement.substr(std::min(statement.size(), name.size())));
-  if (argsText.empty()) return {};
-  if (argsText.front() == '(' && argsText.back() == ')') {
+NativeMacroInvocation parse_macro_invocation_native(const std::string& statement) {
+  NativeMacroInvocation invocation;
+  auto body = trim_copy(statement);
+  if (body.empty()) return invocation;
+
+  std::size_t nameEnd = 0;
+  while (nameEnd < body.size()) {
+    const char ch = body[nameEnd];
+    if (std::isspace(static_cast<unsigned char>(ch)) != 0 || ch == '(') break;
+    nameEnd += 1u;
+  }
+  invocation.name = trim_copy(body.substr(0, nameEnd));
+  if (!is_label_identifier_native(invocation.name)) {
+    invocation.name.clear();
+    return invocation;
+  }
+
+  auto argsText = trim_copy(body.substr(nameEnd));
+  if (!argsText.empty() && argsText.front() == '(' && argsText.back() == ')') {
     argsText = trim_copy(argsText.substr(1, argsText.size() - 2u));
   }
-  return argsText.empty() ? std::vector<std::string>() : tokenize_statement_native(argsText);
+  invocation.args = argsText.empty() ? std::vector<std::string>() : tokenize_statement_native(argsText);
+  invocation.valid = true;
+  return invocation;
+}
+
+std::vector<std::string> parse_macro_invocation_arguments_native(const std::string& statement, const std::string& name) {
+  const auto invocation = parse_macro_invocation_native(statement);
+  if (!invocation.valid || invocation.name != name) return {};
+  return invocation.args;
 }
 
 std::vector<std::string> tokenize_pseudo_source_statement_native(const std::string& statement) {
@@ -1007,6 +1220,24 @@ std::unordered_map<std::string, std::vector<NativeReferencePseudoEntry>> build_r
   return index;
 }
 
+std::unordered_map<std::string, std::vector<NativeReferenceInstructionEntry>> build_reference_instruction_index(const val& input) {
+  std::unordered_map<std::string, std::vector<NativeReferenceInstructionEntry>> index;
+  const auto length = array_length(input);
+  for (std::uint32_t i = 0; i < length; i += 1u) {
+    const auto entry = input[i];
+    NativeReferenceInstructionEntry parsed;
+    parsed.example = trim_copy(string_or(entry, "example"));
+    const auto tokens = tokenize_statement_native(parsed.example);
+    if (tokens.empty()) continue;
+    parsed.op = lower_copy(tokens.front());
+    if (parsed.op.empty()) continue;
+    parsed.operandCount = static_cast<std::int32_t>(tokens.size() > 0u ? tokens.size() - 1u : 0u);
+    parsed.order = static_cast<std::int32_t>(i);
+    index[parsed.op].push_back(std::move(parsed));
+  }
+  return index;
+}
+
 Opcode parse_opcode(const std::string& opcode) {
   static const std::unordered_map<std::string, Opcode> map = {
     {"nop", Opcode::Nop},
@@ -1084,6 +1315,7 @@ void NativeMarsEngine::resetRuntimeState() {
   fpuFlags_.fill(0);
   memoryWords_.clear();
   dirtyWordAddresses_.clear();
+  recentMemoryAccesses_.clear();
   memoryBytesUsed_ = 0;
   clearExecutionHistory();
 }
@@ -1101,7 +1333,7 @@ void NativeMarsEngine::clear() {
   resetRuntimeState();
 }
 
-std::int32_t NativeMarsEngine::hostReadByte(std::uint32_t address, bool signedRead) const {
+std::int32_t NativeMarsEngine::hostReadByte(std::uint32_t address, bool signedRead) {
   return readByte(address, signedRead);
 }
 
@@ -1109,7 +1341,7 @@ void NativeMarsEngine::hostWriteByte(std::uint32_t address, std::int32_t value) 
   writeByte(address, value);
 }
 
-std::int32_t NativeMarsEngine::hostReadWord(std::uint32_t address) const {
+std::int32_t NativeMarsEngine::hostReadWord(std::uint32_t address) {
   return readWord(address);
 }
 
@@ -1185,6 +1417,7 @@ void NativeMarsEngine::importState(val snapshot, bool preserveProgram, bool pres
 
   memoryWords_.clear();
   dirtyWordAddresses_.clear();
+  recentMemoryAccesses_.clear();
   memoryBytesUsed_ = 0;
   const auto memoryWords = snapshot["memoryWords"];
   for (std::uint32_t i = 0; i < array_length(memoryWords); i += 1u) {
@@ -1419,6 +1652,20 @@ val NativeMarsEngine::exportRuntimeState(bool includeBreakpoints) {
   snapshot.set("memoryDelta", memoryDelta);
   dirtyWordAddresses_.clear();
 
+  val memoryAccesses = val::array();
+  std::uint32_t accessIndex = 0;
+  for (const auto& access : recentMemoryAccesses_) {
+    val item = val::object();
+    item.set("kind", access.write ? "write" : "read");
+    item.set("address", access.address);
+    item.set("size", access.size);
+    item.set("value", access.value);
+    item.set("steps", access.steps);
+    memoryAccesses.set(accessIndex++, item);
+  }
+  snapshot.set("memoryAccesses", memoryAccesses);
+  recentMemoryAccesses_.clear();
+
   if (includeBreakpoints) {
     val breakpoints = val::array();
     std::uint32_t index = 0;
@@ -1485,6 +1732,16 @@ std::uint32_t NativeMarsEngine::getBackstepHistoryBudgetBytes() const {
     BACKSTEP_HISTORY_BUDGET_MIN_BYTES,
     std::min(BACKSTEP_HISTORY_BUDGET_CAP_BYTES, derived)
   );
+}
+
+void NativeMarsEngine::recordMemoryAccess(bool write, std::uint32_t address, std::int32_t size, std::int32_t value) {
+  MemoryAccessEvent event;
+  event.write = write;
+  event.address = address;
+  event.size = size;
+  event.value = value;
+  event.steps = steps_;
+  recentMemoryAccesses_.push_back(event);
 }
 
 void NativeMarsEngine::pushExecutionHistory(HistoryEntry entry) {
@@ -1588,22 +1845,28 @@ void NativeMarsEngine::setByte(std::uint32_t address, std::uint8_t value) {
   markDirtyWord(base);
 }
 
-std::int32_t NativeMarsEngine::readByte(std::uint32_t address, bool signedRead) const {
+std::int32_t NativeMarsEngine::readByte(std::uint32_t address, bool signedRead) {
   const auto value = getByte(address);
-  return signedRead ? static_cast<std::int32_t>(static_cast<std::int8_t>(value)) : static_cast<std::int32_t>(value);
+  const auto result = signedRead ? static_cast<std::int32_t>(static_cast<std::int8_t>(value)) : static_cast<std::int32_t>(value);
+  recordMemoryAccess(false, address, 1, result);
+  return result;
 }
 
 void NativeMarsEngine::writeByte(std::uint32_t address, std::int32_t value) {
   assertWritableAddress(address, 1u);
-  setByte(address, static_cast<std::uint8_t>(value & 0xff));
+  const auto masked = static_cast<std::int32_t>(value & 0xff);
+  setByte(address, static_cast<std::uint8_t>(masked));
+  recordMemoryAccess(true, address, 1, masked);
 }
 
-std::int32_t NativeMarsEngine::readHalf(std::uint32_t address, bool signedRead) const {
+std::int32_t NativeMarsEngine::readHalf(std::uint32_t address, bool signedRead) {
   if ((address & 0x1u) != 0u) {
     throw std::runtime_error("Address not aligned on halfword boundary: {address}");
   }
-  const auto value = static_cast<std::uint32_t>((getByte(address) << 8u) | getByte(address + 1u));
-  return signedRead ? sign_extend16(static_cast<std::int32_t>(value)) : static_cast<std::int32_t>(value & 0xffffu);
+  const auto value = static_cast<std::uint32_t>(getByte(address) | (getByte(address + 1u) << 8u));
+  const auto result = signedRead ? sign_extend16(static_cast<std::int32_t>(value)) : static_cast<std::int32_t>(value & 0xffffu);
+  recordMemoryAccess(false, address, 2, result);
+  return result;
 }
 
 void NativeMarsEngine::writeHalf(std::uint32_t address, std::int32_t value) {
@@ -1612,17 +1875,21 @@ void NativeMarsEngine::writeHalf(std::uint32_t address, std::int32_t value) {
   }
   assertWritableAddress(address, 2u);
   const auto numeric = zero_extend16(value);
-  setByte(address, static_cast<std::uint8_t>((numeric >> 8u) & 0xffu));
-  setByte(address + 1u, static_cast<std::uint8_t>(numeric & 0xffu));
+  setByte(address, static_cast<std::uint8_t>(numeric & 0xffu));
+  setByte(address + 1u, static_cast<std::uint8_t>((numeric >> 8u) & 0xffu));
+  recordMemoryAccess(true, address, 2, numeric);
 }
 
-std::int32_t NativeMarsEngine::readWord(std::uint32_t address) const {
+std::int32_t NativeMarsEngine::readWord(std::uint32_t address) {
   if ((address & 0x3u) != 0u) {
     throw std::runtime_error("Address not aligned on word boundary: {address}");
   }
   const auto entry = memoryWords_.find(address);
-  if (entry != memoryWords_.end()) return entry->second;
-  return compose_word(getByte(address), getByte(address + 1u), getByte(address + 2u), getByte(address + 3u));
+  const auto result = entry != memoryWords_.end()
+    ? entry->second
+    : compose_word(getByte(address), getByte(address + 1u), getByte(address + 2u), getByte(address + 3u));
+  recordMemoryAccess(false, address, 4, result);
+  return result;
 }
 
 void NativeMarsEngine::writeWord(std::uint32_t address, std::int32_t value) {
@@ -1649,6 +1916,7 @@ void NativeMarsEngine::writeWord(std::uint32_t address, std::int32_t value) {
   }
   lastMemoryWriteAddress_ = static_cast<std::int32_t>(address);
   markDirtyWord(address);
+  recordMemoryAccess(true, address, 4, value);
 }
 
 void NativeMarsEngine::forceZeroRegister() {
@@ -2215,10 +2483,12 @@ StepResult NativeMarsEngine::stepInternal() {
 }
 
 val NativeMarsEngine::step() {
+  recentMemoryAccesses_.clear();
   return toResultVal(stepInternal());
 }
 
 val NativeMarsEngine::go(std::int32_t maxSteps) {
+  recentMemoryAccesses_.clear();
   StepResult lastResult;
   bool hasLastResult = false;
   std::int32_t executed = 0;
@@ -2246,6 +2516,7 @@ val NativeMarsEngine::go(std::int32_t maxSteps) {
 }
 
 val NativeMarsEngine::backstep() {
+  recentMemoryAccesses_.clear();
   if (executionHistory_.empty()) {
     StepResult result;
     result.ok = false;

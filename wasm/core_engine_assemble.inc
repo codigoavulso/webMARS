@@ -32,6 +32,7 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
   const auto programArgumentsLine = string_or(options, "programArguments", std::string());
   const auto includeFiles = options["includeFiles"];
   const auto referencePseudoOps = options["referencePseudoOps"];
+  const auto referenceBasicInstructions = options["referenceBasicInstructions"];
   std::vector<AssembleMessage> warnings;
   std::vector<AssembleMessage> errors;
   std::vector<AssembledTextRow> textRows;
@@ -39,6 +40,7 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
   std::unordered_map<std::string, std::uint32_t> labels;
   std::string fallbackReason;
   const auto referencePseudoIndex = build_reference_pseudo_index(referencePseudoOps);
+  const auto referenceInstructionIndex = build_reference_instruction_index(referenceBasicInstructions);
 
   auto buildSnapshot = [&]() {
     val snapshot = exportState(false, true);
@@ -54,9 +56,26 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       item.set("basic", row.basic);
       item.set("addressHex", to_hex32(row.address));
       item.set("code", row.code);
+      item.set("machineCodeHex", row.machineCodeHex);
       rows.set(i, item);
     }
     snapshot.set("textRows", rows);
+
+    val dataRows = val::array();
+    const auto dataBase = memoryMap_.dataBase;
+    for (std::uint32_t i = 0; i < 32u; i += 1u) {
+      const auto address = dataBase + (i * 4u);
+      const auto entry = memoryWords_.find(address);
+      const auto value = entry == memoryWords_.end() ? 0 : entry->second;
+      val item = val::object();
+      item.set("address", address);
+      item.set("addressHex", to_hex32(address));
+      item.set("value", value);
+      item.set("valueUnsigned", static_cast<double>(static_cast<std::uint32_t>(value)));
+      item.set("valueHex", to_hex32(static_cast<std::uint32_t>(value)));
+      dataRows.set(i, item);
+    }
+    snapshot.set("dataRows", dataRows);
 
     val labelsValue = val::array();
     std::sort(labelsOrdered.begin(), labelsOrdered.end(), [](const auto& left, const auto& right) {
@@ -449,18 +468,16 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       return rows;
     };
 
-    if (parse_opcode(opcode) != Opcode::Delegate || is_delegate_basic_opcode(opcode)) {
-      expanded.push_back(statement);
-      return true;
-    }
     if (!allowExtendedAssembler) {
       expanded.push_back(statement);
       return true;
     }
-    if (expandPseudoFromReference(statement, firstPass, allowExtendedAssembler, expanded)) return true;
+    const bool canUseReferencePseudo =
+      parse_opcode(opcode) == Opcode::Delegate
+      || is_known_pseudo_opcode(opcode);
+    if (canUseReferencePseudo && expandPseudoFromReference(statement, firstPass, allowExtendedAssembler, expanded)) return true;
     if (opcode == "nop") { expanded.push_back("sll $zero, $zero, 0"); return true; }
     if (opcode == "move" && tokens.size() >= 3u) { expanded.push_back("addu " + tokens[1] + ", " + tokens[2] + ", $zero"); return true; }
-    if (opcode == "clear" && tokens.size() >= 2u) { expanded.push_back("addu " + tokens[1] + ", $zero, $zero"); return true; }
     if (opcode == "not" && tokens.size() >= 3u) { expanded.push_back("nor " + tokens[1] + ", " + tokens[2] + ", $zero"); return true; }
     if (opcode == "neg" && tokens.size() >= 3u) { expanded.push_back("sub " + tokens[1] + ", $zero, " + tokens[2]); return true; }
     if (opcode == "negu" && tokens.size() >= 3u) { expanded.push_back("subu " + tokens[1] + ", $zero, " + tokens[2]); return true; }
@@ -486,6 +503,23 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       expanded.push_back("lui " + tokens[1] + ", " + std::to_string(((value >> 16u) + ((value & 0x8000u) ? 1u : 0u)) & 0xffffu));
       expanded.push_back("ori " + tokens[1] + ", " + tokens[1] + ", " + std::to_string(value & 0xffffu));
       return true;
+    }
+    if ((opcode == "lw" || opcode == "sw" || opcode == "lb" || opcode == "lbu" || opcode == "sb" || opcode == "lh" || opcode == "lhu" || opcode == "sh" || opcode == "ll" || opcode == "sc" || opcode == "lwl" || opcode == "lwr" || opcode == "swl" || opcode == "swr" || opcode == "lwc1" || opcode == "swc1")
+      && tokens.size() >= 3u && tokens[2].find('(') == std::string::npos && tokens[2].find(')') == std::string::npos) {
+      const auto rawValue = resolveValue(tokens[2], firstPass);
+      if (std::isfinite(rawValue)) {
+        const auto value = static_cast<std::uint32_t>(static_cast<std::int32_t>(rawValue));
+        if (fitsSigned16(static_cast<std::int32_t>(rawValue))) {
+          expanded.push_back(opcode + " " + tokens[1] + ", " + std::to_string(static_cast<std::int32_t>(rawValue)) + "($0)");
+        } else if (fitsUnsigned16(static_cast<std::int32_t>(rawValue))) {
+          expanded.push_back("ori $1, $0, " + std::to_string(value & 0xffffu));
+          expanded.push_back(opcode + " " + tokens[1] + ", 0($1)");
+        } else {
+          expanded.push_back("lui $1, " + std::to_string(((value >> 16u) + ((value & 0x8000u) ? 1u : 0u)) & 0xffffu));
+          expanded.push_back(opcode + " " + tokens[1] + ", " + std::to_string(static_cast<std::int32_t>(value & 0xffffu)) + "($1)");
+        }
+        return true;
+      }
     }
     if (opcode == "b" && tokens.size() >= 2u) { expanded.push_back("bgez $zero, " + tokens[1]); return true; }
     if (opcode == "beqz" && tokens.size() >= 3u) { expanded.push_back("beq " + tokens[1] + ", $zero, " + tokens[2]); return true; }
@@ -535,14 +569,20 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     const auto normalized = normalize_path_like(name);
     if (normalized.empty()) return;
     includeSourceMap[normalized] = source;
-    const auto base = path_basename_like(normalized);
-    if (!base.empty() && includeSourceMap.find(base) == includeSourceMap.end()) includeSourceMap[base] = source;
   };
 
-  for (std::uint32_t i = 0; i < array_length(includeFiles); i += 1u) {
-    const auto pair = includeFiles[i];
-    if (!pair.isArray() || array_length(pair) < 2u) continue;
-    registerIncludeSource(pair[0].as<std::string>(), pair[1].as<std::string>());
+  if (includeFiles.isArray()) {
+    for (std::uint32_t i = 0; i < array_length(includeFiles); i += 1u) {
+      const auto pair = includeFiles[i];
+      if (!pair.isArray() || array_length(pair) < 2u) continue;
+      registerIncludeSource(pair[0].as<std::string>(), pair[1].as<std::string>());
+    }
+  } else if (!includeFiles.isUndefined() && !includeFiles.isNull()) {
+    const auto keys = val::global("Object").call<val>("keys", includeFiles);
+    for (std::uint32_t i = 0; i < array_length(keys); i += 1u) {
+      const auto key = keys[i].as<std::string>();
+      registerIncludeSource(key, includeFiles[key].as<std::string>());
+    }
   }
   registerIncludeSource(sourceName, normalizedSource);
 
@@ -550,11 +590,9 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
   auto resolveInclude = [&](const std::string& requested, const std::string& currentFile) {
     const auto cleanRequest = normalize_path_like(requested);
     std::vector<std::string> candidates;
-    if (!cleanRequest.empty()) candidates.push_back(cleanRequest);
     const auto joined = path_join_like(path_dirname_like(currentFile), cleanRequest);
     if (!joined.empty()) candidates.push_back(joined);
-    const auto base = path_basename_like(cleanRequest);
-    if (!base.empty()) candidates.push_back(base);
+    if (!cleanRequest.empty()) candidates.push_back(cleanRequest);
     for (const auto& candidate : candidates) {
       if (includeSourceMap.find(candidate) != includeSourceMap.end()) return candidate;
     }
@@ -566,7 +604,7 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     const auto normalizedName = normalize_path_like(fileName);
     const auto found = includeSourceMap.find(normalizedName);
     if (found == includeSourceMap.end()) {
-      errors.push_back({ 0, "[" + normalizedName + "] include source not found." });
+      errors.push_back({ 0, "Error reading include file " + path_basename_like(normalizedName) });
       return;
     }
 
@@ -588,7 +626,7 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
             const auto includeName = includeBody.substr(1, includeBody.size() - 2u);
             const auto resolved = resolveInclude(includeName, normalizedName);
             if (resolved.empty()) {
-              errors.push_back({ lineNumber, "[" + normalizedName + "] include '" + includeName + "' not found." });
+              errors.push_back({ lineNumber, "Error reading include file " + includeName });
             } else if (std::find(stack.begin(), stack.end(), resolved) != stack.end()) {
               errors.push_back({ lineNumber, "[" + normalizedName + "] circular include detected for '" + resolved + "'." });
             } else {
@@ -632,13 +670,22 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
 
     const auto eqvApplied = trim_copy(applyEqv(lineObj.statement));
     if (eqvApplied.empty()) return;
-    const auto tokens = tokenize_statement_native(eqvApplied);
-    if (tokens.empty()) return;
-    const auto macroName = tokens[0];
-    const auto args = parse_macro_invocation_arguments_native(eqvApplied, macroName);
+    const auto invocation = parse_macro_invocation_native(eqvApplied);
+    if (!invocation.valid) {
+      lines.push_back({ lineObj.lineNumber, lineObj.fileName, eqvApplied });
+      return;
+    }
+    const auto macroName = invocation.name;
+    const auto args = invocation.args;
     const auto key = macroName + "/" + std::to_string(args.size());
     const auto foundMacro = macros.find(key);
     if (foundMacro == macros.end()) {
+      for (const auto& entry : macros) {
+        if (entry.second.name == macroName) {
+          errors.push_back({ lineObj.lineNumber, "Forward reference or invalid parameters for macro \"" + macroName + "\"" });
+          return;
+        }
+      }
       lines.push_back({ lineObj.lineNumber, lineObj.fileName, eqvApplied });
       return;
     }
@@ -861,13 +908,13 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       if (size == 1) {
         writeByte(addr, static_cast<std::uint8_t>(value & 0xffu));
       } else if (size == 2) {
-        writeByte(addr, static_cast<std::uint8_t>((value >> 8u) & 0xffu));
-        writeByte((addr + 1u) & 0xffffffffu, static_cast<std::uint8_t>(value & 0xffu));
+        writeByte(addr, static_cast<std::uint8_t>(value & 0xffu));
+        writeByte((addr + 1u) & 0xffffffffu, static_cast<std::uint8_t>((value >> 8u) & 0xffu));
       } else {
-        writeByte(addr, static_cast<std::uint8_t>((value >> 24u) & 0xffu));
-        writeByte((addr + 1u) & 0xffffffffu, static_cast<std::uint8_t>((value >> 16u) & 0xffu));
-        writeByte((addr + 2u) & 0xffffffffu, static_cast<std::uint8_t>((value >> 8u) & 0xffu));
-        writeByte((addr + 3u) & 0xffffffffu, static_cast<std::uint8_t>(value & 0xffu));
+        writeByte(addr, static_cast<std::uint8_t>(value & 0xffu));
+        writeByte((addr + 1u) & 0xffffffffu, static_cast<std::uint8_t>((value >> 8u) & 0xffu));
+        writeByte((addr + 2u) & 0xffffffffu, static_cast<std::uint8_t>((value >> 16u) & 0xffu));
+        writeByte((addr + 3u) & 0xffffffffu, static_cast<std::uint8_t>((value >> 24u) & 0xffu));
       }
     };
     const auto warnIfTruncated = [&](std::int32_t value, int size) {
@@ -947,36 +994,7 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
         errors.push_back({ line, "\".set\" requires at least one argument." });
         return true;
       }
-      const auto option = lower_copy(trim_copy(args[0]));
-      if (option.empty()) {
-        errors.push_back({ line, "\".set\" requires at least one argument." });
-        return true;
-      }
-      if (option == "reorder") {
-        state.reorder = true;
-        return true;
-      }
-      if (option == "noreorder") {
-        state.reorder = false;
-        return true;
-      }
-      if (option == "at") {
-        state.at = true;
-        return true;
-      }
-      if (option == "noat") {
-        state.at = false;
-        return true;
-      }
-      if (option == "macro") {
-        state.macro = true;
-        return true;
-      }
-      if (option == "nomacro") {
-        state.macro = false;
-        return true;
-      }
-      warnings.push_back({ line, "Unsupported \".set\" option \"" + option + "\" (ignored)." });
+      if (sizeOnly) warnings.push_back({ line, "MARS currently ignores the .set directive." });
       return true;
     }
     if (directive == ".include") {
@@ -1065,8 +1083,9 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
             } else {
               std::uint64_t bits = 0;
               std::memcpy(&bits, &number, sizeof(bits));
-              writeIntegerBySize(address, 4, static_cast<std::uint32_t>((bits >> 32u) & 0xffffffffu));
-              writeIntegerBySize((address + 4u) & 0xffffffffu, 4, static_cast<std::uint32_t>(bits & 0xffffffffu));
+              for (std::uint32_t i = 0; i < 8u; i += 1u) {
+                writeByte((address + i) & 0xffffffffu, static_cast<std::uint8_t>((bits >> (8u * i)) & 0xffu));
+              }
             }
           }
           address = (address + static_cast<std::uint32_t>(size)) & 0xffffffffu;
@@ -1089,6 +1108,27 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     return true;
   };
 
+  auto predictAlignedDataLabelAddress = [&](const PassState& state, const std::string& statement) -> std::optional<std::uint32_t> {
+    if (state.segment != "data" && state.segment != "kdata") return std::nullopt;
+    const auto colon = statement.find(':');
+    if (colon == std::string::npos) return std::nullopt;
+    const auto stripped = trim_copy(statement.substr(colon + 1u));
+    if (stripped.empty() || stripped[0] != '.') return std::nullopt;
+    const auto tokens = tokenize_statement_native(stripped);
+    if (tokens.empty()) return std::nullopt;
+    const auto directive = lower_copy(tokens[0]);
+    std::uint32_t alignment = 0;
+    if (directive == ".half") alignment = 2u;
+    else if (directive == ".word" || directive == ".float") alignment = 4u;
+    else if (directive == ".double") alignment = 8u;
+    if (alignment <= 1u) return std::nullopt;
+    const bool autoAlign = state.segment == "kdata" ? state.autoAlignKernelData : state.autoAlignData;
+    if (!autoAlign) return std::nullopt;
+    std::uint32_t address = state.segment == "kdata" ? state.kernelDataAddress : state.dataAddress;
+    address = (address + alignment - 1u) & ~(alignment - 1u);
+    return address;
+  };
+
   auto applyLabel = [&](const std::string& statement, const PassState& state, std::int32_t line, bool record, std::string& stripped) {
     stripped = statement;
     const auto colon = statement.find(':');
@@ -1097,9 +1137,9 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     if (label.empty()) return;
     if (record) {
       std::uint32_t address = state.textAddress;
-      if (state.segment == "data") address = state.dataAddress;
+      if (state.segment == "data") address = predictAlignedDataLabelAddress(state, statement).value_or(state.dataAddress);
       else if (state.segment == "ktext") address = state.kernelTextAddress;
-      else if (state.segment == "kdata") address = state.kernelDataAddress;
+      else if (state.segment == "kdata") address = predictAlignedDataLabelAddress(state, statement).value_or(state.kernelDataAddress);
       if (labels.find(label) != labels.end()) errors.push_back({ line, "Duplicate label '" + label + "'." });
       else {
         labels[label] = address;
@@ -1143,10 +1183,6 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     if (!expandPseudo(statement, true, pass1.macro, expanded)) {
       fallbackReason = "pseudo:" + lower_copy(tokenize_statement_native(statement).front());
       return buildResult(false, true);
-    }
-    if (!pass1.at && emitsAtFromPseudo(statement, expanded)) {
-      errors.push_back({ line.lineNumber, "\".set noat\" forbids pseudo expansion that uses $at." });
-      continue;
     }
     const auto expansionBytes = static_cast<std::uint32_t>(expanded.size() * 4u);
     if (pass1.segment == "text") {
@@ -1269,6 +1305,81 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
     return row;
   };
 
+  auto chooseInstructionExample = [&](const std::string& opcode, std::int32_t operandCount) {
+    const auto found = referenceInstructionIndex.find(lower_copy(opcode));
+    if (found == referenceInstructionIndex.end() || found->second.empty()) return lower_copy(opcode);
+    const auto desired = std::max(0, operandCount);
+    auto entries = found->second;
+    std::sort(entries.begin(), entries.end(), [&](const auto& left, const auto& right) {
+      const auto leftDelta = std::abs(left.operandCount - desired);
+      const auto rightDelta = std::abs(right.operandCount - desired);
+      if (leftDelta != rightDelta) return leftDelta < rightDelta;
+      return left.order < right.order;
+    });
+    return !entries.front().example.empty() ? entries.front().example : lower_copy(opcode);
+  };
+
+  auto pushInstructionCountError = [&](std::int32_t line, const std::string& opcodeToken, std::int32_t operandCount) {
+    const auto found = referenceInstructionIndex.find(lower_copy(opcodeToken));
+    if (found == referenceInstructionIndex.end() || found->second.empty()) {
+      errors.push_back({ line, "\"" + opcodeToken + "\" is not a recognized operator" });
+      return;
+    }
+    std::int32_t minOperands = found->second.front().operandCount;
+    for (const auto& entry : found->second) minOperands = std::min(minOperands, entry.operandCount);
+    const auto example = chooseInstructionExample(opcodeToken, operandCount);
+    const auto detail = operandCount < minOperands
+      ? "Too few or incorrectly formatted operands. Expected: " + example
+      : "Too many or incorrectly formatted operands. Expected: " + example;
+    errors.push_back({ line, "\"" + opcodeToken + "\": " + detail });
+  };
+
+  auto pushInstructionFormatError = [&](std::int32_t line, const std::string& opcodeToken, std::int32_t operandCount) {
+    const auto found = referenceInstructionIndex.find(lower_copy(opcodeToken));
+    if (found == referenceInstructionIndex.end() || found->second.empty()) {
+      errors.push_back({ line, "\"" + opcodeToken + "\" is not a recognized operator" });
+      return;
+    }
+    const auto example = chooseInstructionExample(opcodeToken, operandCount);
+    errors.push_back({ line, "\"" + opcodeToken + "\": Too few or incorrectly formatted operands. Expected: " + example });
+  };
+
+  auto validateBasicInstruction = [&](const std::string& basic, std::int32_t line) -> bool {
+    const auto tokens = tokenize_statement_native(basic);
+    if (tokens.empty()) return true;
+    const auto opcodeToken = tokens[0];
+    const auto opcode = lower_copy(opcodeToken);
+    const auto operandCount = static_cast<std::int32_t>(tokens.size() > 0u ? tokens.size() - 1u : 0u);
+    if (opcode != "syscall" && !is_delegate_basic_opcode(opcode) && parse_opcode(opcode) == Opcode::Delegate) {
+      errors.push_back({ line, "\"" + opcodeToken + "\" is not a recognized operator" });
+      return false;
+    }
+    const auto found = referenceInstructionIndex.find(opcode);
+    if (found != referenceInstructionIndex.end() && !found->second.empty()) {
+      bool operandCountMatch = false;
+      for (const auto& entry : found->second) {
+        if (entry.operandCount == operandCount) {
+          operandCountMatch = true;
+          break;
+        }
+      }
+      if (!operandCountMatch) {
+        pushInstructionCountError(line, opcodeToken, operandCount);
+        return false;
+      }
+    }
+    if (opcode == "lw" || opcode == "sw" || opcode == "lb" || opcode == "lbu" || opcode == "sb" || opcode == "lh" || opcode == "lhu" || opcode == "sh" || opcode == "ll" || opcode == "sc" || opcode == "lwl" || opcode == "lwr" || opcode == "swl" || opcode == "swr" || opcode == "lwc1" || opcode == "swc1") {
+      std::int32_t base = -1;
+      std::int32_t offset = 0;
+      std::uint32_t absolute = 0;
+      if (tokens.size() < 3u || !resolveMemoryOperand(tokens[2], base, offset, absolute)) {
+        pushInstructionFormatError(line, opcodeToken, operandCount);
+        return false;
+      }
+    }
+    return true;
+  };
+
   for (const auto& line : lines) {
     std::string statement;
     applyLabel(line.statement, pass2, line.lineNumber, false, statement);
@@ -1304,10 +1415,6 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       fallbackReason = "pseudo:" + lower_copy(tokenize_statement_native(statement).front());
       return buildResult(false, true);
     }
-    if (!pass2.at && emitsAtFromPseudo(statement, expanded)) {
-      errors.push_back({ line.lineNumber, "\".set noat\" forbids pseudo expansion that uses $at." });
-      continue;
-    }
     const auto emissionBytes = static_cast<std::uint32_t>(expanded.size() * 4u);
     const auto currentSegment = pass2.segment == "text" ? std::string("text") : std::string("ktext");
     const auto currentAddress = pass2.segment == "text" ? pass2.textAddress : pass2.kernelTextAddress;
@@ -1315,9 +1422,27 @@ val NativeMarsEngine::assemble(const std::string& sourceCode, val options) {
       continue;
     }
     for (std::size_t index = 0; index < expanded.size(); index += 1u) {
+      if (!validateBasicInstruction(expanded[index], line.lineNumber)) continue;
       const auto address = pass2.segment == "text" ? pass2.textAddress : pass2.kernelTextAddress;
-      textRows.push_back({ address, line.lineNumber, index == 0 ? statement : std::string(), expanded[index], to_hex32(stable_hash_native(expanded[index])) });
-      programRows_.push_back(buildProgramRow(address, line.lineNumber, expanded[index]));
+      const auto row = buildProgramRow(address, line.lineNumber, expanded[index]);
+      const auto machineCodeWord = encode_instruction_word_from_program_row(row);
+      if (machineCodeWord.has_value()) {
+        const auto encoded = machineCodeWord.value();
+        setByte(address, static_cast<std::uint8_t>(encoded & 0xffu));
+        setByte((address + 1u) & 0xffffffffu, static_cast<std::uint8_t>((encoded >> 8u) & 0xffu));
+        setByte((address + 2u) & 0xffffffffu, static_cast<std::uint8_t>((encoded >> 16u) & 0xffu));
+        setByte((address + 3u) & 0xffffffffu, static_cast<std::uint8_t>((encoded >> 24u) & 0xffu));
+      }
+      const auto machineCodeHex = machineCodeWord.has_value() ? to_hex32(machineCodeWord.value()) : std::string();
+      textRows.push_back({
+        address,
+        line.lineNumber,
+        index == 0 ? statement : std::string(),
+        expanded[index],
+        machineCodeWord.has_value() ? machineCodeHex : to_hex32(stable_hash_native(expanded[index])),
+        machineCodeHex
+      });
+      programRows_.push_back(row);
       programIndex_[address] = programRows_.size() - 1u;
       if (pass2.segment == "text") pass2.textAddress = (pass2.textAddress + 4u) & 0xffffffffu;
       else pass2.kernelTextAddress = (pass2.kernelTextAddress + 4u) & 0xffffffffu;

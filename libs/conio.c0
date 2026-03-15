@@ -1,0 +1,33 @@
+void print(string s) {
+  print_string(s);
+}
+
+void println(string s) {
+  print_string(s);
+  print_char('\n');
+}
+
+void printint(int i) {
+  print_int(i);
+}
+
+void printbool(bool b) {
+  print_bool(b);
+}
+
+void printchar(char c) {
+  print_char(c);
+}
+
+void flush(void) {
+  __wm_flush();
+}
+
+bool eof(void) {
+  return __wm_eof();
+}
+
+//@requires !eof();
+string readline(void) {
+  return __wm_readline();
+}

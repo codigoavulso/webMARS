@@ -128,22 +128,22 @@ std::int32_t wm_div_unsigned_rem32(std::uint32_t a, std::uint32_t b) {
 
 std::int32_t wm_compose_word(std::uint32_t b0, std::uint32_t b1, std::uint32_t b2, std::uint32_t b3) {
   const auto word =
-    ((b0 & 0xffu) << 24)
-    | ((b1 & 0xffu) << 16)
-    | ((b2 & 0xffu) << 8)
-    | (b3 & 0xffu);
+    ((b3 & 0xffu) << 24)
+    | ((b2 & 0xffu) << 16)
+    | ((b1 & 0xffu) << 8)
+    | (b0 & 0xffu);
   return static_cast<std::int32_t>(word);
 }
 
 std::uint32_t wm_get_word_byte(std::uint32_t word, std::uint32_t index) {
   const auto safe_index = index & 0x3u;
-  const auto shift = (3u - safe_index) * 8u;
+  const auto shift = safe_index * 8u;
   return (word >> shift) & 0xffu;
 }
 
 std::int32_t wm_set_word_byte(std::uint32_t word, std::uint32_t index, std::uint32_t byte) {
   const auto safe_index = index & 0x3u;
-  const auto shift = (3u - safe_index) * 8u;
+  const auto shift = safe_index * 8u;
   const auto cleared = word & ~(0xffu << shift);
   const auto merged = cleared | ((byte & 0xffu) << shift);
   return static_cast<std::int32_t>(merged);

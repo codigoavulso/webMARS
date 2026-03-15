@@ -9,6 +9,8 @@
   startAtMain: false,
   strictMarsCompatibility: false,
   selfModifyingCode: false,
+  assemblerBackendMode: "js",
+  simulatorBackendMode: "js",
   popupSyscallInput: false,
   programArguments: false,
   programArgumentsLine: "",
@@ -16,7 +18,7 @@
   maxErrors: 200,
   maxBacksteps: 100,
   maxMemoryBytes: 2 * 1024 * 1024 * 1024,
-  coreBackend: "wasm",
+  coreBackend: "js",
   fileExtensions: ["asm", "s"],
   asciiNonPrint: "."
 };
@@ -36,6 +38,7 @@ const DEFAULT_MEMORY_MAP = {
   exceptionHandlerAddress: 0x80000180,
   mmioBase: 0xffff0000
 };
+const JAVA_MARS_ENDIANNESS = "little";
 const MEMORY_CONFIG_PRESETS = {
   Default: {
     id: "Default",
@@ -110,6 +113,53 @@ const FILE_OPEN_RDONLY = 0;
 const FILE_OPEN_WRONLY = 1;
 const FILE_OPEN_APPEND = 9;
 const VFS_STORAGE_KEY = "webmars-vfs-v1";
+const WEBMARS_RUNIO_EOF_MARKER = "/eof";
+const WEBMARS_CUSTOM_SYSCALLS = Object.freeze({
+  flush: 60,
+  eof: 61,
+  readline: 62,
+  printf: 63,
+  format: 64,
+  fileRead: 65,
+  fileClosed: 66,
+  fileClose: 67,
+  fileEof: 68,
+  fileReadline: 69,
+  argsFlag: 70,
+  argsInt: 71,
+  argsString: 72,
+  argsParse: 73,
+  stringLength: 74,
+  stringCharAt: 75,
+  stringJoin: 76,
+  stringSub: 77,
+  stringCompare: 78,
+  stringFromInt: 79,
+  stringFromChar: 80,
+  stringToLower: 81,
+  stringTerminated: 82,
+  stringToCharArray: 83,
+  stringFromCharArray: 84,
+  charChr: 85,
+  parseBool: 86,
+  parseInt: 87,
+  numTokens: 88,
+  intTokens: 89,
+  parseTokens: 90,
+  parseInts: 91,
+  int2Hex: 92,
+  imageWidth: 93,
+  imageHeight: 94,
+  imageCreate: 95,
+  imageClone: 96,
+  imageSubimage: 97,
+  imageLoad: 98,
+  imageSave: 99,
+  imageData: 100,
+  cstrTerminated: 101,
+  cstrFromString: 102,
+  stringFromCstr: 103
+});
 const MIDI_DEFAULTS = Object.freeze({
   pitch: 60,
   duration: 1000,
@@ -219,6 +269,36 @@ function bytesToText(bytes) {
 
 function textToBytes(text) {
   return cloneByteArray(String(text ?? ""));
+}
+
+function parseStrictIntegerBase(text, base) {
+  const raw = String(text ?? "").trim();
+  const numericBase = Number(base) | 0;
+  if (!Number.isFinite(numericBase) || numericBase < 2 || numericBase > 36) return null;
+  if (!raw.length) return null;
+  let sign = 1;
+  let cursor = 0;
+  if (raw[0] === "+") cursor = 1;
+  else if (raw[0] === "-") {
+    sign = -1;
+    cursor = 1;
+  }
+  if (cursor >= raw.length) return null;
+  let value = 0;
+  for (let i = cursor; i < raw.length; i += 1) {
+    const ch = raw[i];
+    const code = ch.charCodeAt(0);
+    let digit = -1;
+    if (code >= 48 && code <= 57) digit = code - 48;
+    else if (code >= 65 && code <= 90) digit = code - 55;
+    else if (code >= 97 && code <= 122) digit = code - 87;
+    if (digit < 0 || digit >= numericBase) return null;
+    value = (value * numericBase) + digit;
+    if (!Number.isFinite(value)) return null;
+  }
+  value *= sign;
+  if (value < -2147483648 || value > 2147483647) return null;
+  return value | 0;
 }
 
 function bytesToStorageHex(bytes) {
@@ -379,17 +459,17 @@ const wordsToFloat64 = (highWord, lowWord) => {
 const composeWord = (b0, b1, b2, b3) => {
   const hotpath = getWasmHotpath();
   if (hotpath && typeof hotpath.composeWord === "function") return hotpath.composeWord(b0, b1, b2, b3);
-  return clamp32((((b0 & 0xff) << 24) | ((b1 & 0xff) << 16) | ((b2 & 0xff) << 8) | (b3 & 0xff)) >>> 0);
+  return clamp32((((b3 & 0xff) << 24) | ((b2 & 0xff) << 16) | ((b1 & 0xff) << 8) | (b0 & 0xff)) >>> 0);
 };
 const getWordByte = (word, index) => {
   const hotpath = getWasmHotpath();
   if (hotpath && typeof hotpath.getWordByte === "function") return hotpath.getWordByte(word, index);
-  return (word >>> ((3 - (index & 0x3)) * 8)) & 0xff;
+  return (word >>> ((index & 0x3) * 8)) & 0xff;
 };
 const setWordByte = (word, index, byte) => {
   const hotpath = getWasmHotpath();
   if (hotpath && typeof hotpath.setWordByte === "function") return hotpath.setWordByte(word, index, byte);
-  const shift = (3 - (index & 0x3)) * 8;
+  const shift = (index & 0x3) * 8;
   return clamp32((word & ~(0xff << shift)) | ((byte & 0xff) << shift));
 };
 const clz32 = (value) => {
@@ -683,6 +763,146 @@ function tokenizeStatement(statement) {
   return tokens;
 }
 
+function isAssemblerIdentifierStart(ch) {
+  return /[A-Za-z_.$]/.test(String(ch ?? ""));
+}
+
+function isAssemblerIdentifierPart(ch) {
+  return /[\w.$]/.test(String(ch ?? ""));
+}
+
+function replaceIdentifiersOutsideLiterals(statement, replacer) {
+  const input = String(statement ?? "");
+  if (!input) return "";
+
+  let output = "";
+  let current = "";
+  let inSingle = false;
+  let inDouble = false;
+
+  const flush = () => {
+    if (!current) return;
+    const replacement = typeof replacer === "function" ? replacer(current) : current;
+    output += replacement == null ? current : String(replacement);
+    current = "";
+  };
+
+  for (let i = 0; i < input.length; i += 1) {
+    const ch = input[i];
+    const prev = i > 0 ? input[i - 1] : "";
+
+    if (!inSingle && !inDouble && ch === "#") {
+      flush();
+      output += input.slice(i);
+      return output;
+    }
+
+    if (ch === '"' && !inSingle && prev !== "\\") {
+      flush();
+      inDouble = !inDouble;
+      output += ch;
+      continue;
+    }
+
+    if (ch === "'" && !inDouble && prev !== "\\") {
+      flush();
+      inSingle = !inSingle;
+      output += ch;
+      continue;
+    }
+
+    if (inSingle || inDouble) {
+      output += ch;
+      continue;
+    }
+
+    if (!current) {
+      if (isAssemblerIdentifierStart(ch)) {
+        current = ch;
+      } else {
+        output += ch;
+      }
+      continue;
+    }
+
+    if (isAssemblerIdentifierPart(ch)) {
+      current += ch;
+      continue;
+    }
+
+    flush();
+    if (isAssemblerIdentifierStart(ch)) {
+      current = ch;
+    } else {
+      output += ch;
+    }
+  }
+
+  flush();
+  return output;
+}
+
+function replaceMacroParametersOutsideLiterals(statement, replacements) {
+  const input = String(statement ?? "");
+  if (!input || !(replacements instanceof Map) || replacements.size === 0) return input;
+
+  let output = "";
+  let inSingle = false;
+  let inDouble = false;
+
+  for (let i = 0; i < input.length; i += 1) {
+    const ch = input[i];
+    const prev = i > 0 ? input[i - 1] : "";
+
+    if (!inSingle && !inDouble && ch === "#") {
+      output += input.slice(i);
+      return output;
+    }
+
+    if (ch === '"' && !inSingle && prev !== "\\") {
+      inDouble = !inDouble;
+      output += ch;
+      continue;
+    }
+
+    if (ch === "'" && !inDouble && prev !== "\\") {
+      inSingle = !inSingle;
+      output += ch;
+      continue;
+    }
+
+    if (inSingle || inDouble) {
+      output += ch;
+      continue;
+    }
+
+    if ((ch === "%" || ch === "$") && i + 1 < input.length && isAssemblerIdentifierPart(input[i + 1])) {
+      let end = i + 1;
+      while (end < input.length && isAssemblerIdentifierPart(input[end])) end += 1;
+      const token = input.slice(i, end);
+      output += replacements.has(token) ? String(replacements.get(token)) : token;
+      i = end - 1;
+      continue;
+    }
+
+    output += ch;
+  }
+
+  return output;
+}
+
+function isPotentialSymbolExpression(text) {
+  const expression = stripToken(String(text ?? ""));
+  if (!expression) return false;
+  let sawIdentifier = false;
+  const substituted = expression.replace(/[A-Za-z_.$][\w.$]*/g, () => {
+    sawIdentifier = true;
+    return "1";
+  });
+  if (!sawIdentifier) return false;
+  return /^[0-9a-fxX()\s+\-*/%<>&|^~]+$/.test(substituted);
+}
+
 function escapeRegExp(text) {
   return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -731,6 +951,8 @@ function pathJoinLike(base, rel) {
 
 let cachedReferencePseudoOpsSource = null;
 let cachedReferencePseudoOpsIndex = null;
+let cachedReferenceBasicInstructionsSource = null;
+let cachedReferenceBasicInstructionsIndex = null;
 
 function getReferenceDataStore() {
   if (typeof window !== "undefined") return window.WebMarsReferenceData || null;
@@ -757,13 +979,238 @@ function getReferencePseudoOpsIndex() {
   return index;
 }
 
+function getReferenceBasicInstructionsIndex() {
+  const referenceData = getReferenceDataStore();
+  const basicInstructions = Array.isArray(referenceData?.basicInstructions) ? referenceData.basicInstructions : null;
+  if (!basicInstructions || !basicInstructions.length) return null;
+  if (cachedReferenceBasicInstructionsSource === basicInstructions && cachedReferenceBasicInstructionsIndex instanceof Map) {
+    return cachedReferenceBasicInstructionsIndex;
+  }
+
+  const index = new Map();
+  basicInstructions.forEach((entry, order) => {
+    const example = String(entry?.example ?? "").trim();
+    const description = String(entry?.description ?? "").trim();
+    const tokens = tokenizeStatement(example);
+    if (!tokens.length) return;
+    const opcode = String(tokens[0] ?? "").toLowerCase();
+    const spec = {
+      opcode,
+      example,
+      description,
+      tokens,
+      operandCount: Math.max(0, tokens.length - 1),
+      order
+    };
+    if (!index.has(opcode)) index.set(opcode, []);
+    index.get(opcode).push(spec);
+  });
+
+  cachedReferenceBasicInstructionsSource = basicInstructions;
+  cachedReferenceBasicInstructionsIndex = index;
+  return cachedReferenceBasicInstructionsIndex;
+}
+
+function parseMacroInvocation(statement) {
+  const input = String(statement ?? "").trim();
+  if (!input) return null;
+  const match = /^([A-Za-z_.$][\w.$]*)(.*)$/.exec(input);
+  if (!match) return null;
+  let argsText = String(match[2] ?? "").trim();
+  if (argsText.startsWith("(") && argsText.endsWith(")")) {
+    argsText = argsText.slice(1, -1).trim();
+  }
+  return {
+    name: match[1],
+    args: argsText ? tokenizeStatement(argsText) : []
+  };
+}
+
+function encodeRFormatWord(rs, rt, rd, shamt, funct) {
+  return (
+    (((rs ?? 0) & 0x1f) << 21)
+    | (((rt ?? 0) & 0x1f) << 16)
+    | (((rd ?? 0) & 0x1f) << 11)
+    | (((shamt ?? 0) & 0x1f) << 6)
+    | ((funct ?? 0) & 0x3f)
+  ) >>> 0;
+}
+
+function encodeIFormatWord(opcode, rs, rt, immediate) {
+  return (
+    (((opcode ?? 0) & 0x3f) << 26)
+    | (((rs ?? 0) & 0x1f) << 21)
+    | (((rt ?? 0) & 0x1f) << 16)
+    | ((immediate ?? 0) & 0xffff)
+  ) >>> 0;
+}
+
+function encodeJFormatWord(opcode, targetAddress) {
+  return (
+    (((opcode ?? 0) & 0x3f) << 26)
+    | (((targetAddress ?? 0) >>> 2) & 0x03ffffff)
+  ) >>> 0;
+}
+
+function encodeCopMoveWord(opcode, rs, rt, rdOrFs) {
+  return (
+    (((opcode ?? 0) & 0x3f) << 26)
+    | (((rs ?? 0) & 0x1f) << 21)
+    | (((rt ?? 0) & 0x1f) << 16)
+    | (((rdOrFs ?? 0) & 0x1f) << 11)
+  ) >>> 0;
+}
+
+function computeBranchImmediateField(address, target) {
+  const nextPc = ((address >>> 0) + 4) >>> 0;
+  const signedDelta = (((target >>> 0) - nextPc) | 0) >> 2;
+  return signedDelta & 0xffff;
+}
+
+function encodeInstructionWordFromPlanRow(row) {
+  if (!row || typeof row !== "object") return null;
+  const opcode = String(row.opcode ?? "").toLowerCase();
+  const rs = row.rs ?? 0;
+  const rt = row.rt ?? 0;
+  const rd = row.rd ?? 0;
+  const fs = row.fs ?? 0;
+  const base = row.base ?? 0;
+  const imm = row.immediate ?? 0;
+  const cc = row.cc ?? 0;
+  const address = row.address ?? 0;
+  const target = row.target ?? 0;
+
+  if (opcode === "nop") return 0;
+  if (opcode === "syscall") return 0x0000000c;
+  if (opcode === "eret") return 0x42000018;
+  if (opcode === "break") return ((((imm >>> 0) & 0xfffff) << 6) | 0x0d) >>> 0;
+
+  switch (opcode) {
+    case "add": return encodeRFormatWord(rs, rt, rd, 0, 0x20);
+    case "addu": return encodeRFormatWord(rs, rt, rd, 0, 0x21);
+    case "sub": return encodeRFormatWord(rs, rt, rd, 0, 0x22);
+    case "subu": return encodeRFormatWord(rs, rt, rd, 0, 0x23);
+    case "and": return encodeRFormatWord(rs, rt, rd, 0, 0x24);
+    case "or": return encodeRFormatWord(rs, rt, rd, 0, 0x25);
+    case "xor": return encodeRFormatWord(rs, rt, rd, 0, 0x26);
+    case "nor": return encodeRFormatWord(rs, rt, rd, 0, 0x27);
+    case "slt": return encodeRFormatWord(rs, rt, rd, 0, 0x2a);
+    case "sltu": return encodeRFormatWord(rs, rt, rd, 0, 0x2b);
+    case "movn": return encodeRFormatWord(rs, rt, rd, 0, 0x0b);
+    case "movz": return encodeRFormatWord(rs, rt, rd, 0, 0x0a);
+    case "sll": return encodeRFormatWord(0, rt, rd, imm, 0x00);
+    case "srl": return encodeRFormatWord(0, rt, rd, imm, 0x02);
+    case "sra": return encodeRFormatWord(0, rt, rd, imm, 0x03);
+    case "sllv": return encodeRFormatWord(rs, rt, rd, 0, 0x04);
+    case "srlv": return encodeRFormatWord(rs, rt, rd, 0, 0x06);
+    case "srav": return encodeRFormatWord(rs, rt, rd, 0, 0x07);
+    case "mult": return encodeRFormatWord(rs, rt, 0, 0, 0x18);
+    case "multu": return encodeRFormatWord(rs, rt, 0, 0, 0x19);
+    case "div": return encodeRFormatWord(rs, rt, 0, 0, 0x1a);
+    case "divu": return encodeRFormatWord(rs, rt, 0, 0, 0x1b);
+    case "mfhi": return encodeRFormatWord(0, 0, rd, 0, 0x10);
+    case "mflo": return encodeRFormatWord(0, 0, rd, 0, 0x12);
+    case "mthi": return encodeRFormatWord(rs, 0, 0, 0, 0x11);
+    case "mtlo": return encodeRFormatWord(rs, 0, 0, 0, 0x13);
+    case "jr": return encodeRFormatWord(rs, 0, 0, 0, 0x08);
+    case "jalr": return encodeRFormatWord(rs, 0, rd || 31, 0, 0x09);
+    case "teq": return encodeRFormatWord(rs, rt, 0, 0, 0x34);
+    case "tne": return encodeRFormatWord(rs, rt, 0, 0, 0x36);
+    case "tge": return encodeRFormatWord(rs, rt, 0, 0, 0x30);
+    case "tgeu": return encodeRFormatWord(rs, rt, 0, 0, 0x31);
+    case "tlt": return encodeRFormatWord(rs, rt, 0, 0, 0x32);
+    case "tltu": return encodeRFormatWord(rs, rt, 0, 0, 0x33);
+    case "movf": return encodeRFormatWord(rs, ((cc & 0x7) << 2), rd, 0, 0x01);
+    case "movt": return encodeRFormatWord(rs, ((cc & 0x7) << 2) | 0x1, rd, 0, 0x01);
+
+    case "addi": return encodeIFormatWord(0x08, rs, rt, imm);
+    case "addiu": return encodeIFormatWord(0x09, rs, rt, imm);
+    case "andi": return encodeIFormatWord(0x0c, rs, rt, imm);
+    case "ori": return encodeIFormatWord(0x0d, rs, rt, imm);
+    case "xori": return encodeIFormatWord(0x0e, rs, rt, imm);
+    case "slti": return encodeIFormatWord(0x0a, rs, rt, imm);
+    case "sltiu": return encodeIFormatWord(0x0b, rs, rt, imm);
+    case "lui": return encodeIFormatWord(0x0f, 0, rt, imm);
+    case "lw": return encodeIFormatWord(0x23, base, rt, imm);
+    case "sw": return encodeIFormatWord(0x2b, base, rt, imm);
+    case "lb": return encodeIFormatWord(0x20, base, rt, imm);
+    case "lbu": return encodeIFormatWord(0x24, base, rt, imm);
+    case "sb": return encodeIFormatWord(0x28, base, rt, imm);
+    case "lh": return encodeIFormatWord(0x21, base, rt, imm);
+    case "lhu": return encodeIFormatWord(0x25, base, rt, imm);
+    case "sh": return encodeIFormatWord(0x29, base, rt, imm);
+    case "ll": return encodeIFormatWord(0x30, base, rt, imm);
+    case "sc": return encodeIFormatWord(0x38, base, rt, imm);
+    case "lwl": return encodeIFormatWord(0x22, base, rt, imm);
+    case "lwr": return encodeIFormatWord(0x26, base, rt, imm);
+    case "swl": return encodeIFormatWord(0x2a, base, rt, imm);
+    case "swr": return encodeIFormatWord(0x2e, base, rt, imm);
+    case "beq": return encodeIFormatWord(0x04, rs, rt, computeBranchImmediateField(address, target));
+    case "bne": return encodeIFormatWord(0x05, rs, rt, computeBranchImmediateField(address, target));
+    case "bgtz": return encodeIFormatWord(0x07, rs, 0, computeBranchImmediateField(address, target));
+    case "blez": return encodeIFormatWord(0x06, rs, 0, computeBranchImmediateField(address, target));
+    case "bltz": return encodeIFormatWord(0x01, rs, 0x00, computeBranchImmediateField(address, target));
+    case "bgez": return encodeIFormatWord(0x01, rs, 0x01, computeBranchImmediateField(address, target));
+    case "bltzal": return encodeIFormatWord(0x01, rs, 0x10, computeBranchImmediateField(address, target));
+    case "bgezal": return encodeIFormatWord(0x01, rs, 0x11, computeBranchImmediateField(address, target));
+    case "teqi": return encodeIFormatWord(0x01, rs, 0x0c, imm);
+    case "tnei": return encodeIFormatWord(0x01, rs, 0x0e, imm);
+    case "tgei": return encodeIFormatWord(0x01, rs, 0x08, imm);
+    case "tgeiu": return encodeIFormatWord(0x01, rs, 0x09, imm);
+    case "tlti": return encodeIFormatWord(0x01, rs, 0x0a, imm);
+    case "tltiu": return encodeIFormatWord(0x01, rs, 0x0b, imm);
+    case "mfc0": return encodeCopMoveWord(0x10, 0x00, rt, rd);
+    case "mtc0": return encodeCopMoveWord(0x10, 0x04, rt, rd);
+    case "mfc1": return encodeCopMoveWord(0x11, 0x00, rt, fs);
+    case "mtc1": return encodeCopMoveWord(0x11, 0x04, rt, fs);
+    case "lwc1": return encodeIFormatWord(0x31, base, fs, imm);
+    case "swc1": return encodeIFormatWord(0x39, base, fs, imm);
+    case "bc1f": return encodeIFormatWord(0x11, 0x08, ((cc & 0x7) << 2), computeBranchImmediateField(address, target));
+    case "bc1t": return encodeIFormatWord(0x11, 0x08, ((cc & 0x7) << 2) | 0x1, computeBranchImmediateField(address, target));
+    case "j": return encodeJFormatWord(0x02, target);
+    case "jal": return encodeJFormatWord(0x03, target);
+    case "mul": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rt & 0x1f) << 16) | ((rd & 0x1f) << 11) | 0x02) >>> 0);
+    case "madd": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rt & 0x1f) << 16) | 0x00) >>> 0);
+    case "maddu": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rt & 0x1f) << 16) | 0x01) >>> 0);
+    case "msub": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rt & 0x1f) << 16) | 0x04) >>> 0);
+    case "msubu": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rt & 0x1f) << 16) | 0x05) >>> 0);
+    case "clz": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rd & 0x1f) << 11) | 0x20) >>> 0);
+    case "clo": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rd & 0x1f) << 11) | 0x21) >>> 0);
+    default:
+      return null;
+  }
+}
+
+function predictAlignedDataLabelAddress(state, statement) {
+  if (!state || (state.segment !== "data" && state.segment !== "kdata")) return null;
+  const effectiveStatement = String(statement ?? "").trim();
+  const colonIndex = effectiveStatement.indexOf(":");
+  const directiveSource = colonIndex >= 0
+    ? effectiveStatement.slice(colonIndex + 1).trim()
+    : effectiveStatement;
+  const explicitDirective = directiveSource.startsWith(".")
+    ? String(directiveSource.split(/\s+/)[0] || "").toLowerCase()
+    : String(state.currentDataDirective || ".word").toLowerCase();
+  const scalarAlignment = explicitDirective === ".half" ? 2
+    : explicitDirective === ".word" || explicitDirective === ".float" ? 4
+    : explicitDirective === ".double" ? 8
+    : 0;
+  if (!scalarAlignment) {
+    return state.segment === "kdata" ? (state.kernelDataAddress >>> 0) : (state.dataAddress >>> 0);
+  }
+  const autoAlign = state.segment === "kdata" ? state.autoAlignKernelData !== false : state.autoAlignData !== false;
+  const baseAddress = state.segment === "kdata" ? (state.kernelDataAddress >>> 0) : (state.dataAddress >>> 0);
+  if (!autoAlign) return baseAddress;
+  return ((baseAddress + scalarAlignment - 1) & ~(scalarAlignment - 1)) >>> 0;
+}
+
 function getReferenceSyscallMatrix() {
   const referenceData = getReferenceDataStore();
   return Array.isArray(referenceData?.syscallMatrix) ? referenceData.syscallMatrix : [];
 }
 
 const MANUAL_PSEUDO_EXPANSION_OPS = new Set([
-  "nop", "move", "clear", "not", "abs", "neg", "negu",
+  "nop", "move", "not", "abs", "neg", "negu",
   "li",
   "add", "addu", "sub", "subu", "subi", "subiu",
   "addi", "addiu", "andi", "ori", "xori",
@@ -1157,9 +1604,10 @@ const EXCEPTION_HANDLER_ADDRESS = 0x80000180;
 
 class MarsEngine {
   constructor({ settings, memoryMap }) {
-    this.settings = settings;
+    this.settings = { ...DEFAULT_SETTINGS, ...(settings ?? {}) };
     this.memoryMap = { ...DEFAULT_MEMORY_MAP, ...(memoryMap ?? {}) };
     this.runtimeHooks = {};
+    this.memoryAccessObservers = new Set();
     this.sourceFiles = new Map();
     this.defaultSourceName = "main.s";
     this.activeSourceName = this.defaultSourceName;
@@ -1175,6 +1623,46 @@ class MarsEngine {
   setMemoryMap(memoryMap = {}) {
     this.memoryMap = { ...this.memoryMap, ...memoryMap };
     this.reset();
+  }
+
+  registerMemoryObserver(observer = {}) {
+    if (!observer || typeof observer !== "object") return () => {};
+    const start = Number.isFinite(observer.start) ? (observer.start >>> 0) : 0;
+    const end = Number.isFinite(observer.end) ? (observer.end >>> 0) : start;
+    const entry = {
+      start: Math.min(start, end) >>> 0,
+      end: Math.max(start, end) >>> 0,
+      onRead: typeof observer.onRead === "function" ? observer.onRead : null,
+      onWrite: typeof observer.onWrite === "function" ? observer.onWrite : null
+    };
+    this.memoryAccessObservers.add(entry);
+    return () => {
+      this.memoryAccessObservers.delete(entry);
+    };
+  }
+
+  notifyMemoryObservers(kind, address, size, value) {
+    if (!(this.memoryAccessObservers instanceof Set) || this.memoryAccessObservers.size === 0) return;
+    const start = address >>> 0;
+    const width = Math.max(1, size | 0);
+    const end = (start + width - 1) >>> 0;
+    this.memoryAccessObservers.forEach((observer) => {
+      if (!observer) return;
+      if (end < (observer.start >>> 0) || start > (observer.end >>> 0)) return;
+      const handler = kind === "write" ? observer.onWrite : observer.onRead;
+      if (typeof handler !== "function") return;
+      try {
+        handler({
+          kind,
+          address: start >>> 0,
+          size: width,
+          value: value | 0,
+          steps: this.steps | 0
+        });
+      } catch {
+        // Ignore observer failures to keep simulation stable.
+      }
+    });
   }
 
   setSourceFiles(files = new Map()) {
@@ -1259,6 +1747,123 @@ class MarsEngine {
       });
     });
     return map;
+  }
+
+  cloneArgsRegistry(source) {
+    if (!Array.isArray(source)) return [];
+    return source
+      .filter((entry) => entry && typeof entry === "object")
+      .map((entry) => ({
+        kind: String(entry.kind || ""),
+        name: String(entry.name || ""),
+        address: Number.isFinite(entry.address) ? (entry.address >>> 0) : 0
+      }));
+  }
+
+  cloneImageHandleMap(source) {
+    const map = new Map();
+    if (!(source instanceof Map)) return map;
+    source.forEach((value, key) => {
+      if (!value || typeof value !== "object") return;
+      map.set(key | 0, {
+        id: Number.isFinite(value.id) ? (value.id | 0) : (key | 0),
+        width: Math.max(0, Number(value.width) | 0),
+        height: Math.max(0, Number(value.height) | 0),
+        dataAddress: Number.isFinite(value.dataAddress) ? (value.dataAddress >>> 0) : 0,
+        path: value.path == null ? "" : String(value.path)
+      });
+    });
+    return map;
+  }
+
+  reserveHeapBytes(byteCount = 0, alignment = 4) {
+    const size = Math.max(0, Number(byteCount) | 0);
+    const align = Math.max(1, Number(alignment) | 0);
+    const alignedPointer = Math.ceil((this.heapPointer >>> 0) / align) * align;
+    const padding = (alignedPointer - (this.heapPointer >>> 0)) | 0;
+    this.ensureHeapReservation(size + padding);
+    this.heapPointer = ((alignedPointer >>> 0) + size) >>> 0;
+    return alignedPointer >>> 0;
+  }
+
+  allocateCString(text = "") {
+    const payload = textToBytes(String(text ?? ""));
+    const address = this.reserveHeapBytes(payload.length + 1, 4);
+    for (let i = 0; i < payload.length; i += 1) this.setByte((address + i) >>> 0, payload[i]);
+    this.setByte((address + payload.length) >>> 0, 0);
+    return address >>> 0;
+  }
+
+  allocateScalarWord(value = 0) {
+    const address = this.reserveHeapBytes(4, 4);
+    this.writeWord(address, value | 0);
+    return address >>> 0;
+  }
+
+  allocateWordArray(values = []) {
+    const items = Array.isArray(values) ? values : [];
+    const baseAddress = this.reserveHeapBytes(4 + (items.length * 4), 4);
+    this.writeWord(baseAddress, items.length | 0);
+    for (let i = 0; i < items.length; i += 1) {
+      this.writeWord((baseAddress + 4 + (i * 4)) >>> 0, items[i] | 0);
+    }
+    return (baseAddress + 4) >>> 0;
+  }
+
+  getArrayLength(address) {
+    const ptr = address >>> 0;
+    if (ptr === 0) return 0;
+    return this.readWord((ptr - 4) >>> 0) | 0;
+  }
+
+  readArrayWords(address, explicitLength = null) {
+    const ptr = address >>> 0;
+    const length = explicitLength == null ? this.getArrayLength(ptr) : Math.max(0, explicitLength | 0);
+    const values = [];
+    for (let i = 0; i < length; i += 1) {
+      values.push(this.readWord((ptr + (i * 4)) >>> 0) | 0);
+    }
+    return values;
+  }
+
+  readStackArgument(wordIndex = 0) {
+    const index = Math.max(0, Number(wordIndex) | 0);
+    return this.readWord(((this.registers[29] >>> 0) + (index * 4)) >>> 0) | 0;
+  }
+
+  createImageHandle(width, height, dataAddress, path = "") {
+    const handle = (0x60000000 + (this.nextImageHandleId | 0)) | 0;
+    this.nextImageHandleId = (this.nextImageHandleId + 1) | 0;
+    this.imageHandles.set(handle, {
+      id: handle,
+      width: Math.max(0, width | 0),
+      height: Math.max(0, height | 0),
+      dataAddress: dataAddress >>> 0,
+      path: String(path || "")
+    });
+    return handle | 0;
+  }
+
+  getImageHandle(handleValue) {
+    return this.imageHandles.get(handleValue | 0) || null;
+  }
+
+  readImagePixels(handleValue) {
+    const handle = this.getImageHandle(handleValue);
+    if (!handle) return [];
+    const length = Math.max(0, (handle.width | 0) * (handle.height | 0));
+    return this.readArrayWords(handle.dataAddress, length);
+  }
+
+  serializeImageHandle(handleValue) {
+    const handle = this.getImageHandle(handleValue);
+    if (!handle) return null;
+    return {
+      kind: "webmars-image-v1",
+      width: handle.width | 0,
+      height: handle.height | 0,
+      data: this.readImagePixels(handleValue).map((entry) => entry | 0)
+    };
   }
 
   loadVirtualFileSystemFromStorage() {
@@ -1358,6 +1963,10 @@ class MarsEngine {
 
     this.openFiles = this.createStdioOpenFileTable();
     this.virtualFileSystem = this.cloneVirtualFileSystemMap(this.persistentVirtualFileSystem);
+    this.stdinClosed = false;
+    this.argsRegistry = [];
+    this.imageHandles = new Map();
+    this.nextImageHandleId = 1;
 
     this.program = {
       source: "",
@@ -1385,6 +1994,10 @@ class MarsEngine {
       openFiles: null,
       virtualFileSystem: null,
       randomStreams: null,
+      stdinClosed: this.stdinClosed === true,
+      argsRegistry: this.cloneArgsRegistry(this.argsRegistry),
+      imageHandles: this.cloneImageHandleMap(this.imageHandles),
+      nextImageHandleId: this.nextImageHandleId | 0,
       estimatedBytes: 0
     };
   }
@@ -1420,6 +2033,14 @@ class MarsEngine {
       this.virtualFileSystem = this.cloneVirtualFileSystemMap(restoredVfs);
       this.persistVirtualFileSystemToStorage();
     }
+    this.stdinClosed = state.stdinClosed === true;
+    this.argsRegistry = this.cloneArgsRegistry(state.argsRegistry);
+    if (state.imageHandles instanceof Map || Array.isArray(state.imageHandles)) {
+      this.imageHandles = this.cloneImageHandleMap(state.imageHandles instanceof Map ? state.imageHandles : new Map(state.imageHandles ?? []));
+    } else {
+      this.imageHandles = new Map();
+    }
+    this.nextImageHandleId = Math.max(1, Number(state.nextImageHandleId) | 0);
 
     const memoryChanges = state.memoryChanges instanceof Map
       ? state.memoryChanges
@@ -1532,10 +2153,10 @@ class MarsEngine {
       const value = clamp32(entry[1]);
       if (value === 0) return;
       this.memoryWords.set(address, value);
-      this.setByteRaw(address, (value >>> 24) & 0xff);
-      this.setByteRaw(address + 1, (value >>> 16) & 0xff);
-      this.setByteRaw(address + 2, (value >>> 8) & 0xff);
-      this.setByteRaw(address + 3, value & 0xff);
+      this.setByteRaw(address, value & 0xff);
+      this.setByteRaw(address + 1, (value >>> 8) & 0xff);
+      this.setByteRaw(address + 2, (value >>> 16) & 0xff);
+      this.setByteRaw(address + 3, (value >>> 24) & 0xff);
     });
 
     this.executionHistory = [];
@@ -1574,6 +2195,268 @@ class MarsEngine {
     }
 
     this.forceZeroRegister();
+  }
+
+  getReferenceInstructionCandidates(opcode) {
+    const index = getReferenceBasicInstructionsIndex();
+    if (!(index instanceof Map)) return [];
+    return index.get(String(opcode ?? "").toLowerCase()) ?? [];
+  }
+
+  chooseReferenceInstructionExample(opcode, operandCount = 0) {
+    const candidates = this.getReferenceInstructionCandidates(opcode);
+    if (!candidates.length) return String(opcode ?? "").toLowerCase();
+    const desired = Math.max(0, operandCount | 0);
+    const sorted = [...candidates].sort((left, right) => {
+      const delta = Math.abs(left.operandCount - desired) - Math.abs(right.operandCount - desired);
+      if (delta !== 0) return delta;
+      return (left.order | 0) - (right.order | 0);
+    });
+    return sorted[0]?.example || candidates[0]?.example || String(opcode ?? "").toLowerCase();
+  }
+
+  pushInstructionCountError(lineNumber, opcodeToken, operandCount, errors) {
+    const candidates = this.getReferenceInstructionCandidates(opcodeToken);
+    const example = this.chooseReferenceInstructionExample(opcodeToken, operandCount);
+    if (!candidates.length) {
+      errors.push({
+        line: lineNumber,
+        message: translateText('"{opcode}" is not a recognized operator', {
+          opcode: opcodeToken
+        })
+      });
+      return;
+    }
+
+    const expectedCounts = candidates.map((entry) => entry.operandCount);
+    const minOperands = Math.min(...expectedCounts);
+    const message = operandCount < minOperands
+      ? `Too few or incorrectly formatted operands. Expected: ${example}`
+      : `Too many or incorrectly formatted operands. Expected: ${example}`;
+    errors.push({
+      line: lineNumber,
+      message: translateText('"{opcode}": {message}', {
+        opcode: opcodeToken,
+        message
+      })
+    });
+  }
+
+  pushInstructionFormatError(lineNumber, opcodeToken, operandCount, errors) {
+    const candidates = this.getReferenceInstructionCandidates(opcodeToken);
+    const example = this.chooseReferenceInstructionExample(opcodeToken, operandCount);
+    if (!candidates.length) {
+      errors.push({
+        line: lineNumber,
+        message: translateText('"{opcode}" is not a recognized operator', {
+          opcode: opcodeToken
+        })
+      });
+      return;
+    }
+
+    errors.push({
+      line: lineNumber,
+      message: translateText('"{opcode}": {message}', {
+        opcode: opcodeToken,
+        message: `Too few or incorrectly formatted operands. Expected: ${example}`
+      })
+    });
+  }
+
+  pushInstructionOperandError(lineNumber, token, message, errors) {
+    errors.push({
+      line: lineNumber,
+      message: translateText('"{token}": {message}', {
+        token: String(token ?? ""),
+        message
+      })
+    });
+  }
+
+  extractFirstUnresolvedSymbol(token) {
+    const expression = stripToken(String(token ?? ""));
+    if (!expression) return null;
+    const matches = expression.match(/[A-Za-z_.$][\w.$]*/g);
+    if (!matches) return null;
+    for (let i = 0; i < matches.length; i += 1) {
+      const symbol = matches[i];
+      if (this.program.labels.has(symbol)) continue;
+      return symbol;
+    }
+    return null;
+  }
+
+  pushUndefinedSymbolError(lineNumber, token, errors) {
+    const symbol = this.extractFirstUnresolvedSymbol(token);
+    if (!symbol) return false;
+    errors.push({
+      line: lineNumber,
+      message: translateText('Symbol "{symbol}" not found in symbol table.', {
+        symbol
+      })
+    });
+    return true;
+  }
+
+  validateInstructionStatement(statement, lineNumber, address, errors, options = {}) {
+    const tokens = tokenizeStatement(statement);
+    if (!tokens.length) return true;
+
+    const opcodeToken = String(tokens[0] ?? "");
+    const opcode = opcodeToken.toLowerCase();
+    const operandCount = Math.max(0, tokens.length - 1);
+    const allowUnresolvedSymbols = options?.allowUnresolvedSymbols === true;
+    const nextPc = ((address >>> 0) + 4) >>> 0;
+
+    const candidates = this.getReferenceInstructionCandidates(opcode);
+    if (!candidates.length) {
+      errors.push({
+        line: lineNumber,
+        message: translateText('"{opcode}" is not a recognized operator', {
+          opcode: opcodeToken
+        })
+      });
+      return false;
+    }
+
+    const allowedCounts = new Set(candidates.map((entry) => entry.operandCount));
+    if (!allowedCounts.has(operandCount)) {
+      this.pushInstructionCountError(lineNumber, opcodeToken, operandCount, errors);
+      return false;
+    }
+
+    const reg = (index) => this.resolveRegister(tokens[index]);
+    const freg = (index) => this.resolveFloatRegister(tokens[index]);
+    const cop0 = (index) => this.resolveCop0Register(tokens[index]);
+
+    const reportType = (index, message = "operand is of incorrect type") => {
+      this.pushInstructionOperandError(lineNumber, tokens[index], message, errors);
+      return false;
+    };
+    const reportRange = (index) => reportType(index, "operand is out of range");
+    const reportFormat = () => {
+      this.pushInstructionFormatError(lineNumber, opcodeToken, operandCount, errors);
+      return false;
+    };
+    const reportUndefined = (index) => {
+      if (this.pushUndefinedSymbolError(lineNumber, tokens[index], errors)) return false;
+      return reportType(index);
+    };
+
+    const expectRegister = (index) => reg(index) !== null || reportType(index);
+    const expectFloatRegister = (index) => freg(index) !== null || reportType(index);
+    const expectCop0Register = (index) => cop0(index) !== null || reportType(index);
+    const expectImmediate = (index, range = null) => {
+      const raw = String(tokens[index] ?? "").trim();
+      if (!raw) return reportType(index);
+      const parsed = parseImmediate(raw);
+      const value = Number.isFinite(parsed) ? parsed : this.resolveValue(raw);
+      if (!Number.isFinite(value)) {
+        if (allowUnresolvedSymbols && isPotentialSymbolExpression(raw)) return true;
+        return reportUndefined(index);
+      }
+      if (range && (value < range.min || value > range.max)) return reportRange(index);
+      return true;
+    };
+    const expectMemory = (index) => {
+      const raw = String(tokens[index] ?? "").trim();
+      if (!raw) return reportFormat();
+      if (this.resolveNativeMemoryOperand(raw)) return true;
+
+      const compact = raw.replace(/\s+/g, "");
+      const hasParenSyntax = compact.includes("(") || compact.includes(")");
+      const memMatch = /^(.*)\((\$?[\w\d]+)\)$/.exec(compact);
+      if (memMatch) {
+        if (this.resolveRegister(memMatch[2]) === null) return reportFormat();
+        const offsetExpr = String(memMatch[1] ?? "").trim();
+        if (!offsetExpr) return true;
+        if (Number.isFinite(this.resolveValue(offsetExpr))) return true;
+        if (allowUnresolvedSymbols && isPotentialSymbolExpression(offsetExpr)) return true;
+        if (!allowUnresolvedSymbols && this.pushUndefinedSymbolError(lineNumber, offsetExpr, errors)) return false;
+        return reportFormat();
+      }
+
+      if (hasParenSyntax) return reportFormat();
+
+      if (!allowUnresolvedSymbols && this.pushUndefinedSymbolError(lineNumber, raw, errors)) return false;
+      if (allowUnresolvedSymbols && isPotentialSymbolExpression(raw)) return true;
+      return reportFormat();
+    };
+    const expectBranchTarget = (index) => {
+      const raw = String(tokens[index] ?? "").trim();
+      if (this.branchTarget(raw, nextPc) !== null) return true;
+      if (allowUnresolvedSymbols && isPotentialSymbolExpression(raw)) return true;
+      if (!allowUnresolvedSymbols && this.pushUndefinedSymbolError(lineNumber, raw, errors)) return false;
+      return reportType(index);
+    };
+    const expectJumpTarget = (index) => {
+      const raw = String(tokens[index] ?? "").trim();
+      if (this.resolveLabelAddress(raw) !== null || Number.isFinite(parseImmediate(raw)) || Number.isFinite(this.resolveValue(raw))) return true;
+      if (allowUnresolvedSymbols && isPotentialSymbolExpression(raw)) return true;
+      if (!allowUnresolvedSymbols && this.pushUndefinedSymbolError(lineNumber, raw, errors)) return false;
+      return reportType(index);
+    };
+
+    if (["nop", "syscall", "eret"].includes(opcode)) return true;
+    if (opcode === "break") return operandCount === 0 || expectImmediate(1);
+    if (["teq", "tne", "tge", "tgeu", "tlt", "tltu"].includes(opcode)) return expectRegister(1) && expectRegister(2);
+    if (["teqi", "tnei", "tgei", "tgeiu", "tlti", "tltiu"].includes(opcode)) return expectRegister(1) && expectImmediate(2, { min: -32768, max: 32767 });
+    if (["add", "addu", "sub", "subu", "and", "or", "xor", "nor", "slt", "sltu", "mul", "movn", "movz"].includes(opcode)) return expectRegister(1) && expectRegister(2) && expectRegister(3);
+    if (["clz", "clo"].includes(opcode)) return expectRegister(1) && expectRegister(2);
+    if (["addi", "addiu", "slti", "sltiu"].includes(opcode)) return expectRegister(1) && expectRegister(2) && expectImmediate(3, { min: -32768, max: 32767 });
+    if (["andi", "ori", "xori"].includes(opcode)) return expectRegister(1) && expectRegister(2) && expectImmediate(3, { min: 0, max: 65535 });
+    if (opcode === "lui") return expectRegister(1) && expectImmediate(2);
+    if (["sll", "srl", "sra"].includes(opcode)) return expectRegister(1) && expectRegister(2) && expectImmediate(3, { min: 0, max: 31 });
+    if (["sllv", "srlv", "srav"].includes(opcode)) return expectRegister(1) && expectRegister(2) && expectRegister(3);
+    if (["mult", "multu", "div", "divu", "madd", "maddu", "msub", "msubu"].includes(opcode)) return expectRegister(1) && expectRegister(2);
+    if (["mfhi", "mflo", "mthi", "mtlo"].includes(opcode)) return expectRegister(1);
+    if (["mfc0", "mtc0"].includes(opcode)) return expectRegister(1) && expectCop0Register(2);
+    if (["mfc1", "mtc1"].includes(opcode)) return expectRegister(1) && expectFloatRegister(2);
+    if (["lw", "sw", "lb", "lbu", "sb", "lh", "lhu", "sh", "ll", "sc", "lwl", "lwr", "swl", "swr"].includes(opcode)) return expectRegister(1) && expectMemory(2);
+    if (["lwc1", "swc1", "ldc1", "sdc1"].includes(opcode)) return expectFloatRegister(1) && expectMemory(2);
+    if (["beq", "bne"].includes(opcode)) return expectRegister(1) && expectRegister(2) && expectBranchTarget(3);
+    if (["bgtz", "blez", "bltz", "bgez", "bgezal", "bltzal"].includes(opcode)) return expectRegister(1) && expectBranchTarget(2);
+    if (["bc1f", "bc1t"].includes(opcode)) {
+      return operandCount === 1
+        ? expectBranchTarget(1)
+        : expectImmediate(1, { min: 0, max: 7 }) && expectBranchTarget(2);
+    }
+    if (["j", "jal"].includes(opcode)) return expectJumpTarget(1);
+    if (opcode === "jr") return expectRegister(1);
+    if (opcode === "jalr") return operandCount === 1 ? expectRegister(1) : expectRegister(1) && expectRegister(2);
+    if (["movf", "movt"].includes(opcode)) {
+      return operandCount === 2
+        ? expectRegister(1) && expectRegister(2)
+        : expectRegister(1) && expectRegister(2) && expectImmediate(3, { min: 0, max: 7 });
+    }
+    if (["add.s", "sub.s", "mul.s", "div.s", "add.d", "sub.d", "mul.d", "div.d"].includes(opcode)) return expectFloatRegister(1) && expectFloatRegister(2) && expectFloatRegister(3);
+    if (["mov.s", "mov.d", "neg.s", "neg.d", "abs.s", "abs.d", "sqrt.s", "sqrt.d"].includes(opcode)) return expectFloatRegister(1) && expectFloatRegister(2);
+    if (["movf.s", "movt.s", "movf.d", "movt.d"].includes(opcode)) {
+      return operandCount === 2
+        ? expectFloatRegister(1) && expectFloatRegister(2)
+        : expectFloatRegister(1) && expectFloatRegister(2) && expectImmediate(3, { min: 0, max: 7 });
+    }
+    if (["movn.s", "movz.s", "movn.d", "movz.d"].includes(opcode)) return expectFloatRegister(1) && expectFloatRegister(2) && expectRegister(3);
+    if (["c.eq.s", "c.lt.s", "c.le.s", "c.eq.d", "c.lt.d", "c.le.d"].includes(opcode)) {
+      return operandCount === 2
+        ? expectFloatRegister(1) && expectFloatRegister(2)
+        : expectImmediate(1, { min: 0, max: 7 }) && expectFloatRegister(2) && expectFloatRegister(3);
+    }
+    if (["cvt.s.d", "cvt.s.w", "cvt.d.s", "cvt.d.w", "cvt.w.s", "cvt.w.d", "round.w.s", "round.w.d", "trunc.w.s", "trunc.w.d", "ceil.w.s", "ceil.w.d", "floor.w.s", "floor.w.d"].includes(opcode)) return expectFloatRegister(1) && expectFloatRegister(2);
+
+    const row = this.buildNativeExecutionPlanRow({
+      address: address >>> 0,
+      line: lineNumber,
+      basic: statement
+    });
+    if (!row.valid || row.delegate) {
+      if (!allowUnresolvedSymbols && operandCount > 0 && this.pushUndefinedSymbolError(lineNumber, tokens[tokens.length - 1], errors)) {
+        return false;
+      }
+      return reportType(1);
+    }
+    return true;
   }
 
   resolveNativeMemoryOperand(token) {
@@ -2227,20 +3110,26 @@ class MarsEngine {
     const addr = address >>> 0;
     this.assertAddressInStrictMemoryModel(addr, 1, "read");
     const value = this.getByte(addr);
-    return signed ? ((value << 24) >> 24) : value;
+    const result = signed ? ((value << 24) >> 24) : value;
+    this.notifyMemoryObservers("read", addr, 1, result);
+    return result;
   }
 
   writeByte(address, value) {
-    this.assertWritableAddress(address >>> 0, 1);
-    this.setByte(address >>> 0, value);
+    const addr = address >>> 0;
+    this.assertWritableAddress(addr, 1);
+    this.setByte(addr, value);
+    this.notifyMemoryObservers("write", addr, 1, value & 0xff);
   }
 
   readHalf(address, signed = true) {
     const addr = address >>> 0;
     this.assertAddressInStrictMemoryModel(addr, 2, "read");
     if (addr % 2 !== 0) throw new Error(translateText("Address not aligned on halfword boundary: {address}", { address: toHex(addr) }));
-    const value = ((this.getByte(addr) << 8) | this.getByte(addr + 1)) & 0xffff;
-    return signed ? signExtend16(value) : zeroExtend16(value);
+    const value = (this.getByte(addr) | (this.getByte(addr + 1) << 8)) & 0xffff;
+    const result = signed ? signExtend16(value) : zeroExtend16(value);
+    this.notifyMemoryObservers("read", addr, 2, result);
+    return result;
   }
 
   writeHalf(address, value) {
@@ -2249,15 +3138,18 @@ class MarsEngine {
     if (addr % 2 !== 0) throw new Error(translateText("Address not aligned on halfword boundary: {address}", { address: toHex(addr) }));
     this.assertWritableAddress(addr, 2);
     const numeric = zeroExtend16(value);
-    this.setByte(addr, (numeric >>> 8) & 0xff);
-    this.setByte(addr + 1, numeric & 0xff);
+    this.setByte(addr, numeric & 0xff);
+    this.setByte(addr + 1, (numeric >>> 8) & 0xff);
+    this.notifyMemoryObservers("write", addr, 2, numeric);
   }
 
   readWord(address) {
     const addr = address >>> 0;
     this.assertAddressInStrictMemoryModel(addr, 4, "read");
     if (addr % 4 !== 0) throw new Error(translateText("Address not aligned on word boundary: {address}", { address: toHex(addr) }));
-    return this.memoryWords.get(addr) ?? composeWord(this.getByte(addr), this.getByte(addr + 1), this.getByte(addr + 2), this.getByte(addr + 3));
+    const result = this.memoryWords.get(addr) ?? composeWord(this.getByte(addr), this.getByte(addr + 1), this.getByte(addr + 2), this.getByte(addr + 3));
+    this.notifyMemoryObservers("read", addr, 4, result);
+    return result;
   }
 
   writeWord(address, value) {
@@ -2266,10 +3158,11 @@ class MarsEngine {
     if (addr % 4 !== 0) throw new Error(translateText("Address not aligned on word boundary: {address}", { address: toHex(addr) }));
     this.assertWritableAddress(addr, 4);
     const numeric = value >>> 0;
-    this.setByte(addr, (numeric >>> 24) & 0xff);
-    this.setByte(addr + 1, (numeric >>> 16) & 0xff);
-    this.setByte(addr + 2, (numeric >>> 8) & 0xff);
-    this.setByte(addr + 3, numeric & 0xff);
+    this.setByte(addr, numeric & 0xff);
+    this.setByte(addr + 1, (numeric >>> 8) & 0xff);
+    this.setByte(addr + 2, (numeric >>> 16) & 0xff);
+    this.setByte(addr + 3, (numeric >>> 24) & 0xff);
+    this.notifyMemoryObservers("write", addr, 4, numeric | 0);
   }
   readNullTerminatedString(address, maxLen = 16384) {
     let out = "";
@@ -2447,22 +3340,15 @@ class MarsEngine {
   }
 
   parseMacroInvocationArguments(statement, name) {
-    let argsText = statement.slice(name.length).trim();
-    if (!argsText) return [];
-    if (argsText.startsWith("(") && argsText.endsWith(")")) {
-      argsText = argsText.slice(1, -1).trim();
-    }
-    return argsText ? tokenizeStatement(argsText) : [];
+    const parsed = parseMacroInvocation(statement);
+    if (!parsed || parsed.name !== name) return [];
+    return parsed.args;
   }
 
   applyEqv(statement, eqvMap) {
-    let output = statement;
-    const entries = [...eqvMap.entries()].sort((a, b) => b[0].length - a[0].length);
-    entries.forEach(([key, value]) => {
-      const pattern = new RegExp(`(?<![\\w.$])${escapeRegExp(key)}(?![\\w.$])`, "g");
-      output = output.replace(pattern, value);
-    });
-    return output;
+    return replaceIdentifiersOutsideLiterals(statement, (identifier) => (
+      eqvMap.has(identifier) ? eqvMap.get(identifier) : identifier
+    ));
   }
 
   expandPseudoFromReference(statement, firstPass = false, allowExtendedAssembler = this.settings.extendedAssembler) {
@@ -2513,7 +3399,8 @@ class MarsEngine {
       return Number.isFinite(resolved) ? resolved : 0;
     };
 
-    const high16 = (value) => ((value >>> 16) + ((value & 0x8000) ? 1 : 0)) & 0xffff;
+    const high16Carry = (value) => ((value >>> 16) + ((value & 0x8000) ? 1 : 0)) & 0xffff;
+    const high16Logical = (value) => (value >>> 16) & 0xffff;
     const low16 = (value) => value & 0xffff;
 
     const isImmediateToken = (token) => {
@@ -2530,7 +3417,7 @@ class MarsEngine {
       if (fitsSigned16(value)) return [`addiu $at, $zero, ${value}`];
       if (preferUnsignedOri && fitsUnsigned16(value)) return [`ori $at, $zero, ${value}`];
       const asUnsigned = value >>> 0;
-      return [`lui $at, ${high16(asUnsigned)}`, `ori $at, $at, ${low16(asUnsigned)}`];
+      return [`lui $at, ${high16Logical(asUnsigned)}`, `ori $at, $at, ${low16(asUnsigned)}`];
     };
     const delaySlotNop = this.settings.delayedBranching ? ["nop"] : [];
     const branchOffset = this.settings.delayedBranching ? 2 : 1;
@@ -2572,8 +3459,6 @@ class MarsEngine {
         return ["sll $zero, $zero, 0"];
       case "move":
         return args.length >= 2 ? [`addu ${args[0]}, ${args[1]}, $zero`] : [statement];
-      case "clear":
-        return args.length >= 1 ? [`addu ${args[0]}, $zero, $zero`] : [statement];
       case "not":
         return args.length >= 2 ? [`nor ${args[0]}, ${args[1]}, $zero`] : [statement];
       case "abs":
@@ -2591,7 +3476,7 @@ class MarsEngine {
         if (fitsSigned16(value)) return [`addiu ${args[0]}, $zero, ${value}`];
         if (fitsUnsigned16(value)) return [`ori ${args[0]}, $zero, ${value}`];
         const asUnsigned = value >>> 0;
-        return [`lui ${args[0]}, ${high16(asUnsigned)}`, `ori ${args[0]}, ${args[0]}, ${low16(asUnsigned)}`];
+        return [`lui ${args[0]}, ${high16Logical(asUnsigned)}`, `ori ${args[0]}, ${args[0]}, ${low16(asUnsigned)}`];
       }
 
       case "la": {
@@ -2617,7 +3502,16 @@ class MarsEngine {
           ];
         }
 
-        const value = asImmediate(addressToken);
+        const directImmediate = parseImmediate(addressToken);
+        if (!Number.isFinite(directImmediate)) {
+          const resolvedValue = firstPass ? 0 : this.resolveValue(addressToken);
+          const asUnsigned = (Number.isFinite(resolvedValue) ? resolvedValue : 0) >>> 0;
+          return [
+            `lui $at, ${high16Logical(asUnsigned)}`,
+            `ori ${destination}, $at, ${low16(asUnsigned)}`
+          ];
+        }
+        const value = directImmediate;
         if (fitsSigned16(value)) return [`addiu ${destination}, $zero, ${value}`];
         if (fitsUnsigned16(value)) return [`ori ${destination}, $zero, ${value >>> 0}`];
         const asUnsigned = value >>> 0;
@@ -2931,11 +3825,14 @@ class MarsEngine {
         if (args.length < 2) return [statement];
         const target = args[0];
         const memoryToken = String(args[1]).trim();
-        const memMatch = /^(.*)\((\$?[\w\d]+)\)$/.exec(memoryToken.replace(/\s+/g, ""));
+        const compactMemoryToken = memoryToken.replace(/\s+/g, "");
+        const memMatch = /^(.*)\((\$?[\w\d]+)\)$/.exec(compactMemoryToken);
+        const hasParenSyntax = compactMemoryToken.includes("(") || compactMemoryToken.includes(")");
 
         if (memMatch) {
           const offsetToken = (memMatch[1] && memMatch[1].length > 0) ? memMatch[1] : "0";
           const baseToken = memMatch[2];
+          if (this.resolveRegister(baseToken) === null) return [statement];
           const offsetImmediate = parseImmediate(offsetToken);
           if (Number.isFinite(offsetImmediate) && fitsSigned16(offsetImmediate)) return [statement];
           return [
@@ -2944,6 +3841,8 @@ class MarsEngine {
             `${op} ${target}, 0($at)`
           ];
         }
+
+        if (hasParenSyntax) return [statement];
 
         const absolute = parseImmediate(memoryToken);
         if (Number.isFinite(absolute) && fitsSigned16(absolute)) {
@@ -2972,7 +3871,7 @@ class MarsEngine {
         const absoluteUnsigned = absoluteValue >>> 0;
         const absoluteLow16Signed = signExtend16(absoluteUnsigned & 0xffff);
         return [
-          `lui $at, ${high16(absoluteUnsigned)}`,
+          `lui $at, ${high16Carry(absoluteUnsigned)}`,
           `${op} ${target}, ${absoluteLow16Signed}($at)`
         ];
       }
@@ -3058,14 +3957,14 @@ class MarsEngine {
         return;
       }
       if (size === 2) {
-        this.writeByte(addr, (numeric >>> 8) & 0xff);
-        this.writeByte((addr + 1) >>> 0, numeric & 0xff);
+        this.writeByte(addr, numeric & 0xff);
+        this.writeByte((addr + 1) >>> 0, (numeric >>> 8) & 0xff);
         return;
       }
-      this.writeByte(addr, (numeric >>> 24) & 0xff);
-      this.writeByte((addr + 1) >>> 0, (numeric >>> 16) & 0xff);
-      this.writeByte((addr + 2) >>> 0, (numeric >>> 8) & 0xff);
-      this.writeByte((addr + 3) >>> 0, numeric & 0xff);
+      this.writeByte(addr, numeric & 0xff);
+      this.writeByte((addr + 1) >>> 0, (numeric >>> 8) & 0xff);
+      this.writeByte((addr + 2) >>> 0, (numeric >>> 16) & 0xff);
+      this.writeByte((addr + 3) >>> 0, (numeric >>> 24) & 0xff);
     };
 
     const warnIfTruncated = (value, byteSize) => {
@@ -3132,54 +4031,17 @@ class MarsEngine {
       return;
     }
 
-    if (directive === ".set") {
-      if (!(state.setOptions && typeof state.setOptions === "object")) {
-        state.setOptions = {
-          reorder: true,
-          at: true,
-          macro: true
-        };
+      if (directive === ".set") {
+        if (args.length < 1) {
+          errors.push({ line: lineNumber, message: translateText('".set" requires at least one argument.') });
+          return;
+        }
+      if (sizeOnly) {
+        warnings.push({
+          line: lineNumber,
+          message: translateText("MARS currently ignores the .set directive.")
+        });
       }
-      if (args.length < 1) {
-        errors.push({ line: lineNumber, message: translateText('".set" requires at least one argument.') });
-        return;
-      }
-
-      const option = String(args[0] || "").trim().toLowerCase();
-      if (!option) {
-        errors.push({ line: lineNumber, message: translateText('".set" requires at least one argument.') });
-        return;
-      }
-
-      if (option === "reorder") {
-        state.setOptions.reorder = true;
-        return;
-      }
-      if (option === "noreorder") {
-        state.setOptions.reorder = false;
-        return;
-      }
-      if (option === "at") {
-        state.setOptions.at = true;
-        return;
-      }
-      if (option === "noat") {
-        state.setOptions.at = false;
-        return;
-      }
-      if (option === "macro") {
-        state.setOptions.macro = true;
-        return;
-      }
-      if (option === "nomacro") {
-        state.setOptions.macro = false;
-        return;
-      }
-
-      warnings.push({
-        line: lineNumber,
-        message: translateText('Unsupported ".set" option "{option}" (ignored).', { option })
-      });
       return;
     }
 
@@ -3267,8 +4129,8 @@ class MarsEngine {
             if (!sizeOnly) {
               const buffer = new ArrayBuffer(size);
               const view = new DataView(buffer);
-              if (size === 4) view.setFloat32(0, parsed, false);
-              else view.setFloat64(0, parsed, false);
+              if (size === 4) view.setFloat32(0, parsed, JAVA_MARS_ENDIANNESS === "little");
+              else view.setFloat64(0, parsed, JAVA_MARS_ENDIANNESS === "little");
               const base = getAddr();
               for (let i = 0; i < size; i += 1) {
                 this.writeByte((base + i) >>> 0, view.getUint8(i));
@@ -3330,8 +4192,6 @@ class MarsEngine {
       if (!normalized) return;
       const text = String(source ?? "");
       includeMap.set(normalized, text);
-      const base = pathBasenameLike(normalized);
-      if (base && !includeMap.has(base)) includeMap.set(base, text);
     };
 
     if (this.sourceFiles instanceof Map) {
@@ -3347,11 +4207,10 @@ class MarsEngine {
     const flattened = [];
     const resolveInclude = (requested, currentFile) => {
       const cleanRequest = normalizePathLike(requested);
-      const candidates = [
-        cleanRequest,
+      const candidates = Array.from(new Set([
         pathJoinLike(pathDirnameLike(currentFile), cleanRequest),
-        pathBasenameLike(cleanRequest)
-      ].filter(Boolean);
+        cleanRequest
+      ].filter(Boolean)));
       for (const candidate of candidates) {
         if (includeMap.has(candidate)) return candidate;
       }
@@ -3362,7 +4221,12 @@ class MarsEngine {
       const normalizedName = normalizePathLike(fileName);
       const sourceText = includeMap.get(normalizedName);
       if (typeof sourceText !== "string") {
-        errors.push({ line: 0, message: translateText("[{fileName}] include source not found.", { fileName: normalizedName }) });
+        errors.push({
+          line: 0,
+          message: translateText("Error reading include file {includeName}", {
+            includeName: projectPathBasename(normalizedName)
+          })
+        });
         return;
       }
       const lines = sourceText.replace(/\r\n/g, "\n").split("\n");
@@ -3379,10 +4243,13 @@ class MarsEngine {
           }
           const resolved = resolveInclude(includeMatch[1], normalizedName);
           if (!resolved) {
-            errors.push({ line: lineNumber, message: translateText("[{fileName}] include '{includeName}' not found.", {
-              fileName: normalizedName,
-              includeName: includeMatch[1]
-            }) });
+            const includeName = normalizePathLike(includeMatch[1]) || includeMatch[1];
+            errors.push({
+              line: lineNumber,
+              message: translateText("Error reading include file {includeName}", {
+                includeName
+              })
+            });
             continue;
           }
           if (stack.includes(resolved)) {
@@ -3418,10 +4285,13 @@ class MarsEngine {
       const eqvApplied = this.applyEqv(lineObj.statement, eqvMap).trim();
       if (!eqvApplied) return;
 
-      const tokens = tokenizeStatement(eqvApplied);
-      if (!tokens.length) return;
-      const macroName = tokens[0];
-      const args = this.parseMacroInvocationArguments(eqvApplied, macroName);
+      const parsedInvocation = parseMacroInvocation(eqvApplied);
+      if (!parsedInvocation) {
+        output.push({ lineNumber: lineObj.lineNumber, fileName: lineObj.fileName, statement: eqvApplied });
+        return;
+      }
+      const macroName = parsedInvocation.name;
+      const args = parsedInvocation.args;
       const key = `${macroName}/${args.length}`;
 
       if (macros.has(key)) {
@@ -3439,16 +4309,26 @@ class MarsEngine {
         macroCounter += 1;
 
         def.body.forEach((entry) => {
-          let expanded = entry.statement;
-          argMap.forEach((value, formal) => {
-            const pattern = new RegExp(`(?<![\\w.$])${escapeRegExp(formal)}(?![\\w.$])`, "g");
-            expanded = expanded.replace(pattern, value);
-          });
+          let expanded = replaceMacroParametersOutsideLiterals(entry.statement, argMap);
           labelSet.forEach((label) => {
-            const pattern = new RegExp(`(?<![\\w.$])${escapeRegExp(label)}(?![\\w.$])`, "g");
-            expanded = expanded.replace(pattern, `${label}${suffix}`);
+            expanded = replaceIdentifiersOutsideLiterals(expanded, (identifier) => (
+              identifier === label ? `${label}${suffix}` : identifier
+            ));
           });
           emit({ lineNumber: lineObj.lineNumber, fileName: lineObj.fileName, statement: expanded }, depth + 1);
+        });
+        return;
+      }
+
+      const hasMacroWithDifferentArity = Array.from(macros.keys()).some((macroKey) => (
+        macroKey.startsWith(`${macroName}/`)
+      ));
+      if (hasMacroWithDifferentArity) {
+        errors.push({
+          line: lineObj.lineNumber,
+          message: translateText('Forward reference or invalid parameters for macro "{macroName}"', {
+            macroName
+          })
         });
         return;
       }
@@ -3560,6 +4440,37 @@ class MarsEngine {
 
     const labels = new Map();
     const textRows = [];
+    const finalizeAssemblyFailure = () => {
+      if (this.settings.warningsAreErrors && warnings.length > 0) {
+        warnings.forEach((warning) => {
+          errors.push({
+            line: warning.line,
+            message: translateText("Warning treated as error: {message}", { message: warning.message })
+          });
+        });
+      }
+
+      if (Number.isFinite(this.settings.maxErrors) && this.settings.maxErrors > 0 && errors.length > this.settings.maxErrors) {
+        errors.length = this.settings.maxErrors;
+      }
+
+      this.program.labels = labels;
+      this.program.textRows = textRows;
+      this.program.textRowByAddress = new Map(textRows.map((row) => [row.address >>> 0, row]));
+      this.program.warnings = warnings;
+      this.program.errors = errors;
+      this.lastMemoryWriteAddress = null;
+
+      return {
+        ok: false,
+        warnings,
+        errors
+      };
+    };
+
+    if (errors.length > 0) {
+      return finalizeAssemblyFailure();
+    }
 
     const pass1State = {
       segment: "text",
@@ -3656,9 +4567,9 @@ class MarsEngine {
       if (labelMatch) {
         const label = labelMatch[1];
         let address = pass1State.textAddress;
-        if (pass1State.segment === "data") address = pass1State.dataAddress;
+        if (pass1State.segment === "data") address = predictAlignedDataLabelAddress(pass1State, statement) ?? pass1State.dataAddress;
         else if (pass1State.segment === "ktext") address = pass1State.kernelTextAddress;
-        else if (pass1State.segment === "kdata") address = pass1State.kernelDataAddress;
+        else if (pass1State.segment === "kdata") address = predictAlignedDataLabelAddress(pass1State, statement) ?? pass1State.kernelDataAddress;
 
         if (labels.has(label)) {
           errors.push({ line: entry.lineNumber, message: translateText("Duplicate label '{label}'.", { label }) });
@@ -3710,12 +4621,13 @@ class MarsEngine {
         return;
       }
       const expanded = this.expandPseudo(statement, true, pass1State.setOptions);
-      if (pass1State.setOptions?.at === false && emitsAtFromPseudo(statement, expanded)) {
-        errors.push({
-          line: entry.lineNumber,
-          message: translateText('".set noat" forbids pseudo expansion that uses $at.')
-        });
-        return;
+      const validationBaseAddress = pass1State.segment === "text" ? pass1State.textAddress : pass1State.kernelTextAddress;
+      for (let i = 0; i < expanded.length; i += 1) {
+        const basic = expanded[i];
+        const address = (validationBaseAddress + (i * 4)) >>> 0;
+        if (!this.validateInstructionStatement(basic, entry.lineNumber, address, errors, { allowUnresolvedSymbols: true })) {
+          return;
+        }
       }
       if (pass1State.segment === "text") {
         if (!validateStrictSegmentRange("text", pass1State.textAddress, expanded.length * 4, entry.lineNumber, "instruction expansion")) return;
@@ -3726,6 +4638,10 @@ class MarsEngine {
       }
     });
 
+
+    if (errors.length > 0) {
+      return finalizeAssemblyFailure();
+    }
 
     this.program.labels = labels;
 
@@ -3795,27 +4711,41 @@ class MarsEngine {
       if (pass2State.segment !== "text" && pass2State.segment !== "ktext") return;
 
       const expanded = this.expandPseudo(statement, false, pass2State.setOptions);
-      if (pass2State.setOptions?.at === false && emitsAtFromPseudo(statement, expanded)) {
-        errors.push({
-          line: entry.lineNumber,
-          message: translateText('".set noat" forbids pseudo expansion that uses $at.')
-        });
-        return;
-      }
       const currentTextAddress = pass2State.segment === "text" ? pass2State.textAddress : pass2State.kernelTextAddress;
       const currentTextSegment = pass2State.segment === "text" ? "text" : "ktext";
       if (!validateStrictSegmentRange(currentTextSegment, currentTextAddress, expanded.length * 4, entry.lineNumber, "instruction emission")) {
         return;
       }
+      for (let i = 0; i < expanded.length; i += 1) {
+        const basic = expanded[i];
+        const address = (currentTextAddress + (i * 4)) >>> 0;
+        if (!this.validateInstructionStatement(basic, entry.lineNumber, address, errors, { allowUnresolvedSymbols: false })) {
+          return;
+        }
+      }
       expanded.forEach((basic, index) => {
         const address = pass2State.segment === "text" ? pass2State.textAddress : pass2State.kernelTextAddress;
+        const planRow = this.buildNativeExecutionPlanRow({
+          address: address >>> 0,
+          line: entry.lineNumber,
+          basic
+        });
+        const machineCodeWord = encodeInstructionWordFromPlanRow(planRow);
+        if (machineCodeWord != null) {
+          this.setByteRaw(address, machineCodeWord & 0xff);
+          this.setByteRaw((address + 1) >>> 0, (machineCodeWord >>> 8) & 0xff);
+          this.setByteRaw((address + 2) >>> 0, (machineCodeWord >>> 16) & 0xff);
+          this.setByteRaw((address + 3) >>> 0, (machineCodeWord >>> 24) & 0xff);
+          this.syncWordCache(address);
+        }
         textRows.push({
           index: textRows.length,
           address: address >>> 0,
           line: entry.lineNumber,
           source: index === 0 ? statement : "",
           basic,
-          code: toHex(stableHash(basic))
+          code: machineCodeWord == null ? toHex(stableHash(basic)) : toHex(machineCodeWord),
+          machineCodeHex: machineCodeWord == null ? "" : toHex(machineCodeWord)
         });
 
         if (pass2State.segment === "text") {
@@ -3832,13 +4762,13 @@ class MarsEngine {
       if (size === 1) {
         this.writeByte(addr, numeric & 0xff);
       } else if (size === 2) {
-        this.writeByte(addr, (numeric >>> 8) & 0xff);
-        this.writeByte((addr + 1) >>> 0, numeric & 0xff);
+        this.writeByte(addr, numeric & 0xff);
+        this.writeByte((addr + 1) >>> 0, (numeric >>> 8) & 0xff);
       } else {
-        this.writeByte(addr, (numeric >>> 24) & 0xff);
-        this.writeByte((addr + 1) >>> 0, (numeric >>> 16) & 0xff);
-        this.writeByte((addr + 2) >>> 0, (numeric >>> 8) & 0xff);
-        this.writeByte((addr + 3) >>> 0, numeric & 0xff);
+        this.writeByte(addr, numeric & 0xff);
+        this.writeByte((addr + 1) >>> 0, (numeric >>> 8) & 0xff);
+        this.writeByte((addr + 2) >>> 0, (numeric >>> 16) & 0xff);
+        this.writeByte((addr + 3) >>> 0, (numeric >>> 24) & 0xff);
       }
     };
 
@@ -3852,32 +4782,16 @@ class MarsEngine {
       }
       writeFixupValue(fixup.address, fixup.size, resolved);
     });
-    if (this.settings.warningsAreErrors && warnings.length > 0) {
-      warnings.forEach((warning) => {
-        errors.push({
-          line: warning.line,
-          message: translateText("Warning treated as error: {message}", { message: warning.message })
-        });
-      });
+    if (errors.length > 0) {
+      return finalizeAssemblyFailure();
     }
 
-    if (Number.isFinite(this.settings.maxErrors) && this.settings.maxErrors > 0 && errors.length > this.settings.maxErrors) {
-      errors.length = this.settings.maxErrors;
-    }
     this.program.labels = labels;
     this.program.textRows = textRows;
     this.program.textRowByAddress = new Map(textRows.map((row) => [row.address >>> 0, row]));
     this.program.warnings = warnings;
     this.program.errors = errors;
     this.lastMemoryWriteAddress = null;
-
-    if (errors.length > 0) {
-      return {
-        ok: false,
-        warnings,
-        errors
-      };
-    }
 
     this.assembled = true;
     this.halted = false;
@@ -4360,6 +5274,170 @@ class MarsEngine {
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
     const tx = (template, variables = {}) => translateText(template, variables);
+    const parseWhitespaceTokens = (text) => {
+      const normalized = String(text ?? "").trim();
+      return normalized.length ? normalized.split(/\s+/g) : [];
+    };
+    const consumeConsoleLine = () => {
+      if (this.stdinClosed === true) return { eof: true, value: null };
+      const inputResult = promptInput("ReadLine", "", { kind: "read-line" });
+      if (inputResult.waitForInput) return inputResult;
+      if (inputResult.cancelled) {
+        this.stdinClosed = true;
+        return { eof: true, value: null };
+      }
+      const value = String(inputResult.value ?? "");
+      if (value.trim() === WEBMARS_RUNIO_EOF_MARKER) {
+        this.stdinClosed = true;
+        return { eof: true, value: null };
+      }
+      return { value };
+    };
+    const allocateStringArray = (items = []) => (
+      this.allocateWordArray((Array.isArray(items) ? items : []).map((entry) => this.allocateCString(String(entry ?? ""))))
+    );
+    const getManagedFile = (handleValue) => this.openFiles.get(handleValue | 0) || null;
+    const isManagedFileClosed = (handleValue) => {
+      const handle = handleValue | 0;
+      return handle === 0 || !this.openFiles.has(handle);
+    };
+    const openReadonlyManagedFile = (path) => {
+      const filename = String(path ?? "");
+      const existing = this.getVirtualFileBytes(filename);
+      if (existing === null) return 0;
+      const fd = this.allocateFileDescriptor();
+      if (fd < 0) return 0;
+      this.markOpenFilesDirty();
+      this.openFiles.set(fd, {
+        fd,
+        name: filename,
+        flag: FILE_OPEN_RDONLY,
+        cursor: 0,
+        stdio: false,
+        data: cloneByteArray(existing)
+      });
+      return fd | 0;
+    };
+    const readManagedFileLine = (file) => {
+      if (!file || typeof file !== "object") return "";
+      const data = file.data instanceof Uint8Array ? file.data : new Uint8Array(0);
+      let start = Math.max(0, file.cursor | 0);
+      let end = start;
+      while (end < data.length && data[end] !== 10 && data[end] !== 13) end += 1;
+      const line = bytesToText(data.slice(start, end));
+      if (end < data.length && data[end] === 13) end += 1;
+      if (end < data.length && data[end] === 10) end += 1;
+      this.markOpenFilesDirty();
+      file.cursor = end | 0;
+      return line;
+    };
+    const renderFormatString = (formatAddress, argAddress, argCount) => {
+      const formatText = this.readNullTerminatedString(formatAddress >>> 0);
+      let output = "";
+      let cursor = 0;
+      let argIndex = 0;
+      while (cursor < formatText.length) {
+        const ch = formatText[cursor];
+        if (ch !== "%") {
+          output += ch;
+          cursor += 1;
+          continue;
+        }
+        if ((cursor + 1) >= formatText.length) {
+          throw new Error("Format string cannot end with '%'.");
+        }
+        const spec = formatText[cursor + 1];
+        if (spec === "%") {
+          output += "%";
+          cursor += 2;
+          continue;
+        }
+        if (argIndex >= (argCount | 0)) {
+          throw new Error("Insufficient arguments for format string.");
+        }
+        const rawValue = this.readWord(((argAddress >>> 0) + (argIndex * 4)) >>> 0) | 0;
+        if (spec === "s") output += this.readNullTerminatedString(rawValue >>> 0);
+        else if (spec === "d") output += String(rawValue | 0);
+        else if (spec === "c") output += String.fromCharCode(rawValue & 0xff);
+        else throw new Error(`Unsupported format specifier '%${spec}'.`);
+        argIndex += 1;
+        cursor += 2;
+      }
+      return output;
+    };
+    const registerArgumentBinding = (kind, name, address) => {
+      const normalizedName = String(name ?? "").trim();
+      if (!normalizedName || !Number.isFinite(address)) return;
+      const entry = {
+        kind: String(kind || ""),
+        name: normalizedName,
+        address: address >>> 0
+      };
+      const existingIndex = this.argsRegistry.findIndex((item) => item.kind === entry.kind && item.name === entry.name && item.address === entry.address);
+      if (existingIndex >= 0) this.argsRegistry[existingIndex] = entry;
+      else this.argsRegistry.push(entry);
+    };
+    const performArgsParse = () => {
+      const remaining = [];
+      const tokens = Array.isArray(this.lastProgramArguments) ? [...this.lastProgramArguments] : [];
+      for (let i = 0; i < tokens.length; i += 1) {
+        const token = String(tokens[i] ?? "");
+        if (!token.startsWith("-") || token.length <= 1) {
+          remaining.push(token);
+          continue;
+        }
+        const optionName = token.slice(1);
+        const matches = this.argsRegistry.filter((entry) => entry.name === optionName);
+        if (!matches.length) {
+          remaining.push(token);
+          continue;
+        }
+        let consumed = false;
+        matches.forEach((entry) => {
+          if (entry.kind === "flag") {
+            this.writeWord(entry.address, 1);
+            consumed = true;
+          }
+        });
+        if (consumed) continue;
+        const nextToken = tokens[i + 1];
+        if (nextToken == null) return null;
+        const stringEntry = matches.find((entry) => entry.kind === "string");
+        if (stringEntry) {
+          this.writeWord(stringEntry.address, this.allocateCString(String(nextToken)));
+          i += 1;
+          continue;
+        }
+        const intEntry = matches.find((entry) => entry.kind === "int");
+        if (intEntry) {
+          const parsed = parseStrictInteger(String(nextToken));
+          if (parsed === null) return null;
+          this.writeWord(intEntry.address, parsed | 0);
+          i += 1;
+          continue;
+        }
+        remaining.push(token);
+      }
+      return remaining;
+    };
+    const buildArgsResult = (remainingArgs) => {
+      const argvAddress = allocateStringArray(remainingArgs);
+      const structAddress = this.reserveHeapBytes(8, 4);
+      this.writeWord(structAddress, remainingArgs.length | 0);
+      this.writeWord((structAddress + 4) >>> 0, argvAddress >>> 0);
+      return structAddress >>> 0;
+    };
+    const parseImagePayload = (bytes) => {
+      const text = bytesToText(bytes);
+      const parsed = JSON.parse(text);
+      const width = Number(parsed?.width) | 0;
+      const height = Number(parsed?.height) | 0;
+      const data = Array.isArray(parsed?.data) ? parsed.data.map((entry) => entry | 0) : [];
+      if (parsed?.kind !== "webmars-image-v1" || width <= 0 || height <= 0 || data.length !== (width * height)) {
+        throw new Error("Unsupported image payload.");
+      }
+      return { width, height, data };
+    };
 
     switch (service) {
       case 1:
@@ -4428,16 +5506,18 @@ class MarsEngine {
       case 9: {
         const bytes = this.registers[4] | 0;
         if (bytes < 0) return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("sbrk with negative byte count"));
-        const oldHeap = this.heapPointer >>> 0;
+        const currentHeap = this.heapPointer >>> 0;
+        const oldHeap = ((currentHeap + 3) & ~3) >>> 0;
+        const padding = (oldHeap - currentHeap) >>> 0;
         try {
-          this.ensureHeapReservation(bytes);
+          this.ensureHeapReservation((padding + bytes) >>> 0);
         } catch (error) {
           return this.raiseException(
             EXCEPTION_CODES.SYSCALL,
             error instanceof Error ? error.message : String(error)
           );
         }
-        const nextHeap = (this.heapPointer + bytes) >>> 0;
+        const nextHeap = (oldHeap + bytes) >>> 0;
         if (nextHeap < oldHeap) {
           return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("sbrk with negative byte count"));
         }
@@ -4760,6 +5840,316 @@ class MarsEngine {
           messageType
         });
         if (dialogResult.waitForInput) return dialogResult;
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.flush:
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.eof:
+        this.registers[2] = this.stdinClosed === true ? 1 : 0;
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.readline: {
+        const lineResult = consumeConsoleLine();
+        if (lineResult.waitForInput) return lineResult;
+        if (lineResult.eof) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("readline at end-of-file"));
+        }
+        this.registers[2] = clamp32(this.allocateCString(String(lineResult.value ?? "")));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.printf:
+      case WEBMARS_CUSTOM_SYSCALLS.format: {
+        const formatAddress = this.registers[4] >>> 0;
+        const argPointer = this.registers[5] >>> 0;
+        const argCount = Math.max(0, this.registers[6] | 0);
+        try {
+          const rendered = renderFormatString(formatAddress, argPointer, argCount);
+          if (service === WEBMARS_CUSTOM_SYSCALLS.printf) {
+            return { message: rendered, runIo: true };
+          }
+          this.registers[2] = clamp32(this.allocateCString(rendered));
+          return {};
+        } catch (error) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, error instanceof Error ? error.message : String(error));
+        }
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.fileRead: {
+        const handle = openReadonlyManagedFile(readMessage(4));
+        this.registers[2] = clamp32(handle);
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.fileClosed:
+        this.registers[2] = isManagedFileClosed(this.registers[4] | 0) ? 1 : 0;
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.fileClose: {
+        const fd = this.registers[4] | 0;
+        if (fd > STDERR_FD) {
+          this.markOpenFilesDirty();
+          this.openFiles.delete(fd);
+        }
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.fileEof: {
+        const file = getManagedFile(this.registers[4] | 0);
+        this.registers[2] = (!file || file.cursor >= file.data.length) ? 1 : 0;
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.fileReadline: {
+        const file = getManagedFile(this.registers[4] | 0);
+        if (!file) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid file handle"));
+        }
+        this.registers[2] = clamp32(this.allocateCString(readManagedFileLine(file)));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.argsFlag:
+        this.writeWord(this.registers[5] >>> 0, 0);
+        registerArgumentBinding("flag", readMessage(4), this.registers[5] >>> 0);
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.argsInt:
+        registerArgumentBinding("int", readMessage(4), this.registers[5] >>> 0);
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.argsString:
+        registerArgumentBinding("string", readMessage(4), this.registers[5] >>> 0);
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.argsParse: {
+        const remaining = performArgsParse();
+        this.registers[2] = clamp32(remaining == null ? 0 : buildArgsResult(remaining));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.stringLength:
+        this.registers[2] = clamp32(readMessage(4).length | 0);
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.stringCharAt: {
+        const text = readMessage(4);
+        const index = this.registers[5] | 0;
+        if (index < 0 || index >= text.length) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("string_charat index out of bounds"));
+        }
+        this.registers[2] = text.charCodeAt(index) & 0xff;
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.stringJoin:
+        this.registers[2] = clamp32(this.allocateCString(readMessage(4) + readMessage(5)));
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.stringSub: {
+        const text = readMessage(4);
+        const start = this.registers[5] | 0;
+        const end = this.registers[6] | 0;
+        if (start < 0 || end < start || end > text.length) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid substring bounds"));
+        }
+        this.registers[2] = clamp32(this.allocateCString(text.slice(start, end)));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.stringCompare: {
+        const left = readMessage(4);
+        const right = readMessage(5);
+        this.registers[2] = clamp32(left === right ? 0 : (left < right ? -1 : 1));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.stringFromInt:
+        this.registers[2] = clamp32(this.allocateCString(String(this.registers[4] | 0)));
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.stringFromChar: {
+        const value = this.registers[4] & 0xff;
+        if (value === 0) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("string_fromchar requires non-null character"));
+        }
+        this.registers[2] = clamp32(this.allocateCString(String.fromCharCode(value)));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.stringToLower:
+        this.registers[2] = clamp32(this.allocateCString(readMessage(4).replace(/[A-Z]/g, (match) => match.toLowerCase())));
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.stringTerminated: {
+        const address = this.registers[4] >>> 0;
+        const count = Math.max(0, this.registers[5] | 0);
+        let terminated = false;
+        for (let i = 0; i < count; i += 1) {
+          if ((this.readWord((address + (i * 4)) >>> 0) | 0) === 0) {
+            terminated = true;
+            break;
+          }
+        }
+        this.registers[2] = terminated ? 1 : 0;
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.stringToCharArray: {
+        const text = readMessage(4);
+        const values = Array.from(text).map((ch) => ch.charCodeAt(0) & 0xff);
+        values.push(0);
+        this.registers[2] = clamp32(this.allocateWordArray(values));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.stringFromCharArray: {
+        const address = this.registers[4] >>> 0;
+        const length = this.getArrayLength(address);
+        let output = "";
+        for (let i = 0; i < length; i += 1) {
+          const value = this.readWord((address + (i * 4)) >>> 0) & 0xff;
+          if (value === 0) break;
+          output += String.fromCharCode(value);
+        }
+        this.registers[2] = clamp32(this.allocateCString(output));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.cstrTerminated: {
+        const address = this.registers[4] >>> 0;
+        const count = Math.max(0, this.registers[5] | 0);
+        let terminated = false;
+        for (let i = 0; i < count; i += 1) {
+          if ((this.readByte((address + i) >>> 0, false) & 0xff) === 0) {
+            terminated = true;
+            break;
+          }
+        }
+        this.registers[2] = terminated ? 1 : 0;
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.cstrFromString:
+        this.registers[2] = clamp32(this.allocateCString(readMessage(4)));
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.stringFromCstr:
+        this.registers[2] = clamp32(this.allocateCString(this.readNullTerminatedString(this.registers[4] >>> 0)));
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.charChr: {
+        const value = this.registers[4] | 0;
+        if (value < 0 || value > 127) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("char_chr argument out of ASCII range"));
+        }
+        this.registers[2] = value & 0xff;
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.parseBool: {
+        const text = readMessage(4);
+        if (text === "true") this.registers[2] = clamp32(this.allocateScalarWord(1));
+        else if (text === "false") this.registers[2] = clamp32(this.allocateScalarWord(0));
+        else this.registers[2] = 0;
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.parseInt: {
+        const parsed = parseStrictIntegerBase(readMessage(4), this.registers[5] | 0);
+        this.registers[2] = clamp32(parsed == null ? 0 : this.allocateScalarWord(parsed));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.numTokens:
+        this.registers[2] = clamp32(parseWhitespaceTokens(readMessage(4)).length | 0);
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.intTokens: {
+        const tokens = parseWhitespaceTokens(readMessage(4));
+        const base = this.registers[5] | 0;
+        const ok = tokens.every((entry) => parseStrictIntegerBase(entry, base) != null);
+        this.registers[2] = ok ? 1 : 0;
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.parseTokens: {
+        const tokens = parseWhitespaceTokens(readMessage(4));
+        this.registers[2] = clamp32(allocateStringArray(tokens));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.parseInts: {
+        const tokens = parseWhitespaceTokens(readMessage(4));
+        const base = this.registers[5] | 0;
+        const values = [];
+        for (let i = 0; i < tokens.length; i += 1) {
+          const parsed = parseStrictIntegerBase(tokens[i], base);
+          if (parsed == null) {
+            return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("parse_ints received non-integer token"));
+          }
+          values.push(parsed | 0);
+        }
+        this.registers[2] = clamp32(this.allocateWordArray(values));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.int2Hex:
+        this.registers[2] = clamp32(this.allocateCString((this.registers[4] >>> 0).toString(16).padStart(8, "0")));
+        return {};
+      case WEBMARS_CUSTOM_SYSCALLS.imageWidth: {
+        const handle = this.getImageHandle(this.registers[4] | 0);
+        this.registers[2] = clamp32(handle ? handle.width : 0);
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.imageHeight: {
+        const handle = this.getImageHandle(this.registers[4] | 0);
+        this.registers[2] = clamp32(handle ? handle.height : 0);
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.imageCreate: {
+        const width = this.registers[4] | 0;
+        const height = this.registers[5] | 0;
+        if (width <= 0 || height <= 0) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("image_create requires positive dimensions"));
+        }
+        const dataAddress = this.allocateWordArray(Array.from({ length: width * height }, () => 0));
+        this.registers[2] = clamp32(this.createImageHandle(width, height, dataAddress));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.imageClone: {
+        const sourceHandle = this.getImageHandle(this.registers[4] | 0);
+        if (!sourceHandle) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid image handle"));
+        }
+        const dataAddress = this.allocateWordArray(this.readImagePixels(sourceHandle.id));
+        this.registers[2] = clamp32(this.createImageHandle(sourceHandle.width, sourceHandle.height, dataAddress));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.imageSubimage: {
+        const sourceHandle = this.getImageHandle(this.registers[4] | 0);
+        const x = this.registers[5] | 0;
+        const y = this.registers[6] | 0;
+        const width = this.registers[7] | 0;
+        const height = this.readStackArgument(0);
+        if (!sourceHandle) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid image handle"));
+        }
+        if (width <= 0 || height <= 0) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("image_subimage requires positive dimensions"));
+        }
+        const sourcePixels = this.readImagePixels(sourceHandle.id);
+        const output = [];
+        for (let row = 0; row < height; row += 1) {
+          for (let col = 0; col < width; col += 1) {
+            const sx = x + col;
+            const sy = y + row;
+            if (sx < 0 || sy < 0 || sx >= sourceHandle.width || sy >= sourceHandle.height) output.push(0);
+            else output.push(sourcePixels[(sy * sourceHandle.width) + sx] | 0);
+          }
+        }
+        const dataAddress = this.allocateWordArray(output);
+        this.registers[2] = clamp32(this.createImageHandle(width, height, dataAddress));
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.imageLoad: {
+        const path = readMessage(4);
+        const bytes = this.getVirtualFileBytes(path);
+        if (bytes === null) {
+          this.registers[2] = 0;
+          return {};
+        }
+        try {
+          const payload = parseImagePayload(bytes);
+          const dataAddress = this.allocateWordArray(payload.data);
+          this.registers[2] = clamp32(this.createImageHandle(payload.width, payload.height, dataAddress, path));
+          return {};
+        } catch (error) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, error instanceof Error ? error.message : String(error));
+        }
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.imageSave: {
+        const handleValue = this.registers[4] | 0;
+        const path = readMessage(5);
+        const payload = this.serializeImageHandle(handleValue);
+        if (!payload) {
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid image handle"));
+        }
+        this.setVirtualFileBytes(path, textToBytes(JSON.stringify(payload)));
+        const imageHandle = this.getImageHandle(handleValue);
+        if (imageHandle) imageHandle.path = path;
+        return {};
+      }
+      case WEBMARS_CUSTOM_SYSCALLS.imageData: {
+        const handle = this.getImageHandle(this.registers[4] | 0);
+        this.registers[2] = clamp32(handle ? handle.dataAddress : 0);
         return {};
       }
       default:
@@ -5343,8 +6733,18 @@ class MarsEngine {
 }
 
 function createMarsEngine(options = {}) {
-  const settings = options?.settings || {};
-  const backend = String(settings.coreBackend || DEFAULT_SETTINGS.coreBackend || "js").trim().toLowerCase();
+  const settings = { ...DEFAULT_SETTINGS, ...(options?.settings || {}) };
+  const legacyBackend = String(settings.coreBackend || DEFAULT_SETTINGS.coreBackend || "js").trim().toLowerCase();
+  const assemblerBackendMode = String(
+    settings.assemblerBackendMode
+    || (legacyBackend === "wasm" ? "hybrid" : "js")
+  ).trim().toLowerCase() === "hybrid" ? "hybrid" : "js";
+  const simulatorBackendMode = String(
+    settings.simulatorBackendMode
+    || (legacyBackend === "wasm" ? "hybrid" : "js")
+  ).trim().toLowerCase() === "hybrid" ? "hybrid" : "js";
+  const wantsNativeWrapper = assemblerBackendMode === "hybrid" || simulatorBackendMode === "hybrid";
+  const backend = wantsNativeWrapper ? "wasm" : "js";
   const wasmFactory = typeof window !== "undefined" ? window.WebMarsWasmCore : null;
 
   const wrapBackend = (engine, backendInfo = {}) => {
@@ -5354,11 +6754,17 @@ function createMarsEngine(options = {}) {
     const info = {
       backend: backendInfo.backend || backend || "js",
       backendName: backendInfo.backendName || (backend === "wasm" ? "wasm-cpp" : "js-core"),
-      native: backendInfo.native === true
+      native: backendInfo.native === true,
+      assemblerBackendMode: backendInfo.assemblerBackendMode || assemblerBackendMode,
+      simulatorBackendMode: backendInfo.simulatorBackendMode || simulatorBackendMode
     };
 
     return {
       __webMarsBackend: true,
+      whenReady(...args) {
+        if (typeof engine.whenReady === "function") return engine.whenReady(...args);
+        return Promise.resolve(engine);
+      },
       getBackendInfo() {
         if (typeof engine.getBackendInfo === "function") {
           const dynamicInfo = engine.getBackendInfo();
@@ -5366,7 +6772,9 @@ function createMarsEngine(options = {}) {
             return {
               backend: dynamicInfo.backend || info.backend,
               backendName: dynamicInfo.backendName || info.backendName,
-              native: dynamicInfo.native === true
+              native: dynamicInfo.native === true,
+              assemblerBackendMode: dynamicInfo.assemblerBackendMode || info.assemblerBackendMode,
+              simulatorBackendMode: dynamicInfo.simulatorBackendMode || info.simulatorBackendMode
             };
           }
         }
@@ -5417,6 +6825,10 @@ function createMarsEngine(options = {}) {
       },
       setSourceFiles(...args) {
         return engine.setSourceFiles(...args);
+      },
+      registerMemoryObserver(...args) {
+        if (typeof engine.registerMemoryObserver === "function") return engine.registerMemoryObserver(...args);
+        return () => {};
       },
       exportNativeState(...args) {
         if (typeof engine.exportNativeState === "function") return engine.exportNativeState(...args);
@@ -5470,14 +6882,17 @@ function createMarsEngine(options = {}) {
     };
   };
 
-  if (backend === "wasm" && wasmFactory && typeof wasmFactory.createEngineSync === "function") {
+  const useHybridEngine = wantsNativeWrapper && wasmFactory && typeof wasmFactory.createEngineSync === "function";
+  if (useHybridEngine) {
     try {
       const wasmEngine = wasmFactory.createEngineSync(options);
       if (wasmEngine) {
         return wrapBackend(wasmEngine, {
-          backend: "wasm",
-          backendName: wasmFactory?.status?.backendName || "wasm-cpp",
-          native: true
+          backend,
+          backendName: backend === "wasm" ? (wasmFactory?.status?.backendName || "wasm-cpp") : "js-core",
+          native: backend === "wasm",
+          assemblerBackendMode,
+          simulatorBackendMode
         });
       }
     } catch {
@@ -5488,7 +6903,9 @@ function createMarsEngine(options = {}) {
   return wrapBackend(new MarsEngine(options), {
     backend: "js",
     backendName: "js-core",
-    native: false
+    native: false,
+    assemblerBackendMode,
+    simulatorBackendMode
   });
 }
 

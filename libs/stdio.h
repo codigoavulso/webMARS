@@ -9,6 +9,10 @@ int SEEK_END = 2;
 int stdin_fd = 0;
 int stdout_fd = 1;
 int stderr_fd = 2;
+typedef int FILE;
+int stdin = 0;
+int stdout = 1;
+int stderr = 2;
 
 int _STDIO_MAX_STREAMS = 64;
 int _stdio_eof[64];
@@ -23,6 +27,37 @@ bool _stdio_is_space(int ch) {
 
 bool _stdio_is_digit(int ch) {
   return ch >= 48 && ch <= 57;
+}
+
+bool _stdio_string_equal(string a, string b) {
+  return __wm_string_compare(a, b) == 0;
+}
+
+int _stdio_mode_flags(string mode) {
+  if (_stdio_string_equal(mode, "r") || _stdio_string_equal(mode, "rb") || _stdio_string_equal(mode, "rt")) {
+    return 0;
+  }
+  if (_stdio_string_equal(mode, "w") || _stdio_string_equal(mode, "wb") || _stdio_string_equal(mode, "wt")) {
+    return 1;
+  }
+  if (_stdio_string_equal(mode, "a") || _stdio_string_equal(mode, "ab") || _stdio_string_equal(mode, "at")) {
+    return 9;
+  }
+  return -1;
+}
+
+int _stdio_copy_string_to_buffer(int out[], int capacity, string text) {
+  int fullLength = __wm_string_length(text);
+  if (capacity <= 0) return fullLength;
+
+  int limit = capacity - 1;
+  int index = 0;
+  while (index < limit && index < fullLength) {
+    out[index] = (int)__wm_string_charat(text, index);
+    index = index + 1;
+  }
+  out[index] = 0;
+  return fullLength;
 }
 
 bool _stdio_valid_stream(int stream) {
@@ -59,16 +94,16 @@ int _stdio_read_byte_fd(int stream) {
 
   _stdio_pos[stream] = _stdio_pos[stream] + 1;
   _stdio_eof[stream] = 0;
-  // MARS memory is big-endian: one-byte fd_read lands in the highest byte.
-  return (cell[0] >> 24) & 255;
+  // webMARS stores words little-endian, so one-byte fd_read lands in the low byte.
+  return cell[0] & 255;
 }
 
 int _stdio_write_byte_fd(int stream, int ch) {
   if (!_stdio_valid_stream(stream)) return EOF;
 
   int cell[1] = {0};
-  // MARS memory is big-endian: fd_write reads the first byte in memory.
-  cell[0] = (ch & 255) << 24;
+  // webMARS stores words little-endian, so fd_write reads the low byte first.
+  cell[0] = ch & 255;
   int wrote = fd_write(stream, cell, 1);
   if (wrote != 1) {
     _stdio_error[stream] = 1;
@@ -97,11 +132,6 @@ int fopen_write(string path) {
 
 int fopen_append(string path) {
   return fopen_mode(path, 9);
-}
-
-int printf(string text) {
-  print_string(text);
-  return 0;
 }
 
 int puts(string text) {
@@ -140,10 +170,20 @@ int fputs(string text, int stream) {
   if (!_stdio_valid_stream(stream)) return EOF;
   if (stream == stdout_fd || stream == stderr_fd) {
     print_string(text);
+    _stdio_pos[stream] = _stdio_pos[stream] + __wm_string_length(text);
     return 0;
   }
-  _stdio_error[stream] = 1;
-  return EOF;
+
+  int index = 0;
+  int length = __wm_string_length(text);
+  while (index < length) {
+    if (_stdio_write_byte_fd(stream, (int)__wm_string_charat(text, index)) == EOF) {
+      return EOF;
+    }
+    index = index + 1;
+  }
+
+  return 0;
 }
 
 int fprintf(int stream, string text) {
@@ -291,12 +331,13 @@ int sscanf(int input[], string format, int out[]) {
 }
 
 int snprintf(int out[], int capacity, string text) {
-  if (capacity > 0) out[0] = 0;
-  return 0;
+  return _stdio_copy_string_to_buffer(out, capacity, text);
 }
 
 int fopen(string path, string mode) {
-  return fopen_read(path);
+  int flags = _stdio_mode_flags(mode);
+  if (flags < 0) return -1;
+  return fopen_mode(path, flags);
 }
 
 int fclose(int stream) {
@@ -339,6 +380,9 @@ int fwrite(int buffer[], int size, int count, int stream) {
 
 int fflush(int stream) {
   if (!_stdio_valid_stream(stream)) return EOF;
+  if (stream == stdout_fd || stream == stderr_fd) {
+    __wm_flush();
+  }
   return 0;
 }
 

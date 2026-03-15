@@ -16,6 +16,7 @@ const referenceDir = resolve(webRoot, "assets", "js", "reference");
 const helpDir = resolve(webRoot, "help");
 const defaultHelpLanguageDir = resolve(helpDir, "en");
 const pseudoOpsOutputPath = resolve(referenceDir, "pseudo-ops.generated.js");
+const instructionsOutputPath = resolve(referenceDir, "instructions.generated.js");
 const syscallsOutputPath = resolve(referenceDir, "syscalls.generated.js");
 const helpReferenceOutputPath = resolve(helpDir, "help-reference.json");
 const localizedHelpReferenceOutputPath = resolve(defaultHelpLanguageDir, "help-reference.json");
@@ -139,7 +140,7 @@ function unescapeJavaString(value) {
     .replace(/\\\\/g, "\\");
 }
 
-function parseBasicInstructions() {
+function parseBasicInstructions({ sort = false } = {}) {
   const source = readFileSync(instructionSetJavaPath, "utf8");
   const pattern = /new BasicInstruction\(\s*"((?:[^"\\]|\\.)*)"\s*,\s*"((?:[^"\\]|\\.)*)"/g;
   const entries = [];
@@ -155,7 +156,7 @@ function parseBasicInstructions() {
     entries.push({ example, description });
   }
 
-  return entries.sort((a, b) => a.example.localeCompare(b.example));
+  return sort ? entries.sort((a, b) => a.example.localeCompare(b.example)) : entries;
 }
 
 function parseDirectivesHelp() {
@@ -177,6 +178,7 @@ function parseDirectivesHelp() {
 }
 
 function buildHelpReference(pseudoOps) {
+  const basicInstructions = parseBasicInstructions({ sort: true });
   return {
     generatedAt: new Date().toISOString(),
     source: {
@@ -184,7 +186,7 @@ function buildHelpReference(pseudoOps) {
       extendedInstructions: "../PseudoOps.txt",
       directives: "../mars/assembler/Directives.java"
     },
-    basicInstructions: parseBasicInstructions(),
+    basicInstructions,
     extendedInstructions: pseudoOps
       .map((entry) => ({
         example: entry.source,
@@ -308,11 +310,16 @@ mkdirSync(defaultHelpLanguageDir, { recursive: true });
 
 const generatedAt = new Date().toISOString();
 const pseudoOps = parsePseudoOps();
+const basicInstructions = parseBasicInstructions();
 const syscallMatrix = parseSyscallMatrix();
 const helpReference = buildHelpReference(pseudoOps);
 
 emitReferenceModule(pseudoOpsOutputPath, "pseudoOps", pseudoOps, {
   source: "../PseudoOps.txt",
+  generatedAt
+});
+emitReferenceModule(instructionsOutputPath, "basicInstructions", basicInstructions, {
+  source: "../mars/mips/instructions/InstructionSet.java",
   generatedAt
 });
 emitReferenceModule(syscallsOutputPath, "syscallMatrix", syscallMatrix, {

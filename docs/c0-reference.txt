@@ -1,51 +1,45 @@
-C0 Reference
 15-122: Principles of Imperative Computation
 Frank Pfenning
 Tuesday 18th February, 2025
 Compiler revision 707
 (updates since January 30, 2011)
 Contents
-1 Introduction 3
-2 Types 3
-3 Integers 4
-4 Booleans 5
-5 Functions 6
-6 Commands 7
-6.1 Assignments . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
-6.2 Expressions as Statements . . . . . . . . . . . . . . . . . . . . 7
-6.3 Conditionals . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
-6.4 Loops . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
-6.5 Blocks . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
-6.6 Returns . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
-6.7 Assertions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
-6.8 Errors . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
-7 Characters 9
-8 Strings 10
-9 Arrays 10
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
+1 Introduction
+2 Types
+3 Integers
+4 Booleans
+5 Functions
+6 Commands
+6.1 Assignments
+6.2 Expressions as Statements
+6.3 Conditionals
+6.4 Loops
+6.5 Blocks
+6.6 Returns
+6.7 Assertions
+6.8 Errors
+7 Characters
+8 Strings
+9 Arrays
+10 Pointers
+11 Structs
+12 Compiler Directives
+13 Contracts
+13.1 Function Contracts
+13.2 Loop Invariants
+13.3 Assertions
+13.4 Purity
+14 Grammar
+14.1 Lexical tokens
+14.2 Grammar
+14.3 Annotations
+15 C1 Language Extension
+15.1 Advanced Control Constructs
+15.2 Generic Pointers
+15.3 Function Pointers
+16 Static Semantics Reference
+17 Updates
 
-Reference C0.2
-10 Pointers 11
-11 Structs 11
-12 Compiler Directives 13
-13 Contracts 13
-13.1 Function Contracts . . . . . . . . . . . . . . . . . . . . . . . . 14
-13.2 Loop Invariants . . . . . . . . . . . . . . . . . . . . . . . . . . 15
-13.3 Assertions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
-13.4 Purity . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
-14 Grammar 16
-14.1 Lexical tokens . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
-14.2 Grammar . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
-14.3 Annotations . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
-15 C1 Language Extension 18
-15.1 Advanced Control Constructs . . . . . . . . . . . . . . . . . . 18
-15.2 Generic Pointers . . . . . . . . . . . . . . . . . . . . . . . . . . 21
-15.3 Function Pointers . . . . . . . . . . . . . . . . . . . . . . . . . 22
-16 Static Semantics Reference 24
-17 Updates 26
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
-
-Reference C0.3
 1 Introduction
 The programming language C0 is a carefully crafted subset of the C aimed
 at teaching introductory algorithms and imperative programming. It is re-
@@ -78,9 +72,7 @@ char The type of characters contains ASCII (not Unicode) characters writ-
 ten as ’c’.
 string The type of strings contains constant strings of characters, written
 as "this is a string" .
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.4
 t [ ] For any type t, we can form the type t[ ], the type of arrays of values
 of type t. A value of this type is a reference to an array stored in
 memory. An array A has an intrinsic length n determined at the type
@@ -116,9 +108,7 @@ division n/k and modulus n%k. Division truncates towards zero, and both
 division and modulus raise an overflow exception ifk = 0 or n = −231 and
 k = −1. If n is negative, the result of the modulus will be negative, so that
 (n/k)*k + n%k == n when the left-hand side doesn’t overflow.
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.5
 Comparisons <, <=, >=, > return a boolean when applied to integers, as
 do == (equality) and != (disequality).
 We can also view and manipulate values of type int as 32-bit words.
@@ -154,9 +144,7 @@ conditional expressions, both branches e1 and e2 must have the same type,
 and this type must be small (see the sections on functions and structs).
 Booleans can be compared for equality (==) and disequality (!=).
 The default value is false.
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.6
 5 Functions
 Functions are not first-class in C0, but can only be declared or defined at
 the top-level of a file. A function definition has the form
@@ -190,9 +178,7 @@ resulting values passed to the function g.
 Functions may recursively call themselves. As a language, C0 does not
 specify a minimum or maximum required recursion depth. Different im-
 plementations may impose different limits, or no limit at all.
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.7
 6 Commands
 Commands are not first-class in C0, but occur in the bodies of functions.
 We have assignments, conditionals, loops, blocks, and returns.
@@ -225,9 +211,7 @@ with two ifs and only oneelse it may be unclear which condition theelse
 is associated with. For example,
 if (e1) if (e2) s1 else s2
 could be read as
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.8
 if (e1) { if (e2) s1} else s2
 or
 if (e1) { if (e2) s1 else s2}
@@ -260,9 +244,7 @@ one of the two forms
 t x;
 where t is a type and x is a variable, or
 t x = e;
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.9
 where t is a type, x is a variable, and e is an expression initializing x which
 must have type t.
 In either form, the scope of x consists of the remaining declarations and
@@ -294,9 +276,7 @@ immediately terminate the program.
 7 Characters
 Characters are a special type to represent components of strings. They are
 written in the form ’c’, where c can be any printable ASCII character, as
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.10
 well as the following escape sequences \t (tab), \r (return), \f (formfeed),
 \a (alert), \b (backspace), \n (newline), \v (vertical tab), \’ (quote), \"
 (doublequote), \0 (null). The default value for characters is \0. Characters
@@ -331,9 +311,7 @@ For every type t there is a distinguished zero-sized array of type t []
 which serves as the default. Because its size is zero, the only operations
 that can be performed on this element are comparisons for equality ( ==)
 and disequality (!=).
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.11
 It is important to remember that comparisons of variables of type t []
 are comparisons of array references, and not the array elements, and simi-
 larly for argument passing and variable assignment.
@@ -367,9 +345,7 @@ an error to write *NULL in programs.
 Structs are the only types that can aggregate values of different type. We
 write struct s for the type of structs named s. Structure names occupy
 their own name space, as do the names of the fields of structs; neither can
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.12
 conflict with names of variables, functions, or other fields or struct names.
 Structs with name s are defined with
 struct s { t1 f1; ... tn fn; };
@@ -406,12 +382,9 @@ also be explicitly declared as
 struct s;
 Since the fields of such a struct are not known, they cannot be accessed by
 a program. Nonetheless, pointers to elements of such type have a uniform
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
-
-Reference C0.13
 size and can therefore be passed as arguments even without knowing the
-precise representation of s. This allows a very weak form of polymorphism
-in C0.
+precise representation of s. This allows a very weak form of polymorphism in C0.
+
 12 Compiler Directives
 As described elsewhere, the cc0 compiler for C0 processes a list of files in
 sequence, and can also include specific libraries as documented in the C0
@@ -442,9 +415,7 @@ entirely absent from C. Annotations start with //@ and extend to the end
 of the line, or delimited by /*@ and @*/. For illustration purposes below
 we use the single-line form.
 1with explicit angle brackets < and >
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.14
 Contracts should never have store effects and should terminate, although
 the compiler currently does not check that. It is permissible for contracts to
 raise exceptions, including the exception that the contract was not satisfied.
@@ -480,7 +451,6 @@ int exp ( int k, int n)
 { int res = 1; int i = 0;
 2For modular arithmetic as specified for C0, this contract is not satisfied because the
 result may be negative.
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
 Reference C0.15
 while (i < n) {
@@ -513,11 +483,8 @@ that sense they express expected internal invariants of functions, just like
 loop invariants.
 13.4 Purity
 Functions that are called from annotations must be pure, which means that
-they may not modify previously allocated memory. Allowing such con-
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
-
-Reference C0.16
-tracts could lead to different results, depending on whether contract check-
+they may not modify previously allocated memory. Allowing such
+contracts could lead to different results, depending on whether contract check-
 ing is enabled or not. Other kinds of effects, like input, output, or ex-
 ceptions are permitted. The C0 language implementation performs a light
 analysis pass over the code to uncover functions used in annotations with
@@ -549,9 +516,7 @@ The reserved keywords of the language are:
 int bool string char void struct typedef
 if else while for continue break return assert
 error true false NULL alloc alloc _array
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.17
 <id> ::= [A-Za-z _][A-Za-z0-9_]*
 <num> ::= <decnum> | <hexnum>
 <decnum> ::= 0 | [1-9][0-9] *
@@ -574,9 +539,7 @@ Reference C0.17
 | &= | ^= | |=
 <postop> ::= -- | ++
 Figure 1: C0 lexical tokens
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.18
 14.2 Grammar
 We present the grammar in a similarly abbreviated style in Figure 2. Here,
 [brackets] surround optional constituents. Identifiers occupy four name
@@ -608,9 +571,7 @@ C0.
 Execution of the break statement immediately exits the innermost loop
 that contains it and proceeds with the statement following the loop. The
 loop invariant is not checked.
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.19
 <prog> ::= (<gdecl> | <gdefn>) *
 <gdecl> ::= struct <sid> ;
 | <tp> <vid> ( [<tp> <vid> (, <tp> <vid>) *] ) ;
@@ -644,9 +605,7 @@ Reference C0.19
 | <exp> [ <exp> ]
 | alloc ( <tp> ) | alloc_array ( <tp> , <exp> )
 Figure 2: C0 Grammar, without annotations
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.20
 Operator Associates Meaning
 () [] -> . left parens, array subscript,
 field dereference, field select
@@ -667,9 +626,7 @@ increment, decrement
 = += -= *= /= %=
 &= ^= |= <<= >>= right assignment operators
 Figure 3: Operator precedence, from highest to lowest
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.21
 <spec> ::= requires <exp> ;
 | ensures <exp> ;
 | loop_invariant <exp> ;
@@ -701,9 +658,7 @@ The form (void*)e casts the expression e of type t * to be of type (void*).
 Operationally, this new pointer references a pair consisting of a runtime
 representation of the type t * (the tag) and the pointer value of e.
 The second form (t*)e where t ̸= void casts an expression e of type
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.22
 void* to have type t *. If the tag agrees with the type t *, it strips off the tag
 and returns the underlying pointer of type t *. If the tags do not agree, an
 appropriate runtime exception is raised and the program is terminated.
@@ -740,9 +695,7 @@ Function types, named by a<fnid> are large types and, moreover, func-
 tion values cannot be allocated on the stack or heap. That is, we store and
 pass only pointers to functions, not functions themselves. Function type
 names are treated nominally, which means that two distinct function type
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.23
 names are considered different, even if their definitions happen to be the
 same.
 Here is a small example of the use of function pointers and generic
@@ -779,9 +732,7 @@ A[i] = ( void*)p;
 }
 return is_sorted(&leq, A, 0, n) ? 1 : 0;
 }
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.24
 16 Static Semantics Reference
 The static semantics enforces the following conditions.
 • #use directives must precede all other declarations.
@@ -813,9 +764,7 @@ erenced, because this is the function called when an executable re-
 sulting from compilation is invoked. Therefore, when a collection of
 sources is compiled, at least one of them must define main to match
 the above prototype.
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.25
 The return value of main is not treated as an indication of success or
 failure of the program as it is in C; any program that returns from
 main prints the returned integer and signals to the operating system
@@ -842,9 +791,7 @@ functions parameters. Expressions in loop invariants and assertions
 can also use other local variables in whose scope they occur. Variables
 in @ensures clauses cannot be assigned to in the body of the function
 they annotate.
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025
 
-Reference C0.26
 17 Updates
 Jan 30 2011. A stand-alone semicolon ’;’ is now flagged as an error rather
 than interpreted as an empty statement. Remember that conditionals,
@@ -871,4 +818,3 @@ Rev . C0.0590, March 30, 2018. Reformatted documentation to use thelistings
 Latex package.
 Rev . C0.0720, August 20, 2020. Modified the lvalue rules to allow casts from
 void*
-15-122 F ALL 2020 T UESDAY 18 TH FEBRUARY , 2025

@@ -613,8 +613,10 @@
           if (!connected) return;
 
           const nextStep = Number.isFinite(snapshot?.steps) ? (snapshot.steps | 0) : null;
-          if (Number.isFinite(nextStep) && Number.isFinite(lastSnapshotStep) && (nextStep - lastSnapshotStep) > 1) {
-            fullRedrawNeeded = true;
+          if (Number.isFinite(nextStep) && Number.isFinite(lastSnapshotStep)) {
+            if (nextStep < lastSnapshotStep || (nextStep - lastSnapshotStep) > 1) {
+              fullRedrawNeeded = true;
+            }
           }
           if (Number.isFinite(nextStep)) lastSnapshotStep = nextStep;
 

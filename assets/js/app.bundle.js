@@ -3,6 +3,7 @@
     "./assets/js/app-modules/00-core-wasm-hotpath.js",
     "./assets/js/app-modules/00-i18n.js",
     "./assets/js/reference/pseudo-ops.generated.js",
+    "./assets/js/reference/instructions.generated.js",
     "./assets/js/reference/syscalls.generated.js",
   ];
 
@@ -31,14 +32,18 @@
 
   if (window.__marsWebAppBootstrapped) return;
 
+  function dispatchLoaderEvent(name, detail) {
+    try {
+      window.dispatchEvent(new CustomEvent(name, { detail }));
+    } catch {
+      window.dispatchEvent(new Event(name));
+    }
+  }
+
   function loadSequential(moduleScripts, index) {
     if (index >= moduleScripts.length) {
       window.__marsWebAppBootstrapped = true;
-      try {
-        window.dispatchEvent(new CustomEvent("webmars:ready"));
-      } catch {
-        window.dispatchEvent(new Event("webmars:ready"));
-      }
+      dispatchLoaderEvent("webmars:scripts-loaded", { ok: true });
       return;
     }
 
@@ -55,11 +60,7 @@
       msg.style.color = "#8b0000";
       msg.style.padding = "8px";
       root.appendChild(msg);
-      try {
-        window.dispatchEvent(new CustomEvent("webmars:ready"));
-      } catch {
-        window.dispatchEvent(new Event("webmars:ready"));
-      }
+      dispatchLoaderEvent("webmars:scripts-loaded", { ok: false, failedModule: src });
     };
     document.head.appendChild(script);
   }

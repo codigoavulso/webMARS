@@ -134,6 +134,7 @@
       let x = 0;
       let y = 0;
       let tracks = [];
+      let stepHistory = new Map();
       let frameTimer = null;
 
       function writeWordSafe(address, value) {
@@ -154,7 +155,72 @@
         ].join("\n");
       }
 
+      function getSnapshotStep(snapshot = lastSnapshot) {
+        return Number.isFinite(snapshot?.steps) ? (snapshot.steps | 0) : 0;
+      }
+
+      function pruneFutureHistory(step) {
+        for (const historyStep of stepHistory.keys()) {
+          if ((historyStep | 0) > (step | 0)) {
+            stepHistory.delete(historyStep);
+          }
+        }
+      }
+
+      function captureToolState() {
+        return {
+          heading,
+          leaveTrack,
+          moving,
+          x,
+          y,
+          tracks: tracks.map((segment) => ({ ...segment }))
+        };
+      }
+
+      function restoreToolState(state) {
+        if (!state || typeof state !== "object") return false;
+        heading = Number(state.heading) || 0;
+        leaveTrack = state.leaveTrack === true;
+        moving = state.moving === true;
+        x = Number(state.x) || 0;
+        y = Number(state.y) || 0;
+        tracks = Array.isArray(state.tracks)
+          ? state.tracks.map((segment) => ({
+              x1: Number(segment.x1) || 0,
+              y1: Number(segment.y1) || 0,
+              x2: Number(segment.x2) || 0,
+              y2: Number(segment.y2) || 0
+            }))
+          : [];
+        render();
+        updateInfo();
+        return true;
+      }
+
+      function captureHistoryForStep(step) {
+        const normalizedStep = step | 0;
+        pruneFutureHistory(normalizedStep);
+        stepHistory.set(normalizedStep, captureToolState());
+      }
+
+      function restoreHistoryForStep(step) {
+        const normalizedStep = step | 0;
+        if (stepHistory.has(normalizedStep)) {
+          return restoreToolState(stepHistory.get(normalizedStep));
+        }
+        let bestStep = null;
+        for (const candidate of stepHistory.keys()) {
+          if ((candidate | 0) <= normalizedStep && (bestStep == null || (candidate | 0) > (bestStep | 0))) {
+            bestStep = candidate | 0;
+          }
+        }
+        if (bestStep == null) return false;
+        return restoreToolState(stepHistory.get(bestStep));
+      }
+
       function clearState() {
+        stepHistory = new Map();
         heading = 0;
         leaveTrack = false;
         moving = false;
@@ -165,6 +231,7 @@
         writeWordSafe(ADDR_WHERE_Y, 0);
         render();
         updateInfo();
+        captureHistoryForStep(getSnapshotStep());
       }
 
       function render() {
@@ -206,9 +273,10 @@
         }
 
         writeWordSafe(ADDR_WHERE_X, Math.round(x));
-        writeWordSafe(ADDR_WHERE_Y, Math.round(y));
+       writeWordSafe(ADDR_WHERE_Y, Math.round(y));
         render();
         updateInfo();
+        captureHistoryForStep(getSnapshotStep());
       }
 
       function ensureTimer() {
@@ -250,6 +318,7 @@
           moving = (write.value | 0) !== 0;
         }
         updateInfo();
+        captureHistoryForStep(getSnapshotStep());
       }
 
       connectButton.addEventListener("click", () => {
@@ -257,6 +326,7 @@
         connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
         if (connected) {
           ensureTimer();
+          captureHistoryForStep(getSnapshotStep());
           ctx.messagesPane.postMars("[tool] Mars Bot connected.");
         }
       });
@@ -275,9 +345,24 @@
         onSnapshot(snapshot) {
           const previous = lastSnapshot;
           lastSnapshot = snapshot;
-          if (!connected || !snapshot || !previous) return;
-          if ((snapshot.steps | 0) <= (previous.steps | 0)) return;
+          if (!connected || !snapshot) return;
+
+          const nextStep = getSnapshotStep(snapshot);
+          const previousStep = getSnapshotStep(previous);
+          if (!previous) {
+            captureHistoryForStep(nextStep);
+            return;
+          }
+
+          if (nextStep < previousStep) {
+            restoreHistoryForStep(nextStep);
+            pruneFutureHistory(nextStep);
+            return;
+          }
+          if (nextStep === previousStep) return;
+
           processWrite(extractWrite(previous));
+          captureHistoryForStep(nextStep);
         }
       };
     }

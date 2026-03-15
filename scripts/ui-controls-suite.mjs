@@ -128,6 +128,7 @@ function buildBrowserTestSource() {
     };
 
     const buttons = () => ({
+      compileDisabled: byId("btn-compile-c0").disabled,
       assembleDisabled: byId("btn-assemble").disabled,
       goDisabled: byId("btn-go").disabled,
       stepDisabled: byId("btn-step").disabled,
@@ -168,8 +169,15 @@ function buildBrowserTestSource() {
       return buttons();
     };
 
+    const seedAssemblyFile = async (source = "", name = "src/main.s") => {
+      const setEditorFiles = window.WebMarsRuntimeDebug?.setEditorFiles;
+      assert(typeof setEditorFiles === "function", "Missing runtime debug file setter.");
+      setEditorFiles([{ name, source }], name);
+      await wait(150);
+    };
+
     const assembleProgram = async (source) => {
-      await setEditorSource(source);
+      await seedAssemblyFile(source);
       await click("btn-assemble");
       await waitFor(() => !byId("btn-go").disabled, 4000, "go enabled after assemble");
       assert(textRowCount() > 0, "Text segment should be loaded after assemble.");
@@ -266,7 +274,9 @@ function buildBrowserTestSource() {
       };
 
       await runCase("idle_and_assemble_controls", async () => {
+        await seedAssemblyFile("");
         assertButtons({
+          compileDisabled: true,
           assembleDisabled: false,
           goDisabled: true,
           stepDisabled: true,
@@ -278,6 +288,7 @@ function buildBrowserTestSource() {
 
         await assembleProgram(factorialProgram);
         assertButtons({
+          compileDisabled: true,
           assembleDisabled: false,
           goDisabled: false,
           stepDisabled: false,
@@ -299,6 +310,7 @@ function buildBrowserTestSource() {
         await click("btn-step");
         await waitFor(() => byId("btn-backstep").disabled === false, 2500, "backstep enabled after step");
         assertButtons({
+          compileDisabled: true,
           assembleDisabled: false,
           goDisabled: false,
           stepDisabled: false,
@@ -311,6 +323,7 @@ function buildBrowserTestSource() {
         await click("btn-backstep");
         await waitFor(() => byId("btn-backstep").disabled === true, 2000, "backstep disabled after returning to start");
         assertButtons({
+          compileDisabled: true,
           assembleDisabled: false,
           goDisabled: false,
           stepDisabled: false,
@@ -333,6 +346,7 @@ function buildBrowserTestSource() {
         await click("btn-go");
         await waitFor(() => debugState().run?.runPausedForInput === true, 5000, "runtime waiting for input");
         assertButtons({
+          compileDisabled: true,
           assembleDisabled: true,
           goDisabled: true,
           stepDisabled: true,
@@ -345,6 +359,7 @@ function buildBrowserTestSource() {
         await click("btn-stop");
         await waitFor(() => debugState().run?.runPausedForInput === false, 3000, "input wait cleared after stop");
         await waitForButtons({
+          compileDisabled: true,
           assembleDisabled: false,
           goDisabled: true,
           stepDisabled: true,
@@ -373,6 +388,7 @@ function buildBrowserTestSource() {
 
         await click("btn-pause");
         await waitForButtons({
+          compileDisabled: true,
           assembleDisabled: false,
           goDisabled: false,
           stepDisabled: false,
@@ -385,6 +401,7 @@ function buildBrowserTestSource() {
         await click("btn-go");
         await waitFor(() => debugState().snapshot?.halted === true, 12000, "factorial run halted after resume");
         await waitForButtons({
+          compileDisabled: true,
           assembleDisabled: false,
           goDisabled: true,
           stepDisabled: true,
@@ -395,6 +412,7 @@ function buildBrowserTestSource() {
         }, 3000, "controls after halted factorial run");
         await click("btn-reset");
         await waitForButtons({
+          compileDisabled: true,
           assembleDisabled: false,
           goDisabled: false,
           stepDisabled: false,
@@ -409,6 +427,79 @@ function buildBrowserTestSource() {
           buttons: buttons(),
           debug: debugState(),
           output: runOutput()
+        };
+      });
+
+      await runCase("file_type_aliases_drive_mode_and_actions", async () => {
+        const setEditorFiles = window.WebMarsRuntimeDebug?.setEditorFiles;
+        assert(typeof setEditorFiles === "function", "Missing runtime debug file setter.");
+
+        setEditorFiles([
+          { name: "src/main.c", source: "int main(void) { return 0; }\n" }
+        ], "src/main.c");
+        await waitForButtons({
+          compileDisabled: false,
+          assembleDisabled: true
+        }, 2000, "controls for active .c source");
+        assert(byId("mode-c0").classList.contains("active"), ".c source should activate C0 mode.");
+
+        setEditorFiles([
+          { name: "include/runtime.h0", source: "int puts(char* text);\n" }
+        ], "include/runtime.h0");
+        await waitForButtons({
+          compileDisabled: true,
+          assembleDisabled: true
+        }, 2000, "controls for active .h0 header");
+        assert(byId("mode-c0").classList.contains("active"), ".h0 header should stay in C0 mode.");
+
+        setEditorFiles([
+          { name: "src/main.mips", source: factorialProgram }
+        ], "src/main.mips");
+        await waitForButtons({
+          compileDisabled: true,
+          assembleDisabled: false
+        }, 2000, "controls for active .mips source");
+        assert(byId("mode-assembly").classList.contains("active"), ".mips source should activate Assembly mode.");
+
+        return {
+          buttons: buttons(),
+          debug: debugState()
+        };
+      });
+
+      await runCase("reset_uses_last_successful_assembly_after_switching_to_c", async () => {
+        const setEditorFiles = window.WebMarsRuntimeDebug?.setEditorFiles;
+        assert(typeof setEditorFiles === "function", "Missing runtime debug file setter.");
+        const mixedFiles = [
+          { name: "src/main.s", source: factorialProgram },
+          { name: "src/helper.c", source: "int main(void) { return 0; }\n" }
+        ];
+
+        setEditorFiles(mixedFiles, "src/main.s");
+        await wait(150);
+        await click("btn-assemble");
+        await waitFor(() => !byId("btn-go").disabled, 4000, "assembled ASM before switching tabs");
+
+        setEditorFiles(mixedFiles, "src/helper.c");
+        await waitForButtons({
+          compileDisabled: false,
+          assembleDisabled: true,
+          resetDisabled: false
+        }, 2000, "controls after switching to active C source");
+
+        await click("btn-reset");
+        await waitForButtons({
+          compileDisabled: false,
+          assembleDisabled: true,
+          goDisabled: false,
+          stepDisabled: false,
+          resetDisabled: false
+        }, 4000, "controls after reset from active C tab");
+        assert(textRowCount() > 0, "Reset should preserve the previously assembled ASM program.");
+
+        return {
+          buttons: buttons(),
+          debug: debugState()
         };
       });
 

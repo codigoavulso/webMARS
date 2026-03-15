@@ -299,6 +299,17 @@ function normalizeText(text) {
     .toLowerCase();
 }
 
+function normalizeDiagnosticMessage(text) {
+  const normalized = normalizeText(text).replace(/\\/g, "/");
+  const includeMatch = /^error reading include file (.+)$/.exec(normalized);
+  if (includeMatch) {
+    const rawPath = String(includeMatch[1] || "").trim();
+    const basename = rawPath.split("/").filter(Boolean).pop() || rawPath;
+    return `error reading include file ${basename}`;
+  }
+  return normalized;
+}
+
 function toHex(value) {
   return `0x${(Number(value) >>> 0).toString(16).padStart(8, "0")}`;
 }
@@ -307,7 +318,7 @@ function normalizeMessages(messages = []) {
   return messages.map((entry) => ({
     line: Number(entry?.line ?? 0) | 0,
     message: String(entry?.message ?? ""),
-    normalized: normalizeText(entry?.message ?? "")
+    normalized: normalizeDiagnosticMessage(entry?.message ?? "")
   }));
 }
 
@@ -358,6 +369,8 @@ function buildWebCaseExpression(testCase) {
   const payload = JSON.stringify({
     id: testCase.id,
     source: testCase.source,
+    sourceName: testCase.sourceName || `${testCase.id}.s`,
+    files: testCase.files && typeof testCase.files === "object" ? testCase.files : {},
     settings: testCase.settings || {},
     maxSteps: Number(testCase.maxSteps || 100000) | 0
   });
@@ -365,6 +378,7 @@ function buildWebCaseExpression(testCase) {
   return `(async () => {
     const testCase = ${payload};
     const baseSettings = { ...DEFAULT_SETTINGS, ...testCase.settings, coreBackend: "${WEB_BACKEND}" };
+    const includeMap = new Map(Object.entries(testCase.files || {}).map(([name, text]) => [String(name), String(text ?? "")]));
     const engine = createMarsEngine({
       settings: baseSettings,
       memoryMap: { ...DEFAULT_MEMORY_MAP }
@@ -374,7 +388,8 @@ function buildWebCaseExpression(testCase) {
     }
 
     const assembled = engine.assemble(testCase.source, {
-      sourceName: testCase.id + ".s",
+      sourceName: testCase.sourceName || (testCase.id + ".s"),
+      includeMap,
       programArgumentsEnabled: baseSettings.programArguments === true,
       programArguments: baseSettings.programArgumentsLine || ""
     });
@@ -795,8 +810,17 @@ async function runDifferentialCases(cases, options) {
       await wait(1200);
 
       for (const testCase of cases) {
-        const sourcePath = resolve(sourceTmpDir, `${testCase.id}.s`);
+        const sourceName = String(testCase.sourceName || `${testCase.id}.s`);
+        const sourcePath = resolve(sourceTmpDir, sourceName);
+        mkdirSync(dirname(sourcePath), { recursive: true });
         writeFileSync(sourcePath, String(testCase.source || ""), "utf8");
+        if (testCase.files && typeof testCase.files === "object") {
+          Object.entries(testCase.files).forEach(([relativePath, content]) => {
+            const targetPath = resolve(sourceTmpDir, String(relativePath));
+            mkdirSync(dirname(targetPath), { recursive: true });
+            writeFileSync(targetPath, String(content ?? ""), "utf8");
+          });
+        }
 
         const webResult = await runWebCase(send, testCase);
         const sampledAddresses = buildAddressSample(webResult);

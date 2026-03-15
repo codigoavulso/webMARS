@@ -9,7 +9,7 @@ const repoRoot = resolve(__dirname, "..", "..");
 const compilerPath = join(repoRoot, "web", "assets", "js", "app-modules", "17-mini-c-compiler.js");
 const resultDir = join(repoRoot, "test-results");
 
-export const SUBSET_ORDER = Object.freeze(["C0-S0", "C0-S1", "C0-S2", "C0-S3", "C0-S4"]);
+export const SUBSET_ORDER = Object.freeze(["C0-S0", "C0-S1", "C0-S2", "C0-S3", "C0-S4", "C1-NATIVE"]);
 
 export function subsetIndex(subsetName) {
   return SUBSET_ORDER.indexOf(String(subsetName || "").toUpperCase());

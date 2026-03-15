@@ -270,6 +270,7 @@
       let instructionCount = 0;
       let delayLimit = 0;
       let pendingWord = 0;
+      let stepHistory = new Map();
       let splitRatio = 0.58;
       let splitDrag = null;
 
@@ -287,17 +288,17 @@
         };
       }
 
-      function readWordSafe(address) {
+      function readByteSafe(address) {
         try {
-          return ctx.engine.readWord(address >>> 0) | 0;
+          return ctx.engine.readByte(address >>> 0, false) & 0xff;
         } catch {
           return 0;
         }
       }
 
-      function writeWordSafe(address, value) {
+      function writeByteSafe(address, value) {
         try {
-          ctx.engine.writeWord(address >>> 0, value | 0);
+          ctx.engine.writeByte(address >>> 0, value & 0xff);
           return true;
         } catch {
           return false;
@@ -305,15 +306,15 @@
       }
 
       function isReadyBitSet(address) {
-        return (readWordSafe(address) & 1) === 1;
+        return (readByteSafe(address) & 1) === 1;
       }
 
       function readyBitSet(address) {
-        return (readWordSafe(address) | 1) | 0;
+        return (readByteSafe(address) | 1) & 0xff;
       }
 
       function readyBitCleared(address) {
-        return (readWordSafe(address) & ~1) | 0;
+        return (readByteSafe(address) & ~1) & 0xff;
       }
 
       function applySplitLayout() {
@@ -374,6 +375,94 @@
 
       function getSequentialCursor() {
         return displayArea.selectionStart ?? displayArea.value.length ?? 0;
+      }
+
+      function getSnapshotStep(snapshot = lastSnapshot) {
+        return Number.isFinite(snapshot?.steps) ? (snapshot.steps | 0) : 0;
+      }
+
+      function pruneFutureHistory(step) {
+        for (const historyStep of stepHistory.keys()) {
+          if ((historyStep | 0) > (step | 0)) {
+            stepHistory.delete(historyStep);
+          }
+        }
+      }
+
+      function captureToolState() {
+        return {
+          randomAccessMode,
+          columns,
+          rows,
+          cursorX,
+          cursorY,
+          displayValue: String(displayArea.value || ""),
+          selectionStart: Number(displayArea.selectionStart) || 0,
+          selectionEnd: Number(displayArea.selectionEnd) || 0,
+          terminalRows: randomAccessMode
+            ? terminalBuffer.map((row) => row.join(""))
+            : [],
+          keyQueue: keyQueue.slice(),
+          countingInstructions,
+          instructionCount,
+          delayLimit,
+          pendingWord
+        };
+      }
+
+      function restoreToolState(state) {
+        if (!state || typeof state !== "object") return false;
+
+        randomAccessMode = state.randomAccessMode === true;
+        columns = Math.max(1, Number(state.columns) || columns || 1);
+        rows = Math.max(1, Number(state.rows) || rows || 1);
+        cursorX = Math.max(0, Math.min(columns - 1, Number(state.cursorX) || 0));
+        cursorY = Math.max(0, Math.min(rows - 1, Number(state.cursorY) || 0));
+        keyQueue = Array.isArray(state.keyQueue) ? state.keyQueue.map((value) => value & 0xff) : [];
+        countingInstructions = state.countingInstructions === true;
+        instructionCount = Number(state.instructionCount) || 0;
+        delayLimit = Number(state.delayLimit) || 0;
+        pendingWord = Number(state.pendingWord) || 0;
+
+        if (randomAccessMode) {
+          terminalBuffer = Array.from({ length: rows }, (_, rowIndex) => {
+            const rowText = String(state.terminalRows?.[rowIndex] || "");
+            return Array.from({ length: columns }, (_, colIndex) => rowText[colIndex] || " ");
+          });
+        } else {
+          terminalBuffer = [];
+        }
+
+        displayArea.value = String(state.displayValue || "");
+        const selectionStart = Math.max(0, Math.min(displayArea.value.length, Number(state.selectionStart) || 0));
+        const selectionEnd = Math.max(selectionStart, Math.min(displayArea.value.length, Number(state.selectionEnd) || selectionStart));
+        displayArea.selectionStart = selectionStart;
+        displayArea.selectionEnd = selectionEnd;
+        displayArea.scrollTop = displayArea.scrollHeight;
+        updateTitles();
+        return true;
+      }
+
+      function captureHistoryForStep(step) {
+        const normalizedStep = step | 0;
+        pruneFutureHistory(normalizedStep);
+        stepHistory.set(normalizedStep, captureToolState());
+      }
+
+      function restoreHistoryForStep(step) {
+        const normalizedStep = step | 0;
+        if (stepHistory.has(normalizedStep)) {
+          return restoreToolState(stepHistory.get(normalizedStep));
+        }
+
+        let bestStep = null;
+        for (const candidate of stepHistory.keys()) {
+          if ((candidate | 0) <= normalizedStep && (bestStep == null || (candidate | 0) > (bestStep | 0))) {
+            bestStep = candidate | 0;
+          }
+        }
+        if (bestStep == null) return false;
+        return restoreToolState(stepHistory.get(bestStep));
       }
 
       function formatCursorPosition() {
@@ -520,14 +609,15 @@
         if (isReadyBitSet(RECEIVER_CONTROL)) return;
 
         const value = keyQueue.shift() | 0;
-        writeWordSafe(RECEIVER_DATA, value & 0xff);
-        writeWordSafe(RECEIVER_CONTROL, readyBitSet(RECEIVER_CONTROL));
+        writeByteSafe(RECEIVER_DATA, value & 0xff);
+        writeByteSafe(RECEIVER_CONTROL, readyBitSet(RECEIVER_CONTROL));
       }
 
       function queueKey(value) {
         if (!Number.isFinite(value)) return;
         keyQueue.push(value & 0xff);
         feedReceiverFromQueue();
+        captureHistoryForStep(getSnapshotStep());
       }
 
       function extractMemoryAccess(previousSnapshot) {
@@ -563,12 +653,12 @@
         const access = extractMemoryAccess(previousSnapshot);
         if (access) {
           if (!access.write && access.address === RECEIVER_DATA) {
-            writeWordSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
+            writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
             feedReceiverFromQueue();
           }
 
           if (access.write && access.address === TRANSMITTER_DATA && isReadyBitSet(TRANSMITTER_CONTROL)) {
-            writeWordSafe(TRANSMITTER_CONTROL, readyBitCleared(TRANSMITTER_CONTROL));
+            writeByteSafe(TRANSMITTER_CONTROL, readyBitCleared(TRANSMITTER_CONTROL));
             pendingWord = access.value | 0;
             if (!displayAfterDelay) displayCharacter(pendingWord);
             countingInstructions = true;
@@ -582,7 +672,7 @@
           if (instructionCount >= delayLimit) {
             if (displayAfterDelay) displayCharacter(pendingWord);
             countingInstructions = false;
-            writeWordSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
+            writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
           }
         }
 
@@ -590,6 +680,7 @@
       }
 
       function doReset() {
+        stepHistory = new Map();
         keyQueue = [];
         countingInstructions = false;
         instructionCount = 0;
@@ -599,9 +690,10 @@
         initializeDisplay(false);
         keyboardArea.value = "";
         const { TRANSMITTER_CONTROL, RECEIVER_CONTROL } = addresses();
-        writeWordSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
-        writeWordSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
+        writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
+        writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
         updateTitles();
+        captureHistoryForStep(getSnapshotStep());
       }
 
       keyboardArea.addEventListener("keydown", (event) => {
@@ -644,9 +736,10 @@
         updateConnectButtonLabel();
         if (connected) {
           const { TRANSMITTER_CONTROL, RECEIVER_CONTROL } = addresses();
-          writeWordSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
-          writeWordSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
+          writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
+          writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
           feedReceiverFromQueue();
+          captureHistoryForStep(getSnapshotStep());
           keyboardArea.focus();
         }
       });
@@ -685,9 +778,24 @@
         onSnapshot(snapshot) {
           const previous = lastSnapshot;
           lastSnapshot = snapshot;
-          if (!connected || !snapshot || !previous) return;
-          if ((snapshot.steps | 0) <= (previous.steps | 0)) return;
+          if (!connected || !snapshot) return;
+
+          const nextStep = getSnapshotStep(snapshot);
+          const previousStep = getSnapshotStep(previous);
+          if (!previous) {
+            captureHistoryForStep(nextStep);
+            return;
+          }
+
+          if (nextStep < previousStep) {
+            restoreHistoryForStep(nextStep);
+            pruneFutureHistory(nextStep);
+            return;
+          }
+          if (nextStep === previousStep) return;
+
           processStep(previous);
+          captureHistoryForStep(nextStep);
         }
       };
     }

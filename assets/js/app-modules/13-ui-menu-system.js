@@ -14,6 +14,8 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
   const definitions = () => {
     const state = getState();
     const hasOpenProject = state?.project?.isOpen === true;
+    const cloudAuthenticated = state?.cloud?.authenticated === true;
+    const cloudUserName = String(state?.cloud?.user?.username || "").trim();
     const examples = typeof handlers.getExampleMenuItems === "function" ? handlers.getExampleMenuItems() : [];
     const exampleItems = examples.length ? examples : [{ label: "(no examples)", enabled: () => false }];
     const windows = typeof handlers.getViewMenuItems === "function" ? handlers.getViewMenuItems() : [];
@@ -46,6 +48,25 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         "-",
         { label: "Dump Run I/O", command: "dumpRunIo" }
       ],
+      Cloud: [
+        {
+          label: () => (cloudAuthenticated
+            ? `Signed in as ${cloudUserName || "user"}`
+            : "Not signed in"),
+          enabled: () => false
+        },
+        {
+          label: () => (cloudAuthenticated
+            ? `Logout${cloudUserName ? ` (${cloudUserName})` : ""}`
+            : "Login..."),
+          command: cloudAuthenticated ? "cloudLogout" : "cloudLogin"
+        },
+        "-",
+        { label: "Open Cloud Project...", command: "cloudOpenProject", enabled: () => cloudAuthenticated },
+        { label: "Save Active Project", command: "cloudSaveProject", enabled: () => cloudAuthenticated && hasOpenProject },
+        { label: "Sync All Projects", command: "cloudSyncAllProjects", enabled: () => cloudAuthenticated },
+        { label: "Refresh Session", command: "cloudRefreshSession" }
+      ],
       Edit: [
         { label: "Undo", command: "undo", shortcut: "Ctrl+Z" },
         { label: "Redo", command: "redo", shortcut: "Ctrl+Y" },
@@ -57,14 +78,14 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Select All", command: "selectAll", shortcut: "Ctrl+A" }
       ],
       Run: [
-        { label: "Compile C0", command: "compileC0", shortcut: "F4" },
-        { label: "Assemble", command: "assemble", shortcut: "F3" },
-        { label: "Go", command: "go", shortcut: "F5" },
-        { label: "Pause", command: "pause" },
-        { label: "Stop", command: "stop" },
-        { label: "Step", command: "step", shortcut: "F7" },
-        { label: "Backstep", command: "backstep" },
-        { label: "Reset", command: "reset" }
+        { label: "Compile C0", command: "compileC0", shortcut: "F4", enabled: () => refs.buttons?.compileC0?.disabled !== true },
+        { label: "Assemble", command: "assemble", shortcut: "F3", enabled: () => refs.buttons?.assemble?.disabled !== true },
+        { label: "Go", command: "go", shortcut: "F5", enabled: () => refs.buttons?.go?.disabled !== true },
+        { label: "Pause", command: "pause", enabled: () => refs.buttons?.pause?.disabled !== true },
+        { label: "Stop", command: "stop", enabled: () => refs.buttons?.stop?.disabled !== true },
+        { label: "Step", command: "step", shortcut: "F7", enabled: () => refs.buttons?.step?.disabled !== true },
+        { label: "Backstep", command: "backstep", enabled: () => refs.buttons?.backstep?.disabled !== true },
+        { label: "Reset", command: "reset", enabled: () => refs.buttons?.reset?.disabled !== true }
       ],
       Settings: [
         { label: "Show Labels Window (symbol table)", command: "toggleShowLabelsWindow", check: (st) => st.preferences.showLabelsWindow },
@@ -153,7 +174,9 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
 
       const checked = typeof item.check === "function" ? item.check(state) : false;
       const enabled = typeof item.enabled === "function" ? item.enabled(state) : true;
-      row.innerHTML = `<span class="menu-check">${checked ? "&#10003;" : ""}</span><span>${escapeHtml(translateText(item.label))}</span><span class="menu-shortcut">${escapeHtml(item.shortcut ?? "")}</span><span class="menu-arrow">${hasSubmenu ? "&#9654;" : ""}</span>`;
+      const label = typeof item.label === "function" ? String(item.label(state) ?? "") : String(item.label ?? "");
+      const shortcut = typeof item.shortcut === "function" ? String(item.shortcut(state) ?? "") : String(item.shortcut ?? "");
+      row.innerHTML = `<span class="menu-check">${checked ? "&#10003;" : ""}</span><span>${escapeHtml(translateText(label))}</span><span class="menu-shortcut">${escapeHtml(shortcut)}</span><span class="menu-arrow">${hasSubmenu ? "&#9654;" : ""}</span>`;
 
       if (!enabled) {
         row.classList.add("disabled");

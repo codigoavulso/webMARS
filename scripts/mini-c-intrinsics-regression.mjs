@@ -54,8 +54,14 @@ const EXPECTED_INTRINSICS = Object.freeze({
   message_dialog_string: { minSubset: "C0-S1", services: [59] },
   contract_length: { minSubset: "C0-S0", services: [] },
   contract_old: { minSubset: "C0-S0", services: [] },
-  contract_result: { minSubset: "C0-S0", services: [] }
+  contract_result: { minSubset: "C0-S0", services: [] },
+  contract_hastag: { minSubset: "C1-NATIVE", services: [] }
 });
+
+const ALLOWED_EXTENSION_INTRINSICS = Object.freeze([
+  "format",
+  "printf"
+]);
 
 function pickLiteralForType(typeName, index) {
   const normalized = String(typeName || "int").trim().toLowerCase();
@@ -74,6 +80,12 @@ function maxSubset(left, right) {
 }
 
 function buildIntrinsicCallSource(name, intrinsicMeta, options = {}) {
+  if (name === "contract_length") {
+    return "int main(void){ int buf[4]; return contract_length(buf); }";
+  }
+  if (name === "contract_hastag") {
+    return "int main(void){ int x = 1; void* p = (void*)&x; return contract_hastag(\"int*\", p) ? 1 : 0; }";
+  }
   const params = Number(intrinsicMeta?.params || 0);
   const paramTypes = Array.isArray(intrinsicMeta?.paramTypes) ? intrinsicMeta.paramTypes : [];
   const paramKinds = Array.isArray(intrinsicMeta?.paramKinds) ? intrinsicMeta.paramKinds : [];
@@ -107,6 +119,9 @@ function runIntrinsicsRegression() {
   const expectedIntrinsicNames = Object.keys(EXPECTED_INTRINSICS).sort();
   const missingInCompiler = expectedIntrinsicNames.filter((name) => !compilerIntrinsicNames.includes(name));
   const unexpectedInCompiler = compilerIntrinsicNames.filter((name) => !expectedIntrinsicNames.includes(name));
+  const disallowedUnexpectedInCompiler = unexpectedInCompiler.filter((name) => (
+    !String(name || "").startsWith("__wm_") && !ALLOWED_EXTENSION_INTRINSICS.includes(name)
+  ));
 
   const baselineBySubset = {};
   for (const subset of SUBSET_ORDER) {
@@ -218,6 +233,7 @@ function runIntrinsicsRegression() {
       compilerIntrinsicCount: compilerIntrinsicNames.length,
       missingInCompiler,
       unexpectedInCompiler,
+      disallowedUnexpectedInCompiler,
       totalChecks,
       failedChecks,
       passedChecks: totalChecks - failedChecks
@@ -229,7 +245,7 @@ function runIntrinsicsRegression() {
   console.log(`[mini-c-intrinsics] checks: ${report.summary.passedChecks}/${report.summary.totalChecks}`);
   console.log(`[mini-c-intrinsics] report: ${outputPath}`);
 
-  const keysetMatch = missingInCompiler.length === 0 && unexpectedInCompiler.length === 0;
+  const keysetMatch = missingInCompiler.length === 0 && disallowedUnexpectedInCompiler.length === 0;
   if (!keysetMatch || failedChecks > 0) process.exitCode = 1;
 }
 

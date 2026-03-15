@@ -1,0 +1,143 @@
+#use <string>
+
+int tty_mmio_base(void) {
+  return -65536;
+}
+
+int tty_receiver_control_addr(void) {
+  return tty_mmio_base();
+}
+
+int tty_receiver_data_addr(void) {
+  return tty_mmio_base() + 4;
+}
+
+int tty_transmitter_control_addr(void) {
+  return tty_mmio_base() + 8;
+}
+
+int tty_transmitter_data_addr(void) {
+  return tty_mmio_base() + 12;
+}
+
+bool tty_key_ready(void) {
+  int* control = (int*)tty_receiver_control_addr();
+  return (*control & 1) != 0;
+}
+
+bool tty_tx_ready(void) {
+  int* control = (int*)tty_transmitter_control_addr();
+  return (*control & 1) != 0;
+}
+
+int tty_get_byte(void) {
+  int* data = (int*)tty_receiver_data_addr();
+  while (!tty_key_ready()) {
+  }
+  return *data & 255;
+}
+
+char tty_getchar(void) {
+  return char_chr(tty_get_byte() & 127);
+}
+
+void tty_put_byte(int value) {
+  int* data = (int*)tty_transmitter_data_addr();
+  while (!tty_tx_ready()) {
+  }
+  *data = value & 255;
+}
+
+void tty_putc(char c) {
+  tty_put_byte((int)c);
+}
+
+void tty_puts(string s) {
+  int i = 0;
+  int len = string_length(s);
+  while (i < len) {
+    tty_put_byte((int)string_charat(s, i));
+    i++;
+  }
+}
+
+void tty_putint(int value) {
+  tty_puts(string_fromint(value));
+}
+
+void tty_escape(void) {
+  tty_put_byte(27);
+}
+
+void tty_csi(void) {
+  tty_escape();
+  tty_put_byte(91);
+}
+
+void tty_newline(void) {
+  tty_put_byte(13);
+  tty_put_byte(10);
+}
+
+void tty_reset(void) {
+  tty_escape();
+  tty_put_byte(99);
+}
+
+void tty_home(void) {
+  tty_csi();
+  tty_putc('H');
+}
+
+void tty_clear(void) {
+  tty_csi();
+  tty_puts("2J");
+  tty_home();
+}
+
+//@requires row >= 1 && col >= 1;
+void tty_move(int row, int col) {
+  tty_csi();
+  tty_putint(row);
+  tty_put_byte(59);
+  tty_putint(col);
+  tty_put_byte(72);
+}
+
+//@requires 0 <= color && color <= 7;
+void tty_set_fg(int color) {
+  tty_csi();
+  tty_putint(30 + color);
+  tty_putc('m');
+}
+
+//@requires 0 <= color && color <= 7;
+void tty_set_bg(int color) {
+  tty_csi();
+  tty_putint(40 + color);
+  tty_putc('m');
+}
+
+//@requires 0 <= color && color <= 7;
+void tty_set_bright_fg(int color) {
+  tty_csi();
+  tty_putint(90 + color);
+  tty_putc('m');
+}
+
+void tty_style_reset(void) {
+  tty_csi();
+  tty_puts("0m");
+}
+
+void tty_box_on(void) {
+  tty_escape();
+  tty_put_byte(40);
+  tty_put_byte(48);
+}
+
+void tty_box_off(void) {
+  tty_escape();
+  tty_put_byte(40);
+  tty_put_byte(66);
+}

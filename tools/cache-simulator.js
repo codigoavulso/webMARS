@@ -431,11 +431,24 @@
       let lastSnapshot = null;
       let highlightBlock = -1;
       let highlightKind = "empty";
+      let stepHistory = new Map();
 
       function appendLog(line) {
         if (!line) return;
         controls.log.value += `${line}\n`;
         controls.log.scrollTop = controls.log.scrollHeight;
+      }
+
+      function getSnapshotStep(snapshot = lastSnapshot) {
+        return Number.isFinite(snapshot?.steps) ? (snapshot.steps | 0) : 0;
+      }
+
+      function pruneFutureHistory(step) {
+        for (const historyStep of stepHistory.keys()) {
+          if ((historyStep | 0) > (step | 0)) {
+            stepHistory.delete(historyStep);
+          }
+        }
       }
 
       function parseIntControl(control, fallback) {
@@ -481,6 +494,66 @@
         controls.log.value = "";
       }
 
+      function captureToolState() {
+        return {
+          accesses,
+          hits,
+          misses,
+          highlightBlock,
+          highlightKind,
+          log: String(controls.log.value || ""),
+          accessTick: Number(cache?.accessTick) || 0,
+          blocks: Array.isArray(cache?.blocks)
+            ? cache.blocks.map((block) => ({
+                valid: block.valid === true,
+                tag: block.tag >>> 0,
+                lastUsed: Number(block.lastUsed) || 0
+              }))
+            : []
+        };
+      }
+
+      function restoreToolState(state) {
+        if (!state || typeof state !== "object" || !cache) return false;
+        accesses = Number(state.accesses) || 0;
+        hits = Number(state.hits) || 0;
+        misses = Number(state.misses) || 0;
+        highlightBlock = Number.isFinite(state.highlightBlock) ? (state.highlightBlock | 0) : -1;
+        highlightKind = String(state.highlightKind || "empty");
+        controls.log.value = String(state.log || "");
+        cache.accessTick = Number(state.accessTick) || 0;
+        if (Array.isArray(state.blocks) && state.blocks.length === cache.blocks.length) {
+          cache.blocks = state.blocks.map((block) => ({
+            valid: block.valid === true,
+            tag: block.tag >>> 0,
+            lastUsed: Number(block.lastUsed) || 0
+          }));
+        }
+        render();
+        return true;
+      }
+
+      function captureHistoryForStep(step) {
+        const normalizedStep = step | 0;
+        pruneFutureHistory(normalizedStep);
+        stepHistory.set(normalizedStep, captureToolState());
+      }
+
+      function restoreHistoryForStep(step) {
+        const normalizedStep = step | 0;
+        if (stepHistory.has(normalizedStep)) {
+          return restoreToolState(stepHistory.get(normalizedStep));
+        }
+        let bestStep = null;
+        for (const candidate of stepHistory.keys()) {
+          if ((candidate | 0) <= normalizedStep && (bestStep == null || (candidate | 0) > (bestStep | 0))) {
+            bestStep = candidate | 0;
+          }
+        }
+        if (bestStep == null) return false;
+        return restoreToolState(stepHistory.get(bestStep));
+      }
+
       function rebuildCache() {
         updateSetSizeOptions();
         const blockCount = parseIntControl(controls.blocks, 8);
@@ -491,6 +564,8 @@
         cache = new CacheModel(blockCount, blockSizeWords, Math.max(1, setSize), replacement);
         controls.bytes.value = String(blockCount * blockSizeWords * 4);
         resetCounters();
+        stepHistory = new Map();
+        captureHistoryForStep(getSnapshotStep());
         render();
       }
 
@@ -593,9 +668,24 @@
         onSnapshot(snapshot) {
           const previous = lastSnapshot;
           lastSnapshot = snapshot;
-          if (!connected || !snapshot || !previous) return;
-          if ((snapshot.steps | 0) <= (previous.steps | 0)) return;
+          if (!connected || !snapshot) return;
+
+          const nextStep = getSnapshotStep(snapshot);
+          const previousStep = getSnapshotStep(previous);
+          if (!previous) {
+            captureHistoryForStep(nextStep);
+            return;
+          }
+
+          if (nextStep < previousStep) {
+            restoreHistoryForStep(nextStep);
+            pruneFutureHistory(nextStep);
+            return;
+          }
+          if (nextStep === previousStep) return;
+
           processAccess(previous);
+          captureHistoryForStep(nextStep);
         }
       };
     }

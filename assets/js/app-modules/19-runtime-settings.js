@@ -9,6 +9,9 @@
   const DEFAULT_MAX_BACKSTEPS = 100;
   const MIN_MAX_BACKSTEPS = 0;
   const MAX_MAX_BACKSTEPS = 1000000;
+  const BACKEND_MODE_JS = "js";
+  const BACKEND_MODE_HYBRID = "hybrid";
+  const DEFAULT_BACKEND_MODE = BACKEND_MODE_JS;
 
   function sanitizeMemoryGb(value, fallback = DEFAULT_MEMORY_GB) {
     const parsed = Number(value);
@@ -24,6 +27,19 @@
 
   function memoryGbToBytes(gbValue) {
     return Math.floor(sanitizeMemoryGb(gbValue) * 1024 * 1024 * 1024);
+  }
+
+  function sanitizeBackendMode(value, fallback = DEFAULT_BACKEND_MODE) {
+    const token = String(value || "").trim().toLowerCase();
+    if (token === BACKEND_MODE_HYBRID || token === "wasm" || token === "experimental") {
+      return BACKEND_MODE_HYBRID;
+    }
+    if (token === BACKEND_MODE_JS || token === "only-js" || token === "only_js") {
+      return BACKEND_MODE_JS;
+    }
+    return String(fallback || DEFAULT_BACKEND_MODE).trim().toLowerCase() === BACKEND_MODE_HYBRID
+      ? BACKEND_MODE_HYBRID
+      : BACKEND_MODE_JS;
   }
 
   function getI18nApi() {
@@ -50,8 +66,12 @@
     DEFAULT_MAX_BACKSTEPS,
     MIN_MAX_BACKSTEPS,
     MAX_MAX_BACKSTEPS,
+    BACKEND_MODE_JS,
+    BACKEND_MODE_HYBRID,
+    DEFAULT_BACKEND_MODE,
     sanitizeMemoryGb,
     sanitizeMaxBacksteps,
+    sanitizeBackendMode,
     memoryGbToBytes,
     getI18nApi,
     applyLanguagePreference,

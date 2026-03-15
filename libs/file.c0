@@ -1,0 +1,32 @@
+struct __c0_file_handle;
+typedef struct __c0_file_handle* file_t;
+
+//@requires f != NULL;
+bool file_closed(file_t f) {
+  return __wm_file_closed(f);
+}
+
+//@ensures \result == NULL || !file_closed(\result);
+file_t file_read(string path) {
+  return __wm_file_read(path);
+}
+
+//@requires f != NULL;
+//@requires !file_closed(f);
+//@ensures file_closed(f);
+void file_close(file_t f) {
+  __wm_file_close(f);
+}
+
+//@requires f != NULL;
+//@requires !file_closed(f);
+bool file_eof(file_t f) {
+  return __wm_file_eof(f);
+}
+
+//@requires f != NULL;
+//@requires !file_closed(f);
+//@requires !file_eof(f);
+string file_readline(file_t f) {
+  return __wm_file_readline(f);
+}
