@@ -14,6 +14,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
   const definitions = () => {
     const state = getState();
     const hasOpenProject = state?.project?.isOpen === true;
+    const hasActiveFile = Array.isArray(state?.files) && state.files.length > 0;
     const cloudAuthenticated = state?.cloud?.authenticated === true;
     const cloudUserName = String(state?.cloud?.user?.username || "").trim();
     const examples = typeof handlers.getExampleMenuItems === "function" ? handlers.getExampleMenuItems() : [];
@@ -28,9 +29,33 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
       );
     }
     const closeMenuItems = [
-      { label: "Active file", command: "closeFile", shortcut: "Ctrl+W", enabled: () => hasOpenProject },
+      { label: "Active file", command: "closeFile", shortcut: "Ctrl+W", enabled: () => hasActiveFile },
       { label: "Close project", command: "closeProject", enabled: () => hasOpenProject }
     ];
+    const cloudMenuItems = [
+      {
+        label: () => (cloudAuthenticated
+          ? `Signed in as ${cloudUserName || "user"}`
+          : "Not signed in"),
+        enabled: () => false
+      },
+      {
+        label: () => (cloudAuthenticated
+          ? `Logout${cloudUserName ? ` (${cloudUserName})` : ""}`
+          : "Login..."),
+        command: cloudAuthenticated ? "cloudLogout" : "cloudLogin"
+      }
+    ];
+    if (!cloudAuthenticated) {
+      cloudMenuItems.push({ label: "Create User...", command: "cloudRegister" });
+    }
+    cloudMenuItems.push(
+      "-",
+      { label: "Open Cloud Project...", command: "cloudOpenProject", enabled: () => cloudAuthenticated },
+      { label: "Save Project", command: "cloudSaveProject", enabled: () => cloudAuthenticated && hasOpenProject },
+      { label: "Sync All Projects", command: "cloudSyncAllProjects", enabled: () => cloudAuthenticated },
+      { label: "Refresh Session", command: "cloudRefreshSession" }
+    );
     return {
       File: [
         { label: "New", submenu: newMenuItems },
@@ -39,34 +64,17 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         "-",
         { label: "Close", submenu: closeMenuItems },
         "-",
-        { label: "Download", command: "saveFileToDisk", shortcut: "Ctrl+S" },
+        { label: "Save Active File", command: "saveFile", shortcut: "Ctrl+S", enabled: () => hasActiveFile },
+        { label: "Save Project", command: "saveProjectWorkspace", enabled: () => hasOpenProject },
+        "-",
+        { label: "Download", command: "saveFileToDisk" },
         { label: "Download As...", command: "saveFileToDiskAs", shortcut: "Ctrl+Shift+S" },
-        { label: "Save to Browser Storage", command: "saveFileToBrowserStorage" },
-        { label: "Save to Browser Storage As...", command: "saveFileToBrowserStorageAs" },
         "-",
         { label: "Examples", submenu: exampleItems },
         "-",
         { label: "Dump Run I/O", command: "dumpRunIo" }
       ],
-      Cloud: [
-        {
-          label: () => (cloudAuthenticated
-            ? `Signed in as ${cloudUserName || "user"}`
-            : "Not signed in"),
-          enabled: () => false
-        },
-        {
-          label: () => (cloudAuthenticated
-            ? `Logout${cloudUserName ? ` (${cloudUserName})` : ""}`
-            : "Login..."),
-          command: cloudAuthenticated ? "cloudLogout" : "cloudLogin"
-        },
-        "-",
-        { label: "Open Cloud Project...", command: "cloudOpenProject", enabled: () => cloudAuthenticated },
-        { label: "Save Active Project", command: "cloudSaveProject", enabled: () => cloudAuthenticated && hasOpenProject },
-        { label: "Sync All Projects", command: "cloudSyncAllProjects", enabled: () => cloudAuthenticated },
-        { label: "Refresh Session", command: "cloudRefreshSession" }
-      ],
+      Cloud: cloudMenuItems,
       Edit: [
         { label: "Undo", command: "undo", shortcut: "Ctrl+Z" },
         { label: "Redo", command: "redo", shortcut: "Ctrl+Y" },
@@ -108,6 +116,8 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         "-",
         { label: "Store/Load state...", command: "manageProjectStates" },
         { label: "Clear localStorage and loaded states...", command: "clearLocalData" },
+        "-",
+        { label: "Cloud Server...", command: "showCloudServerPreferences" },
         "-",
         { label: "Interface...", command: "showInterfacePreferences" },
         { label: "Runtime & Memory...", command: "showRuntimeMemoryPreferences" }

@@ -5068,9 +5068,104 @@
     };
   }
 
+  function collectReachableFunctions(programAst) {
+    const functions = Array.isArray(programAst?.functions) ? [...programAst.functions] : [];
+    const globals = Array.isArray(programAst?.globals) ? [...programAst.globals] : [];
+    const functionMap = new Map();
+    const functionNames = new Set();
+    functions.forEach((fn) => {
+      const name = String(fn?.name || "");
+      if (!name) return;
+      functionMap.set(name, fn);
+      functionNames.add(name);
+    });
+    if (functions.length === 0) return functions;
+
+    const addressTakenNames = new Set();
+
+    function walkNode(node, visitor, seen = new Set()) {
+      if (!node || typeof node !== "object") return;
+      if (seen.has(node)) return;
+      seen.add(node);
+      visitor(node);
+      if (Array.isArray(node)) {
+        node.forEach((entry) => walkNode(entry, visitor, seen));
+        return;
+      }
+      Object.keys(node).forEach((key) => {
+        if (key.startsWith("_")) return;
+        const value = node[key];
+        if (!value || typeof value !== "object") return;
+        walkNode(value, visitor, seen);
+      });
+    }
+
+    function analyzeReferences(rootNode) {
+      const directRefs = new Set();
+      let hasIndirectCall = false;
+      walkNode(rootNode, (node) => {
+        if (!node || typeof node !== "object") return;
+        if (node.type === "call") {
+          if (typeof node.callee === "string" && functionNames.has(node.callee)) {
+            directRefs.add(node.callee);
+          }
+          if (node.callIndirect === true || node.indirectCallee || node.calleeExpr) {
+            hasIndirectCall = true;
+          }
+        }
+        if (node.type === "identifier" && node.symbolKind === "function" && functionNames.has(node.name)) {
+          directRefs.add(node.name);
+          addressTakenNames.add(node.name);
+        }
+      });
+      return { directRefs, hasIndirectCall };
+    }
+
+    const rootRefs = analyzeReferences(globals);
+    const rootNames = new Set();
+    if (functionMap.has("main")) rootNames.add("main");
+    rootRefs.directRefs.forEach((name) => rootNames.add(name));
+
+    const analysisByName = new Map();
+    functions.forEach((fn) => {
+      analysisByName.set(fn.name, analyzeReferences(fn));
+    });
+
+    const reachable = new Set(rootNames);
+    const queue = [...rootNames];
+    while (queue.length > 0) {
+      const name = queue.shift();
+      const analysis = analysisByName.get(name);
+      if (!analysis) continue;
+      analysis.directRefs.forEach((refName) => {
+        if (reachable.has(refName)) return;
+        reachable.add(refName);
+        queue.push(refName);
+      });
+      if (analysis.hasIndirectCall) {
+        functions.forEach((fn) => {
+          if (reachable.has(fn.name)) return;
+          reachable.add(fn.name);
+          queue.push(fn.name);
+        });
+      }
+    }
+
+    if (rootRefs.hasIndirectCall) {
+      functions.forEach((fn) => reachable.add(fn.name));
+    } else {
+      addressTakenNames.forEach((name) => {
+        if (reachable.has(name)) return;
+        reachable.add(name);
+      });
+    }
+
+    return functions.filter((fn) => reachable.has(fn.name));
+  }
+
   function generateProgram(programAst, options = {}) {
     const emitter = createEmitter();
-    const functions = Array.isArray(programAst?.functions) ? [...programAst.functions] : [];
+    const functions = collectReachableFunctions(programAst);
     const globals = Array.isArray(programAst?.globals) ? [...programAst.globals] : [];
     const structTable = programAst?._structTable || null;
     const typedefTable = programAst?._typedefTable || null;
@@ -7057,14 +7152,18 @@
     }
 
     try {
+      const loadedFunctionCount = Array.isArray(ast.functions) ? ast.functions.length : 0;
+      const emittedFunctions = collectReachableFunctions(ast);
       const asm = generateProgram(ast, {
         sourceName,
         subset: subsetLabel,
         targetAbi,
         emitComments: options.emitComments !== false
       });
+      const emittedFunctionCount = emittedFunctions.length;
       logs.push(`Mini-C phase 5 compile succeeded (${sourceName}).`);
-      logs.push(`Functions: ${ast.functions.length}`);
+      logs.push(`Functions loaded: ${loadedFunctionCount}`);
+      logs.push(`Functions emitted: ${emittedFunctionCount}`);
       return {
         ok: true,
         sourceName,
@@ -7072,6 +7171,8 @@
         asm,
         subset,
         targetAbi,
+        loadedFunctionCount,
+        emittedFunctionCount,
         logs,
         warnings,
         errors: []

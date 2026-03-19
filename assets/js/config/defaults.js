@@ -1,5 +1,6 @@
 export const DEFAULT_SETTINGS = {
   version: "4.5",
+  cloudApiBase: "https://backmars.nfiles.top/api",
   extendedAssembler: true,
   bareMachine: false,
   assembleOnOpen: false,
@@ -12,6 +13,7 @@ export const DEFAULT_SETTINGS = {
   maxMessageCharacters: 200_000,
   maxErrors: 200,
   maxBacksteps: 2000,
+  maxUserStorageBytes: 1024 * 1024,
   fileExtensions: ["asm", "s", "c", "c0"],
   asciiNonPrint: "."
 };

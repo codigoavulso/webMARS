@@ -149,6 +149,56 @@ function buildBrowserTestSource() {
       }) || null,
       error: window.WebMarsRuntimeDebug?.getLastControlSyncError?.() || null
     });
+    const getPreferences = () => window.WebMarsRuntimeDebug?.getPreferences?.() || {};
+    const setPreferences = (patch) => {
+      const applyPatch = window.WebMarsRuntimeDebug?.setPreferences;
+      assert(typeof applyPatch === "function", "Missing runtime debug preference setter.");
+      return applyPatch(patch || {});
+    };
+    const getWindowState = (windowId) => window.WebMarsRuntimeDebug?.getWindowState?.(windowId) || null;
+    const editorFiles = () => window.WebMarsRuntimeDebug?.getEditorFiles?.() || [];
+    const getProjectTreeDebug = () => window.WebMarsRuntimeDebug?.getProjectTreeDebug?.() || null;
+    const setProjectLibrary = (payload) => {
+      const applyLibrary = window.WebMarsRuntimeDebug?.setProjectLibrary;
+      assert(typeof applyLibrary === "function", "Missing runtime debug project library setter.");
+      return applyLibrary.call(window.WebMarsRuntimeDebug, payload || {});
+    };
+    const persistWorkspaceSession = () => {
+      const persist = window.WebMarsRuntimeDebug?.persistWorkspaceSession;
+      assert(typeof persist === "function", "Missing runtime debug workspace session persister.");
+      return persist.call(window.WebMarsRuntimeDebug);
+    };
+    const getStoredWorkspaceSession = () => window.WebMarsRuntimeDebug?.getStoredWorkspaceSession?.() || null;
+    const getStartupEditorFiles = () => window.WebMarsRuntimeDebug?.getStartupEditorFiles?.() || null;
+    const setCloudProjectSyncDocuments = (payload) => {
+      const applySyncDocuments = window.WebMarsRuntimeDebug?.setCloudProjectSyncDocuments;
+      assert(typeof applySyncDocuments === "function", "Missing runtime debug cloud sync setter.");
+      return applySyncDocuments.call(window.WebMarsRuntimeDebug, payload || {});
+    };
+    const activeTab = () => String(document.querySelector(".editor-file-tab.active")?.textContent || "").trim().replace(/^\*/, "");
+    const query = (selector) => {
+      const element = document.querySelector(selector);
+      assert(element, "Missing element " + selector);
+      return element;
+    };
+    const doubleClickElement = async (element) => {
+      assert(element instanceof HTMLElement, "Missing element for double click.");
+      element.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+      await wait(120);
+    };
+    const rightClickElement = async (element, clientX = 160, clientY = 120) => {
+      assert(element instanceof HTMLElement, "Missing element for right click.");
+      element.dispatchEvent(new MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+        button: 2,
+        buttons: 2,
+        clientX,
+        clientY
+      }));
+      await wait(120);
+    };
+    const editorTabContextRows = () => Array.from(document.querySelectorAll(".editor-tab-context-menu:not(.hidden) .menu-row"));
 
     const runOutput = () => String(byId("run-messages").value || byId("run-messages").textContent || "");
     const textRowCount = () => document.querySelectorAll("#text-segment-body tr[data-text-address]").length;
@@ -441,7 +491,7 @@ function buildBrowserTestSource() {
           compileDisabled: false,
           assembleDisabled: true
         }, 2000, "controls for active .c source");
-        assert(byId("mode-c0").classList.contains("active"), ".c source should activate C0 mode.");
+        assert(byId("mode-editor").classList.contains("active"), ".c source should keep Editor active.");
 
         setEditorFiles([
           { name: "include/runtime.h0", source: "int puts(char* text);\n" }
@@ -450,7 +500,7 @@ function buildBrowserTestSource() {
           compileDisabled: true,
           assembleDisabled: true
         }, 2000, "controls for active .h0 header");
-        assert(byId("mode-c0").classList.contains("active"), ".h0 header should stay in C0 mode.");
+        assert(byId("mode-editor").classList.contains("active"), ".h0 header should stay in Editor mode.");
 
         setEditorFiles([
           { name: "src/main.mips", source: factorialProgram }
@@ -459,7 +509,7 @@ function buildBrowserTestSource() {
           compileDisabled: true,
           assembleDisabled: false
         }, 2000, "controls for active .mips source");
-        assert(byId("mode-assembly").classList.contains("active"), ".mips source should activate Assembly mode.");
+        assert(byId("mode-editor").classList.contains("active"), ".mips source should stay in Editor mode.");
 
         return {
           buttons: buttons(),
@@ -500,6 +550,404 @@ function buildBrowserTestSource() {
         return {
           buttons: buttons(),
           debug: debugState()
+        };
+      });
+
+      await runCase("compile_c0_auto_opens_asm_when_output_window_disabled", async () => {
+        setPreferences({ miniCOpenOutputWindow: false });
+        const setEditorFiles = window.WebMarsRuntimeDebug?.setEditorFiles;
+        assert(typeof setEditorFiles === "function", "Missing runtime debug file setter.");
+
+        setEditorFiles([
+          { name: "src/main.c", source: "int main(void) { return 0; }\n" }
+        ], "src/main.c");
+        await waitForButtons({
+          compileDisabled: false,
+          assembleDisabled: true
+        }, 2000, "controls before compile with output window disabled");
+
+        await click("btn-compile-c0");
+        await waitFor(() => editorFiles().some((file) => String(file?.name || "").endsWith(".generated.s")), 4000, "generated ASM file opened");
+        await waitFor(() => activeTab().endsWith(".generated.s"), 4000, "generated ASM tab active");
+
+        const miniCWindow = getWindowState("window-mini-c");
+        assert(miniCWindow?.hidden === true, "Mini-C output window should remain hidden when auto-open is disabled.");
+        assert(getPreferences().miniCOpenOutputWindow === false, "Output window preference should remain disabled.");
+
+        return {
+          activeTab: activeTab(),
+          files: editorFiles().map((file) => file.name),
+          miniCWindow,
+          preferences: getPreferences()
+        };
+      });
+
+      await runCase("mini_c_open_asm_closes_window_and_can_disable_future_auto_open", async () => {
+        setPreferences({ miniCOpenOutputWindow: true });
+        const setEditorFiles = window.WebMarsRuntimeDebug?.setEditorFiles;
+        assert(typeof setEditorFiles === "function", "Missing runtime debug file setter.");
+
+        setEditorFiles([
+          { name: "src/demo.c", source: "int main(void) { return 0; }\n" }
+        ], "src/demo.c");
+        await click("btn-compile-c0");
+        await waitFor(() => getWindowState("window-mini-c")?.hidden === false, 4000, "Mini-C window visible after compile");
+
+        const dontShowAgain = byId("mini-c-dont-show-again");
+        dontShowAgain.checked = true;
+        dontShowAgain.dispatchEvent(new Event("change", { bubbles: true }));
+        await click("mini-c-open-asm");
+        await waitFor(() => getWindowState("window-mini-c")?.hidden === true, 4000, "Mini-C window hidden after opening ASM");
+        await waitFor(() => getPreferences().miniCOpenOutputWindow === false, 2000, "Mini-C auto-open disabled by don't show again");
+        await waitFor(() => activeTab().endsWith(".generated.s"), 4000, "generated ASM tab active after open button");
+
+        return {
+          activeTab: activeTab(),
+          files: editorFiles().map((file) => file.name),
+          miniCWindow: getWindowState("window-mini-c"),
+          preferences: getPreferences()
+        };
+      });
+
+      await runCase("project_tree_defaults_and_readonly_open_from_other_project", async () => {
+        const projectLibrary = {
+          activeRootPath: "alpha.p",
+          projects: [
+            {
+              name: "alpha",
+              rootPath: "alpha.p",
+              files: [
+                { id: "alpha-main", path: "src/main.s", source: "main:\n  jr $ra\n", savedSource: "main:\n  jr $ra\n", updatedAt: 1710000000000 },
+                { id: "alpha-extra", path: "src/extra.s", source: "extra:\n  jr $ra\n", savedSource: "extra:\n  jr $ra\n", updatedAt: 1710000001000 },
+                { id: "alpha-c", path: "src/demo.c", source: "int main(void) { return 0; }\n", savedSource: "int main(void) { return 0; }\n", updatedAt: 1710000002000 }
+              ],
+              folderPaths: ["src"],
+              activeFileId: "alpha-main",
+              updatedAt: 1710000003000
+            },
+            {
+              name: "beta",
+              rootPath: "beta.p",
+              files: [
+                { id: "beta-main", path: "src/other.s", source: "other:\n  jr $ra\n", savedSource: "other:\n  jr $ra\n", updatedAt: 1710000004000 }
+              ],
+              folderPaths: ["src"],
+              activeFileId: "beta-main",
+              updatedAt: 1710000005000
+            }
+          ]
+        };
+
+        setProjectLibrary({ library: projectLibrary, openRootPath: "alpha.p" });
+        await wait(250);
+
+        assert(document.querySelector('button[data-tree-node-type="file"][data-project-root="alpha.p"][data-project-path="src/main.s"]'), "Active project file should be visible by default.");
+        assert(!document.querySelector('button[data-tree-node-type="file"][data-project-root="beta.p"][data-project-path="src/other.s"]'), "Inactive project should be collapsed by default.");
+        assert(!document.querySelector('button[data-tree-node-type="libs-file"]'), "libs/ should be collapsed by default.");
+
+        const betaProjectButton = query('button[data-tree-node-type="project"][data-project-root="beta.p"]');
+        const betaToggle = betaProjectButton.closest(".project-tree-row")?.querySelector("[data-tree-toggle]");
+        assert(betaToggle instanceof HTMLElement, "Missing beta project toggle.");
+        betaToggle.click();
+        await wait(120);
+
+        const betaFileButton = query('button[data-tree-node-type="file"][data-project-root="beta.p"][data-project-path="src/other.s"]');
+        await doubleClickElement(betaFileButton);
+        await waitFor(() => byId("source-editor").readOnly === true, 2500, "external project file opened read-only");
+
+        const debug = getProjectTreeDebug();
+        assert(debug?.activeRootPath === "alpha.p", "Opening another project's file should not change the active project.");
+        assert(debug?.openFiles?.some((file) => file.readOnly === true && String(file.originKey || "").includes("project:beta.p:src/other.s")), "Readonly external project tab should be registered.");
+
+        return {
+          tree: debug,
+          activeTab: activeTab(),
+          editorReadOnly: byId("source-editor").readOnly
+        };
+      });
+
+      await runCase("project_tree_multi_select_updates_actions_and_status", async () => {
+        const projectLibrary = {
+          activeRootPath: "alpha.p",
+          projects: [
+            {
+              name: "alpha",
+              rootPath: "alpha.p",
+              files: [
+                { id: "alpha-main", path: "src/main.s", source: "main:\n  jr $ra\n", savedSource: "main:\n  jr $ra\n", updatedAt: 1710000010000 },
+                { id: "alpha-extra", path: "src/extra.s", source: "extra:\n  jr $ra\n", savedSource: "extra:\n  jr $ra\n", updatedAt: 1710000011000 },
+                { id: "alpha-util", path: "src/util.s", source: "util:\n  jr $ra\n", savedSource: "util:\n  jr $ra\n", updatedAt: 1710000012000 }
+              ],
+              folderPaths: ["src"],
+              activeFileId: "alpha-main",
+              updatedAt: 1710000013000
+            }
+          ]
+        };
+
+        setProjectLibrary({ library: projectLibrary, openRootPath: "alpha.p" });
+        await wait(250);
+
+        const mainCheckbox = query('input[data-tree-checkbox][data-project-root="alpha.p"][data-project-path="src/main.s"]');
+        mainCheckbox.click();
+        await wait(100);
+        const extraCheckbox = query('input[data-tree-checkbox][data-project-root="alpha.p"][data-project-path="src/extra.s"]');
+        extraCheckbox.click();
+        await wait(150);
+
+        assert(byId("project-main-new-folder").disabled === true, "New Folder should be disabled when multi-selection exists.");
+        assert(byId("project-main-rename").disabled === true, "Rename should be disabled when multi-selection exists.");
+        assert(byId("project-main-delete").disabled === false, "Delete should remain enabled when multi-selection exists.");
+        assert(String(byId("project-tree-main-status-selected").textContent || "").includes("2"), "Status bar should show two selected files.");
+        assert(!String(byId("project-tree-main-status-size").textContent || "").includes("0 B"), "Status bar should show the selected size.");
+        assert(String(byId("project-tree-main-status-usage").textContent || "").includes("/"), "Status bar should show usage versus limit.");
+
+        return {
+          tree: getProjectTreeDebug(),
+          buttons: {
+            newFolderDisabled: byId("project-main-new-folder").disabled,
+            renameDisabled: byId("project-main-rename").disabled,
+            deleteDisabled: byId("project-main-delete").disabled
+          },
+          status: {
+            selected: byId("project-tree-main-status-selected").textContent,
+            size: byId("project-tree-main-status-size").textContent,
+            usage: byId("project-tree-main-status-usage").textContent
+          }
+        };
+      });
+
+      await runCase("editor_tab_context_menu_supports_readonly_close", async () => {
+        const projectLibrary = {
+          activeRootPath: "alpha.p",
+          projects: [
+            {
+              name: "alpha",
+              rootPath: "alpha.p",
+              files: [
+                { id: "alpha-main", path: "src/main.s", source: "main:\n  jr $ra\n", savedSource: "main:\n  jr $ra\n", updatedAt: 1710000020000 }
+              ],
+              folderPaths: ["src"],
+              activeFileId: "alpha-main",
+              updatedAt: 1710000021000
+            },
+            {
+              name: "beta",
+              rootPath: "beta.p",
+              files: [
+                { id: "beta-main", path: "src/other.s", source: "other:\n  jr $ra\n", savedSource: "other:\n  jr $ra\n", updatedAt: 1710000022000 }
+              ],
+              folderPaths: ["src"],
+              activeFileId: "beta-main",
+              updatedAt: 1710000023000
+            }
+          ]
+        };
+
+        setProjectLibrary({ library: projectLibrary, openRootPath: "alpha.p" });
+        await wait(250);
+
+        const betaProjectButton = query('button[data-tree-node-type="project"][data-project-root="beta.p"]');
+        const betaToggle = betaProjectButton.closest(".project-tree-row")?.querySelector("[data-tree-toggle]");
+        assert(betaToggle instanceof HTMLElement, "Missing beta project toggle.");
+        betaToggle.click();
+        await wait(120);
+
+        const betaFileButton = query('button[data-tree-node-type="file"][data-project-root="beta.p"][data-project-path="src/other.s"]');
+        await doubleClickElement(betaFileButton);
+        await waitFor(() => byId("source-editor").readOnly === true, 2500, "readonly beta file opened");
+
+        const readonlyTab = query('.editor-file-tab.active[data-file-id]');
+        await rightClickElement(readonlyTab);
+        await waitFor(() => editorTabContextRows().length === 3, 2500, "editor tab context menu visible");
+
+        const rows = editorTabContextRows();
+        const labels = rows.map((row) => String(row.textContent || "").trim().replace(/\s+/g, " "));
+        assert(labels.some((label) => label.includes("Close")), "Context menu should show Close.");
+        assert(labels.some((label) => label.includes("Save")), "Context menu should show Save.");
+        assert(rows[0].disabled === false, "Close should stay enabled for readonly tabs.");
+        assert(rows[1].disabled === true, "Save should be disabled for readonly tabs.");
+        assert(rows[2].disabled === true, "Save and Close should be disabled for readonly tabs.");
+
+        rows[0].click();
+        await waitFor(() => !editorFiles().some((file) => String(file?.originKey || "").includes("project:beta.p:src/other.s")), 2500, "readonly tab closed");
+        await waitFor(() => byId("source-editor").readOnly === false, 2500, "editor returned to editable project file");
+
+        return {
+          labels,
+          files: editorFiles().map((file) => ({
+            name: file.name,
+            readOnly: file.readOnly === true,
+            originKey: String(file.originKey || "")
+          })),
+          activeTab: activeTab(),
+          editorReadOnly: byId("source-editor").readOnly
+        };
+      });
+
+      await runCase("workspace_refresh_keeps_external_tabs_readonly", async () => {
+        const projectLibrary = {
+          activeRootPath: "alpha.p",
+          projects: [
+            {
+              name: "alpha",
+              rootPath: "alpha.p",
+              files: [
+                { id: "alpha-main", path: "src/main.s", source: "main:\n  jr $ra\n", savedSource: "main:\n  jr $ra\n", updatedAt: 1710000030000 }
+              ],
+              folderPaths: ["src"],
+              activeFileId: "alpha-main",
+              updatedAt: 1710000031000
+            },
+            {
+              name: "beta",
+              rootPath: "beta.p",
+              files: [
+                { id: "beta-main", path: "src/other.s", source: "other:\n  jr $ra\n", savedSource: "other:\n  jr $ra\n", updatedAt: 1710000032000 }
+              ],
+              folderPaths: ["src"],
+              activeFileId: "beta-main",
+              updatedAt: 1710000033000
+            }
+          ]
+        };
+
+        setProjectLibrary({ library: projectLibrary, openRootPath: "alpha.p" });
+        await wait(250);
+
+        const betaProjectButton = query('button[data-tree-node-type="project"][data-project-root="beta.p"]');
+        const betaToggle = betaProjectButton.closest(".project-tree-row")?.querySelector("[data-tree-toggle]");
+        assert(betaToggle instanceof HTMLElement, "Missing beta project toggle.");
+        betaToggle.click();
+        await wait(120);
+
+        const betaFileButton = query('button[data-tree-node-type="file"][data-project-root="beta.p"][data-project-path="src/other.s"]');
+        await doubleClickElement(betaFileButton);
+        await waitFor(() => byId("source-editor").readOnly === true, 2500, "readonly beta file opened");
+
+        persistWorkspaceSession();
+        const stored = getStoredWorkspaceSession();
+        assert(stored && Array.isArray(stored.files), "Stored workspace session should be available.");
+        const storedReadonly = stored.files.find((file) => String(file?.originKey || "").includes("project:beta.p:src/other.s"));
+        assert(storedReadonly?.readOnly === true, "Stored readonly tab should keep readOnly metadata.");
+        assert(storedReadonly?.projectOwned === false, "Stored readonly tab should keep projectOwned=false.");
+
+        const startup = getStartupEditorFiles();
+        assert(startup && Array.isArray(startup.files), "Startup editor preview should be available.");
+        const startupReadonly = startup.files.find((file) => String(file?.originKey || "").includes("project:beta.p:src/other.s"));
+        assert(startupReadonly?.readOnly === true, "Startup reload should keep readonly external tab readonly.");
+        assert(startupReadonly?.projectOwned === false, "Startup reload should keep readonly external tab outside the active project.");
+
+        return {
+          storedFiles: stored.files.map((file) => ({
+            name: file.name,
+            readOnly: file.readOnly === true,
+            projectOwned: file.projectOwned !== false,
+            originKey: String(file.originKey || "")
+          })),
+          startupFiles: startup.files.map((file) => ({
+            name: file.name,
+            readOnly: file.readOnly === true,
+            projectOwned: file.projectOwned !== false,
+            originKey: String(file.originKey || "")
+          })),
+          startupActiveFileId: startup.activeFileId
+        };
+      });
+
+      await runCase("project_tree_sync_markers_show_green_orange_red", async () => {
+        const projectLibrary = {
+          activeRootPath: "alpha.p",
+          projects: [
+            {
+              name: "alpha",
+              rootPath: "alpha.p",
+              files: [
+                { id: "alpha-main", path: "src/main.s", source: "main:\n  jr $ra\n", savedSource: "main:\n  jr $ra\n", updatedAt: 1710000040000 },
+                { id: "alpha-extra", path: "src/extra.s", source: "extra:\n  jr $ra\n", savedSource: "extra:\n  jr $ra\n", updatedAt: 1710000041000 }
+              ],
+              folderPaths: ["src"],
+              activeFileId: "alpha-main",
+              updatedAt: 1710000042000
+            },
+            {
+              name: "beta",
+              rootPath: "beta.p",
+              files: [
+                { id: "beta-main", path: "src/other.s", source: "other:\n  jr $ra\n", savedSource: "other:\n  jr $ra\n", updatedAt: 1710000043000 }
+              ],
+              folderPaths: ["src"],
+              activeFileId: "beta-main",
+              updatedAt: 1710000044000
+            }
+          ]
+        };
+
+        setProjectLibrary({ library: projectLibrary, openRootPath: "alpha.p" });
+        setCloudProjectSyncDocuments({
+          "alpha.p": {
+            rootPath: "alpha.p",
+            files: [
+              { id: "alpha-main", path: "src/main.s", source: "main:\n  jr $ra\n", savedSource: "main:\n  jr $ra\n" },
+              { id: "alpha-extra", path: "src/extra.s", source: "extra:\n  nop\n", savedSource: "extra:\n  nop\n" }
+            ],
+            folderPaths: ["src"],
+            activeFileId: "alpha-main"
+          }
+        });
+        await wait(150);
+
+        if (!document.querySelector('button.project-tree-file[data-project-root="alpha.p"][data-project-path="src/main.s"]')) {
+          const alphaProject = query('button.project-tree-project[data-project-root="alpha.p"]');
+          const alphaToggle = alphaProject.closest(".project-tree-row")?.querySelector("[data-tree-toggle]");
+          assert(alphaToggle instanceof HTMLElement, "Missing alpha project toggle.");
+          alphaToggle.click();
+          await wait(120);
+        }
+
+        assert(document.querySelector('button.project-tree-project[data-project-root="alpha.p"] .project-tree-sync-orange'), "Alpha project should be partially synced.");
+        assert(document.querySelector('button.project-tree-folder[data-project-root="alpha.p"][data-project-path="src"] .project-tree-sync-orange'), "Alpha folder should be partially synced.");
+        assert(document.querySelector('button.project-tree-file[data-project-root="alpha.p"][data-project-path="src/main.s"] .project-tree-sync-green'), "Main file should be synced.");
+        assert(document.querySelector('button.project-tree-file[data-project-root="alpha.p"][data-project-path="src/extra.s"] .project-tree-sync-red'), "Extra file should be unsynced.");
+        assert(document.querySelector('button.project-tree-project[data-project-root="beta.p"] .project-tree-sync-red'), "Beta project should be unsynced.");
+
+        return {
+          alphaProjectClass: document.querySelector('button.project-tree-project[data-project-root="alpha.p"] .project-tree-sync')?.className || "",
+          betaProjectClass: document.querySelector('button.project-tree-project[data-project-root="beta.p"] .project-tree-sync')?.className || ""
+        };
+      });
+
+      await runCase("project_quota_blocks_editor_growth_past_1mb", async () => {
+        const nearLimitSource = "a".repeat((1024 * 1024) - 4);
+        const projectLibrary = {
+          activeRootPath: "alpha.p",
+          projects: [
+            {
+              name: "alpha",
+              rootPath: "alpha.p",
+              files: [
+                { id: "alpha-main", path: "src/main.s", source: nearLimitSource, savedSource: nearLimitSource, updatedAt: 1710000050000 }
+              ],
+              folderPaths: ["src"],
+              activeFileId: "alpha-main",
+              updatedAt: 1710000051000
+            }
+          ]
+        };
+
+        setProjectLibrary({ library: projectLibrary, openRootPath: "alpha.p" });
+        await wait(250);
+        assert(editorFiles()[0].source.length === nearLimitSource.length, "Initial near-limit source should load.");
+
+        await setEditorSource(nearLimitSource + "OVERFLOW-BLOCK");
+        await wait(150);
+
+        assert(editorFiles()[0].source.length === nearLimitSource.length, "Editor source should be reverted when quota is exceeded.");
+        assert(String(byId("project-tree-main-status-usage").textContent || "").includes("1.0 MB") || String(byId("project-tree-main-status-usage").textContent || "").includes("1024.0 kB"), "Usage bar should reflect the 1 MB quota.");
+
+        return {
+          sourceLength: editorFiles()[0].source.length,
+          usage: byId("project-tree-main-status-usage").textContent
         };
       });
 

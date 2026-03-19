@@ -140,8 +140,7 @@ function renderLayout(root) {
           <div class="window-content main-window-content">
             <div class="mode-tabs">
               <button class="mode-tab-btn" id="mode-project" type="button">Project</button>
-              <button class="mode-tab-btn" id="mode-c0" type="button">C0</button>
-              <button class="mode-tab-btn active" id="mode-assembly" type="button">Assembly</button>
+              <button class="mode-tab-btn active" id="mode-editor" type="button">Editor</button>
               <button class="mode-tab-btn" id="mode-execute" type="button">Execute</button>
             </div>
 
@@ -156,15 +155,16 @@ function renderLayout(root) {
                   <span id="project-tree-main-root-label" class="project-tree-root-label">/</span>
                 </div>
                 <div id="project-tree-main" class="project-tree-container" role="tree" aria-label="Project files"></div>
+                <div class="project-tree-status" aria-live="polite">
+                  <span id="project-tree-main-status-selected">files: 0</span>
+                  <span id="project-tree-main-status-size">size: 0 B</span>
+                  <span id="project-tree-main-status-usage">used: 0 B / 0 B</span>
+                </div>
               </div>
             </section>
 
-            <section id="main-panel-c0" class="main-tab-panel">
-              <div id="c0-editor-host" class="editor-host"></div>
-            </section>
-
-            <section id="main-panel-assembly" class="main-tab-panel active">
-              <div id="assembly-editor-host" class="editor-host">
+            <section id="main-panel-editor" class="main-tab-panel active">
+              <div id="editor-host" class="editor-host">
                 <section id="main-editor-workspace" class="main-editor-workspace">
                   <div class="subtabs editor-file-tabs" id="editor-file-tabs"></div>
                   <div class="editor-wrap">
@@ -327,6 +327,11 @@ function renderLayout(root) {
               <span id="project-tree-root-label" class="project-tree-root-label">project.p</span>
             </div>
             <div id="project-tree" class="project-tree-container" role="tree" aria-label="Project files"></div>
+            <div class="project-tree-status" aria-live="polite">
+              <span id="project-tree-tool-status-selected">files: 0</span>
+              <span id="project-tree-tool-status-size">size: 0 B</span>
+              <span id="project-tree-tool-status-usage">used: 0 B / 0 B</span>
+            </div>
           </div>
         </section>
 
@@ -351,6 +356,7 @@ function renderLayout(root) {
               <textarea id="mini-c-asm" class="mini-c-textarea" readonly spellcheck="false" wrap="off"></textarea>
             </div>
             <div class="mini-c-actions">
+              <label class="mini-c-option"><input id="mini-c-dont-show-again" type="checkbox"> Don't show again</label>
               <button class="tool-btn" id="mini-c-open-asm" type="button">Open ASM as new file</button>
               <button class="tool-btn" id="mini-c-copy-asm" type="button">Copy ASM</button>
               <button class="tool-btn" id="mini-c-clear" type="button">Clear</button>
@@ -371,16 +377,13 @@ function renderLayout(root) {
     },
     mode: {
       project: root.querySelector("#mode-project"),
-      c0: root.querySelector("#mode-c0"),
-      assembly: root.querySelector("#mode-assembly"),
+      editor: root.querySelector("#mode-editor"),
       execute: root.querySelector("#mode-execute"),
       panelProject: root.querySelector("#main-panel-project"),
-      panelC0: root.querySelector("#main-panel-c0"),
-      panelAssembly: root.querySelector("#main-panel-assembly"),
+      panelEditor: root.querySelector("#main-panel-editor"),
       panelExecute: root.querySelector("#main-panel-execute"),
       editorWorkspace: root.querySelector("#main-editor-workspace"),
-      hostC0: root.querySelector("#c0-editor-host"),
-      hostAssembly: root.querySelector("#assembly-editor-host")
+      hostEditor: root.querySelector("#editor-host")
     },
     windows: {
       desktop: root.querySelector("#mars-desktop"),
@@ -409,6 +412,7 @@ function renderLayout(root) {
       stop: root.querySelector("#btn-stop")
     },
     editor: root.querySelector("#source-editor"),
+    editorSurface: root.querySelector("#editor-surface"),
     editorHighlight: root.querySelector("#editor-highlight"),
     editorGutter: root.querySelector("#editor-gutter"),
     editorGutterLines: root.querySelector("#editor-gutter-lines"),
@@ -460,9 +464,11 @@ function renderLayout(root) {
     miniC: {
       log: root.querySelector("#mini-c-log"),
       asm: root.querySelector("#mini-c-asm"),
+      dontShowAgain: root.querySelector("#mini-c-dont-show-again"),
       openAsm: root.querySelector("#mini-c-open-asm"),
       copyAsm: root.querySelector("#mini-c-copy-asm"),
-      clear: root.querySelector("#mini-c-clear")
+      clear: root.querySelector("#mini-c-clear"),
+      close: root.querySelector("#window-mini-c [data-win-action=\"close\"]")
     },
     project: {
       mainRootLabel: root.querySelector("#project-tree-main-root-label"),
@@ -470,11 +476,17 @@ function renderLayout(root) {
       mainNewFolder: root.querySelector("#project-main-new-folder"),
       mainRename: root.querySelector("#project-main-rename"),
       mainDelete: root.querySelector("#project-main-delete"),
+      mainStatusSelected: root.querySelector("#project-tree-main-status-selected"),
+      mainStatusSize: root.querySelector("#project-tree-main-status-size"),
+      mainStatusUsage: root.querySelector("#project-tree-main-status-usage"),
       toolRootLabel: root.querySelector("#project-tree-root-label"),
       toolTree: root.querySelector("#project-tree"),
       toolNewFolder: root.querySelector("#project-tool-new-folder"),
       toolRename: root.querySelector("#project-tool-rename"),
-      toolDelete: root.querySelector("#project-tool-delete")
+      toolDelete: root.querySelector("#project-tool-delete"),
+      toolStatusSelected: root.querySelector("#project-tree-tool-status-selected"),
+      toolStatusSize: root.querySelector("#project-tree-tool-status-size"),
+      toolStatusUsage: root.querySelector("#project-tree-tool-status-usage")
     },
     registers: {
       body: root.querySelector("#registers-body"),
@@ -3020,12 +3032,32 @@ function createWindowManager(refs) {
 }
 
 function setupEditor(refs, store, options = {}) {
-  const { editor, editorHighlight, editorGutter, editorGutterLines, editorTabs, status } = refs;
+  const { editor, editorSurface, editorHighlight, editorGutter, editorGutterLines, editorTabs, status } = refs;
   const HISTORY_LIMIT = 500;
   let fileCounter = 0;
   let suppressInput = false;
   let activeFileChangeHandler = typeof options.onActiveFileChange === "function" ? options.onActiveFileChange : null;
+  let filesChangeGuard = typeof options.onBeforeFilesChange === "function" ? options.onBeforeFilesChange : null;
   let lastActiveFileChangeKey = "";
+
+  function copyExtraFileFields(file) {
+    const extra = {};
+    if (!file || typeof file !== "object") return extra;
+    Object.keys(file).forEach((key) => {
+      if (
+        key === "id"
+        || key === "name"
+        || key === "source"
+        || key === "savedSource"
+        || key === "undoStack"
+        || key === "redoStack"
+      ) {
+        return;
+      }
+      extra[key] = file[key];
+    });
+    return extra;
+  }
 
   function createFileId() {
     fileCounter += 1;
@@ -3055,6 +3087,7 @@ function setupEditor(refs, store, options = {}) {
     const undoStack = undoSeed[undoSeed.length - 1] === source ? undoSeed : [...undoSeed, source];
     const redoStack = Array.isArray(file?.redoStack) ? file.redoStack.map((entry) => String(entry)) : [];
     return {
+      ...copyExtraFileFields(file),
       id: String(file?.id ?? createFileId()),
       name: ensureUniqueName(file?.name ?? "untitled.s", existing),
       source,
@@ -3252,11 +3285,12 @@ function setupEditor(refs, store, options = {}) {
     files.forEach((file) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = `subtab-btn editor-file-tab${file.id === activeFileId ? " active" : ""}`;
+      button.className = `subtab-btn editor-file-tab${file.id === activeFileId ? " active" : ""}${file.readOnly === true ? " readonly" : ""}`;
       button.dataset.fileId = file.id;
-      button.title = file.name;
+      button.title = file.readOnly === true ? `${file.name} (${translateText("Read-only")})` : file.name;
       const dirty = file.source !== file.savedSource;
-      button.textContent = dirty ? `*${file.name}` : file.name;
+      const prefix = file.readOnly === true ? "[RO] " : "";
+      button.textContent = dirty ? `*${prefix}${file.name}` : `${prefix}${file.name}`;
       editorTabs.appendChild(button);
     });
   }
@@ -3266,13 +3300,29 @@ function setupEditor(refs, store, options = {}) {
     const cursor = editor.selectionStart ?? active.source.length;
     suppressInput = true;
     editor.value = active.source;
+    editor.readOnly = active.readOnly === true;
+    editor.setAttribute("aria-readonly", active.readOnly === true ? "true" : "false");
+    editorSurface?.classList.toggle("readonly", active.readOnly === true);
     const clampedCursor = Math.min(cursor, active.source.length);
     editor.setSelectionRange(clampedCursor, clampedCursor);
     suppressInput = false;
     updateStatus();
   }
 
-  function applyFiles(files, activeFileId, syncEditor = true) {
+  function canApplyFiles(files, activeFileId, context = {}) {
+    if (typeof filesChangeGuard !== "function") return true;
+    try {
+      return filesChangeGuard(
+        files.map((file) => ({ ...file })),
+        activeFileId,
+        { ...context }
+      ) !== false;
+    } catch {
+      return true;
+    }
+  }
+
+  function applyFiles(files, activeFileId, syncEditor = true, context = {}) {
     const active = files.find((file) => file.id === activeFileId) || files[0];
     const normalizedFiles = files.map((file) => ({
       ...file,
@@ -3281,6 +3331,11 @@ function setupEditor(refs, store, options = {}) {
       redoStack: (Array.isArray(file.redoStack) ? file.redoStack : []).slice(0, HISTORY_LIMIT)
     }));
     const safeActive = normalizedFiles.find((file) => file.id === active.id) || normalizedFiles[0];
+    if (!canApplyFiles(normalizedFiles, safeActive.id, context)) {
+      renderTabs();
+      syncEditorFromActive();
+      return null;
+    }
     store.setState({
       files: normalizedFiles,
       activeFileId: safeActive.id,
@@ -3298,7 +3353,7 @@ function setupEditor(refs, store, options = {}) {
     const { files, activeFileId } = ensureState();
     if (!fileId || fileId === activeFileId) return;
     if (!files.some((file) => file.id === fileId)) return;
-    applyFiles(files, fileId, true);
+    applyFiles(files, fileId, true, { reason: "activate" });
     editor.focus();
   }
 
@@ -3315,6 +3370,7 @@ function setupEditor(refs, store, options = {}) {
       return;
     }
 
+    const updatedFiles = [...files];
     const undoStack = Array.isArray(current.undoStack) ? [...current.undoStack] : [current.source];
     let redoStack = [];
     if (pushHistory) {
@@ -3325,14 +3381,15 @@ function setupEditor(refs, store, options = {}) {
       undoStack.push(source);
     }
 
-    files[idx] = {
+    updatedFiles[idx] = {
       ...current,
       source,
       undoStack: undoStack.slice(-HISTORY_LIMIT),
       redoStack
     };
 
-    applyFiles(files, activeFileId, false);
+    const applied = applyFiles(updatedFiles, activeFileId, false, { reason: "edit", changedFileId: activeFileId });
+    if (!applied) return;
   }
 
   editor.addEventListener("input", () => {
@@ -3374,23 +3431,29 @@ function setupEditor(refs, store, options = {}) {
       }
       const target = String(activeFileId || "").trim();
       const active = normalized.find((file) => file.id === target || file.name === target) || normalized[0];
-      applyFiles(normalized, active.id, true);
-      return { ...active };
+      const applied = applyFiles(normalized, active.id, true, { reason: "setFiles" });
+      return applied ? { ...applied } : null;
     },
     createFile({ name = "untitled.s", source = "" } = {}) {
       const state = ensureState();
       const safeName = ensureUniqueName(name, state.files);
       const file = normalizeFile({ id: createFileId(), name: safeName, source }, state.files);
-      applyFiles(buildFilesForIncomingActiveFile(state, file), file.id, true);
-      return file;
+      const applied = applyFiles(buildFilesForIncomingActiveFile(state, file), file.id, true, { reason: "createFile", file });
+      return applied ? file : null;
     },
-    openFile(name, source, activate = true) {
+    openFile(name, source, activate = true, options = {}) {
+      let resolvedActivate = activate;
+      let resolvedOptions = options;
+      if (activate && typeof activate === "object") {
+        resolvedOptions = activate;
+        resolvedActivate = activate.activate !== false;
+      }
       const state = ensureState();
       const safeName = ensureUniqueName(name, state.files);
-      const file = normalizeFile({ id: createFileId(), name: safeName, source }, state.files);
+      const file = normalizeFile({ id: createFileId(), name: safeName, source, ...resolvedOptions }, state.files);
       const files = buildFilesForIncomingActiveFile(state, file);
-      applyFiles(files, activate ? file.id : state.activeFileId, activate);
-      return file;
+      const applied = applyFiles(files, resolvedActivate ? file.id : state.activeFileId, resolvedActivate, { reason: "openFile", file });
+      return applied ? file : null;
     },
     renameActive(name) {
       const { files, activeFileId } = ensureState();
@@ -3399,7 +3462,8 @@ function setupEditor(refs, store, options = {}) {
       const updated = [...files];
       const safeName = ensureUniqueName(name, files, activeFileId);
       updated[idx] = { ...updated[idx], name: safeName };
-      applyFiles(updated, activeFileId, false);
+      const applied = applyFiles(updated, activeFileId, false, { reason: "rename" });
+      if (!applied) return null;
       renderTabs();
       return updated[idx];
     },
@@ -3410,21 +3474,21 @@ function setupEditor(refs, store, options = {}) {
 
       if (files.length <= 1) {
         const replacement = normalizeFile({ id: createFileId(), name: "untitled.s", source: "" }, []);
-        applyFiles([replacement], replacement.id, true);
+        applyFiles([replacement], replacement.id, true, { reason: "close" });
         return { closed: files[idx], fallbackCreated: true, remaining: 1 };
       }
 
       const updated = files.filter((file) => file.id !== activeFileId);
       const nextIndex = Math.max(0, Math.min(idx, updated.length - 1));
       const nextActive = updated[nextIndex];
-      applyFiles(updated, nextActive.id, true);
+      applyFiles(updated, nextActive.id, true, { reason: "close" });
       return { closed: files[idx], fallbackCreated: false, remaining: updated.length };
     },
     closeAll() {
       const { files } = ensureState();
       const closedCount = files.length;
       const replacement = normalizeFile({ id: createFileId(), name: "untitled.s", source: "" }, []);
-      applyFiles([replacement], replacement.id, true);
+      applyFiles([replacement], replacement.id, true, { reason: "closeAll" });
       return { closedCount, replacement };
     },
     markActiveSaved() {
@@ -3434,8 +3498,18 @@ function setupEditor(refs, store, options = {}) {
       const updated = [...files];
       const active = updated[idx];
       updated[idx] = { ...active, savedSource: active.source };
-      applyFiles(updated, activeFileId, false);
+      applyFiles(updated, activeFileId, false, { reason: "markSaved" });
       return updated[idx];
+    },
+    markProjectOwnedSaved() {
+      const { files, activeFileId } = ensureState();
+      const updated = files.map((file) => (
+        file?.projectOwned === false
+          ? file
+          : { ...file, savedSource: String(file.source ?? "") }
+      ));
+      applyFiles(updated, activeFileId, false, { reason: "markProjectSaved" });
+      return updated.map((file) => ({ ...file }));
     },
     getDirtyFiles() {
       const { files } = ensureState();
@@ -3455,27 +3529,29 @@ function setupEditor(refs, store, options = {}) {
       const { files, activeFileId } = ensureState();
       const idx = files.findIndex((file) => file.id === activeFileId);
       if (idx < 0) return false;
+      const updatedFiles = [...files];
       const current = files[idx];
       const undoStack = Array.isArray(current.undoStack) ? [...current.undoStack] : [current.source];
       if (undoStack.length <= 1) return false;
       const currentSource = undoStack.pop();
       const previous = undoStack[undoStack.length - 1] ?? "";
       const redoStack = [currentSource, ...(Array.isArray(current.redoStack) ? current.redoStack : [])].slice(0, HISTORY_LIMIT);
-      files[idx] = { ...current, source: previous, undoStack, redoStack };
-      applyFiles(files, activeFileId, true);
+      updatedFiles[idx] = { ...current, source: previous, undoStack, redoStack };
+      applyFiles(updatedFiles, activeFileId, true, { reason: "undo" });
       return true;
     },
     redo() {
       const { files, activeFileId } = ensureState();
       const idx = files.findIndex((file) => file.id === activeFileId);
       if (idx < 0) return false;
+      const updatedFiles = [...files];
       const current = files[idx];
       const redoStack = Array.isArray(current.redoStack) ? [...current.redoStack] : [];
       if (!redoStack.length) return false;
       const source = redoStack.shift();
       const undoStack = [...(Array.isArray(current.undoStack) ? current.undoStack : [current.source]), source].slice(-HISTORY_LIMIT);
-      files[idx] = { ...current, source, undoStack, redoStack };
-      applyFiles(files, activeFileId, true);
+      updatedFiles[idx] = { ...current, source, undoStack, redoStack };
+      applyFiles(updatedFiles, activeFileId, true, { reason: "redo" });
       return true;
     },
     getActiveFile() {
@@ -3512,6 +3588,9 @@ function setupEditor(refs, store, options = {}) {
         notifyActiveFileChange(ensureState().active);
       }
     },
+    setFilesChangeGuard(handler) {
+      filesChangeGuard = typeof handler === "function" ? handler : null;
+    },
     focus() {
       editor.focus();
     }
@@ -3540,7 +3619,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
       </div>
     </div>
     <div class="window-content dialog-window-content">
-      <div class="dialog-message" data-dialog-role="message"></div>
+      <textarea data-dialog-role="message" class="dialog-message" readonly spellcheck="false" wrap="soft"></textarea>
       <div data-dialog-role="form" class="dialog-form" hidden></div>
       <input data-dialog-role="input" class="run-io-input dialog-input" type="text" autocomplete="off">
       <div class="dialog-actions">
@@ -3569,6 +3648,104 @@ function createDialogSystem(windowManager, desktop, options = {}) {
     width: win.style.width || "460px",
     height: win.style.height || "200px"
   };
+
+  function setMessageContent(text, tone = "") {
+    if (!(messageNode instanceof HTMLTextAreaElement)) return;
+    messageNode.value = String(text || "");
+    messageNode.classList.remove("info", "success", "error");
+    const normalizedTone = String(tone || "").trim().toLowerCase();
+    if (normalizedTone === "info" || normalizedTone === "success" || normalizedTone === "error") {
+      messageNode.classList.add(normalizedTone);
+    }
+    messageNode.scrollTop = 0;
+  }
+
+  function setFormDisabled(disabled) {
+    if (!(formNode instanceof HTMLElement)) return;
+    formNode.querySelectorAll("input, select, textarea, button").forEach((node) => {
+      if (!(node instanceof HTMLElement)) return;
+      if (node instanceof HTMLInputElement || node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement || node instanceof HTMLButtonElement) {
+        node.disabled = disabled;
+      }
+    });
+  }
+
+  function syncActiveButtons() {
+    if (!active) return;
+    const confirmHidden = active.hideConfirm === true;
+    const cancelHidden = active.hideCancel === true;
+    const allowCancelWhilePending = active.pendingConfirm === true && active.allowCancelWhilePending === true;
+    confirmButton.hidden = confirmHidden;
+    cancelButton.hidden = cancelHidden;
+    confirmButton.disabled = active.confirmDisabled === true || active.pendingConfirm === true;
+    cancelButton.disabled = active.cancelDisabled === true || (active.pendingConfirm === true && !allowCancelWhilePending);
+    titleCloseButton.disabled = active.closeDisabled === true || (active.pendingConfirm === true && !allowCancelWhilePending);
+  }
+
+  function createActiveFormController(activeDialog) {
+    return {
+      getValues() {
+        return collectFormValues();
+      },
+      setMessage(text, tone = "") {
+        if (active !== activeDialog) return;
+        activeDialog.message = String(text || "");
+        activeDialog.messageTone = String(tone || "");
+        setMessageContent(activeDialog.message, activeDialog.messageTone);
+      },
+      setBusy(busy = true, options = {}) {
+        if (active !== activeDialog) return;
+        const isBusy = busy === true;
+        const allowCancelWhilePending = isBusy && options && typeof options === "object" && options.allowCancel === true;
+        activeDialog.pendingConfirm = isBusy;
+        activeDialog.allowCancelWhilePending = allowCancelWhilePending;
+        activeDialog.confirmDisabled = isBusy;
+        activeDialog.cancelDisabled = isBusy && !allowCancelWhilePending;
+        activeDialog.closeDisabled = isBusy && !allowCancelWhilePending;
+        setFormDisabled(isBusy);
+        syncActiveButtons();
+      },
+      setActions(options = {}) {
+        if (active !== activeDialog || !options || typeof options !== "object") return;
+        if (Object.prototype.hasOwnProperty.call(options, "confirmLabel")) activeDialog.confirmLabel = String(options.confirmLabel || "");
+        if (Object.prototype.hasOwnProperty.call(options, "cancelLabel")) activeDialog.cancelLabel = String(options.cancelLabel || "");
+        if (Object.prototype.hasOwnProperty.call(options, "confirmDisabled")) activeDialog.confirmDisabled = options.confirmDisabled === true;
+        if (Object.prototype.hasOwnProperty.call(options, "cancelDisabled")) activeDialog.cancelDisabled = options.cancelDisabled === true;
+        if (Object.prototype.hasOwnProperty.call(options, "closeDisabled")) activeDialog.closeDisabled = options.closeDisabled === true;
+        if (Object.prototype.hasOwnProperty.call(options, "hideConfirm")) activeDialog.hideConfirm = options.hideConfirm === true;
+        if (Object.prototype.hasOwnProperty.call(options, "hideCancel")) activeDialog.hideCancel = options.hideCancel === true;
+        confirmButton.textContent = activeDialog.confirmLabel || "OK";
+        cancelButton.textContent = activeDialog.cancelLabel || "Cancel";
+        syncActiveButtons();
+      },
+      setCloseOnly(label = "Close") {
+        if (active !== activeDialog) return;
+        activeDialog.pendingConfirm = false;
+        activeDialog.hideConfirm = true;
+        activeDialog.hideCancel = false;
+        activeDialog.confirmDisabled = true;
+        activeDialog.cancelDisabled = false;
+        activeDialog.closeDisabled = false;
+        activeDialog.cancelLabel = String(label || "Close");
+        setFormDisabled(true);
+        confirmButton.textContent = activeDialog.confirmLabel || "OK";
+        cancelButton.textContent = activeDialog.cancelLabel || "Cancel";
+        syncActiveButtons();
+      },
+      setFinalResult(result) {
+        if (active !== activeDialog) return;
+        activeDialog.finalResult = result;
+      },
+      setCancelHandler(handler = null) {
+        if (active !== activeDialog) return;
+        activeDialog.cancelHandler = typeof handler === "function" ? handler : null;
+      },
+      close(result) {
+        if (active !== activeDialog) return;
+        resolveActive(result ?? activeDialog.finalResult ?? { ok: false, value: null });
+      }
+    };
+  }
 
   function renderForm(activeDialog) {
     if (!(formNode instanceof HTMLElement)) return;
@@ -3677,10 +3854,10 @@ function createDialogSystem(windowManager, desktop, options = {}) {
     const contextText = String(active.contextText || "");
     const contextLabel = String(active.contextLabel || "");
     if (!contextText) {
-      messageNode.textContent = baseMessage;
+      setMessageContent(baseMessage, active.messageTone || "");
     } else {
       const contextBlock = contextLabel ? `${contextLabel}:\n${contextText}` : contextText;
-      messageNode.textContent = baseMessage ? `${baseMessage}\n\n${contextBlock}` : contextBlock;
+      setMessageContent(baseMessage ? `${baseMessage}\n\n${contextBlock}` : contextBlock, active.messageTone || "");
     }
     confirmButton.textContent = active.confirmLabel || "OK";
     cancelButton.textContent = active.cancelLabel || "Cancel";
@@ -3691,19 +3868,24 @@ function createDialogSystem(windowManager, desktop, options = {}) {
       inputNode.hidden = false;
       inputNode.value = active.defaultValue || "";
       inputNode.placeholder = active.placeholder || "";
+      setFormDisabled(false);
     } else if (active.kind === "form") {
       renderForm(active);
       formNode.hidden = false;
       inputNode.hidden = true;
       inputNode.value = "";
       inputNode.placeholder = "";
+      setFormDisabled(active.formDisabled === true);
     } else {
       formNode.hidden = true;
       formNode.innerHTML = "";
       inputNode.hidden = true;
       inputNode.value = "";
       inputNode.placeholder = "";
+      setFormDisabled(false);
     }
+
+    syncActiveButtons();
 
     windowManager.show(win.id);
     if (active.kind === "prompt") {
@@ -3737,16 +3919,48 @@ function createDialogSystem(windowManager, desktop, options = {}) {
 
   function closeAsCancel() {
     if (!active) return;
-    resolveActive({ ok: false, value: null });
+    const allowCancelWhilePending = active.pendingConfirm === true && active.allowCancelWhilePending === true;
+    if (active.closeDisabled === true) return;
+    if (active.pendingConfirm === true && !allowCancelWhilePending) return;
+    if (typeof active.cancelHandler === "function") {
+      try {
+        active.cancelHandler();
+      } catch {}
+    }
+    resolveActive(active.finalResult ?? { ok: false, value: null });
   }
 
-  confirmButton?.addEventListener("click", () => {
+  confirmButton?.addEventListener("click", async () => {
     if (!active) return;
     if (active.kind === "prompt") {
       resolveActive({ ok: true, value: inputNode.value });
       return;
     }
     if (active.kind === "form") {
+      if (typeof active.beforeResolve === "function") {
+        const activeDialog = active;
+        const controller = createActiveFormController(activeDialog);
+        const values = collectFormValues();
+        try {
+          activeDialog.pendingConfirm = true;
+          syncActiveButtons();
+          const resolution = await activeDialog.beforeResolve(values, controller);
+          if (active !== activeDialog) return;
+          activeDialog.pendingConfirm = false;
+          syncActiveButtons();
+          if (resolution && typeof resolution === "object" && Object.prototype.hasOwnProperty.call(resolution, "result")) {
+            resolveActive(resolution.result);
+            return;
+          }
+          if (resolution && resolution.close === false) return;
+        } catch (error) {
+          if (active !== activeDialog) return;
+          activeDialog.pendingConfirm = false;
+          syncActiveButtons();
+          controller.setMessage(String(error?.message || error || "Operation failed."), "error");
+          return;
+        }
+      }
       resolveActive({ ok: true, value: collectFormValues() });
       return;
     }
@@ -3833,6 +4047,17 @@ function createDialogSystem(windowManager, desktop, options = {}) {
           width: String(options.width || "520px"),
           height: String(options.height || "430px"),
           sections: Array.isArray(options.sections) ? options.sections : [],
+          beforeResolve: typeof options.beforeResolve === "function" ? options.beforeResolve : null,
+          messageTone: String(options.messageTone || ""),
+          hideConfirm: options.hideConfirm === true,
+          hideCancel: options.hideCancel === true,
+          confirmDisabled: options.confirmDisabled === true,
+          cancelDisabled: options.cancelDisabled === true,
+          closeDisabled: options.closeDisabled === true,
+          allowCancelWhilePending: false,
+          cancelHandler: null,
+          formDisabled: options.formDisabled === true,
+          finalResult: Object.prototype.hasOwnProperty.call(options, "finalResult") ? options.finalResult : null,
           resolve
         });
         dequeueNext();
@@ -3862,52 +4087,43 @@ function createDialogSystem(windowManager, desktop, options = {}) {
 function createModeController(refs, windowManager) {
   const fileKindsModule = ((typeof window !== "undefined" ? window.WebMarsModules : globalThis.WebMarsModules) || {}).fileKinds || {};
   const projectButton = refs.mode.project;
-  const c0Button = refs.mode.c0;
-  const assemblyButton = refs.mode.assembly;
+  const editorButton = refs.mode.editor;
   const executeButton = refs.mode.execute;
   const projectPanel = refs.mode.panelProject;
-  const c0Panel = refs.mode.panelC0;
-  const assemblyPanel = refs.mode.panelAssembly;
+  const editorPanel = refs.mode.panelEditor;
   const executePanel = refs.mode.panelExecute;
   const editorWorkspace = refs.mode.editorWorkspace;
-  const c0Host = refs.mode.hostC0;
-  const assemblyHost = refs.mode.hostAssembly;
+  const editorHost = refs.mode.hostEditor;
   let authoringMode = "assembly";
-  let mode = "assembly";
+  let mode = "editor";
 
   function normalizeMode(nextMode) {
     const raw = String(nextMode || "").trim().toLowerCase();
-    if (raw === "edit" || raw === "authoring") return authoringMode;
-    if (raw === "assembly" || raw === "execute" || raw === "project" || raw === "c0") return raw;
     if (raw === "run") return "execute";
-    return authoringMode;
+    if (raw === "project" || raw === "execute" || raw === "editor") return raw;
+    if (raw === "edit" || raw === "authoring" || raw === "assembly" || raw === "c0") return "editor";
+    return "editor";
   }
 
-  function moveEditorWorkspace(nextMode) {
+  function moveEditorWorkspace() {
     if (!(editorWorkspace instanceof HTMLElement)) return;
-    let targetHost = null;
-    if (nextMode === "c0") targetHost = c0Host;
-    else if (nextMode === "assembly") targetHost = assemblyHost;
-    if (!(targetHost instanceof HTMLElement)) return;
-    if (editorWorkspace.parentElement === targetHost) return;
-    targetHost.appendChild(editorWorkspace);
+    if (!(editorHost instanceof HTMLElement)) return;
+    if (editorWorkspace.parentElement === editorHost) return;
+    editorHost.appendChild(editorWorkspace);
   }
 
   function apply(nextMode) {
+    const raw = String(nextMode || "").trim().toLowerCase();
+    if (raw === "c0" || raw === "assembly") authoringMode = raw;
     mode = normalizeMode(nextMode);
-    if (mode === "c0" || mode === "assembly") {
-      authoringMode = mode;
-      moveEditorWorkspace(mode);
-    }
+    if (mode === "editor") moveEditorWorkspace();
 
     projectButton?.classList.toggle("active", mode === "project");
-    c0Button?.classList.toggle("active", mode === "c0");
-    assemblyButton?.classList.toggle("active", mode === "assembly");
+    editorButton?.classList.toggle("active", mode === "editor");
     executeButton?.classList.toggle("active", mode === "execute");
 
     projectPanel?.classList.toggle("active", mode === "project");
-    c0Panel?.classList.toggle("active", mode === "c0");
-    assemblyPanel?.classList.toggle("active", mode === "assembly");
+    editorPanel?.classList.toggle("active", mode === "editor");
     executePanel?.classList.toggle("active", mode === "execute");
 
     windowManager.focus("window-main");
@@ -3927,16 +4143,15 @@ function createModeController(refs, windowManager) {
     else if (classification.isAssemblySource) target = "assembly";
     if (!target) return authoringMode;
     authoringMode = target;
-    if (options.activate !== false) apply(target);
+    if (options.activate !== false) apply("editor");
     return target;
   }
 
   projectButton?.addEventListener("click", () => apply("project"));
-  c0Button?.addEventListener("click", () => apply("c0"));
-  assemblyButton?.addEventListener("click", () => apply("assembly"));
+  editorButton?.addEventListener("click", () => apply("editor"));
   executeButton?.addEventListener("click", () => apply("execute"));
 
-  apply("assembly");
+  apply("editor");
 
   return {
     setMode: apply,
@@ -4751,6 +4966,7 @@ const DEFAULT_PREFERENCES = {
   memoryConfiguration: "Default",
   maxMemoryGb: 2,
   maxBacksteps: 100,
+  cloudApiBase: "",
   miniCSubset: "C1-NATIVE",
   miniCTargetAbi: "o32",
   miniCOpenOutputWindow: true,
@@ -4889,6 +5105,15 @@ function injectRuntimeStyles() {
 
     #source-editor::selection {
       background: rgba(100, 149, 237, 0.34);
+    }
+
+    .editor-surface.readonly,
+    .editor-surface.readonly .editor-code-wrap {
+      background: #fff8dc;
+    }
+
+    #source-editor[readonly] {
+      cursor: default;
     }
 
     .editor-token-comment { color: #37b24d; font-style: italic; }
@@ -5471,7 +5696,7 @@ function injectRuntimeStyles() {
 
     .project-tree-pane {
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto;
       min-height: 0;
       background: #eef3f9;
     }
@@ -5555,10 +5780,33 @@ function injectRuntimeStyles() {
 
     .project-tree-row {
       display: grid;
-      grid-template-columns: 14px minmax(0, 1fr);
+      grid-template-columns: 14px auto minmax(0, 1fr);
       align-items: center;
-      column-gap: 2px;
+      column-gap: 4px;
       min-height: 18px;
+    }
+
+    .project-tree-check {
+      width: 14px;
+      height: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .project-tree-check input {
+      width: 12px;
+      height: 12px;
+      margin: 0;
+      accent-color: #c79c1d;
+      cursor: pointer;
+    }
+
+    .project-tree-check input:disabled {
+      cursor: default;
+      opacity: 0.45;
     }
 
     .project-tree-toggle {
@@ -5644,7 +5892,7 @@ function injectRuntimeStyles() {
     .project-tree-project.active,
     .project-tree-file.active {
       border-color: #6f89a8;
-      background: #c8dbf1;
+      background: #c7dcf4;
       color: #0f2f4d;
       font-weight: 700;
     }
@@ -5655,9 +5903,16 @@ function injectRuntimeStyles() {
     .project-tree-libs-root.selected,
     .project-tree-libs-folder.selected,
     .project-tree-libs-file.selected {
-      border-color: #5f7e9f;
-      background: #d2e2f5;
-      color: #11314e;
+      border-color: #b88d26;
+      background: linear-gradient(180deg, #fff5bf 0%, #f1df96 100%);
+      color: #5d4208;
+    }
+
+    .project-tree-file.active.selected,
+    .project-tree-project.active.selected {
+      border-color: #a37a19;
+      background: linear-gradient(180deg, #fff0a5 0%, #ead07d 100%);
+      color: #4f3908;
     }
 
     .project-tree-project.drop-target,
@@ -5683,11 +5938,30 @@ function injectRuntimeStyles() {
       color: #4f657c;
     }
 
+    .project-tree-main {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
     .project-tree-node-label {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+
+    .project-tree-sync {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+      box-shadow: inset 0 0 0 1px rgba(18, 28, 40, 0.22);
+    }
+
+    .project-tree-sync-green { background: #35a853; }
+    .project-tree-sync-orange { background: #ee8f1f; }
+    .project-tree-sync-red { background: #d94848; }
 
     .project-tree-meta {
       color: #5f7288;
@@ -5701,20 +5975,43 @@ function injectRuntimeStyles() {
       color: #2e5576;
     }
 
+    .project-tree-project.selected .project-tree-meta,
+    .project-tree-folder.selected .project-tree-meta,
+    .project-tree-file.selected .project-tree-meta,
+    .project-tree-libs-root.selected .project-tree-meta,
+    .project-tree-libs-folder.selected .project-tree-meta,
+    .project-tree-libs-file.selected .project-tree-meta {
+      color: #75561a;
+    }
+
     .project-tree-empty {
       color: #647993;
       padding: 4px 2px;
       font-style: italic;
     }
 
-    #main-panel-c0,
-    #main-panel-assembly {
+    .project-tree-status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 5px 8px 6px;
+      border-top: 1px solid #c0ccda;
+      background: linear-gradient(180deg, #f8fbff 0%, #e2ebf5 100%);
+      color: #36506a;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .project-tree-status span {
+      white-space: nowrap;
+    }
+
+    #main-panel-editor {
       min-height: 0;
       overflow: hidden;
     }
 
-    #main-panel-c0 .editor-host,
-    #main-panel-assembly .editor-host {
+    #main-panel-editor .editor-host {
       display: grid;
       grid-template-rows: minmax(0, 1fr);
       min-height: 0;
@@ -6115,6 +6412,26 @@ function injectRuntimeStyles() {
       line-height: 1.25;
       font-size: 11px;
       min-height: 56px;
+      resize: none;
+      color: #243649;
+    }
+
+    .dialog-message.info {
+      color: #1f5f99;
+      background: #eef6ff;
+      border-color: #8fb4d9;
+    }
+
+    .dialog-message.success {
+      color: #1d6b2f;
+      background: #edf9ef;
+      border-color: #93c29d;
+    }
+
+    .dialog-message.error {
+      color: #9a2323;
+      background: #fff2f2;
+      border-color: #d9a1a1;
     }
 
     .dialog-input {
@@ -6444,10 +6761,21 @@ function injectRuntimeStyles() {
     .mini-c-actions {
       display: flex;
       gap: 6px;
+      align-items: center;
       justify-content: flex-end;
       padding: 5px 6px 7px;
       border-top: 1px solid #b3c2d4;
       background: #e2e9f2;
+    }
+
+    .mini-c-option {
+      margin-right: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #2a405a;
+      font-size: 12px;
+      user-select: none;
     }
 
     .help-window {

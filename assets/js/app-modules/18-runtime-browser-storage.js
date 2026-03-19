@@ -84,7 +84,9 @@ function listOnlineSourceFolders(files) {
 function formatStoredSourceUsage(bytes) {
   const value = Number.isFinite(bytes) ? Math.max(0, bytes | 0) : 0;
   if (value < 1024) return `${value} B`;
-  return `${(value / 1024).toFixed(1)} kB`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} kB`;
+  if (value < 1024 * 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
 function normalizeOnlineSourceEntry(entry) {

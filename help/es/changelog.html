@@ -95,22 +95,29 @@
  
   <!-- __WEBMARS_APP_VERSION__ (2026) -->
   <section class="release">
-    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-13</span></div>
+    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-19</span></div>
     <div class="release-body">
-      <h3>Compilador Mini-C (C0 S0-S4) Integrado</h3>
+      <h3>Backend Cloud y Autenticación</h3>
       <ul>
-        <li>Se implementó e integró la pipeline del compilador Mini-C con subsets incrementales C0 desde <code>S0</code> hasta <code>S4</code>.</li>
-        <li>Se amplió la cobertura de parser/type-check/codegen para funcionalidades núcleo: expresiones, control de flujo, funciones, arrays, punteros y flujo multiarchivo a nivel de proyecto.</li>
-        <li>Se expandió la integración de bibliotecas nativas y de proyecto, incluyendo resolución de <code>#use</code> mediante <code>libs/</code> global y fuentes del proyecto.</li>
-        <li>Se mejoraron diagnósticos y usabilidad de salida de compilación, con inspección de ASM generado más clara.</li>
+        <li>Se añadió selección configurable del backend cloud, con enrutado automático al backend local en desarrollo y a <code>backmars.nfiles.top/api</code> en producción cuando no hay servidor personalizado configurado.</li>
+        <li>Se integraron en la UI los flujos de login, registro y creación de usuario cloud, con soporte backend listo para producción y feedback operativo más claro.</li>
+        <li>Se separó la autenticación de la sincronización de proyectos para que login/registro terminen inmediatamente mientras la sync continúa en segundo plano.</li>
+        <li>Se mejoraron los diálogos de login/registro con estado dentro de la propia ventana, tiempo transcurrido, cancelación más segura y mensajes explícitos de actividad cloud en <code>Mars Messages</code>.</li>
       </ul>
 
-      <h3>Renovación de UI y Modernización del Flujo</h3>
+      <h3>Mejoras en el Flujo de Project y Editor</h3>
       <ul>
-        <li>El flujo principal se reorganizó en torno a una filosofía project-first, con pestañas dedicadas <code>Project</code>, <code>C0</code>, <code>Assembly</code> y <code>Execute</code>.</li>
-        <li>El explorador de proyecto evolucionó a un flujo de árbol práctico (expandir/colapsar, renombrar, borrar con confirmación, mover por drag/drop y copia entre proyectos).</li>
-        <li>La gestión de layout se reforzó con opciones de guardar/cargar/reset, mejor clamp/snap entre ventanas base y restauración desktop más estable.</li>
-        <li>La UX de arranque y recuperación se rediseñó (splash ligero + flujo de recuperación de datos locales), incluyendo controles claros de limpieza de datos en Settings.</li>
+        <li>El flujo principal de autoría se consolidó alrededor de <code>Project</code>, <code>Editor</code> y <code>Execute</code>, manteniendo la disponibilidad de acciones C0/Assembly según el tipo del archivo activo.</li>
+        <li>El árbol de proyecto ganó defaults más útiles de expandir/colapsar, reglas de apertura en read-only para <code>libs/</code> y archivos de otros proyectos, selección múltiple, metadatos/estado e indicadores de sincronización.</li>
+        <li>Las tabs del editor ahora restauran correctamente sesiones read-only e incluyen menú contextual con <code>Close</code>, <code>Save</code> y <code>Save and Close</code>.</li>
+        <li>Las operaciones de guardado se simplificaron a <code>Save Active File</code> y <code>Save Project</code>, con persistencia en el navegador y sincronización cloud cuando corresponde.</li>
+      </ul>
+
+      <h3>Refinamiento de Almacenamiento, Mini-C y UI</h3>
+      <ul>
+        <li>La cuota de almacenamiento del usuario en el navegador se elevó a <code>1 MB</code>, se movió a configuración central y ahora se aplica de forma consistente.</li>
+        <li>El flujo de salida de Mini-C se refinó con opción para suprimir la ventana de output, apertura directa del ASM generado y cierre automático tras abrir ASM.</li>
+        <li>Settings cloud/servidor, traducciones y comportamiento de diálogos se ampliaron para soportar el nuevo modelo de despliegue y el flujo backend de producción.</li>
       </ul>
     </div>
   </section>

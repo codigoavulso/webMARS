@@ -1,4 +1,4 @@
-# webMARS v0.4.3
+# webMARS v0.4.5
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -26,16 +26,20 @@ Browser port of MARS MIPS 4.5 (IDE + assembler + simulator), with a desktop/mobi
 - Browser storage for ASM sources (virtual folders, quota control).
 - Session restore (files, machine state, tool windows).
 
-## What's New in v0.4.3
+## What's New in v0.4.5
 
-- Mini-C/C0 compiler integration:
-  - Mini-C pipeline integrated with incremental C0 subsets from `S0` to `S4`.
-  - Expanded parser/type-check/codegen coverage for expressions, control flow, functions, arrays and pointers.
-  - Better `#use`-based library flow with global `libs/` and project-level sources.
-- UI renewal and workflow improvements:
-  - Project-first workflow consolidated around `Project`, `C0`, `Assembly` and `Execute`.
-  - Project tree improved with practical file/folder operations and drag/drop project workflows.
-  - Layout/save/load/reset and startup/recovery flows refined for more stable desktop behavior.
+- Cloud backend and authentication:
+  - Added configurable cloud backend selection with automatic default routing for local development (`localhost`) and production (`backmars.nfiles.top/api`).
+  - Introduced cloud login/register dialogs, user creation flow, production-ready backend integration, and clearer status reporting in both dialogs and `Mars Messages`.
+  - Login/register flows were decoupled from project sync so authentication completes immediately and cloud sync continues in background.
+- Project and editor workflow:
+  - Main authoring workflow consolidated around `Project`, `Editor`, and `Execute`, while preserving C0/Assembly-specific actions based on the active file type.
+  - Project tree gained richer selection state, status bar, metadata columns, sync indicators, read-only opening rules for external/libs files, and stronger save/sync behavior.
+  - Editor tabs now support read-only restore, proper close behavior, and right-click context actions (`Close`, `Save`, `Save and Close`).
+- UI and storage refinements:
+  - Mini-C output flow now supports direct ASM opening, optional output window suppression, and improved compile dialog behavior.
+  - User project quota was raised to `1 MB`, moved to central config, and is now enforced consistently in browser storage flows.
+  - Settings, translations, and cloud/server preferences were expanded to support the new deployment and workspace model.
 
 ## Compatibility Controls
 
@@ -108,6 +112,7 @@ Reports:
 ## Release Line
 
 - `v0.4.3`: Mini-C/C0 compiler (S0-S4) integration + UI renewal and project-first workflow
+- `v0.4.5`: cloud backend/login productionization + project/editor workflow improvements + storage/sync refinement
 - `v0.4.2`: UI polish + simulation runtime bug fixes + final MARS 4.5 parity adjustments
 - `v0.3.7`: initial git baseline
 - `v0.3.8`: core fixes and UI improvements

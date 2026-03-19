@@ -89,6 +89,10 @@
   const api = {
     format: formatMessage,
     registerLanguage,
+    getCatalog(language) {
+      const catalog = getCatalog(language);
+      return catalog ? { ...catalog } : null;
+    },
     setLanguage,
     hasLanguage(language) {
       return state.catalogs.has(normalizeLanguage(language));

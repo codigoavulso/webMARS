@@ -95,22 +95,29 @@
  
   <!-- __WEBMARS_APP_VERSION__ (2026) -->
   <section class="release">
-    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-13</span></div>
+    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-19</span></div>
     <div class="release-body">
-      <h3>Mini-C Compiler (C0 S0-S4) Integrated</h3>
+      <h3>Cloud Backend and Authentication</h3>
       <ul>
-        <li>Implemented and integrated the Mini-C compiler pipeline with incremental C0 subsets from <code>S0</code> to <code>S4</code>.</li>
-        <li>Added parser/type-check/codegen coverage for core language features used in teaching and tooling workflows: expressions, control flow, functions, arrays, pointers, and project-level multi-file flows.</li>
-        <li>Expanded native and project libraries integration, including <code>#use</code> resolution through global <code>libs/</code> and project sources.</li>
-        <li>Improved diagnostics and output usability, with cleaner compile output and better generated ASM inspection flow.</li>
+        <li>Added configurable cloud backend selection, with automatic routing to local backend during development and <code>backmars.nfiles.top/api</code> in production when no custom server is configured.</li>
+        <li>Integrated cloud login, register and user creation flows into the UI, with production-ready backend support and clearer operational feedback.</li>
+        <li>Decoupled authentication from project synchronization so login/register complete immediately while cloud sync continues in background.</li>
+        <li>Improved login/register dialogs with in-window status updates, elapsed-time reporting, safer cancel behavior, and explicit cloud activity messages in <code>Mars Messages</code>.</li>
       </ul>
 
-      <h3>UI Renewal and Workflow Modernization</h3>
+      <h3>Project and Editor Workflow Improvements</h3>
       <ul>
-        <li>Main workflow reorganized around project-first operation, with dedicated tabs for <code>Project</code>, <code>C0</code>, <code>Assembly</code>, and <code>Execute</code>.</li>
-        <li>Project explorer evolved to a practical tree workflow (expand/collapse, rename, delete with confirmation, drag/drop move and cross-project copy behaviors).</li>
-        <li>Layout management matured with save/load/reset options, better clamp/snap handling between base windows, and safer desktop restore behavior.</li>
-        <li>Startup and recovery UX were reworked (lightweight splash + local data recovery flow), with clear local data/reset controls in Settings.</li>
+        <li>The main authoring flow was consolidated around <code>Project</code>, <code>Editor</code>, and <code>Execute</code>, while preserving C0/Assembly command availability by active file type.</li>
+        <li>The project tree gained improved expand/collapse defaults, read-only opening rules for <code>libs/</code> and external project files, multi-selection, metadata/status display, and sync state indicators.</li>
+        <li>Editor tabs now preserve read-only session restore correctly and support a context menu with <code>Close</code>, <code>Save</code>, and <code>Save and Close</code>.</li>
+        <li>Save operations were simplified to <code>Save Active File</code> and <code>Save Project</code>, storing in browser state and synchronizing to cloud where applicable.</li>
+      </ul>
+
+      <h3>Storage, Mini-C and UI Refinement</h3>
+      <ul>
+        <li>User browser storage quota was raised to <code>1 MB</code>, moved to central configuration, and is now enforced consistently.</li>
+        <li>The Mini-C output flow was refined with optional output window suppression, direct ASM opening, and automatic close behavior after opening generated ASM.</li>
+        <li>Cloud/server settings, translations, and dialog behavior were expanded to support the new deployment model and production backend flow.</li>
       </ul>
     </div>
   </section>

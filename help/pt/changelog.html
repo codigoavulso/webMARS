@@ -95,22 +95,29 @@
  
   <!-- __WEBMARS_APP_VERSION__ (2026) -->
   <section class="release">
-    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-13</span></div>
+    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-19</span></div>
     <div class="release-body">
-      <h3>Compilador Mini-C (C0 S0-S4) Integrado</h3>
+      <h3>Backend Cloud e Autenticação</h3>
       <ul>
-        <li>Implementada e integrada a pipeline do compilador Mini-C com subsets incrementais C0 de <code>S0</code> a <code>S4</code>.</li>
-        <li>Alargada a cobertura de parser/type-check/codegen para funcionalidades nucleares: expressões, controlo de fluxo, funções, arrays, apontadores e fluxo multi-ficheiro ao nível de projeto.</li>
-        <li>Expandida a integração de bibliotecas nativas e de projeto, incluindo resolução de <code>#use</code> via <code>libs/</code> global e fontes do projeto.</li>
-        <li>Melhorados diagnósticos e usabilidade do output de compilação, com inspeção de ASM gerado mais clara.</li>
+        <li>Adicionada seleção configurável do backend cloud, com encaminhamento automático para backend local em desenvolvimento e para <code>backmars.nfiles.top/api</code> em produção quando não existe servidor custom definido.</li>
+        <li>Integrados na UI os fluxos de login, registo e criação de utilizador cloud, com suporte backend pronto para produção e feedback operacional mais claro.</li>
+        <li>Separada a autenticação da sincronização de projetos, para que login/registo terminem de imediato e a sync continue em background.</li>
+        <li>Melhorados os diálogos de login/registo com estado dentro da própria janela, tempo decorrido, cancelamento mais seguro e mensagens explícitas de atividade cloud em <code>Mars Messages</code>.</li>
       </ul>
 
-      <h3>Renovação de UI e Modernização do Fluxo</h3>
+      <h3>Melhorias no Fluxo Project e Editor</h3>
       <ul>
-        <li>Fluxo principal reorganizado para filosofia project-first, com separadores dedicados <code>Project</code>, <code>C0</code>, <code>Assembly</code> e <code>Execute</code>.</li>
-        <li>Explorador de projeto evoluído para árvore prática (expandir/recolher, renomear, eliminar com confirmação, mover por drag/drop e cópia entre projetos).</li>
-        <li>Gestão de layout reforçada com opções de guardar/carregar/reset, melhor clamp/snap entre janelas base e restauro desktop mais estável.</li>
-        <li>UX de arranque e recuperação retrabalhada (splash leve + fluxo de recuperação de dados locais), incluindo controlos explícitos de limpeza de dados em Settings.</li>
+        <li>O fluxo principal de autoria foi consolidado em torno de <code>Project</code>, <code>Editor</code> e <code>Execute</code>, mantendo a disponibilidade das ações C0/Assembly conforme o tipo do ficheiro ativo.</li>
+        <li>A árvore de projeto ganhou defaults de expandir/recolher mais úteis, regras de abertura em read-only para <code>libs/</code> e ficheiros de outros projetos, seleção múltipla, metadados/estado e indicadores de sincronização.</li>
+        <li>As tabs do editor passaram a restaurar corretamente sessões read-only e incluem menu de contexto com <code>Close</code>, <code>Save</code> e <code>Save and Close</code>.</li>
+        <li>As operações de gravação foram simplificadas para <code>Save Active File</code> e <code>Save Project</code>, com persistência no browser e sincronização cloud quando aplicável.</li>
+      </ul>
+
+      <h3>Refino de Armazenamento, Mini-C e UI</h3>
+      <ul>
+        <li>A quota de armazenamento do utilizador no browser foi aumentada para <code>1 MB</code>, movida para configuração central e passou a ser aplicada de forma consistente.</li>
+        <li>O fluxo de output do Mini-C foi refinado com opção de suprimir a janela de output, abertura direta do ASM gerado e fecho automático após abrir ASM.</li>
+        <li>Settings cloud/servidor, traduções e comportamento dos diálogos foram alargados para suportar o novo modelo de deployment e o fluxo backend de produção.</li>
       </ul>
     </div>
   </section>
