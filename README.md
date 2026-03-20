@@ -76,7 +76,7 @@ Default URL: `http://localhost:8080`
 
 ## Release Line
 
-- `v0.4.6`: startup hardening, help/PDF fixes, browser-storage timestamp fix, runtime cleanup, dead-code removal
+- `v0.4.6`: startup hardening, help/PDF fixes, browser-storage timestamp fix, runtime cleanup, dead-code removal, legacy script/result purge
 - `v0.4.5`: cloud backend/login productionization + project/editor workflow improvements + storage/sync refinement
 - `v0.4.3`: Mini-C/C0 compiler integration + UI renewal and project-first workflow
 - `v0.4.2`: UI polish + simulation runtime bug fixes + final MARS 4.5 parity adjustments
