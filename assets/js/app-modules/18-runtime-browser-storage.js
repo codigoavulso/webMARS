@@ -89,6 +89,17 @@ function formatStoredSourceUsage(bytes) {
   return `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
+function normalizeOnlineSourceTimestamp(value, fallback = Date.now()) {
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && numeric > 0) return Math.floor(numeric);
+  const parsed = Date.parse(String(value || ""));
+  if (Number.isFinite(parsed) && parsed > 0) return Math.floor(parsed);
+  const safeFallback = Number(fallback);
+  return Number.isFinite(safeFallback) && safeFallback > 0
+    ? Math.floor(safeFallback)
+    : Date.now();
+}
+
 function normalizeOnlineSourceEntry(entry) {
   if (!entry || typeof entry !== "object") return null;
   const name = normalizeOnlineSourcePath(entry.name || "");
@@ -96,7 +107,7 @@ function normalizeOnlineSourceEntry(entry) {
   return {
     name,
     source: String(entry.source ?? ""),
-    updatedAt: Number.isFinite(entry.updatedAt) ? (entry.updatedAt | 0) : Date.now()
+    updatedAt: normalizeOnlineSourceTimestamp(entry.updatedAt, Date.now())
   };
 }
 
@@ -130,7 +141,7 @@ function persistOnlineSourceFolder(files) {
       files: files.map((file) => ({
         name: normalizeOnlineSourcePath(file.name),
         source: String(file.source ?? ""),
-        updatedAt: Number.isFinite(file.updatedAt) ? (file.updatedAt | 0) : Date.now()
+        updatedAt: normalizeOnlineSourceTimestamp(file.updatedAt, Date.now())
       }))
     }));
     return true;

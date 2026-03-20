@@ -125,6 +125,11 @@
         if (loaderTitle) loaderTitle.textContent = String(message || "");
       }
 
+      function showLoaderFailure(title, message) {
+        setLoaderTitle(title || "Startup error");
+        setLoaderText(message || "webMARS failed to start. Check browser console for details.");
+      }
+
       function hideLoader() {
         if (loaderHidden || !(loader instanceof HTMLElement)) return;
         loaderHidden = true;
@@ -146,8 +151,7 @@
         script.src = APP_BUNDLE_SRC;
         script.async = false;
         script.onerror = () => {
-          setLoaderTitle("Load error");
-          setLoaderText("Failed to load application modules. Check browser console for details.");
+          showLoaderFailure("Load error", "Failed to load application modules. Check browser console for details.");
         };
         document.body.appendChild(script);
       }
@@ -155,7 +159,13 @@
       window.addEventListener("webmars:tools-manifest-load-start", () => {
         setLoaderText("Loading tools manifest...");
       }, { once: true });
-      window.addEventListener("webmars:tools-manifest-loaded", () => {
+      window.addEventListener("webmars:tools-manifest-loaded", (event) => {
+        const detail = event instanceof CustomEvent ? event.detail : null;
+        setLoaderText(detail?.ok === false
+          ? "Using built-in tool list and loading tool modules..."
+          : "Loading tool modules...");
+      }, { once: true });
+      window.addEventListener("webmars:tools-ready", () => {
         hideLoader();
       }, { once: true });
       window.addEventListener("webmars:scripts-loaded", () => {
@@ -165,14 +175,27 @@
         if (loaderHidden) return;
         setLoaderText("Finalizing interface...");
       }, { once: true });
-      window.addEventListener("error", () => {
+      window.addEventListener("error", (event) => {
         if (loaderHidden) return;
-        hideLoader();
+        const message = event?.message
+          ? `Startup hit an error: ${String(event.message)}`
+          : "Startup hit an unexpected error. Check browser console for details.";
+        showLoaderFailure("Startup error", message);
+      });
+      window.addEventListener("unhandledrejection", (event) => {
+        if (loaderHidden) return;
+        const reason = event?.reason;
+        const message = typeof reason === "string" && reason.trim()
+          ? `Startup hit an error: ${reason.trim()}`
+          : (reason && typeof reason.message === "string" && reason.message.trim()
+            ? `Startup hit an error: ${reason.message.trim()}`
+            : "Startup hit an unexpected promise rejection. Check browser console for details.");
+        showLoaderFailure("Startup error", message);
       });
       splashTimer = window.setTimeout(() => {
         if (loaderHidden) return;
-        setLoaderText("Startup is taking longer than usual. Continuing...");
-        hideLoader();
+        setLoaderTitle("Still starting");
+        setLoaderText("Startup is taking longer than usual. Waiting for modules to finish...");
       }, SPLASH_MAX_MS);
       loadAppBundle();
     })();

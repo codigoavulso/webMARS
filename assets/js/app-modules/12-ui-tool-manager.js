@@ -8,8 +8,23 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
   }
 
   const FALLBACK_TOOLS = [
-    // Only used if tools.json cannot be loaded.
-    { id: "bitmap-display", label: "Bitmap Display", script: "./tools/bitmap-display.js" }
+    // Keep a built-in manifest so transient fetch failures do not collapse the tools menu.
+    { id: "bht-simulator", label: "BHT Simulator", script: "./tools/bht-simulator.js" },
+    { id: "bitmap-display", label: "Bitmap Display", script: "./tools/bitmap-display.js" },
+    { id: "bitmap-terminal-tool", label: "Bitmap Terminal Tool", script: "./tools/bitmap-terminal-tool.js" },
+    { id: "cache-simulator", label: "Data Cache Simulator", script: "./tools/cache-simulator.js" },
+    { id: "digital-lab-sim", label: "Digital Lab Sim", script: "./tools/digital-lab-sim.js" },
+    { id: "float-representation", label: "Floating Point Representation", script: "./tools/float-representation.js" },
+    { id: "instruction-counter", label: "Instruction Counter", script: "./tools/instruction-counter.js" },
+    { id: "instruction-statistics", label: "Instruction Statistics", script: "./tools/instruction-statistics.js" },
+    { id: "intro-to-tools", label: "Introduction to Tools", script: "./tools/intro-to-tools.js" },
+    { id: "keyboard-display-mmio", label: "Keyboard and Display MMIO Simulator", script: "./tools/keyboard-display-mmio.js" },
+    { id: "mars-bot", label: "Mars Bot", script: "./tools/mars-bot.js" },
+    { id: "memory-reference-visualization", label: "Memory Reference Visualization", script: "./tools/memory-reference-visualization.js" },
+    { id: "mips-xray", label: "MIPS X-Ray", script: "./tools/mips-xray.js" },
+    { id: "scavenger-hunt", label: "ScavengerHunt", script: "./tools/scavenger-hunt.js" },
+    { id: "screen-magnifier", label: "Screen Magnifier", script: "./tools/screen-magnifier.js" },
+    { id: "tty-ansi-terminal", label: "TTY Device + ANSI Terminal", script: "./tools/tty-ansi-terminal.js" }
   ];
 
   const registry = (() => {
@@ -215,6 +230,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
 
   async function loadManifestAndScripts() {
     let manifestTools = FALLBACK_TOOLS;
+    let manifestLoadedFromDisk = false;
     try {
       dispatchToolLoaderEvent("webmars:tools-manifest-load-start", {
         path: "./tools/tools.json"
@@ -223,11 +239,14 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
       const parsed = JSON.parse(text.replace(/^\uFEFF/, ""));
       const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.tools) ? parsed.tools : [];
       const normalized = list.map(normalizeManifestTool).filter(Boolean);
-      if (normalized.length) manifestTools = normalized;
+      if (normalized.length) {
+        manifestTools = normalized;
+        manifestLoadedFromDisk = true;
+      }
       dispatchToolLoaderEvent("webmars:tools-manifest-loaded", {
         path: "./tools/tools.json",
-        ok: true,
-        count: normalized.length
+        ok: manifestLoadedFromDisk,
+        count: manifestTools.length
       });
     } catch {
       dispatchToolLoaderEvent("webmars:tools-manifest-loaded", {
@@ -240,9 +259,13 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
 
     upsertEntries(manifestTools);
 
+    let scriptsLoaded = 0;
+    let scriptsFailed = 0;
     for (const tool of manifestTools) {
       if (!tool.script) continue;
-      await loadScript(tool.script);
+      const loaded = await loadScript(tool.script);
+      if (loaded) scriptsLoaded += 1;
+      else scriptsFailed += 1;
       const plugin = registry.definitions.get(tool.id);
       if (plugin) {
         upsertEntries([{ ...tool, label: plugin.label || tool.label, factory: plugin.create }]);
@@ -253,6 +276,14 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
       if (!toolEntries.some((entry) => entry.id === id)) {
         upsertEntries([{ id, label: plugin.label || id, factory: plugin.create, script: "" }]);
       }
+    });
+
+    dispatchToolLoaderEvent("webmars:tools-ready", {
+      ok: scriptsFailed === 0,
+      manifestLoadedFromDisk,
+      count: toolEntries.length,
+      scriptsLoaded,
+      scriptsFailed
     });
   }
 

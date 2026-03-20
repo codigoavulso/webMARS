@@ -1,9 +1,9 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>webMARS â€“ Technical Changelog</title>
+  <title>webMARS - Registro tecnico de cambios</title>
   <style>
     body {
       margin: 0;
@@ -90,34 +90,34 @@
   </style>
 </head>
 <body>
-  <h1>webMARS Â· changelog</h1>
+  <h1>webMARS - changelog</h1>
   <p class="subtitle">https://github.com/codigoavulso/webMARS/</p>
  
-  <!-- __WEBMARS_APP_VERSION__ (2026) -->
+  <!-- __WEBMARS_APP_VERSION__ (2026-03-20) -->
   <section class="release">
-    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-19</span></div>
+    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-20</span></div>
     <div class="release-body">
-      <h3>Backend Cloud y Autenticación</h3>
+      <h3>Robustez del Runtime y del Arranque</h3>
       <ul>
-        <li>Se añadió selección configurable del backend cloud, con enrutado automático al backend local en desarrollo y a <code>backmars.nfiles.top/api</code> en producción cuando no hay servidor personalizado configurado.</li>
-        <li>Se integraron en la UI los flujos de login, registro y creación de usuario cloud, con soporte backend listo para producción y feedback operativo más claro.</li>
-        <li>Se separó la autenticación de la sincronización de proyectos para que login/registro terminen inmediatamente mientras la sync continúa en segundo plano.</li>
-        <li>Se mejoraron los diálogos de login/registro con estado dentro de la propia ventana, tiempo transcurrido, cancelación más segura y mensajes explícitos de actividad cloud en <code>Mars Messages</code>.</li>
+        <li>El loader de arranque ahora espera al estado real <code>webmars:tools-ready</code> en lugar de desaparecer tras leer el manifiesto o por timeout hacia una UI parcial.</li>
+        <li>El bootstrap de tools ahora tiene fallback a un manifiesto embebido completo, evitando la degradacion anterior a una sola tool cuando fallaba <code>tools.json</code>.</li>
+        <li>Los metadatos del browser storage preservan la precision completa de timestamps; los valores de <code>updatedAt</code> ya no se truncan por coerciones de 32 bits.</li>
+        <li>Las dependencias del runtime/bootstrap quedaron mas estrictas y los fallbacks inline inalcanzables dejaron de sombrear la ruta de codigo activa.</li>
       </ul>
 
-      <h3>Mejoras en el Flujo de Project y Editor</h3>
+      <h3>Sistema de Ayuda y Documentos Embebidos</h3>
       <ul>
-        <li>El flujo principal de autoría se consolidó alrededor de <code>Project</code>, <code>Editor</code> y <code>Execute</code>, manteniendo la disponibilidad de acciones C0/Assembly según el tipo del archivo activo.</li>
-        <li>El árbol de proyecto ganó defaults más útiles de expandir/colapsar, reglas de apertura en read-only para <code>libs/</code> y archivos de otros proyectos, selección múltiple, metadatos/estado e indicadores de sincronización.</li>
-        <li>Las tabs del editor ahora restauran correctamente sesiones read-only e incluyen menú contextual con <code>Close</code>, <code>Save</code> y <code>Save and Close</code>.</li>
-        <li>Las operaciones de guardado se simplificaron a <code>Save Active File</code> y <code>Save Project</code>, con persistencia en el navegador y sincronización cloud cuando corresponde.</li>
+        <li>El PDF de referencia MIPS vuelve a estar conectado al menu Help y se abre en el visor embebido en lugar de pasar por una ruta externa rota.</li>
+        <li>El servidor local ahora entrega PDFs con <code>application/pdf</code> y disposicion inline, permitiendo lectura dentro de la UI en vez de descargas forzadas.</li>
+        <li>Los enlaces externos, destinos <code>mailto:</code> y enlaces con apertura en nueva pestaña dentro de Help/About ahora se abren fuera de la iframe en lugar de quedarse en blanco.</li>
+        <li>El visor de documentos conserva el titulo solicitado para el documento en lugar de sustituirlo por una etiqueta generica.</li>
       </ul>
 
-      <h3>Refinamiento de Almacenamiento, Mini-C y UI</h3>
+      <h3>Limpieza de la Base de Codigo</h3>
       <ul>
-        <li>La cuota de almacenamiento del usuario en el navegador se elevó a <code>1 MB</code>, se movió a configuración central y ahora se aplica de forma consistente.</li>
-        <li>El flujo de salida de Mini-C se refinó con opción para suprimir la ventana de output, apertura directa del ASM generado y cierre automático tras abrir ASM.</li>
-        <li>Settings cloud/servidor, traducciones y comportamiento de diálogos se ampliaron para soportar el nuevo modelo de despliegue y el flujo backend de producción.</li>
+        <li>Se eliminaron los antiguos entrypoints ES-modules en <code>assets/js/app.js</code>, <code>core/</code>, <code>ui/</code>, <code>config/</code> y <code>state/</code>, que ya no formaban parte del bootstrap vivo.</li>
+        <li>Se eliminó la bridge antigua de Help, conectando el runtime directamente con el sistema moderno de ayuda.</li>
+        <li>Se podaron fallbacks muertos de Mini-C, file kinds, store y settings que ya no podian alcanzarse con el orden fijo del bundle.</li>
       </ul>
     </div>
   </section>
@@ -468,7 +468,7 @@
   </section>
 
   <p class="footnote">
-    âš™ï¸ NÃ©lson Ferreira - nels.ferreira@sapo.pt
+    Nelson Ferreira - nels.ferreira@sapo.pt
   </p>
 <script src="../../assets/js/app-version.js"></script>
 </body>

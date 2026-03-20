@@ -608,6 +608,38 @@
     return win;
   }
 
+  function shouldOpenExternallyFromHelp(anchor, resolvedUrl) {
+    if (!(anchor instanceof HTMLAnchorElement) || !(resolvedUrl instanceof URL)) return false;
+    const protocol = String(resolvedUrl.protocol || "").toLowerCase();
+    const target = String(anchor.getAttribute("target") || "").trim().toLowerCase();
+    if (protocol === "mailto:" || protocol === "tel:") return true;
+    if (target && target !== "_self") return true;
+    if (anchor.hasAttribute("download")) return true;
+    if (protocol !== "http:" && protocol !== "https:") return true;
+    if (typeof window === "undefined" || !window.location) return false;
+    return resolvedUrl.origin !== window.location.origin;
+  }
+
+  function openExternalHelpLink(resolvedUrl, anchor) {
+    const href = String(resolvedUrl instanceof URL ? resolvedUrl.href : resolvedUrl || "").trim();
+    if (!href || typeof window === "undefined") return false;
+    const requestedTarget = anchor instanceof HTMLAnchorElement
+      ? String(anchor.getAttribute("target") || "").trim().toLowerCase()
+      : "";
+    const target = requestedTarget && requestedTarget !== "_self" ? requestedTarget : "_blank";
+    const features = target === "_blank" ? "noopener,noreferrer" : "";
+    const opened = window.open(href, target, features);
+    if (opened && typeof opened.focus === "function") {
+      opened.focus();
+      return true;
+    }
+    if (/^(mailto|tel):/i.test(href)) {
+      window.location.href = href;
+      return true;
+    }
+    return false;
+  }
+
   function bindHelpFrameLinks(frame, openDocument) {
     frame.addEventListener("load", () => {
       try {
@@ -620,10 +652,16 @@
           if (!(anchor instanceof HTMLAnchorElement)) return;
           const href = anchor.getAttribute("href");
           if (!href || href.startsWith("#")) return;
+          const resolved = new URL(href, frame.contentWindow?.location?.href || frame.src);
+          if (shouldOpenExternallyFromHelp(anchor, resolved)) {
+            event.preventDefault();
+            event.stopPropagation();
+            openExternalHelpLink(resolved, anchor);
+            return;
+          }
           event.preventDefault();
           event.stopPropagation();
-          const resolved = new URL(href, frame.contentWindow?.location?.href || frame.src).toString();
-          openDocument(resolved, anchor.textContent?.trim() || DOC_VIEWER_TITLE, { alreadyResolved: true });
+          openDocument(resolved.href, anchor.textContent?.trim() || DOC_VIEWER_TITLE, { alreadyResolved: true });
         }, { capture: true });
       } catch {
         // Ignore iframe bridge issues on browsers with restricted access.
@@ -941,6 +979,7 @@
         aboutHostNode.innerHTML = `<div class="mars-help-panel-fill"><iframe class="mars-help-frame" title="${escape(translate("Info"))}"></iframe></div>`;
         const frame = aboutHostNode.querySelector("iframe");
         if (!(frame instanceof HTMLIFrameElement)) return;
+        bindHelpFrameLinks(frame, openDocument);
         frame.addEventListener("error", () => {
           postMarsError("[error] Failed to load selected help file.");
         });
@@ -962,7 +1001,8 @@
     async function openDocument(pathOrFile, title = DOC_VIEWER_TITLE, options = {}) {
       const resolvedUrl = await resolveDocumentUrl(pathOrFile, options);
       if (!resolvedUrl) return;
-      state.docTitle = String(options.viewerTitle || DOC_VIEWER_TITLE);
+      const resolvedTitle = String(title || options.viewerTitle || DOC_VIEWER_TITLE).trim() || DOC_VIEWER_TITLE;
+      state.docTitle = resolvedTitle;
       state.docUrl = resolvedUrl;
       docTitleNode.textContent = translate(state.docTitle || DOC_VIEWER_TITLE);
       docUrlNode.value = resolvedUrl;

@@ -4,98 +4,54 @@ const preferences = loadPreferences();
 const runtimeSettings = { ...DEFAULT_SETTINGS };
 
 const moduleRegistry = (typeof window !== "undefined" ? window.WebMarsModules : globalThis.WebMarsModules) || {};
-const runtimeCoreStoreModule = moduleRegistry.coreStore || {};
-const runtimeSettingsModule = moduleRegistry.runtimeSettings || {};
-const miniCCompilerModule = moduleRegistry.miniCCompiler || {};
-const fileKindsModule = moduleRegistry.fileKinds || {};
+const runtimeCoreStoreModule = moduleRegistry.coreStore;
+const runtimeSettingsModule = moduleRegistry.runtimeSettings;
+const miniCCompilerModule = moduleRegistry.miniCCompiler;
+const fileKindsModule = moduleRegistry.fileKinds;
 
-const runtimeCreateStore = typeof runtimeCoreStoreModule.createStore === "function"
-  ? runtimeCoreStoreModule.createStore
-  : function createStoreFallback(initialState) {
-      let state = { ...initialState };
-      const listeners = new Set();
+if (!runtimeCoreStoreModule || typeof runtimeCoreStoreModule.createStore !== "function") {
+  throw new Error("[mars-web] coreStore module was not loaded before app runtime.");
+}
+if (!runtimeSettingsModule || typeof runtimeSettingsModule.sanitizeMemoryGb !== "function") {
+  throw new Error("[mars-web] runtimeSettings module was not loaded before app runtime.");
+}
+if (!miniCCompilerModule
+  || typeof miniCCompilerModule.compile !== "function"
+  || typeof miniCCompilerModule.isSourceFile !== "function"
+  || typeof miniCCompilerModule.deriveGeneratedAsmName !== "function"
+  || typeof miniCCompilerModule.defaultTemplate !== "string"
+  || !miniCCompilerModule.defaultTemplate.trim()
+) {
+  throw new Error("[mars-web] miniCCompiler module was not loaded before app runtime.");
+}
+if (!fileKindsModule
+  || typeof fileKindsModule.classifyFileName !== "function"
+  || typeof fileKindsModule.isCSourceFile !== "function"
+  || typeof fileKindsModule.isCFamilyFile !== "function"
+  || typeof fileKindsModule.isAssemblySourceFile !== "function"
+) {
+  throw new Error("[mars-web] fileKinds module was not loaded before app runtime.");
+}
 
-      return {
-        getState: () => state,
-        setState: (patch) => {
-          state = { ...state, ...patch };
-          listeners.forEach((listener) => listener(state));
-        },
-        subscribe: (listener) => {
-          listeners.add(listener);
-          return () => listeners.delete(listener);
-        }
-      };
-    };
-
-const MIN_MEMORY_GB = Number.isFinite(runtimeSettingsModule.MIN_MEMORY_GB) ? runtimeSettingsModule.MIN_MEMORY_GB : 0.25;
-const MAX_MEMORY_GB = Number.isFinite(runtimeSettingsModule.MAX_MEMORY_GB) ? runtimeSettingsModule.MAX_MEMORY_GB : 16;
-const DEFAULT_MEMORY_GB = Number.isFinite(runtimeSettingsModule.DEFAULT_MEMORY_GB) ? runtimeSettingsModule.DEFAULT_MEMORY_GB : 2;
-const DEFAULT_MAX_BACKSTEPS = Number.isFinite(runtimeSettingsModule.DEFAULT_MAX_BACKSTEPS)
-  ? runtimeSettingsModule.DEFAULT_MAX_BACKSTEPS
-  : 100;
-const MIN_MAX_BACKSTEPS = Number.isFinite(runtimeSettingsModule.MIN_MAX_BACKSTEPS) ? runtimeSettingsModule.MIN_MAX_BACKSTEPS : 0;
-const MAX_MAX_BACKSTEPS = Number.isFinite(runtimeSettingsModule.MAX_MAX_BACKSTEPS)
-  ? runtimeSettingsModule.MAX_MAX_BACKSTEPS
-  : 1000000;
-const BACKEND_MODE_JS = String(runtimeSettingsModule.BACKEND_MODE_JS || "js").trim().toLowerCase() === "hybrid" ? "hybrid" : "js";
-const BACKEND_MODE_HYBRID = String(runtimeSettingsModule.BACKEND_MODE_HYBRID || "hybrid").trim().toLowerCase() === "js" ? "js" : "hybrid";
-const DEFAULT_BACKEND_MODE = String(runtimeSettingsModule.DEFAULT_BACKEND_MODE || BACKEND_MODE_JS).trim().toLowerCase() === BACKEND_MODE_HYBRID
-  ? BACKEND_MODE_HYBRID
-  : BACKEND_MODE_JS;
-
-const sanitizeMemoryGb = typeof runtimeSettingsModule.sanitizeMemoryGb === "function"
-  ? runtimeSettingsModule.sanitizeMemoryGb
-  : function sanitizeMemoryGbFallback(value, fallback = DEFAULT_MEMORY_GB) {
-      const parsed = Number(value);
-      if (!Number.isFinite(parsed)) return fallback;
-      return Math.max(MIN_MEMORY_GB, Math.min(MAX_MEMORY_GB, parsed));
-    };
-
-const sanitizeMaxBacksteps = typeof runtimeSettingsModule.sanitizeMaxBacksteps === "function"
-  ? runtimeSettingsModule.sanitizeMaxBacksteps
-  : function sanitizeMaxBackstepsFallback(value, fallback = DEFAULT_MAX_BACKSTEPS) {
-      const parsed = Number.parseInt(String(value ?? ""), 10);
-      if (!Number.isFinite(parsed)) return fallback;
-      return Math.max(MIN_MAX_BACKSTEPS, Math.min(MAX_MAX_BACKSTEPS, parsed));
-    };
-
-const sanitizeBackendMode = typeof runtimeSettingsModule.sanitizeBackendMode === "function"
-  ? runtimeSettingsModule.sanitizeBackendMode
-  : function sanitizeBackendModeFallback(value, fallback = DEFAULT_BACKEND_MODE) {
-      return String(value || fallback || DEFAULT_BACKEND_MODE).trim().toLowerCase() === BACKEND_MODE_HYBRID
-        ? BACKEND_MODE_HYBRID
-        : BACKEND_MODE_JS;
-    };
-
-const memoryGbToBytes = typeof runtimeSettingsModule.memoryGbToBytes === "function"
-  ? runtimeSettingsModule.memoryGbToBytes
-  : function memoryGbToBytesFallback(gbValue) {
-      return Math.floor(sanitizeMemoryGb(gbValue) * 1024 * 1024 * 1024);
-    };
-
-const getI18nApi = typeof runtimeSettingsModule.getI18nApi === "function"
-  ? runtimeSettingsModule.getI18nApi
-  : function getI18nApiFallback() {
-      return typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
-    };
-
-const applyLanguagePreference = typeof runtimeSettingsModule.applyLanguagePreference === "function"
-  ? runtimeSettingsModule.applyLanguagePreference
-  : function applyLanguagePreferenceFallback(language) {
-      const i18n = getI18nApi();
-      if (!i18n || typeof i18n.setLanguage !== "function") return;
-      i18n.setLanguage(language || "en");
-    };
-
-const getAvailableLanguages = typeof runtimeSettingsModule.getAvailableLanguages === "function"
-  ? runtimeSettingsModule.getAvailableLanguages
-  : function getAvailableLanguagesFallback() {
-      const i18n = getI18nApi();
-      if (!i18n || typeof i18n.getLanguages !== "function") return ["en"];
-      const languages = i18n.getLanguages();
-      return languages.length ? languages : ["en"];
-    };
+const { createStore: runtimeCreateStore } = runtimeCoreStoreModule;
+const {
+  MIN_MEMORY_GB,
+  MAX_MEMORY_GB,
+  DEFAULT_MEMORY_GB,
+  DEFAULT_MAX_BACKSTEPS,
+  MIN_MAX_BACKSTEPS,
+  MAX_MAX_BACKSTEPS,
+  BACKEND_MODE_JS,
+  BACKEND_MODE_HYBRID,
+  DEFAULT_BACKEND_MODE,
+  sanitizeMemoryGb,
+  sanitizeMaxBacksteps,
+  sanitizeBackendMode,
+  memoryGbToBytes,
+  getI18nApi,
+  applyLanguagePreference,
+  getAvailableLanguages
+} = runtimeSettingsModule;
 
 applyLanguagePreference(preferences.language || "en");
 
@@ -149,6 +105,11 @@ const refs = renderLayout(document.querySelector("#app"));
 const windowManager = createWindowManager(refs);
 const transientDialogSystems = new Set();
 let transientDialogCounter = 0;
+const createModernHelpSystem = (typeof window !== "undefined" ? window : globalThis).createMarsJavaStyleHelpSystem;
+
+if (typeof createModernHelpSystem !== "function") {
+  throw new Error("[mars-web] Help system module was not loaded before app runtime.");
+}
 
 function createTransientDialogSystem(windowOptions = {}) {
   transientDialogCounter += 1;
@@ -494,41 +455,10 @@ function normalizeExtensionAliasList(values, fallback) {
   ));
 }
 
-function classifyWorkspaceFileFallback(fileName = "") {
-  const extension = getPathExtension(fileName);
-  const cSourceSet = new Set(C_SOURCE_FILE_EXTENSIONS);
-  const cHeaderSet = new Set(C_HEADER_FILE_EXTENSIONS);
-  const asmSourceSet = new Set(ASM_SOURCE_FILE_EXTENSIONS);
-  const textSet = new Set(OPENABLE_TEXT_FILE_EXTENSIONS);
-  const isCSource = cSourceSet.has(extension);
-  const isCHeader = cHeaderSet.has(extension);
-  const isCFamily = isCSource || isCHeader;
-  const isAssemblySource = asmSourceSet.has(extension);
-  const isOpenableText = textSet.has(extension);
-  return {
-    extension,
-    family: isAssemblySource ? "asm" : (isCFamily ? "c" : (isOpenableText ? "text" : "unknown")),
-    isCSource,
-    isCHeader,
-    isCFamily,
-    isAssemblySource,
-    isOpenableText,
-    isSupportedProjectFile: isAssemblySource || isCFamily || isOpenableText
-  };
-}
-
-const classifyWorkspaceFile = typeof fileKindsModule.classifyFileName === "function"
-  ? (fileName = "") => fileKindsModule.classifyFileName(fileName)
-  : classifyWorkspaceFileFallback;
-const isCSourceFile = typeof fileKindsModule.isCSourceFile === "function"
-  ? (fileName = "") => fileKindsModule.isCSourceFile(fileName)
-  : (fileName = "") => classifyWorkspaceFileFallback(fileName).isCSource;
-const isCFamilyFile = typeof fileKindsModule.isCFamilyFile === "function"
-  ? (fileName = "") => fileKindsModule.isCFamilyFile(fileName)
-  : (fileName = "") => classifyWorkspaceFileFallback(fileName).isCFamily;
-const isAssemblySourceFile = typeof fileKindsModule.isAssemblySourceFile === "function"
-  ? (fileName = "") => fileKindsModule.isAssemblySourceFile(fileName)
-  : (fileName = "") => classifyWorkspaceFileFallback(fileName).isAssemblySource;
+const classifyWorkspaceFile = (fileName = "") => fileKindsModule.classifyFileName(fileName);
+const isCSourceFile = (fileName = "") => fileKindsModule.isCSourceFile(fileName);
+const isCFamilyFile = (fileName = "") => fileKindsModule.isCFamilyFile(fileName);
+const isAssemblySourceFile = (fileName = "") => fileKindsModule.isAssemblySourceFile(fileName);
 
 function getPathExtension(pathValue) {
   const normalized = String(pathValue || "").trim().toLowerCase();
@@ -1080,7 +1010,7 @@ const postRunSystemLine = (template, variables = {}, options = {}) => {
   const prefix = messagesPane.runEndsWithNewline?.() === false ? "\n" : "";
   messagesPane.postRun(`${prefix}${translateText(template, variables)}\n`, { translate: false, ...options });
 };
-const helpSystem = createHelpSystem(refs, messagesPane, windowManager);
+const helpSystem = createModernHelpSystem(refs, messagesPane, windowManager);
 const engine = createMarsEngine({ settings: runtimeSettings, memoryMap: initialMemoryMap });
 let activeMemoryConfigId = memoryPresets[initialMemorySelection.id] ? initialMemorySelection.id : "Default";
 const executePane = createExecutePane(refs, engine);
@@ -1130,10 +1060,7 @@ const RUN_LOOP_UI_SYNC_INTERVAL_MS_FAST = 33;
 const RUN_LOOP_MACHINE_CAPTURE_INTERVAL_MS = 220;
 const RUN_LOOP_MACHINE_FULL_CAPTURE_INTERVAL_MS = 2200;
 const RUN_LOOP_TOOL_SYNC_INTERVAL_MS_NO_INTERACTION = 120;
-const MINI_C_SOURCE_EXTENSION_PATTERN = new RegExp(`(${C_SOURCE_FILE_EXTENSIONS.map((extension) => extension.replace(".", "\\.")).join("|")})$`, "i");
-const MINI_C_DEFAULT_TEMPLATE = (typeof miniCCompilerModule.defaultTemplate === "string" && miniCCompilerModule.defaultTemplate.trim())
-  ? miniCCompilerModule.defaultTemplate
-  : DEFAULT_PROJECT_C_TEMPLATE;
+const MINI_C_DEFAULT_TEMPLATE = miniCCompilerModule.defaultTemplate;
 const MINI_C_BITMAP_DEFAULT_BASE = 0x10010000;
 const MINI_C_NATIVE_LIB_BITMAP_RECT = [
   "void bitmap_set_base_address(int baseAddress) {",
@@ -7481,10 +7408,7 @@ function formatRuntimeAddress(address, addressHex, displayAddressesHex) {
 }
 
 function isMiniCSourceFile(fileName = "") {
-  if (typeof miniCCompilerModule.isSourceFile === "function") {
-    return miniCCompilerModule.isSourceFile(fileName);
-  }
-  return isCSourceFile(fileName) || MINI_C_SOURCE_EXTENSION_PATTERN.test(String(fileName || "").trim());
+  return miniCCompilerModule.isSourceFile(fileName);
 }
 
 function getActiveFileActionState() {
@@ -7536,12 +7460,7 @@ function buildLastSuccessfulAssemblyContext() {
 }
 
 function deriveMiniCGeneratedAsmName(fileName = "untitled.c") {
-  if (typeof miniCCompilerModule.deriveGeneratedAsmName === "function") {
-    return String(miniCCompilerModule.deriveGeneratedAsmName(fileName) || "program.generated.s");
-  }
-  const baseName = String(fileName || "untitled.c").trim().replace(/\\/g, "/").split("/").pop() || "untitled.c";
-  const stem = baseName.replace(/\.[^.]+$/g, "");
-  return `${stem || "program"}.generated.s`;
+  return String(miniCCompilerModule.deriveGeneratedAsmName(fileName) || "program.generated.s");
 }
 
 function normalizeMiniCIncludePath(pathValue = "") {
@@ -7904,36 +7823,6 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences) {
   const subset = normalizeMiniCSubsetPreferenceToken(compilerPreferences?.miniCSubset || "C1-NATIVE");
   const emitComments = compilerPreferences?.miniCEmitScaffoldingComments !== false;
   const generatedAsmName = deriveMiniCGeneratedAsmName(sourceName);
-  const compiler = (typeof miniCCompilerModule.compile === "function") ? miniCCompilerModule : null;
-  if (!compiler) {
-    const asmLines = [];
-    if (emitComments) {
-      asmLines.push("# mini-c fallback scaffold output");
-      asmLines.push(`# source: ${sourceName}`);
-      asmLines.push(`# target abi: ${targetAbi}`);
-      asmLines.push(`# subset: ${subset}`);
-      asmLines.push("# warning: mini-c compiler module unavailable.");
-      asmLines.push("");
-    }
-    asmLines.push(".text");
-    asmLines.push(".globl main");
-    asmLines.push("main:");
-    asmLines.push("  li $v0, 10");
-    asmLines.push("  syscall");
-    asmLines.push("");
-    const fallbackWarning = "Mini-C compiler module unavailable. Generated fallback scaffold output.";
-    return {
-      ok: true,
-      sourceName,
-      generatedAsmName,
-      targetAbi,
-      subset,
-      asm: asmLines.join("\n"),
-      log: `[mini-c] ${fallbackWarning}\n`,
-      warnings: [fallbackWarning],
-      errors: []
-    };
-  }
 
   let compileResult = null;
   try {
@@ -7941,7 +7830,7 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences) {
     const includeSourceMap = collectMiniCIncludeSourceMap();
     const includeResolver = createMiniCIncludeResolver(sourceName, includeSourceMap);
     const useLibrarySources = buildMiniCUseLibrarySources(includeSourceMap, subset);
-    compileResult = compiler.compile(source, {
+    compileResult = miniCCompilerModule.compile(source, {
       sourceName,
       subset,
       targetAbi,
@@ -9156,7 +9045,7 @@ const commands = {
   helpBugs() { helpSystem.open("bugs", "main"); },
   helpAcknowledgements() { helpSystem.open("ack", "main"); },
   helpSong() { helpSystem.open("song", "main"); },
-  helpMipsPdf() { helpSystem.openDocument("mipsref.pdf", "MIPS Reference PDF"); },
+  helpMipsPdf() { helpSystem.openDocument("./help/mipsref.pdf", "MIPS Reference PDF"); },
   helpAbout() { helpSystem.openAbout(); }
 };
 

@@ -322,24 +322,10 @@ function storageHexToBytes(text) {
 }
 
 const coreStoreModule = (typeof window !== "undefined" ? window.WebMarsModules : globalThis.WebMarsModules)?.coreStore;
-const createStore = typeof coreStoreModule?.createStore === "function"
-  ? coreStoreModule.createStore
-  : function createStoreFallback(initialState) {
-      let state = { ...initialState };
-      const listeners = new Set();
-
-      return {
-        getState: () => state,
-        setState: (patch) => {
-          state = { ...state, ...patch };
-          listeners.forEach((listener) => listener(state));
-        },
-        subscribe: (listener) => {
-          listeners.add(listener);
-          return () => listeners.delete(listener);
-        }
-      };
-    };
+if (!coreStoreModule || typeof coreStoreModule.createStore !== "function") {
+  throw new Error("[mars-web] coreStore module was not loaded before core runtime.");
+}
+const { createStore } = coreStoreModule;
 
 const USER_REGISTER_NAMES = [
   "$zero", "$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3",

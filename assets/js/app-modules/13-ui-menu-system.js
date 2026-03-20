@@ -129,6 +129,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
       })),
       Help: [
         { label: "Help", command: "helpHub", shortcut: "F1" },
+        { label: "MIPS Reference PDF", command: "helpMipsPdf" },
         "-",
         { label: "About ...", command: "helpAbout" }
       ]

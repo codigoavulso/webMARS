@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>webMARS â€“ Technical Changelog</title>
+  <title>webMARS - Technical Changelog</title>
   <style>
     body {
       margin: 0;
@@ -90,34 +90,34 @@
   </style>
 </head>
 <body>
-  <h1>webMARS Â· changelog</h1>
+  <h1>webMARS - changelog</h1>
   <p class="subtitle">https://github.com/codigoavulso/webMARS/</p>
  
-  <!-- __WEBMARS_APP_VERSION__ (2026) -->
+  <!-- __WEBMARS_APP_VERSION__ (2026-03-20) -->
   <section class="release">
-    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-19</span></div>
+    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-20</span></div>
     <div class="release-body">
-      <h3>Cloud Backend and Authentication</h3>
+      <h3>Runtime and Startup Hardening</h3>
       <ul>
-        <li>Added configurable cloud backend selection, with automatic routing to local backend during development and <code>backmars.nfiles.top/api</code> in production when no custom server is configured.</li>
-        <li>Integrated cloud login, register and user creation flows into the UI, with production-ready backend support and clearer operational feedback.</li>
-        <li>Decoupled authentication from project synchronization so login/register complete immediately while cloud sync continues in background.</li>
-        <li>Improved login/register dialogs with in-window status updates, elapsed-time reporting, safer cancel behavior, and explicit cloud activity messages in <code>Mars Messages</code>.</li>
+        <li>The startup loader now waits for the real <code>webmars:tools-ready</code> state instead of disappearing after manifest load or timeout-based partial boot.</li>
+        <li>Tool bootstrap now falls back to a complete embedded manifest, avoiding the previous collapse to a single available tool when <code>tools.json</code> could not be loaded.</li>
+        <li>Browser-storage metadata now preserves full timestamp precision; <code>updatedAt</code> values are no longer truncated through 32-bit coercion.</li>
+        <li>Runtime/bootstrap dependencies were tightened so unreachable inline fallbacks no longer shadow the active code path.</li>
       </ul>
 
-      <h3>Project and Editor Workflow Improvements</h3>
+      <h3>Help System and Embedded Documents</h3>
       <ul>
-        <li>The main authoring flow was consolidated around <code>Project</code>, <code>Editor</code>, and <code>Execute</code>, while preserving C0/Assembly command availability by active file type.</li>
-        <li>The project tree gained improved expand/collapse defaults, read-only opening rules for <code>libs/</code> and external project files, multi-selection, metadata/status display, and sync state indicators.</li>
-        <li>Editor tabs now preserve read-only session restore correctly and support a context menu with <code>Close</code>, <code>Save</code>, and <code>Save and Close</code>.</li>
-        <li>Save operations were simplified to <code>Save Active File</code> and <code>Save Project</code>, storing in browser state and synchronizing to cloud where applicable.</li>
+        <li>The MIPS reference PDF is now wired back into the Help menu and opens through the embedded document viewer instead of a broken external path.</li>
+        <li>Local serving of PDF assets now uses <code>application/pdf</code> plus inline disposition, allowing in-UI viewing instead of forced download flows.</li>
+        <li>External links, <code>mailto:</code> targets, and explicit new-tab links inside Help/About content now open externally instead of being forced into a blank iframe.</li>
+        <li>The document viewer keeps the requested document title instead of overwriting it with a generic label.</li>
       </ul>
 
-      <h3>Storage, Mini-C and UI Refinement</h3>
+      <h3>Codebase Cleanup</h3>
       <ul>
-        <li>User browser storage quota was raised to <code>1 MB</code>, moved to central configuration, and is now enforced consistently.</li>
-        <li>The Mini-C output flow was refined with optional output window suppression, direct ASM opening, and automatic close behavior after opening generated ASM.</li>
-        <li>Cloud/server settings, translations, and dialog behavior were expanded to support the new deployment model and production backend flow.</li>
+        <li>Removed the old ES-module frontend entrypoints under <code>assets/js/app.js</code>, <code>core/</code>, <code>ui/</code>, <code>config/</code>, and <code>state/</code> that were no longer part of the live bootstrap.</li>
+        <li>Removed the obsolete Help bridge layer and connected the active runtime directly to the modern help system.</li>
+        <li>Pruned dead Mini-C, file-kind, store, and settings fallbacks that could no longer be reached in the ordered bundle bootstrap.</li>
       </ul>
     </div>
   </section>
@@ -468,7 +468,7 @@
   </section>
 
   <p class="footnote">
-    âš™ï¸ NÃ©lson Ferreira - nels.ferreira@sapo.pt
+    Nelson Ferreira - nels.ferreira@sapo.pt
   </p>
 <script src="../../assets/js/app-version.js"></script>
 </body>

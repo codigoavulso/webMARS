@@ -27,6 +27,7 @@ $mimeTypes = @{
   ".svg"  = "image/svg+xml"
   ".txt"  = "text/plain; charset=utf-8"
   ".md"   = "text/plain; charset=utf-8"
+  ".pdf"  = "application/pdf"
 }
 
 function Get-ContentType([string]$path) {
@@ -69,9 +70,13 @@ try {
       continue
     }
 
+    $ext = [System.IO.Path]::GetExtension($fullPath).ToLowerInvariant()
     $bytes = [System.IO.File]::ReadAllBytes($fullPath)
     $response.StatusCode = 200
     $response.ContentType = Get-ContentType $fullPath
+    if ($ext -eq ".pdf") {
+      $response.AddHeader("Content-Disposition", "inline")
+    }
     $response.ContentLength64 = $bytes.Length
     $response.OutputStream.Write($bytes, 0, $bytes.Length)
     $response.Close()
