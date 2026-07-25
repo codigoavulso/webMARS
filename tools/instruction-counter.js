@@ -98,7 +98,15 @@
       let rCount = 0;
       let iCount = 0;
       let jCount = 0;
-      let lastSnapshot = null;
+      const history = ctx.createToolDeltaHistory({
+        applyInverse(delta) {
+          total = delta.total | 0;
+          rCount = delta.rCount | 0;
+          iCount = delta.iCount | 0;
+          jCount = delta.jCount | 0;
+          render();
+        }
+      });
 
       function render() {
         fields.total.value = String(total);
@@ -121,6 +129,7 @@
       }
 
       function resetCounters() {
+        history.clear(Number(ctx.engine?.steps) | 0);
         total = 0;
         rCount = 0;
         iCount = 0;
@@ -128,11 +137,9 @@
         render();
       }
 
-      function processStep(previousSnapshot, shouldRender = true) {
-        const row = (previousSnapshot?.textRows || []).find((entry) => entry.isCurrent);
-        if (!row) return;
-
-        const tokens = parseTokens(row.basic || row.source);
+      function processInstruction(statement, step, shouldRender = true) {
+        history.record(step, { total, rCount, iCount, jCount });
+        const tokens = parseTokens(statement);
         const opcode = tokens[0] || "";
         const category = classify(opcode);
 
@@ -153,14 +160,26 @@
       resetCounters();
 
       return {
+        isConnected: () => connected,
         open: shell.open,
         close: shell.close,
-        onSnapshot(snapshot, delivery = {}) {
-          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
-          lastSnapshot = snapshot;
-          if (!connected || !snapshot || !previous) return;
-          if ((snapshot.steps | 0) <= (previous.steps | 0)) return;
-          processStep(previous, delivery.isLast !== false);
+        onRuntimeEvent(event) {
+          if (!connected || !event) return;
+          if (event.type === "backstep") {
+            history.rewind(event.stepAfter | 0);
+            return;
+          }
+          if (event.type !== "instruction") return;
+          processInstruction(event.executedInstruction, event.stepAfter | 0, false);
+          history.pruneBefore(event.historyStartStep | 0);
+        },
+        onRuntimeBatchEnd() {
+          if (connected) render();
+        },
+        onBackstep(event) {
+          if (!connected || !event) return;
+          history.rewind(event.stepAfter | 0);
+          render();
         }
       };
     }

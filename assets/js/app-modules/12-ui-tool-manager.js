@@ -23,6 +23,175 @@ function deliverToolSnapshotBatch(instances, snapshots, onError = () => {}) {
   });
 }
 
+function deliverToolRuntimeEventBatch(instances, events, onError = () => {}) {
+  const queue = Array.isArray(events) ? events.filter(Boolean) : (events ? [events] : []);
+  if (!queue.length || !(instances instanceof Map) || instances.size === 0) return;
+
+  instances.forEach((tool, toolId) => {
+    if (!tool || tool.runtimeEventConsumer !== true) return;
+    try {
+      if (typeof tool.onRuntimeEventBatch === "function") {
+        tool.onRuntimeEventBatch(queue);
+      } else if (typeof tool.onRuntimeEvent === "function") {
+        queue.forEach((event, eventIndex) => {
+          tool.onRuntimeEvent(event, {
+            batched: queue.length > 1,
+            batchSize: queue.length,
+            batchIndex: eventIndex,
+            isLast: eventIndex === queue.length - 1
+          });
+        });
+      }
+      if (typeof tool.onRuntimeBatchEnd === "function") {
+        tool.onRuntimeBatchEnd({
+          batchSize: queue.length,
+          firstEvent: queue[0],
+          lastEvent: queue[queue.length - 1]
+        });
+      }
+    } catch (error) {
+      try {
+        onError(toolId, error);
+      } catch {
+        // Error reporting must never interrupt delivery to the remaining tools.
+      }
+    }
+  });
+}
+
+function createToolDeltaHistory(options = {}) {
+  const applyInverse = typeof options.applyInverse === "function" ? options.applyInverse : () => {};
+  let entries = new Map();
+  let orderedSteps = [];
+  let orderedHead = 0;
+  let currentStep = Number.isFinite(options.initialStep) ? (options.initialStep | 0) : 0;
+
+  function normalizeStep(step) {
+    return Math.max(0, Number(step) | 0);
+  }
+
+  function compactOrder() {
+    if (orderedHead === 0) return;
+    if (orderedHead >= orderedSteps.length) {
+      orderedSteps = [];
+      orderedHead = 0;
+      return;
+    }
+    if (orderedHead >= 4096 && orderedHead * 2 >= orderedSteps.length) {
+      orderedSteps = orderedSteps.slice(orderedHead);
+      orderedHead = 0;
+    }
+  }
+
+  function appendOrderedStep(step) {
+    if (entries.has(step)) return;
+    const last = orderedSteps.length > orderedHead ? orderedSteps[orderedSteps.length - 1] : null;
+    if (last == null || step > last) {
+      orderedSteps.push(step);
+      return;
+    }
+    let insertAt = orderedSteps.length;
+    while (insertAt > orderedHead && orderedSteps[insertAt - 1] > step) insertAt -= 1;
+    orderedSteps.splice(insertAt, 0, step);
+  }
+
+  function pruneFuture(step) {
+    const target = normalizeStep(step);
+    while (orderedSteps.length > orderedHead) {
+      const historyStep = orderedSteps[orderedSteps.length - 1] | 0;
+      if (historyStep <= target) break;
+      orderedSteps.pop();
+      entries.delete(historyStep);
+    }
+    compactOrder();
+    currentStep = Math.min(currentStep, target);
+  }
+
+  function pruneBefore(step) {
+    const oldestStep = normalizeStep(step);
+    while (orderedHead < orderedSteps.length) {
+      const historyStep = orderedSteps[orderedHead] | 0;
+      if (historyStep > oldestStep) break;
+      entries.delete(historyStep);
+      orderedHead += 1;
+    }
+    compactOrder();
+  }
+
+  function ensure(step, createDelta = () => ({})) {
+    const target = normalizeStep(step);
+    if (target < currentStep) pruneFuture(target);
+    if (!entries.has(target)) {
+      const delta = createDelta();
+      if (delta != null) {
+        appendOrderedStep(target);
+        entries.set(target, delta);
+      }
+    }
+    currentStep = Math.max(currentStep, target);
+    return entries.get(target) ?? null;
+  }
+
+  function record(step, delta) {
+    if (delta == null) {
+      currentStep = Math.max(currentStep, normalizeStep(step));
+      return null;
+    }
+    const target = normalizeStep(step);
+    if (target < currentStep) pruneFuture(target);
+    appendOrderedStep(target);
+    entries.set(target, delta);
+    currentStep = Math.max(currentStep, target);
+    return delta;
+  }
+
+  function rewind(step) {
+    const target = normalizeStep(step);
+    let applied = 0;
+    while (orderedSteps.length > orderedHead) {
+      const historyStep = orderedSteps[orderedSteps.length - 1] | 0;
+      if (historyStep <= target) break;
+      orderedSteps.pop();
+      const delta = entries.get(historyStep);
+      if (historyStep <= currentStep && delta != null) {
+        applyInverse(delta, historyStep, target);
+        applied += 1;
+      }
+      entries.delete(historyStep);
+    }
+    compactOrder();
+    currentStep = target;
+    return applied;
+  }
+
+  function sync(snapshot) {
+    const step = normalizeStep(snapshot?.steps);
+    const explicitStart = Number(snapshot?.backstepHistoryStartStep);
+    const derivedStart = Math.max(0, step - Math.max(0, Number(snapshot?.backstepDepth) | 0));
+    pruneBefore(Number.isFinite(explicitStart) ? explicitStart : derivedStart);
+    if (step < currentStep) rewind(step);
+    else currentStep = step;
+    return currentStep;
+  }
+
+  return {
+    clear(step = 0) {
+      entries = new Map();
+      orderedSteps = [];
+      orderedHead = 0;
+      currentStep = normalizeStep(step);
+    },
+    ensure,
+    record,
+    rewind,
+    sync,
+    pruneFuture,
+    pruneBefore,
+    getCurrentStep: () => currentStep,
+    getEntryCount: () => entries.size
+  };
+}
+
 function createToolManager(engine, messagesPane, windowManager, desktop) {
   function dispatchToolLoaderEvent(name, detail) {
     try {
@@ -195,7 +364,8 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
     return {
       open: shell.open,
       close: shell.close,
-      onSnapshot() {}
+      onSnapshot() {},
+      isConnected: () => false
     };
   }
 
@@ -337,6 +507,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
           defaultMemoryMap: DEFAULT_MEMORY_MAP,
           createToolWindowShell,
           createPlaceholderTool,
+          createToolDeltaHistory,
           nextPlacement
         });
 
@@ -350,6 +521,17 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
             open: instance.open,
             close: typeof instance.close === "function" ? instance.close : () => {},
             onSnapshot: typeof instance.onSnapshot === "function" ? instance.onSnapshot : () => {},
+            snapshotConsumer: typeof instance.onSnapshot === "function",
+            onRuntimeEvent: typeof instance.onRuntimeEvent === "function" ? instance.onRuntimeEvent : () => {},
+            onRuntimeEventBatch: typeof instance.onRuntimeEventBatch === "function" ? instance.onRuntimeEventBatch : null,
+            onRuntimeBatchEnd: typeof instance.onRuntimeBatchEnd === "function" ? instance.onRuntimeBatchEnd : null,
+            onBackstep: typeof instance.onBackstep === "function" ? instance.onBackstep : null,
+            runtimeEventConsumer: typeof instance.onRuntimeEvent === "function"
+              || typeof instance.onRuntimeEventBatch === "function",
+            isRuntimeActive: typeof instance.isConnected === "function"
+              ? () => instance.isConnected() === true
+                && windowRoot?.classList?.contains("window-hidden") !== true
+              : () => windowRoot?.classList?.contains("window-hidden") !== true,
             windowRoot
           };
         }
@@ -393,6 +575,24 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
     deliverToolSnapshotBatch(targetInstances, snapshots, reportSnapshotFailure);
   }
 
+  function activeInstances(consumerKind = "any") {
+    const active = new Map();
+    instances.forEach((tool, toolId) => {
+      if (!tool) return;
+      let enabled = true;
+      try {
+        enabled = typeof tool.isRuntimeActive === "function" ? tool.isRuntimeActive() === true : true;
+      } catch {
+        enabled = false;
+      }
+      if (!enabled) return;
+      if (consumerKind === "event" && tool.runtimeEventConsumer !== true) return;
+      if (consumerKind === "snapshot" && (tool.snapshotConsumer !== true || tool.runtimeEventConsumer === true)) return;
+      active.set(toolId, tool);
+    });
+    return active;
+  }
+
   function captureSeedSnapshot() {
     if (!engine || typeof engine.getSnapshot !== "function") return latestSnapshot;
     try {
@@ -427,19 +627,35 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
         tool.open();
       });
     },
-    onSnapshot(snapshot) {
+    onSnapshot(snapshot, options = {}) {
       if (!snapshot) return;
       latestSnapshot = snapshot;
-      deliverSnapshots([snapshot]);
+      deliverSnapshots(
+        [snapshot],
+        options.snapshotOnly === true ? activeInstances("snapshot") : activeInstances("any")
+      );
     },
-    onSnapshotBatch(snapshots) {
-      const queue = Array.isArray(snapshots) ? snapshots.filter(Boolean) : [];
+    onRuntimeEventBatch(events) {
+      const queue = Array.isArray(events) ? events.filter(Boolean) : [];
       if (!queue.length) return;
-      latestSnapshot = queue[queue.length - 1];
-      deliverSnapshots(queue);
+      deliverToolRuntimeEventBatch(activeInstances("event"), queue, reportSnapshotFailure);
+    },
+    hasRuntimeEventConsumers() {
+      return activeInstances("event").size > 0;
     },
     hasSnapshotConsumers() {
-      return instances.size > 0;
+      return activeInstances("any").size > 0;
+    },
+    onBackstep(event) {
+      if (!event) return;
+      activeInstances("any").forEach((tool, toolId) => {
+        if (typeof tool.onBackstep !== "function") return;
+        try {
+          tool.onBackstep(event);
+        } catch (error) {
+          reportSnapshotFailure(toolId, error);
+        }
+      });
     },
     closeAll() {
       instances.forEach((tool) => {

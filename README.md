@@ -1,4 +1,4 @@
-# webMARS v0.4.7
+# webMARS v0.4.8
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,16 +22,14 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.4.7
+## Highlights in v0.4.8
 
-- Standardized execution on a single JavaScript engine and removed the experimental WASM/hybrid runtime.
-- Added local Compile, Assemble and Run benchmarks with estimated JavaScript utilization and execution throughput.
-- Corrected COP1 doubleword ordering and rounding, delayed-branch links and exceptions, LL/SC reservations, strict memory access and atomic stores.
-- Made breakpoints resumable, aligned direct-engine and browser execution behavior, and made Stop terminate pending execution and Sleep.
-- Expanded runtime snapshots to preserve breakpoints, random streams, virtual files and cursors, stdin, arguments and image handles.
-- Restored reproducible install, serve, build, test and validation commands with broad regression coverage.
-- Expanded and validated the multilingual C/Assembly examples, including C1-NATIVE and multi-file projects.
-- Rebuilt the in-app documentation in English, Spanish and Portuguese to match the current runtime, compiler, tools, storage and privacy behavior.
+- Replaced full per-instruction backstep snapshots with bounded inverse deltas, sharply reducing memory use in long-running programs.
+- Separated synchronous MMIO devices, compact runtime-event batches and periodic tool snapshots for correct causality and faster execution.
+- Corrected Keyboard/Display and TTY input/output behavior, tool batch rendering, backstep parity and hidden-tool overhead.
+- Fixed Mini-C bitmap framebuffer collisions and synchronized Bitmap Display rendering with live runtime memory.
+- Added broader runtime, tool, example and browser regression coverage.
+- Made the local benchmark strip optional through Interface Preferences and hidden by default.
 
 ## Main Capabilities
 
@@ -134,6 +132,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.4.8`: delta-based backsteps, synchronous MMIO devices, faster tool delivery, corrected C bitmaps, expanded regression coverage, and optional Bench UI
 - `v0.4.7`: JavaScript runtime consolidation, benchmarks, execution correctness, stronger snapshots, expanded examples, complete multilingual help, and release validation
 - `v0.4.6`: startup hardening, help/PDF fixes, browser-storage timestamp fix, runtime cleanup, dead-code removal, legacy script/result purge
 - `v0.4.5`: cloud backend/login productionization + project/editor workflow improvements + storage/sync refinement

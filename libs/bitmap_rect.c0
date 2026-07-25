@@ -1,4 +1,4 @@
-int _bitmap_base_address = 268500992;
+int _bitmap_base_address = 268566528;
 
 void bitmap_set_base_address(int baseAddress) {
   if (baseAddress == 0) {

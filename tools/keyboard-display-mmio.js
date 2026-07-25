@@ -84,12 +84,6 @@
     document.head.appendChild(style);
   }
 
-  const MEMORY_OPS = new Set([
-    "lb", "lbu", "lh", "lhu", "lw", "lwl", "lwr", "sb", "sh", "sw", "swl", "swr", "ll", "sc",
-    "lwc1", "swc1", "ldc1", "sdc1"
-  ]);
-  const WRITE_OPS = new Set(["sb", "sh", "sw", "swl", "swr", "sc", "swc1", "sdc1"]);
-
   function formatFallback(message, variables = {}) {
     return String(message ?? "").replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => (
       Object.prototype.hasOwnProperty.call(variables, key) ? String(variables[key]) : match
@@ -111,77 +105,6 @@
 
   function toHex32(value) {
     return `0x${(value >>> 0).toString(16).padStart(8, "0")}`;
-  }
-
-  function parseTokens(statement) {
-    if (!statement) return [];
-    const cleaned = String(statement).split("#")[0].trim();
-    if (!cleaned) return [];
-    return cleaned.split(/[\s,]+/).filter(Boolean);
-  }
-
-  function parseImmediate(token) {
-    if (typeof token !== "string") return null;
-    const text = token.trim();
-    if (!text) return 0;
-    if (/^[+-]?\d+$/.test(text)) return Number.parseInt(text, 10) | 0;
-    if (/^[+-]?0x[0-9a-f]+$/i.test(text)) return Number.parseInt(text, 16) | 0;
-    return null;
-  }
-
-  function buildRegisterMap(snapshot) {
-    const map = new Map();
-    (snapshot?.registers || []).forEach((reg) => {
-      const value = reg.value | 0;
-      const name = String(reg.name || "").toLowerCase();
-      map.set(name, value);
-      if (name.startsWith("$")) map.set(name.slice(1), value);
-      map.set(String(reg.index), value);
-      map.set(`$${reg.index}`, value);
-    });
-    return map;
-  }
-
-  function buildLabelMap(snapshot) {
-    const map = new Map();
-    (snapshot?.labels || []).forEach((label) => map.set(String(label.label || "").toLowerCase(), label.address >>> 0));
-    return map;
-  }
-
-  function resolveMemoryAddress(memArg, registers, labels, rowAddress) {
-    const token = String(memArg || "").trim();
-    const match = token.match(/^(.+?)\(([^)]+)\)$/);
-    if (match) {
-      const offsetRaw = match[1].trim();
-      const baseRaw = match[2].trim().toLowerCase();
-      const offset = parseImmediate(offsetRaw);
-      const offsetValue = Number.isFinite(offset) ? offset : (labels.get(offsetRaw.toLowerCase()) ?? 0);
-      const baseValue = registers.get(baseRaw) ?? registers.get(baseRaw.replace(/^\$/, "")) ?? 0;
-      return (((baseValue | 0) + (offsetValue | 0)) >>> 0);
-    }
-
-    const labelAddress = labels.get(token.toLowerCase());
-    if (Number.isFinite(labelAddress)) return labelAddress >>> 0;
-
-    const immediate = parseImmediate(token);
-    if (Number.isFinite(immediate)) {
-      if (Math.abs(immediate) < 0x10000) return (((rowAddress + 4) | 0) + ((immediate | 0) << 2)) >>> 0;
-      return immediate >>> 0;
-    }
-
-    return null;
-  }
-
-  function resolveSourceValue(opcode, sourceToken, registers, snapshot) {
-    const token = String(sourceToken || "").trim().toLowerCase();
-    const regValue = registers.get(token) ?? registers.get(token.replace(/^\$/, "")) ?? 0;
-    if (opcode === "sb") return regValue & 0xff;
-    if (opcode === "sh") return regValue & 0xffff;
-    if (opcode === "swc1") {
-      const idx = Number.parseInt(token.replace(/^\$f/, ""), 10);
-      if (Number.isFinite(idx) && Array.isArray(snapshot?.cop1)) return snapshot.cop1[idx] | 0;
-    }
-    return regValue | 0;
   }
 
   host.register({
@@ -270,9 +193,62 @@
       let instructionCount = 0;
       let delayLimit = 0;
       let pendingWord = 0;
-      let stepHistory = new Map();
       let splitRatio = 0.58;
       let splitDrag = null;
+      let activeDisplayDelta = null;
+      let detachMemoryObserver = () => {};
+      let detachInstructionObserver = () => {};
+      let suppressDeviceObservers = false;
+      const history = ctx.createToolDeltaHistory({
+        applyInverse(delta) {
+          if (!delta) return;
+          randomAccessMode = delta.randomAccessMode === true;
+          columns = Math.max(1, Number(delta.columns) || columns || 1);
+          rows = Math.max(1, Number(delta.rows) || rows || 1);
+          cursorX = Math.max(0, Math.min(columns - 1, Number(delta.cursorX) || 0));
+          cursorY = Math.max(0, Math.min(rows - 1, Number(delta.cursorY) || 0));
+          keyQueue = Array.isArray(delta.keyQueue) ? delta.keyQueue.map((value) => value & 0xff) : [];
+          countingInstructions = delta.countingInstructions === true;
+          instructionCount = Number(delta.instructionCount) || 0;
+          delayLimit = Number(delta.delayLimit) || 0;
+          pendingWord = Number(delta.pendingWord) || 0;
+          if (delta.mmio) {
+            const { RECEIVER_CONTROL, RECEIVER_DATA, TRANSMITTER_CONTROL, TRANSMITTER_DATA } = addresses();
+            suppressDeviceObservers = true;
+            try {
+              writeByteSafe(RECEIVER_CONTROL, delta.mmio.receiverControl);
+              writeByteSafe(RECEIVER_DATA, delta.mmio.receiverData);
+              writeByteSafe(TRANSMITTER_CONTROL, delta.mmio.transmitterControl);
+              writeByteSafe(TRANSMITTER_DATA, delta.mmio.transmitterData);
+            } finally {
+              suppressDeviceObservers = false;
+            }
+          }
+
+          const display = delta.display;
+          if (display?.kind === "full") {
+            terminalBuffer = Array.from({ length: rows }, (_, rowIndex) => {
+              const rowText = String(display.terminalRows?.[rowIndex] || "");
+              return Array.from({ length: columns }, (_, colIndex) => rowText[colIndex] || " ");
+            });
+            displayArea.value = String(display.value || "");
+          } else if (display?.kind === "cell") {
+            if (Array.isArray(terminalBuffer?.[display.y])) {
+              terminalBuffer[display.y][display.x] = String(display.ch || " ");
+              flushBufferToDisplay();
+            }
+          } else if (display?.kind === "append") {
+            displayArea.value = String(displayArea.value || "").slice(0, Math.max(0, display.length | 0));
+          }
+
+          const selectionStart = Math.max(0, Math.min(displayArea.value.length, Number(delta.selectionStart) || 0));
+          const selectionEnd = Math.max(selectionStart, Math.min(displayArea.value.length, Number(delta.selectionEnd) || selectionStart));
+          displayArea.selectionStart = selectionStart;
+          displayArea.selectionEnd = selectionEnd;
+          displayArea.scrollTop = displayArea.scrollHeight;
+          updateTitles();
+        }
+      });
 
       function mmioBase() {
         return (ctx.engine?.memoryMap?.mmioBase ?? ctx.defaultMemoryMap?.mmioBase ?? 0xffff0000) >>> 0;
@@ -377,92 +353,45 @@
         return displayArea.selectionStart ?? displayArea.value.length ?? 0;
       }
 
-      function getSnapshotStep(snapshot = lastSnapshot) {
-        return Number.isFinite(snapshot?.steps) ? (snapshot.steps | 0) : 0;
+      function getSnapshotStep(snapshot = null) {
+        if (snapshot && Number.isFinite(snapshot.steps)) return snapshot.steps | 0;
+        return Number.isFinite(ctx.engine?.steps) ? (ctx.engine.steps | 0) : 0;
       }
 
-      function pruneFutureHistory(step) {
-        for (const historyStep of stepHistory.keys()) {
-          if ((historyStep | 0) > (step | 0)) {
-            stepHistory.delete(historyStep);
-          }
-        }
-      }
-
-      function captureToolState() {
-        return {
+      function ensureHistoryDelta(step) {
+        const { RECEIVER_CONTROL, RECEIVER_DATA, TRANSMITTER_CONTROL, TRANSMITTER_DATA } = addresses();
+        return history.ensure(step, () => ({
           randomAccessMode,
           columns,
           rows,
           cursorX,
           cursorY,
-          displayValue: String(displayArea.value || ""),
           selectionStart: Number(displayArea.selectionStart) || 0,
           selectionEnd: Number(displayArea.selectionEnd) || 0,
-          terminalRows: randomAccessMode
-            ? terminalBuffer.map((row) => row.join(""))
-            : [],
           keyQueue: keyQueue.slice(),
           countingInstructions,
           instructionCount,
           delayLimit,
-          pendingWord
+          pendingWord,
+          mmio: {
+            receiverControl: readByteSafe(RECEIVER_CONTROL),
+            receiverData: readByteSafe(RECEIVER_DATA),
+            transmitterControl: readByteSafe(TRANSMITTER_CONTROL),
+            transmitterData: readByteSafe(TRANSMITTER_DATA)
+          },
+          display: null
+        }));
+      }
+
+      function recordFullDisplayRollback(delta) {
+        if (!delta || delta.display) return;
+        delta.display = {
+          kind: "full",
+          value: String(displayArea.value || ""),
+          terminalRows: Array.isArray(terminalBuffer)
+            ? terminalBuffer.map((row) => row.join(""))
+            : []
         };
-      }
-
-      function restoreToolState(state) {
-        if (!state || typeof state !== "object") return false;
-
-        randomAccessMode = state.randomAccessMode === true;
-        columns = Math.max(1, Number(state.columns) || columns || 1);
-        rows = Math.max(1, Number(state.rows) || rows || 1);
-        cursorX = Math.max(0, Math.min(columns - 1, Number(state.cursorX) || 0));
-        cursorY = Math.max(0, Math.min(rows - 1, Number(state.cursorY) || 0));
-        keyQueue = Array.isArray(state.keyQueue) ? state.keyQueue.map((value) => value & 0xff) : [];
-        countingInstructions = state.countingInstructions === true;
-        instructionCount = Number(state.instructionCount) || 0;
-        delayLimit = Number(state.delayLimit) || 0;
-        pendingWord = Number(state.pendingWord) || 0;
-
-        if (randomAccessMode) {
-          terminalBuffer = Array.from({ length: rows }, (_, rowIndex) => {
-            const rowText = String(state.terminalRows?.[rowIndex] || "");
-            return Array.from({ length: columns }, (_, colIndex) => rowText[colIndex] || " ");
-          });
-        } else {
-          terminalBuffer = [];
-        }
-
-        displayArea.value = String(state.displayValue || "");
-        const selectionStart = Math.max(0, Math.min(displayArea.value.length, Number(state.selectionStart) || 0));
-        const selectionEnd = Math.max(selectionStart, Math.min(displayArea.value.length, Number(state.selectionEnd) || selectionStart));
-        displayArea.selectionStart = selectionStart;
-        displayArea.selectionEnd = selectionEnd;
-        displayArea.scrollTop = displayArea.scrollHeight;
-        updateTitles();
-        return true;
-      }
-
-      function captureHistoryForStep(step) {
-        const normalizedStep = step | 0;
-        pruneFutureHistory(normalizedStep);
-        stepHistory.set(normalizedStep, captureToolState());
-      }
-
-      function restoreHistoryForStep(step) {
-        const normalizedStep = step | 0;
-        if (stepHistory.has(normalizedStep)) {
-          return restoreToolState(stepHistory.get(normalizedStep));
-        }
-
-        let bestStep = null;
-        for (const candidate of stepHistory.keys()) {
-          if ((candidate | 0) <= normalizedStep && (bestStep == null || (candidate | 0) > (bestStep | 0))) {
-            bestStep = candidate | 0;
-          }
-        }
-        if (bestStep == null) return false;
-        return restoreToolState(stepHistory.get(bestStep));
       }
 
       function formatCursorPosition() {
@@ -535,12 +464,14 @@
         const ch = word & 0xff;
 
         if (ch === 12) {
+          recordFullDisplayRollback(activeDisplayDelta);
           initializeDisplay(randomAccessMode);
           return;
         }
 
         if (ch === 7) {
           if (!randomAccessMode) {
+            recordFullDisplayRollback(activeDisplayDelta);
             randomAccessMode = true;
             initializeDisplay(true);
           }
@@ -551,6 +482,12 @@
         }
 
         if (!randomAccessMode) {
+          if (activeDisplayDelta && !activeDisplayDelta.display) {
+            activeDisplayDelta.display = {
+              kind: "append",
+              length: String(displayArea.value || "").length
+            };
+          }
           displayArea.value += String.fromCharCode(ch);
           displayArea.selectionStart = displayArea.value.length;
           displayArea.selectionEnd = displayArea.value.length;
@@ -559,6 +496,14 @@
           return;
         }
 
+        if (activeDisplayDelta && !activeDisplayDelta.display) {
+          activeDisplayDelta.display = {
+            kind: "cell",
+            x: cursorX,
+            y: cursorY,
+            ch: String(terminalBuffer?.[cursorY]?.[cursorX] || " ")
+          };
+        }
         const char = String.fromCharCode(ch);
         terminalBuffer[cursorY][cursorX] = char;
         cursorX += 1;
@@ -615,42 +560,18 @@
 
       function queueKey(value) {
         if (!Number.isFinite(value)) return;
+        ensureHistoryDelta(getSnapshotStep());
         keyQueue.push(value & 0xff);
         feedReceiverFromQueue();
-        captureHistoryForStep(getSnapshotStep());
       }
 
-      function extractMemoryAccess(previousSnapshot) {
-        const row = (previousSnapshot?.textRows || []).find((entry) => entry.isCurrent);
-        if (!row) return null;
-
-        const tokens = parseTokens(row.basic || row.source);
-        if (!tokens.length) return null;
-
-        const opcode = tokens[0].toLowerCase();
-        if (!MEMORY_OPS.has(opcode)) return null;
-        const args = tokens.slice(1);
-        const memArg = args[1] ?? args[0];
-        if (!memArg) return null;
-
-        const registers = buildRegisterMap(previousSnapshot);
-        const labels = buildLabelMap(previousSnapshot);
-        const address = resolveMemoryAddress(memArg, registers, labels, row.address >>> 0);
-        if (!Number.isFinite(address)) return null;
-
-        return {
-          opcode,
-          write: WRITE_OPS.has(opcode),
-          address: address >>> 0,
-          value: resolveSourceValue(opcode, args[0], registers, previousSnapshot)
-        };
-      }
-
-      function processStep(previousSnapshot) {
+      function processResolvedStep(access, targetStep, tickInstruction = true) {
         if (!connected) return;
         const { RECEIVER_DATA, RECEIVER_CONTROL, TRANSMITTER_DATA, TRANSMITTER_CONTROL } = addresses();
-
-        const access = extractMemoryAccess(previousSnapshot);
+        const mayMutate = Boolean(access) || countingInstructions || keyQueue.length > 0;
+        if (!mayMutate) return;
+        const delta = ensureHistoryDelta(targetStep);
+        activeDisplayDelta = delta;
         if (access) {
           if (!access.write && access.address === RECEIVER_DATA) {
             writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
@@ -667,7 +588,7 @@
           }
         }
 
-        if (countingInstructions) {
+        if (tickInstruction && countingInstructions) {
           instructionCount += 1;
           if (instructionCount >= delayLimit) {
             if (displayAfterDelay) displayCharacter(pendingWord);
@@ -677,10 +598,54 @@
         }
 
         feedReceiverFromQueue();
+        activeDisplayDelta = null;
+      }
+
+      function detachDeviceObservers() {
+        try {
+          detachMemoryObserver();
+          detachInstructionObserver();
+        } catch {
+          // Detaching a device must not affect the simulator.
+        }
+        detachMemoryObserver = () => {};
+        detachInstructionObserver = () => {};
+      }
+
+      function attachDeviceObservers() {
+        detachDeviceObservers();
+        if (!ctx.engine || typeof ctx.engine.registerMemoryObserver !== "function") return;
+        const { RECEIVER_DATA, TRANSMITTER_DATA } = addresses();
+        detachMemoryObserver = ctx.engine.registerMemoryObserver({
+          start: RECEIVER_DATA,
+          end: TRANSMITTER_DATA,
+          onRead(detail) {
+            if (!connected || suppressDeviceObservers || (detail?.address >>> 0) !== RECEIVER_DATA) return;
+            processResolvedStep({
+              write: false,
+              address: RECEIVER_DATA,
+              value: detail?.value | 0
+            }, (detail?.steps | 0) + 1, false);
+          },
+          onWrite(detail) {
+            if (!connected || suppressDeviceObservers || (detail?.address >>> 0) !== TRANSMITTER_DATA) return;
+            processResolvedStep({
+              write: true,
+              address: TRANSMITTER_DATA,
+              value: detail?.value | 0
+            }, (detail?.steps | 0) + 1, false);
+          }
+        });
+        if (typeof ctx.engine.registerInstructionObserver === "function") {
+          detachInstructionObserver = ctx.engine.registerInstructionObserver((detail) => {
+            if (!connected || suppressDeviceObservers) return;
+            processResolvedStep(null, detail?.steps | 0, true);
+          });
+        }
       }
 
       function doReset() {
-        stepHistory = new Map();
+        history.clear(getSnapshotStep());
         keyQueue = [];
         countingInstructions = false;
         instructionCount = 0;
@@ -693,7 +658,6 @@
         writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
         writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
         updateTitles();
-        captureHistoryForStep(getSnapshotStep());
       }
 
       keyboardArea.addEventListener("keydown", (event) => {
@@ -739,8 +703,11 @@
           writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
           writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
           feedReceiverFromQueue();
-          captureHistoryForStep(getSnapshotStep());
+          history.sync(lastSnapshot);
+          attachDeviceObservers();
           keyboardArea.focus();
+        } else {
+          detachDeviceObservers();
         }
       });
 
@@ -753,7 +720,10 @@
         ctx.messagesPane.postMars(`${t("[tool] Keyboard/Display MMIO: type in keyboard panel to feed receiver data; store to transmitter data address to print.")}\n`);
       });
 
-      closeButton.addEventListener("click", shell.close);
+      closeButton.addEventListener("click", () => {
+        detachDeviceObservers();
+        shell.close();
+      });
       shell.onResize(() => {
         applySplitLayout();
         recalcGrid();
@@ -768,34 +738,42 @@
       refreshUiText();
 
       return {
+        isConnected: () => connected,
         open() {
           shell.open();
+          if (connected) attachDeviceObservers();
           applySplitLayout();
           recalcGrid();
           keyboardArea.focus();
         },
-        close: shell.close,
+        close() {
+          detachDeviceObservers();
+          shell.close();
+        },
         onSnapshot(snapshot) {
-          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
+          const previous = lastSnapshot;
           lastSnapshot = snapshot;
           if (!connected || !snapshot) return;
 
           const nextStep = getSnapshotStep(snapshot);
           const previousStep = getSnapshotStep(previous);
           if (!previous) {
-            captureHistoryForStep(nextStep);
+            history.sync(snapshot);
             return;
           }
 
           if (nextStep < previousStep) {
-            restoreHistoryForStep(nextStep);
-            pruneFutureHistory(nextStep);
+            history.rewind(nextStep);
+            history.sync(snapshot);
             return;
           }
           if (nextStep === previousStep) return;
 
-          processStep(previous);
-          captureHistoryForStep(nextStep);
+          history.sync(snapshot);
+        },
+        onBackstep(event) {
+          if (!connected || !event) return;
+          history.rewind(event.stepAfter | 0);
         }
       };
     }

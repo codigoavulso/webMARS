@@ -1110,7 +1110,6 @@ let runBenchmarkSession = null;
 let runLastTickAt = 0;
 let runStepCarry = 0;
 let runLastUiSyncAt = 0;
-let runToolTraceContext = null;
 let runPausedForInput = false;
 let resumeRunAfterInput = false;
 let backstepDepthEstimate = 0;
@@ -1129,7 +1128,8 @@ const RUN_LOOP_MACHINE_CAPTURE_INTERVAL_MS = 220;
 const RUN_LOOP_MACHINE_FULL_CAPTURE_INTERVAL_MS = 2200;
 const RUN_LOOP_TOOL_SYNC_INTERVAL_MS_NO_INTERACTION = 120;
 const MINI_C_DEFAULT_TEMPLATE = miniCCompilerModule.defaultTemplate;
-const MINI_C_BITMAP_DEFAULT_BASE = 0x10010000;
+// Keep the framebuffer clear of Mini-C globals, which start at 0x10010000.
+const MINI_C_BITMAP_DEFAULT_BASE = 0x10020000;
 const MINI_C_NATIVE_LIB_BITMAP_RECT = [
   `int _bitmap_base_address = ${MINI_C_BITMAP_DEFAULT_BASE};`,
   "",
@@ -5620,7 +5620,6 @@ function tryResumeRunAfterInput() {
   runLastTickAt = performance.now();
   runStepCarry = 0;
   runLastUiSyncAt = 0;
-  if (!runToolTraceContext) runToolTraceContext = createRunToolTraceContext(snapshot);
   if (typeof toolManager.hasSnapshotConsumers === "function" && toolManager.hasSnapshotConsumers()) {
     toolManager.onSnapshot(snapshot);
   }
@@ -5832,6 +5831,10 @@ messagesPane.setInputSubmittedHandler(() => {
 function applyUiPreferences(nextPreferences) {
   refs.root.classList.toggle("hide-labels-window", !nextPreferences.showLabelsWindow);
   refs.root.classList.toggle("split-messages-runio", nextPreferences.splitMessagesRunIo === true);
+  refs.benchmarks?.group?.classList.toggle(
+    "benchmark-panel-hidden",
+    nextPreferences.showBenchmarkPanel !== true
+  );
   const menuPosition = String(nextPreferences.menuPosition || "top").trim().toLowerCase();
   refs.root.classList.toggle("menu-at-bottom", menuPosition === "bottom");
 
@@ -6301,6 +6304,7 @@ function syncSnapshot(snapshot, options = {}) {
 
   try {
     if (!skipToolSync) toolManager.onSnapshot(snapshot);
+    else toolManager.onSnapshot(snapshot, { snapshotOnly: true });
     trackMachineStateCheckpoint(snapshot, options);
     store.setState({ assembled: snapshot.assembled, halted: snapshot.halted, running: runActive });
   } catch (error) {
@@ -6488,92 +6492,14 @@ function finishRunBenchmark(outcome = "completed", metadata = {}) {
   });
 }
 
-function createRunToolTraceContext(snapshot) {
-  const rowsByAddress = new Map();
-  (Array.isArray(snapshot?.textRows) ? snapshot.textRows : []).forEach((row) => {
-    if (!Number.isFinite(row?.address)) return;
-    rowsByAddress.set(row.address >>> 0, {
-      ...row,
-      address: row.address >>> 0,
-      isCurrent: false
-    });
+function executeRunStepWithRuntimeEvent(engineInstance, captureRuntimeEvent = false) {
+  const result = engineInstance.step({
+    includeSnapshot: false,
+    includeRuntimeEvent: captureRuntimeEvent
   });
-  const labels = (Array.isArray(snapshot?.labels) ? snapshot.labels : []).map((label) => ({ ...label }));
-  return { rowsByAddress, labels, previousSnapshot: snapshot || null };
-}
-
-function createRunToolTraceSnapshot(snapshot, context, stepResult = null, memoryWords = new Map()) {
-  if (!snapshot || typeof snapshot !== "object") return null;
-  const currentAddress = Number.isFinite(snapshot.pc) ? (snapshot.pc >>> 0) : null;
-  const row = currentAddress == null ? null : context?.rowsByAddress?.get(currentAddress);
-  const executedAddress = Number.isFinite(stepResult?.executedAddress)
-    ? (stepResult.executedAddress >>> 0)
-    : null;
-  const executedInstruction = String(stepResult?.executedInstruction || "").trim();
-  const executedBaseRow = executedAddress == null ? null : context?.rowsByAddress?.get(executedAddress);
-  const previousSteps = Number(context?.previousSnapshot?.steps) || 0;
-  const currentSteps = Number(snapshot.steps) || 0;
-  const executedPreviousSnapshot = executedAddress != null && executedInstruction && currentSteps > previousSteps
-    ? {
-        ...(context?.previousSnapshot || {}),
-        pc: executedAddress,
-        textRows: [{
-          ...(executedBaseRow || {}),
-          address: executedAddress,
-          basic: executedInstruction,
-          source: executedBaseRow?.source || executedInstruction,
-          machineCodeHex: Number.isFinite(stepResult?.machineWord)
-            ? toHex(stepResult.machineWord)
-            : String(executedBaseRow?.machineCodeHex || ""),
-          isCurrent: true
-        }],
-        labels: Array.isArray(context?.labels) ? context.labels : []
-      }
-    : null;
-  const tracedSnapshot = {
-    ...snapshot,
-    textRows: row ? [{ ...row, isCurrent: true }] : [],
-    labels: Array.isArray(context?.labels) ? context.labels : [],
-    memoryWords,
-    executedAddress,
-    executedInstruction,
-    machineWord: Number.isFinite(stepResult?.machineWord) ? (stepResult.machineWord >>> 0) : null,
-    runtimeTrace: executedPreviousSnapshot ? { previousSnapshot: executedPreviousSnapshot } : null
-  };
-  if (context && typeof context === "object") {
-    context.previousSnapshot = {
-      ...tracedSnapshot,
-      runtimeTrace: null
-    };
-  }
-  return tracedSnapshot;
-}
-
-function executeRunStepWithToolTrace(engineInstance, traceContext, captureTrace) {
-  const result = engineInstance.step(captureTrace ? {
-    includeSnapshot: true,
-    snapshotOptions: {
-      includeTextRows: false,
-      includeLabels: false,
-      includeDataRows: false,
-      includeRegisters: true,
-      includeMemoryWords: false
-    }
-  } : {
-    includeSnapshot: false
-  });
-  const incrementalMemoryWords = new Map();
-  const writeAddress = Number.isFinite(result?.snapshot?.lastMemoryWriteAddress)
-    ? (result.snapshot.lastMemoryWriteAddress & ~0x3) >>> 0
-    : null;
-  if (writeAddress != null && engineInstance?.memoryWords instanceof Map) {
-    incrementalMemoryWords.set(writeAddress, engineInstance.memoryWords.get(writeAddress) ?? 0);
-  }
   return {
     result,
-    toolSnapshot: captureTrace
-      ? createRunToolTraceSnapshot(result?.snapshot, traceContext, result, incrementalMemoryWords)
-      : null
+    runtimeEvent: captureRuntimeEvent ? (result?.runtimeEvent ?? null) : null
   };
 }
 
@@ -6614,15 +6540,10 @@ function runLoopTick() {
   let deferredDelayMs = 0;
   let stopReason = "";
   let lastStepResult = null;
-  const toolTraceEnabled = typeof toolManager.hasSnapshotConsumers === "function"
-    && toolManager.hasSnapshotConsumers();
-  if (toolTraceEnabled && !runToolTraceContext) {
-    runToolTraceContext = createRunToolTraceContext(engine.getSnapshot({
-      includeDataRows: false,
-      shareMemoryWords: true
-    }));
-  }
-  const toolTraceSnapshots = [];
+  const runtimeEventTraceEnabled = typeof toolManager.hasRuntimeEventConsumers === "function"
+    && toolManager.hasRuntimeEventConsumers();
+  const toolTraceEnabled = runtimeEventTraceEnabled;
+  const toolRuntimeEvents = [];
   {
     const loopStart = performance.now();
     const timeBudgetMs = interactive ? RUN_LOOP_TIME_BUDGET_MS_INTERACTIVE : RUN_LOOP_TIME_BUDGET_MS_FAST;
@@ -6636,9 +6557,9 @@ function runLoopTick() {
         break;
       }
 
-      const tracedStep = executeRunStepWithToolTrace(engine, runToolTraceContext, toolTraceEnabled);
+      const tracedStep = executeRunStepWithRuntimeEvent(engine, runtimeEventTraceEnabled);
       const result = tracedStep.result;
-      if (tracedStep.toolSnapshot) toolTraceSnapshots.push(tracedStep.toolSnapshot);
+      if (tracedStep.runtimeEvent) toolRuntimeEvents.push(tracedStep.runtimeEvent);
       lastStepResult = result;
       if (!result.ok) {
         postExecutionError(translateText("Go"), result.message);
@@ -6706,8 +6627,8 @@ function runLoopTick() {
     }
   }
 
-  if (toolTraceSnapshots.length && typeof toolManager.onSnapshotBatch === "function") {
-    toolManager.onSnapshotBatch(toolTraceSnapshots);
+  if (toolRuntimeEvents.length && typeof toolManager.onRuntimeEventBatch === "function") {
+    toolManager.onRuntimeEventBatch(toolRuntimeEvents);
   }
   flushRunOutputMessages(runOutputMessages);
   if (forceCriticalCheckpoint) forceMachineStateCheckpoint();
@@ -6890,6 +6811,12 @@ async function openInterfacePreferencesPanel() {
               { value: "top", label: translateText("Top") },
               { value: "bottom", label: translateText("Bottom") }
             ]
+          },
+          {
+            name: "showBenchmarkPanel",
+            label: translateText("Show performance benchmarks"),
+            type: "checkbox",
+            value: current.showBenchmarkPanel === true
           }
         ]
       },
@@ -6966,6 +6893,7 @@ async function openInterfacePreferencesPanel() {
   updatePreferencesPatch({
     language: selectedLanguage,
     menuPosition: parsedMenuPosition,
+    showBenchmarkPanel: parseBooleanPreferenceToken(values.showBenchmarkPanel, current.showBenchmarkPanel),
     editorFontSize: Math.max(9, Math.min(22, parsedFont)),
     editorLineHeight: Math.max(1, Math.min(2.2, parsedLineHeight)),
     highlightTextUpdates: parseBooleanPreferenceToken(values.highlightTextUpdates, current.highlightTextUpdates),
@@ -8621,7 +8549,11 @@ const commands = {
       return;
     }
     messagesPane.selectRunTab?.();
-    const result = benchmarkCollector.measure("step", () => engine.step(), {
+    const captureRuntimeEvent = typeof toolManager.hasRuntimeEventConsumers === "function"
+      && toolManager.hasRuntimeEventConsumers();
+    const result = benchmarkCollector.measure("step", () => engine.step({
+      includeRuntimeEvent: captureRuntimeEvent
+    }), {
       programName: getCurrentProgramName()
     });
     if (!result.ok) {
@@ -8641,6 +8573,9 @@ const commands = {
     }
     scheduleRuntimeControlRecovery();
     restoredBackstepFallbackActive = false;
+    if (result.runtimeEvent && typeof toolManager.onRuntimeEventBatch === "function") {
+      toolManager.onRuntimeEventBatch([result.runtimeEvent]);
+    }
     const nextSnapshot = resolveStableRuntimeSnapshot(result.snapshot, { expectBackstep: true });
     syncSnapshot(nextSnapshot, {
       force: result.runIo === true || result.waitingForInput === true
@@ -8679,7 +8614,6 @@ const commands = {
     runLastTickAt = performance.now();
     runStepCarry = 0;
     runLastUiSyncAt = 0;
-    runToolTraceContext = createRunToolTraceContext(snapshot);
     forceMachineStateCheckpoint();
     syncButtons(snapshot);
     if (typeof toolManager.hasSnapshotConsumers === "function" && toolManager.hasSnapshotConsumers()) {
@@ -8752,6 +8686,9 @@ const commands = {
     }
     decrementBackstepEstimate(1);
     scheduleRuntimeControlRecovery();
+    if (result.runtimeEvent && typeof toolManager.onBackstep === "function") {
+      toolManager.onBackstep(result.runtimeEvent);
+    }
     const nextSnapshot = resolveStableRuntimeSnapshot(result.snapshot);
     syncSnapshot(nextSnapshot);
     refreshRuntimeControls(nextSnapshot);
@@ -10209,15 +10146,6 @@ if (typeof window !== "undefined") {
     }
   };
 }
-
-
-
-
-
-
-
-
-
 
 
 

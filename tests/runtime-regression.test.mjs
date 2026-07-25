@@ -98,6 +98,176 @@ main:
   assert.equal(engine.getSnapshot().steps, 1);
 });
 
+test("backstep history retains inverse deltas instead of full machine snapshots", async () => {
+  const engine = await createJavaScriptEngine({
+    settings: {
+      startAtMain: true,
+      maxBacksteps: 100
+    }
+  });
+  const source = `
+.text
+main:
+  addiu $t0, $zero, 1
+  addiu $t1, $zero, 2
+  sw    $t1, 0($sp)
+  nop
+`;
+  const assembled = engine.assemble(source, { sourceName: "delta-history.s" });
+  assert.equal(assembled.ok, true, JSON.stringify(assembled.errors || []));
+
+  const first = engine.step({ includeSnapshot: false, includeRuntimeEvent: true });
+  assert.equal(first.ok, true);
+  assert.equal(first.runtimeEvent.type, "instruction");
+  assert.deepEqual(Array.from(first.runtimeEvent.registerChanges), [8, 0, 1]);
+
+  const firstJournal = engine.executionHistory.at(0);
+  assert.equal(Object.hasOwn(firstJournal, "registers"), false);
+  assert.equal(Object.hasOwn(firstJournal, "registerBaseline"), false);
+  assert.equal(Object.hasOwn(firstJournal, "cop0Registers"), false);
+  assert.equal(Object.hasOwn(firstJournal, "cop1Registers"), false);
+  assert.deepEqual(Array.from(firstJournal.r), [8, 0]);
+  assert.equal(Object.hasOwn(firstJournal, "c0"), false);
+  assert.equal(Object.hasOwn(firstJournal, "c1"), false);
+  assert.equal(Object.hasOwn(firstJournal, "ff"), false);
+  assert.equal(Object.hasOwn(firstJournal, "m"), false);
+
+  assert.equal(engine.step({ includeSnapshot: false }).ok, true);
+  const store = engine.step({ includeSnapshot: false, includeRuntimeEvent: true });
+  assert.equal(store.ok, true);
+  assert.equal(store.runtimeEvent.memoryAccesses.some((access) => access.kind === "write"), true);
+  const storeJournal = engine.executionHistory.at(2);
+  assert.equal(storeJournal.m.length, 2);
+  assert.equal(storeJournal.m[0], registers(engine)[29] >>> 0);
+  assert.equal(storeJournal.m[1]?.constructor?.name, "Uint8Array");
+  assert.equal(storeJournal.m[1].length, 1);
+
+  const snapshot = engine.getSnapshot();
+  assert.equal(snapshot.backstepHistoryStartStep, 0);
+  assert.equal(snapshot.backstepDepth, 3);
+  assert.equal(engine.backstep().ok, true);
+  assert.equal(engine.backstep().ok, true);
+  assert.equal(registers(engine)[9], 0);
+});
+
+test("long ALU histories remain sparse and bounded per instruction", async () => {
+  const engine = await createJavaScriptEngine({
+    settings: {
+      startAtMain: true,
+      maxBacksteps: 20000,
+      maxBackstepHistoryBytes: 8 * 1024 * 1024
+    }
+  });
+  const source = `
+.text
+main:
+  li    $t0, 3000
+loop:
+  addiu $t0, $t0, -1
+  bgtz  $t0, loop
+  nop
+`;
+  const assembled = engine.assemble(source, { sourceName: "sparse-history.s" });
+  assert.equal(assembled.ok, true, JSON.stringify(assembled.errors || []));
+  const result = engine.go(12000);
+  assert.equal(result.ok, true);
+  assert.equal(result.done, true);
+
+  assert.ok(engine.executionHistory.length >= 6000);
+  assert.ok(engine.getBackstepHistoryUsageBytes() < 2 * 1024 * 1024);
+  engine.executionHistory.forEach((journal) => {
+    assert.equal(Object.hasOwn(journal, "registerBaseline"), false);
+    assert.equal(Object.hasOwn(journal, "registers"), false);
+    assert.ok((journal.r?.length ?? 0) <= 2);
+  });
+});
+
+test("one large syscall cannot exceed the complete backstep history budget", async () => {
+  const input = "x".repeat(72 * 1024);
+  const engine = await createJavaScriptEngine({
+    settings: {
+      startAtMain: true,
+      maxBacksteps: 100,
+      maxBackstepHistoryBytes: 64 * 1024
+    }
+  });
+  engine.setRuntimeHooks({
+    readInput() {
+      return input;
+    }
+  });
+  const source = `
+.data
+buffer: .space 131072
+.text
+main:
+  la   $a0, buffer
+  li   $a1, 131072
+  li   $v0, 8
+  syscall
+  li   $v0, 10
+  syscall
+`;
+  const assembled = engine.assemble(source, { sourceName: "bounded-large-journal.s" });
+  assert.equal(assembled.ok, true, JSON.stringify(assembled.errors || []));
+
+  let syscallResult = null;
+  for (let index = 0; index < 20; index += 1) {
+    const result = engine.step({ includeSnapshot: false, includeRuntimeEvent: true });
+    assert.equal(result.ok, true);
+    if (result.executedInstruction === "syscall") {
+      syscallResult = result;
+      break;
+    }
+  }
+
+  assert.ok(syscallResult);
+  assert.equal(engine.getSnapshot().backstepDepth, 0);
+  assert.equal(engine.getBackstepHistoryUsageBytes(), 0);
+  assert.equal(engine.getBackstepHistoryBudgetBytes(), 64 * 1024);
+  assert.equal(engine.readByte(registers(engine)[4] >>> 0, false), "x".charCodeAt(0));
+  assert.equal(syscallResult.runtimeEvent.memoryAccesses.length, 1);
+  assert.ok(syscallResult.runtimeEvent.memoryAccesses[0].accessCount > 68 * 1024);
+  assert.equal(engine.backstep().ok, false);
+});
+
+test("backstep journal evicts in constant-time order and reports the shared history window", async () => {
+  const engine = await createJavaScriptEngine({
+    settings: {
+      startAtMain: true,
+      maxBacksteps: 3,
+      maxBackstepHistoryBytes: 1024 * 1024
+    }
+  });
+  const source = `
+.text
+main:
+  addiu $t0, $zero, 1
+  addiu $t0, $t0, 1
+  addiu $t0, $t0, 1
+  addiu $t0, $t0, 1
+  addiu $t0, $t0, 1
+  nop
+`;
+  const assembled = engine.assemble(source, { sourceName: "journal-window.s" });
+  assert.equal(assembled.ok, true, JSON.stringify(assembled.errors || []));
+  for (let index = 0; index < 5; index += 1) {
+    assert.equal(engine.step({ includeSnapshot: false }).ok, true);
+  }
+
+  const snapshot = engine.getSnapshot();
+  assert.equal(snapshot.steps, 5);
+  assert.equal(snapshot.backstepDepth, 3);
+  assert.equal(snapshot.backstepHistoryStartStep, 2);
+  assert.equal(engine.executionHistory.peekOldest().s, 2);
+
+  assert.equal(engine.backstep().ok, true);
+  assert.equal(engine.backstep().ok, true);
+  assert.equal(engine.backstep().ok, true);
+  assert.equal(engine.getSnapshot().steps, 2);
+  assert.equal(engine.backstep().ok, false);
+});
+
 test("breakpoints stop before the selected instruction and resume cleanly", async () => {
   const engine = await createJavaScriptEngine({ settings: { startAtMain: true } });
   const source = `
@@ -365,6 +535,45 @@ main:
       expectedWrites.map(([address, value]) => [address, value, expectedWord])
     );
   }
+});
+
+test("synchronous instruction observers participate in the same atomic backstep journal", async () => {
+  const engine = await createJavaScriptEngine({ settings: { maxBacksteps: 16 } });
+  const source = `
+.text
+.globl main
+main:
+  lui $t0, 0x1001
+  ori $t1, $zero, 1
+  sw $t1, 0($t0)
+  nop
+`;
+  const assembled = engine.assemble(source);
+  assert.equal(assembled.ok, true);
+
+  const base = 0x10010000;
+  const detach = engine.registerInstructionObserver((detail) => {
+    if (String(detail.executedInstruction).trim().startsWith("sw ")) {
+      engine.writeByte(base + 4, 0x7f);
+    }
+  });
+
+  let storeResult = null;
+  while (!engine.halted) {
+    const result = engine.step({ includeSnapshot: false });
+    if (String(result.executedInstruction).trim().startsWith("sw ")) {
+      storeResult = result;
+      break;
+    }
+  }
+
+  assert.ok(storeResult);
+  assert.equal(engine.readWord(base) >>> 0, 1);
+  assert.equal(engine.readByte(base + 4, false), 0x7f);
+  assert.equal(engine.backstep().ok, true);
+  assert.equal(engine.readWord(base) >>> 0, 0);
+  assert.equal(engine.readByte(base + 4, false), 0);
+  detach();
 });
 
 test("LDC1 and SDC1 preserve little-endian double word order", async () => {

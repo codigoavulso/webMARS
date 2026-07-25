@@ -49,84 +49,6 @@
     return cleaned.split(/[\s,]+/).filter(Boolean);
   }
 
-  function parseImmediate(token) {
-    if (typeof token !== "string") return null;
-    const text = token.trim();
-    if (!text) return null;
-    if (/^[+-]?\d+$/.test(text)) return Number.parseInt(text, 10) | 0;
-    if (/^[+-]?0x[0-9a-f]+$/i.test(text)) return Number.parseInt(text, 16) | 0;
-    return null;
-  }
-
-  function buildRegisters(snapshot) {
-    const map = new Map();
-    (snapshot?.registers || []).forEach((reg) => {
-      const value = reg.value | 0;
-      const name = String(reg.name || "").toLowerCase();
-      map.set(name, value);
-      if (name.startsWith("$")) map.set(name.slice(1), value);
-      map.set(String(reg.index), value);
-      map.set(`$${reg.index}`, value);
-    });
-    return map;
-  }
-
-  function buildLabels(snapshot) {
-    const map = new Map();
-    (snapshot?.labels || []).forEach((label) => {
-      map.set(String(label.label || "").toLowerCase(), label.address >>> 0);
-    });
-    return map;
-  }
-
-  function resolveRegister(token, registers) {
-    if (token == null) return 0;
-    const normalized = String(token).toLowerCase().replace(/[\s,]/g, "");
-    if (registers.has(normalized)) return registers.get(normalized) | 0;
-    if (normalized.startsWith("$") && registers.has(normalized.slice(1))) return registers.get(normalized.slice(1)) | 0;
-    return 0;
-  }
-
-  function computeBranchTarget(token, rowAddress, labels) {
-    const normalized = String(token || "").trim().toLowerCase();
-    if (labels.has(normalized)) return labels.get(normalized) >>> 0;
-    const immediate = parseImmediate(normalized);
-    if (Number.isFinite(immediate)) return (((rowAddress + 4) | 0) + ((immediate | 0) << 2)) >>> 0;
-    return null;
-  }
-
-  function evaluateBranch(opcode, args, registers) {
-    const rs = resolveRegister(args[0], registers);
-    const rt = resolveRegister(args[1], registers);
-
-    switch (opcode) {
-      case "beq":
-      case "beql":
-        return rs === rt;
-      case "bne":
-      case "bnel":
-        return rs !== rt;
-      case "bgtz":
-      case "bgtzl":
-        return rs > 0;
-      case "blez":
-      case "blezl":
-        return rs <= 0;
-      case "bltz":
-      case "bltzl":
-      case "bltzal":
-      case "bltzall":
-        return rs < 0;
-      case "bgez":
-      case "bgezl":
-      case "bgezal":
-      case "bgezall":
-        return rs >= 0;
-      default:
-        return false;
-    }
-  }
-
   class BHTEntry {
     constructor(historySize, initTake) {
       this.prediction = Boolean(initTake);
@@ -242,14 +164,49 @@
       let historySize = 1;
       let initTake = false;
       let model = [];
-      let lastSnapshot = null;
       let activeIndex = null;
       let activeClass = "";
+      let logLines = [];
+      let activeHistoryDelta = null;
+      const MAX_LOG_LINES = 5000;
+      const history = ctx.createToolDeltaHistory({
+        applyInverse(delta) {
+          if (!delta) return;
+          if (delta.entry && delta.entryIndex >= 0 && delta.entryIndex < model.length) {
+            const entry = model[delta.entryIndex];
+            entry.prediction = delta.entry.prediction === true;
+            entry.history = Array.isArray(delta.entry.history) ? [...delta.entry.history] : [];
+            entry.correct = delta.entry.correct | 0;
+            entry.incorrect = delta.entry.incorrect | 0;
+          }
+          if (Array.isArray(delta.removedLog) && delta.removedLog.length) {
+            logLines = [...delta.removedLog, ...logLines];
+          }
+          logLines.length = Math.min(logLines.length, Math.max(0, delta.logLength | 0));
+          instructionField.value = String(delta.instruction || "");
+          addressField.value = String(delta.address || "");
+          indexField.value = String(delta.index || "");
+          activeIndex = Number.isFinite(delta.activeIndex) ? (delta.activeIndex | 0) : null;
+          activeClass = String(delta.activeClass || "");
+          flushLog();
+          renderTable();
+        }
+      });
+
+      function flushLog() {
+        logArea.value = logLines.length ? `${logLines.join("\n")}\n` : "";
+        logArea.scrollTop = logArea.scrollHeight;
+      }
 
       function appendLog(line) {
         if (!line) return;
-        logArea.value += `${line}\n`;
-        logArea.scrollTop = logArea.scrollHeight;
+        logLines.push(String(line));
+        if (logLines.length > MAX_LOG_LINES) {
+          const removed = logLines.splice(0, logLines.length - MAX_LOG_LINES);
+          if (activeHistoryDelta && Array.isArray(activeHistoryDelta.removedLog)) {
+            activeHistoryDelta.removedLog.push(...removed);
+          }
+        }
       }
 
       function renderTable() {
@@ -270,67 +227,82 @@
         }).join("");
       }
 
-      function clearInstructionInfo() {
+      function clearInstructionInfo(shouldRender = true) {
         instructionField.value = "";
         addressField.value = "";
         indexField.value = "";
         activeIndex = null;
         activeClass = "";
-        renderTable();
+        if (shouldRender) renderTable();
       }
 
       function resetModel() {
+        history.clear(Number(ctx.engine?.steps) | 0);
         entries = Number.parseInt(entriesSelect.value, 10) || 16;
         historySize = Number.parseInt(historySelect.value, 10) || 1;
         initTake = initSelect.value === "t";
         model = Array.from({ length: entries }, () => new BHTEntry(historySize, initTake));
-        logArea.value = "";
+        logLines = [];
+        flushLog();
         clearInstructionInfo();
       }
 
-      function processInstruction(prevSnapshot, nextSnapshot) {
-        const executedRow = (prevSnapshot?.textRows || []).find((row) => row.isCurrent);
-        if (!executedRow) return;
-
-        const tokens = parseTokens(executedRow.basic || executedRow.source);
-        if (!tokens.length) return;
-
-        const opcode = tokens[0].toLowerCase();
+      function processRuntimeInstruction(event, shouldRender = true) {
+        const delta = {
+          instruction: instructionField.value,
+          address: addressField.value,
+          index: indexField.value,
+          activeIndex,
+          activeClass,
+          logLength: logLines.length,
+          removedLog: [],
+          entryIndex: -1,
+          entry: null
+        };
+        history.record(event.stepAfter | 0, delta);
+        activeHistoryDelta = delta;
+        const statement = String(event?.executedInstruction || "").trim();
+        const tokens = parseTokens(statement);
+        const opcode = String(tokens[0] || "").toLowerCase();
         if (!BRANCH_OPS.has(opcode)) {
-          clearInstructionInfo();
+          clearInstructionInfo(shouldRender);
+          activeHistoryDelta = null;
+          if (shouldRender) flushLog();
           return;
         }
 
-        const args = tokens.slice(1);
-        const registers = buildRegisters(prevSnapshot);
-        const labels = buildLabels(nextSnapshot || prevSnapshot);
-        const branchTaken = evaluateBranch(opcode, args, registers);
-        const targetToken = args[args.length - 1];
-        const targetAddress = computeBranchTarget(targetToken, executedRow.address >>> 0, labels);
-
-        const idx = ((executedRow.address >>> 2) % entries) >>> 0;
+        const address = event.executedAddress >>> 0;
+        const branchTaken = Number.isFinite(event.controlTransferTarget);
+        const targetAddress = branchTaken ? (event.controlTransferTarget >>> 0) : null;
+        const idx = ((address >>> 2) % entries) >>> 0;
         const entry = model[idx];
+        delta.entryIndex = idx;
+        delta.entry = {
+          prediction: entry.prediction,
+          history: [...entry.history],
+          correct: entry.correct,
+          incorrect: entry.incorrect
+        };
         const prediction = entry.prediction;
         const correct = prediction === branchTaken;
 
-        instructionField.value = executedRow.basic || executedRow.source || opcode;
-        addressField.value = toHex32(executedRow.address >>> 0);
+        instructionField.value = statement || opcode;
+        addressField.value = toHex32(address);
         indexField.value = String(idx);
-
         activeIndex = idx;
         activeClass = "";
-        renderTable();
-
-        appendLog(`instruction ${(executedRow.basic || executedRow.source || opcode).trim()} at address ${toHex32(executedRow.address >>> 0)}, maps to index ${idx}`);
-        if (Number.isFinite(targetAddress)) appendLog(`branches to address ${toHex32(targetAddress >>> 0)}`);
+        appendLog(`instruction ${statement || opcode} at address ${toHex32(address)}, maps to index ${idx}`);
+        if (targetAddress != null) appendLog(`branches to address ${toHex32(targetAddress)}`);
         appendLog(`prediction is: ${prediction ? "take" : "do not take"}...`);
-
         entry.update(branchTaken);
         activeClass = correct ? "ok" : "bad";
-        renderTable();
-
         appendLog(`branch ${branchTaken ? "taken" : "not taken"}, prediction was ${correct ? "correct" : "incorrect"}`);
         appendLog("");
+        activeHistoryDelta = null;
+        if (shouldRender) {
+          flushLog();
+          renderTable();
+        }
       }
 
       connectButton.addEventListener("click", () => {
@@ -346,7 +318,6 @@
 
       resetButton.addEventListener("click", () => {
         resetModel();
-        lastSnapshot = null;
       });
 
       closeButton.addEventListener("click", shell.close);
@@ -354,21 +325,24 @@
       resetModel();
 
       return {
+        isConnected: () => connected,
         open: shell.open,
         close: shell.close,
-        onSnapshot(snapshot) {
-          if (!connected || !snapshot) {
-            lastSnapshot = snapshot;
+        onRuntimeEvent(event, delivery = {}) {
+          if (!connected || !event) return;
+          if (event.type === "backstep") {
+            history.rewind(event.stepAfter | 0);
             return;
           }
-
-          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
-          lastSnapshot = snapshot;
-
-          if (!previous) return;
-          if ((snapshot.steps | 0) <= (previous.steps | 0)) return;
-
-          processInstruction(previous, snapshot);
+          if (event.type !== "instruction") return;
+          processRuntimeInstruction(event, delivery.isLast !== false);
+          history.pruneBefore(event.historyStartStep | 0);
+        },
+        onBackstep(event) {
+          if (!connected || !event) return;
+          history.rewind(event.stepAfter | 0);
+          flushLog();
+          renderTable();
         }
       };
     }

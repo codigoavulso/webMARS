@@ -8,7 +8,17 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.4.7 consolidates the current JavaScript runtime, examples and multilingual documentation. The repository history contains the individual implementation changes.</p>
+  <p class="lead">Release 0.4.8 improves long-running execution, tool causality and memory efficiency while preserving the pure JavaScript runtime.</p>
+
+  <h2>0.4.8 — delta backsteps and synchronous devices</h2>
+  <ul>
+    <li>Replaced full per-instruction backstep snapshots with bounded inverse deltas.</li>
+    <li>Separated synchronous MMIO devices, compact runtime-event batches and periodic tool snapshots.</li>
+    <li>Corrected Keyboard/Display and TTY input/output causality, backsteps and hidden-tool overhead.</li>
+    <li>Fixed batch rendering in cache, instruction, memory-reference and bitmap tools.</li>
+    <li>Moved Mini-C example framebuffers away from compiler globals and synchronized Bitmap Display with live memory.</li>
+    <li>Made the local benchmark strip optional in Interface Preferences and hidden by default.</li>
+  </ul>
 
   <h2>0.4.7 — JavaScript runtime hardening and complete documentation</h2>
   <ul>

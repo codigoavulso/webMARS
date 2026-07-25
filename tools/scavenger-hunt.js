@@ -80,7 +80,6 @@
       const g = canvas.getContext("2d");
 
       let connected = false;
-      let lastSnapshot = null;
       let locations = makeRandomLocations();
       let players = [];
 
@@ -218,13 +217,11 @@
       resetState();
 
       return {
+        isConnected: () => connected,
         open: shell.open,
         close: shell.close,
         onSnapshot(snapshot) {
-          const previous = lastSnapshot;
-          lastSnapshot = snapshot;
-          if (!connected || !snapshot || !previous) return;
-          if ((snapshot.steps | 0) <= (previous.steps | 0)) return;
+          if (!connected || !snapshot) return;
           updatePlayers();
           render();
         }

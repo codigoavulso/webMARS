@@ -215,6 +215,7 @@
       capture();
 
       return {
+        isConnected: () => false,
         open() {
           shell.open();
           updateOverlaySize();

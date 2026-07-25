@@ -86,34 +86,35 @@
 
       let connected = false;
       let zoom = 1;
-      let lastSnapshot = null;
-
+      let currentInfoText = info.textContent;
+      const history = ctx.createToolDeltaHistory({
+        applyInverse(delta) {
+          currentInfoText = String(delta?.text || "");
+          info.textContent = currentInfoText;
+        }
+      });
       function applyZoom() {
         image.style.transformOrigin = "top left";
         image.style.transform = `scale(${zoom})`;
         zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
       }
 
-      function updateInstruction(previousSnapshot) {
-        const row = (previousSnapshot?.textRows || []).find((entry) => entry.isCurrent);
-        if (!row) return;
-
-        const statement = row.basic || row.source || "";
+      function updateRuntimeInstruction(event, shouldRender = true) {
+        history.record(event.stepAfter | 0, { text: currentInfoText });
+        const statement = String(event?.executedInstruction || "");
         const tokens = parseTokens(statement);
         const opcode = (tokens[0] || "").toLowerCase();
-
-        const details = [
-          `Line: ${row.line ?? "-"}`,
-          `Address: ${row.addressHex || "-"}`,
-          `Machine code: ${row.code || "-"}`,
+        currentInfoText = [
+          "Line: -",
+          `Address: ${toHex32(event?.executedAddress >>> 0)}`,
+          `Machine code: ${Number.isFinite(event?.machineWord) ? toHex32(event.machineWord) : "-"}`,
           `Opcode: ${opcode || "-"}`,
           `Category: ${classify(opcode)}`,
           `Registers: ${formatRegisters(tokens.slice(1))}`,
           `Instruction: ${statement || "-"}`,
-          `Source: ${row.source || "-"}`
-        ];
-
-        info.textContent = details.join("\n");
+          `Next address: ${toHex32(event?.pcAfter >>> 0)}`
+        ].join("\n");
+        if (shouldRender) info.textContent = currentInfoText;
       }
 
       connectButton.addEventListener("click", () => {
@@ -130,14 +131,22 @@
       applyZoom();
 
       return {
+        isConnected: () => connected,
         open: shell.open,
         close: shell.close,
-        onSnapshot(snapshot) {
-          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
-          lastSnapshot = snapshot;
-          if (!connected || !snapshot || !previous) return;
-          if ((snapshot.steps | 0) <= (previous.steps | 0)) return;
-          updateInstruction(previous);
+        onRuntimeEvent(event, delivery = {}) {
+          if (!connected || !event) return;
+          if (event.type === "backstep") {
+            history.rewind(event.stepAfter | 0);
+            return;
+          }
+          if (event.type !== "instruction") return;
+          updateRuntimeInstruction(event, delivery.isLast !== false);
+          history.pruneBefore(event.historyStartStep | 0);
+        },
+        onBackstep(event) {
+          if (!connected || !event) return;
+          history.rewind(event.stepAfter | 0);
         }
       };
     }

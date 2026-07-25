@@ -133,7 +133,7 @@ function renderLayout(root) {
           </select>
         </div>
 
-        <div class="toolbar-group toolbar-benchmark-group">
+        <div class="toolbar-group toolbar-benchmark-group benchmark-panel-hidden">
           <div id="benchmark-status" class="benchmark-status" role="status" aria-live="polite" aria-label="Local performance benchmarks">
             <span class="benchmark-title">Bench</span>
             <span id="benchmark-compile" class="benchmark-value">Compile: —</span>
@@ -440,6 +440,7 @@ function renderLayout(root) {
       runSpeedSelectMobile: root.querySelector("#run-speed-select-mobile")
     },
     benchmarks: {
+      group: root.querySelector(".toolbar-benchmark-group"),
       root: root.querySelector("#benchmark-status"),
       compile: root.querySelector("#benchmark-compile"),
       assemble: root.querySelector("#benchmark-assemble"),
@@ -4957,6 +4958,7 @@ const STORAGE_KEY = "mars45-web-preferences";
 const DEFAULT_PREFERENCES = {
   language: "en",
   menuPosition: "top",
+  showBenchmarkPanel: false,
   showLabelsWindow: true,
   programArguments: false,
   popupSyscallInput: false,
@@ -6681,6 +6683,10 @@ function injectRuntimeStyles() {
       align-items: center;
       min-width: 310px;
       padding-right: 0;
+    }
+
+    .toolbar-benchmark-group.benchmark-panel-hidden {
+      display: none !important;
     }
 
     .benchmark-status {

@@ -107,6 +107,7 @@
     "Adjust exception handler, memory configuration, and memory limits.": "Adjust exception handler, memory configuration, and memory limits.",
     "Layout": "Layout",
     "Menu position": "Menu position",
+    "Show performance benchmarks": "Show performance benchmarks",
     "Top": "Top",
     "Bottom": "Bottom",
     "Editor font size (9-22)": "Editor font size (9-22)",

@@ -132,6 +132,7 @@
       let attachedRegister = -1;
       let bits = 0 >>> 0;
       let lastSnapshot = null;
+      let runtimeRefreshPending = false;
 
       function syncExpansion() {
         const { sign, exponent, fraction } = toBinary(bits);
@@ -251,12 +252,32 @@
       refreshInputs();
 
       return {
+        isConnected: () => connected,
         open: shell.open,
         close: shell.close,
         onSnapshot(snapshot) {
           lastSnapshot = snapshot;
           if (!connected) return;
           if (attachedRegister >= 0) readAttachedRegister(snapshot);
+        },
+        onRuntimeEvent(event, delivery = {}) {
+          if (!connected || attachedRegister < 0 || event?.type !== "instruction") return;
+          const changes = Array.isArray(event.cop1Changes) ? event.cop1Changes : [];
+          for (let offset = 0; offset + 2 < changes.length; offset += 3) {
+            if ((changes[offset] | 0) !== attachedRegister) continue;
+            bits = changes[offset + 2] >>> 0;
+            runtimeRefreshPending = true;
+            break;
+          }
+          if (delivery.isLast !== false && runtimeRefreshPending) {
+            runtimeRefreshPending = false;
+            refreshInputs();
+          }
+        },
+        onRuntimeBatchEnd() {
+          if (!connected || !runtimeRefreshPending) return;
+          runtimeRefreshPending = false;
+          refreshInputs();
         }
       };
     }

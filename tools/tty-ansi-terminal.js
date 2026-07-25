@@ -151,11 +151,6 @@
     document.head.appendChild(style);
   }
 
-  const MEMORY_OPS = new Set([
-    "lb", "lbu", "lh", "lhu", "lw", "lwl", "lwr", "sb", "sh", "sw", "swl", "swr", "ll", "sc",
-    "lwc1", "swc1", "ldc1", "sdc1"
-  ]);
-  const WRITE_OPS = new Set(["sb", "sh", "sw", "swl", "swr", "sc", "swc1", "sdc1"]);
   const TERMINAL_GEOMETRY = { columns: 80, rows: 25 };
   const FONT_OPTIONS = [8, 10, 12, 14, 16, 18, 20];
   const DEFAULT_FONT_SIZE = 12;
@@ -233,99 +228,6 @@
 
   function toHex32(value) {
     return `0x${(value >>> 0).toString(16).padStart(8, "0")}`;
-  }
-
-  function parseTokens(statement) {
-    if (!statement) return [];
-    const cleaned = String(statement).split("#")[0].trim();
-    if (!cleaned) return [];
-    return cleaned.split(/[\s,]+/).filter(Boolean);
-  }
-
-  function parseImmediate(token) {
-    if (typeof token !== "string") return null;
-    const text = token.trim();
-    if (!text) return 0;
-    if (/^[+-]?\d+$/.test(text)) return Number.parseInt(text, 10) | 0;
-    if (/^[+-]?0x[0-9a-f]+$/i.test(text)) return Number.parseInt(text, 16) | 0;
-    return null;
-  }
-
-  function buildRegisterMap(snapshot) {
-    const map = new Map();
-    (snapshot?.registers || []).forEach((reg) => {
-      const value = reg.value | 0;
-      const name = String(reg.name || "").toLowerCase();
-      map.set(name, value);
-      if (name.startsWith("$")) map.set(name.slice(1), value);
-      map.set(String(reg.index), value);
-      map.set(`$${reg.index}`, value);
-    });
-    return map;
-  }
-
-  function buildLabelMap(snapshot) {
-    const map = new Map();
-    (snapshot?.labels || []).forEach((label) => map.set(String(label.label || "").toLowerCase(), label.address >>> 0));
-    return map;
-  }
-
-  function resolveMemoryAddress(memArg, registers, labels, rowAddress) {
-    const token = String(memArg || "").trim();
-    const match = token.match(/^(.+?)\(([^)]+)\)$/);
-    if (match) {
-      const offsetRaw = match[1].trim();
-      const baseRaw = match[2].trim().toLowerCase();
-      const offset = parseImmediate(offsetRaw);
-      const offsetValue = Number.isFinite(offset) ? offset : (labels.get(offsetRaw.toLowerCase()) ?? 0);
-      const baseValue = registers.get(baseRaw) ?? registers.get(baseRaw.replace(/^\$/, "")) ?? 0;
-      return (((baseValue | 0) + (offsetValue | 0)) >>> 0);
-    }
-
-    const labelAddress = labels.get(token.toLowerCase());
-    if (Number.isFinite(labelAddress)) return labelAddress >>> 0;
-
-    const immediate = parseImmediate(token);
-    if (Number.isFinite(immediate)) {
-      if (Math.abs(immediate) < 0x10000) return (((rowAddress + 4) | 0) + ((immediate | 0) << 2)) >>> 0;
-      return immediate >>> 0;
-    }
-
-    return null;
-  }
-
-  function resolveSourceValue(opcode, sourceToken, registers, snapshot) {
-    const token = String(sourceToken || "").trim().toLowerCase();
-    const regValue = registers.get(token) ?? registers.get(token.replace(/^\$/, "")) ?? 0;
-    if (opcode === "sb") return regValue & 0xff;
-    if (opcode === "sh") return regValue & 0xffff;
-    if (opcode === "swc1") {
-      const idx = Number.parseInt(token.replace(/^\$f/, ""), 10);
-      if (Number.isFinite(idx) && Array.isArray(snapshot?.cop1)) return snapshot.cop1[idx] | 0;
-    }
-    return regValue | 0;
-  }
-
-  function extractMemoryAccess(previousSnapshot) {
-    const row = (previousSnapshot?.textRows || []).find((entry) => entry.isCurrent);
-    if (!row) return null;
-    const tokens = parseTokens(row.basic || row.source);
-    if (!tokens.length) return null;
-    const opcode = tokens[0].toLowerCase();
-    if (!MEMORY_OPS.has(opcode)) return null;
-    const args = tokens.slice(1);
-    const memArg = args[1] ?? args[0];
-    if (!memArg) return null;
-    const registers = buildRegisterMap(previousSnapshot);
-    const labels = buildLabelMap(previousSnapshot);
-    const address = resolveMemoryAddress(memArg, registers, labels, row.address >>> 0);
-    if (!Number.isFinite(address)) return null;
-    return {
-      opcode,
-      write: WRITE_OPS.has(opcode),
-      address: address >>> 0,
-      value: resolveSourceValue(opcode, args[0], registers, previousSnapshot)
-    };
   }
 
   function createCell() {
@@ -434,7 +336,6 @@
       let dirty = new Set();
       let cursorOverlayIndex = -1;
       let inputQueue = [];
-      let stepHistory = new Map();
       let savedCursor = { row: 0, col: 0 };
       let terminalState = null;
       let detachMemoryObserver = () => {};
@@ -446,6 +347,53 @@
       let polledTxCount = 0;
       let localEchoEnabled = false;
       let crlfTranslationEnabled = true;
+      let activeHistoryStep = null;
+      let suppressHistory = false;
+      const history = ctx.createToolDeltaHistory({
+        applyInverse(delta) {
+          if (!delta) return;
+          suppressHistory = true;
+          try {
+            inputQueue = Array.isArray(delta.inputQueue) ? delta.inputQueue.map((value) => value & 0xff) : [];
+            savedCursor = {
+              row: delta.savedCursor?.row | 0,
+              col: delta.savedCursor?.col | 0
+            };
+            observerReadCount = delta.observerReadCount | 0;
+            observerWriteCount = delta.observerWriteCount | 0;
+            snapshotReadCount = delta.snapshotReadCount | 0;
+            snapshotWriteCount = delta.snapshotWriteCount | 0;
+            polledTxCount = delta.polledTxCount | 0;
+            if (delta.mmio) {
+              const { RECEIVER_CONTROL, RECEIVER_DATA, TRANSMITTER_CONTROL, TRANSMITTER_DATA } = addresses();
+              writeByteSafe(RECEIVER_CONTROL, delta.mmio.receiverControl);
+              writeByteSafe(RECEIVER_DATA, delta.mmio.receiverData);
+              writeByteSafe(TRANSMITTER_CONTROL, delta.mmio.transmitterControl);
+              writeByteSafe(TRANSMITTER_DATA, delta.mmio.transmitterData);
+            }
+
+            if (delta.fullTerminalState) {
+              terminalState = cloneTerminalState(delta.fullTerminalState);
+            } else if (terminalState && delta.terminalState) {
+              Object.assign(terminalState, delta.terminalState);
+              if (delta.cells instanceof Map) {
+                delta.cells.forEach((cell, index) => {
+                  if (index >= 0 && index < terminalState.cells.length) {
+                    terminalState.cells[index] = cloneCell(cell);
+                  }
+                });
+              }
+            }
+          } finally {
+            suppressHistory = false;
+          }
+          dirty = new Set();
+          dirtyAll = true;
+          cursorOverlayIndex = -1;
+          scheduleRender();
+          updateStatus();
+        }
+      });
 
       function mmioBase() {
         return (ctx.engine?.memoryMap?.mmioBase ?? ctx.defaultMemoryMap?.mmioBase ?? 0xffff0000) >>> 0;
@@ -507,17 +455,9 @@
         return (readByteSafe(address) & 1) === 1;
       }
 
-      function getSnapshotStep(snapshot = lastSnapshot) {
-        return snapshot ? (snapshot.steps | 0) : 0;
-      }
-
-      function pruneFutureHistory(step) {
-        const normalizedStep = step | 0;
-        for (const candidate of [...stepHistory.keys()]) {
-          if ((candidate | 0) > normalizedStep) {
-            stepHistory.delete(candidate);
-          }
-        }
+      function getSnapshotStep(snapshot = null) {
+        if (snapshot && Number.isFinite(snapshot.steps)) return snapshot.steps | 0;
+        return Number.isFinite(ctx.engine?.steps) ? (ctx.engine.steps | 0) : 0;
       }
 
       function cloneCell(cell) {
@@ -550,65 +490,79 @@
         };
       }
 
-      function captureToolState() {
+      function captureTerminalScalars() {
+        if (!terminalState) return null;
         return {
+          rows: terminalState.rows | 0,
+          columns: terminalState.columns | 0,
+          cursorRow: terminalState.cursorRow | 0,
+          cursorCol: terminalState.cursorCol | 0,
+          savedRow: terminalState.savedRow | 0,
+          savedCol: terminalState.savedCol | 0,
+          currentFg: terminalState.currentFg | 0,
+          currentBg: terminalState.currentBg | 0,
+          currentBold: !!terminalState.currentBold,
+          currentInverse: !!terminalState.currentInverse,
+          parserState: String(terminalState.parserState || "normal"),
+          csiBuffer: String(terminalState.csiBuffer || ""),
+          charsetMode: String(terminalState.charsetMode || "ascii")
+        };
+      }
+
+      function ensureHistoryDelta(step = activeHistoryStep ?? getSnapshotStep()) {
+        if (suppressHistory) return null;
+        const { RECEIVER_CONTROL, RECEIVER_DATA, TRANSMITTER_CONTROL, TRANSMITTER_DATA } = addresses();
+        return history.ensure(step, () => ({
           inputQueue: Array.isArray(inputQueue) ? inputQueue.map((value) => value & 0xff) : [],
           savedCursor: {
             row: savedCursor?.row | 0,
             col: savedCursor?.col | 0
           },
-          terminalState: cloneTerminalState(terminalState),
+          terminalState: captureTerminalScalars(),
+          cells: new Map(),
+          fullTerminalState: null,
           observerReadCount: observerReadCount | 0,
           observerWriteCount: observerWriteCount | 0,
           snapshotReadCount: snapshotReadCount | 0,
           snapshotWriteCount: snapshotWriteCount | 0,
-          polledTxCount: polledTxCount | 0
-        };
-      }
-
-      function restoreToolState(state) {
-        if (!state || !state.terminalState) return false;
-        inputQueue = Array.isArray(state.inputQueue) ? state.inputQueue.map((value) => value & 0xff) : [];
-        savedCursor = {
-          row: state.savedCursor?.row | 0,
-          col: state.savedCursor?.col | 0
-        };
-        terminalState = cloneTerminalState(state.terminalState);
-        observerReadCount = state.observerReadCount | 0;
-        observerWriteCount = state.observerWriteCount | 0;
-        snapshotReadCount = state.snapshotReadCount | 0;
-        snapshotWriteCount = state.snapshotWriteCount | 0;
-        polledTxCount = state.polledTxCount | 0;
-        dirty = new Set();
-        dirtyAll = true;
-        cursorOverlayIndex = -1;
-        scheduleRender();
-        updateStatus();
-        return true;
-      }
-
-      function captureHistoryForStep(step) {
-        const normalizedStep = step | 0;
-        pruneFutureHistory(normalizedStep);
-        stepHistory.set(normalizedStep, captureToolState());
-      }
-
-      function restoreHistoryForStep(step) {
-        const normalizedStep = step | 0;
-        if (stepHistory.has(normalizedStep)) {
-          return restoreToolState(stepHistory.get(normalizedStep));
-        }
-        let bestStep = null;
-        for (const candidate of stepHistory.keys()) {
-          if ((candidate | 0) <= normalizedStep && (bestStep == null || (candidate | 0) > (bestStep | 0))) {
-            bestStep = candidate | 0;
+          polledTxCount: polledTxCount | 0,
+          mmio: {
+            receiverControl: readByteSafe(RECEIVER_CONTROL),
+            receiverData: readByteSafe(RECEIVER_DATA),
+            transmitterControl: readByteSafe(TRANSMITTER_CONTROL),
+            transmitterData: readByteSafe(TRANSMITTER_DATA)
           }
+        }));
+      }
+
+      function withHistoryStep(step, callback) {
+        const previousStep = activeHistoryStep;
+        activeHistoryStep = Math.max(0, Number(step) | 0);
+        try {
+          return callback();
+        } finally {
+          activeHistoryStep = previousStep;
         }
-        if (bestStep == null) return false;
-        return restoreToolState(stepHistory.get(bestStep));
+      }
+
+      function recordCellBefore(index) {
+        const delta = ensureHistoryDelta();
+        if (!delta || delta.fullTerminalState || !(delta.cells instanceof Map)) return;
+        const normalizedIndex = index | 0;
+        if (delta.cells.has(normalizedIndex)) return;
+        const cell = terminalState?.cells?.[normalizedIndex];
+        if (cell) delta.cells.set(normalizedIndex, cloneCell(cell));
+      }
+
+      function recordFullTerminalBefore() {
+        const delta = ensureHistoryDelta();
+        if (!delta || delta.fullTerminalState) return;
+        delta.fullTerminalState = cloneTerminalState(terminalState);
+        delta.cells = new Map();
       }
 
       function resetTerminalState() {
+        if (terminalState && !suppressHistory) recordFullTerminalBefore();
         const cellCount = TERMINAL_GEOMETRY.columns * TERMINAL_GEOMETRY.rows;
         terminalState = {
           rows: TERMINAL_GEOMETRY.rows,
@@ -644,7 +598,9 @@
       function writeCell(row, col, ch, attrs = null) {
         if (!terminalState) return;
         if (row < 0 || row >= terminalState.rows || col < 0 || col >= terminalState.columns) return;
-        const cell = terminalState.cells[idx(row, col)];
+        const cellIndex = idx(row, col);
+        recordCellBefore(cellIndex);
+        const cell = terminalState.cells[cellIndex];
         const next = attrs || {
           fg: terminalState.currentFg,
           bg: terminalState.currentBg,
@@ -663,7 +619,9 @@
         if (!terminalState) return;
         for (let row = 1; row < terminalState.rows; row += 1) {
           for (let col = 0; col < terminalState.columns; col += 1) {
-            const target = terminalState.cells[idx(row - 1, col)];
+            const targetIndex = idx(row - 1, col);
+            recordCellBefore(targetIndex);
+            const target = terminalState.cells[targetIndex];
             const source = terminalState.cells[idx(row, col)];
             target.ch = source.ch;
             target.fg = source.fg;
@@ -673,7 +631,9 @@
           }
         }
         for (let col = 0; col < terminalState.columns; col += 1) {
-          const cell = terminalState.cells[idx(terminalState.rows - 1, col)];
+          const cellIndex = idx(terminalState.rows - 1, col);
+          recordCellBefore(cellIndex);
+          const cell = terminalState.cells[cellIndex];
           cell.ch = " ";
           cell.fg = terminalState.currentFg;
           cell.bg = terminalState.currentBg;
@@ -927,6 +887,7 @@
 
       function processTerminalByte(byteValue) {
         if (!terminalState) return;
+        ensureHistoryDelta();
         const byte = byteValue & 0xff;
 
         if (terminalState.parserState === "esc") {
@@ -1096,9 +1057,9 @@
       }
 
       function queueInputBytes(bytes) {
+        ensureHistoryDelta(getSnapshotStep());
         bytes.forEach((value) => inputQueue.push(value & 0xff));
         feedReceiverFromQueue();
-        captureHistoryForStep(getSnapshotStep());
         updateStatus();
       }
 
@@ -1111,32 +1072,10 @@
         if (!connected || !inputQueue.length) return;
         const { RECEIVER_CONTROL, RECEIVER_DATA } = addresses();
         if (isReadyBitSet(RECEIVER_CONTROL)) return;
+        ensureHistoryDelta();
         const byte = inputQueue.shift() | 0;
         writeByteSafe(RECEIVER_DATA, byte & 0xff);
         writeByteSafe(RECEIVER_CONTROL, readyBitSet(RECEIVER_CONTROL));
-      }
-
-      function processSnapshotAccess(previousSnapshot) {
-        if (!connected || !previousSnapshot) return;
-        const { RECEIVER_DATA, RECEIVER_CONTROL, TRANSMITTER_DATA, TRANSMITTER_CONTROL } = addresses();
-        const access = extractMemoryAccess(previousSnapshot);
-        if (!access) return;
-        if (!access.write && access.address === (RECEIVER_DATA >>> 0)) {
-          snapshotReadCount += 1;
-          writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
-          writeByteSafe(RECEIVER_DATA, 0);
-          feedReceiverFromQueue();
-          updateStatus();
-          return;
-        }
-        if (access.write && access.address === (TRANSMITTER_DATA >>> 0) && observerWriteCount === 0) {
-          snapshotWriteCount += 1;
-          writeByteSafe(TRANSMITTER_CONTROL, readyBitCleared(TRANSMITTER_CONTROL));
-          processTerminalByte(access.value | 0);
-          writeByteSafe(TRANSMITTER_DATA, 0);
-          writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
-          updateStatus();
-        }
       }
 
       function syncDeviceRegisters() {
@@ -1148,6 +1087,7 @@
         if (observerWriteCount === 0) {
           const txByte = readByteSafe(TRANSMITTER_DATA);
           if (txByte !== 0) {
+            ensureHistoryDelta(getSnapshotStep());
             polledTxCount += 1;
             processTerminalByte(txByte);
             writeByteSafe(TRANSMITTER_DATA, 0);
@@ -1190,24 +1130,30 @@
           start: RECEIVER_DATA,
           end: TRANSMITTER_DATA,
           onRead(detail) {
-            if (!connected) return;
+            if (!connected || suppressHistory) return;
             if ((detail?.address >>> 0) !== (RECEIVER_DATA >>> 0)) return;
-            observerReadCount += 1;
-            writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
-            writeByteSafe(RECEIVER_DATA, 0);
-            feedReceiverFromQueue();
-            updateStatus();
+            withHistoryStep((detail?.steps | 0) + 1, () => {
+              ensureHistoryDelta();
+              observerReadCount += 1;
+              writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
+              writeByteSafe(RECEIVER_DATA, 0);
+              feedReceiverFromQueue();
+              updateStatus();
+            });
           },
           onWrite(detail) {
-            if (!connected) return;
+            if (!connected || suppressHistory) return;
             if ((detail?.address >>> 0) !== (TRANSMITTER_DATA >>> 0)) return;
-            observerWriteCount += 1;
-            if (!isReadyBitSet(TRANSMITTER_CONTROL)) return;
-            writeByteSafe(TRANSMITTER_CONTROL, readyBitCleared(TRANSMITTER_CONTROL));
-            processTerminalByte(detail?.value | 0);
-            writeByteSafe(TRANSMITTER_DATA, 0);
-            writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
-            updateStatus();
+            withHistoryStep((detail?.steps | 0) + 1, () => {
+              ensureHistoryDelta();
+              observerWriteCount += 1;
+              if (!isReadyBitSet(TRANSMITTER_CONTROL)) return;
+              writeByteSafe(TRANSMITTER_CONTROL, readyBitCleared(TRANSMITTER_CONTROL));
+              processTerminalByte(detail?.value | 0);
+              writeByteSafe(TRANSMITTER_DATA, 0);
+              writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
+              updateStatus();
+            });
           }
         });
       }
@@ -1248,8 +1194,9 @@
       }
 
       function resetDevice() {
+        history.clear(getSnapshotStep());
+        suppressHistory = true;
         inputQueue = [];
-        stepHistory = new Map();
         observerReadCount = 0;
         observerWriteCount = 0;
         snapshotReadCount = 0;
@@ -1265,12 +1212,12 @@
           terminalState.charsetMode = "ascii";
         }
         resetTerminalState();
+        suppressHistory = false;
         const { TRANSMITTER_CONTROL, TRANSMITTER_DATA, RECEIVER_CONTROL, RECEIVER_DATA } = addresses();
         writeByteSafe(TRANSMITTER_DATA, 0);
         writeByteSafe(RECEIVER_DATA, 0);
         writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
         writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
-        captureHistoryForStep(getSnapshotStep());
         updateStatus();
       }
 
@@ -1366,7 +1313,7 @@
           attachMmioObserver();
           startSyncTimer();
           feedReceiverFromQueue();
-          captureHistoryForStep(getSnapshotStep());
+          history.sync(lastSnapshot);
           canvas.focus();
           ctx.messagesPane.postMars(`${t("[tool] TTY ANSI Terminal connected to keyboard/display MMIO {address}.", {
             address: toHex32(mmioBase())
@@ -1405,8 +1352,13 @@
       refreshUiText();
 
       return {
+        isConnected: () => connected,
         open() {
           shell.open();
+          if (connected) {
+            attachMmioObserver();
+            startSyncTimer();
+          }
           canvas.focus();
           dirtyAll = true;
           scheduleRender();
@@ -1417,7 +1369,7 @@
           shell.close();
         },
         onSnapshot(snapshot) {
-          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
+          const previous = lastSnapshot;
           lastSnapshot = snapshot;
           if (!connected) {
             updateStatus();
@@ -1426,24 +1378,28 @@
           const nextStep = getSnapshotStep(snapshot);
           const previousStep = getSnapshotStep(previous);
           if (previous == null) {
-            captureHistoryForStep(nextStep);
+            history.sync(snapshot);
             syncDeviceRegisters();
             updateStatus();
             return;
           }
           if (nextStep < previousStep) {
-            restoreHistoryForStep(nextStep);
-            pruneFutureHistory(nextStep);
+            history.rewind(nextStep);
+            history.sync(snapshot);
             updateStatus();
             return;
           }
           if (nextStep > previousStep) {
-            processSnapshotAccess(previous);
-            syncDeviceRegisters();
-            captureHistoryForStep(nextStep);
+            withHistoryStep(nextStep, syncDeviceRegisters);
+            history.sync(snapshot);
             updateStatus();
             return;
           }
+          updateStatus();
+        },
+        onBackstep(event) {
+          if (!connected || !event) return;
+          history.rewind(event.stepAfter | 0);
           updateStatus();
         }
       };

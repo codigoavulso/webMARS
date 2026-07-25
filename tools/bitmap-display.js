@@ -122,6 +122,7 @@
     { value: 0x10000000, label: "0x10000000 (global data)" },
     { value: 0x10008000, label: "0x10008000 ($gp)" },
     { value: 0x10010000, label: "0x10010000 (static data)" },
+    { value: 0x10020000, label: "0x10020000 (safe Mini-C framebuffer)" },
     { value: 0x10040000, label: "0x10040000 (heap)" },
     { value: 0xffff0000, label: "0xFFFF0000 (memory map)" }
   ];
@@ -361,6 +362,9 @@
       }
 
       function readMemoryWords(snapshot) {
+        // Runtime events are delivered without per-instruction snapshots. Read the
+        // engine's current map so an animation frame never redraws stale memory.
+        if (ctx.engine?.memoryWords instanceof Map) return ctx.engine.memoryWords;
         if (!snapshot) return new Map();
         if (snapshot.memoryWords instanceof Map) return snapshot.memoryWords;
         if (Array.isArray(snapshot.memoryWords)) return new Map(snapshot.memoryWords);
@@ -600,6 +604,7 @@
       refreshUiText();
 
       return {
+        isConnected: () => connected,
         open() {
           shell.open();
           applyLayoutDefaultResolution(false);
@@ -635,6 +640,41 @@
             pendingWriteAddress = writeAddress;
             scheduleRender();
           }
+        },
+        onRuntimeEvent(event) {
+          if (!connected || !event) return;
+          if (event.type === "backstep") {
+            lastSnapshotStep = event.stepAfter | 0;
+            fullRedrawNeeded = true;
+            pendingWriteAddress = null;
+            scheduleRender();
+            return;
+          }
+          if (event.type !== "instruction") return;
+          lastSnapshotStep = event.stepAfter | 0;
+          const writes = (Array.isArray(event.memoryAccesses) ? event.memoryAccesses : [])
+            .filter((access) => access?.kind === "write" && isAddressVisible(access.address >>> 0));
+          if (!writes.length) return;
+          if (writes.length > 1) {
+            fullRedrawNeeded = true;
+            pendingWriteAddress = null;
+          } else {
+            const nextWriteAddress = writes[0].address >>> 0;
+            if (pendingWriteAddress != null && pendingWriteAddress !== nextWriteAddress) {
+              fullRedrawNeeded = true;
+              pendingWriteAddress = null;
+            } else if (!fullRedrawNeeded) {
+              pendingWriteAddress = nextWriteAddress;
+            }
+          }
+          scheduleRender();
+        },
+        onBackstep(event) {
+          if (!connected || !event) return;
+          lastSnapshotStep = event.stepAfter | 0;
+          fullRedrawNeeded = true;
+          pendingWriteAddress = null;
+          scheduleRender();
         }
       };
     }

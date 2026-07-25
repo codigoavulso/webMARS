@@ -8,7 +8,17 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">A versão 0.4.7 consolida o runtime JavaScript atual, os exemplos e a documentação multilingue. O histórico do repositório contém as alterações individuais.</p>
+  <p class="lead">A versão 0.4.8 melhora a execução prolongada, a causalidade das ferramentas e a eficiência de memória, preservando o runtime JavaScript puro.</p>
+
+  <h2>0.4.8 — backsteps por diferenças e dispositivos síncronos</h2>
+  <ul>
+    <li>Substituição dos snapshots completos por instrução por diferenças inversas limitadas.</li>
+    <li>Separação entre dispositivos MMIO síncronos, eventos compactos em lote e snapshots periódicos das ferramentas.</li>
+    <li>Correção da causalidade de entrada/saída, backsteps e custo de ferramentas ocultas no Keyboard/Display e TTY.</li>
+    <li>Correção da atualização em lote nas ferramentas de cache, instruções, referências de memória e bitmap.</li>
+    <li>Framebuffers dos exemplos Mini-C afastados dos globais do compilador e Bitmap Display sincronizado com a memória atual.</li>
+    <li>Faixa Bench opcional nas Preferências da interface e oculta por predefinição.</li>
+  </ul>
 
   <h2>0.4.7 — reforço do runtime JavaScript e documentação completa</h2>
   <ul>
