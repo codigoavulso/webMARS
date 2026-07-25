@@ -98,7 +98,6 @@
       let rCount = 0;
       let iCount = 0;
       let jCount = 0;
-      let lastAddress = null;
       let lastSnapshot = null;
 
       function render() {
@@ -126,16 +125,12 @@
         rCount = 0;
         iCount = 0;
         jCount = 0;
-        lastAddress = null;
         render();
       }
 
-      function processStep(previousSnapshot) {
+      function processStep(previousSnapshot, shouldRender = true) {
         const row = (previousSnapshot?.textRows || []).find((entry) => entry.isCurrent);
         if (!row) return;
-        const addr = row.address >>> 0;
-        if (addr === lastAddress) return;
-        lastAddress = addr;
 
         const tokens = parseTokens(row.basic || row.source);
         const opcode = tokens[0] || "";
@@ -145,7 +140,7 @@
         if (category === "R") rCount += 1;
         else if (category === "I") iCount += 1;
         else if (category === "J") jCount += 1;
-        render();
+        if (shouldRender) render();
       }
 
       root.querySelector("[data-ic='connect']").addEventListener("click", (event) => {
@@ -160,12 +155,12 @@
       return {
         open: shell.open,
         close: shell.close,
-        onSnapshot(snapshot) {
-          const previous = lastSnapshot;
+        onSnapshot(snapshot, delivery = {}) {
+          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
           lastSnapshot = snapshot;
           if (!connected || !snapshot || !previous) return;
           if ((snapshot.steps | 0) <= (previous.steps | 0)) return;
-          processStep(previous);
+          processStep(previous, delivery.isLast !== false);
         }
       };
     }

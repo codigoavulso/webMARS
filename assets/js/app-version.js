@@ -1,12 +1,19 @@
 (() => {
   const globalScope = typeof window !== "undefined" ? window : globalThis;
   const APP_NAME = "webMARS";
-  const APP_VERSION = "0.4.6";
+  const APP_VERSION = "0.4.7";
   const VERSION_TOKEN = "__WEBMARS_APP_VERSION__";
 
   function replaceVersionToken(value) {
     if (typeof value !== "string" || value.indexOf(VERSION_TOKEN) === -1) return value;
     return value.split(VERSION_TOKEN).join(APP_VERSION);
+  }
+
+  function withVersion(value) {
+    const source = String(value || "");
+    if (!source || /^(?:data:|blob:|#)/i.test(source) || /(?:[?&])v=/.test(source)) return source;
+    const separator = source.includes("?") ? "&" : "?";
+    return `${source}${separator}v=${encodeURIComponent(APP_VERSION)}`;
   }
 
   function applyVersionTokens(rootDocument = document) {
@@ -47,6 +54,7 @@
     token: VERSION_TOKEN,
     label: `${APP_NAME} ${APP_VERSION}`,
     replaceVersionToken,
+    withVersion,
     applyVersionTokens
   });
 

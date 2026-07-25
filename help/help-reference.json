@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-14T21:33:43.334Z",
+  "generatedAt": "2026-07-25T00:00:00.000Z",
   "source": {
-    "basicInstructions": "../mars/mips/instructions/InstructionSet.java",
-    "extendedInstructions": "../PseudoOps.txt",
-    "directives": "../mars/assembler/Directives.java"
+    "basicInstructions": "../assets/js/reference/instructions.generated.js",
+    "extendedInstructions": "../assets/js/reference/pseudo-ops.generated.js",
+    "directives": "../assets/js/app-modules/00-core.js"
   },
   "basicInstructions": [
     {
@@ -260,7 +260,7 @@
     },
     {
       "example": "ll $t1,-100($t2)",
-      "description": "Load linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)"
     },
     {
       "example": "lui $t1,100",
@@ -297,6 +297,10 @@
     {
       "example": "mfc1 $t1,$f1",
       "description": "Move from Coprocessor 1 (FPU) : Set $t1 to value in Coprocessor 1 register $f1"
+    },
+    {
+      "example": "cfc1 $t1,$31",
+      "description": "Move from Coprocessor 1 control : Set $t1 to the FCSR control and status value"
     },
     {
       "example": "mfhi $t1",
@@ -403,6 +407,10 @@
       "description": "Move to Coprocessor 1 (FPU) : Set Coprocessor 1 register $f1 to value in $t1"
     },
     {
+      "example": "ctc1 $t1,$31",
+      "description": "Move to Coprocessor 1 control : Set FCSR, including its rounding mode, to the value in $t1"
+    },
+    {
       "example": "mthi $t1",
       "description": "Move to HI registerr : Set HI to contents of $t1 (see multiply and divide operations)"
     },
@@ -468,7 +476,7 @@
     },
     {
       "example": "sc $t1,-100($t2)",
-      "description": "Store conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Stores $t1 value into effective address, then sets $t1 to 1 for success.  Always succeeds because MARS does not simulate multiple processors."
+      "description": "Store conditional : Store $t1 only if the matching Load Linked reservation is still valid, then set $t1 to 1 on success or 0 on failure"
     },
     {
       "example": "sdc1 $f2,-100($t2)",
@@ -1162,43 +1170,43 @@
     },
     {
       "example": "ll $t1,-100",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
     },
     {
       "example": "ll $t1,($t2)",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
     },
     {
       "example": "ll $t1,100",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
     },
     {
       "example": "ll $t1,100($t2)",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
     },
     {
       "example": "ll $t1,100000",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
     },
     {
       "example": "ll $t1,100000($t2)",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
     },
     {
       "example": "ll $t1,label",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
     },
     {
       "example": "ll $t1,label($t2)",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
     },
     {
       "example": "ll $t1,label+100000",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
     },
     {
       "example": "ll $t1,label+100000($t2)",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
     },
     {
       "example": "lw $t1,-100",
@@ -1586,43 +1594,43 @@
     },
     {
       "example": "sc $t1,-100",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
     },
     {
       "example": "sc $t1,($t2)",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
     },
     {
       "example": "sc $t1,100",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
     },
     {
       "example": "sc $t1,100($t2)",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
     },
     {
       "example": "sc $t1,100000",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
     },
     {
       "example": "sc $t1,100000($t2)",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
     },
     {
       "example": "sc $t1,label",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
     },
     {
       "example": "sc $t1,label($t2)",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
     },
     {
       "example": "sc $t1,label+100000",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
     },
     {
       "example": "sc $t1,label+100000($t2)",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
     },
     {
       "example": "sd $t1,-100($t2)",

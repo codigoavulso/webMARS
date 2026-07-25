@@ -1065,6 +1065,60 @@
     return diagnostic;
   }
 
+  function requiredSubsetFromDiagnostic(diagnostic) {
+    const message = typeof diagnostic === "string"
+      ? diagnostic
+      : String(diagnostic?.message || "");
+    const match = message.match(/\brequires?\s+(?:compiler\s+)?subset\s+(C1(?:[\/_-]NATIVE)?|C0-S[0-4])\b/i);
+    if (!match) return "";
+    const required = String(match[1] || "").toUpperCase();
+    return required.startsWith("C1") ? "C1-NATIVE" : normalizeSubsetName(required);
+  }
+
+  function compactSubsetMismatchDiagnostics(diagnostics, activeSubset) {
+    const entries = Array.isArray(diagnostics) ? diagnostics : [];
+    const currentSubset = normalizeSubsetName(activeSubset || "C1-NATIVE");
+    const currentLevel = subsetLevel(currentSubset);
+    const subsetDiagnostics = [];
+    const independentDiagnostics = [];
+    let requiredSubset = "";
+    let requiredLevel = currentLevel;
+
+    entries.forEach((diagnostic) => {
+      const candidate = requiredSubsetFromDiagnostic(diagnostic);
+      if (!candidate) {
+        independentDiagnostics.push(diagnostic);
+        return;
+      }
+      subsetDiagnostics.push(diagnostic);
+      const candidateLevel = subsetLevel(candidate);
+      if (candidateLevel <= requiredLevel) return;
+      requiredSubset = candidate;
+      requiredLevel = candidateLevel;
+    });
+
+    if (!requiredSubset) return entries;
+
+    const summary = createDiagnostic(
+      `Source requires compiler subset ${requiredSubset}, but the current subset is ${currentSubset}.`,
+      null,
+      "semantic",
+      {
+        code: "MC_SUBSET_MISMATCH",
+        suggestion: {
+          code: "MC_SUGGEST_RAISE_SUBSET",
+          message: `Use compiler subset ${requiredSubset}.`,
+          action: `Select '${requiredSubset}' in Mini-C compiler preferences or rewrite the unsupported features.`
+        }
+      }
+    );
+    summary.requiredSubset = requiredSubset;
+    summary.currentSubset = currentSubset;
+    const preservedDiagnostics = requiredSubset === "C1-NATIVE" ? [] : independentDiagnostics;
+    summary.suppressedDiagnosticCount = Math.max(0, entries.length - preservedDiagnostics.length - 1);
+    return [summary, ...preservedDiagnostics];
+  }
+
   function tokenize(sourceText) {
     const source = String(sourceText ?? "");
     const tokens = [];
@@ -7138,6 +7192,7 @@
 
     const semantic = analyzeProgram(ast, { subset });
     if (!semantic.ok) {
+      const semanticErrors = compactSubsetMismatchDiagnostics(semantic.diagnostics, subset);
       return {
         ok: false,
         sourceName,
@@ -7147,7 +7202,7 @@
         targetAbi,
         logs,
         warnings,
-        errors: semantic.diagnostics
+        errors: semanticErrors
       };
     }
 

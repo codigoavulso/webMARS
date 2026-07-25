@@ -8,8 +8,9 @@
   <meta name="description" content="webMARS is a browser-based MIPS assembler and simulator inspired by MARS 4.5. Write, assemble and run MIPS code directly in your browser.">
   <meta name="keywords" content="MIPS simulator, MIPS assembler, MARS MIPS, MIPS online, MIPS IDE, MIPS assembly simulator">
   <meta name="author" content="codigoavulso">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta property="og:title" content="webMARS - MIPS Simulator in the Browser">
   <meta property="og:description" content="Run MIPS assembly code directly in your browser with a MARS-style IDE.">
   <meta property="og:type" content="website">
@@ -22,8 +23,8 @@
   <meta name="twitter:image" content="https://webmars.nfiles.top/assets/images/screenshot-main.png">
 
   <link rel="icon" href="./favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="./assets/css/styles.css" />
-  <script src="./assets/js/app-version.js"></script>
+  <link rel="stylesheet" href="./assets/css/styles.css?v=0.4.7" />
+  <script src="./assets/js/app-version.js?v=0.4.7"></script>
   <style>
     .webmars-loader {
       position: fixed;
@@ -108,7 +109,8 @@
 
   <script>
     (function bootstrapWebMars() {
-      const APP_BUNDLE_SRC = "./assets/js/app.bundle.js";
+      const APP_BUNDLE_SRC = window.WebMarsAppVersion?.withVersion?.("./assets/js/app.bundle.js")
+        || "./assets/js/app.bundle.js";
       const SPLASH_MAX_MS = 4500;
       const loader = document.getElementById("webmars-loader");
       const loaderTitle = document.getElementById("webmars-loader-title");

@@ -103,10 +103,6 @@ glyph_table:
 .text
 .globl main
 main:
-  # stack relativamente segura
-  lui  $sp, 0x7FFF
-  ori  $sp, $sp, 0xEFFC
-
   jal  console_init
   nop
 
@@ -645,9 +641,8 @@ dg_next:
 # kernel_main: lee el teclado por MMIO y hace eco
 # ------------------------------------------------------------
 kernel_main:
-  li   $t0,KBD_CTRL
-
 loop:
+  li   $t0,KBD_CTRL
   lw   $t1,0($t0)
   andi $t1,$t1,1
   beqz $t1,loop
@@ -656,22 +651,8 @@ loop:
   lw   $a0,4($t0)
   andi $a0,$a0,0xFF
 
-  jal  draw_debug_char
+  jal  console_putc
   nop
 
   j loop
-  nop
-  
-draw_debug_char:
-  addiu $sp,$sp,-8
-  sw    $ra,4($sp)
-
-  li    $a1,0
-  li    $a2,0
-  jal   draw_char_cell
-  nop
-
-  lw    $ra,4($sp)
-  addiu $sp,$sp,8
-  jr    $ra
   nop

@@ -1,184 +1,43 @@
-﻿<!DOCTYPE html>
+<!doctype html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>webMARS __WEBMARS_APP_VERSION__ - InformaÃ§Ã£o</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg-top: #edf3fb;
-      --bg-bottom: #eef1f5;
-      --card: #ffffff;
-      --card-border: #c8d4e3;
-      --soft: #f9fbfe;
-      --soft-border: #dde6f1;
-      --text: #1f2c3b;
-      --muted: #445a72;
-      --accent: #2f5e93;
-      --accent-soft: #e1ecf9;
-    }
-
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      padding: 16px;
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      font-size: 14px;
-      line-height: 1.5;
-      color: var(--text);
-      background: linear-gradient(145deg, var(--bg-top), #f7f9fc 58%, var(--bg-bottom));
-    }
-
-    .about-shell {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .about-card {
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      box-shadow: 0 8px 22px rgba(29, 49, 77, 0.12);
-      overflow: hidden;
-    }
-
-    .about-head {
-      padding: 18px 20px 16px;
-      background: linear-gradient(180deg, #f8fbff, #eef4fb);
-      border-bottom: 1px solid #d7e1ef;
-    }
-
-    .about-kicker {
-      margin: 0 0 8px;
-      display: inline-block;
-      padding: 3px 9px;
-      border: 1px solid #c3d6ed;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 34px;
-      line-height: 1.1;
-      color: #1d2a3a;
-    }
-
-    .about-sub {
-      margin: 10px 0 0;
-      color: var(--muted);
-      max-width: 72ch;
-    }
-
-    .about-body {
-      padding: 16px 20px 20px;
-      display: grid;
-      gap: 12px;
-    }
-
-    .about-block {
-      padding: 12px 14px;
-      background: var(--soft);
-      border: 1px solid var(--soft-border);
-      border-radius: 9px;
-    }
-
-    h2 {
-      margin: 0 0 7px;
-      font-size: 16px;
-      color: #223446;
-    }
-
-    p {
-      margin: 0;
-    }
-
-    ul {
-      margin: 0;
-      padding-left: 18px;
-    }
-
-    .about-links {
-      margin-top: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .about-link {
-      display: inline-block;
-      text-decoration: none;
-      color: #1f3d5b;
-      background: #e9f1fb;
-      border: 1px solid #c3d6ed;
-      border-radius: 7px;
-      padding: 5px 10px;
-      font-weight: 600;
-    }
-
-    .about-link:hover {
-      background: #deebf9;
-    }
-
-    @media (max-width: 560px) {
-      body { padding: 10px; }
-      .about-head { padding: 14px 14px 12px; }
-      .about-body { padding: 12px 14px 14px; }
-      h1 { font-size: 28px; }
-    }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Informação do webMARS __WEBMARS_APP_VERSION__</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
 </head>
 <body>
-  <main class="about-shell">
-    <article class="about-card">
-      <header class="about-head">
-        <p class="about-kicker">MARS no navegador</p>
-        <h1>webMARS __WEBMARS_APP_VERSION__</h1>
-        <p class="about-sub">webMARS Ã© uma porta JavaScript do simulador original MARS MIPS 4.5, adaptado para ser executado nativamente no navegador.</p>
-      </header>
+  <h1>webMARS __WEBMARS_APP_VERSION__</h1>
+  <p class="lead">Ambiente educativo MIPS32 nativo do browser com assembler, simulador JavaScript, depurador, compilador Mini-C, exemplos e dispositivos interativos.</p>
 
-      <section class="about-body">
-        <section class="about-block">
-          <h2>CrÃ©ditos</h2>
-          <ul>
-            <li>VersÃ£o original em Java: Pete Sanderson, Kenneth Vollmar e colaboradores (2003-2013).</li>
-            <li>Porta JavaScript: Nelson Ferreira (2020-2026).</li>
-          </ul>
-        </section>
+  <div class="cards">
+    <section class="card"><h3>Sem instalação</h3><p>Funciona num browser moderno. Não necessita de Java nem WebAssembly.</p></section>
+    <section class="card"><h3>Local por omissão</h3><p>Edite, compile, execute, guarde no browser e descarregue sem iniciar sessão.</p></section>
+    <section class="card"><h3>Orientado ao ensino</h3><p>Sintaxe, syscalls, mapas, ferramentas e perfis Mini-C ao estilo MARS.</p></section>
+  </div>
 
-        <section class="about-block">
-          <h2>Privacidade &amp; LicenÃ§a</h2>
-          <p>O webMARS Ã© gratuito e de cÃ³digo aberto, sem publicidade, sem cookies e sem coleta de dados do usuÃ¡rio.</p>
-          <p>DistribuÃ­do sob a licenÃ§a MIT.</p>
-        </section>
+  <h2>Capacidades atuais</h2>
+  <ul>
+    <li>Execução MIPS32 de inteiros, memória, desvios, exceções, LL/SC e COP1.</li>
+    <li>Referência de instruções básicas e pseudo, macros e compatibilidade configurável.</li>
+    <li>Breakpoints, passos, backstep, pausa, paragem, reset e snapshots.</li>
+    <li>Compilação Mini-C C0-S0 a C0-S4 e C1-NATIVE com o32.</li>
+    <li>Dezasseis ferramentas, exemplos multilingues e projetos Cloud opcionais.</li>
+    <li>Benchmarks locais de Compilar, Montar e Executar com estimativa de utilização JavaScript.</li>
+  </ul>
 
-        <section class="about-block">
-          <h2>Status</h2>
-          <p>Trata-se de um projeto em curso. Alguns comportamentos podem ser diferentes do Java MARS de desktop em casos de borda.</p>
-        </section>
+  <h2>Privacidade</h2>
+  <p>O webMARS não tem publicidade. Fontes, preferências, ficheiros virtuais, recuperação, benchmarks e estado permanecem no dispositivo por omissão. As amostras de desempenho são voláteis e não são transmitidas.</p>
+  <p>Cloud é opcional. Ao iniciar sessão ou sincronizar, dados da conta/sessão e do projeto são enviados para o servidor configurado nas Definições. Reveja os termos do operador antes de usar um servidor externo.</p>
 
-        <section class="about-block">
-          <h2>Contato</h2>
-          <p>Nelson Ferreira</p>
-          <div class="about-links">
-            <a class="about-link" href="mailto:nels.ferreira@sapo.pt">nels.ferreira@sapo.pt</a>
-            <a class="about-link" href="https://github.com/codigoavulso/webMARS/" target="_blank" rel="noopener noreferrer">RepositÃ³rio no GitHub</a>
-          </div>
-        </section>
-      </section>
-    </article>
-  </main>
-<script src="../../assets/js/app-version.js"></script>
+  <h2>Créditos e licença</h2>
+  <ul>
+    <li>MARS original: Pete Sanderson, Kenneth Vollmar e colaboradores (2003–2013).</li>
+    <li>Implementação webMARS: Nelson Ferreira (2020–2026).</li>
+  </ul>
+  <p>O webMARS é software livre e open-source distribuído sob a licença MIT. O material histórico MARS mantém os seus próprios avisos.</p>
+
+  <p><a href="https://github.com/codigoavulso/webMARS/" target="_blank" rel="noopener noreferrer">Repositório</a> · <a href="mailto:nels.ferreira@sapo.pt">Contacto</a></p>
+  <script src="../../assets/js/app-version.js"></script>
 </body>
 </html>
-
-
-
-

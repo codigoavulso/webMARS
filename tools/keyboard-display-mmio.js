@@ -776,7 +776,7 @@
         },
         close: shell.close,
         onSnapshot(snapshot) {
-          const previous = lastSnapshot;
+          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
           lastSnapshot = snapshot;
           if (!connected || !snapshot) return;
 

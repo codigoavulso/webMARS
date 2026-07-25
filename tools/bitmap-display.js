@@ -584,7 +584,9 @@
       });
 
       helpButton.addEventListener("click", () => {
-        window.open("./help/MarsHelpTools.html", "_blank", "noopener,noreferrer");
+        const language = window.WebMarsI18n?.getLanguage?.() || "en";
+        const supportedLanguage = ["en", "es", "pt"].includes(language) ? language : "en";
+        window.open(`./help/${supportedLanguage}/MarsHelpTools.html`, "_blank", "noopener,noreferrer");
       });
 
       closeButton.addEventListener("click", () => {

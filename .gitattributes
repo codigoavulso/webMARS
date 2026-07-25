@@ -1,0 +1,26 @@
+* text=auto
+
+*.asm text eol=lf
+*.c text eol=lf
+*.c0 text eol=lf
+*.css text eol=lf
+*.h text eol=lf
+*.html text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.mjs text eol=lf
+*.ps1 text eol=lf
+*.s text eol=lf
+*.svg text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.bat text eol=crlf
+
+*.gif binary
+*.ico binary
+*.jpg binary
+*.pdf binary
+*.png binary
+*.wasm binary

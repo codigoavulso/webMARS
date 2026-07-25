@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-03-10T20:29:57.644Z",
+  "generatedAt": "2026-07-25T00:00:00.000Z",
   "source": {
-    "basicInstructions": "../mars/mips/instructions/InstructionSet.java",
-    "extendedInstructions": "../PseudoOps.txt",
-    "directives": "../mars/assembler/Directives.java"
+    "basicInstructions": "../../assets/js/reference/instructions.generated.js",
+    "extendedInstructions": "../../assets/js/reference/pseudo-ops.generated.js",
+    "directives": "../../assets/js/app-modules/00-core.js"
   },
   "basicInstructions": [
     {
@@ -260,7 +260,7 @@
     },
     {
       "example": "ll $t1,-100($t2)",
-      "description": "Carga vinculada: emparelhada com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carga vinculada: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "lui $t1,100",
@@ -297,6 +297,10 @@
     {
       "example": "mfc1 $t1,$f1",
       "description": "Mover do Coprocessador 1 (FPU): Defina $t1 para o valor no registro do Coprocessador 1 $f1"
+    },
+    {
+      "example": "cfc1 $t1,$31",
+      "description": "Mover do controlo do Coprocessador 1: define $t1 com o valor de controlo e estado FCSR"
     },
     {
       "example": "mfhi $t1",
@@ -403,6 +407,10 @@
       "description": "Mover para o coprocessador 1 (FPU): Defina o registro do coprocessador 1 $f1 para o valor em $t1"
     },
     {
+      "example": "ctc1 $t1,$31",
+      "description": "Mover para o controlo do Coprocessador 1: define o FCSR, incluindo o modo de arredondamento, com o valor de $t1"
+    },
+    {
       "example": "mthi $t1",
       "description": "Mover para o registrador HI: Defina HI para o conteúdo de $t1 (veja operações de multiplicação e divisão)"
     },
@@ -468,7 +476,7 @@
     },
     {
       "example": "sc $t1,-100($t2)",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Armazena o valor $t1 no endereço efetivo e, em seguida, define $t1 como 1 para sucesso. Sempre tem sucesso porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena $t1 apenas se a reserva de Carregar vinculado correspondente continuar válida e define $t1 como 1 em caso de sucesso ou 0 em caso de falha."
     },
     {
       "example": "sdc1 $f2,-100($t2)",
@@ -1162,43 +1170,43 @@
     },
     {
       "example": "ll $t1,-100",
-      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carregar vinculado: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "ll $t1,($t2)",
-      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carregar vinculado: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "ll $t1,100",
-      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carregar vinculado: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "ll $t1,100($t2)",
-      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carregar vinculado: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "ll $t1,100000",
-      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carregar vinculado: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "ll $t1,100000($t2)",
-      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carregar vinculado: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "ll $t1,label",
-      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carregar vinculado: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "ll $t1,label($t2)",
-      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carregar vinculado: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "ll $t1,label+100000",
-      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carregar vinculado: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "ll $t1,label+100000($t2)",
-      "description": "Carregar vinculado: emparelhado com Armazenar condicional (sc) para executar leitura-modificação-gravação atômica. Tratado como equivalente a Carregar palavra (lw) porque MARS não simula vários processadores."
+      "description": "Carregar vinculado: carrega uma palavra e estabelece uma reserva para um Armazenar condicional (sc) subsequente."
     },
     {
       "example": "lw $t1,-100",
@@ -1586,43 +1594,43 @@
     },
     {
       "example": "sc $t1,-100",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena apenas se a reserva de Carregar vinculado correspondente continuar válida e comunica sucesso ou falha no registo de origem."
     },
     {
       "example": "sc $t1,($t2)",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena apenas se a reserva de Carregar vinculado correspondente continuar válida e comunica sucesso ou falha no registo de origem."
     },
     {
       "example": "sc $t1,100",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena apenas se a reserva de Carregar vinculado correspondente continuar válida e comunica sucesso ou falha no registo de origem."
     },
     {
       "example": "sc $t1,100($t2)",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena apenas se a reserva de Carregar vinculado correspondente continuar válida e comunica sucesso ou falha no registo de origem."
     },
     {
       "example": "sc $t1,100000",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena apenas se a reserva de Carregar vinculado correspondente continuar válida e comunica sucesso ou falha no registo de origem."
     },
     {
       "example": "sc $t1,100000($t2)",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena apenas se a reserva de Carregar vinculado correspondente continuar válida e comunica sucesso ou falha no registo de origem."
     },
     {
       "example": "sc $t1,label",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena apenas se a reserva de Carregar vinculado correspondente continuar válida e comunica sucesso ou falha no registo de origem."
     },
     {
       "example": "sc $t1,label($t2)",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena apenas se a reserva de Carregar vinculado correspondente continuar válida e comunica sucesso ou falha no registo de origem."
     },
     {
       "example": "sc $t1,label+100000",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena apenas se a reserva de Carregar vinculado correspondente continuar válida e comunica sucesso ou falha no registo de origem."
     },
     {
       "example": "sc $t1,label+100000($t2)",
-      "description": "Armazenar condicional: emparelhado com Carregar vinculado (ll) para executar leitura-modificação-gravação atômica. Tratado como equivalente ao Armazenar palavra (sw) porque MARS não simula vários processadores."
+      "description": "Armazenar condicional: armazena apenas se a reserva de Carregar vinculado correspondente continuar válida e comunica sucesso ou falha no registo de origem."
     },
     {
       "example": "sd $t1,-100($t2)",

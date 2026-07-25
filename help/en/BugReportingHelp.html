@@ -1,28 +1,31 @@
-<!DOCTYPE html>
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Bug Reporting help contents
-</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS support</title>
+  <link rel="stylesheet" href="webmars-help.css">
 </head>
 <body>
-<center>
-<h3>Bug Reporting and General Comments</h3>
-</center>
+  <h1>Support</h1>
+  <p class="lead">Report webMARS defects and documentation gaps in the project repository, or contact the maintainer directly.</p>
 
-<p>
-The MARS web page is maintained at
-<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>
+  <h2>A useful bug report includes</h2>
+  <ul>
+    <li>The smallest assembly or C project that reproduces the problem.</li>
+    <li>The exact compile/assemble/run sequence and the result you expected.</li>
+    <li>The complete Messages and Run I/O text; <b>File → Dump Run I/O</b> can export the transcript.</li>
+    <li>Relevant settings: compiler profile, memory map, delayed branching, pseudo-instructions and self-modifying code.</li>
+    <li>Browser name/version and whether the problem also occurs after a reload in a clean local project.</li>
+  </ul>
 
-and will contain updated releases, bug lists, etc.
+  <h2>Before submitting</h2>
+  <ol>
+    <li>Try the closest bundled example and compare its settings.</li>
+    <li>Reassemble after changing runtime or memory preferences.</li>
+    <li>Do not include passwords, cloud session data or private source that cannot be shared.</li>
+  </ol>
 
-<p>
-For bug reporting and general comments, please send email to
-Dr. Pete Sanderson at 
-<tt>PSanderson@otterbein.edu</tt>
-with &quot;MARS&quot; in the
-subject line. Please include sufficient information to recreate
-the problem, and assembly programs if appropriate.</tt>
+  <p><a href="https://github.com/codigoavulso/webMARS/issues" target="_blank" rel="noopener noreferrer">Open the issue tracker</a> · <a href="mailto:nels.ferreira@sapo.pt">nels.ferreira@sapo.pt</a></p>
 </body>
 </html>

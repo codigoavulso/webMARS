@@ -120,7 +120,6 @@
 
       let connected = false;
       let total = 0;
-      let lastAddress = null;
       let lastSnapshot = null;
       const counters = { ALU: 0, Jump: 0, Branch: 0, Memory: 0, Other: 0 };
 
@@ -138,22 +137,18 @@
 
       function resetCounters() {
         total = 0;
-        lastAddress = null;
         Object.keys(counters).forEach((category) => { counters[category] = 0; });
         render();
       }
 
-      function processStep(previousSnapshot) {
+      function processStep(previousSnapshot, shouldRender = true) {
         const row = (previousSnapshot?.textRows || []).find((entry) => entry.isCurrent);
         if (!row) return;
-        const addr = row.address >>> 0;
-        if (addr === lastAddress) return;
-        lastAddress = addr;
         const tokens = parseTokens(row.basic || row.source);
         const category = classify(tokens[0]);
         total += 1;
         counters[category] += 1;
-        render();
+        if (shouldRender) render();
       }
 
       root.querySelector("[data-is='connect']").addEventListener("click", (event) => {
@@ -168,12 +163,12 @@
       return {
         open: shell.open,
         close: shell.close,
-        onSnapshot(snapshot) {
-          const previous = lastSnapshot;
+        onSnapshot(snapshot, delivery = {}) {
+          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
           lastSnapshot = snapshot;
           if (!connected || !snapshot || !previous) return;
           if ((snapshot.steps | 0) <= (previous.steps | 0)) return;
-          processStep(previous);
+          processStep(previous, delivery.isLast !== false);
         }
       };
     }

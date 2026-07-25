@@ -10,10 +10,15 @@
 
   int down = 3;
   down--;
-  ++down;
+  int up = 3;
+  ++up;
 
-  // Expected output: 19
-  print_int(sum + down);
+  // Expected output: 16 2 4
+  print_int(sum);
+  print_char(32);
+  print_int(down);
+  print_char(32);
+  print_int(up);
   print_char(10);
   return 0;
 }

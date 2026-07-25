@@ -93,9 +93,25 @@
   <h1>webMARS - changelog</h1>
   <p class="subtitle">https://github.com/codigoavulso/webMARS/</p>
  
-  <!-- __WEBMARS_APP_VERSION__ (2026-03-20) -->
+  <!-- __WEBMARS_APP_VERSION__ (2026-07-25) -->
   <section class="release">
-    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-03-20</span></div>
+    <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-07-25</span></div>
+    <div class="release-body">
+      <h3>JavaScript Runtime, Correctness and Release Validation</h3>
+      <ul>
+        <li>Standardized execution on the JavaScript engine and removed the experimental WASM/hybrid runtime.</li>
+        <li>Added local Compile, Assemble and Run benchmarks with estimated JavaScript utilization and throughput.</li>
+        <li>Corrected COP1, memory, LL/SC, delayed-branch, breakpoint, exception, Stop/Sleep and runtime-state edge cases.</li>
+        <li>Expanded and validated the multilingual C and Assembly examples, including C1-NATIVE and multi-file projects.</li>
+        <li>Rebuilt the English, Spanish and Portuguese in-app documentation for the current application.</li>
+        <li>Added reproducible validation and release-readiness checks for versions, manifests, localization and transient files.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 0.4.6 (2026-03-20) -->
+  <section class="release">
+    <div class="release-header"><span>v0.4.6</span><span>2026-03-20</span></div>
     <div class="release-body">
       <h3>Runtime and Startup Hardening</h3>
       <ul>
@@ -474,7 +490,6 @@
 <script src="../assets/js/app-version.js"></script>
 </body>
 </html>
-
 
 
 

@@ -3,6 +3,7 @@
 )
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$rootPrefix = $root.TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
 $prefix = "http://localhost:$Port/"
 
 $listener = New-Object System.Net.HttpListener
@@ -15,10 +16,13 @@ Write-Host "Press Ctrl+C to stop."
 
 $mimeTypes = @{
   ".html" = "text/html; charset=utf-8"
+  ".asm"  = "text/plain; charset=utf-8"
+  ".s"    = "text/plain; charset=utf-8"
+  ".c"    = "text/plain; charset=utf-8"
+  ".c0"   = "text/plain; charset=utf-8"
   ".js"   = "text/javascript; charset=utf-8"
   ".css"  = "text/css; charset=utf-8"
   ".json" = "application/json; charset=utf-8"
-  ".wasm" = "application/wasm"
   ".png"  = "image/png"
   ".jpg"  = "image/jpeg"
   ".jpeg" = "image/jpeg"
@@ -41,6 +45,19 @@ try {
     $context = $listener.GetContext()
     $request = $context.Request
     $response = $context.Response
+    $response.AddHeader("Cache-Control", "no-store")
+    $response.AddHeader("Referrer-Policy", "no-referrer")
+    $response.AddHeader("X-Content-Type-Options", "nosniff")
+
+    if ($request.HttpMethod -ne "GET" -and $request.HttpMethod -ne "HEAD") {
+      $response.StatusCode = 405
+      $response.AddHeader("Allow", "GET, HEAD")
+      $buffer = [System.Text.Encoding]::UTF8.GetBytes("405 Method Not Allowed")
+      $response.ContentLength64 = $buffer.Length
+      $response.OutputStream.Write($buffer, 0, $buffer.Length)
+      $response.Close()
+      continue
+    }
 
     $requestPath = [System.Uri]::UnescapeDataString($request.Url.AbsolutePath.TrimStart('/'))
     if ([string]::IsNullOrWhiteSpace($requestPath)) {
@@ -50,7 +67,10 @@ try {
     $safePath = $requestPath.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
     $fullPath = [System.IO.Path]::GetFullPath((Join-Path $root $safePath))
 
-    if (-not $fullPath.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
+    if (
+      $fullPath -ne $root
+      -and -not $fullPath.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)
+    ) {
       $response.StatusCode = 403
       $buffer = [System.Text.Encoding]::UTF8.GetBytes("403 Forbidden")
       $response.OutputStream.Write($buffer, 0, $buffer.Length)
@@ -78,7 +98,9 @@ try {
       $response.AddHeader("Content-Disposition", "inline")
     }
     $response.ContentLength64 = $bytes.Length
-    $response.OutputStream.Write($bytes, 0, $bytes.Length)
+    if ($request.HttpMethod -ne "HEAD") {
+      $response.OutputStream.Write($bytes, 0, $bytes.Length)
+    }
     $response.Close()
   }
 }

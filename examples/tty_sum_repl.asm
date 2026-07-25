@@ -33,10 +33,6 @@ repl_loop:
   jal  read_line
   nop
 
-  # Empty input: prompt again.
-  beq  $v0, $zero, repl_loop
-  nop
-
   # Parse left operand.
   la   $a0, line_buf
   jal  parse_uint
@@ -240,7 +236,8 @@ read_line_regular:
   nop
 
 read_line_term:
-  beq  $s3, $zero, read_line_loop  # swallow CR/LF leftovers from CRLF
+  # Ignore empty lines (including the LF half of a CRLF pair).
+  beq  $s3, $zero, read_line_loop
   nop
   addu $t0, $s1, $s3
   sb   $zero, 0($t0)

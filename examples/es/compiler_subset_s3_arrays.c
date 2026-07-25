@@ -8,7 +8,7 @@ int row_sum(int row[]) {
 }
 
 int main(void) {
-  // Requiere C0-S3- o superior: arrays locales, listas de inicializacion, shapes multidimensionales y parametros array.
+  // Tema de arrays S3: arrays locales, listas de inicializacion, shapes multidimensionales y parametros array.
   int matrix[2][3] = { {1, 2, 3}, {4, 5, 6} };
   int total = row_sum(matrix[0]) + row_sum(matrix[1]);
 

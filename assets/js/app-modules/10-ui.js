@@ -132,6 +132,16 @@ function renderLayout(root) {
             <option value="40">speed: no interaction</option>
           </select>
         </div>
+
+        <div class="toolbar-group toolbar-benchmark-group">
+          <div id="benchmark-status" class="benchmark-status" role="status" aria-live="polite" aria-label="Local performance benchmarks">
+            <span class="benchmark-title">Bench</span>
+            <span id="benchmark-compile" class="benchmark-value">Compile: —</span>
+            <span id="benchmark-assemble" class="benchmark-value">Assemble: —</span>
+            <span id="benchmark-run" class="benchmark-value">Run: —</span>
+            <span id="benchmark-cpu" class="benchmark-value benchmark-cpu">JS: —</span>
+          </div>
+        </div>
       </section>
 
       <section id="mars-desktop" class="desktop panel">
@@ -428,6 +438,13 @@ function renderLayout(root) {
       runSpeedLabel: root.querySelector("#run-speed-label"),
       runSpeedSlider: root.querySelector("#run-speed-slider"),
       runSpeedSelectMobile: root.querySelector("#run-speed-select-mobile")
+    },
+    benchmarks: {
+      root: root.querySelector("#benchmark-status"),
+      compile: root.querySelector("#benchmark-compile"),
+      assemble: root.querySelector("#benchmark-assemble"),
+      run: root.querySelector("#benchmark-run"),
+      cpu: root.querySelector("#benchmark-cpu")
     },
     execute: {
       textBody: root.querySelector("#text-segment-body"),
@@ -4953,8 +4970,6 @@ const DEFAULT_PREFERENCES = {
   delayedBranching: false,
   strictMarsCompatibility: false,
   selfModifyingCode: false,
-  assemblerBackendMode: "js",
-  simulatorBackendMode: "js",
   splitMessagesRunIo: false,
   programArgumentsText: "",
   editorFontSize: 12,
@@ -4977,7 +4992,11 @@ function loadPreferences() {
   try {
     const rawPrefs = localStorage.getItem(STORAGE_KEY);
     if (!rawPrefs) return { ...DEFAULT_PREFERENCES };
-    return { ...DEFAULT_PREFERENCES, ...JSON.parse(rawPrefs) };
+    const loaded = { ...DEFAULT_PREFERENCES, ...JSON.parse(rawPrefs) };
+    delete loaded.assemblerBackendMode;
+    delete loaded.simulatorBackendMode;
+    delete loaded.coreBackend;
+    return loaded;
   } catch {
     return { ...DEFAULT_PREFERENCES };
   }
@@ -6658,6 +6677,50 @@ function injectRuntimeStyles() {
       background: #fff;
       color: #1f2d3f;
     }
+    .toolbar-benchmark-group {
+      align-items: center;
+      min-width: 310px;
+      padding-right: 0;
+    }
+
+    .benchmark-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 20px;
+      padding: 1px 6px;
+      border: 1px solid #a9b7c7;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #fbfdff, #e7edf5);
+      color: #33465c;
+      font-family: "Cascadia Mono", "Consolas", monospace;
+      font-size: 10px;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .benchmark-status.active {
+      border-color: #6d9b3f;
+      background: linear-gradient(180deg, #f7ffe9, #e3f1c8);
+    }
+
+    .benchmark-title {
+      padding-right: 5px;
+      border-right: 1px solid #b7c2cf;
+      color: #1f3854;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .benchmark-value {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .benchmark-cpu {
+      color: #245a25;
+      font-weight: 700;
+    }
     #btn-new,
     #btn-open,
     #btn-save,
@@ -7128,6 +7191,7 @@ function injectRuntimeStyles() {
       .toolbar-speed-group { min-width: 100%; grid-template-columns: auto 1fr; }
       .toolbar-speed-group .run-speed-label { display: none; }
       #run-speed-slider, .run-speed-ruler { width: 100%; }
+      .toolbar-benchmark-group { min-width: 100%; width: 100%; }
       .bitmap-main { grid-template-columns: 1fr; }
       .bitmap-control { font-size: 17px; }
       .bitmap-control select { font-size: 16px; }
@@ -7217,6 +7281,16 @@ function injectRuntimeStyles() {
         width: 100%;
         min-height: 28px;
         font-size: 13px;
+      }
+
+      .toolbar-benchmark-group {
+        min-width: 100%;
+        width: 100%;
+      }
+
+      .benchmark-status {
+        width: 100%;
+        justify-content: space-between;
       }
 
       .toolbar .tool-btn {
@@ -7418,6 +7492,16 @@ function injectRuntimeStyles() {
         font-size: 11px;
       }
 
+      .benchmark-status {
+        gap: 3px;
+        padding-inline: 4px;
+        font-size: 9px;
+      }
+
+      .benchmark-title {
+        padding-right: 3px;
+      }
+
       .window-titlebar {
         padding: 0 4px 0 5px;
       }
@@ -7432,4 +7516,3 @@ function injectRuntimeStyles() {
   `;
   document.head.appendChild(style);
 }
-

@@ -4,14 +4,12 @@
   if (registry.runtimeSettings) return;
 
   const MIN_MEMORY_GB = 0.25;
-  const MAX_MEMORY_GB = 16;
+  const MAX_MEMORY_GB = 2;
+  const MAX_MEMORY_BYTES = 0x7fffffff;
   const DEFAULT_MEMORY_GB = 2;
   const DEFAULT_MAX_BACKSTEPS = 100;
   const MIN_MAX_BACKSTEPS = 0;
   const MAX_MAX_BACKSTEPS = 1000000;
-  const BACKEND_MODE_JS = "js";
-  const BACKEND_MODE_HYBRID = "hybrid";
-  const DEFAULT_BACKEND_MODE = BACKEND_MODE_JS;
 
   function sanitizeMemoryGb(value, fallback = DEFAULT_MEMORY_GB) {
     const parsed = Number(value);
@@ -25,21 +23,33 @@
     return Math.max(MIN_MAX_BACKSTEPS, Math.min(MAX_MAX_BACKSTEPS, parsed));
   }
 
-  function memoryGbToBytes(gbValue) {
-    return Math.floor(sanitizeMemoryGb(gbValue) * 1024 * 1024 * 1024);
+  function parseStrictAddress(value) {
+    if (typeof value === "number") {
+      return Number.isInteger(value) && value >= 0 && value <= 0xffffffff
+        ? value >>> 0
+        : null;
+    }
+
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (!/^(?:0x[0-9a-f]+|\+?[0-9]+)$/i.test(trimmed)) return null;
+
+    const parsed = Number(trimmed);
+    if (!Number.isSafeInteger(parsed) || parsed < 0 || parsed > 0xffffffff) return null;
+    return parsed >>> 0;
   }
 
-  function sanitizeBackendMode(value, fallback = DEFAULT_BACKEND_MODE) {
-    const token = String(value || "").trim().toLowerCase();
-    if (token === BACKEND_MODE_HYBRID || token === "wasm" || token === "experimental") {
-      return BACKEND_MODE_HYBRID;
-    }
-    if (token === BACKEND_MODE_JS || token === "only-js" || token === "only_js") {
-      return BACKEND_MODE_JS;
-    }
-    return String(fallback || DEFAULT_BACKEND_MODE).trim().toLowerCase() === BACKEND_MODE_HYBRID
-      ? BACKEND_MODE_HYBRID
-      : BACKEND_MODE_JS;
+  function isValidAddressPreference(value) {
+    return parseStrictAddress(value) !== null;
+  }
+
+  function parseAddressPreference(value, fallback = 0) {
+    return parseStrictAddress(value) ?? parseStrictAddress(fallback) ?? 0;
+  }
+
+  function memoryGbToBytes(gbValue) {
+    return Math.min(MAX_MEMORY_BYTES, Math.floor(sanitizeMemoryGb(gbValue) * 1024 * 1024 * 1024));
   }
 
   function getI18nApi() {
@@ -62,16 +72,15 @@
   registry.runtimeSettings = Object.freeze({
     MIN_MEMORY_GB,
     MAX_MEMORY_GB,
+    MAX_MEMORY_BYTES,
     DEFAULT_MEMORY_GB,
     DEFAULT_MAX_BACKSTEPS,
     MIN_MAX_BACKSTEPS,
     MAX_MAX_BACKSTEPS,
-    BACKEND_MODE_JS,
-    BACKEND_MODE_HYBRID,
-    DEFAULT_BACKEND_MODE,
     sanitizeMemoryGb,
     sanitizeMaxBacksteps,
-    sanitizeBackendMode,
+    isValidAddressPreference,
+    parseAddressPreference,
     memoryGbToBytes,
     getI18nApi,
     applyLanguagePreference,

@@ -1,96 +1,123 @@
-# Web App Code Architecture
+# webMARS Code Architecture (v0.4.7)
 
-The web runtime still has 3 large modules (`00-core.js`, `10-ui.js`, `20-app-runtime.js`), but
-now follows an incremental "strangler" strategy to reduce monolithic risk without breaking
-compatibility.
+webMARS is a static browser application built from ordered, non-ES-module
+scripts. The assembler and simulator use one JavaScript implementation; the
+experimental WASM/hybrid backend is no longer part of the application.
 
-## Entry Point
+## Entry and bootstrap
 
-- `web/assets/js/app.bundle.js`
-  - Sequential script loader (non-ESM) for browser and `file://` compatibility.
-  - Explicit load order to guarantee global symbols and legacy behavior.
+- `index.html`
+  - Loads `assets/css/styles.css` and `assets/js/app-version.js`.
+  - Starts `assets/js/app.bundle.js` with the current application version in the
+    URL so browser caches follow the release version.
 
-## Current Module Layers
+- `assets/js/app.bundle.js`
+  - Loads the script graph sequentially because modules share browser globals
+    and must be initialized in a fixed order.
+  - Loads the i18n core and generated MARS reference data first.
+  - Reads `assets/js/i18n/languages.json` and falls back to English if the
+    language manifest cannot be loaded.
+  - Loads the application modules last, ending with
+    `assets/js/app-modules/20-app-runtime.js`.
 
-### Foundation Modules (new)
+The app should be served over HTTP. Manifests, examples, help documents, tools
+and libraries are loaded as local resources at runtime.
 
-- `web/assets/js/app-modules/00-core-store.js`
-  - Shared state-store factory (`createStore`) extracted from `00-core.js`.
+## Ordered script graph
 
-- `web/assets/js/app-modules/09-ui-translation.js`
-  - DOM i18n tree translator (`translateStaticTree`) extracted from `10-ui.js`.
+The current bootstrap order is:
 
-- `web/assets/js/app-modules/19-runtime-settings.js`
-  - Runtime preference helpers (memory limits, i18n language preference helpers)
-    extracted from `20-app-runtime.js`.
+1. `assets/js/app-modules/00-i18n.js`
+2. `assets/js/reference/pseudo-ops.generated.js`
+3. `assets/js/reference/instructions.generated.js`
+4. `assets/js/reference/syscalls.generated.js`
+5. language packs listed by `assets/js/i18n/languages.json`
+6. `assets/js/app-modules/00-core-store.js`
+7. `assets/js/app-modules/00-core.js`
+8. `assets/js/app-modules/05-layout-config.js`
+9. `assets/js/app-modules/09-ui-translation.js`
+10. `assets/js/app-modules/10-ui.js`
+11. `assets/js/app-modules/12-ui-tool-manager.js`
+12. `assets/js/app-modules/13-ui-menu-system.js`
+13. `assets/js/app-modules/15-help-system.js`
+14. `assets/js/app-modules/17-mini-c-compiler.js`
+15. `assets/js/app-modules/18-runtime-browser-storage.js`
+16. `assets/js/app-modules/19-runtime-settings.js`
+17. `assets/js/app-modules/19-runtime-benchmarks.js`
+18. `assets/js/app-modules/20-app-runtime.js`
 
-- `web/assets/js/app-modules/11-ui-help-system-bridge.js`
-  - Extracted Help window bridge and About/document window orchestration from `10-ui.js`.
+## Current modules
 
-- `web/assets/js/app-modules/12-ui-tool-manager.js`
-  - Extracted tool loading/registration/window host logic from `10-ui.js`.
+| Module | Current responsibility |
+| --- | --- |
+| `00-i18n.js` | Language registration, selection, translation and language-change events through `WebMarsI18n`. |
+| `00-core-store.js` | Small observable state-store factory exposed through `WebMarsModules.coreStore`. |
+| `00-core.js` | JavaScript MIPS assembler and execution engine: parsing, encoding, memory, registers, COP0/COP1, exceptions, syscalls, breakpoints, backstep and runtime-state import/export. |
+| `05-layout-config.js` | Shared compact and stacked layout breakpoints through `WebMarsLayoutConfig`. |
+| `09-ui-translation.js` | Static DOM-tree translation helper used by the main UI and auxiliary windows. |
+| `10-ui.js` | File-kind classification, application layout, editor and execution panes, window management, dialogs and UI rendering helpers. |
+| `12-ui-tool-manager.js` | Tool manifest loading, script registration, tool-window hosting and ordered delivery of runtime snapshots. |
+| `13-ui-menu-system.js` | Menu definitions, popup/submenu behavior, checks, shortcuts and command dispatch. |
+| `15-help-system.js` | Localized in-app help, About window and internal document viewer. |
+| `17-mini-c-compiler.js` | Mini-C/C0 and C1-NATIVE source detection, parsing, semantic checks and MIPS generation. |
+| `18-runtime-browser-storage.js` | Browser source-folder storage and the related file, preference, memory-map and example-loading workflows consumed by the app runtime. |
+| `19-runtime-settings.js` | Runtime preference validation, memory/backstep limits, address parsing and language-preference helpers. |
+| `19-runtime-benchmarks.js` | In-memory compile, assemble and run measurements, including duration, estimated instrumented JavaScript utilization and throughput. |
+| `20-app-runtime.js` | Final composition root: preferences, projects and sessions, compiler/assembler commands, run loop, persistence, cloud adapters, tools, help and UI synchronization. |
 
-- `web/assets/js/app-modules/13-ui-menu-system.js`
-  - Extracted top menu definitions + popup/submenu interactions from `10-ui.js`.
+The files under `assets/js/reference/` are generated data consumed by the core
+and help system, not alternative execution engines.
 
-- `web/assets/js/app-modules/18-runtime-browser-storage.js`
-  - Extracted browser-storage and online-source workflows from `20-app-runtime.js`.
+## Dependency contracts
 
-### Legacy-Large Modules (to keep shrinking)
+- Extracted services are normally published under `window.WebMarsModules`.
+- Established browser-facing APIs such as `WebMarsI18n`,
+  `WebMarsLayoutConfig`, `createMarsEngine` and
+  `createMarsJavaStyleHelpSystem` remain globals because the loader is not ESM.
+- `20-app-runtime.js` is the composition root and therefore must stay last.
+- A module must not silently depend on a script loaded after it.
+- Changes to a shared global or registry entry require tests for every consumer.
 
-- `web/assets/js/app-modules/00-core.js`
-  - Engine state, assembler/runtime semantics, syscall runtime, memory/register behavior.
-  - Now consumes store helper from `00-core-store.js`.
+## Current concentration and maintenance boundaries
 
-- `web/assets/js/app-modules/10-ui.js`
-  - Layout renderer, window manager, editor/execute panes, shared UI helpers.
-  - Translation helper moved to `09-ui-translation.js`.
-  - Help, tools, and menu moved to `11/12/13-*` modules.
+Most behavior is still concentrated in four large files:
+`00-core.js`, `10-ui.js`, `17-mini-c-compiler.js` and `20-app-runtime.js`.
+This is technical debt, but it is also a compatibility boundary. Refactoring
+should remain incremental:
 
-- `web/assets/js/app-modules/20-app-runtime.js`
-  - App bootstrap, command orchestration, run loop, persistence, examples.
-  - Runtime settings helpers moved to `19-runtime-settings.js`.
-  - Browser-storage/online-source logic moved to `18-runtime-browser-storage.js`.
+- extract pure validation, formatting or conversion helpers before moving
+  stateful orchestration;
+- keep assembler/simulator semantics in the core and browser workflow in the
+  app runtime;
+- keep Mini-C parsing and code generation independent from UI state;
+- send complete runtime snapshots to tools that require them;
+- preserve public globals until all consumers have migrated together;
+- add regression coverage before changing an execution or persistence
+  boundary.
 
-## Current Concentration
+Names such as `core/syscalls` or `runtime/session` may be useful conceptual
+boundaries for future extraction, but they are not directories or modules in
+the v0.4.7 tree.
 
-- Heavy 3 modules (`00-core.js`, `10-ui.js`, `20-app-runtime.js`) now represent
-  about **76.13%** of `app-modules` lines (down from the previous ~87.6% baseline).
+## Supporting directories
 
-## Refactor Boundaries (next extractions)
+- `assets/js/i18n/`: UI language packs and their manifest.
+- `tools/`: pluggable MARS-style tools registered through `MarsWebTools`;
+  discovery is driven by `tools/tools.json`.
+- `help/`: localized in-app documentation and MARS reference material.
+- `examples/`: localized Assembly and C examples plus `examples/examples.json`.
+- `libs/`: Mini-C/C0 libraries, compatibility headers and `libs/manifest.json`.
+- `tests/`: assembler, runtime, tools, examples, help and release regression
+  coverage.
+- `scripts/`: local server, static validation and reproducible release
+  packaging.
 
-### `00-core.js`
+## Contributor checks
 
-- `core/settings/*`: defaults, memory presets, config parsing.
-- `core/bytes/*`: byte-array conversion and storage codecs.
-- `core/engine/*`: execution loop, instruction handlers, breakpoints/backstep.
-- `core/syscalls/*`: syscall implementation matrix and browser adapters.
-
-### `10-ui.js`
-
-- `ui/layout/*`: shell render, desktop/mobile layout logic.
-- `ui/window-manager/*`: drag/resize/maximize/focus and splitter orchestration.
-- `ui/panes/*`: editor, execute, registers, messages.
-- `ui/menu/*`: menu definitions, popup renderer, shortcuts.
-- `ui/tools/*`: tool loading and host window integration.
-
-### `20-app-runtime.js`
-
-- `runtime/preferences/*`: settings application and dialogs.
-- `runtime/session/*`: load/save/restore and migration.
-- `runtime/run-loop/*`: go/step/pause scheduler and UI sync strategy.
-- `runtime/file-system/*`: disk/browser storage workflows.
-- `runtime/commands/*`: command handlers and action wiring.
-
-## Contributor Rules
-
-- Keep behavior stable first; extract pure/helper code before orchestration code.
-- New code goes to focused modules; avoid adding new responsibilities to big files.
-- Every extraction must preserve public globals used by downstream modules.
-- Prefer adapters/facades over rewrite-in-place.
-
-## Notes
-
-- Runtime tool implementations are in `web/tools/*.js`, registered via
-  `window.MarsWebTools.register(...)`.
-- Tool discovery remains driven by `web/tools/tools.json`.
+- Keep the ordered loader and module registry coherent.
+- Do not reintroduce the removed WASM/hybrid backend.
+- Treat browser storage failure as a normal error path, not as successful
+  persistence.
+- Keep benchmark data local and volatile.
+- Run `npm run validate` before release work; use `npm run package:release` to
+  build the allowlisted release artifact.
