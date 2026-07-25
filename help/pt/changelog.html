@@ -8,7 +8,18 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">A versão 0.4.8 melhora a execução prolongada, a causalidade das ferramentas e a eficiência de memória, preservando o runtime JavaScript puro.</p>
+  <p class="lead">A versão 0.4.9 reforça a execução prolongada, a compatibilidade com o MARS e as ferramentas síncronas do browser.</p>
+
+  <h2>0.4.9 — paridade do runtime e backsteps fiáveis</h2>
+  <ul>
+    <li>Os 100 backsteps mais recentes permanecem disponíveis, com memória limitada por um journal esparso.</li>
+    <li>Correção do comportamento síncrono do Keyboard/Display, TTY e eventos das ferramentas em execuções prolongadas.</li>
+    <li>Atualização do laboratório Monty Hall e dos exemplos interativos para cooperarem com o input do browser sem busy polling.</li>
+    <li>Syscalls aleatórios 40–44 alinhados com as sequências e regras de amostragem de <code>java.util.Random</code> usadas pelo MARS.</li>
+    <li>Reforço do restauro de estado, contadores longos, limites do assembler e validação de diretivas numéricas.</li>
+    <li>Cobertura de backstep completada para metadados de imagem e correção de buffers InputDialogString com tamanho zero.</li>
+    <li>Cobertura de regressão ampliada no runtime, exemplos localizados e ferramentas ligadas.</li>
+  </ul>
 
   <h2>0.4.8 — backsteps por diferenças e dispositivos síncronos</h2>
   <ul>

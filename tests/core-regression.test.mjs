@@ -281,3 +281,14 @@ globalThis.after = JSON.stringify(projectState);`,
   assert.equal(sandbox.result, false);
   assert.equal(sandbox.after, sandbox.before);
 });
+
+test("machine-state import validates before changing the active memory map", async () => {
+  const runtimeSource = await readFile(resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js"), "utf8");
+  const importStart = runtimeSource.indexOf("function importMachineState(");
+  const importEnd = runtimeSource.indexOf("function computeMachineStateSignature(", importStart);
+  assert.ok(importStart >= 0 && importEnd > importStart);
+  const importSource = runtimeSource.slice(importStart, importEnd);
+
+  assert.match(importSource, /engine\.importRuntimeState\(state, options\);/);
+  assert.doesNotMatch(importSource, /engine\.setMemoryMap\(/);
+});

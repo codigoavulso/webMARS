@@ -1,4 +1,4 @@
-# webMARS v0.4.8
+# webMARS v0.4.9
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,14 +22,14 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.4.8
+## Highlights in v0.4.9
 
-- Replaced full per-instruction backstep snapshots with bounded inverse deltas, sharply reducing memory use in long-running programs.
-- Separated synchronous MMIO devices, compact runtime-event batches and periodic tool snapshots for correct causality and faster execution.
-- Corrected Keyboard/Display and TTY input/output behavior, tool batch rendering, backstep parity and hidden-tool overhead.
-- Fixed Mini-C bitmap framebuffer collisions and synchronized Bitmap Display rendering with live runtime memory.
-- Added broader runtime, tool, example and browser regression coverage.
-- Made the local benchmark strip optional through Interface Preferences and hidden by default.
+- Guaranteed the most recent 100 backsteps while keeping sparse history memory bounded.
+- Corrected synchronous Keyboard/Display, TTY and tool-event behavior in long-running browser execution.
+- Updated the Monty Hall lab and interactive examples to cooperate with browser input without busy polling.
+- Matched random syscalls 40–44 to the seeded behavior of `java.util.Random` used by MARS.
+- Hardened state import, long instruction counters, assembler ranges, numeric directives and image metadata backsteps.
+- Expanded runtime, tool and localized-example regression coverage.
 
 ## Main Capabilities
 
@@ -132,6 +132,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.4.9`: dependable sparse backsteps, synchronous browser tools, Java-compatible random syscalls, stronger state import and expanded runtime/example validation
 - `v0.4.8`: delta-based backsteps, synchronous MMIO devices, faster tool delivery, corrected C bitmaps, expanded regression coverage, and optional Bench UI
 - `v0.4.7`: JavaScript runtime consolidation, benchmarks, execution correctness, stronger snapshots, expanded examples, complete multilingual help, and release validation
 - `v0.4.6`: startup hardening, help/PDF fixes, browser-storage timestamp fix, runtime cleanup, dead-code removal, legacy script/result purge

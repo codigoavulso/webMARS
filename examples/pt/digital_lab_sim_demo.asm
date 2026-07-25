@@ -31,11 +31,24 @@ main:
   sb $t1, 0x12($t0)      # varrer todas as linhas
 
   sb $zero, 0x11($t0)    # digito esquerdo em branco
+  move $s1, $zero        # ultimo codigo de scan processado
 
 wait_key:
   lbu $t2, 0x14($t0)     # codigo de scan do teclado (col<<4 | row)
-  beq $t2, $zero, wait_key
+  beq $t2, $zero, key_idle
+  nop
+  bne $t2, $s1, key_ready
+  nop
+key_idle:
+  move $s1, $t2
+  li  $v0, 32            # espera cooperativa de 4 ms
+  li  $a0, 4
+  syscall
+  b   wait_key
+  nop
 
+key_ready:
+  move $s1, $t2
   # bit da linha (nibble baixo) e bit da coluna (nibble alto)
   andi $t3, $t2, 0x0f    # bitLinha: 1,2,4,8
   srl  $t4, $t2, 4       # bitColuna: 1,2,4,8

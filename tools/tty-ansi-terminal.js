@@ -332,6 +332,8 @@
       let baseline = 14;
       let focusVisible = false;
       let renderFrame = null;
+      let statusFrame = null;
+      let lastStatusHtml = "";
       let dirtyAll = true;
       let dirty = new Set();
       let cursorOverlayIndex = -1;
@@ -1060,7 +1062,7 @@
         ensureHistoryDelta(getSnapshotStep());
         bytes.forEach((value) => inputQueue.push(value & 0xff));
         feedReceiverFromQueue();
-        updateStatus();
+        scheduleStatusUpdate();
       }
 
       function echoInputBytes(bytes) {
@@ -1109,7 +1111,7 @@
         stopSyncTimer();
         syncTimer = window.setInterval(() => {
           syncDeviceRegisters();
-          updateStatus();
+          scheduleStatusUpdate();
         }, 16);
       }
 
@@ -1138,7 +1140,7 @@
               writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
               writeByteSafe(RECEIVER_DATA, 0);
               feedReceiverFromQueue();
-              updateStatus();
+              scheduleStatusUpdate();
             });
           },
           onWrite(detail) {
@@ -1152,7 +1154,7 @@
               processTerminalByte(detail?.value | 0);
               writeByteSafe(TRANSMITTER_DATA, 0);
               writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
-              updateStatus();
+              scheduleStatusUpdate();
             });
           }
         });
@@ -1164,6 +1166,10 @@
 
       function updateStatus() {
         if (!statusNode || !terminalState) return;
+        if (statusFrame !== null) {
+          window.cancelAnimationFrame(statusFrame);
+          statusFrame = null;
+        }
         const { RECEIVER_DATA, TRANSMITTER_DATA } = addresses();
         const items = [
           [t("Cursor"), `${terminalState.cursorCol + 1}, ${terminalState.cursorRow + 1}`],
@@ -1173,12 +1179,23 @@
           [t("RX"), toHex32(RECEIVER_DATA)],
           [t("TX"), toHex32(TRANSMITTER_DATA)]
         ];
-        statusNode.innerHTML = items.map(([label, value]) => `
+        const nextHtml = items.map(([label, value]) => `
           <div class="tty-ansi-status-item">
             <span class="tty-ansi-status-label">${label}</span>
             <span class="tty-ansi-status-value">${value}</span>
           </div>
         `).join("");
+        if (nextHtml === lastStatusHtml) return;
+        lastStatusHtml = nextHtml;
+        statusNode.innerHTML = nextHtml;
+      }
+
+      function scheduleStatusUpdate() {
+        if (statusFrame !== null) return;
+        statusFrame = window.requestAnimationFrame(() => {
+          statusFrame = null;
+          updateStatus();
+        });
       }
 
       function refreshUiText() {
@@ -1338,6 +1355,10 @@
       closeButton.addEventListener("click", () => {
         detachMmioObserver();
         stopSyncTimer();
+        if (statusFrame !== null) {
+          window.cancelAnimationFrame(statusFrame);
+          statusFrame = null;
+        }
         shell.close();
       });
       shell.onResize(() => {
@@ -1366,6 +1387,10 @@
         close() {
           detachMmioObserver();
           stopSyncTimer();
+          if (statusFrame !== null) {
+            window.cancelAnimationFrame(statusFrame);
+            statusFrame = null;
+          }
           shell.close();
         },
         onSnapshot(snapshot) {

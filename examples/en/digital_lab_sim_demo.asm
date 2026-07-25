@@ -31,11 +31,24 @@ main:
   sb $t1, 0x12($t0)      # scan all rows
 
   sb $zero, 0x11($t0)    # left digit blank
+  move $s1, $zero        # last processed scan code
 
 wait_key:
   lbu $t2, 0x14($t0)     # keyboard scan code (col<<4 | row)
-  beq $t2, $zero, wait_key
+  beq $t2, $zero, key_idle
+  nop
+  bne $t2, $s1, key_ready
+  nop
+key_idle:
+  move $s1, $t2
+  li  $v0, 32            # cooperative 4 ms wait
+  li  $a0, 4
+  syscall
+  b   wait_key
+  nop
 
+key_ready:
+  move $s1, $t2
   # row bit (low nibble) and column bit (high nibble)
   andi $t3, $t2, 0x0f    # rowBit: 1,2,4,8
   srl  $t4, $t2, 4       # colBit: 1,2,4,8

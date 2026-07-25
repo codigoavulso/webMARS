@@ -225,7 +225,10 @@
       handleEnter(decInput, applyDecimal);
 
       registerSelect.addEventListener("change", () => {
-        attachedRegister = Number.parseInt(registerSelect.value, 10) || -1;
+        const parsedRegister = Number.parseInt(registerSelect.value, 10);
+        attachedRegister = Number.isInteger(parsedRegister) && parsedRegister >= 0 && parsedRegister < 32
+          ? parsedRegister
+          : -1;
         if (attachedRegister >= 0) {
           instructions.textContent = `Attached to $f${attachedRegister}.`;
           readAttachedRegister(lastSnapshot);

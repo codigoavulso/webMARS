@@ -97,14 +97,14 @@
   <section class="release">
     <div class="release-header"><span>v__WEBMARS_APP_VERSION__</span><span>2026-07-25</span></div>
     <div class="release-body">
-      <h3>JavaScript Runtime, Correctness and Release Validation</h3>
+      <h3>Runtime Parity, Backsteps and Browser Tools</h3>
       <ul>
-        <li>Standardized execution on the JavaScript engine and removed the experimental WASM/hybrid runtime.</li>
-        <li>Added local Compile, Assemble and Run benchmarks with estimated JavaScript utilization and throughput.</li>
-        <li>Corrected COP1, memory, LL/SC, delayed-branch, breakpoint, exception, Stop/Sleep and runtime-state edge cases.</li>
-        <li>Expanded and validated the multilingual C and Assembly examples, including C1-NATIVE and multi-file projects.</li>
-        <li>Rebuilt the English, Spanish and Portuguese in-app documentation for the current application.</li>
-        <li>Added reproducible validation and release-readiness checks for versions, manifests, localization and transient files.</li>
+        <li>Kept the most recent 100 backsteps available while bounding sparse journal memory.</li>
+        <li>Corrected synchronous Keyboard/Display, TTY and tool events in long-running browser execution.</li>
+        <li>Aligned random syscalls 40–44 with the seeded behavior of <code>java.util.Random</code> used by MARS.</li>
+        <li>Hardened state import, long instruction counters, assembler ranges and numeric directives.</li>
+        <li>Completed backstep coverage for image metadata and corrected zero-length InputDialogString buffers.</li>
+        <li>Expanded regression coverage for the runtime, localized examples, Monty Hall lab and connected tools.</li>
       </ul>
     </div>
   </section>
@@ -490,6 +490,5 @@
 <script src="../assets/js/app-version.js"></script>
 </body>
 </html>
-
 
 

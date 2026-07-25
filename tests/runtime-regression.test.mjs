@@ -6,6 +6,24 @@ function registers(engine) {
   return engine.exportRuntimeState({ includeProgram: false }).registers;
 }
 
+test("runtime snapshots identify each fresh machine lifecycle", async () => {
+  const engine = await createJavaScriptEngine({ settings: { startAtMain: true } });
+  const initialRevision = engine.getSnapshot().runtimeRevision;
+  const source = `
+.text
+main:
+  nop
+`;
+
+  assert.equal(engine.assemble(source, { sourceName: "revision-one.s" }).ok, true);
+  const firstAssemblyRevision = engine.getSnapshot().runtimeRevision;
+  assert.notEqual(firstAssemblyRevision, initialRevision);
+
+  assert.equal(engine.assemble(source, { sourceName: "revision-two.s" }).ok, true);
+  const secondAssemblyRevision = engine.getSnapshot().runtimeRevision;
+  assert.notEqual(secondAssemblyRevision, firstAssemblyRevision);
+});
+
 test("data directives, labels, and load instructions work together", async () => {
   const engine = await createJavaScriptEngine({ settings: { startAtMain: true } });
   const source = `
@@ -182,7 +200,7 @@ loop:
   });
 });
 
-test("one large syscall cannot exceed the complete backstep history budget", async () => {
+test("the last 100 instructions remain backsteppable when one journal exceeds the history budget", async () => {
   const input = "x".repeat(72 * 1024);
   const engine = await createJavaScriptEngine({
     settings: {
@@ -205,8 +223,7 @@ main:
   li   $a1, 131072
   li   $v0, 8
   syscall
-  li   $v0, 10
-  syscall
+${Array.from({ length: 99 }, () => "  nop").join("\n")}
 `;
   const assembled = engine.assemble(source, { sourceName: "bounded-large-journal.s" });
   assert.equal(assembled.ok, true, JSON.stringify(assembled.errors || []));
@@ -222,13 +239,30 @@ main:
   }
 
   assert.ok(syscallResult);
-  assert.equal(engine.getSnapshot().backstepDepth, 0);
-  assert.equal(engine.getBackstepHistoryUsageBytes(), 0);
+  const snapshot = engine.getSnapshot();
+  assert.equal(snapshot.backstepDepth, snapshot.steps);
+  assert.ok(engine.getBackstepHistoryUsageBytes() > 64 * 1024);
   assert.equal(engine.getBackstepHistoryBudgetBytes(), 64 * 1024);
-  assert.equal(engine.readByte(registers(engine)[4] >>> 0, false), "x".charCodeAt(0));
+  const bufferAddress = registers(engine)[4] >>> 0;
+  assert.equal(engine.readByte(bufferAddress, false), "x".charCodeAt(0));
+  assert.equal(engine.readByte(bufferAddress + input.length - 1, false), "x".charCodeAt(0));
   assert.equal(syscallResult.runtimeEvent.memoryAccesses.length, 1);
   assert.ok(syscallResult.runtimeEvent.memoryAccesses[0].accessCount > 68 * 1024);
-  assert.equal(engine.backstep().ok, false);
+
+  for (let index = 0; index < 99; index += 1) {
+    assert.equal(engine.step({ includeSnapshot: false, includeMessage: false }).ok, true);
+  }
+  const fullWindow = engine.getSnapshot();
+  assert.equal(fullWindow.backstepDepth, 100);
+  assert.equal(fullWindow.backstepHistoryStartStep, snapshot.steps - 1);
+  assert.ok(engine.getBackstepHistoryUsageBytes() > 64 * 1024);
+
+  for (let index = 0; index < 100; index += 1) {
+    assert.equal(engine.backstep().ok, true);
+  }
+  assert.equal(engine.readByte(bufferAddress, false), 0);
+  assert.equal(engine.readByte(bufferAddress + input.length - 1, false), 0);
+  assert.equal(engine.getSnapshot().backstepDepth, 0);
 });
 
 test("backstep journal evicts in constant-time order and reports the shared history window", async () => {
@@ -1141,4 +1175,165 @@ test("buffer, string, array, and image syscalls reject enormous sizes before wor
     assert.equal(engine.heapPointer, heapBefore);
     assert.equal(engine.imageHandles.size, 0);
   }
+});
+
+test("step counts remain non-negative and exact beyond the signed 32-bit boundary", async () => {
+  const engine = await createJavaScriptEngine({
+    settings: { startAtMain: true, maxBacksteps: 10 }
+  });
+  assert.equal(engine.assemble(`
+.text
+main:
+  nop
+  nop
+`, { sourceName: "large-step-counter.s" }).ok, true);
+
+  engine.steps = 0x80000000;
+  const stepped = engine.step({ includeSnapshot: false });
+  assert.equal(stepped.ok, true);
+  assert.equal(engine.getSnapshot().steps, 0x80000001);
+  assert.equal(engine.exportRuntimeState({ includeProgram: false }).steps, 0x80000001);
+
+  const backed = engine.backstep();
+  assert.equal(backed.ok, true);
+  assert.equal(engine.getSnapshot().steps, 0x80000000);
+  assert.equal(backed.runtimeEvent.stepBefore, 0x80000001);
+  assert.equal(backed.runtimeEvent.stepAfter, 0x80000000);
+});
+
+test("oversized data reservations cannot wrap or overlap the address space", async () => {
+  for (const source of [
+    `.data
+before: .word 1
+gap: .space 4294967296
+after: .word 2
+`,
+    `.data
+.extern giant, 4294967296
+.extern next, 4
+`
+  ]) {
+    const engine = await createJavaScriptEngine({
+      settings: { strictMarsCompatibility: false }
+    });
+    const assembled = engine.assemble(source, { sourceName: "oversized-data.s" });
+    assert.equal(assembled.ok, false);
+    assert.ok(assembled.errors.length > 0);
+  }
+
+  const strict = await createJavaScriptEngine({
+    settings: { strictMarsCompatibility: true }
+  });
+  const strictResult = strict.assemble(`
+.data
+.space 2147483648
+`, { sourceName: "strict-oversized-space.s" });
+  assert.equal(strictResult.ok, false);
+});
+
+test("floating-point directives reject trailing non-numeric text", async () => {
+  for (const directive of [".float", ".double"]) {
+    const engine = await createJavaScriptEngine();
+    const result = engine.assemble(`
+.data
+value: ${directive} 1.25garbage
+`, { sourceName: `invalid-${directive.slice(1)}.s` });
+    assert.equal(result.ok, false);
+    assert.match(result.errors[0]?.message || "", /invalid/i);
+  }
+});
+
+test("break codes must fit the encoded 20-bit field", async () => {
+  for (const code of [-1, 0x100000, 0x100000000]) {
+    const engine = await createJavaScriptEngine();
+    const result = engine.assemble(`
+.text
+main:
+  break ${code}
+`, { sourceName: "invalid-break-code.s" });
+    assert.equal(result.ok, false);
+    assert.match(result.errors[0]?.message || "", /range/i);
+  }
+
+  const valid = await createJavaScriptEngine();
+  assert.equal(valid.assemble(`
+.text
+main:
+  break 1048575
+`, { sourceName: "valid-break-code.s" }).ok, true);
+});
+
+test("random syscalls reproduce java.util.Random sequences used by MARS", async () => {
+  const engine = await createJavaScriptEngine();
+  const seed = () => {
+    engine.registers[2] = 40;
+    engine.registers[4] = 7;
+    engine.registers[5] = 1;
+    assert.equal(engine.executeSyscall().exception, undefined);
+  };
+
+  seed();
+  engine.registers[2] = 41;
+  engine.executeSyscall();
+  assert.equal(engine.registers[4] | 0, -1155869325);
+
+  seed();
+  engine.registers[2] = 42;
+  engine.registers[5] = 100;
+  engine.executeSyscall();
+  assert.equal(engine.registers[4] | 0, 85);
+
+  seed();
+  engine.registers[2] = 43;
+  engine.executeSyscall();
+  assert.equal(engine.getFloat32(0), 0.7308781743049622);
+
+  seed();
+  engine.registers[2] = 44;
+  engine.executeSyscall();
+  assert.equal(engine.getFloat64(0), 0.7308781907032909);
+});
+
+test("InputDialogString leaves a zero-length buffer untouched", async () => {
+  const engine = await createJavaScriptEngine();
+  engine.setRuntimeHooks({ readInput: () => "abc" });
+  const messageAddress = engine.allocateCString("Value");
+  const bufferAddress = engine.allocateCString("z");
+
+  engine.registers[2] = 54;
+  engine.registers[4] = messageAddress;
+  engine.registers[5] = bufferAddress;
+  engine.registers[6] = 0;
+  const result = engine.executeSyscall();
+
+  assert.equal(result.exception, undefined);
+  assert.equal(engine.getByte(bufferAddress), "z".charCodeAt(0));
+  assert.equal(engine.registers[5] | 0, -4);
+});
+
+test("backstep restores image metadata changed by image_save", async () => {
+  const engine = await createJavaScriptEngine({
+    settings: { startAtMain: true, maxBacksteps: 10 }
+  });
+  assert.equal(engine.assemble(`
+.text
+main:
+  syscall
+  nop
+`, { sourceName: "image-save-backstep.s" }).ok, true);
+
+  const pixels = engine.allocateWordArray([0xff112233]);
+  const handle = engine.createImageHandle(1, 1, pixels, "old-image.json");
+  const pathAddress = engine.allocateCString("new-image.json");
+  engine.registers[2] = 99;
+  engine.registers[4] = handle;
+  engine.registers[5] = pathAddress;
+
+  assert.equal(engine.step({ includeSnapshot: false }).exception, false);
+  assert.equal(engine.getImageHandle(handle).path, "new-image.json");
+  assert.notEqual(engine.getVirtualFileBytes("new-image.json"), null);
+
+  assert.equal(engine.backstep().ok, true);
+  assert.equal(engine.getImageHandle(handle).path, "old-image.json");
+  assert.equal(engine.getVirtualFileBytes("new-image.json"), null);
 });

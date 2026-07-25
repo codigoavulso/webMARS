@@ -180,6 +180,7 @@
 
       let connected = false;
       let lastSnapshot = null;
+      let lastRuntimeRevision = null;
       let fontIndex = 0;
       let displayAfterDelay = true;
       let randomAccessMode = false;
@@ -752,11 +753,25 @@
         },
         onSnapshot(snapshot) {
           const previous = lastSnapshot;
+          const previousRuntimeRevision = lastRuntimeRevision;
           lastSnapshot = snapshot;
+          lastRuntimeRevision = Number.isFinite(snapshot?.runtimeRevision)
+            ? (snapshot.runtimeRevision >>> 0)
+            : null;
           if (!connected || !snapshot) return;
 
           const nextStep = getSnapshotStep(snapshot);
           const previousStep = getSnapshotStep(previous);
+          if (
+            previous
+            && previousRuntimeRevision != null
+            && lastRuntimeRevision != null
+            && lastRuntimeRevision !== previousRuntimeRevision
+          ) {
+            doReset();
+            history.sync(snapshot);
+            return;
+          }
           if (!previous) {
             history.sync(snapshot);
             return;

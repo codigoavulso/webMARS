@@ -478,6 +478,59 @@ test("new Assembly examples execute their defining behavior", async () => {
   assert.equal(scavenger.readWord(0xffff801c) >>> 0, 0x00ff5a36);
 });
 
+test("Monty Hall video lab completes 1,000 games before entering a cooperative TTY wait", async () => {
+  const source = await readFile(resolve(projectRoot, "videos/monty_hall_lab.asm"), "utf8");
+  const engine = await assembleSource(source, "monty_hall_lab.asm", {
+    maxBacksteps: 100
+  });
+  const receiverControl = 0xffff0000;
+  const receiverData = 0xffff0004;
+  const transmitterControl = 0xffff0008;
+
+  engine.writeByte(transmitterControl, 1);
+  engine.writeByte(receiverData, "2".charCodeAt(0));
+  engine.writeByte(receiverControl, 1);
+  const detachReceiver = engine.registerMemoryObserver({
+    start: receiverData,
+    end: receiverData,
+    onRead() {
+      engine.writeByte(receiverControl, 0);
+      engine.writeByte(receiverData, 0);
+    }
+  });
+
+  let waitResult = null;
+  for (let step = 0; step < 40000; step += 1) {
+    const result = engine.step({ includeSnapshot: false, includeMessage: false });
+    assert.equal(result.ok, true, result.message || "Monty Hall execution failed.");
+    if (result.sleepMs > 0) {
+      waitResult = result;
+      break;
+    }
+  }
+  detachReceiver();
+
+  assert.ok(waitResult, "The simulation must reach its cooperative terminal wait.");
+  assert.equal(waitResult.sleepMs, 4);
+  assert.ok(engine.steps < 40000, "The 1,000-game simulation must finish without an instruction runaway.");
+  assert.equal(engine.registers[16] | 0, 1000);
+  assert.equal((engine.registers[17] | 0) + (engine.registers[18] | 0), 1000);
+  assert.equal(engine.registers[19] | 0, 1000);
+
+  const snapshot = engine.getSnapshot({
+    includeTextRows: false,
+    includeLabels: false,
+    includeDataRows: false,
+    includeRegisters: false,
+    includeMemoryWords: false
+  });
+  assert.equal(snapshot.backstepDepth, 100);
+  const stepsBeforeBackstep = engine.steps;
+  const backstep = engine.backstep();
+  assert.equal(backstep.ok, true);
+  assert.equal(engine.steps, stepsBeforeBackstep - 1);
+});
+
 test("cache benchmark executes one uncontaminated 1024-load pattern per run", async () => {
   const cachePath = await resolveExampleFile("en", "cache_stride_benchmark.asm");
   const sequentialSource = await readFile(cachePath, "utf8");
@@ -507,4 +560,78 @@ test("cache benchmark executes one uncontaminated 1024-load pattern per run", as
 
   assert.deepEqual(observations[0].slice(0, 3), [0x10010000, 0x10010004, 0x10010008]);
   assert.deepEqual(observations[1].slice(0, 3), [0x10010000, 0x10010040, 0x10010080]);
+});
+
+test("interactive MMIO examples yield cooperatively in every language", async () => {
+  const interactiveExamples = [
+    "tty_mmio_direct_debug.asm",
+    "keyboard_display_mmio_echo.asm",
+    "digital_lab_sim_demo.asm"
+  ];
+
+  for (const language of languages) {
+    for (const logicalPath of interactiveExamples) {
+      const path = await resolveExampleFile(language, logicalPath);
+      const source = await readFile(path, "utf8");
+      const engine = await assembleSource(source, `${language}/${logicalPath}`);
+      let sleepResult = null;
+
+      for (let step = 0; step < 2000; step += 1) {
+        const result = engine.step({ includeSnapshot: false, includeMessage: false });
+        assert.equal(result.ok, true, result.message || `${language}/${logicalPath} failed.`);
+        if (result.sleepMs > 0) {
+          sleepResult = result;
+          break;
+        }
+      }
+
+      assert.ok(sleepResult, `${language}/${logicalPath} must yield instead of busy-polling.`);
+      assert.equal(sleepResult.sleepMs, 4);
+      assert.ok(engine.steps < 2000, `${language}/${logicalPath} took too long to reach its wait.`);
+    }
+  }
+});
+
+test("Digital Lab examples debounce a held key without returning to busy polling", async () => {
+  for (const language of languages) {
+    const path = await resolveExampleFile(language, "digital_lab_sim_demo.asm");
+    const source = await readFile(path, "utf8");
+    const engine = await assembleSource(source, `${language}/digital_lab_debounce.asm`);
+
+    let initialWait = null;
+    for (let step = 0; step < 200; step += 1) {
+      const result = engine.step({ includeSnapshot: false, includeMessage: false });
+      assert.equal(result.ok, true);
+      if (result.sleepMs > 0) {
+        initialWait = result;
+        break;
+      }
+    }
+    assert.equal(initialWait?.sleepMs, 4);
+
+    engine.writeByte(0xffff0014, 0x22);
+    const startStep = engine.steps;
+    let heldKeyWait = null;
+    for (let step = 0; step < 200; step += 1) {
+      const result = engine.step({ includeSnapshot: false, includeMessage: false });
+      assert.equal(result.ok, true);
+      if (result.sleepMs > 0) {
+        heldKeyWait = result;
+        break;
+      }
+    }
+
+    assert.equal(engine.readByte(0xffff0010, false), 0x6d);
+    assert.equal(heldKeyWait?.sleepMs, 4);
+    assert.ok(engine.steps - startStep < 200, `${language} did not debounce the held key.`);
+  }
+});
+
+test("cache benchmark instructions enable collection in every language", async () => {
+  for (const language of languages) {
+    const path = await resolveExampleFile(language, "cache_stride_benchmark.asm");
+    const source = await readFile(path, "utf8");
+    assert.match(source, /connect|ligue|conectela/i);
+    assert.match(source, /\bEnabled\b/);
+  }
 });

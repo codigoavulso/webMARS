@@ -5154,9 +5154,6 @@ function exportMachineState(options = {}) {
 function importMachineState(state, options = {}) {
   if (!canPersistMachineState() || !state || typeof state !== "object") return false;
   try {
-    if (state.memoryMap && typeof state.memoryMap === "object" && typeof engine.setMemoryMap === "function") {
-      engine.setMemoryMap(state.memoryMap);
-    }
     engine.importRuntimeState(state, options);
     return true;
   } catch {
@@ -5167,7 +5164,7 @@ function importMachineState(state, options = {}) {
 function computeMachineStateSignature(state) {
   if (!state || typeof state !== "object") return "";
   const pc = Number.isFinite(state.pc) ? (state.pc >>> 0) : 0;
-  const steps = Number.isFinite(state.steps) ? (state.steps | 0) : 0;
+  const steps = Number.isFinite(state.steps) ? Math.max(0, Math.trunc(state.steps)) : 0;
   const memoryUsage = Number.isFinite(state.memoryUsageBytes) ? (state.memoryUsageBytes >>> 0) : 0;
   const lastWrite = state.lastMemoryWriteAddress == null ? -1 : (state.lastMemoryWriteAddress >>> 0);
   return [
@@ -6495,6 +6492,7 @@ function finishRunBenchmark(outcome = "completed", metadata = {}) {
 function executeRunStepWithRuntimeEvent(engineInstance, captureRuntimeEvent = false) {
   const result = engineInstance.step({
     includeSnapshot: false,
+    includeMessage: false,
     includeRuntimeEvent: captureRuntimeEvent
   });
   return {
@@ -10146,8 +10144,6 @@ if (typeof window !== "undefined") {
     }
   };
 }
-
-
 
 
 

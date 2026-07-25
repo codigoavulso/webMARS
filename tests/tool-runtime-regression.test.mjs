@@ -144,6 +144,8 @@ test("stateful tools use central deltas and expose active runtime consumers", as
   assert.match(keyboardSource, /registerMemoryObserver\(/);
   assert.match(keyboardSource, /registerInstructionObserver\(/);
   assert.match(keyboardSource, /suppressDeviceObservers/);
+  assert.match(keyboardSource, /lastRuntimeRevision !== previousRuntimeRevision/);
+  assert.match(keyboardSource, /runtimeRevision/);
   assert.match(keyboardSource, /onBackstep\(event\)/);
   assert.doesNotMatch(keyboardSource, /onRuntimeEvent\(/);
 
@@ -152,6 +154,13 @@ test("stateful tools use central deltas and expose active runtime consumers", as
   assert.match(cacheSource, /logLength:/);
   assert.match(cacheSource, /onRuntimeEvent\(event\)/);
   assert.match(cacheSource, /onRuntimeBatchEnd\(\)/);
+});
+
+test("floating-point tool accepts register zero as a valid attachment", async () => {
+  const source = await readFile(resolve(projectRoot, "tools/float-representation.js"), "utf8");
+  assert.doesNotMatch(source, /Number\.parseInt\(registerSelect\.value,\s*10\)\s*\|\|\s*-1/);
+  assert.match(source, /Number\.isInteger\(parsedRegister\)/);
+  assert.match(source, /parsedRegister >= 0 && parsedRegister < 32/);
 });
 
 test("Run requests compact runtime events without per-instruction snapshots", async () => {
