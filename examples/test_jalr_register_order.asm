@@ -1,13 +1,13 @@
 # Manual parity test for jalr rd, rs.
 # Expected behavior after run:
-# - $s0 contains the link address 0x0040000c
+# - delayed branching off: $s0 contains 0x0040000c
+# - delayed branching on:  $s0 contains 0x00400010
 # - $t0 becomes 7 inside target
 # - $t3 becomes 9 after returning through $s0
 
 .text
 main:
-  lui $t1, 0x0040
-  ori $t1, $t1, 0x0018
+  la $t1, target
   jalr $s0, $t1
   ori $t3, $zero, 9
   j done

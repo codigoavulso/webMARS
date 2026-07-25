@@ -1,13 +1,13 @@
 # Prueba manual de paridad para jalr rd, rs.
 # Comportamiento esperado tras la ejecucion:
-# - $s0 contiene la direccion de retorno 0x0040000c
+# - delayed branching desactivado: $s0 contiene 0x0040000c
+# - delayed branching activado:    $s0 contiene 0x00400010
 # - $t0 pasa a 7 dentro del target
 # - $t3 pasa a 9 despues de volver por $s0
 
 .text
 main:
-  lui $t1, 0x0040
-  ori $t1, $t1, 0x0018
+  la $t1, target
   jalr $s0, $t1
   ori $t3, $zero, 9
   j done

@@ -27,6 +27,18 @@ int main(void) {
     return 0;
   }
 
+  printf("fseek to byte 6 result: ");
+  print_int(fseek(reader, 6, SEEK_SET));
+  print_char(10);
+  printf("ftell after seek: ");
+  print_int(ftell(reader));
+  print_char(10);
+  printf("First character after seek: ");
+  putchar(fgetc(reader));
+  print_char(10);
+  fclose(reader);
+
+  reader = fopen_read("stdio_demo.txt");
   int read_count = fread(read_back, 1, 31, reader);
   printf("Bytes read: ");
   print_int(read_count);
@@ -34,10 +46,6 @@ int main(void) {
 
   printf("ftell after read: ");
   print_int(ftell(reader));
-  print_char(10);
-
-  printf("fseek(0, SEEK_CUR) result: ");
-  print_int(fseek(reader, 0, SEEK_CUR));
   print_char(10);
 
   printf("feof flag: ");
@@ -49,8 +57,8 @@ int main(void) {
   print_char(10);
 
   clearerr(reader);
-  printf("ferror after clearerr: ");
-  print_int(ferror(reader));
+  printf("feof after clearerr: ");
+  print_int(feof(reader));
   print_char(10);
 
   puts("File contents:");
@@ -63,4 +71,3 @@ int main(void) {
   fclose(reader);
   return 0;
 }
-

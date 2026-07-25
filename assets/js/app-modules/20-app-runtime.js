@@ -6,14 +6,22 @@ const runtimeSettings = { ...DEFAULT_SETTINGS };
 const moduleRegistry = (typeof window !== "undefined" ? window.WebMarsModules : globalThis.WebMarsModules) || {};
 const runtimeCoreStoreModule = moduleRegistry.coreStore;
 const runtimeSettingsModule = moduleRegistry.runtimeSettings;
+const runtimeBenchmarksModule = moduleRegistry.runtimeBenchmarks;
 const miniCCompilerModule = moduleRegistry.miniCCompiler;
 const fileKindsModule = moduleRegistry.fileKinds;
 
 if (!runtimeCoreStoreModule || typeof runtimeCoreStoreModule.createStore !== "function") {
   throw new Error("[mars-web] coreStore module was not loaded before app runtime.");
 }
-if (!runtimeSettingsModule || typeof runtimeSettingsModule.sanitizeMemoryGb !== "function") {
+if (
+  !runtimeSettingsModule
+  || typeof runtimeSettingsModule.sanitizeMemoryGb !== "function"
+  || typeof runtimeSettingsModule.parseAddressPreference !== "function"
+) {
   throw new Error("[mars-web] runtimeSettings module was not loaded before app runtime.");
+}
+if (!runtimeBenchmarksModule || typeof runtimeBenchmarksModule.createBenchmarkCollector !== "function") {
+  throw new Error("[mars-web] runtimeBenchmarks module was not loaded before app runtime.");
 }
 if (!miniCCompilerModule
   || typeof miniCCompilerModule.compile !== "function"
@@ -34,6 +42,7 @@ if (!fileKindsModule
 }
 
 const { createStore: runtimeCreateStore } = runtimeCoreStoreModule;
+const { createBenchmarkCollector } = runtimeBenchmarksModule;
 const {
   MIN_MEMORY_GB,
   MAX_MEMORY_GB,
@@ -41,12 +50,10 @@ const {
   DEFAULT_MAX_BACKSTEPS,
   MIN_MAX_BACKSTEPS,
   MAX_MAX_BACKSTEPS,
-  BACKEND_MODE_JS,
-  BACKEND_MODE_HYBRID,
-  DEFAULT_BACKEND_MODE,
   sanitizeMemoryGb,
   sanitizeMaxBacksteps,
-  sanitizeBackendMode,
+  isValidAddressPreference,
+  parseAddressPreference,
   memoryGbToBytes,
   getI18nApi,
   applyLanguagePreference,
@@ -68,23 +75,8 @@ runtimeSettings.programArguments = preferences.programArguments;
 runtimeSettings.programArgumentsLine = preferences.programArgumentsText || "";
 runtimeSettings.maxBacksteps = sanitizeMaxBacksteps(preferences.maxBacksteps, DEFAULT_SETTINGS.maxBacksteps);
 runtimeSettings.maxMemoryBytes = memoryGbToBytes(preferences.maxMemoryGb ?? DEFAULT_MEMORY_GB);
-runtimeSettings.assemblerBackendMode = sanitizeBackendMode(preferences.assemblerBackendMode, DEFAULT_BACKEND_MODE);
-runtimeSettings.simulatorBackendMode = sanitizeBackendMode(preferences.simulatorBackendMode, DEFAULT_BACKEND_MODE);
-runtimeSettings.coreBackend = runtimeSettings.simulatorBackendMode === BACKEND_MODE_HYBRID ? "wasm" : "js";
 
 const memoryPresets = (typeof MEMORY_CONFIG_PRESETS === "object" && MEMORY_CONFIG_PRESETS) || {};
-
-function parseAddressPreference(value, fallback) {
-  if (typeof value === "number" && Number.isFinite(value)) return value >>> 0;
-  if (typeof value !== "string") return fallback >>> 0;
-  const trimmed = value.trim();
-  if (!trimmed) return fallback >>> 0;
-  const parsed = trimmed.toLowerCase().startsWith("0x")
-    ? Number.parseInt(trimmed.slice(2), 16)
-    : Number.parseInt(trimmed, 10);
-  if (!Number.isFinite(parsed)) return fallback >>> 0;
-  return parsed >>> 0;
-}
 
 function resolveMemoryPreset(preferenceState) {
   const preferred = String(preferenceState.memoryConfiguration || "Default");
@@ -102,6 +94,66 @@ const initialMemoryMap = {
 };
 
 const refs = renderLayout(document.querySelector("#app"));
+const benchmarkCollector = createBenchmarkCollector();
+
+function formatBenchmarkDuration(durationMs) {
+  const value = Number(durationMs);
+  if (!Number.isFinite(value) || value < 0) return "—";
+  if (value < 0.01) return "<0.01 ms";
+  if (value < 10) return `${value.toFixed(2)} ms`;
+  if (value < 100) return `${value.toFixed(1)} ms`;
+  if (value < 1000) return `${Math.round(value)} ms`;
+  return `${(value / 1000).toFixed(value < 10000 ? 2 : 1)} s`;
+}
+
+function renderBenchmarkStatus(snapshot = benchmarkCollector.snapshot()) {
+  const benchmarkRefs = refs.benchmarks;
+  if (!benchmarkRefs?.root) return;
+  const compileSample = snapshot?.metrics?.compile?.last || null;
+  const assembleSample = snapshot?.metrics?.assemble?.last || null;
+  const activeRunSample = snapshot?.active?.name === "run" ? snapshot.active : null;
+  const runSample = activeRunSample || snapshot?.metrics?.run?.last || null;
+  const cpuSample = snapshot?.active || snapshot?.latest || null;
+  const compileDuration = formatBenchmarkDuration(compileSample?.durationMs);
+  const assembleDuration = formatBenchmarkDuration(assembleSample?.durationMs);
+  const runDuration = formatBenchmarkDuration(runSample?.durationMs);
+  const cpuPercent = cpuSample && Number.isFinite(cpuSample.cpuPercent)
+    ? `${Math.round(cpuSample.cpuPercent)}%`
+    : "—";
+
+  benchmarkRefs.compile.textContent = translateText("Compile: {duration}", { duration: compileDuration });
+  benchmarkRefs.assemble.textContent = translateText("Assemble: {duration}", { duration: assembleDuration });
+  benchmarkRefs.run.textContent = translateText("Run: {duration}", { duration: runDuration });
+  benchmarkRefs.cpu.textContent = translateText("JS: {percent}", { percent: cpuPercent });
+  benchmarkRefs.root.classList.toggle("active", Boolean(snapshot?.active));
+
+  const latestMetric = cpuSample?.name ? snapshot?.metrics?.[cpuSample.name] : null;
+  const averageDuration = latestMetric ? formatBenchmarkDuration(latestMetric.averageDurationMs) : "—";
+  const sampleCount = Number(latestMetric?.count) || 0;
+  const throughput = Number(runSample?.unitsPerSecond) || 0;
+  const details = [
+    translateText("Local performance benchmarks; no data leaves this browser."),
+    translateText("JavaScript CPU is estimated from instrumented busy time divided by elapsed time."),
+    cpuSample
+      ? translateText("Latest: {name}, average {average}, {count} sample(s).", {
+          name: String(cpuSample.name || "operation"),
+          average: averageDuration,
+          count: sampleCount
+        })
+      : translateText("No benchmark samples yet.")
+  ];
+  if (throughput > 0) {
+    details.push(translateText("Execution throughput: {rate} instructions/s.", {
+      rate: Math.round(throughput).toLocaleString()
+    }));
+  }
+  benchmarkRefs.root.title = details.join("\n");
+  benchmarkRefs.root.setAttribute("aria-label", details.join(" "));
+}
+
+benchmarkCollector.subscribe(renderBenchmarkStatus);
+renderBenchmarkStatus();
+if (typeof window !== "undefined") window.WebMarsBenchmarks = benchmarkCollector;
 const windowManager = createWindowManager(refs);
 const transientDialogSystems = new Set();
 let transientDialogCounter = 0;
@@ -184,16 +236,6 @@ const RESETTABLE_LOCAL_STORAGE_KEYS = Object.freeze([
   "mars45-window-layout-saved-v1",
   "webmars-vfs-v1"
 ]);
-const STARTUP_RECOVERY_LOCAL_STORAGE_KEYS = Object.freeze([
-  SESSION_STORAGE_KEY,
-  LEGACY_SESSION_STORAGE_KEY,
-  SESSION_SERVER_DRAFT_KEY,
-  ONLINE_SOURCE_STORAGE_KEY,
-  PROJECT_STORAGE_KEY,
-  PROJECT_LIBRARY_STORAGE_KEY,
-  "webmars-vfs-v1"
-]);
-const STARTUP_RECOVERY_SKIP_SESSION_KEY = "mars45-startup-skip-recovery-once-v1";
 const PROJECT_SCHEMA_VERSION = 1;
 const PROJECT_LIBRARY_SCHEMA_VERSION = 1;
 const PROJECT_STATE_SLOT_COUNT = 5;
@@ -391,9 +433,14 @@ function collectSessionExternalEditorFiles(files = [], existingFiles = []) {
     .filter(Boolean);
 }
 
-function buildStartupEditorFiles(project, restoredFiles = [], fallbackFiles = []) {
+function buildStartupEditorFiles(project, restoredSession = null, fallbackFiles = []) {
+  const restoredFiles = Array.isArray(restoredSession?.files) ? restoredSession.files : [];
   if (project?.isOpen === true) {
-    const projectFiles = mapProjectFilesToEditorFiles(project.files, restoredFiles);
+    const projectUpdatedAt = Number(project.updatedAt) || 0;
+    const sessionUpdatedAt = Number(restoredSession?.updatedAt) || 0;
+    const projectFiles = mapProjectFilesToEditorFiles(project.files, restoredFiles, {
+      preferFallbackSource: sessionUpdatedAt >= projectUpdatedAt
+    });
     return [
       ...projectFiles,
       ...collectSessionExternalEditorFiles(restoredFiles, projectFiles)
@@ -721,6 +768,50 @@ function saveProjectData(project) {
   }
 }
 
+function readProjectStorageSnapshot() {
+  try {
+    return {
+      project: window.localStorage.getItem(PROJECT_STORAGE_KEY),
+      library: window.localStorage.getItem(PROJECT_LIBRARY_STORAGE_KEY)
+    };
+  } catch {
+    return null;
+  }
+}
+
+function restoreProjectStorageValue(key, value) {
+  try {
+    if (value == null) window.localStorage.removeItem(key);
+    else window.localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function saveProjectAndLibraryData(project, library) {
+  const previous = readProjectStorageSnapshot();
+  if (!previous) return false;
+  if (!saveProjectLibraryData(library)) return false;
+
+  let savedProject = false;
+  if (project && typeof project === "object") {
+    savedProject = saveProjectData(project);
+  } else {
+    try {
+      window.localStorage.removeItem(PROJECT_STORAGE_KEY);
+      savedProject = true;
+    } catch {
+      savedProject = false;
+    }
+  }
+  if (savedProject) return true;
+
+  restoreProjectStorageValue(PROJECT_LIBRARY_STORAGE_KEY, previous.library);
+  restoreProjectStorageValue(PROJECT_STORAGE_KEY, previous.project);
+  return false;
+}
+
 function loadProjectData() {
   try {
     const raw = window.localStorage.getItem(PROJECT_STORAGE_KEY);
@@ -761,38 +852,6 @@ function enterResetReloadMode() {
   projectPersistWantsEditorSync = false;
 }
 
-function hasStartupRecoverableLocalStorageData() {
-  try {
-    if (!window.localStorage) return false;
-    return STARTUP_RECOVERY_LOCAL_STORAGE_KEYS.some((key) => {
-      const value = window.localStorage.getItem(key);
-      return value != null && String(value).trim() !== "";
-    });
-  } catch {
-    return false;
-  }
-}
-
-function markSkipStartupRecoveryPromptOnce() {
-  try {
-    window.sessionStorage?.setItem(STARTUP_RECOVERY_SKIP_SESSION_KEY, "1");
-  } catch {
-    // Ignore storage errors.
-  }
-}
-
-function consumeStartupRecoverySkipFlag() {
-  try {
-    const shouldSkip = window.sessionStorage?.getItem(STARTUP_RECOVERY_SKIP_SESSION_KEY) === "1";
-    if (shouldSkip) {
-      window.sessionStorage?.removeItem(STARTUP_RECOVERY_SKIP_SESSION_KEY);
-    }
-    return shouldSkip;
-  } catch {
-    return false;
-  }
-}
-
 function createDefaultProjectData(options = {}) {
   const name = normalizeProjectName(options.name || "project");
   const seedFiles = normalizeProjectFiles(options.files);
@@ -830,7 +889,7 @@ function createDefaultProjectData(options = {}) {
   });
 }
 
-function mapProjectFilesToEditorFiles(projectFiles, fallbackFiles = []) {
+function mapProjectFilesToEditorFiles(projectFiles, fallbackFiles = [], options = {}) {
   const fallbackByName = new Map(
     (Array.isArray(fallbackFiles) ? fallbackFiles : [])
       .filter((entry) => entry && typeof entry === "object")
@@ -850,12 +909,15 @@ function mapProjectFilesToEditorFiles(projectFiles, fallbackFiles = []) {
     const rawEntry = rawEntriesByPath.get(file.path);
     const hasRawSource = Boolean(rawEntry && Object.prototype.hasOwnProperty.call(rawEntry, "source"));
     const hasRawSavedSource = Boolean(rawEntry && Object.prototype.hasOwnProperty.call(rawEntry, "savedSource"));
-    const source = hasRawSource
-      ? String(rawEntry.source ?? "")
-      : String(fallback?.source ?? "");
-    const savedSource = hasRawSavedSource
-      ? String(rawEntry.savedSource ?? source)
-      : (typeof fallback?.savedSource === "string" ? fallback.savedSource : source);
+    const useFallbackSource = options.preferFallbackSource === true && Boolean(fallback);
+    const source = useFallbackSource
+      ? String(fallback.source ?? "")
+      : (hasRawSource ? String(rawEntry.source ?? "") : String(fallback?.source ?? ""));
+    const savedSource = useFallbackSource && typeof fallback?.savedSource === "string"
+      ? fallback.savedSource
+      : (hasRawSavedSource
+        ? String(rawEntry.savedSource ?? source)
+        : (typeof fallback?.savedSource === "string" ? fallback.savedSource : source));
     return {
       id: String(file.id || `file-project-${index + 1}`),
       name: file.path,
@@ -910,7 +972,13 @@ function loadWorkspaceSession() {
       const activeFileId = String(parsed.activeFileId || files[0].id);
       const active = files.find((file) => file.id === activeFileId) || files[0];
       const windowState = normalizeWindowSessionData(parsed.windowState);
-      return { files, activeFileId: active.id, active, windowState };
+      return {
+        files,
+        activeFileId: active.id,
+        active,
+        windowState,
+        updatedAt: Number(parsed.updatedAt) || 0
+      };
     } catch {
       // Try next key.
     }
@@ -918,7 +986,6 @@ function loadWorkspaceSession() {
   return null;
 }
 
-const startupHadRecoverableLocalData = hasStartupRecoverableLocalStorageData() && !consumeStartupRecoverySkipFlag();
 const restoredSession = loadWorkspaceSession();
 const storedProject = loadProjectData();
 const fallbackBootstrapProject = storedProject || createDefaultProjectData({
@@ -971,7 +1038,7 @@ const fallbackInitialFiles = restoredSession?.files || [{
   undoStack: [INITIAL_SOURCE],
   redoStack: []
 }];
-const initialFiles = buildStartupEditorFiles(bootstrapProject, restoredSession?.files, fallbackInitialFiles);
+const initialFiles = buildStartupEditorFiles(bootstrapProject, restoredSession, fallbackInitialFiles);
 const preferredInitialActiveId = resolveStartupActiveFileId(bootstrapProject, restoredSession, initialFiles);
 const initialActiveFile = initialFiles.find((file) => file.id === preferredInitialActiveId) || initialFiles[0];
 
@@ -1039,15 +1106,16 @@ const MOBILE_RUN_SPEED_PRESET_INDEXES = Object.freeze([5, 6, 7, 10, 15, 25, 40])
 let runTimer = null;
 let runActive = false;
 let runStopRequested = false;
+let runBenchmarkSession = null;
 let runLastTickAt = 0;
 let runStepCarry = 0;
 let runLastUiSyncAt = 0;
+let runToolTraceContext = null;
 let runPausedForInput = false;
 let resumeRunAfterInput = false;
 let backstepDepthEstimate = 0;
 let allowPageUnload = false;
 let suppressPersistenceForResetReload = false;
-let startupRecoveryDecisionPrompted = false;
 const RUN_LOOP_INTERVAL_MS = 16;
 const RUN_LOOP_MAX_BATCH = 240;
 const RUN_LOOP_MAX_BATCH_UNLIMITED = 720;
@@ -1063,18 +1131,21 @@ const RUN_LOOP_TOOL_SYNC_INTERVAL_MS_NO_INTERACTION = 120;
 const MINI_C_DEFAULT_TEMPLATE = miniCCompilerModule.defaultTemplate;
 const MINI_C_BITMAP_DEFAULT_BASE = 0x10010000;
 const MINI_C_NATIVE_LIB_BITMAP_RECT = [
+  `int _bitmap_base_address = ${MINI_C_BITMAP_DEFAULT_BASE};`,
+  "",
   "void bitmap_set_base_address(int baseAddress) {",
   "  if (baseAddress == 0) {",
   "    return;",
   "  }",
+  "  _bitmap_base_address = baseAddress;",
   "}",
   "",
   "int bitmap_get_base_address(void) {",
-  `  return ${MINI_C_BITMAP_DEFAULT_BASE};`,
+  "  return _bitmap_base_address;",
   "}",
   "",
   "int* bitmap_framebuffer_base(void) {",
-  `  return (int*)${MINI_C_BITMAP_DEFAULT_BASE};`,
+  "  return (int*)_bitmap_base_address;",
   "}",
   "",
   "int bitmap_point_in_bounds(int x, int y, int cols, int rows) {",
@@ -1764,9 +1835,14 @@ function importCloudProjectRecord(projectRecord, options = {}) {
     return opened ? normalized : null;
   }
 
-  upsertProjectInLibrary(normalized, {
-    makeActive: isSameProjectRootPath(projectLibraryState?.activeRootPath || "", normalized.rootPath)
-  });
+  const makeActive = isSameProjectRootPath(projectLibraryState?.activeRootPath || "", normalized.rootPath);
+  const candidateLibrary = buildProjectLibraryCandidate(normalized, { makeActive });
+  if (!candidateLibrary || !ensureProjectLibraryQuota(candidateLibrary).ok) return null;
+  const persisted = makeActive
+    ? saveProjectAndLibraryData(normalized, candidateLibrary)
+    : saveProjectLibraryData(candidateLibrary);
+  if (!persisted) return null;
+  projectLibraryState = candidateLibrary;
   if (!projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", normalized.rootPath)) {
     projectState = normalized;
     updateProjectStoreState();
@@ -2601,8 +2677,8 @@ function upsertProjectInLibrary(project, options = {}) {
   const candidateLibrary = buildProjectLibraryCandidate(normalizedProject, options);
   if (!candidateLibrary) return null;
   if (!ensureProjectLibraryQuota(candidateLibrary, { silent: options.silentQuota === true }).ok) return null;
+  if (!saveProjectLibraryData(candidateLibrary)) return null;
   projectLibraryState = candidateLibrary;
-  saveProjectLibraryData(projectLibraryState);
   return normalizedProject;
 }
 
@@ -2628,8 +2704,8 @@ function replaceProjectInLibrary(previousRootPath, nextProject, options = {}) {
     projects
   });
   if (!ensureProjectLibraryQuota(candidateLibrary, { silent: options.silentQuota === true }).ok) return null;
+  if (!saveProjectAndLibraryData(normalizedProject, candidateLibrary)) return null;
   projectLibraryState = candidateLibrary;
-  saveProjectLibraryData(projectLibraryState);
   return normalizedProject;
 }
 
@@ -2645,12 +2721,18 @@ function removeProjectFromLibrary(rootPath) {
       ? (activeRootKey === rootKey ? projects[0].rootPath : (projectLibraryState?.activeRootPath || projects[0].rootPath))
       : ""
   );
-  projectLibraryState = normalizeProjectLibraryData({
+  const candidateLibrary = normalizeProjectLibraryData({
     version: projectLibraryState?.version || PROJECT_LIBRARY_SCHEMA_VERSION,
     activeRootPath: nextActiveRoot,
     projects
   });
-  saveProjectLibraryData(projectLibraryState);
+  const candidateProjects = Array.isArray(candidateLibrary.projects) ? candidateLibrary.projects : [];
+  const candidateActiveKey = normalizeProjectRootKey(candidateLibrary.activeRootPath || "");
+  const candidateActiveProject = candidateProjects.find((entry) => (
+    normalizeProjectRootKey(entry?.rootPath) === candidateActiveKey
+  )) || candidateProjects[0] || null;
+  if (!saveProjectAndLibraryData(candidateActiveProject, candidateLibrary)) return false;
+  projectLibraryState = candidateLibrary;
   return true;
 }
 
@@ -2675,18 +2757,20 @@ function persistProjectStorageFromLibrary(preferredRootPath = "") {
 function activateProjectInLibrary(rootPath) {
   const rootKey = normalizeProjectRootKey(rootPath);
   const projects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
-  if (!rootKey || !projects.length) return;
+  if (!rootKey || !projects.length) return false;
   const project = projects.find((entry) => normalizeProjectRootKey(entry?.rootPath) === rootKey);
-  if (!project) return;
-  const projectNodeKey = getProjectTreeNodeKey("project", project.rootPath);
-  projectTreeKnownNodes.add(projectNodeKey);
-  projectTreeExpandedNodes.add(projectNodeKey);
-  projectLibraryState = normalizeProjectLibraryData({
+  if (!project) return false;
+  const candidateLibrary = normalizeProjectLibraryData({
     ...projectLibraryState,
     activeRootPath: project.rootPath,
     projects
   });
-  saveProjectLibraryData(projectLibraryState);
+  if (!saveProjectLibraryData(candidateLibrary)) return false;
+  const projectNodeKey = getProjectTreeNodeKey("project", project.rootPath);
+  projectTreeKnownNodes.add(projectNodeKey);
+  projectTreeExpandedNodes.add(projectNodeKey);
+  projectLibraryState = candidateLibrary;
+  return true;
 }
 
 function createProjectTreeBranchNode() {
@@ -3420,9 +3504,10 @@ function persistProjectNow(options = {}) {
   if (suppressPersistenceForResetReload) return false;
   const syncFromEditor = options.syncFromEditor !== false;
   if (!projectState || typeof projectState !== "object") return false;
+  const wasOpen = projectIsOpen();
   let nextProjectState = normalizeProjectData(projectState) || projectState;
 
-  if (projectIsOpen() && syncFromEditor) {
+  if (wasOpen && syncFromEditor) {
     const files = collectProjectFilesFromEditor();
     const active = resolveProjectOwnedEditorActiveFile(files, editor.getActiveFile());
     nextProjectState = normalizeProjectData({
@@ -3443,33 +3528,39 @@ function persistProjectNow(options = {}) {
     if (candidateLibrary && !ensureProjectLibraryQuota(candidateLibrary).ok) {
       return false;
     }
-    projectState.files = nextProjectState.files;
-    projectState.activeFileId = nextProjectState.activeFileId;
-    projectState.settings = {
-      ...(store.getState().preferences || preferences)
-    };
-    if (nextProjectState.layout) projectState.layout = nextProjectState.layout;
   }
 
-  const closedProjectExistsInLibrary = Boolean(findProjectInLibrary(projectState.rootPath));
-  if (!projectIsOpen() && !closedProjectExistsInLibrary) {
+  const closedProjectExistsInLibrary = Boolean(findProjectInLibrary(nextProjectState.rootPath));
+  if (!wasOpen && !closedProjectExistsInLibrary) {
+    const projects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+    const activeKey = normalizeProjectRootKey(projectLibraryState?.activeRootPath || "");
+    const activeProject = projects.find((entry) => normalizeProjectRootKey(entry?.rootPath) === activeKey)
+      || projects[0]
+      || null;
+    if (!saveProjectAndLibraryData(activeProject, projectLibraryState)) return false;
     updateProjectStoreState();
     renderProjectTree();
-    const savedActive = persistProjectStorageFromLibrary(projectLibraryState?.activeRootPath || "");
-    const savedLibrary = saveProjectLibraryData(projectLibraryState);
-    return savedActive && savedLibrary;
+    return true;
   }
 
-  projectState.updatedAt = Date.now();
-  projectState = normalizeProjectData(projectState) || projectState;
-  const upserted = upsertProjectInLibrary(projectState, { makeActive: projectIsOpen() });
-  if (!upserted) return false;
-  if (projectIsOpen()) activateProjectInLibrary(projectState.rootPath);
+  nextProjectState = normalizeProjectData({
+    ...nextProjectState,
+    updatedAt: Date.now()
+  }) || nextProjectState;
+  const candidateLibrary = buildProjectLibraryCandidate(nextProjectState, { makeActive: wasOpen });
+  if (!candidateLibrary || !ensureProjectLibraryQuota(candidateLibrary).ok) return false;
+  if (!saveProjectAndLibraryData(nextProjectState, candidateLibrary)) return false;
+
+  projectState = nextProjectState;
+  projectLibraryState = candidateLibrary;
+  if (wasOpen) {
+    const projectNodeKey = getProjectTreeNodeKey("project", projectState.rootPath);
+    projectTreeKnownNodes.add(projectNodeKey);
+    projectTreeExpandedNodes.add(projectNodeKey);
+  }
   updateProjectStoreState();
   renderProjectTree();
-  const savedActive = saveProjectData(projectState);
-  const savedLibrary = saveProjectLibraryData(projectLibraryState);
-  return savedActive && savedLibrary;
+  return true;
 }
 
 function scheduleProjectPersist(options = {}) {
@@ -3488,7 +3579,7 @@ function scheduleProjectPersist(options = {}) {
 function syncProjectFromEditor(forceRender = false) {
   if (!projectIsOpen()) {
     renderProjectTree(forceRender);
-    return;
+    return false;
   }
   const files = collectProjectFilesFromEditor();
   const signature = getProjectTreePathSignature(files);
@@ -3503,13 +3594,20 @@ function syncProjectFromEditor(forceRender = false) {
     && activePath === lastProjectTreeActivePath
     && activeRootKey === lastProjectTreePathSignature
   ) {
-    return;
+    return true;
   }
-  projectState.files = files;
-  projectState.activeFileId = String(active?.id || files[0]?.id || "");
-  projectState.updatedAt = Date.now();
-  upsertProjectInLibrary(projectState, { makeActive: true });
+  const nextProjectState = normalizeProjectData({
+    ...projectState,
+    files,
+    activeFileId: String(active?.id || files[0]?.id || ""),
+    updatedAt: Date.now()
+  });
+  if (!nextProjectState) return false;
+  const upserted = upsertProjectInLibrary(nextProjectState, { makeActive: true });
+  if (!upserted) return false;
+  projectState = nextProjectState;
   renderProjectTree(true);
+  return true;
 }
 
 function extractVisibleToolIds(windowState) {
@@ -3674,9 +3772,15 @@ function openProjectWorkspace(nextProject, options = {}) {
   const normalized = normalizeProjectData(nextProject);
   if (!normalized) return false;
   normalized.isOpen = true;
+  const candidateLibrary = buildProjectLibraryCandidate(normalized, { makeActive: true });
+  if (!candidateLibrary || !ensureProjectLibraryQuota(candidateLibrary).ok) return false;
+  if (!saveProjectAndLibraryData(normalized, candidateLibrary)) return false;
+
   projectState = normalized;
-  activateProjectInLibrary(projectState.rootPath);
-  upsertProjectInLibrary(projectState, { makeActive: true });
+  projectLibraryState = candidateLibrary;
+  const projectNodeKey = getProjectTreeNodeKey("project", projectState.rootPath);
+  projectTreeKnownNodes.add(projectNodeKey);
+  projectTreeExpandedNodes.add(projectNodeKey);
   updateProjectStoreState();
 
   if (options.applySettings === true && projectState.settings && typeof projectState.settings === "object") {
@@ -3719,12 +3823,21 @@ async function closeProjectWorkspace() {
   const ok = await confirmCloseDirtyFiles(dirtyFiles, translateText("Close project?"));
   if (!ok) return false;
 
-  projectState.isOpen = false;
-  projectState.settings = {
-    ...(store.getState().preferences || preferences)
-  };
-  projectState.updatedAt = Date.now();
-  upsertProjectInLibrary(projectState, { makeActive: false });
+  const nextProjectState = normalizeProjectData({
+    ...projectState,
+    isOpen: false,
+    settings: {
+      ...(store.getState().preferences || preferences)
+    },
+    updatedAt: Date.now()
+  });
+  if (!nextProjectState) return false;
+  const candidateLibrary = buildProjectLibraryCandidate(nextProjectState, { makeActive: false });
+  if (!candidateLibrary || !ensureProjectLibraryQuota(candidateLibrary).ok) return false;
+  if (!saveProjectAndLibraryData(nextProjectState, candidateLibrary)) return false;
+
+  projectState = nextProjectState;
+  projectLibraryState = candidateLibrary;
   updateProjectStoreState();
   editor.setFiles([{
     id: "project-closed-scratch",
@@ -3985,30 +4098,36 @@ function applyProjectMutation(projectRootPath, mutate, options = {}) {
 
   const isOpenProject = projectIsOpen() && isSameProjectRootPath(projectState.rootPath, rootPath);
   if (isOpenProject) {
-    projectState = normalized;
-    const editorFiles = mapProjectFilesToEditorFiles(projectState.files, editor.getFiles());
+    const previousProjectState = projectState;
+    const editorFiles = mapProjectFilesToEditorFiles(normalized.files, editor.getFiles());
     const preferredActivePath = String(options.preferredActivePath || editor.getActiveFile()?.name || "");
     const preferredByPath = editorFiles.find((file) => file.name === preferredActivePath);
-    const preferredById = editorFiles.find((file) => String(file.id) === String(projectState.activeFileId || ""));
+    const preferredById = editorFiles.find((file) => String(file.id) === String(normalized.activeFileId || ""));
     const nextActiveId = String(preferredByPath?.id || preferredById?.id || editorFiles[0]?.id || "");
+    normalized.activeFileId = nextActiveId;
+    projectState = normalized;
+    if (!persistProjectNow({ syncFromEditor: false })) {
+      projectState = previousProjectState;
+      return null;
+    }
     const active = editor.setFiles(editorFiles, nextActiveId);
     projectState.activeFileId = String(active?.id || editorFiles[0]?.id || "");
     modeController.syncForFileName?.(active?.name || "", { activate: false });
-    persistProjectNow({ syncFromEditor: false });
     return projectState;
   }
 
-  upsertProjectInLibrary(normalized, {
-    makeActive: isSameProjectRootPath(projectLibraryState?.activeRootPath || "", rootPath)
-  });
+  const makeActive = isSameProjectRootPath(projectLibraryState?.activeRootPath || "", rootPath);
+  const candidateLibrary = buildProjectLibraryCandidate(normalized, { makeActive });
+  if (!candidateLibrary || !ensureProjectLibraryQuota(candidateLibrary).ok) return null;
+  const persisted = makeActive
+    ? saveProjectAndLibraryData(normalized, candidateLibrary)
+    : saveProjectLibraryData(candidateLibrary);
+  if (!persisted) return null;
+  projectLibraryState = candidateLibrary;
   if (!projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", rootPath)) {
     projectState = normalized;
     updateProjectStoreState();
   }
-  if (isSameProjectRootPath(projectLibraryState?.activeRootPath || "", rootPath)) {
-    saveProjectData(normalized);
-  }
-  saveProjectLibraryData(projectLibraryState);
   renderProjectTree(true);
   return normalized;
 }
@@ -4301,30 +4420,26 @@ async function handleProjectTreeRenameAction() {
     const nextRootPath = normalizeProjectRootPath(uniqueName, uniqueName);
     if (nextRootPath === rootPath && uniqueName === defaultName) return;
 
+    const renamedOpenProject = projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", rootPath);
     const nextProject = normalizeProjectData({
-      ...project,
+      ...(renamedOpenProject ? projectState : project),
       name: uniqueName,
       rootPath: nextRootPath,
       updatedAt: Date.now()
     });
     if (!nextProject) return;
 
-    replaceProjectInLibrary(rootPath, nextProject, {
+    const replaced = replaceProjectInLibrary(rootPath, nextProject, {
       makeActive: isSameProjectRootPath(projectLibraryState?.activeRootPath || "", rootPath)
     });
+    if (!replaced) {
+      postMarsMessage("[error] Failed to save to browser storage.");
+      return;
+    }
 
-    const renamedOpenProject = projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", rootPath);
     if (renamedOpenProject) {
-      projectState = normalizeProjectData({
-        ...projectState,
-        name: uniqueName,
-        rootPath: nextRootPath,
-        updatedAt: Date.now()
-      }) || projectState;
+      projectState = nextProject;
       updateProjectStoreState();
-      saveProjectData(projectState);
-    } else {
-      persistProjectStorageFromLibrary(nextRootPath);
     }
 
     setProjectTreeSelection({
@@ -4656,7 +4771,10 @@ async function handleProjectTreeBulkDeleteAction(selectedNodes = []) {
     resetProjectStateAfterDeletingOpenProject();
   }
 
-  persistProjectStorageFromLibrary(projectLibraryState?.activeRootPath || "");
+  if (!persistProjectStorageFromLibrary(projectLibraryState?.activeRootPath || "")) {
+    postMarsMessage("[error] Failed to save to browser storage.");
+    return;
+  }
   clearProjectTreeCheckedSelection();
   setProjectTreeSelection(null);
   renderProjectTree(true);
@@ -4739,7 +4857,10 @@ async function handleProjectTreeDeleteAction() {
       scheduleWorkspacePersist();
     }
 
-    persistProjectStorageFromLibrary(projectLibraryState?.activeRootPath || "");
+    if (!persistProjectStorageFromLibrary(projectLibraryState?.activeRootPath || "")) {
+      postMarsMessage("[error] Failed to save to browser storage.");
+      return;
+    }
     setProjectTreeSelection(null);
     renderProjectTree(true);
     postMarsMessage("Project deleted: {name}.", { name: rootPath });
@@ -5014,13 +5135,13 @@ void ensureMiniCGlobalLibrariesLoaded()
   });
 
 function canPersistMachineState() {
-  return typeof engine.exportNativeState === "function" && typeof engine.importNativeState === "function";
+  return typeof engine.exportRuntimeState === "function" && typeof engine.importRuntimeState === "function";
 }
 
 function exportMachineState(options = {}) {
   if (!canPersistMachineState()) return null;
   try {
-    return engine.exportNativeState({
+    return engine.exportRuntimeState({
       includeProgram: options.includeProgram === true,
       includeBreakpoints: options.includeBreakpoints !== false,
       includeExecutionPlan: options.includeExecutionPlan === true
@@ -5036,7 +5157,7 @@ function importMachineState(state, options = {}) {
     if (state.memoryMap && typeof state.memoryMap === "object" && typeof engine.setMemoryMap === "function") {
       engine.setMemoryMap(state.memoryMap);
     }
-    engine.importNativeState(state, options);
+    engine.importRuntimeState(state, options);
     return true;
   } catch {
     return false;
@@ -5499,7 +5620,12 @@ function tryResumeRunAfterInput() {
   runLastTickAt = performance.now();
   runStepCarry = 0;
   runLastUiSyncAt = 0;
+  if (!runToolTraceContext) runToolTraceContext = createRunToolTraceContext(snapshot);
+  if (typeof toolManager.hasSnapshotConsumers === "function" && toolManager.hasSnapshotConsumers()) {
+    toolManager.onSnapshot(snapshot);
+  }
   refreshRuntimeControls(snapshot);
+  startRunBenchmark("resume", snapshot);
   runLoopTick();
 }
 
@@ -6226,10 +6352,11 @@ function applyPreferences(nextPreferences) {
   runtimeSettings.programArgumentsLine = nextPreferences.programArgumentsText || "";
   runtimeSettings.maxBacksteps = sanitizeMaxBacksteps(nextPreferences.maxBacksteps, runtimeSettings.maxBacksteps);
   runtimeSettings.maxMemoryBytes = memoryGbToBytes(nextPreferences.maxMemoryGb ?? DEFAULT_MEMORY_GB);
-  runtimeSettings.assemblerBackendMode = sanitizeBackendMode(nextPreferences.assemblerBackendMode, runtimeSettings.assemblerBackendMode || DEFAULT_BACKEND_MODE);
-  runtimeSettings.simulatorBackendMode = sanitizeBackendMode(nextPreferences.simulatorBackendMode, runtimeSettings.simulatorBackendMode || DEFAULT_BACKEND_MODE);
-  runtimeSettings.coreBackend = runtimeSettings.simulatorBackendMode === BACKEND_MODE_HYBRID ? "wasm" : "js";
   cloudApiBase = resolveCloudApiBase(nextPreferences);
+
+  if (typeof engine.setSettings === "function") {
+    engine.setSettings(runtimeSettings);
+  }
 
   if (typeof engine.trimExecutionHistory === "function") {
     engine.trimExecutionHistory();
@@ -6304,10 +6431,157 @@ function stopRunLoop() {
   clearInputPauseState();
   messagesPane.clearInputRequest();
   syncSnapshot(engine.getSnapshot());
+  finishRunBenchmark("interrupted");
+}
+
+function terminateRunByUser() {
+  clearRunTimer();
+  runActive = false;
+  runStopRequested = false;
+  runLastTickAt = 0;
+  runStepCarry = 0;
+  runLastUiSyncAt = 0;
+  clearInputPauseState();
+  messagesPane.clearInputRequest();
+
+  const result = engine.stop();
+  const snapshot = resolveStableRuntimeSnapshot(result?.snapshot);
+  syncSnapshot(snapshot, { force: true });
+  postMarsSystemLine("{action}: execution terminated by user.", { action: translateText("Go") });
+  messagesPane.selectMarsTab?.();
+  finishRunBenchmark("user", { haltReason: "user" });
+  return result;
+}
+
+function startRunBenchmark(trigger = "go", snapshot = null) {
+  if (runBenchmarkSession) finishRunBenchmark("restarted");
+  const runtimeSnapshot = snapshot && typeof snapshot === "object" ? snapshot : engine.getSnapshot();
+  runBenchmarkSession = benchmarkCollector.start("run", {
+    trigger: String(trigger || "go"),
+    programName: getCurrentProgramName(),
+    startStep: Number(runtimeSnapshot?.steps) || 0
+  });
+}
+
+function addRunBenchmarkCpu(cpuMs, executedInstructions = 0) {
+  if (!runBenchmarkSession) return;
+  benchmarkCollector.addCpu(runBenchmarkSession, cpuMs, executedInstructions);
+}
+
+function finishRunBenchmark(outcome = "completed", metadata = {}) {
+  if (!runBenchmarkSession) return null;
+  const session = runBenchmarkSession;
+  runBenchmarkSession = null;
+  const snapshot = engine.getSnapshot({
+    includeTextRows: false,
+    includeLabels: false,
+    includeDataRows: false,
+    includeRegisters: false,
+    shareMemoryWords: true
+  });
+  return benchmarkCollector.finish(session, {
+    outcome,
+    metadata: {
+      ...metadata,
+      endStep: Number(snapshot?.steps) || 0
+    }
+  });
+}
+
+function createRunToolTraceContext(snapshot) {
+  const rowsByAddress = new Map();
+  (Array.isArray(snapshot?.textRows) ? snapshot.textRows : []).forEach((row) => {
+    if (!Number.isFinite(row?.address)) return;
+    rowsByAddress.set(row.address >>> 0, {
+      ...row,
+      address: row.address >>> 0,
+      isCurrent: false
+    });
+  });
+  const labels = (Array.isArray(snapshot?.labels) ? snapshot.labels : []).map((label) => ({ ...label }));
+  return { rowsByAddress, labels, previousSnapshot: snapshot || null };
+}
+
+function createRunToolTraceSnapshot(snapshot, context, stepResult = null, memoryWords = new Map()) {
+  if (!snapshot || typeof snapshot !== "object") return null;
+  const currentAddress = Number.isFinite(snapshot.pc) ? (snapshot.pc >>> 0) : null;
+  const row = currentAddress == null ? null : context?.rowsByAddress?.get(currentAddress);
+  const executedAddress = Number.isFinite(stepResult?.executedAddress)
+    ? (stepResult.executedAddress >>> 0)
+    : null;
+  const executedInstruction = String(stepResult?.executedInstruction || "").trim();
+  const executedBaseRow = executedAddress == null ? null : context?.rowsByAddress?.get(executedAddress);
+  const previousSteps = Number(context?.previousSnapshot?.steps) || 0;
+  const currentSteps = Number(snapshot.steps) || 0;
+  const executedPreviousSnapshot = executedAddress != null && executedInstruction && currentSteps > previousSteps
+    ? {
+        ...(context?.previousSnapshot || {}),
+        pc: executedAddress,
+        textRows: [{
+          ...(executedBaseRow || {}),
+          address: executedAddress,
+          basic: executedInstruction,
+          source: executedBaseRow?.source || executedInstruction,
+          machineCodeHex: Number.isFinite(stepResult?.machineWord)
+            ? toHex(stepResult.machineWord)
+            : String(executedBaseRow?.machineCodeHex || ""),
+          isCurrent: true
+        }],
+        labels: Array.isArray(context?.labels) ? context.labels : []
+      }
+    : null;
+  const tracedSnapshot = {
+    ...snapshot,
+    textRows: row ? [{ ...row, isCurrent: true }] : [],
+    labels: Array.isArray(context?.labels) ? context.labels : [],
+    memoryWords,
+    executedAddress,
+    executedInstruction,
+    machineWord: Number.isFinite(stepResult?.machineWord) ? (stepResult.machineWord >>> 0) : null,
+    runtimeTrace: executedPreviousSnapshot ? { previousSnapshot: executedPreviousSnapshot } : null
+  };
+  if (context && typeof context === "object") {
+    context.previousSnapshot = {
+      ...tracedSnapshot,
+      runtimeTrace: null
+    };
+  }
+  return tracedSnapshot;
+}
+
+function executeRunStepWithToolTrace(engineInstance, traceContext, captureTrace) {
+  const result = engineInstance.step(captureTrace ? {
+    includeSnapshot: true,
+    snapshotOptions: {
+      includeTextRows: false,
+      includeLabels: false,
+      includeDataRows: false,
+      includeRegisters: true,
+      includeMemoryWords: false
+    }
+  } : {
+    includeSnapshot: false
+  });
+  const incrementalMemoryWords = new Map();
+  const writeAddress = Number.isFinite(result?.snapshot?.lastMemoryWriteAddress)
+    ? (result.snapshot.lastMemoryWriteAddress & ~0x3) >>> 0
+    : null;
+  if (writeAddress != null && engineInstance?.memoryWords instanceof Map) {
+    incrementalMemoryWords.set(writeAddress, engineInstance.memoryWords.get(writeAddress) ?? 0);
+  }
+  return {
+    result,
+    toolSnapshot: captureTrace
+      ? createRunToolTraceSnapshot(result?.snapshot, traceContext, result, incrementalMemoryWords)
+      : null
+  };
 }
 
 function runLoopTick() {
   if (!runActive) return;
+
+  const benchmarkTickStartedAt = performance.now();
+  let benchmarkExecutedInstructions = 0;
 
   const speedIndex = getRunSpeedIndex();
   const speed = RUN_SPEED_TABLE[speedIndex];
@@ -6329,6 +6603,7 @@ function runLoopTick() {
   }
 
   if (stepBudget <= 0) {
+    addRunBenchmarkCpu(performance.now() - benchmarkTickStartedAt, 0);
     runTimer = window.setTimeout(runLoopTick, RUN_LOOP_INTERVAL_MS);
     return;
   }
@@ -6339,60 +6614,16 @@ function runLoopTick() {
   let deferredDelayMs = 0;
   let stopReason = "";
   let lastStepResult = null;
-  const backendInfo = typeof engine.getBackendInfo === "function" ? engine.getBackendInfo() : null;
-  const useBatchStep = typeof engine.stepMany === "function" && backendInfo?.backend === "wasm";
-
-  if (useBatchStep) {
-    if (runStopRequested) {
-      stopReason = "user";
-    } else {
-      const result = engine.stepMany(stepBudget, { includeSnapshot: false });
-      lastStepResult = result;
-      if (!result.ok) {
-        postExecutionError(translateText("Go"), result.message);
-        stopReason = "error";
-        runStopRequested = true;
-      } else {
-        const executedInBatch = Math.max(0, Number(result.stepsExecuted) || 0);
-        if (executedInBatch > 0) incrementBackstepEstimate(executedInBatch);
-        if (result.runIo) {
-          forceCriticalCheckpoint = true;
-          if (result.message) runOutputMessages.push({ text: result.message, translate: false });
-        }
-        if (result.waitingForInput) {
-          waitingForInput = true;
-          forceCriticalCheckpoint = true;
-        }
-        if (interactive) {
-          const nowSync = performance.now();
-          const shouldSyncNow =
-            result.done
-            || result.stoppedOnBreakpoint
-            || result.waitingForInput
-            || ((nowSync - runLastUiSyncAt) >= RUN_LOOP_UI_SYNC_INTERVAL_MS_INTERACTIVE);
-          if (shouldSyncNow) {
-            syncSnapshot(engine.getSnapshot({
-              shareMemoryWords: true,
-              includeDataRows: false
-            }), {
-              fastMode: true,
-              suppressPulse: true
-            });
-            runLastUiSyncAt = nowSync;
-          }
-        }
-        if (result.stoppedOnBreakpoint) {
-          stopReason = "breakpoint";
-          runStopRequested = true;
-        } else if (result.done) {
-          stopReason = result.exception ? "exception" : "normal";
-          runStopRequested = true;
-        } else if (result.sleepMs > 0) {
-          deferredDelayMs = Math.max(deferredDelayMs, result.sleepMs | 0);
-        }
-      }
-    }
-  } else {
+  const toolTraceEnabled = typeof toolManager.hasSnapshotConsumers === "function"
+    && toolManager.hasSnapshotConsumers();
+  if (toolTraceEnabled && !runToolTraceContext) {
+    runToolTraceContext = createRunToolTraceContext(engine.getSnapshot({
+      includeDataRows: false,
+      shareMemoryWords: true
+    }));
+  }
+  const toolTraceSnapshots = [];
+  {
     const loopStart = performance.now();
     const timeBudgetMs = interactive ? RUN_LOOP_TIME_BUDGET_MS_INTERACTIVE : RUN_LOOP_TIME_BUDGET_MS_FAST;
     const cooperativeCheckInterval = interactive
@@ -6405,7 +6636,9 @@ function runLoopTick() {
         break;
       }
 
-      const result = engine.step({ includeSnapshot: false });
+      const tracedStep = executeRunStepWithToolTrace(engine, runToolTraceContext, toolTraceEnabled);
+      const result = tracedStep.result;
+      if (tracedStep.toolSnapshot) toolTraceSnapshots.push(tracedStep.toolSnapshot);
       lastStepResult = result;
       if (!result.ok) {
         postExecutionError(translateText("Go"), result.message);
@@ -6426,6 +6659,8 @@ function runLoopTick() {
         break;
       }
 
+      if (!result.stoppedOnBreakpoint) benchmarkExecutedInstructions += 1;
+
       incrementBackstepEstimate(1);
 
       if (interactive) {
@@ -6441,7 +6676,8 @@ function runLoopTick() {
             includeDataRows: false
           }), {
             fastMode: true,
-            suppressPulse: true
+            suppressPulse: true,
+            skipToolSync: toolTraceEnabled
           });
           runLastUiSyncAt = nowSync;
         }
@@ -6470,12 +6706,17 @@ function runLoopTick() {
     }
   }
 
+  if (toolTraceSnapshots.length && typeof toolManager.onSnapshotBatch === "function") {
+    toolManager.onSnapshotBatch(toolTraceSnapshots);
+  }
   flushRunOutputMessages(runOutputMessages);
   if (forceCriticalCheckpoint) forceMachineStateCheckpoint();
 
   if (waitingForInput) {
     markPausedForInput(true);
     messagesPane.focusRunInput();
+    addRunBenchmarkCpu(performance.now() - benchmarkTickStartedAt, benchmarkExecutedInstructions);
+    finishRunBenchmark("input");
     return;
   }
 
@@ -6502,6 +6743,10 @@ function runLoopTick() {
     } else if (stopReason === "normal") {
       postExecutionSuccess(translateText("Go"), lastStepResult?.haltReason || "exit");
     }
+    addRunBenchmarkCpu(performance.now() - benchmarkTickStartedAt, benchmarkExecutedInstructions);
+    finishRunBenchmark(stopReason || "stopped", {
+      haltReason: String(lastStepResult?.haltReason || "")
+    });
     return;
   }
 
@@ -6519,11 +6764,13 @@ function runLoopTick() {
         fastMode: true,
         suppressPulse: true,
         noInteraction: true,
-        preservePreviousSnapshot: true
+        preservePreviousSnapshot: true,
+        skipToolSync: toolTraceEnabled
       });
       runLastUiSyncAt = nowSync;
     }
   }
+  addRunBenchmarkCpu(performance.now() - benchmarkTickStartedAt, benchmarkExecutedInstructions);
   const nextDelay = deferredDelayMs > 0 ? deferredDelayMs : (speed === RUN_SPEED_UNLIMITED ? 1 : RUN_LOOP_INTERVAL_MS);
   runTimer = window.setTimeout(runLoopTick, nextDelay);
 }
@@ -6598,47 +6845,6 @@ async function requestConfirmDialog(title, message, options = {}) {
   }, {
     windowIdPrefix: "window-dialog-system"
   });
-}
-
-async function promptStartupRecoveryChoiceIfNeeded() {
-  if (startupRecoveryDecisionPrompted) return;
-  startupRecoveryDecisionPrompted = true;
-  if (!startupHadRecoverableLocalData) return;
-
-  const recoverExisting = await requestConfirmDialog(
-    "Recover Local Data",
-    translateText("Local storage data was found. Recover it?"),
-    {
-      confirmLabel: "Recover",
-      cancelLabel: "Start New Project"
-    }
-  );
-
-  if (recoverExisting) {
-    postMarsMessage("Recovered local data.");
-    return;
-  }
-
-  const clearAndRestart = await requestConfirmDialog(
-    "Start New Project",
-    translateText("This will clear local data and restart with a clean default project. Continue?"),
-    {
-      confirmLabel: "Clear and Restart",
-      cancelLabel: "Cancel"
-    }
-  );
-  if (!clearAndRestart) {
-    postMarsMessage("Kept current local data.");
-    return;
-  }
-
-  enterResetReloadMode();
-  const removedCount = clearRecoverableLocalStorageData();
-  postMarsMessage("Starting new project. Cleared local data entries: {count}.", { count: removedCount });
-  markSkipStartupRecoveryPromptOnce();
-  window.setTimeout(() => {
-    window.location.reload();
-  }, 40);
 }
 
 function parseBooleanPreferenceToken(value, fallback = false) {
@@ -6768,6 +6974,44 @@ async function openInterfacePreferencesPanel() {
   }, "Interface preferences updated.");
 }
 
+function resolveRuntimeMemoryPreferenceSelection(values = {}, context = {}) {
+  const ids = Array.isArray(context.ids) ? context.ids : [];
+  const activeConfigId = String(context.activeConfigId || "Default");
+  const selectedId = ids.includes(String(values.memoryConfiguration || "").trim())
+    ? String(values.memoryConfiguration || "").trim()
+    : activeConfigId;
+  const defaultMemoryMap = (context.defaultMemoryMap && typeof context.defaultMemoryMap === "object")
+    ? context.defaultMemoryMap
+    : {};
+  const presets = (context.presets && typeof context.presets === "object")
+    ? context.presets
+    : {};
+  const selectedMap = { ...defaultMemoryMap, ...(presets[selectedId] || {}) };
+  const originalExceptionText = String(context.originalExceptionText || "").trim();
+  const exceptionRaw = String(values.exceptionHandlerAddress || "").trim();
+  const memoryChanged = selectedId !== activeConfigId;
+  const shouldUsePresetException = memoryChanged && (!exceptionRaw || exceptionRaw === originalExceptionText);
+  const exceptionSource = shouldUsePresetException
+    ? toHex(selectedMap.exceptionHandlerAddress ?? defaultMemoryMap.exceptionHandlerAddress ?? 0)
+    : (exceptionRaw || originalExceptionText);
+
+  return {
+    selectedId,
+    selectedMap,
+    exceptionSource
+  };
+}
+
+function validateRuntimeMemoryDialogSelection(values, dialog, context = {}) {
+  const selection = resolveRuntimeMemoryPreferenceSelection(values, context);
+  if (isValidAddressPreference(selection.exceptionSource)) return null;
+
+  const warning = "Exception handler address must be a 32-bit decimal or hexadecimal address.";
+  dialog?.setMessage?.(translateText(warning), "error");
+  postMarsMessage(`[warn] ${warning}`);
+  return { close: false };
+}
+
 async function openRuntimeMemoryPreferencesPanel() {
   const ids = Object.keys(memoryPresets);
   if (!ids.length) {
@@ -6786,13 +7030,13 @@ async function openRuntimeMemoryPreferencesPanel() {
     runtimeMemoryMap.exceptionHandlerAddress ?? DEFAULT_MEMORY_MAP.exceptionHandlerAddress
   );
   const originalExceptionText = current.exceptionHandlerAddress || toHex(fallbackAddress);
-  const backendOptions = [
-    { value: BACKEND_MODE_JS, label: translateText("only JS") },
-    { value: BACKEND_MODE_HYBRID, label: translateText("experimental JS + C++") }
-  ];
-  const defaultAssemblerBackend = sanitizeBackendMode(current.assemblerBackendMode, DEFAULT_BACKEND_MODE);
-  const defaultSimulatorBackend = sanitizeBackendMode(current.simulatorBackendMode, DEFAULT_BACKEND_MODE);
-
+  const selectionContext = {
+    ids,
+    activeConfigId: activeMemoryConfigId || "Default",
+    originalExceptionText,
+    presets: memoryPresets,
+    defaultMemoryMap: DEFAULT_MEMORY_MAP
+  };
   const result = await runDialogForm({
     title: translateText("Runtime & Memory Preferences"),
     message: translateText("Adjust exception handler, memory configuration, and memory limits."),
@@ -6801,26 +7045,6 @@ async function openRuntimeMemoryPreferencesPanel() {
     width: "520px",
     height: "390px",
     sections: [
-      {
-        title: translateText("Runtime Engines"),
-        layout: "table",
-        fields: [
-          {
-            name: "assemblerBackendMode",
-            label: translateText("Assembler"),
-            type: "select",
-            value: defaultAssemblerBackend,
-            options: backendOptions
-          },
-          {
-            name: "simulatorBackendMode",
-            label: translateText("Simulator"),
-            type: "select",
-            value: defaultSimulatorBackend,
-            options: backendOptions
-          }
-        ]
-      },
       {
         title: translateText("Memory Configuration"),
         layout: "table",
@@ -6867,7 +7091,8 @@ async function openRuntimeMemoryPreferencesPanel() {
           }
         ]
       }
-    ]
+    ],
+    beforeResolve: (values, dialog) => validateRuntimeMemoryDialogSelection(values, dialog, selectionContext)
   }, {
     windowIdPrefix: "window-runtime-memory-preferences",
     left: "210px",
@@ -6878,32 +7103,26 @@ async function openRuntimeMemoryPreferencesPanel() {
   if (!result?.ok) return;
 
   const values = result.value || {};
-  const selectedId = ids.includes(String(values.memoryConfiguration || "").trim())
-    ? String(values.memoryConfiguration || "").trim()
-    : (activeMemoryConfigId || "Default");
-  const selectedMap = { ...DEFAULT_MEMORY_MAP, ...(memoryPresets[selectedId] || {}) };
-  const exceptionRaw = String(values.exceptionHandlerAddress || "").trim();
-  const memoryChanged = selectedId !== (activeMemoryConfigId || "Default");
-  const shouldUsePresetException = memoryChanged && (!exceptionRaw || exceptionRaw === originalExceptionText);
-  const exceptionSource = shouldUsePresetException
-    ? toHex(selectedMap.exceptionHandlerAddress ?? DEFAULT_MEMORY_MAP.exceptionHandlerAddress)
-    : (exceptionRaw || originalExceptionText);
+  const {
+    selectedId,
+    selectedMap,
+    exceptionSource
+  } = resolveRuntimeMemoryPreferenceSelection(values, selectionContext);
+  if (!isValidAddressPreference(exceptionSource)) {
+    postMarsMessage("[warn] Exception handler address must be a 32-bit decimal or hexadecimal address.");
+    return;
+  }
   const parsedException = parseAddressPreference(
     exceptionSource,
     selectedMap.exceptionHandlerAddress ?? fallbackAddress
   );
   const parsedMemoryGb = sanitizeMemoryGb(values.maxMemoryGb, defaultMemoryGb);
   const parsedBacksteps = sanitizeMaxBacksteps(values.maxBacksteps, defaultBacksteps);
-  const parsedAssemblerBackend = sanitizeBackendMode(values.assemblerBackendMode, defaultAssemblerBackend);
-  const parsedSimulatorBackend = sanitizeBackendMode(values.simulatorBackendMode, defaultSimulatorBackend);
-
   updatePreferencesPatch({
     exceptionHandlerAddress: toHex(parsedException),
     memoryConfiguration: selectedId,
     maxMemoryGb: parsedMemoryGb,
-    maxBacksteps: parsedBacksteps,
-    assemblerBackendMode: parsedAssemblerBackend,
-    simulatorBackendMode: parsedSimulatorBackend
+    maxBacksteps: parsedBacksteps
   }, "Runtime and memory preferences updated.");
 }
 
@@ -7181,6 +7400,7 @@ function normalizeExampleEntry(entry) {
       path: toExampleResourcePath(relativePath),
       relativePath,
       category: DEFAULT_EXAMPLE_CATEGORY,
+      minSubset: "",
       languages: [],
       files: normalizeExampleFiles({}, relativePath),
       id: relativePath || fileName
@@ -7193,6 +7413,7 @@ function normalizeExampleEntry(entry) {
   const path = toExampleResourcePath(relativePath);
   const label = String(entry.label || entry.name || rawPath).trim() || (path.split("/").pop() || path);
   const category = String(entry.category || DEFAULT_EXAMPLE_CATEGORY).trim() || DEFAULT_EXAMPLE_CATEGORY;
+  const minSubset = String(entry.minSubset || "").trim().toUpperCase();
   const languages = normalizeExampleLanguageList(entry.languages);
   const files = normalizeExampleFiles(entry, relativePath);
   return {
@@ -7200,6 +7421,7 @@ function normalizeExampleEntry(entry) {
     path,
     relativePath,
     category,
+    minSubset,
     languages,
     files,
     id: String(entry.id || relativePath || label).trim() || relativePath || label
@@ -7374,15 +7596,24 @@ function buildAssemblyContext(options = {}) {
   };
 }
 
-function assembleFromEditor(options = {}) {
-  const assemblyContext = buildAssemblyContext(options);
-  if (!assemblyContext) return { result: null, assemblyContext: null };
-  const result = engine.assemble(assemblyContext.source, {
+function runBenchmarkedAssembly(assemblyContext, trigger = "assemble") {
+  return benchmarkCollector.measure("assemble", () => engine.assemble(assemblyContext.source, {
     sourceName: assemblyContext.sourceName,
     includeMap: assemblyContext.includeMap,
     programArgumentsEnabled: runtimeSettings.programArguments,
     programArguments: runtimeSettings.programArgumentsLine
+  }), {
+    trigger: String(trigger || "assemble"),
+    sourceName: String(assemblyContext.sourceName || ""),
+    sourceCharacters: String(assemblyContext.source || "").length,
+    fileCount: Number(assemblyContext.fileCount) || 1
   });
+}
+
+function assembleFromEditor(options = {}) {
+  const assemblyContext = buildAssemblyContext(options);
+  if (!assemblyContext) return { result: null, assemblyContext: null };
+  const result = runBenchmarkedAssembly(assemblyContext, options.benchmarkTrigger || "assemble");
   return { result, assemblyContext };
 }
 
@@ -7830,13 +8061,18 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences) {
     const includeSourceMap = collectMiniCIncludeSourceMap();
     const includeResolver = createMiniCIncludeResolver(sourceName, includeSourceMap);
     const useLibrarySources = buildMiniCUseLibrarySources(includeSourceMap, subset);
-    compileResult = miniCCompilerModule.compile(source, {
+    compileResult = benchmarkCollector.measure("compile", () => miniCCompilerModule.compile(source, {
       sourceName,
       subset,
       targetAbi,
       emitComments,
       includeResolver,
       useLibrarySources
+    }), {
+      sourceName,
+      sourceCharacters: source.length,
+      subset,
+      targetAbi
     });
   } catch (error) {
     const message = (error && typeof error === "object" && typeof error.message === "string")
@@ -8204,9 +8440,6 @@ const commands = {
       return;
     }
 
-    const localProjectSave = persistOpenProjectLocally();
-    if (!localProjectSave.ok) return;
-
     const browserResult = saveActiveFileToBrowser(active);
     if (!browserResult.ok) {
       if (browserResult.reason === "quota") {
@@ -8221,20 +8454,10 @@ const commands = {
     }
 
     editor.markActiveSaved();
-    if (projectIsOpen()) {
-      void saveActiveProjectToCloud({ silentSuccess: true }).then((result) => {
-        if (result?.ok) {
-          postMarsMessage("Saved active file '{name}' ({used}/{limit}) and synced project '{project}'.", {
-            name: browserResult.file.name,
-            used: formatStoredSourceUsage(browserResult.usageBytes),
-            limit: formatStoredSourceUsage(browserResult.maxBytes),
-            project: projectState.rootPath
-          });
-          return;
-        }
-        postMarsMessage("[warn] Active file '{name}' was saved locally, but cloud sync is pending.", {
-          name: browserResult.file.name
-        });
+    const localProjectSave = persistOpenProjectLocally();
+    if (!localProjectSave.ok) {
+      postMarsMessage("[warn] Active file '{name}' was saved to browser storage, but the project could not be persisted.", {
+        name: browserResult.file.name
       });
       return;
     }
@@ -8244,6 +8467,9 @@ const commands = {
       used: formatStoredSourceUsage(browserResult.usageBytes),
       limit: formatStoredSourceUsage(browserResult.maxBytes)
     });
+    if (projectIsOpen()) {
+      postMarsMessage("Project saved: {name}.", { name: projectState.rootPath });
+    }
   },
 
   async saveProjectWorkspace() {
@@ -8251,15 +8477,10 @@ const commands = {
     const localProjectSave = persistOpenProjectLocally();
     if (!localProjectSave.ok) return { ok: false, message: "quota" };
     editor.markProjectOwnedSaved?.();
-    const cloudResult = await saveActiveProjectToCloud({ silentSuccess: true });
-    if (cloudResult?.ok) {
-      postMarsMessage("Project saved: {name}.", { name: projectState.rootPath });
-      return { ok: true, name: projectState.rootPath };
-    }
-    postMarsMessage("[warn] Project '{name}' was saved locally, but cloud sync is pending.", {
-      name: projectState.rootPath
-    });
-    return { ok: false, message: cloudResult?.message || "cloud" };
+    const finalizedProjectSave = persistOpenProjectLocally();
+    if (!finalizedProjectSave.ok) return { ok: false, message: "quota" };
+    postMarsMessage("Project saved: {name}.", { name: projectState.rootPath });
+    return { ok: true, name: projectState.rootPath };
   },
 
   saveFileToBrowserStorage() {
@@ -8308,12 +8529,7 @@ const commands = {
       action: translateText("Assemble"),
       sources: describeAssemblySources(assemblyContext)
     });
-    const result = engine.assemble(assemblyContext.source, {
-      sourceName: assemblyContext.sourceName,
-      includeMap: assemblyContext.includeMap,
-      programArgumentsEnabled: runtimeSettings.programArguments,
-      programArguments: runtimeSettings.programArgumentsLine
-    });
+    const result = runBenchmarkedAssembly(assemblyContext, "assemble");
     reportDiagnostics(result, assemblyContext);
 
     if (!result.ok) {
@@ -8405,7 +8621,9 @@ const commands = {
       return;
     }
     messagesPane.selectRunTab?.();
-    const result = engine.step();
+    const result = benchmarkCollector.measure("step", () => engine.step(), {
+      programName: getCurrentProgramName()
+    });
     if (!result.ok) {
       postExecutionError(translateText("Step"), result.message);
       return;
@@ -8461,14 +8679,19 @@ const commands = {
     runLastTickAt = performance.now();
     runStepCarry = 0;
     runLastUiSyncAt = 0;
+    runToolTraceContext = createRunToolTraceContext(snapshot);
     forceMachineStateCheckpoint();
     syncButtons(snapshot);
+    if (typeof toolManager.hasSnapshotConsumers === "function" && toolManager.hasSnapshotConsumers()) {
+      toolManager.onSnapshot(snapshot);
+    }
     updateNoInteractionUiMode();
     postMarsSystemLine("{action}: running {name}", {
       action: translateText("Go"),
       name: getCurrentProgramName()
     }, { activate: false });
     messagesPane.selectRunTab?.();
+    startRunBenchmark("go", snapshot);
     runLoopTick();
   },
   pause() {
@@ -8489,26 +8712,18 @@ const commands = {
       name: getCurrentProgramName()
     });
     messagesPane.selectMarsTab?.();
+    finishRunBenchmark("paused");
   },
   stop() {
-    if (runActive) {
-      runStopRequested = true;
-      return;
+    if (!runActive && !runPausedForInput) {
+      const snapshot = engine.getSnapshot();
+      if (!snapshot.assembled) {
+        postMarsMessage("[warn] No assembled program to stop.");
+        return;
+      }
     }
 
-    const snapshot = engine.getSnapshot();
-    if (!snapshot.assembled) {
-      postMarsMessage("[warn] No assembled program to stop.");
-      return;
-    }
-
-    const result = typeof engine.stop === "function" ? engine.stop() : null;
-    clearInputPauseState();
-    const nextSnapshot = resolveStableRuntimeSnapshot(result?.snapshot);
-    syncSnapshot(nextSnapshot, { force: true });
-    refreshRuntimeControls(nextSnapshot);
-    postMarsSystemLine("{action}: execution terminated by user.", { action: translateText("Go") });
-    messagesPane.selectMarsTab?.();
+    terminateRunByUser();
   },
   backstep() {
     modeController.setMode("execute");
@@ -8525,7 +8740,9 @@ const commands = {
       refreshRuntimeControls(snapshot);
       return;
     }
-    const result = engine.backstep();
+    const result = benchmarkCollector.measure("backstep", () => engine.backstep(), {
+      programName: getCurrentProgramName()
+    });
     if (!result.ok) {
       backstepDepthEstimate = 0;
       scheduleRuntimeControlRecovery();
@@ -8550,26 +8767,24 @@ const commands = {
     runLastUiSyncAt = 0;
     backstepDepthEstimate = 0;
     clearInputPauseState();
-    engine.reset();
+    benchmarkCollector.measure("reset", () => engine.reset(), {
+      programName: getCurrentProgramName()
+    });
     messagesPane.clearInputRequest();
 
     let assemblyContext = buildLastSuccessfulAssemblyContext();
     let assembleResult = null;
     if (assemblyContext) {
-      assembleResult = engine.assemble(assemblyContext.source, {
-        sourceName: assemblyContext.sourceName,
-        includeMap: assemblyContext.includeMap,
-        programArgumentsEnabled: runtimeSettings.programArguments,
-        programArguments: runtimeSettings.programArgumentsLine
-      });
+      assembleResult = runBenchmarkedAssembly(assemblyContext, "reset");
     } else {
       const activeFile = editor.getActiveFile();
       const preferredAssemblyTarget = (activeFile && isAssemblySourceFile(activeFile.name))
         ? {
-            preferredFileId: String(activeFile.id || ""),
-            preferredSourceName: String(activeFile.name || "")
+          preferredFileId: String(activeFile.id || ""),
+            preferredSourceName: String(activeFile.name || ""),
+            benchmarkTrigger: "reset"
           }
-        : lastSuccessfulAssemblySelection;
+        : { ...lastSuccessfulAssemblySelection, benchmarkTrigger: "reset" };
       ({ result: assembleResult, assemblyContext } = assembleFromEditor(preferredAssemblyTarget));
     }
     if (assemblyContext && assembleResult) {
@@ -8736,7 +8951,6 @@ const commands = {
     enterResetReloadMode();
     const removedCount = clearRecoverableLocalStorageData();
     postMarsMessage("Cleared local data entries: {count}. Restarting...", { count: removedCount });
-    markSkipStartupRecoveryPromptOnce();
     window.setTimeout(() => {
       window.location.reload();
     }, 40);
@@ -8809,15 +9023,22 @@ const commands = {
       }
       const rawLabel = String(values.label || "").trim();
       const label = rawLabel || new Date().toLocaleString();
-      if (!Array.isArray(projectState.states)) {
-        projectState.states = Array.from({ length: PROJECT_STATE_SLOT_COUNT }, () => null);
-      }
-      projectState.states[slotIndex] = {
+      const previousProjectState = projectState;
+      const nextStates = normalizeProjectStateSlots(projectState.states);
+      nextStates[slotIndex] = {
         label,
         savedAt: Date.now(),
         snapshot
       };
-      persistProjectNow({ syncFromEditor: true });
+      projectState = normalizeProjectData({
+        ...projectState,
+        states: nextStates
+      }) || projectState;
+      if (!persistProjectNow({ syncFromEditor: true })) {
+        projectState = previousProjectState;
+        postMarsMessage("[error] Failed to save to browser storage.");
+        return;
+      }
       postMarsMessage("State stored in slot {slot}.", { slot: slotIndex + 1 });
       return;
     }
@@ -8995,7 +9216,7 @@ const commands = {
         const items = runtimeExampleFiles
           .filter((example) => example.category === category)
           .map((example) => ({
-            label: example.label,
+            label: example.minSubset ? `${example.label} · ${example.minSubset}` : example.label,
             command: () => commands.openExample(example)
           }));
         if (!items.length) return null;
@@ -9186,7 +9407,6 @@ window.addEventListener("resize", () => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") hideEditorTabContextMenu();
 });
-void refreshCloudSession({ silent: true });
 getI18nApi()?.subscribe?.(() => {
   refs.refreshTranslations?.();
   messagesPane.refreshTranslations?.();
@@ -9195,10 +9415,35 @@ getI18nApi()?.subscribe?.(() => {
   helpSystem.refreshTranslations?.();
   browserStorageManager.refreshTranslations?.();
   updateRunSpeedLabel();
+  renderBenchmarkStatus();
   menuSystem.hide();
   previousSnapshot = null;
   syncSnapshot(engine.getSnapshot(), { suppressPulse: true });
 });
+
+function buildWorkspaceSessionPersistenceCandidates(basePayload) {
+  const withoutWindowState = {
+    ...basePayload,
+    windowState: null
+  };
+  const withoutRedundantSavedSources = {
+    ...withoutWindowState,
+    files: withoutWindowState.files.map((file) => {
+      if (file.savedSource !== file.source) return { ...file };
+      const { savedSource: _savedSource, ...recoveryFile } = file;
+      return recoveryFile;
+    })
+  };
+  const minimalRecoveryPayload = {
+    ...withoutWindowState,
+    files: withoutWindowState.files.map((file) => {
+      const { savedSource: _savedSource, ...recoveryFile } = file;
+      return recoveryFile;
+    })
+  };
+
+  return [basePayload, withoutWindowState, withoutRedundantSavedSources, minimalRecoveryPayload];
+}
 
 function persistWorkspaceSession() {
   if (suppressPersistenceForResetReload) return;
@@ -9227,11 +9472,14 @@ function persistWorkspaceSession() {
         : null
     };
 
-    const candidates = [basePayload];
+    const candidates = buildWorkspaceSessionPersistenceCandidates(basePayload);
+    const attemptedPayloads = new Set();
 
     for (let i = 0; i < candidates.length; i += 1) {
       const payload = candidates[i];
       const serialized = JSON.stringify(payload);
+      if (attemptedPayloads.has(serialized)) continue;
+      attemptedPayloads.add(serialized);
       if (serialized.length > SESSION_STORAGE_TARGET_MAX_CHARS) continue;
       try {
         window.localStorage.setItem(SESSION_STORAGE_KEY, serialized);
@@ -9457,9 +9705,9 @@ registersPane.onToggleCop1Flag((flagIndex, flagValue) => {
     }
   }
 
-  if (!updated && typeof engine.exportNativeState === "function" && typeof engine.importNativeState === "function") {
+  if (!updated && typeof engine.exportRuntimeState === "function" && typeof engine.importRuntimeState === "function") {
     try {
-      const state = engine.exportNativeState({
+      const state = engine.exportRuntimeState({
         includeProgram: false,
         includeExecutionPlan: false,
         includeBreakpoints: true
@@ -9469,7 +9717,7 @@ registersPane.onToggleCop1Flag((flagIndex, flagValue) => {
         while (nextFlags.length < 8) nextFlags.push(0);
         nextFlags[index] = value;
         state.fpuFlags = nextFlags;
-        engine.importNativeState(state, { preserveHistory: true, preserveExecutionHistory: true });
+        engine.importRuntimeState(state, { preserveHistory: true, preserveExecutionHistory: true });
         updated = true;
       }
     } catch {
@@ -9502,6 +9750,7 @@ window.addEventListener("keydown", async (event) => {
       const dirtyFiles = editor.getDirtyFiles();
       const ok = await confirmCloseDirtyFiles(dirtyFiles, translateText("Reload page?"));
       if (!ok) return;
+      flushPendingLocalPersistence();
       allowPageUnload = true;
       window.location.reload();
       return;
@@ -9518,9 +9767,26 @@ window.addEventListener("keydown", async (event) => {
   }
 });
 
+function flushPendingLocalPersistence() {
+  if (suppressPersistenceForResetReload) return;
+  if (persistTimer !== null) {
+    window.clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+  if (projectPersistTimer !== null) {
+    window.clearTimeout(projectPersistTimer);
+    projectPersistTimer = null;
+  }
+  projectPersistWantsEditorSync = false;
+  persistWorkspaceSession();
+  if (projectIsOpen()) {
+    persistProjectNow({ syncFromEditor: true });
+  }
+}
+
 function handleBeforeUnload(event) {
   if (suppressPersistenceForResetReload || allowPageUnload) return;
-  persistWorkspaceSession();
+  flushPendingLocalPersistence();
   if (!editor.hasDirtyFiles()) return;
   event.preventDefault();
   event.returnValue = "";
@@ -9528,22 +9794,21 @@ function handleBeforeUnload(event) {
 
 function handlePageHidePersist() {
   if (suppressPersistenceForResetReload || allowPageUnload) return;
-  persistWorkspaceSession();
+  flushPendingLocalPersistence();
 }
 
 function handleVisibilityPersist() {
   if (document.visibilityState !== "hidden") return;
   if (suppressPersistenceForResetReload || allowPageUnload) return;
-  persistWorkspaceSession();
+  flushPendingLocalPersistence();
 }
 
 function handlePeriodicPersist() {
   if (suppressPersistenceForResetReload || allowPageUnload) return;
-  persistWorkspaceSession();
+  flushPendingLocalPersistence();
 }
 
 window.addEventListener("beforeunload", handleBeforeUnload);
-window.onbeforeunload = handleBeforeUnload;
 window.addEventListener("pagehide", handlePageHidePersist);
 document.addEventListener("visibilitychange", handleVisibilityPersist);
 window.setInterval(() => {
@@ -9687,15 +9952,19 @@ if (typeof window !== "undefined") {
   } catch {
     window.dispatchEvent(new Event("webmars:ready"));
   }
-  window.setTimeout(() => {
-    void promptStartupRecoveryChoiceIfNeeded();
-  }, 0);
 }
 
 if (typeof window !== "undefined") {
   window.WebMarsRuntimeDebug = {
     getSnapshot(options = {}) {
       return engine.getSnapshot(options);
+    },
+    getBenchmarks() {
+      return benchmarkCollector.snapshot();
+    },
+    clearBenchmarks() {
+      benchmarkCollector.clear();
+      return benchmarkCollector.snapshot();
     },
     readByte(address) {
       try {
@@ -9710,29 +9979,6 @@ if (typeof window !== "undefined") {
       } catch {
         return null;
       }
-    },
-    getBackendInfo() {
-      return typeof engine.getBackendInfo === "function" ? engine.getBackendInfo() : null;
-    },
-    getBackendSelection() {
-      const currentPreferences = store.getState().preferences || {};
-      return {
-        assemblerBackendMode: sanitizeBackendMode(currentPreferences.assemblerBackendMode, DEFAULT_BACKEND_MODE),
-        simulatorBackendMode: sanitizeBackendMode(currentPreferences.simulatorBackendMode, DEFAULT_BACKEND_MODE)
-      };
-    },
-    setBackendSelection(nextModes = {}) {
-      const currentPreferences = store.getState().preferences || {};
-      const nextPreferences = {
-        ...currentPreferences,
-        assemblerBackendMode: sanitizeBackendMode(nextModes.assemblerBackendMode, currentPreferences.assemblerBackendMode || DEFAULT_BACKEND_MODE),
-        simulatorBackendMode: sanitizeBackendMode(nextModes.simulatorBackendMode, currentPreferences.simulatorBackendMode || DEFAULT_BACKEND_MODE)
-      };
-      applyPreferences(nextPreferences);
-      return {
-        selection: this.getBackendSelection(),
-        backend: this.getBackendInfo()
-      };
     },
     getPreferences() {
       return { ...(store.getState().preferences || {}) };
@@ -9944,7 +10190,7 @@ if (typeof window !== "undefined") {
         redoStack: []
       }];
       const project = projectState && typeof projectState === "object" ? projectState : null;
-      const files = buildStartupEditorFiles(project, restored?.files, fallbackFiles);
+      const files = buildStartupEditorFiles(project, restored, fallbackFiles);
       const activeFileId = resolveStartupActiveFileId(project, restored, files);
       return {
         files: files.map((file) => ({ ...file })),
@@ -9963,42 +10209,6 @@ if (typeof window !== "undefined") {
     }
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -1,6 +1,5 @@
 (() => {
   const CORE_MODULE_SCRIPTS = [
-    "./assets/js/app-modules/00-core-wasm-hotpath.js",
     "./assets/js/app-modules/00-i18n.js",
     "./assets/js/reference/pseudo-ops.generated.js",
     "./assets/js/reference/instructions.generated.js",
@@ -14,8 +13,6 @@
   const APP_MODULE_SCRIPTS = [
     "./assets/js/app-modules/00-core-store.js",
     "./assets/js/app-modules/00-core.js",
-    "./assets/js/app-modules/00-core-wasm-native.js",
-    "./assets/js/app-modules/00-core-wasm-bridge.js",
     "./assets/js/app-modules/05-layout-config.js",
     "./assets/js/app-modules/09-ui-translation.js",
     "./assets/js/app-modules/10-ui.js",
@@ -25,11 +22,16 @@
     "./assets/js/app-modules/17-mini-c-compiler.js",
     "./assets/js/app-modules/18-runtime-browser-storage.js",
     "./assets/js/app-modules/19-runtime-settings.js",
+    "./assets/js/app-modules/19-runtime-benchmarks.js",
     "./assets/js/app-modules/20-app-runtime.js"
   ];
   const LANGUAGE_MANIFEST_PATH = "./assets/js/i18n/languages.json";
 
   if (window.__marsWebAppBootstrapped) return;
+
+  function withAppVersion(path) {
+    return window.WebMarsAppVersion?.withVersion?.(path) || path;
+  }
 
   function dispatchLoaderEvent(name, detail) {
     try {
@@ -48,7 +50,7 @@
 
     const src = moduleScripts[index];
     const script = document.createElement("script");
-    script.src = src;
+    script.src = withAppVersion(src);
     script.async = false;
     script.onload = () => loadSequential(moduleScripts, index + 1);
     script.onerror = () => {

@@ -1,4 +1,4 @@
-# webMARS v0.4.6
+# webMARS v0.4.7
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -12,23 +12,26 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - Multi-window desktop/mobile UI with registers, text/data segments, labels, messages, Run I/O, and tool windows.
 - Built-in help system with localized pages and embedded reference material.
 - Persistent browser workspace for files, session restore, settings, and tool state.
-- Optional JS/WASM hybrid backend support, while the JavaScript engine remains the compatibility baseline.
+- Single JavaScript assembler and simulator core, with no native runtime dependency.
 
 ## Current Status
 
 - Active project, still evolving.
 - Main target is practical compatibility with Java MARS 4.5 behavior inside the browser.
 - Some edge cases can still differ from desktop Java MARS.
-- The WebAssembly path exists, but should still be treated as experimental/hybrid rather than the primary source of truth.
+- The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
+- This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.4.6
+## Highlights in v0.4.7
 
-- Startup flow was hardened so the loader now waits for actual tool readiness instead of disappearing into a partial UI state.
-- Tool bootstrap now uses a complete embedded manifest fallback instead of silently collapsing to a single tool.
-- Browser-storage timestamps were fixed, preventing corrupted `updatedAt` values from being truncated to 32-bit integers.
-- The built-in help viewer now opens the MIPS reference PDF inside the UI and lets external links and `mailto:` targets open externally as intended.
-- Dead legacy frontend code and unreachable runtime/help fallbacks were removed, reducing drift inside the active code path.
-- Local static serving was updated so PDF files are returned inline with the correct MIME type.
+- Standardized execution on a single JavaScript engine and removed the experimental WASM/hybrid runtime.
+- Added local Compile, Assemble and Run benchmarks with estimated JavaScript utilization and execution throughput.
+- Corrected COP1 doubleword ordering and rounding, delayed-branch links and exceptions, LL/SC reservations, strict memory access and atomic stores.
+- Made breakpoints resumable, aligned direct-engine and browser execution behavior, and made Stop terminate pending execution and Sleep.
+- Expanded runtime snapshots to preserve breakpoints, random streams, virtual files and cursors, stdin, arguments and image handles.
+- Restored reproducible install, serve, build, test and validation commands with broad regression coverage.
+- Expanded and validated the multilingual C/Assembly examples, including C1-NATIVE and multi-file projects.
+- Rebuilt the in-app documentation in English, Spanish and Portuguese to match the current runtime, compiler, tools, storage and privacy behavior.
 
 ## Main Capabilities
 
@@ -43,31 +46,86 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
 ## Run Locally
 
-From the repository root:
+Requirements:
+
+- Node.js 20 or newer.
+
+Install the exact development metadata from `package-lock.json` (the project
+has no runtime npm dependencies):
+
+```bash
+npm ci
+```
+
+Start the local server from the repository root:
 
 ```bash
 npm start
 ```
 
-Or run the local web server directly:
+Default URL: `http://127.0.0.1:8080`. Use `npm start -- --port 9000` to select another port.
+
+The Windows-only server remains available as an alternative:
 
 ```powershell
-.\web\start-web.bat
+.\start-web.bat
 ```
 
-Default URL: `http://localhost:8080`
+## Build, Test, and Validate
+
+The browser application is shipped as static source. Its normal build checks the complete script graph, JavaScript/JSON syntax, required assets, and privacy declarations:
+
+```bash
+npm run build
+```
+
+Run the JavaScript runtime regression tests:
+
+```bash
+npm test
+```
+
+Run the complete pre-change/pre-commit validation:
+
+```bash
+npm run validate
+```
+
+Create the isolated, reproducible release directory, ZIP, and SHA-256
+checksum under `dist/`:
+
+```bash
+npm run package:release
+```
+
+The package is assembled from an explicit public-file allowlist and validates
+its copied files, manifests, local references, JavaScript/JSON syntax, ZIP
+contents, CRCs, and checksums before it is published.
+
+## Runtime Benchmarks
+
+The toolbar includes a compact, local-only benchmark strip for Mini-C compilation, assembly, execution time, and estimated JavaScript utilization. The JS percentage is instrumented main-thread busy time divided by elapsed time; it is not the operating system's total CPU percentage.
+
+Detailed volatile metrics include sample counts, averages, minimum/maximum durations, recent history, outcomes, and execution throughput. They can be inspected while developing with:
+
+```js
+window.WebMarsBenchmarks.snapshot()
+window.WebMarsRuntimeDebug.getBenchmarks()
+```
+
+Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Repository Layout
 
-- `web/index.html`: shell page and startup loader.
-- `web/assets/js/app.bundle.js`: ordered module bootstrap.
-- `web/assets/js/app-modules/00-core.js`: assembler and simulator core in JavaScript.
-- `web/assets/js/app-modules/00-core-wasm-*.js`: WASM bridge and hybrid runtime path.
-- `web/assets/js/app-modules/10-ui.js`: windowing/layout/UI foundation.
-- `web/assets/js/app-modules/20-app-runtime.js`: runtime orchestration, commands, persistence, and integration glue.
-- `web/tools/`: pluggable MARS-style tool windows.
-- `web/help/`: built-in help, about/info pages, changelog, and reference content.
-- `web/wasm/`: C++ sources and generated WebAssembly artifacts.
+- `index.html`: shell page and startup loader.
+- `assets/js/app.bundle.js`: ordered module bootstrap.
+- `assets/js/app-modules/00-core.js`: assembler and simulator core in JavaScript.
+- `assets/js/app-modules/10-ui.js`: windowing/layout/UI foundation.
+- `assets/js/app-modules/19-runtime-benchmarks.js`: local timing, JS-utilization, and throughput collector.
+- `assets/js/app-modules/20-app-runtime.js`: runtime orchestration, commands, persistence, and integration glue.
+- `tools/`: pluggable MARS-style tool windows.
+- `help/`: built-in help, about/info pages, changelog, and reference content.
+- `tests/`: JavaScript runtime regression tests.
 
 ## Help and Documentation
 
@@ -76,8 +134,10 @@ Default URL: `http://localhost:8080`
 
 ## Release Line
 
+- `v0.4.7`: JavaScript runtime consolidation, benchmarks, execution correctness, stronger snapshots, expanded examples, complete multilingual help, and release validation
 - `v0.4.6`: startup hardening, help/PDF fixes, browser-storage timestamp fix, runtime cleanup, dead-code removal, legacy script/result purge
 - `v0.4.5`: cloud backend/login productionization + project/editor workflow improvements + storage/sync refinement
+- `v0.4.4`: Mini-C profile and library expansion, runtime coverage, tools, examples, and project workflow improvements
 - `v0.4.3`: Mini-C/C0 compiler integration + UI renewal and project-first workflow
 - `v0.4.2`: UI polish + simulation runtime bug fixes + final MARS 4.5 parity adjustments
 - `v0.4.1`: register window fixes + tighter MIPS-like register/memory access behavior

@@ -1,64 +1,43 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Contenido de la ayuda de MARS 4.5
-</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Primeros pasos con webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
 </head>
 <body>
-<center>
-<h3>MARS - Mips Assembly and Runtime Simulator</h3>
-<h4>Versión 4.5</h4>
-<h4>Agosto de 2014</h4>
-<h4>Introducción</h4>
-</center>
+  <h1>Primeros pasos</h1>
+  <p class="lead">webMARS es un ensamblador, simulador, depurador, compilador Mini-C y espacio educativo MIPS32 que funciona en el navegador. El runtime está implementado íntegramente en JavaScript; no requiere Java, ejecutables nativos ni un backend WASM.</p>
 
-MARS, el <b>M</b>ips <b>A</b>ssembly and <b>R</b>untime <b>S</b>imulator,
-ensambla y simula la ejecución de programas en lenguaje ensamblador MIPS.
-Puede utilizarse tanto desde la línea de comandos como a través de su
-entorno de desarrollo integrado (IDE). MARS está escrito en Java y
-requiere al menos la versión 1.5 del entorno J2SE Java Runtime Environment (JRE) para funcionar.
-Se distribuye como un archivo JAR ejecutable.
-La página principal de MARS
-es
-<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>. Este documento está disponible allí para su impresión.
+  <ol class="steps">
+    <li><strong>Abre o crea un archivo fuente.</strong> Usa <b>Archivo → Ejemplos</b> para empezar con una guía, <b>Nuevo proyecto</b> para crear un proyecto vacío o <b>Abrir desde disco</b> para importar archivos locales.</li>
+    <li><strong>Constrúyelo.</strong> Para archivos Assembly usa <b>Ejecutar → Ensamblar</b> (<kbd>F3</kbd>). Para archivos C usa <b>Ejecutar → Compilar C0</b> (<kbd>F4</kbd>) y después ensambla el código generado.</li>
+    <li><strong>Ejecútalo.</strong> Selecciona <b>Ejecutar</b> (<kbd>F5</kbd>) o avanza una instrucción con <b>Paso</b> (<kbd>F7</kbd>).</li>
+    <li><strong>Inspecciona el resultado.</strong> Los registros, el coprocesador 1, la memoria, los mensajes, la E/S y las herramientas conectadas se actualizan durante la ejecución.</li>
+  </ol>
 
-<p>A partir de la versión 4.0, MARS ensambla y simula 155 instrucciones básicas del conjunto
-de instrucciones MIPS-32, aproximadamente 370 pseudo-instrucciones o variaciones de instrucciones, las 17 funciones
-de syscall definidas principalmente por SPIM para E/S de consola y archivos, y 22 syscalls adicionales para otros usos como
-salida MIDI, generación de números aleatorios y más. Estas aparecen listadas en pestañas de ayuda independientes. También admite siete
-modos diferentes de direccionamiento de memoria para instrucciones de carga y almacenamiento: <tt>label</tt>, <tt>immed</tt>,
-<tt>label+immed</tt>, <tt>($reg)</tt>, <tt>label($reg)</tt>, <tt>immed($reg)</tt> y <tt>label+immed($reg)</tt>, donde <tt>immed</tt>
-es un entero de hasta 32 bits. Hay una opción de configuración para impedir el uso de pseudo-instrucciones
-y de formatos extendidos de instrucción y direccionamiento de memoria.
-<p>
-Nuestra referencia principal para implementar el conjunto de instrucciones ha sido
-<i>Computer Organization and Design, Fourth Edition</i> de Patterson y Hennessy,
-Elsevier - Morgan Kaufmann, 2009. Resume el conjunto de instrucciones MIPS-32
-y las pseudo-instrucciones en las Figuras 3.24 y 3.25 de las páginas 279-281, con detalles
-adicionales en el texto y en el Apéndice B. Las versiones 3.2 y posteriores de MARS implementan todas las instrucciones
-del Apéndice B y de esas figuras, excepto los delay branches de la columna izquierda de la Figura 3.25.
-También implementa todos los servicios del sistema (syscalls) y las directivas del ensamblador
-documentadas en el Apéndice B.
+  <h2>Qué incluye</h2>
+  <div class="cards">
+    <section class="card"><h3>Runtime MIPS32</h3><p>Ejecución de enteros, saltos, memoria, excepciones, LL/SC y COP1, con opciones de saltos retardados y código automodificable.</p></section>
+    <section class="card"><h3>Compilador Mini-C</h3><p>Subconjuntos educativos C0 y el perfil C1-NATIVE, con la convención de llamada MIPS o32.</p></section>
+    <section class="card"><h3>Depurador</h3><p>Puntos de ruptura, pasos hacia delante y atrás, reinicio, pausa/parada y velocidad configurable.</p></section>
+    <section class="card"><h3>Dispositivos y herramientas</h3><p>Dispositivos MMIO, simuladores de caché y saltos, pantallas, estadísticas, terminal ANSI y más.</p></section>
+  </div>
 
-<p>El IDE de MARS ofrece edición y ensamblado de programas, pero su verdadera
-fortaleza está en el soporte para depuración interactiva. El programador puede fijar y
-eliminar puntos de ruptura con facilidad o avanzar y retroceder paso a paso (undo) mientras
-observa y edita directamente el contenido de registros y memoria.
+  <h2>Primera ejecución recomendada</h2>
+  <p>Abre <b>Archivo → Ejemplos</b>, selecciona un ejemplo de aprendizaje en español y lee su descripción. Los ejemplos Assembly se pueden ensamblar directamente. Los ejemplos C indican su perfil mínimo y pueden contener varios archivos.</p>
 
-<h4>Preguntas y comentarios</h4>
-Envíe sus preguntas y comentarios sobre MARS a
-Dr. Pete Sanderson a <tt>PSanderson@otterbein.edu</tt> o
-Dr. Ken Vollmar a <tt>KenVollmar@missouristate.edu</tt>.
-Responderemos tan pronto como nos sea posible, aunque como profesores no disponemos de tanto tiempo durante
-el curso académico como nos gustaría para dedicarlo a este proyecto. Presentamos artículos
-sobre MARS en la conferencia CCSC:MW de 2005 y en el SIGCSE Technical Symposium de 2006. También presentamos
-una sesión tutorial sobre MARS en la conferencia CCSC:CP de 2007, y el material de ese tutorial está disponible
-en la página principal de MARS.
-<p>
-<hr>
-<p>
-Este documento está disponible para imprimir en la página principal de MARS
-<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+  <div class="note"><strong>Tus archivos permanecen en el navegador por defecto.</strong> Los proyectos locales y la recuperación de sesión no se suben salvo que uses explícitamente el menú Cloud. Descarga periódicamente el trabajo importante.</div>
+
+  <h2>Atajos útiles</h2>
+  <table class="compact">
+    <tr><th>Acción</th><th>Atajo</th></tr>
+    <tr><td>Ayuda</td><td><kbd>F1</kbd></td></tr>
+    <tr><td>Ensamblar</td><td><kbd>F3</kbd></td></tr>
+    <tr><td>Compilar Mini-C</td><td><kbd>F4</kbd></td></tr>
+    <tr><td>Ejecutar</td><td><kbd>F5</kbd></td></tr>
+    <tr><td>Paso</td><td><kbd>F7</kbd></td></tr>
+  </table>
 </body>
 </html>

@@ -22,6 +22,12 @@
     catalogs: new Map()
   };
 
+  function applyDocumentLanguage() {
+    const documentElement = globalScope.document?.documentElement;
+    if (!documentElement) return;
+    documentElement.lang = state.currentLanguage || state.fallbackLanguage || "en";
+  }
+
   try {
     const storedLanguage = globalScope.localStorage?.getItem(STORAGE_KEY);
     if (storedLanguage) state.currentLanguage = storedLanguage;
@@ -60,6 +66,7 @@
     if (!key) return false;
     const existing = getCatalog(key) || {};
     state.catalogs.set(key, { ...existing, ...catalog });
+    applyDocumentLanguage();
     emitChange();
     return true;
   }
@@ -74,6 +81,7 @@
     } catch {
       // Ignore storage failures.
     }
+    applyDocumentLanguage();
     if (changed) emitChange();
     return true;
   }
@@ -125,4 +133,5 @@
   };
 
   globalScope.WebMarsI18n = api;
+  applyDocumentLanguage();
 })();

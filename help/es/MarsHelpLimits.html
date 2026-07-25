@@ -1,72 +1,55 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Contenido de la ayuda de MARS 4.5
-</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Límites y compatibilidad</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
 </head>
 <body>
-<center>
-<h3>MARS - Mips Assembly and Runtime Simulator</h3>
-<h4>Version 4.5</h4>
-<h4>Agosto de 2014</h4>
+  <h1>Límites y compatibilidad</h1>
+  <p class="lead">webMARS busca compatibilidad práctica con fuentes MARS 4.5 ejecutándose íntegramente en un navegador moderno. Se aplican las reglas de seguridad, almacenamiento y audio del navegador.</p>
 
-<h4>Requisitos de funcionamiento</h4>
-</center>
-<p>MARS esta escrito en Java y
-requiere al menos la version 1.5 del J2SE Java Runtime Environment (JRE) para funcionar.
-El IDE grafico esta implementado con Swing. Ha sido
-probado en Windows XP, Vista y 7; Mac OS X; y tambien se utiliza en Linux.
+  <h2>Límites del runtime</h2>
+  <table>
+    <tr><th>Área</th><th>Límite o comportamiento</th></tr>
+    <tr><td>Memoria</td><td>0,25–2 GiB seleccionables, con techo arquitectónico por debajo de <code>0x80000000</code>. La asignación dispersa evita reservar cada byte sin usar.</td></tr>
+    <tr><td>Heap</td><td><code>sbrk</code> valida la reserva completa antes de mover el puntero y no puede desbordar el límite.</td></tr>
+    <tr><td>Paso atrás</td><td>0–1.000.000 instantáneas; valores altos pueden consumir mucha memoria.</td></tr>
+    <tr><td>Almacenamiento del navegador</td><td>Sujeto a cuota. La aplicación limita a 1 MiB determinadas cargas guardadas y usa recuperaciones más pequeñas cuando es necesario.</td></tr>
+    <tr><td>Temporización</td><td>Sleep, MIDI y la interfaz usan el planificador del navegador y no son exactos por ciclo.</td></tr>
+    <tr><td>Distribución</td><td>webMARS 0.4.7 es una aplicación web estática, no una PWA instalable u offline. Debe servirse por HTTP con el servidor local incluido u otro host estático.</td></tr>
+  </table>
 
-<center>
-<h4>Algunas limitaciones del ensamblador y simulador MARS</h4>
-</center>
+  <h2>Mapas de memoria</h2>
+  <table class="compact">
+    <tr><th>Región</th><th>Base predeterminada</th></tr>
+    <tr><td>Texto de usuario</td><td><code>0x00400000</code></td></tr>
+    <tr><td>Datos estáticos</td><td><code>0x10010000</code></td></tr>
+    <tr><td>Heap</td><td><code>0x10040000</code></td></tr>
+    <tr><td>Puntero inicial de pila</td><td><code>0x7ffffffc</code></td></tr>
+    <tr><td>Handler de excepciones</td><td><code>0x80000180</code></td></tr>
+    <tr><td>MMIO</td><td><code>0xffff0000</code></td></tr>
+  </table>
+  <p>Los presets Datos compactos y Texto compacto mueven el segmento educativo correspondiente a la dirección cero. Vuelve a ensamblar al cambiar el mapa.</p>
 
-Las versiones 3.0 y posteriores ensamblan y simulan casi todas las instrucciones MIPS32 documentadas en el
-libro <i>Computer Organization and Design, Fourth Edition</i> de Patterson y Hennessy,
-Elsevier - Morgan Kaufmann, 2009. Se implementan todas las instrucciones basicas y pseudo-instrucciones, directivas
-y servicios del sistema descritos en el Apendice B.
+  <h2>Comportamiento MIPS</h2>
+  <ul>
+    <li>La memoria es little-endian. Las operaciones de palabra y doubleword respetan el orden MIPS.</li>
+    <li>Los fetch desalineados y las direcciones inválidas generan excepciones de dirección.</li>
+    <li>Una escritura comprueba todo el destino antes de modificarlo y nunca deja un valor parcial.</li>
+    <li><code>LL</code>/<code>SC</code> usan una reserva que invalidan las escrituras conflictivas.</li>
+    <li>Las conversiones COP1 respetan FCSR y las entradas numéricas rechazan texto sobrante.</li>
+    <li>En modo estricto, también las cargas parciales como <code>LWL</code> y <code>LWR</code> deben estar en segmentos permitidos.</li>
+  </ul>
 
-<p>Las limitaciones de MARS en la version 4.5 incluyen:
-<ul>
-<li>Los segmentos de memoria (text, data, stack, kernel text, kernel data) estan limitados a 4MB cada uno a partir de sus
-respectivas direcciones base.</li>
-<li>No existe modo segmentado por tuberias (aunque si se soporta delayed branching).</li>
-<li>Si abre un archivo que es un enlace o acceso directo a otro archivo, MARS <em>no</em>
-abrira el archivo de destino. El dialogo de apertura esta implementado mediante JFileChooser de Swing,
-que no soporta enlaces.</li>
-
-<li>Muy pocos cambios de configuracion, aparte de los del menu Settings, se guardan de una sesion a la siguiente.
-La configuracion del editor, que incluye la fuente y la visualizacion de los numeros de linea, si se guarda.</li>
-
-<li>El IDE solo funcionara con el ensamblador de MARS. No puede utilizarse
-con ningun otro compilador, ensamblador o simulador. El ensamblador y simulador de MARS
-pueden usarse tanto desde el IDE como desde un simbolo del sistema.</li>
-
-<li><em>Bug:</em> El resaltador de mensajes de error no selecciona automaticamente el codigo del primer error de ensamblado
-si el archivo que contiene el error no esta abierto en el momento del ensamblado (assemble-on-open, assemble-all).</li>
-
-<li><em>Bug:</em> La funcion de captura de pantalla de Screen Magnifier no parece funcionar correctamente en Windows Vista.</li>
-
-<li><em>Bug:</em> Parece existir una fuga de memoria en el Editor. Varias personas diferentes han informado de manera independiente
-del mismo comportamiento: una ralentizacion severa de la respuesta del editor durante una sesion interactiva prolongada.
-Si MARS se cierra y se vuelve a abrir, este comportamiento desaparece y el editor vuelve a responder de inmediato.</li>
-
-<li><em>No es un bug, pero se documenta aqui igualmente:</em> Las direcciones destino de las instrucciones branch de MIPS se representan por
-el numero relativo de palabras a saltar. Desde la version 3.4, este valor refleja delayed branching,
-independientemente de si la opcion Delayed Branching esta activada o no.
-El codigo binario generado para los branch coincide ahora con el de los ejemplos del libro <em>Computer Organization
-and Design</em>. Esto supone un cambio respecto al pasado y se hizo tras extensas conversaciones
-con varios profesores usuarios de MARS. Antes, el desplazamiento del branch era 1 unidad menor si la opcion Delayed Branching
-estaba activada: la instruccion <tt>label: beq $0,$0,label</tt> generaba <tt>0x1000FFFF</tt> si
-Delayed Branching estaba activado y <tt>0x10000000</tt> si estaba desactivado. Ahora generara <tt>0x1000FFFF</tt> en
-cualquiera de los dos casos. El simulador siempre saltara a la ubicacion correcta; MARS no permite que el ensamblado bajo una
-configuracion y la simulacion bajo la otra se mezclen.</li>
-</ul>
-<p>
-<hr>
-<p>
-Este documento esta disponible para imprimir en la pagina principal de MARS
-<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
+  <h2>Límites de portabilidad</h2>
+  <ul>
+    <li>El sistema virtual de archivos no es el sistema de archivos sin restricciones del host.</li>
+    <li>Los permisos de audio pueden afectar a los syscalls MIDI.</li>
+    <li>Las políticas de popups y descargas pueden afectar a las exportaciones.</li>
+    <li>Mini-C solo acepta sus perfiles documentados, no todo ISO C ni una libc completa.</li>
+    <li>No están disponibles extensiones históricas basadas en clases Java o plugins de escritorio.</li>
+  </ul>
 </body>
 </html>

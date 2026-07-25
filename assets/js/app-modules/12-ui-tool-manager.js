@@ -1,3 +1,28 @@
+function deliverToolSnapshotBatch(instances, snapshots, onError = () => {}) {
+  const queue = Array.isArray(snapshots) ? snapshots.filter(Boolean) : (snapshots ? [snapshots] : []);
+  if (!queue.length || !(instances instanceof Map) || instances.size === 0) return;
+
+  queue.forEach((snapshot, snapshotIndex) => {
+    instances.forEach((tool, toolId) => {
+      if (!tool || typeof tool.onSnapshot !== "function") return;
+      try {
+        tool.onSnapshot(snapshot, {
+          batched: queue.length > 1,
+          batchSize: queue.length,
+          batchIndex: snapshotIndex,
+          isLast: snapshotIndex === queue.length - 1
+        });
+      } catch (error) {
+        try {
+          onError(toolId, error);
+        } catch {
+          // Error reporting must never interrupt delivery to the remaining tools.
+        }
+      }
+    });
+  });
+}
+
 function createToolManager(engine, messagesPane, windowManager, desktop) {
   function dispatchToolLoaderEvent(name, detail) {
     try {
@@ -46,8 +71,10 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
   })();
 
   const instances = new Map();
+  const reportedSnapshotFailures = new Set();
   let placementIndex = 0;
   let loadPromise = null;
+  let latestSnapshot = null;
   let toolEntries = [...FALLBACK_TOOLS].sort((a, b) => a.label.localeCompare(b.label));
 
   function sortTools(entries) {
@@ -210,7 +237,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
       }
 
       const script = document.createElement("script");
-      script.src = path;
+      script.src = window.WebMarsAppVersion?.withVersion?.(path) || path;
       script.async = true;
       script.dataset.marsToolScript = path;
       script.onload = () => resolve(true);
@@ -347,25 +374,72 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
     return instance;
   }
 
+  function reportSnapshotFailure(toolId, error) {
+    const key = String(toolId || "unknown");
+    const message = error instanceof Error ? error.message : String(error);
+    if (typeof console !== "undefined" && typeof console.error === "function") {
+      console.error(`[mars-web] Tool '${key}' failed to process a runtime update.`, error);
+    }
+    if (reportedSnapshotFailures.has(key)) return;
+    reportedSnapshotFailures.add(key);
+    const definition = toolEntries.find((tool) => tool.id === key);
+    messagesPane.postMars(`${translateText("[error] Tool '{label}' failed to process a runtime update: {message}", {
+      label: definition?.label || key,
+      message
+    })}\n`);
+  }
+
+  function deliverSnapshots(snapshots, targetInstances = instances) {
+    deliverToolSnapshotBatch(targetInstances, snapshots, reportSnapshotFailure);
+  }
+
+  function captureSeedSnapshot() {
+    if (!engine || typeof engine.getSnapshot !== "function") return latestSnapshot;
+    try {
+      return engine.getSnapshot({
+        includeDataRows: false,
+        shareMemoryWords: true
+      });
+    } catch {
+      return latestSnapshot;
+    }
+  }
+
   return {
     getTools() {
       return toolEntries.map(({ id, label }) => ({ id, label }));
     },
     open(toolId) {
       void ensureLoaded().finally(() => {
+        const alreadyCreated = instances.has(toolId);
         const tool = ensureToolInstance(toolId);
         if (!tool) {
           messagesPane.postMars(`${translateText("[warn] Tool '{toolId}' not found.", { toolId })}\n`);
           return;
         }
+        if (!alreadyCreated) {
+          const seedSnapshot = captureSeedSnapshot();
+          if (seedSnapshot) {
+            latestSnapshot = seedSnapshot;
+            deliverSnapshots([seedSnapshot], new Map([[toolId, tool]]));
+          }
+        }
         tool.open();
       });
     },
     onSnapshot(snapshot) {
-      instances.forEach((tool) => {
-        if (tool.windowRoot instanceof HTMLElement && tool.windowRoot.classList.contains("window-hidden")) return;
-        if (typeof tool.onSnapshot === "function") tool.onSnapshot(snapshot);
-      });
+      if (!snapshot) return;
+      latestSnapshot = snapshot;
+      deliverSnapshots([snapshot]);
+    },
+    onSnapshotBatch(snapshots) {
+      const queue = Array.isArray(snapshots) ? snapshots.filter(Boolean) : [];
+      if (!queue.length) return;
+      latestSnapshot = queue[queue.length - 1];
+      deliverSnapshots(queue);
+    },
+    hasSnapshotConsumers() {
+      return instances.size > 0;
     },
     closeAll() {
       instances.forEach((tool) => {

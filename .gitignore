@@ -1,2 +1,5 @@
-scripts/
+node_modules/
 test-results/
+/dist/
+/tmp_*.generated.s
+/docs/test_tmp.txt

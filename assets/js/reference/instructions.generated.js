@@ -140,7 +140,7 @@
   },
   {
     "example": "ll $t1,-100($t2)",
-    "description": "Load linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)"
   },
   {
     "example": "lwl $t1,-100($t2)",
@@ -156,7 +156,7 @@
   },
   {
     "example": "sc $t1,-100($t2)",
-    "description": "Store conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Stores $t1 value into effective address, then sets $t1 to 1 for success.  Always succeeds because MARS does not simulate multiple processors."
+    "description": "Store conditional : Store $t1 only if the matching Load Linked reservation is still valid, then set $t1 to 1 on success or 0 on failure"
   },
   {
     "example": "swl $t1,-100($t2)",
@@ -543,8 +543,16 @@
     "description": "Move from Coprocessor 1 (FPU) : Set $t1 to value in Coprocessor 1 register $f1"
   },
   {
+    "example": "cfc1 $t1,$31",
+    "description": "Move from Coprocessor 1 control : Set $t1 to the FCSR control and status value"
+  },
+  {
     "example": "mtc1 $t1,$f1",
     "description": "Move to Coprocessor 1 (FPU) : Set Coprocessor 1 register $f1 to value in $t1"
+  },
+  {
+    "example": "ctc1 $t1,$31",
+    "description": "Move to Coprocessor 1 control : Set FCSR, including its rounding mode, to the value in $t1"
   },
   {
     "example": "neg.d $f2,$f4",

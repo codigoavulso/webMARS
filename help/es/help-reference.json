@@ -1,2266 +1,2274 @@
 {
-  "generatedAt": "2026-03-10T20:29:57.644Z",
+  "generatedAt": "2026-07-25T00:00:00.000Z",
   "source": {
-    "basicInstructions": "../mars/mips/instructions/InstructionSet.java",
-    "extendedInstructions": "../PseudoOps.txt",
-    "directives": "../mars/assembler/Directives.java"
+    "basicInstructions": "../../assets/js/reference/instructions.generated.js",
+    "extendedInstructions": "../../assets/js/reference/pseudo-ops.generated.js",
+    "directives": "../../assets/js/app-modules/00-core.js"
   },
   "basicInstructions": [
     {
       "example": "abs.d $f2,$f4",
-      "description": "Floating point absolute value double precision : Set $f2 to absolute value of $f4, double precision"
+      "description": "Valor absoluto de doble precisión: establece el valor de doble precisión de $f2 en el valor absoluto del almacenado en $f4"
     },
     {
       "example": "abs.s $f0,$f1",
-      "description": "Floating point absolute value single precision : Set $f0 to absolute value of $f1, single precision"
+      "description": "Valor absoluto de precisión simple: establece el valor de precisión simple de $f0 en el valor absoluto del almacenado en $f1"
     },
     {
       "example": "add $t1,$t2,$t3",
-      "description": "Addition with overflow : set $t1 to ($t2 plus $t3)"
+      "description": "Suma con desbordamiento: establece $t1 en ($t2 más $t3) y genera una excepción si hay desbordamiento"
     },
     {
       "example": "add.d $f2,$f4,$f6",
-      "description": "Floating point addition double precision : Set $f2 to double-precision floating point value of $f4 plus $f6"
+      "description": "Suma de doble precisión: establece $f2 en la suma de los valores de coma flotante de doble precisión de $f4 y $f6"
     },
     {
       "example": "add.s $f0,$f1,$f3",
-      "description": "Floating point addition single precision : Set $f0 to single-precision floating point value of $f1 plus $f3"
+      "description": "Suma de precisión simple: establece $f0 en la suma de los valores de coma flotante de precisión simple de $f1 y $f3"
     },
     {
       "example": "addi $t1,$t2,-100",
-      "description": "Addition immediate with overflow : set $t1 to ($t2 plus signed 16-bit immediate)"
+      "description": "Suma inmediata con desbordamiento: establece $t1 en ($t2 más el inmediato de 16 bits extendido con signo)"
     },
     {
       "example": "addiu $t1,$t2,-100",
-      "description": "Addition immediate unsigned without overflow : set $t1 to ($t2 plus signed 16-bit immediate), no overflow"
+      "description": "Suma inmediata sin comprobación de desbordamiento: establece $t1 en ($t2 más el inmediato de 16 bits extendido con signo)"
     },
     {
       "example": "addu $t1,$t2,$t3",
-      "description": "Addition unsigned without overflow : set $t1 to ($t2 plus $t3), no overflow"
+      "description": "Suma sin comprobación de desbordamiento: establece $t1 en ($t2 más $t3)"
     },
     {
       "example": "and $t1,$t2,$t3",
-      "description": "Bitwise AND : Set $t1 to bitwise AND of $t2 and $t3"
+      "description": "AND bit a bit: establece $t1 en el AND bit a bit de $t2 y $t3"
     },
     {
       "example": "andi $t1,$t2,100",
-      "description": "Bitwise AND immediate : Set $t1 to bitwise AND of $t2 and zero-extended 16-bit immediate"
+      "description": "AND inmediato: establece $t1 en el AND bit a bit de $t2 y el inmediato de 16 bits extendido con ceros"
     },
     {
       "example": "bc1f 1,label",
-      "description": "Branch if specified FP condition flag false (BC1F, not BCLF) : If Coprocessor 1 condition flag specified by immediate is false (zero) then branch to statement at label's address"
+      "description": "Bifurcación si la bandera de condición FP indicada es falsa: salta a la etiqueta si la bandera del coprocesador 1 indicada por el inmediato vale cero (BC1F, no BCLF)"
     },
     {
       "example": "bc1f label",
-      "description": "Branch if FP condition flag 0 false (BC1F, not BCLF) : If Coprocessor 1 condition flag 0 is false (zero) then branch to statement at label's address"
+      "description": "Bifurcación si la bandera de condición FP 0 es falsa: salta a la etiqueta si la bandera 0 del coprocesador 1 vale cero (BC1F, no BCLF)"
     },
     {
       "example": "bc1t 1,label",
-      "description": "Branch if specified FP condition flag true (BC1T, not BCLT) : If Coprocessor 1 condition flag specified by immediate is true (one) then branch to statement at label's address"
+      "description": "Bifurcación si la bandera de condición FP indicada es verdadera: salta a la etiqueta si la bandera del coprocesador 1 indicada por el inmediato vale uno (BC1T, no BCLT)"
     },
     {
       "example": "bc1t label",
-      "description": "Branch if FP condition flag 0 true (BC1T, not BCLT) : If Coprocessor 1 condition flag 0 is true (one) then branch to statement at label's address"
+      "description": "Bifurcación si la bandera de condición FP 0 es verdadera: salta a la etiqueta si la bandera 0 del coprocesador 1 vale uno (BC1T, no BCLT)"
     },
     {
       "example": "beq $t1,$t2,label",
-      "description": "Branch if equal : Branch to statement at label's address if $t1 and $t2 are equal"
+      "description": "Bifurcación si son iguales: salta a la etiqueta si $t1 y $t2 son iguales"
     },
     {
       "example": "bgez $t1,label",
-      "description": "Branch if greater than or equal to zero : Branch to statement at label's address if $t1 is greater than or equal to zero"
+      "description": "Bifurcación si es mayor o igual que cero: salta a la etiqueta si $t1 es mayor o igual que cero"
     },
     {
       "example": "bgezal $t1,label",
-      "description": "Branch if greater then or equal to zero and link : If $t1 is greater than or equal to zero, then set $ra to the Program Counter and branch to statement at label's address"
+      "description": "Bifurcación y enlace si es mayor o igual que cero: si $t1 cumple la condición, guarda la dirección de retorno en $ra y salta a la etiqueta"
     },
     {
       "example": "bgtz $t1,label",
-      "description": "Branch if greater than zero : Branch to statement at label's address if $t1 is greater than zero"
+      "description": "Bifurcación si es mayor que cero: salta a la etiqueta si $t1 es mayor que cero"
     },
     {
       "example": "blez $t1,label",
-      "description": "Branch if less than or equal to zero : Branch to statement at label's address if $t1 is less than or equal to zero"
+      "description": "Bifurcación si es menor o igual que cero: salta a la etiqueta si $t1 es menor o igual que cero"
     },
     {
       "example": "bltz $t1,label",
-      "description": "Branch if less than zero : Branch to statement at label's address if $t1 is less than zero"
+      "description": "Bifurcación si es menor que cero: salta a la etiqueta si $t1 es menor que cero"
     },
     {
       "example": "bltzal $t1,label",
-      "description": "Branch if less than zero and link : If $t1 is less than or equal to zero, then set $ra to the Program Counter and branch to statement at label's address"
+      "description": "Bifurcación y enlace si es menor que cero: si $t1 es menor que cero, guarda la dirección de retorno en $ra y salta a la etiqueta"
     },
     {
       "example": "bne $t1,$t2,label",
-      "description": "Branch if not equal : Branch to statement at label's address if $t1 and $t2 are not equal"
+      "description": "Bifurcación si son distintos: salta a la etiqueta si $t1 y $t2 no son iguales"
     },
     {
       "example": "break",
-      "description": "Break execution : Terminate program execution with exception"
+      "description": "Interrumpir la ejecución: finaliza el programa con una excepción Breakpoint"
     },
     {
       "example": "break 100",
-      "description": "Break execution with code : Terminate program execution with specified exception code"
+      "description": "Interrumpir la ejecución con código: finaliza el programa con una excepción que contiene el código indicado"
     },
     {
       "example": "c.eq.d $f2,$f4",
-      "description": "Compare equal double precision : If $f2 is equal to $f4 (double-precision), set Coprocessor 1 condition flag 0 true else set it false"
+      "description": "Comparación de igualdad de doble precisión: establece la bandera de condición 0 del coprocesador 1 según si $f2 y $f4 son iguales"
     },
     {
       "example": "c.eq.d 1,$f2,$f4",
-      "description": "Compare equal double precision : If $f2 is equal to $f4 (double-precision), set Coprocessor 1 condition flag specified by immediate to true else set it to false"
+      "description": "Comparación de igualdad de doble precisión: establece la bandera de condición del coprocesador 1 indicada por el inmediato según si $f2 y $f4 son iguales"
     },
     {
       "example": "c.eq.s $f0,$f1",
-      "description": "Compare equal single precision : If $f0 is equal to $f1, set Coprocessor 1 condition flag 0 true else set it false"
+      "description": "Comparación de igualdad de precisión simple: establece la bandera de condición 0 del coprocesador 1 según si $f0 y $f1 son iguales"
     },
     {
       "example": "c.eq.s 1,$f0,$f1",
-      "description": "Compare equal single precision : If $f0 is equal to $f1, set Coprocessor 1 condition flag specied by immediate to true else set it to false"
+      "description": "Comparación de igualdad de precisión simple: establece la bandera de condición del coprocesador 1 indicada por el inmediato según si $f0 y $f1 son iguales"
     },
     {
       "example": "c.le.d $f2,$f4",
-      "description": "Compare less or equal double precision : If $f2 is less than or equal to $f4 (double-precision), set Coprocessor 1 condition flag 0 true else set it false"
+      "description": "Comparación menor o igual de doble precisión: establece la bandera de condición 0 del coprocesador 1 según si $f2 es menor o igual que $f4"
     },
     {
       "example": "c.le.d 1,$f2,$f4",
-      "description": "Compare less or equal double precision : If $f2 is less than or equal to $f4 (double-precision), set Coprocessor 1 condition flag specfied by immediate true else set it false"
+      "description": "Comparación menor o igual de doble precisión: establece la bandera de condición del coprocesador 1 indicada por el inmediato según si $f2 es menor o igual que $f4"
     },
     {
       "example": "c.le.s $f0,$f1",
-      "description": "Compare less or equal single precision : If $f0 is less than or equal to $f1, set Coprocessor 1 condition flag 0 true else set it false"
+      "description": "Comparación menor o igual de precisión simple: establece la bandera de condición 0 del coprocesador 1 según si $f0 es menor o igual que $f1"
     },
     {
       "example": "c.le.s 1,$f0,$f1",
-      "description": "Compare less or equal single precision : If $f0 is less than or equal to $f1, set Coprocessor 1 condition flag specified by immediate to true else set it to false"
+      "description": "Comparación menor o igual de precisión simple: establece la bandera de condición del coprocesador 1 indicada por el inmediato según si $f0 es menor o igual que $f1"
     },
     {
       "example": "c.lt.d $f2,$f4",
-      "description": "Compare less than double precision : If $f2 is less than $f4 (double-precision), set Coprocessor 1 condition flag 0 true else set it false"
+      "description": "Comparación menor que de doble precisión: establece la bandera de condición 0 del coprocesador 1 según si $f2 es menor que $f4"
     },
     {
       "example": "c.lt.d 1,$f2,$f4",
-      "description": "Compare less than double precision : If $f2 is less than $f4 (double-precision), set Coprocessor 1 condition flag specified by immediate to true else set it to false"
+      "description": "Comparación menor que de doble precisión: establece la bandera de condición del coprocesador 1 indicada por el inmediato según si $f2 es menor que $f4"
     },
     {
       "example": "c.lt.s $f0,$f1",
-      "description": "Compare less than single precision : If $f0 is less than $f1, set Coprocessor 1 condition flag 0 true else set it false"
+      "description": "Comparación menor que de precisión simple: establece la bandera de condición 0 del coprocesador 1 según si $f0 es menor que $f1"
     },
     {
       "example": "c.lt.s 1,$f0,$f1",
-      "description": "Compare less than single precision : If $f0 is less than $f1, set Coprocessor 1 condition flag specified by immediate to true else set it to false"
+      "description": "Comparación menor que de precisión simple: establece la bandera de condición del coprocesador 1 indicada por el inmediato según si $f0 es menor que $f1"
     },
     {
       "example": "ceil.w.d $f1,$f2",
-      "description": "Ceiling double precision to word : Set $f1 to 32-bit integer ceiling of double-precision float in $f2"
+      "description": "Redondeo hacia arriba de doble precisión a palabra: guarda en $f1 el menor entero de 32 bits que no sea inferior al valor de $f2"
     },
     {
       "example": "ceil.w.s $f0,$f1",
-      "description": "Ceiling single precision to word : Set $f0 to 32-bit integer ceiling of single-precision float in $f1"
+      "description": "Redondeo hacia arriba de precisión simple a palabra: guarda en $f0 el menor entero de 32 bits que no sea inferior al valor de $f1"
     },
     {
       "example": "clo $t1,$t2",
-      "description": "Count number of leading ones : Set $t1 to the count of leading one bits in $t2 starting at most significant bit position"
+      "description": "Contar unos iniciales: establece $t1 en el número de bits uno consecutivos de $t2 a partir del bit más significativo"
     },
     {
       "example": "clz $t1,$t2",
-      "description": "Count number of leading zeroes : Set $t1 to the count of leading zero bits in $t2 starting at most significant bit positio"
+      "description": "Contar ceros iniciales: establece $t1 en el número de bits cero consecutivos de $t2 a partir del bit más significativo"
     },
     {
       "example": "cvt.d.s $f2,$f1",
-      "description": "Convert from single precision to double precision : Set $f2 to double precision equivalent of single precision value in $f1"
+      "description": "Convertir de precisión simple a doble: establece el valor de doble precisión de $f2 en el equivalente del valor de precisión simple de $f1"
     },
     {
       "example": "cvt.d.w $f2,$f1",
-      "description": "Convert from word to double precision : Set $f2 to double precision equivalent of 32-bit integer value in $f1"
+      "description": "Convertir de palabra a doble precisión: interpreta $f1 como un entero de 32 bits y guarda su equivalente de doble precisión en $f2"
     },
     {
       "example": "cvt.s.d $f1,$f2",
-      "description": "Convert from double precision to single precision : Set $f1 to single precision equivalent of double precision value in $f2"
+      "description": "Convertir de doble precisión a precisión simple: establece el valor de precisión simple de $f1 en el equivalente del valor de doble precisión de $f2"
     },
     {
       "example": "cvt.s.w $f0,$f1",
-      "description": "Convert from word to single precision : Set $f0 to single precision equivalent of 32-bit integer value in $f2"
+      "description": "Convertir de palabra a precisión simple: interpreta $f1 como un entero de 32 bits y guarda su equivalente de precisión simple en $f0"
     },
     {
       "example": "cvt.w.d $f1,$f2",
-      "description": "Convert from double precision to word : Set $f1 to 32-bit integer equivalent of double precision value in $f2"
+      "description": "Convertir de doble precisión a palabra: redondea el valor de $f2 según el modo de FCSR y guarda el entero de 32 bits en $f1"
     },
     {
       "example": "cvt.w.s $f0,$f1",
-      "description": "Convert from single precision to word : Set $f0 to 32-bit integer equivalent of single precision value in $f1"
+      "description": "Convertir de precisión simple a palabra: redondea el valor de $f1 según el modo de FCSR y guarda el entero de 32 bits en $f0"
     },
     {
       "example": "div $t1,$t2",
-      "description": "Division with overflow : Divide $t1 by $t2 then set LO to quotient and HI to remainder (use mfhi to access HI, mflo to access LO)"
+      "description": "División con signo: divide $t1 entre $t2, guarda el cociente en LO y el resto en HI"
     },
     {
       "example": "div.d $f2,$f4,$f6",
-      "description": "Floating point division double precision : Set $f2 to double-precision floating point value of $f4 divided by $f6"
+      "description": "División de doble precisión: establece $f2 en el cociente de los valores de coma flotante de doble precisión de $f4 y $f6"
     },
     {
       "example": "div.s $f0,$f1,$f3",
-      "description": "Floating point division single precision : Set $f0 to single-precision floating point value of $f1 divided by $f3"
+      "description": "División de precisión simple: establece $f0 en el cociente de los valores de coma flotante de precisión simple de $f1 y $f3"
     },
     {
       "example": "divu $t1,$t2",
-      "description": "Division unsigned without overflow : Divide unsigned $t1 by $t2 then set LO to quotient and HI to remainder (use mfhi to access HI, mflo to access LO)"
+      "description": "División sin signo: divide $t1 entre $t2 como valores sin signo, guarda el cociente en LO y el resto en HI"
     },
     {
       "example": "eret",
-      "description": "Exception return : Set Program Counter to Coprocessor 0 EPC register value, set Coprocessor Status register bit 1 (exception level) to zero"
+      "description": "Retorno de excepción: carga en el contador de programa el valor EPC del coprocesador 0 y borra el bit de nivel de excepción del registro Status"
     },
     {
       "example": "floor.w.d $f1,$f2",
-      "description": "Floor double precision to word : Set $f1 to 32-bit integer floor of double-precision float in $f2"
+      "description": "Redondeo hacia abajo de doble precisión a palabra: guarda en $f1 el mayor entero de 32 bits que no sea superior al valor de $f2"
     },
     {
       "example": "floor.w.s $f0,$f1",
-      "description": "Floor single precision to word : Set $f0 to 32-bit integer floor of single-precision float in $f1"
+      "description": "Redondeo hacia abajo de precisión simple a palabra: guarda en $f0 el mayor entero de 32 bits que no sea superior al valor de $f1"
     },
     {
       "example": "j target",
-      "description": "Jump unconditionally : Jump to statement at target address"
+      "description": "Salto incondicional: continúa la ejecución en la dirección de destino"
     },
     {
       "example": "jal target",
-      "description": "Jump and link : Set $ra to Program Counter (return address) then jump to statement at target address"
+      "description": "Salto y enlace: guarda la dirección de retorno en $ra y continúa la ejecución en la dirección de destino"
     },
     {
       "example": "jalr $t1",
-      "description": "Jump and link register : Set $ra to Program Counter (return address) then jump to statement whose address is in $t1"
+      "description": "Salto y enlace por registro: guarda la dirección de retorno en $ra y salta a la dirección contenida en $t1"
     },
     {
       "example": "jalr $t1,$t2",
-      "description": "Jump and link register : Set $t1 to Program Counter (return address) then jump to statement whose address is in $t2"
+      "description": "Salto y enlace por registro: guarda la dirección de retorno en $t1 y salta a la dirección contenida en $t2"
     },
     {
       "example": "jr $t1",
-      "description": "Jump register unconditionally : Jump to statement whose address is in $t1"
+      "description": "Salto por registro: continúa la ejecución en la dirección contenida en $t1"
     },
     {
       "example": "lb $t1,-100($t2)",
-      "description": "Load byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,-100($t2)",
-      "description": "Load byte unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "ldc1 $f2,-100($t2)",
-      "description": "Load double word Coprocessor 1 (FPU)) : Set $f2 to 64-bit value from effective memory doubleword address"
+      "description": "Cargar palabra doble en el coprocesador 1: carga 64 bits desde la dirección efectiva en el par de registros $f2/$f3"
     },
     {
       "example": "lh $t1,-100($t2)",
-      "description": "Load halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lhu $t1,-100($t2)",
-      "description": "Load halfword unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "ll $t1,-100($t2)",
-      "description": "Load linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra en $t1 y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "lui $t1,100",
-      "description": "Load upper immediate : Set high-order 16 bits of $t1 to 16-bit immediate and low-order 16 bits to 0"
+      "description": "Cargar inmediato superior: coloca el inmediato de 16 bits en la mitad superior de $t1 y pone a cero la mitad inferior"
     },
     {
       "example": "lw $t1,-100($t2)",
-      "description": "Load word : Set $t1 to contents of effective memory word address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección efectiva de memoria"
     },
     {
       "example": "lwc1 $f1,-100($t2)",
-      "description": "Load word into Coprocessor 1 (FPU) : Set $f1 to 32-bit value from effective memory word address"
+      "description": "Cargar palabra en el coprocesador 1: carga en $f1 los 32 bits situados en la dirección efectiva de memoria"
     },
     {
       "example": "lwl $t1,-100($t2)",
-      "description": "Load word left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwr $t1,-100($t2)",
-      "description": "Load word right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "madd $t1,$t2",
-      "description": "Multiply add : Multiply $t1 by $t2 then increment HI by high-order 32 bits of product, increment LO by low-order 32 bits of product (use mfhi to access HI, mflo to access LO)"
+      "description": "Multiplicar y sumar: suma el producto con signo de $t1 y $t2 al acumulador formado por HI y LO"
     },
     {
       "example": "maddu $t1,$t2",
-      "description": "Multiply add unsigned : Multiply $t1 by $t2 then increment HI by high-order 32 bits of product, increment LO by low-order 32 bits of product, unsigned (use mfhi to access HI, mflo to access LO)"
+      "description": "Multiplicar y sumar sin signo: suma el producto sin signo de $t1 y $t2 al acumulador formado por HI y LO"
     },
     {
       "example": "mfc0 $t1,$8",
-      "description": "Move from Coprocessor 0 : Set $t1 to the value stored in Coprocessor 0 register $8"
+      "description": "Mover desde el coprocesador 0: copia en $t1 el contenido del registro $8 del coprocesador 0"
     },
     {
       "example": "mfc1 $t1,$f1",
-      "description": "Move from Coprocessor 1 (FPU) : Set $t1 to value in Coprocessor 1 register $f1"
+      "description": "Mover desde el coprocesador 1: copia en $t1 el contenido de $f1"
+    },
+    {
+      "example": "cfc1 $t1,$31",
+      "description": "Mover desde un registro de control del coprocesador 1: copia en $t1 el valor de control y estado FCSR"
     },
     {
       "example": "mfhi $t1",
-      "description": "Move from HI register : Set $t1 to contents of HI (see multiply and divide operations)"
+      "description": "Mover desde HI: copia en $t1 el contenido del registro HI"
     },
     {
       "example": "mflo $t1",
-      "description": "Move from LO register : Set $t1 to contents of LO (see multiply and divide operations)"
+      "description": "Mover desde LO: copia en $t1 el contenido del registro LO"
     },
     {
       "example": "mov.d $f2,$f4",
-      "description": "Move floating point double precision : Set double precision $f2 to double precision value in $f4"
+      "description": "Mover doble precisión: copia el valor de doble precisión de $f4 en $f2"
     },
     {
       "example": "mov.s $f0,$f1",
-      "description": "Move floating point single precision : Set single precision $f0 to single precision value in $f1"
+      "description": "Mover precisión simple: copia el valor de precisión simple de $f1 en $f0"
     },
     {
       "example": "movf $t1,$t2",
-      "description": "Move if FP condition flag 0 false : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag 0 is false (zero)"
+      "description": "Mover si la bandera FP 0 es falsa: copia $t2 en $t1 cuando la bandera de condición 0 vale cero"
     },
     {
       "example": "movf $t1,$t2,1",
-      "description": "Move if specified FP condition flag false : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is false (zero)"
+      "description": "Mover si la bandera FP indicada es falsa: copia $t2 en $t1 cuando la bandera de condición indicada por el inmediato vale cero"
     },
     {
       "example": "movf.d $f2,$f4",
-      "description": "Move floating point double precision : If condition flag 0 false, set double precision $f2 to double precision value in $f4"
+      "description": "Mover doble precisión si la bandera FP 0 es falsa: copia el valor de $f4 en $f2 cuando la bandera 0 vale cero"
     },
     {
       "example": "movf.d $f2,$f4,1",
-      "description": "Move floating point double precision : If condition flag specified by immediate is false, set double precision $f2 to double precision value in $f4"
+      "description": "Mover doble precisión si la bandera FP indicada es falsa: copia el valor de $f4 en $f2 cuando la bandera indicada por el inmediato vale cero"
     },
     {
       "example": "movf.s $f0,$f1",
-      "description": "Move floating point single precision : If condition flag 0 is false, set single precision $f0 to single precision value in $f1"
+      "description": "Mover precisión simple si la bandera FP 0 es falsa: copia el valor de $f1 en $f0 cuando la bandera 0 vale cero"
     },
     {
       "example": "movf.s $f0,$f1,1",
-      "description": "Move floating point single precision : If condition flag specified by immediate is false, set single precision $f0 to single precision value in $f1e"
+      "description": "Mover precisión simple si la bandera FP indicada es falsa: copia el valor de $f1 en $f0 cuando la bandera indicada por el inmediato vale cero"
     },
     {
       "example": "movn $t1,$t2,$t3",
-      "description": "Move conditional not zero : Set $t1 to $t2 if $t3 is not zero"
+      "description": "Mover si no es cero: copia $t2 en $t1 si $t3 no es cero"
     },
     {
       "example": "movn.d $f2,$f4,$t3",
-      "description": "Move floating point double precision : If $t3 is not zero, set double precision $f2 to double precision value in $f4"
+      "description": "Mover doble precisión si no es cero: copia el valor de $f4 en $f2 si $t3 no es cero"
     },
     {
       "example": "movn.s $f0,$f1,$t3",
-      "description": "Move floating point single precision : If $t3 is not zero, set single precision $f0 to single precision value in $f1"
+      "description": "Mover precisión simple si no es cero: copia el valor de $f1 en $f0 si $t3 no es cero"
     },
     {
       "example": "movt $t1,$t2",
-      "description": "Move if FP condition flag 0 true : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag 0 is true (one)"
+      "description": "Mover si la bandera FP 0 es verdadera: copia $t2 en $t1 cuando la bandera de condición 0 vale uno"
     },
     {
       "example": "movt $t1,$t2,1",
-      "description": "Move if specfied FP condition flag true : Set $t1 to $t2 if FPU (Coprocessor 1) condition flag specified by the immediate is true (one)"
+      "description": "Mover si la bandera FP indicada es verdadera: copia $t2 en $t1 cuando la bandera de condición indicada por el inmediato vale uno"
     },
     {
       "example": "movt.d $f2,$f4",
-      "description": "Move floating point double precision : If condition flag 0 true, set double precision $f2 to double precision value in $f4"
+      "description": "Mover doble precisión si la bandera FP 0 es verdadera: copia el valor de $f4 en $f2 cuando la bandera 0 vale uno"
     },
     {
       "example": "movt.d $f2,$f4,1",
-      "description": "Move floating point double precision : If condition flag specified by immediate is true, set double precision $f2 to double precision value in $f4e"
+      "description": "Mover doble precisión si la bandera FP indicada es verdadera: copia el valor de $f4 en $f2 cuando la bandera indicada por el inmediato vale uno"
     },
     {
       "example": "movt.s $f0,$f1",
-      "description": "Move floating point single precision : If condition flag 0 is true, set single precision $f0 to single precision value in $f1e"
+      "description": "Mover precisión simple si la bandera FP 0 es verdadera: copia el valor de $f1 en $f0 cuando la bandera 0 vale uno"
     },
     {
       "example": "movt.s $f0,$f1,1",
-      "description": "Move floating point single precision : If condition flag specified by immediate is true, set single precision $f0 to single precision value in $f1e"
+      "description": "Mover precisión simple si la bandera FP indicada es verdadera: copia el valor de $f1 en $f0 cuando la bandera indicada por el inmediato vale uno"
     },
     {
       "example": "movz $t1,$t2,$t3",
-      "description": "Move conditional zero : Set $t1 to $t2 if $t3 is zero"
+      "description": "Mover si es cero: copia $t2 en $t1 si $t3 es cero"
     },
     {
       "example": "movz.d $f2,$f4,$t3",
-      "description": "Move floating point double precision : If $t3 is zero, set double precision $f2 to double precision value in $f4"
+      "description": "Mover doble precisión si es cero: copia el valor de $f4 en $f2 si $t3 es cero"
     },
     {
       "example": "movz.s $f0,$f1,$t3",
-      "description": "Move floating point single precision : If $t3 is zero, set single precision $f0 to single precision value in $f1"
+      "description": "Mover precisión simple si es cero: copia el valor de $f1 en $f0 si $t3 es cero"
     },
     {
       "example": "msub $t1,$t2",
-      "description": "Multiply subtract : Multiply $t1 by $t2 then decrement HI by high-order 32 bits of product, decrement LO by low-order 32 bits of product (use mfhi to access HI, mflo to access LO)"
+      "description": "Multiplicar y restar: resta el producto con signo de $t1 y $t2 del acumulador formado por HI y LO"
     },
     {
       "example": "msubu $t1,$t2",
-      "description": "Multiply subtract unsigned : Multiply $t1 by $t2 then decrement HI by high-order 32 bits of product, decement LO by low-order 32 bits of product, unsigned (use mfhi to access HI, mflo to access LO)"
+      "description": "Multiplicar y restar sin signo: resta el producto sin signo de $t1 y $t2 del acumulador formado por HI y LO"
     },
     {
       "example": "mtc0 $t1,$8",
-      "description": "Move to Coprocessor 0 : Set Coprocessor 0 register $8 to value stored in $t1"
+      "description": "Mover al coprocesador 0: copia el contenido de $t1 en el registro $8 del coprocesador 0"
     },
     {
       "example": "mtc1 $t1,$f1",
-      "description": "Move to Coprocessor 1 (FPU) : Set Coprocessor 1 register $f1 to value in $t1"
+      "description": "Mover al coprocesador 1: copia el contenido de $t1 en $f1"
+    },
+    {
+      "example": "ctc1 $t1,$31",
+      "description": "Mover a un registro de control del coprocesador 1: copia el contenido de $t1 en FCSR, incluido el modo de redondeo"
     },
     {
       "example": "mthi $t1",
-      "description": "Move to HI registerr : Set HI to contents of $t1 (see multiply and divide operations)"
+      "description": "Mover a HI: copia el contenido de $t1 en el registro HI"
     },
     {
       "example": "mtlo $t1",
-      "description": "Move to LO register : Set LO to contents of $t1 (see multiply and divide operations)"
+      "description": "Mover a LO: copia el contenido de $t1 en el registro LO"
     },
     {
       "example": "mul $t1,$t2,$t3",
-      "description": "Multiplication without overflow  : Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of the product of $t2 and $t3 (use mfhi to access HI, mflo to access LO)"
+      "description": "Multiplicación: guarda los 32 bits inferiores del producto de $t2 y $t3 en $t1 y LO, y los 32 bits superiores en HI"
     },
     {
       "example": "mul.d $f2,$f4,$f6",
-      "description": "Floating point multiplication double precision : Set $f2 to double-precision floating point value of $f4 times $f6"
+      "description": "Multiplicación de doble precisión: establece $f2 en el producto de los valores de coma flotante de doble precisión de $f4 y $f6"
     },
     {
       "example": "mul.s $f0,$f1,$f3",
-      "description": "Floating point multiplication single precision : Set $f0 to single-precision floating point value of $f1 times $f3"
+      "description": "Multiplicación de precisión simple: establece $f0 en el producto de los valores de coma flotante de precisión simple de $f1 y $f3"
     },
     {
       "example": "mult $t1,$t2",
-      "description": "Multiplication : Set hi to high-order 32 bits, lo to low-order 32 bits of the product of $t1 and $t2 (use mfhi to access hi, mflo to access lo)"
+      "description": "Multiplicación con signo: guarda los 32 bits superiores del producto de $t1 y $t2 en HI y los inferiores en LO"
     },
     {
       "example": "multu $t1,$t2",
-      "description": "Multiplication unsigned : Set HI to high-order 32 bits, LO to low-order 32 bits of the product of unsigned $t1 and $t2 (use mfhi to access HI, mflo to access LO)"
+      "description": "Multiplicación sin signo: guarda los 32 bits superiores del producto sin signo de $t1 y $t2 en HI y los inferiores en LO"
     },
     {
       "example": "neg.d $f2,$f4",
-      "description": "Floating point negate double precision : Set double precision $f2 to negation of double precision value in $f4"
+      "description": "Negación de doble precisión: establece $f2 en el opuesto del valor de doble precisión de $f4"
     },
     {
       "example": "neg.s $f0,$f1",
-      "description": "Floating point negate single precision : Set single precision $f0 to negation of single precision value in $f1"
+      "description": "Negación de precisión simple: establece $f0 en el opuesto del valor de precisión simple de $f1"
     },
     {
       "example": "nop",
-      "description": "Null operation : machine code is all zeroes"
+      "description": "Operación nula: no modifica el estado arquitectónico; su código máquina contiene solo ceros"
     },
     {
       "example": "nor $t1,$t2,$t3",
-      "description": "Bitwise NOR : Set $t1 to bitwise NOR of $t2 and $t3"
+      "description": "NOR bit a bit: establece $t1 en el NOR bit a bit de $t2 y $t3"
     },
     {
       "example": "or $t1,$t2,$t3",
-      "description": "Bitwise OR : Set $t1 to bitwise OR of $t2 and $t3"
+      "description": "OR bit a bit: establece $t1 en el OR bit a bit de $t2 y $t3"
     },
     {
       "example": "ori $t1,$t2,100",
-      "description": "Bitwise OR immediate : Set $t1 to bitwise OR of $t2 and zero-extended 16-bit immediate"
+      "description": "OR inmediato: establece $t1 en el OR bit a bit de $t2 y el inmediato de 16 bits extendido con ceros"
     },
     {
       "example": "round.w.d $f1,$f2",
-      "description": "Round double precision to word : Set $f1 to 32-bit integer round of double-precision float in $f2"
+      "description": "Redondear doble precisión a palabra: redondea $f2 al entero de 32 bits más próximo y guarda el resultado en $f1"
     },
     {
       "example": "round.w.s $f0,$f1",
-      "description": "Round single precision to word : Set $f0 to 32-bit integer round of single-precision float in $f1"
+      "description": "Redondear precisión simple a palabra: redondea $f1 al entero de 32 bits más próximo y guarda el resultado en $f0"
     },
     {
       "example": "sb $t1,-100($t2)",
-      "description": "Store byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sc $t1,-100($t2)",
-      "description": "Store conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Stores $t1 value into effective address, then sets $t1 to 1 for success.  Always succeeds because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe $t1 solo si la reserva de carga enlazada correspondiente sigue siendo válida; después establece $t1 en 1 si tuvo éxito o en 0 si falló"
     },
     {
       "example": "sdc1 $f2,-100($t2)",
-      "description": "Store double word from Coprocessor 1 (FPU)) : Store 64 bit value in $f2 to effective memory doubleword address"
+      "description": "Almacenar palabra doble desde el coprocesador 1: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva"
     },
     {
       "example": "sh $t1,-100($t2)",
-      "description": "Store halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sll $t1,$t2,10",
-      "description": "Shift left logical : Set $t1 to result of shifting $t2 left by number of bits specified by immediate"
+      "description": "Desplazamiento lógico a la izquierda: establece $t1 en $t2 desplazado a la izquierda el número de bits indicado por el inmediato"
     },
     {
       "example": "sllv $t1,$t2,$t3",
-      "description": "Shift left logical variable : Set $t1 to result of shifting $t2 left by number of bits specified by value in low-order 5 bits of $t3"
+      "description": "Desplazamiento lógico variable a la izquierda: establece $t1 en $t2 desplazado a la izquierda el número de bits indicado por los cinco bits inferiores de $t3"
     },
     {
       "example": "slt $t1,$t2,$t3",
-      "description": "Set less than : If $t2 is less than $t3, then set $t1 to 1 else set $t1 to 0"
+      "description": "Establecer si es menor: pone $t1 a 1 si $t2 es menor que $t3 y a 0 en caso contrario"
     },
     {
       "example": "slti $t1,$t2,-100",
-      "description": "Set less than immediate : If $t2 is less than sign-extended 16-bit immediate, then set $t1 to 1 else set $t1 to 0"
+      "description": "Establecer si es menor que un inmediato: pone $t1 a 1 si $t2 es menor que el inmediato de 16 bits extendido con signo y a 0 en caso contrario"
     },
     {
       "example": "sltiu $t1,$t2,-100",
-      "description": "Set less than immediate unsigned : If $t2 is less than  sign-extended 16-bit immediate using unsigned comparison, then set $t1 to 1 else set $t1 to 0"
+      "description": "Establecer si es menor que un inmediato, sin signo: compara sin signo $t2 con el inmediato de 16 bits extendido con signo y pone $t1 a 1 o 0"
     },
     {
       "example": "sltu $t1,$t2,$t3",
-      "description": "Set less than unsigned : If $t2 is less than $t3 using unsigned comparision, then set $t1 to 1 else set $t1 to 0"
+      "description": "Establecer si es menor, sin signo: compara $t2 y $t3 como valores sin signo y pone $t1 a 1 si se cumple la condición o a 0 en caso contrario"
     },
     {
       "example": "sqrt.d $f2,$f4",
-      "description": "Square root double precision : Set $f2 to double-precision floating point square root of $f4"
+      "description": "Raíz cuadrada de doble precisión: establece $f2 en la raíz cuadrada del valor de doble precisión de $f4"
     },
     {
       "example": "sqrt.s $f0,$f1",
-      "description": "Square root single precision : Set $f0 to single-precision floating point square root of $f1"
+      "description": "Raíz cuadrada de precisión simple: establece $f0 en la raíz cuadrada del valor de precisión simple de $f1"
     },
     {
       "example": "sra $t1,$t2,10",
-      "description": "Shift right arithmetic : Set $t1 to result of sign-extended shifting $t2 right by number of bits specified by immediate"
+      "description": "Desplazamiento aritmético a la derecha: establece $t1 en $t2 desplazado a la derecha con extensión de signo"
     },
     {
       "example": "srav $t1,$t2,$t3",
-      "description": "Shift right arithmetic variable : Set $t1 to result of sign-extended shifting $t2 right by number of bits specified by value in low-order 5 bits of $t3"
+      "description": "Desplazamiento aritmético variable a la derecha: desplaza $t2 a la derecha con extensión de signo el número de bits indicado por los cinco bits inferiores de $t3 y guarda el resultado en $t1"
     },
     {
       "example": "srl $t1,$t2,10",
-      "description": "Shift right logical : Set $t1 to result of shifting $t2 right by number of bits specified by immediate"
+      "description": "Desplazamiento lógico a la derecha: establece $t1 en $t2 desplazado a la derecha el número de bits indicado por el inmediato"
     },
     {
       "example": "srlv $t1,$t2,$t3",
-      "description": "Shift right logical variable : Set $t1 to result of shifting $t2 right by number of bits specified by value in low-order 5 bits of $t3"
+      "description": "Desplazamiento lógico variable a la derecha: establece $t1 en $t2 desplazado a la derecha el número de bits indicado por los cinco bits inferiores de $t3"
     },
     {
       "example": "sub $t1,$t2,$t3",
-      "description": "Subtraction with overflow : set $t1 to ($t2 minus $t3)"
+      "description": "Resta con desbordamiento: establece $t1 en ($t2 menos $t3) y genera una excepción si hay desbordamiento"
     },
     {
       "example": "sub.d $f2,$f4,$f6",
-      "description": "Floating point subtraction double precision : Set $f2 to double-precision floating point value of $f4 minus $f6"
+      "description": "Resta de doble precisión: establece $f2 en la diferencia entre los valores de coma flotante de doble precisión de $f4 y $f6"
     },
     {
       "example": "sub.s $f0,$f1,$f3",
-      "description": "Floating point subtraction single precision : Set $f0 to single-precision floating point value of $f1  minus $f3"
+      "description": "Resta de precisión simple: establece $f0 en la diferencia entre los valores de coma flotante de precisión simple de $f1 y $f3"
     },
     {
       "example": "subu $t1,$t2,$t3",
-      "description": "Subtraction unsigned without overflow : set $t1 to ($t2 minus $t3), no overflow"
+      "description": "Resta sin comprobación de desbordamiento: establece $t1 en ($t2 menos $t3)"
     },
     {
       "example": "sw $t1,-100($t2)",
-      "description": "Store word : Store contents of $t1 into effective memory word address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "swc1 $f1,-100($t2)",
-      "description": "Store word from Coprocesor 1 (FPU) : Store 32 bit value in $f1 to effective memory word address"
+      "description": "Almacenar palabra desde el coprocesador 1: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "swl $t1,-100($t2)",
-      "description": "Store word left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swr $t1,-100($t2)",
-      "description": "Store word right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "syscall",
-      "description": "Issue a system call : Execute the system call specified by value in $v0"
+      "description": "Llamada al sistema: ejecuta el servicio cuyo número está almacenado en $v0"
     },
     {
       "example": "teq $t1,$t2",
-      "description": "Trap if equal : Trap if $t1 is equal to $t2"
+      "description": "Trap si son iguales: genera una excepción Trap si $t1 y $t2 son iguales"
     },
     {
       "example": "teqi $t1,-100",
-      "description": "Trap if equal to immediate : Trap if $t1 is equal to sign-extended 16 bit immediate"
+      "description": "Trap si es igual al inmediato: genera una excepción Trap si $t1 es igual al inmediato de 16 bits extendido con signo"
     },
     {
       "example": "tge $t1,$t2",
-      "description": "Trap if greater or equal : Trap if $t1 is greater than or equal to $t2"
+      "description": "Trap si es mayor o igual: genera una excepción Trap si $t1 es mayor o igual que $t2"
     },
     {
       "example": "tgei $t1,-100",
-      "description": "Trap if greater than or equal to immediate : Trap if $t1 greater than or equal to sign-extended 16 bit immediate"
+      "description": "Trap si es mayor o igual que el inmediato: genera una excepción Trap si $t1 es mayor o igual que el inmediato de 16 bits extendido con signo"
     },
     {
       "example": "tgeiu $t1,-100",
-      "description": "Trap if greater or equal to immediate unsigned : Trap if $t1 greater than or equal to sign-extended 16 bit immediate, unsigned comparison"
+      "description": "Trap si es mayor o igual que el inmediato, sin signo: compara sin signo $t1 con el inmediato de 16 bits extendido con signo y genera una excepción si se cumple"
     },
     {
       "example": "tgeu $t1,$t2",
-      "description": "Trap if greater or equal unsigned : Trap if $t1 is greater than or equal to $t2 using unsigned comparision"
+      "description": "Trap si es mayor o igual, sin signo: compara $t1 y $t2 como valores sin signo y genera una excepción si se cumple"
     },
     {
       "example": "tlt $t1,$t2",
-      "description": "Trap if less than: Trap if $t1 less than $t2"
+      "description": "Trap si es menor: genera una excepción Trap si $t1 es menor que $t2"
     },
     {
       "example": "tlti $t1,-100",
-      "description": "Trap if less than immediate : Trap if $t1 less than sign-extended 16-bit immediate"
+      "description": "Trap si es menor que el inmediato: genera una excepción Trap si $t1 es menor que el inmediato de 16 bits extendido con signo"
     },
     {
       "example": "tltiu $t1,-100",
-      "description": "Trap if less than immediate unsigned : Trap if $t1 less than sign-extended 16-bit immediate, unsigned comparison"
+      "description": "Trap si es menor que el inmediato, sin signo: compara sin signo $t1 con el inmediato de 16 bits extendido con signo y genera una excepción si se cumple"
     },
     {
       "example": "tltu $t1,$t2",
-      "description": "Trap if less than unsigned : Trap if $t1 less than $t2, unsigned comparison"
+      "description": "Trap si es menor, sin signo: compara $t1 y $t2 como valores sin signo y genera una excepción si se cumple"
     },
     {
       "example": "tne $t1,$t2",
-      "description": "Trap if not equal : Trap if $t1 is not equal to $t2"
+      "description": "Trap si son distintos: genera una excepción Trap si $t1 y $t2 no son iguales"
     },
     {
       "example": "tnei $t1,-100",
-      "description": "Trap if not equal to immediate : Trap if $t1 is not equal to sign-extended 16 bit immediate"
+      "description": "Trap si es distinto del inmediato: genera una excepción Trap si $t1 no es igual al inmediato de 16 bits extendido con signo"
     },
     {
       "example": "trunc.w.d $f1,$f2",
-      "description": "Truncate double precision to word : Set $f1 to 32-bit integer truncation of double-precision float in $f2"
+      "description": "Truncar doble precisión a palabra: elimina la parte fraccionaria de $f2 y guarda el entero de 32 bits en $f1"
     },
     {
       "example": "trunc.w.s $f0,$f1",
-      "description": "Truncate single precision to word : Set $f0 to 32-bit integer truncation of single-precision float in $f1"
+      "description": "Truncar precisión simple a palabra: elimina la parte fraccionaria de $f1 y guarda el entero de 32 bits en $f0"
     },
     {
       "example": "xor $t1,$t2,$t3",
-      "description": "Bitwise XOR (exclusive OR) : Set $t1 to bitwise XOR of $t2 and $t3"
+      "description": "XOR bit a bit: establece $t1 en el XOR bit a bit de $t2 y $t3"
     },
     {
       "example": "xori $t1,$t2,100",
-      "description": "Bitwise XOR immediate : Set $t1 to bitwise XOR of $t2 and zero-extended 16-bit immediate"
+      "description": "XOR inmediato: establece $t1 en el XOR bit a bit de $t2 y el inmediato de 16 bits extendido con ceros"
     }
   ],
   "extendedInstructions": [
     {
       "example": "abs $t1,$t2",
-      "description": "ABSolute value : Set $t1 to absolute value of $t2 (algorithm from Hacker's Delight)"
+      "description": "Absoluto valor: Establecer $t1 en valor absoluto de $t2 (algoritmo de Hacker's Delight)"
     },
     {
       "example": "add $t1,$t2,-100",
-      "description": "ADDition : set $t1 to ($t2 plus 16-bit immediate)"
+      "description": "Suma: establecer $t1 en ($t2 más inmediato de 16 bits)"
     },
     {
       "example": "add $t1,$t2,100000",
-      "description": "ADDition : set $t1 to ($t2 plus 32-bit immediate)"
+      "description": "Suma: establecer $t1 en ($t2 más inmediato de 32 bits)"
     },
     {
       "example": "addi $t1,$t2,100000",
-      "description": "ADDition Immediate : set $t1 to ($t2 plus 32-bit immediate)"
+      "description": "Suma inmediato: establecer $t1 en ($t2 más inmediato de 32 bits)"
     },
     {
       "example": "addiu $t1,$t2,100000",
-      "description": "ADDition Immediate Unsigned: set $t1 to ($t2 plus 32-bit immediate), no overflow"
+      "description": "Suma inmediato sin signo: establecer $t1 en ($t2 más inmediato de 32 bits), sin desbordamiento"
     },
     {
       "example": "addu $t1,$t2,100000",
-      "description": "ADDition Unsigned : set $t1 to ($t2 plus 32-bit immediate), no overflow"
+      "description": "Suma sin signo: establecer $t1 en ($t2 más inmediato de 32 bits), sin desbordamiento"
     },
     {
       "example": "and $t1,$t2,100",
-      "description": "AND : set $t1 to ($t2 bitwise-AND 16-bit unsigned immediate)"
+      "description": "AND: establecer $t1 en ($t2 bit a bit-AND inmediato de 16 bits sin signo)"
     },
     {
       "example": "and $t1,100",
-      "description": "AND : set $t1 to ($t1 bitwise-AND 16-bit unsigned immediate)"
+      "description": "AND: establecer $t1 en ($t1 bit a bit-AND inmediato de 16 bits sin signo)"
     },
     {
       "example": "andi $t1,$t2,100000",
-      "description": "AND Immediate : set $t1 to ($t2 bitwise-AND 32-bit immediate)"
+      "description": "AND inmediato: establecer $t1 en ($t2 bit a bit-AND inmediato de 32 bits)"
     },
     {
       "example": "andi $t1,100",
-      "description": "AND Immediate : set $t1 to ($t1 bitwise-AND 16-bit unsigned immediate)"
+      "description": "AND inmediato: establecer $t1 en ($t1 bit a bit-AND inmediato de 16 bits sin signo)"
     },
     {
       "example": "andi $t1,100000",
-      "description": "AND Immediate : set $t1 to ($t1 bitwise-AND 32-bit immediate)"
+      "description": "AND inmediato: establecer $t1 en ($t1 bit a bit-AND inmediato de 32 bits)"
     },
     {
       "example": "b label",
-      "description": "Branch : Branch to statement at label unconditionally"
+      "description": "Salto: Saltar a la instrucción de la etiqueta incondicionalmente"
     },
     {
       "example": "beq $t1,-100,label",
-      "description": "Branch if EQual : Branch to statement at label if $t1 is equal to 16-bit immediate"
+      "description": "Salto si igual: Saltar a la instrucción de la etiqueta si $t1 es igual a inmediato de 16 bits"
     },
     {
       "example": "beq $t1,100000,label",
-      "description": "Branch if EQual : Branch to statement at label if $t1 is equal to 32-bit immediate"
+      "description": "Salto si igual: Saltar a la instrucción de la etiqueta si $t1 es igual a inmediato de 32 bits"
     },
     {
       "example": "beqz $t1,label",
-      "description": "Branch if EQual Zero : Branch to statement at label if $t1 is equal to zero"
+      "description": "Salto si igual cero: Saltar a la instrucción de la etiqueta si $t1 es igual a cero"
     },
     {
       "example": "bge $t1,-100,label",
-      "description": "Branch if Greater or Equal : Branch to statement at label if $t1 is greater or equal to 16-bit immediate"
+      "description": "Salto si mayor o igual: Saltar a la instrucción de la etiqueta si $t1 es mayor o igual que inmediato de 16 bits"
     },
     {
       "example": "bge $t1,$t2,label",
-      "description": "Branch if Greater or Equal : Branch to statement at label if $t1 is greater or equal to $t2"
+      "description": "Salto si mayor o igual: Saltar a la instrucción de la etiqueta si $t1 es mayor o igual que $t2"
     },
     {
       "example": "bge $t1,100000,label",
-      "description": "Branch if Greater or Equal : Branch to statement at label if $t1 is greater or equal to 32-bit immediate"
+      "description": "Salto si mayor o igual: Saltar a la instrucción de la etiqueta si $t1 es mayor o igual que inmediato de 32 bits"
     },
     {
       "example": "bgeu $t1,-100,label",
-      "description": "Branch if Greater or Equal Unsigned : Branch to statement at label if $t1 is greater or equal to 16-bit immediate (unsigned compare)"
+      "description": "Salto si mayor o igual sin signo: Saltar a la instrucción de la etiqueta si $t1 es mayor o igual que inmediato de 16 bits (comparación sin signo)"
     },
     {
       "example": "bgeu $t1,$t2,label",
-      "description": "Branch if Greater or Equal Unsigned : Branch to statement at label if $t1 is greater or equal to $t2 (unsigned compare)"
+      "description": "Salto si mayor o igual sin signo: Saltar a la instrucción de la etiqueta si $t1 es mayor o igual que $t2 (comparación sin signo)"
     },
     {
       "example": "bgeu $t1,100000,label",
-      "description": "Branch if Greater or Equal Unsigned : Branch to statement at label if $t1 is greater or equal to 32-bit immediate (unsigned compare)"
+      "description": "Salto si mayor o igual sin signo: Saltar a la instrucción de la etiqueta si $t1 es mayor o igual que inmediato de 32 bits (comparación sin signo)"
     },
     {
       "example": "bgt $t1,-100,label",
-      "description": "Branch if Greater Than : Branch to statement at label if $t1 is greater than 16-bit immediate"
+      "description": "Salto si mayor que: Saltar a la instrucción de la etiqueta si $t1 es mayor que inmediato de 16 bits"
     },
     {
       "example": "bgt $t1,$t2,label",
-      "description": "Branch if Greater Than : Branch to statement at label if $t1 is greater than $t2"
+      "description": "Salto si mayor que: Saltar a la instrucción de la etiqueta si $t1 es mayor que $t2"
     },
     {
       "example": "bgt $t1,100000,label",
-      "description": "Branch if Greater Than : Branch to statement at label if $t1 is greater than 32-bit immediate"
+      "description": "Salto si mayor que: Saltar a la instrucción de la etiqueta si $t1 es mayor que inmediato de 32 bits"
     },
     {
       "example": "bgtu $t1,-100,label",
-      "description": "Branch if Greater Than Unsigned: Branch to statement at label if $t1 is greater than 16-bit immediate (unsigned compare)"
+      "description": "Salto si mayor que sin signo: Saltar a la instrucción de la etiqueta si $t1 es mayor que inmediato de 16 bits (comparación sin signo)"
     },
     {
       "example": "bgtu $t1,$t2,label",
-      "description": "Branch if Greater Than Unsigned: Branch to statement at label if $t1 is greater than $t2 (unsigned compare)"
+      "description": "Salto si mayor que sin signo: Saltar a la instrucción de la etiqueta si $t1 es mayor que $t2 (comparación sin signo)"
     },
     {
       "example": "bgtu $t1,100000,label",
-      "description": "Branch if Greater Than Unsigned: Branch to statement at label if $t1 is greater than 16-bit immediate (unsigned compare)"
+      "description": "Bifurcación si es mayor, sin signo: salta a la etiqueta si $t1 es mayor que el inmediato de 32 bits en una comparación sin signo"
     },
     {
       "example": "ble $t1,-100,label",
-      "description": "Branch if Less or Equal : Branch to statement at label if $t1 is less than or equal to 16-bit immediate"
+      "description": "Salto si menor o igual: Saltar a la instrucción de la etiqueta si $t1 es menor o igual que inmediato de 16 bits"
     },
     {
       "example": "ble $t1,$t2,label",
-      "description": "Branch if Less or Equal : Branch to statement at label if $t1 is less than or equal to $t2"
+      "description": "Salto si menor o igual: Saltar a la instrucción de la etiqueta si $t1 es menor o igual que $t2"
     },
     {
       "example": "ble $t1,100000,label",
-      "description": "Branch if Less or Equal : Branch to statement at label if $t1 is less than or equal to 32-bit immediate"
+      "description": "Salto si menor o igual: Saltar a la instrucción de la etiqueta si $t1 es menor o igual que inmediato de 32 bits"
     },
     {
       "example": "bleu $t1,-100,label",
-      "description": "Branch if Less or Equal Unsigned : Branch to statement at label if $t1 is less than or equal to 16-bit immediate (unsigned compare)"
+      "description": "Salto si menor o igual sin signo: Saltar a la instrucción de la etiqueta si $t1 es menor o igual que inmediato de 16 bits (comparación sin signo)"
     },
     {
       "example": "bleu $t1,$t2,label",
-      "description": "Branch if Less or Equal Unsigned : Branch to statement at label if $t1 is less than or equal to $t2 (unsigned compare)"
+      "description": "Salto si menor o igual sin signo: Saltar a la instrucción de la etiqueta si $t1 es menor o igual que $t2 (comparación sin signo)"
     },
     {
       "example": "bleu $t1,100000,label",
-      "description": "Branch if Less or Equal Unsigned : Branch to statement at label if $t1 is less than or equal to 32-bit immediate (unsigned compare)"
+      "description": "Salto si menor o igual sin signo: Saltar a la instrucción de la etiqueta si $t1 es menor o igual que inmediato de 32 bits (comparación sin signo)"
     },
     {
       "example": "blt $t1,-100,label",
-      "description": "Branch if Less Than : Branch to statement at label if $t1 is less than 16-bit immediate"
+      "description": "Salto si menor que: Saltar a la instrucción de la etiqueta si $t1 es menor que inmediato de 16 bits"
     },
     {
       "example": "blt $t1,$t2,label",
-      "description": "Branch if Less Than : Branch to statement at label if $t1 is less than $t2"
+      "description": "Salto si menor que: Saltar a la instrucción de la etiqueta si $t1 es menor que $t2"
     },
     {
       "example": "blt $t1,100000,label",
-      "description": "Branch if Less Than : Branch to statement at label if $t1 is less than 32-bit immediate"
+      "description": "Salto si menor que: Saltar a la instrucción de la etiqueta si $t1 es menor que inmediato de 32 bits"
     },
     {
       "example": "bltu $t1,-100,label",
-      "description": "Branch if Less Than Unsigned : Branch to statement at label if $t1 is less than 16-bit immediate"
+      "description": "Salto si menor que sin signo: Saltar a la instrucción de la etiqueta si $t1 es menor que inmediato de 16 bits"
     },
     {
       "example": "bltu $t1,$t2,label",
-      "description": "Branch if Less Than Unsigned : Branch to statement at label if $t1 is less than $t2"
+      "description": "Salto si menor que sin signo: Saltar a la instrucción de la etiqueta si $t1 es menor que $t2"
     },
     {
       "example": "bltu $t1,100000,label",
-      "description": "Branch if Less Than Unsigned : Branch to statement at label if $t1 is less than 32-bit immediate"
+      "description": "Salto si menor que sin signo: Saltar a la instrucción de la etiqueta si $t1 es menor que inmediato de 32 bits"
     },
     {
       "example": "bne $t1,-100,label",
-      "description": "Branch if Not Equal : Branch to statement at label if $t1 is not equal to 16-bit immediate"
+      "description": "Salto si no igual: Saltar a la instrucción de la etiqueta si $t1 no es igual a inmediato de 16 bits"
     },
     {
       "example": "bne $t1,100000,label",
-      "description": "Branch if Not Equal : Branch to statement at label if $t1 is not equal to 32-bit immediate"
+      "description": "Salto si no igual: Saltar a la instrucción de la etiqueta si $t1 no es igual a inmediato de 32 bits"
     },
     {
       "example": "bnez $t1,label",
-      "description": "Branch if Not Equal Zero : Branch to statement at label if $t1 is not equal to zero"
+      "description": "Salto si no igual cero: Saltar a la instrucción de la etiqueta si $t1 no es igual a cero"
     },
     {
       "example": "div $t1,$t2,-100",
-      "description": "DIVision : Set $t1 to ($t2 divided by 16-bit immediate, integer division)"
+      "description": "División: Establecer $t1 en ($t2 dividido entre inmediato de 16 bits, división entera)"
     },
     {
       "example": "div $t1,$t2,$t3",
-      "description": "DIVision : Set $t1 to ($t2 divided by $t3, integer division)"
+      "description": "División: Establecer $t1 en ($t2 dividido entre $t3, división entera)"
     },
     {
       "example": "div $t1,$t2,100000",
-      "description": "DIVision : Set $t1 to ($t2 divided by 32-bit immediate, integer division)"
+      "description": "División: Establecer $t1 en ($t2 dividido entre inmediato de 32 bits, división entera)"
     },
     {
       "example": "divu $t1,$t2,-100",
-      "description": "DIVision Unsigned :  Set $t1 to ($t2 divided by 16-bit immediate, unsigned integer division)"
+      "description": "División sin signo: Establecer $t1 en ($t2 dividido entre inmediato de 16 bits, división entera sin signo)"
     },
     {
       "example": "divu $t1,$t2,$t3",
-      "description": "DIVision Unsigned :  Set $t1 to ($t2 divided by $t3, unsigned integer division)"
+      "description": "División sin signo: Establecer $t1 en ($t2 dividido entre $t3, división entera sin signo)"
     },
     {
       "example": "divu $t1,$t2,100000",
-      "description": "DIVision Unsigned :  Set $t1 to ($t2 divided by 32-bit immediate, unsigned integer division)"
+      "description": "División sin signo: Establecer $t1 en ($t2 dividido entre inmediato de 32 bits, división entera sin signo)"
     },
     {
       "example": "l.d $f2,-100",
-      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar doble precisión: carga los 64 bits de la dirección efectiva de memoria en el par de registros $f2/$f3"
     },
     {
       "example": "l.d $f2,($t2)",
-      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar doble precisión: carga los 64 bits de la dirección efectiva de memoria en el par de registros $f2/$f3"
     },
     {
       "example": "l.d $f2,100000",
-      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar doble precisión: carga los 64 bits de la dirección efectiva de memoria en el par de registros $f2/$f3"
     },
     {
       "example": "l.d $f2,100000($t2)",
-      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar doble precisión: carga los 64 bits de la dirección efectiva de memoria en el par de registros $f2/$f3"
     },
     {
       "example": "l.d $f2,label",
-      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar doble precisión: carga los 64 bits de la dirección efectiva de memoria en el par de registros $f2/$f3"
     },
     {
       "example": "l.d $f2,label($t2)",
-      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar doble precisión: carga los 64 bits de la dirección efectiva de memoria en el par de registros $f2/$f3"
     },
     {
       "example": "l.d $f2,label+100000",
-      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar doble precisión: carga los 64 bits de la dirección efectiva de memoria en el par de registros $f2/$f3"
     },
     {
       "example": "l.d $f2,label+100000($t2)",
-      "description": "Load floating point Double precision : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar doble precisión: carga los 64 bits de la dirección efectiva de memoria en el par de registros $f2/$f3"
     },
     {
       "example": "l.s $f1,-100",
-      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+      "description": "Cargar precisión simple: carga los 32 bits de la dirección efectiva de memoria en $f1"
     },
     {
       "example": "l.s $f1,($t2)",
-      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+      "description": "Cargar precisión simple: carga los 32 bits de la dirección efectiva de memoria en $f1"
     },
     {
       "example": "l.s $f1,100000",
-      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+      "description": "Cargar precisión simple: carga los 32 bits de la dirección efectiva de memoria en $f1"
     },
     {
       "example": "l.s $f1,100000($t2)",
-      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+      "description": "Cargar precisión simple: carga los 32 bits de la dirección efectiva de memoria en $f1"
     },
     {
       "example": "l.s $f1,label",
-      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+      "description": "Cargar precisión simple: carga los 32 bits de la dirección efectiva de memoria en $f1"
     },
     {
       "example": "l.s $f1,label($t2)",
-      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+      "description": "Cargar precisión simple: carga los 32 bits de la dirección efectiva de memoria en $f1"
     },
     {
       "example": "l.s $f1,label+100000",
-      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+      "description": "Cargar precisión simple: carga los 32 bits de la dirección efectiva de memoria en $f1"
     },
     {
       "example": "l.s $f1,label+100000($t2)",
-      "description": "Load floating point Single precision : Set $f1 to 32-bit value at effective memory word address"
+      "description": "Cargar precisión simple: carga los 32 bits de la dirección efectiva de memoria en $f1"
     },
     {
       "example": "la $t1,-100",
-      "description": "Load Address : Set $t1 to 16-bit immediate (sign-extended)"
+      "description": "Cargar dirección: establece $t1 en el inmediato de 16 bits extendido con signo"
     },
     {
       "example": "la $t1,($t2)",
-      "description": "Load Address : Set $t1 to contents of $t2"
+      "description": "Cargar dirección: copia el contenido de $t2 en $t1"
     },
     {
       "example": "la $t1,100",
-      "description": "Load Address : Set $t1 to 16-bit immediate (zero-extended)"
+      "description": "Cargar dirección: establece $t1 en el inmediato de 16 bits extendido con ceros"
     },
     {
       "example": "la $t1,100($t2)",
-      "description": "Load Address : Set $t1 to sum (of $t2 and 16-bit immediate)"
+      "description": "Cargar dirección: establece $t1 en la suma de $t2 y el inmediato de 16 bits"
     },
     {
       "example": "la $t1,100000",
-      "description": "Load Address : Set $t1 to 32-bit immediate"
+      "description": "Cargar dirección: establece $t1 en el inmediato de 32 bits"
     },
     {
       "example": "la $t1,100000($t2)",
-      "description": "Load Address : Set $t1 to sum (of $t2 and 32-bit immediate)"
+      "description": "Cargar dirección: establece $t1 en la suma de $t2 y el inmediato de 32 bits"
     },
     {
       "example": "la $t1,label",
-      "description": "Load Address : Set $t1 to label's address"
+      "description": "Cargar dirección: establece $t1 en la dirección de la etiqueta"
     },
     {
       "example": "la $t1,label($t2)",
-      "description": "Load Address : Set $t1 to sum (of $t2 and label's address)"
+      "description": "Cargar dirección: establece $t1 en la suma de $t2 y la dirección de la etiqueta"
     },
     {
       "example": "la $t1,label+100000",
-      "description": "Load Address : Set $t1 to sum (of label's address and 32-bit immediate)"
+      "description": "Cargar dirección: establece $t1 en la suma de la dirección de la etiqueta y el inmediato de 32 bits"
     },
     {
       "example": "la $t1,label+100000($t2)",
-      "description": "Load Address : Set $t1 to sum (of label's address, 32-bit immediate, and $t2)"
+      "description": "Cargar dirección: establece $t1 en la suma de la dirección de la etiqueta, el inmediato de 32 bits y $t2"
     },
     {
       "example": "lb $t1,-100",
-      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lb $t1,($t2)",
-      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lb $t1,100",
-      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lb $t1,100($t2)",
-      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lb $t1,100000",
-      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lb $t1,100000($t2)",
-      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lb $t1,label",
-      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lb $t1,label($t2)",
-      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lb $t1,label+100000",
-      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lb $t1,label+100000($t2)",
-      "description": "Load Byte : Set $t1 to sign-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte: lee un byte de la dirección efectiva, lo extiende con signo y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,-100",
-      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,($t2)",
-      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,100",
-      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,100($t2)",
-      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,100000",
-      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,100000($t2)",
-      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,label",
-      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,label($t2)",
-      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,label+100000",
-      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "lbu $t1,label+100000($t2)",
-      "description": "Load Byte Unsigned : Set $t1 to zero-extended 8-bit value from effective memory byte address"
+      "description": "Cargar byte sin signo: lee un byte de la dirección efectiva, lo extiende con ceros y lo guarda en $t1"
     },
     {
       "example": "ld $t1,-100($t2)",
-      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory byte address"
+      "description": "Cargar palabra doble: carga los 64 bits que comienzan en la dirección efectiva en $t1 y el registro siguiente"
     },
     {
       "example": "ld $t1,($t2)",
-      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Cargar palabra doble: carga los 64 bits que comienzan en la dirección efectiva en $t1 y el registro siguiente"
     },
     {
       "example": "ld $t1,100000",
-      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Cargar palabra doble: carga los 64 bits que comienzan en la dirección efectiva en $t1 y el registro siguiente"
     },
     {
       "example": "ld $t1,100000($t2)",
-      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Cargar palabra doble: carga los 64 bits que comienzan en la dirección efectiva en $t1 y el registro siguiente"
     },
     {
       "example": "ld $t1,label",
-      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Cargar palabra doble: carga los 64 bits que comienzan en la dirección efectiva en $t1 y el registro siguiente"
     },
     {
       "example": "ld $t1,label($t2)",
-      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Cargar palabra doble: carga los 64 bits que comienzan en la dirección efectiva en $t1 y el registro siguiente"
     },
     {
       "example": "ld $t1,label+100000",
-      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Cargar palabra doble: carga los 64 bits que comienzan en la dirección efectiva en $t1 y el registro siguiente"
     },
     {
       "example": "ld $t1,label+100000($t2)",
-      "description": "Load Doubleword : Set $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Cargar palabra doble: carga los 64 bits que comienzan en la dirección efectiva en $t1 y el registro siguiente"
     },
     {
       "example": "ldc1 $f2,-100",
-      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar palabra doble en el coprocesador 1: carga los 64 bits de la dirección efectiva en el par de registros $f2/$f3"
     },
     {
       "example": "ldc1 $f2,($t2)",
-      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar palabra doble en el coprocesador 1: carga los 64 bits de la dirección efectiva en el par de registros $f2/$f3"
     },
     {
       "example": "ldc1 $f2,100000",
-      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar palabra doble en el coprocesador 1: carga los 64 bits de la dirección efectiva en el par de registros $f2/$f3"
     },
     {
       "example": "ldc1 $f2,100000($t2)",
-      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar palabra doble en el coprocesador 1: carga los 64 bits de la dirección efectiva en el par de registros $f2/$f3"
     },
     {
       "example": "ldc1 $f2,label",
-      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar palabra doble en el coprocesador 1: carga los 64 bits de la dirección efectiva en el par de registros $f2/$f3"
     },
     {
       "example": "ldc1 $f2,label($t2)",
-      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar palabra doble en el coprocesador 1: carga los 64 bits de la dirección efectiva en el par de registros $f2/$f3"
     },
     {
       "example": "ldc1 $f2,label+100000",
-      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar palabra doble en el coprocesador 1: carga los 64 bits de la dirección efectiva en el par de registros $f2/$f3"
     },
     {
       "example": "ldc1 $f2,label+100000($t2)",
-      "description": "Load Doubleword Coprocessor 1 : Set $f2 and $f3 register pair to 64-bit value at effective memory doubleword address"
+      "description": "Cargar palabra doble en el coprocesador 1: carga los 64 bits de la dirección efectiva en el par de registros $f2/$f3"
     },
     {
       "example": "lh $t1,-100",
-      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lh $t1,($t2)",
-      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lh $t1,100",
-      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lh $t1,100($t2)",
-      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lh $t1,100000",
-      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lh $t1,100000($t2)",
-      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lh $t1,label",
-      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lh $t1,label($t2)",
-      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lh $t1,label+100000",
-      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lh $t1,label+100000($t2)",
-      "description": "Load Halfword : Set $t1 to sign-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra: lee 16 bits de la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "lhu $t1,-100",
-      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "lhu $t1,($t2)",
-      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "lhu $t1,100",
-      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "lhu $t1,100($t2)",
-      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "lhu $t1,100000",
-      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "lhu $t1,100000($t2)",
-      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "lhu $t1,label",
-      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "lhu $t1,label($t2)",
-      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "lhu $t1,label+100000",
-      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "lhu $t1,label+100000($t2)",
-      "description": "Load Halfword Unsigned : Set $t1 to zero-extended 16-bit value from effective memory halfword address"
+      "description": "Cargar media palabra sin signo: lee 16 bits de la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "li $t1,-100",
-      "description": "Load Immediate : Set $t1 to 16-bit immediate (sign-extended)"
+      "description": "Cargar inmediato: establece $t1 en el inmediato de 16 bits extendido con signo"
     },
     {
       "example": "li $t1,100",
-      "description": "Load Immediate : Set $t1 to unsigned 16-bit immediate (zero-extended)"
+      "description": "Cargar inmediato: establece $t1 en el inmediato de 16 bits extendido con ceros"
     },
     {
       "example": "li $t1,100000",
-      "description": "Load Immediate : Set $t1 to 32-bit immediate"
+      "description": "Cargar inmediato: establece $t1 en el inmediato de 32 bits"
     },
     {
       "example": "ll $t1,-100",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "ll $t1,($t2)",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "ll $t1,100",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "ll $t1,100($t2)",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "ll $t1,100000",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "ll $t1,100000($t2)",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "ll $t1,label",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "ll $t1,label($t2)",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "ll $t1,label+100000",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "ll $t1,label+100000($t2)",
-      "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+      "description": "Carga enlazada: carga una palabra y establece una reserva para un almacenamiento condicional (sc) posterior"
     },
     {
       "example": "lw $t1,-100",
-      "description": "Load Word : Set $t1 to contents of effective memory word address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección efectiva de memoria"
     },
     {
       "example": "lw $t1,($t2)",
-      "description": "Load Word : Set $t1 to contents of effective memory word address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección efectiva de memoria"
     },
     {
       "example": "lw $t1,100",
-      "description": "Load Word : Set $t1 to contents of effective memory word address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección efectiva de memoria"
     },
     {
       "example": "lw $t1,100($t2)",
-      "description": "Load Word : Set $t1 to contents of effective memory word address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección efectiva de memoria"
     },
     {
       "example": "lw $t1,100000",
-      "description": "Load Word : Set $t1 to contents of effective memory word address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección efectiva de memoria"
     },
     {
       "example": "lw $t1,100000($t2)",
-      "description": "Load Word : Set $t1 to contents of effective memory word address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección efectiva de memoria"
     },
     {
       "example": "lw $t1,label",
-      "description": "Load Word : Set $t1 to contents of memory word at label's address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección de la etiqueta"
     },
     {
       "example": "lw $t1,label($t2)",
-      "description": "Load Word : Set $t1 to contents of effective memory word address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección efectiva de memoria"
     },
     {
       "example": "lw $t1,label+100000",
-      "description": "Load Word : Set $t1 to contents of effective memory word address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección efectiva de memoria"
     },
     {
       "example": "lw $t1,label+100000($t2)",
-      "description": "Load Word : Set $t1 to contents of effective memory word address"
+      "description": "Cargar palabra: carga en $t1 la palabra situada en la dirección efectiva de memoria"
     },
     {
       "example": "lwc1 $f1,-100",
-      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+      "description": "Cargar palabra en el coprocesador 1: carga en $f1 los 32 bits situados en la dirección efectiva de memoria"
     },
     {
       "example": "lwc1 $f1,($t2)",
-      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+      "description": "Cargar palabra en el coprocesador 1: carga en $f1 los 32 bits situados en la dirección efectiva de memoria"
     },
     {
       "example": "lwc1 $f1,100000",
-      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+      "description": "Cargar palabra en el coprocesador 1: carga en $f1 los 32 bits situados en la dirección efectiva de memoria"
     },
     {
       "example": "lwc1 $f1,100000($t2)",
-      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+      "description": "Cargar palabra en el coprocesador 1: carga en $f1 los 32 bits situados en la dirección efectiva de memoria"
     },
     {
       "example": "lwc1 $f1,label",
-      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+      "description": "Cargar palabra en el coprocesador 1: carga en $f1 los 32 bits situados en la dirección efectiva de memoria"
     },
     {
       "example": "lwc1 $f1,label($t2)",
-      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+      "description": "Cargar palabra en el coprocesador 1: carga en $f1 los 32 bits situados en la dirección efectiva de memoria"
     },
     {
       "example": "lwc1 $f1,label+100000",
-      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+      "description": "Cargar palabra en el coprocesador 1: carga en $f1 los 32 bits situados en la dirección efectiva de memoria"
     },
     {
       "example": "lwc1 $f1,label+100000($t2)",
-      "description": "Load Word Coprocessor 1 : Set $f1 to 32-bit value from effective memory word address"
+      "description": "Cargar palabra en el coprocesador 1: carga en $f1 los 32 bits situados en la dirección efectiva de memoria"
     },
     {
       "example": "lwl $t1,-100",
-      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwl $t1,($t2)",
-      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwl $t1,100",
-      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwl $t1,100($t2)",
-      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwl $t1,100000",
-      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwl $t1,100000($t2)",
-      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwl $t1,label",
-      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwl $t1,label($t2)",
-      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwl $t1,label+100000",
-      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwl $t1,label+100000($t2)",
-      "description": "Load Word Left : Load from 1 to 4 bytes left-justified into $t1, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Cargar palabra izquierda: combina en la parte izquierda de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "lwr $t1,-100",
-      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "lwr $t1,($t2)",
-      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "lwr $t1,100",
-      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "lwr $t1,100($t2)",
-      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "lwr $t1,100000",
-      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "lwr $t1,100000($t2)",
-      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "lwr $t1,label",
-      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "lwr $t1,label($t2)",
-      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "lwr $t1,label+100000",
-      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "lwr $t1,label+100000($t2)",
-      "description": "Load Word Right : Load from 1 to 4 bytes right-justified into $t1, starting with effective memory byte address and continuing through the high-order byte of its word"
+      "description": "Cargar palabra derecha: combina en la parte derecha de $t1 entre uno y cuatro bytes desde la dirección efectiva hasta el byte más significativo de su palabra"
     },
     {
       "example": "mfc1.d $t1,$f2",
-      "description": "Move From Coprocessor 1 Double : Set $t1 to contents of $f2, set next higher register from $t1 to contents of next higher register from $f2"
+      "description": "Mover doble desde el coprocesador 1: copia $f2 en $t1 y el registro flotante siguiente en el registro entero siguiente"
     },
     {
       "example": "move $t1,$t2",
-      "description": "MOVE : Set $t1 to contents of $t2"
+      "description": "Mover: copia el contenido de $t2 en $t1"
     },
     {
       "example": "mtc1.d $t1,$f2",
-      "description": "Move To Coprocessor 1 Double : Set $f2 to contents of $t1, set next higher register from $f2 to contents of next higher register from $t1"
+      "description": "Mover doble al coprocesador 1: copia $t1 en $f2 y el registro entero siguiente en el registro flotante siguiente"
     },
     {
       "example": "mul $t1,$t2,-100",
-      "description": "MULtiplication : Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of the product of $t2 and 16-bit signed immediate (use mfhi to access HI, mflo to access LO)"
+      "description": "Multiplicación: Establecer HI en 32 bits más significativos, LO y $t1 a 32 bits menos significativos del producto de $t2 y inmediato de 16 bits con signo (usar mfhi para acceder a HI y mflo para acceder a LO)"
     },
     {
       "example": "mul $t1,$t2,100000",
-      "description": "MULtiplication : Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of the product of $t2 and 32-bit immediate (use mfhi to access HI, mflo to access LO)"
+      "description": "Multiplicación: Establecer HI en 32 bits más significativos, LO y $t1 a 32 bits menos significativos del producto de $t2 y inmediato de 32 bits (usar mfhi para acceder a HI y mflo para acceder a LO)"
     },
     {
       "example": "mulo $t1,$t2,-100",
-      "description": "MULtiplication with Overflow : Set $t1 to low-order 32 bits of the product of $t2 and signed 16-bit immediate"
+      "description": "Multiplicación con desbordamiento: Establecer $t1 en 32 bits menos significativos del producto de $t2 y inmediato de 16 bits con signo"
     },
     {
       "example": "mulo $t1,$t2,$t3",
-      "description": "MULtiplication with Overflow : Set $t1 to low-order 32 bits of the product of $t2 and $t3"
+      "description": "Multiplicación con desbordamiento: Establecer $t1 en 32 bits menos significativos del producto de $t2 y $t3"
     },
     {
       "example": "mulo $t1,$t2,100000",
-      "description": "MULtiplication with Overflow : Set $t1 to low-order 32 bits of the product of $t2 and 32-bit immediate"
+      "description": "Multiplicación con desbordamiento: Establecer $t1 en 32 bits menos significativos del producto de $t2 y inmediato de 32 bits"
     },
     {
       "example": "mulou $t1,$t2,-100",
-      "description": "MULtiplication with Overflow Unsigned : Set $t1 to low-order 32 bits of the product of $t2 and signed 16-bit immediate"
+      "description": "Multiplicación con desbordamiento sin signo: Establecer $t1 en 32 bits menos significativos del producto de $t2 y inmediato de 16 bits con signo"
     },
     {
       "example": "mulou $t1,$t2,$t3",
-      "description": "MULtiplication with Overflow Unsigned : Set $t1 to low-order 32 bits of the product of $t2 and $t3"
+      "description": "Multiplicación con desbordamiento sin signo: Establecer $t1 en 32 bits menos significativos del producto de $t2 y $t3"
     },
     {
       "example": "mulou $t1,$t2,100000",
-      "description": "MULtiplication with Overflow Unsigned : Set $t1 to low-order 32 bits of the product of $t2 and 32-bit immediate"
+      "description": "Multiplicación con desbordamiento sin signo: Establecer $t1 en 32 bits menos significativos del producto de $t2 y inmediato de 32 bits"
     },
     {
       "example": "mulu $t1,$t2,-100",
-      "description": "MULtiplication Unsigned :  Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of ($t2 multiplied by 16-bit immediate, unsigned multiplication)"
+      "description": "Multiplicación sin signo: Establecer HI en 32 bits más significativos, LO y $t1 a 32 bits menos significativos de ($t2 multiplicado por inmediato de 16 bits, multiplicación sin signo)"
     },
     {
       "example": "mulu $t1,$t2,$t3",
-      "description": "MULtiplication Unsigned : Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of ($t2 multiplied by $t3, unsigned multiplication)"
+      "description": "Multiplicación sin signo: Establecer HI en 32 bits más significativos, LO y $t1 a 32 bits menos significativos de ($t2 multiplicado por $t3, multiplicación sin signo)"
     },
     {
       "example": "mulu $t1,$t2,100000",
-      "description": "MULtiplication Unsigned :  Set HI to high-order 32 bits, LO and $t1 to low-order 32 bits of ($t2 multiplied by 32-bit immediate, unsigned multiplication)"
+      "description": "Multiplicación sin signo: Establecer HI en 32 bits más significativos, LO y $t1 a 32 bits menos significativos de ($t2 multiplicado por inmediato de 32 bits, multiplicación sin signo)"
     },
     {
       "example": "neg $t1,$t2",
-      "description": "NEGate : Set $t1 to negation of $t2"
+      "description": "Negar: Establecer $t1 en negación de $t2"
     },
     {
       "example": "negu $t1,$t2",
-      "description": "NEGate Unsigned : Set $t1 to negation of $t2, no overflow"
+      "description": "Negar sin signo: Establecer $t1 en negación de $t2, sin desbordamiento"
     },
     {
       "example": "not $t1,$t2",
-      "description": "Bitwise NOT (bit inversion)"
+      "description": "Bit a bit NOT (inversión de bits)"
     },
     {
       "example": "or $t1,$t2,100",
-      "description": "OR : set $t1 to ($t2 bitwise-OR 16-bit unsigned immediate)"
+      "description": "OR: establecer $t1 en ($t2 bit a bit-OR inmediato de 16 bits sin signo)"
     },
     {
       "example": "or $t1,100",
-      "description": "OR : set $t1 to ($t1 bitwise-OR 16-bit unsigned immediate)"
+      "description": "OR: establecer $t1 en ($t1 bit a bit-OR inmediato de 16 bits sin signo)"
     },
     {
       "example": "ori $t1,$t2,100000",
-      "description": "OR Immediate : set $t1 to ($t2 bitwise-OR 32-bit immediate)"
+      "description": "OR inmediato: establecer $t1 en ($t2 bit a bit-OR inmediato de 32 bits)"
     },
     {
       "example": "ori $t1,100",
-      "description": "OR Immediate : set $t1 to ($t1 bitwise-OR 16-bit unsigned immediate)"
+      "description": "OR inmediato: establecer $t1 en ($t1 bit a bit-OR inmediato de 16 bits sin signo)"
     },
     {
       "example": "ori $t1,100000",
-      "description": "OR Immediate : set $t1 to ($t1 bitwise-OR 32-bit immediate)"
+      "description": "OR inmediato: establecer $t1 en ($t1 bit a bit-OR inmediato de 32 bits)"
     },
     {
       "example": "rem $t1,$t2,-100",
-      "description": "REMainder : Set $t1 to (remainder of $t2 divided by 16-bit immediate)"
+      "description": "Resto: Establecer $t1 en (resto de $t2 dividido entre inmediato de 16 bits)"
     },
     {
       "example": "rem $t1,$t2,$t3",
-      "description": "REMainder : Set $t1 to (remainder of $t2 divided by $t3)"
+      "description": "Resto: Establecer $t1 en (resto de $t2 dividido entre $t3)"
     },
     {
       "example": "rem $t1,$t2,100000",
-      "description": "REMainder : Set $t1 to (remainder of $t2 divided by 32-bit immediate)"
+      "description": "Resto: Establecer $t1 en (resto de $t2 dividido entre inmediato de 32 bits)"
     },
     {
       "example": "remu $t1,$t2,-100",
-      "description": "REMainder : Set $t1 to (remainder of $t2 divided by 16-bit immediate, unsigned division)"
+      "description": "Resto: Establecer $t1 en (resto de $t2 dividido entre inmediato de 16 bits, división sin signo)"
     },
     {
       "example": "remu $t1,$t2,$t3",
-      "description": "REMainder : Set $t1 to (remainder of $t2 divided by $t3, unsigned division)"
+      "description": "Resto: Establecer $t1 en (resto de $t2 dividido entre $t3, división sin signo)"
     },
     {
       "example": "remu $t1,$t2,100000",
-      "description": "REMainder : Set $t1 to (remainder of $t2 divided by 32-bit immediate, unsigned division)"
+      "description": "Resto: Establecer $t1 en (resto de $t2 dividido entre inmediato de 32 bits, división sin signo)"
     },
     {
       "example": "rol $t1,$t2,$t3",
-      "description": "ROtate Left : Set $t1 to ($t2 rotated left by number of bit positions specified in $t3)"
+      "description": "Rotar izquierda: Establecer $t1 en ($t2 rotado a la izquierda por número de posiciones de bit indicado en $t3)"
     },
     {
       "example": "rol $t1,$t2,10",
-      "description": "ROtate Left : Set $t1 to ($t2 rotated left by number of bit positions specified in 5-bit immediate)"
+      "description": "Rotar izquierda: Establecer $t1 en ($t2 rotado a la izquierda por número de posiciones de bit indicado en inmediato de 5 bits)"
     },
     {
       "example": "ror $t1,$t2,$t3",
-      "description": "ROtate Right : Set $t1 to ($t2 rotated right by number of bit positions specified in $t3)"
+      "description": "Rotar derecha: Establecer $t1 en ($t2 rotado a la derecha por número de posiciones de bit indicado en $t3)"
     },
     {
       "example": "ror $t1,$t2,10",
-      "description": "ROtate Right : Set $t1 to ($t2 rotated right by number of bit positions specified in 5-bit immediate)"
+      "description": "Rotar derecha: Establecer $t1 en ($t2 rotado a la derecha por número de posiciones de bit indicado en inmediato de 5 bits)"
     },
     {
       "example": "s.d $f2,-100",
-      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar doble precisión: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "s.d $f2,($t2)",
-      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar doble precisión: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "s.d $f2,100000",
-      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar doble precisión: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "s.d $f2,100000($t2)",
-      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar doble precisión: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "s.d $f2,label",
-      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar doble precisión: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "s.d $f2,label($t2)",
-      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar doble precisión: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "s.d $f2,label+100000",
-      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar doble precisión: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "s.d $f2,label+100000($t2)",
-      "description": "Store floating point Double precision : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar doble precisión: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "s.s $f1,-100",
-      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar precisión simple: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "s.s $f1,($t2)",
-      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar precisión simple: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "s.s $f1,100000",
-      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar precisión simple: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "s.s $f1,100000($t2)",
-      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar precisión simple: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "s.s $f1,label",
-      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar precisión simple: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "s.s $f1,label($t2)",
-      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar precisión simple: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "s.s $f1,label+100000",
-      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar precisión simple: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "s.s $f1,label+100000($t2)",
-      "description": "Store floating point Single precision : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar precisión simple: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "sb $t1,-100",
-      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sb $t1,($t2)",
-      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sb $t1,100",
-      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sb $t1,100($t2)",
-      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sb $t1,100000",
-      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sb $t1,100000($t2)",
-      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sb $t1,label",
-      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sb $t1,label($t2)",
-      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sb $t1,label+100000",
-      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sb $t1,label+100000($t2)",
-      "description": "Store Byte : Store the low-order 8 bits of $t1 into the effective memory byte address"
+      "description": "Almacenar byte: escribe los 8 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sc $t1,-100",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe solo si la reserva de carga enlazada correspondiente sigue siendo válida e indica éxito o fallo en el registro de origen"
     },
     {
       "example": "sc $t1,($t2)",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe solo si la reserva de carga enlazada correspondiente sigue siendo válida e indica éxito o fallo en el registro de origen"
     },
     {
       "example": "sc $t1,100",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe solo si la reserva de carga enlazada correspondiente sigue siendo válida e indica éxito o fallo en el registro de origen"
     },
     {
       "example": "sc $t1,100($t2)",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe solo si la reserva de carga enlazada correspondiente sigue siendo válida e indica éxito o fallo en el registro de origen"
     },
     {
       "example": "sc $t1,100000",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe solo si la reserva de carga enlazada correspondiente sigue siendo válida e indica éxito o fallo en el registro de origen"
     },
     {
       "example": "sc $t1,100000($t2)",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe solo si la reserva de carga enlazada correspondiente sigue siendo válida e indica éxito o fallo en el registro de origen"
     },
     {
       "example": "sc $t1,label",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe solo si la reserva de carga enlazada correspondiente sigue siendo válida e indica éxito o fallo en el registro de origen"
     },
     {
       "example": "sc $t1,label($t2)",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe solo si la reserva de carga enlazada correspondiente sigue siendo válida e indica éxito o fallo en el registro de origen"
     },
     {
       "example": "sc $t1,label+100000",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe solo si la reserva de carga enlazada correspondiente sigue siendo válida e indica éxito o fallo en el registro de origen"
     },
     {
       "example": "sc $t1,label+100000($t2)",
-      "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+      "description": "Almacenamiento condicional: escribe solo si la reserva de carga enlazada correspondiente sigue siendo válida e indica éxito o fallo en el registro de origen"
     },
     {
       "example": "sd $t1,-100($t2)",
-      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory byte address"
+      "description": "Almacenar palabra doble: escribe el contenido de $t1 y del registro siguiente en los 64 bits que comienzan en la dirección efectiva"
     },
     {
       "example": "sd $t1,($t2)",
-      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Almacenar palabra doble: escribe el contenido de $t1 y del registro siguiente en los 64 bits que comienzan en la dirección efectiva"
     },
     {
       "example": "sd $t1,100000",
-      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Almacenar palabra doble: escribe el contenido de $t1 y del registro siguiente en los 64 bits que comienzan en la dirección efectiva"
     },
     {
       "example": "sd $t1,100000($t2)",
-      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Almacenar palabra doble: escribe el contenido de $t1 y del registro siguiente en los 64 bits que comienzan en la dirección efectiva"
     },
     {
       "example": "sd $t1,label",
-      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Almacenar palabra doble: escribe el contenido de $t1 y del registro siguiente en los 64 bits que comienzan en la dirección efectiva"
     },
     {
       "example": "sd $t1,label($t2)",
-      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Almacenar palabra doble: escribe el contenido de $t1 y del registro siguiente en los 64 bits que comienzan en la dirección efectiva"
     },
     {
       "example": "sd $t1,label+100000",
-      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Almacenar palabra doble: escribe el contenido de $t1 y del registro siguiente en los 64 bits que comienzan en la dirección efectiva"
     },
     {
       "example": "sd $t1,label+100000($t2)",
-      "description": "Store Doubleword : Store contents of $t1 and the next register to the 64 bits starting at effective memory word address"
+      "description": "Almacenar palabra doble: escribe el contenido de $t1 y del registro siguiente en los 64 bits que comienzan en la dirección efectiva"
     },
     {
       "example": "sdc1 $f2,-100",
-      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar palabra doble desde el coprocesador 1: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "sdc1 $f2,($t2)",
-      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar palabra doble desde el coprocesador 1: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "sdc1 $f2,100000",
-      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar palabra doble desde el coprocesador 1: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "sdc1 $f2,100000($t2)",
-      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar palabra doble desde el coprocesador 1: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "sdc1 $f2,label",
-      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar palabra doble desde el coprocesador 1: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "sdc1 $f2,label($t2)",
-      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar palabra doble desde el coprocesador 1: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "sdc1 $f2,label+100000",
-      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar palabra doble desde el coprocesador 1: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "sdc1 $f2,label+100000($t2)",
-      "description": "Store Doubleword Coprocessor 1 : Store 64 bits from $f2 and $f3 register pair to effective memory doubleword address"
+      "description": "Almacenar palabra doble desde el coprocesador 1: escribe los 64 bits del par de registros $f2/$f3 en la dirección efectiva de memoria"
     },
     {
       "example": "seq $t1,$t2,-100",
-      "description": "Set EQual : if $t2 equal to 16-bit immediate then set $t1 to 1 else 0"
+      "description": "Establecer igual: si $t2 es igual a inmediato de 16 bits entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "seq $t1,$t2,$t3",
-      "description": "Set EQual : if $t2 equal to $t3 then set $t1 to 1 else 0"
+      "description": "Establecer igual: si $t2 es igual a $t3 entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "seq $t1,$t2,100000",
-      "description": "Set EQual : if $t2 equal to 32-bit immediate then set $t1 to 1 else 0"
+      "description": "Establecer igual: si $t2 es igual a inmediato de 32 bits entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sge $t1,$t2,-100",
-      "description": "Set Greater or Equal : if $t2 greater or equal to 16-bit immediate then set $t1 to 1 else 0"
+      "description": "Establecer mayor o igual: si $t2 es mayor o igual que inmediato de 16 bits entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sge $t1,$t2,$t3",
-      "description": "Set Greater or Equal : if $t2 greater or equal to $t3 then set $t1 to 1 else 0"
+      "description": "Establecer mayor o igual: si $t2 es mayor o igual que $t3 entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sge $t1,$t2,100000",
-      "description": "Set Greater or Equal : if $t2 greater or equal to 32-bit immediate then set $t1 to 1 else 0"
+      "description": "Establecer mayor o igual: si $t2 es mayor o igual que inmediato de 32 bits entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sgeu $t1,$t2,-100",
-      "description": "Set Greater or Equal Unsigned : if $t2 greater or equal to 16-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+      "description": "Establecer mayor o igual sin signo: si $t2 es mayor o igual que inmediato de 16 bits (comparación sin signo) entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sgeu $t1,$t2,$t3",
-      "description": "Set Greater or Equal Unsigned : if $t2 greater or equal to $t3 (unsigned compare) then set $t1 to 1 else 0"
+      "description": "Establecer mayor o igual sin signo: si $t2 es mayor o igual que $t3 (comparación sin signo) entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sgeu $t1,$t2,100000",
-      "description": "Set Greater or Equal Unsigned : if $t2 greater or equal to 32-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+      "description": "Establecer mayor o igual sin signo: si $t2 es mayor o igual que inmediato de 32 bits (comparación sin signo) entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sgt $t1,$t2,-100",
-      "description": "Set Greater Than : if $t2 greater than 16-bit immediate then set $t1 to 1 else 0"
+      "description": "Establecer mayor que: si $t2 es mayor que inmediato de 16 bits entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sgt $t1,$t2,$t3",
-      "description": "Set Greater Than : if $t2 greater than $t3 then set $t1 to 1 else 0"
+      "description": "Establecer mayor que: si $t2 es mayor que $t3 entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sgt $t1,$t2,100000",
-      "description": "Set Greater Than : if $t2 greater than 32-bit immediate then set $t1 to 1 else 0"
+      "description": "Establecer mayor que: si $t2 es mayor que inmediato de 32 bits entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sgtu $t1,$t2,-100",
-      "description": "Set Greater Than Unsigned : if $t2 greater than 16-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+      "description": "Establecer mayor que sin signo: si $t2 es mayor que inmediato de 16 bits (comparación sin signo) entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sgtu $t1,$t2,$t3",
-      "description": "Set Greater Than Unsigned : if $t2 greater than $t3 (unsigned compare) then set $t1 to 1 else 0"
+      "description": "Establecer mayor que sin signo: si $t2 es mayor que $t3 (comparación sin signo) entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sgtu $t1,$t2,100000",
-      "description": "Set Greater Than Unsigned : if $t2 greater than 32-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+      "description": "Establecer mayor que sin signo: si $t2 es mayor que inmediato de 32 bits (comparación sin signo) entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sh $t1,-100",
-      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sh $t1,($t2)",
-      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sh $t1,100",
-      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sh $t1,100($t2)",
-      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sh $t1,100000",
-      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sh $t1,100000($t2)",
-      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sh $t1,label",
-      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sh $t1,label($t2)",
-      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sh $t1,label+100000",
-      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sh $t1,label+100000($t2)",
-      "description": "Store Halfword : Store the low-order 16 bits of $t1 into the effective memory halfword address"
+      "description": "Almacenar media palabra: escribe los 16 bits menos significativos de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sle $t1,$t2,-100",
-      "description": "Set Less or Equal : if $t2 less or equal to 16-bit immediate then set $t1 to 1 else 0"
+      "description": "Establecer menor o igual: si $t2 es menor o igual que inmediato de 16 bits entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sle $t1,$t2,$t3",
-      "description": "Set Less or Equal : if $t2 less or equal to $t3 then set $t1 to 1 else 0"
+      "description": "Establecer menor o igual: si $t2 es menor o igual que $t3 entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sle $t1,$t2,100000",
-      "description": "Set Less or Equal : if $t2 less or equal to 32-bit immediate then set $t1 to 1 else 0"
+      "description": "Establecer menor o igual: si $t2 es menor o igual que inmediato de 32 bits entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sleu $t1,$t2,-100",
-      "description": "Set Less or Equal Unsigned: if $t2 less or equal to 16-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+      "description": "Establecer menor o igual sin signo: si $t2 es menor o igual que inmediato de 16 bits (comparación sin signo) entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sleu $t1,$t2,$t3",
-      "description": "Set Less or Equal Unsigned: if $t2 less or equal to $t3 (unsigned compare) then set $t1 to 1 else 0"
+      "description": "Establecer menor o igual sin signo: si $t2 es menor o igual que $t3 (comparación sin signo) entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sleu $t1,$t2,100000",
-      "description": "Set Less or Equal Unsigned: if $t2 less or equal to 32-bit immediate (unsigned compare) then set $t1 to 1 else 0"
+      "description": "Establecer menor o igual sin signo: si $t2 es menor o igual que inmediato de 32 bits (comparación sin signo) entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sne $t1,$t2,-100",
-      "description": "Set Not Equal : if $t2 not equal to 16-bit immediate then set $t1 to 1 else 0"
+      "description": "Establecer no igual: si $t2 no es igual a inmediato de 16 bits entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sne $t1,$t2,$t3",
-      "description": "Set Not Equal : if $t2 not equal to $t3 then set $t1 to 1 else 0"
+      "description": "Establecer no igual: si $t2 no es igual a $t3 entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sne $t1,$t2,100000",
-      "description": "Set Not Equal : if $t2 not equal to 32-bit immediate then set $t1 to 1 else 0"
+      "description": "Establecer no igual: si $t2 no es igual a inmediato de 32 bits entonces establecer $t1 en 1; de lo contrario, 0"
     },
     {
       "example": "sub $t1,$t2,-100",
-      "description": "SUBtraction : set $t1 to ($t2 minus 16-bit immediate)"
+      "description": "Resta: establecer $t1 en ($t2 menos inmediato de 16 bits)"
     },
     {
       "example": "sub $t1,$t2,100000",
-      "description": "SUBtraction : set $t1 to ($t2 minus 32-bit immediate)"
+      "description": "Resta: establecer $t1 en ($t2 menos inmediato de 32 bits)"
     },
     {
       "example": "subi $t1,$t2,-100",
-      "description": "SUBtraction Immediate : set $t1 to ($t2 minus 16-bit immediate)"
+      "description": "Resta inmediato: establecer $t1 en ($t2 menos inmediato de 16 bits)"
     },
     {
       "example": "subi $t1,$t2,100000",
-      "description": "SUBtraction Immediate : set $t1 to ($t2 minus 32-bit immediate)"
+      "description": "Resta inmediato: establecer $t1 en ($t2 menos inmediato de 32 bits)"
     },
     {
       "example": "subiu $t1,$t2,100000",
-      "description": "SUBtraction Immediate Unsigned : set $t1 to ($t2 minus 32-bit immediate), no overflow"
+      "description": "Resta inmediato sin signo: establecer $t1 en ($t2 menos inmediato de 32 bits), sin desbordamiento"
     },
     {
       "example": "subu $t1,$t2,100000",
-      "description": "SUBtraction Unsigned : set $t1 to ($t2 minus 32-bit immediate), no overflow"
+      "description": "Resta sin signo: establecer $t1 en ($t2 menos inmediato de 32 bits), sin desbordamiento"
     },
     {
       "example": "sw $t1,-100",
-      "description": "Store Word : Store $t1 contents into effective memory word address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sw $t1,($t2)",
-      "description": "Store Word : Store $t1 contents into effective memory word address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sw $t1,100",
-      "description": "Store Word : Store $t1 contents into effective memory word address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sw $t1,100($t2)",
-      "description": "Store Word : Store $t1 contents into effective memory word address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sw $t1,100000",
-      "description": "Store Word : Store $t1 contents into effective memory word address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sw $t1,100000($t2)",
-      "description": "Store Word : Store $t1 contents into effective memory word address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sw $t1,label",
-      "description": "Store Word : Store $t1 contents into memory word at label's address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la palabra situada en la dirección de la etiqueta"
     },
     {
       "example": "sw $t1,label($t2)",
-      "description": "Store Word : Store $t1 contents into effective memory word address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sw $t1,label+100000",
-      "description": "Store Word : Store $t1 contents into effective memory word address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "sw $t1,label+100000($t2)",
-      "description": "Store Word : Store $t1 contents into effective memory word address"
+      "description": "Almacenar palabra: escribe el contenido de $t1 en la dirección efectiva de memoria"
     },
     {
       "example": "swc1 $f1,-100",
-      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar palabra desde el coprocesador 1: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "swc1 $f1,($t2)",
-      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar palabra desde el coprocesador 1: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "swc1 $f1,100000",
-      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar palabra desde el coprocesador 1: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "swc1 $f1,100000($t2)",
-      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar palabra desde el coprocesador 1: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "swc1 $f1,label",
-      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar palabra desde el coprocesador 1: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "swc1 $f1,label($t2)",
-      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar palabra desde el coprocesador 1: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "swc1 $f1,label+100000",
-      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar palabra desde el coprocesador 1: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "swc1 $f1,label+100000($t2)",
-      "description": "Store Word Coprocessor 1 : Store 32-bit value from $f1 to effective memory word address"
+      "description": "Almacenar palabra desde el coprocesador 1: escribe los 32 bits de $f1 en la dirección efectiva de memoria"
     },
     {
       "example": "swl $t1,-100",
-      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swl $t1,($t2)",
-      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swl $t1,100",
-      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swl $t1,100($t2)",
-      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swl $t1,100000",
-      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swl $t1,100000($t2)",
-      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swl $t1,label",
-      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swl $t1,label($t2)",
-      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swl $t1,label+100000",
-      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swl $t1,label+100000($t2)",
-      "description": "Store Word Left : Store high-order 1 to 4 bytes of $t1 into memory, starting with effective memory byte address and continuing through the low-order byte of its word"
+      "description": "Almacenar palabra izquierda: escribe entre uno y cuatro bytes superiores de $t1 desde la dirección efectiva hasta el byte menos significativo de su palabra"
     },
     {
       "example": "swr $t1,-100",
-      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "swr $t1,($t2)",
-      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "swr $t1,100",
-      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "swr $t1,100($t2)",
-      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "swr $t1,100000",
-      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "swr $t1,100000($t2)",
-      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "swr $t1,label",
-      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "swr $t1,label($t2)",
-      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "swr $t1,label+100000",
-      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "swr $t1,label+100000($t2)",
-      "description": "Store Word Right : Store low-order 1 to 4 bytes of $t1 into memory, starting with high-order byte of word containing effective memory byte address and continuing through that byte address"
+      "description": "Almacenar palabra derecha: escribe entre uno y cuatro bytes inferiores de $t1 desde el byte más significativo de la palabra hasta la dirección efectiva"
     },
     {
       "example": "ulh $t1,-100($t2)",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada: lee 16 bits desde la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "ulh $t1,($t2)",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada: lee 16 bits desde la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "ulh $t1,100000",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada: lee 16 bits desde la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "ulh $t1,100000($t2)",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada: lee 16 bits desde la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "ulh $t1,label",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada: lee 16 bits desde la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "ulh $t1,label($t2)",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada: lee 16 bits desde la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "ulh $t1,label+100000",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada: lee 16 bits desde la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "ulh $t1,label+100000($t2)",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, sign-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada: lee 16 bits desde la dirección efectiva, los extiende con signo y los guarda en $t1"
     },
     {
       "example": "ulhu $t1,-100($t2)",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada sin signo: lee 16 bits desde la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "ulhu $t1,($t2)",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada sin signo: lee 16 bits desde la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "ulhu $t1,100000",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada sin signo: lee 16 bits desde la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "ulhu $t1,100000($t2)",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada sin signo: lee 16 bits desde la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "ulhu $t1,label",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada sin signo: lee 16 bits desde la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "ulhu $t1,label($t2)",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada sin signo: lee 16 bits desde la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "ulhu $t1,label+100000",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada sin signo: lee 16 bits desde la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "ulhu $t1,label+100000($t2)",
-      "description": "Unaligned Load Halfword : Set $t1 to the 16 bits, zero-extended, starting at effective memory byte address"
+      "description": "Cargar media palabra no alineada sin signo: lee 16 bits desde la dirección efectiva, los extiende con ceros y los guarda en $t1"
     },
     {
       "example": "ulw $t1,-100($t2)",
-      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+      "description": "Cargar palabra no alineada: lee 32 bits desde la dirección efectiva y los guarda en $t1"
     },
     {
       "example": "ulw $t1,($t2)",
-      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+      "description": "Cargar palabra no alineada: lee 32 bits desde la dirección efectiva y los guarda en $t1"
     },
     {
       "example": "ulw $t1,100000",
-      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+      "description": "Cargar palabra no alineada: lee 32 bits desde la dirección efectiva y los guarda en $t1"
     },
     {
       "example": "ulw $t1,100000($t2)",
-      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+      "description": "Cargar palabra no alineada: lee 32 bits desde la dirección efectiva y los guarda en $t1"
     },
     {
       "example": "ulw $t1,label",
-      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+      "description": "Cargar palabra no alineada: lee 32 bits desde la dirección efectiva y los guarda en $t1"
     },
     {
       "example": "ulw $t1,label($t2)",
-      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+      "description": "Cargar palabra no alineada: lee 32 bits desde la dirección efectiva y los guarda en $t1"
     },
     {
       "example": "ulw $t1,label+100000",
-      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+      "description": "Cargar palabra no alineada: lee 32 bits desde la dirección efectiva y los guarda en $t1"
     },
     {
       "example": "ulw $t1,label+100000($t2)",
-      "description": "Unaligned Load Word : Set $t1 to the 32 bits starting at effective memory byte address"
+      "description": "Cargar palabra no alineada: lee 32 bits desde la dirección efectiva y los guarda en $t1"
     },
     {
       "example": "ush $t1,-100($t2)",
-      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+      "description": "Almacenar media palabra no alineada: escribe los 16 bits menos significativos de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "ush $t1,($t2)",
-      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+      "description": "Almacenar media palabra no alineada: escribe los 16 bits menos significativos de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "ush $t1,100000",
-      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+      "description": "Almacenar media palabra no alineada: escribe los 16 bits menos significativos de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "ush $t1,100000($t2)",
-      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+      "description": "Almacenar media palabra no alineada: escribe los 16 bits menos significativos de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "ush $t1,label",
-      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+      "description": "Almacenar media palabra no alineada: escribe los 16 bits menos significativos de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "ush $t1,label($t2)",
-      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+      "description": "Almacenar media palabra no alineada: escribe los 16 bits menos significativos de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "ush $t1,label+100000",
-      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+      "description": "Almacenar media palabra no alineada: escribe los 16 bits menos significativos de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "ush $t1,label+100000($t2)",
-      "description": "Unaligned Store Halfword: Store low-order halfword $t1 contents into the 16 bits starting at effective memory byte address"
+      "description": "Almacenar media palabra no alineada: escribe los 16 bits menos significativos de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "usw $t1,-100($t2)",
-      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+      "description": "Almacenar palabra no alineada: escribe los 32 bits de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "usw $t1,($t2)",
-      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+      "description": "Almacenar palabra no alineada: escribe los 32 bits de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "usw $t1,100000",
-      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+      "description": "Almacenar palabra no alineada: escribe los 32 bits de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "usw $t1,100000($t2)",
-      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+      "description": "Almacenar palabra no alineada: escribe los 32 bits de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "usw $t1,label",
-      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+      "description": "Almacenar palabra no alineada: escribe los 32 bits de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "usw $t1,label($t2)",
-      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+      "description": "Almacenar palabra no alineada: escribe los 32 bits de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "usw $t1,label+100000",
-      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+      "description": "Almacenar palabra no alineada: escribe los 32 bits de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "usw $t1,label+100000($t2)",
-      "description": "Unaligned Store Word : Store $t1 contents into the 32 bits starting at effective memory byte address"
+      "description": "Almacenar palabra no alineada: escribe los 32 bits de $t1 a partir de la dirección efectiva"
     },
     {
       "example": "xor $t1,$t2,100",
-      "description": "XOR : set $t1 to ($t2 bitwise-exclusive-OR 16-bit unsigned immediate)"
+      "description": "XOR: establecer $t1 en ($t2 bit a bit-exclusivo-OR inmediato de 16 bits sin signo)"
     },
     {
       "example": "xor $t1,100",
-      "description": "XOR : set $t1 to ($t1 bitwise-exclusive-OR 16-bit unsigned immediate)"
+      "description": "XOR: establecer $t1 en ($t1 bit a bit-exclusivo-OR inmediato de 16 bits sin signo)"
     },
     {
       "example": "xori $t1,$t2,100000",
-      "description": "XOR Immediate : set $t1 to ($t2 bitwise-exclusive-OR 32-bit immediate)"
+      "description": "XOR inmediato: establecer $t1 en ($t2 bit a bit-exclusivo-OR inmediato de 32 bits)"
     },
     {
       "example": "xori $t1,100",
-      "description": "XOR Immediate : set $t1 to ($t1 bitwise-exclusive-OR 16-bit unsigned immediate)"
+      "description": "XOR inmediato: establecer $t1 en ($t1 bit a bit-exclusivo-OR inmediato de 16 bits sin signo)"
     },
     {
       "example": "xori $t1,100000",
-      "description": "XOR Immediate : set $t1 to ($t1 bitwise-exclusive-OR 32-bit immediate)"
+      "description": "XOR inmediato: establecer $t1 en ($t1 bit a bit-exclusivo-OR inmediato de 32 bits)"
     }
   ],
   "directives": [
     {
       "name": ".align",
-      "description": "Align next data item on specified byte boundary (0=byte, 1=half, 2=word, 3=double)"
+      "description": "Alinear el siguiente elemento de datos al límite de bytes especificado (0=byte, 1=media palabra, 2=palabra, 3=palabra doble)"
     },
     {
       "name": ".ascii",
-      "description": "Store the string in the Data segment but do not add null terminator"
+      "description": "Almacenar la cadena en el segmento de datos sin añadir un terminador nulo"
     },
     {
       "name": ".asciiz",
-      "description": "Store the string in the Data segment and add null terminator"
+      "description": "Almacenar la cadena en el segmento de datos y añadir un terminador nulo"
     },
     {
       "name": ".byte",
-      "description": "Store the listed value(s) as 8 bit bytes"
+      "description": "Almacenar los valores indicados como bytes de 8 bits"
     },
     {
       "name": ".data",
-      "description": "Subsequent items stored in Data segment at next available address"
+      "description": "Almacenar los elementos siguientes en el segmento de datos, a partir de la próxima dirección disponible"
     },
     {
       "name": ".double",
-      "description": "Store the listed value(s) as double precision floating point"
+      "description": "Almacenar los valores indicados como números de coma flotante de doble precisión"
     },
     {
       "name": ".end_macro",
-      "description": "End macro definition.  See .macro"
+      "description": "Finalizar la definición de la macro. Véase .macro"
     },
     {
       "name": ".eqv",
-      "description": "Substitute second operand for first. First operand is symbol, second operand is expression (like #define)"
+      "description": "Sustituir el primer operando por el segundo. El primer operando es un símbolo y el segundo, una expresión (como en #define)"
     },
     {
       "name": ".extern",
-      "description": "Declare the listed label and byte length to be a global data field"
+      "description": "Declarar la etiqueta y la longitud en bytes indicadas como un campo de datos global"
     },
     {
       "name": ".float",
-      "description": "Store the listed value(s) as single precision floating point"
+      "description": "Almacenar los valores indicados como números de coma flotante de precisión simple"
     },
     {
       "name": ".globl",
-      "description": "Declare the listed label(s) as global to enable referencing from other files"
+      "description": "Declarar las etiquetas indicadas como globales para permitir referencias desde otros archivos"
     },
     {
       "name": ".half",
-      "description": "Store the listed value(s) as 16 bit halfwords on halfword boundary"
+      "description": "Almacenar los valores indicados como medias palabras de 16 bits, alineadas a un límite de media palabra"
     },
     {
       "name": ".include",
-      "description": "Insert the contents of the specified file.  Put filename in quotes."
+      "description": "Insertar el contenido del archivo especificado. El nombre del archivo debe escribirse entre comillas"
     },
     {
       "name": ".kdata",
-      "description": "Subsequent items stored in Kernel Data segment at next available address"
+      "description": "Almacenar los elementos siguientes en el segmento de datos del núcleo, a partir de la próxima dirección disponible"
     },
     {
       "name": ".ktext",
-      "description": "Subsequent items (instructions) stored in Kernel Text segment at next available address"
+      "description": "Almacenar los elementos siguientes (instrucciones) en el segmento de texto del núcleo, a partir de la próxima dirección disponible"
     },
     {
       "name": ".macro",
-      "description": "Begin macro definition.  See .end_macro"
+      "description": "Iniciar la definición de una macro. Véase .end_macro"
     },
     {
       "name": ".set",
-      "description": "Set assembler variables.  Currently ignored but included for SPIM compatability"
+      "description": "Definir variables del ensamblador. Actualmente se ignora, pero se admite por compatibilidad con SPIM"
     },
     {
       "name": ".space",
-      "description": "Reserve the next specified number of bytes in Data segment"
+      "description": "Reservar el número de bytes especificado a continuación en el segmento de datos"
     },
     {
       "name": ".text",
-      "description": "Subsequent items (instructions) stored in Text segment at next available address"
+      "description": "Almacenar los elementos siguientes (instrucciones) en el segmento de texto, a partir de la próxima dirección disponible"
     },
     {
       "name": ".word",
-      "description": "Store the listed value(s) as 32 bit words on word boundary"
+      "description": "Almacenar los valores indicados como palabras de 32 bits, alineadas a un límite de palabra"
     }
   ]
 }

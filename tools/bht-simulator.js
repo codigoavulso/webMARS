@@ -362,7 +362,7 @@
             return;
           }
 
-          const previous = lastSnapshot;
+          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
           lastSnapshot = snapshot;
 
           if (!previous) return;

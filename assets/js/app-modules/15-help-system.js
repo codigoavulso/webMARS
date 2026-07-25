@@ -9,15 +9,15 @@
       { id: "en", label: "English", dir: "en" }
     ]
   };
-  const MARS_HELP_TITLE = "MARS 4.5 Help";
-  const ABOUT_MARS_TITLE = "About Mars";
-  const DOC_VIEWER_TITLE = "Primitive HTML Viewer";
+  const MARS_HELP_TITLE = "webMARS Help";
+  const ABOUT_MARS_TITLE = "About webMARS";
+  const DOC_VIEWER_TITLE = "Document Viewer";
   const ABOUT_INFO_PAGE_FILE = "about-card.html";
 
   const HELP_SECTIONS = [
     {
       id: "webmars",
-      label: "webMars",
+      label: "webMARS",
       pages: [
         { id: "info", label: "Info", type: "html", file: "info.html" },
         { id: "changelog", label: "Changelog", type: "html", file: "changelog.html" }
@@ -38,15 +38,15 @@
     },
     {
       id: "mars",
-      label: "MARS",
+      label: "Workspace",
       pages: [
-        { id: "intro", label: "Intro", type: "html", file: "MarsHelpIntro.html" },
-        { id: "ide", label: "IDE", type: "html", file: "MarsHelpIDE.html" },
-        { id: "debugging", label: "Debugging", type: "html", file: "MarsHelpDebugging.html" },
+        { id: "intro", label: "Getting Started", type: "html", file: "MarsHelpIntro.html" },
+        { id: "ide", label: "Workspace & Files", type: "html", file: "MarsHelpIDE.html" },
+        { id: "debugging", label: "Run & Debug", type: "html", file: "MarsHelpDebugging.html" },
         { id: "settings", label: "Settings", type: "html", file: "MarsHelpSettings.html" },
         { id: "tools", label: "Tools", type: "html", file: "MarsHelpTools.html" },
-        { id: "command", label: "Command", type: "html", file: "MarsHelpCommand.html" },
-        { id: "limits", label: "Limits", type: "html", file: "MarsHelpLimits.html" },
+        { id: "command", label: "Mini-C", type: "html", file: "MarsHelpCommand.html" },
+        { id: "limits", label: "Limits & Compatibility", type: "html", file: "MarsHelpLimits.html" },
         { id: "history", label: "History", type: "html", file: "MarsHelpHistory.html" }
       ]
     },
@@ -57,8 +57,8 @@
     },
     {
       id: "bugs",
-      label: "Bugs/Comments",
-      pages: [{ id: "main", label: "Bugs/Comments", type: "html", file: "BugReportingHelp.html" }]
+      label: "Support",
+      pages: [{ id: "main", label: "Support", type: "html", file: "BugReportingHelp.html" }]
     },
     {
       id: "ack",

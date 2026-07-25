@@ -25,6 +25,8 @@ int main(void) {
   int doubled = write_and_double(heap_value, local, 5);
   int combined = sum5(local, 2, 3, 4, *heap_value); // 5o argumento passa na pilha
 
-  return doubled + combined;
+  // Saida esperada: 52
+  print_int(doubled + combined);
+  print_char(10);
+  return 0;
 }
-

@@ -14,17 +14,20 @@
                      {
                          "label":  "bitmap_ascii.c",
                          "path":  "bitmap_ascii.c",
-                         "category":  "Tools"
+                         "category":  "Tools",
+                         "minSubset":  "C0-S1"
                      },
                      {
                          "label":  "bitmap_rectangles.c",
                          "path":  "bitmap_rectangles.c",
-                         "category":  "Tools"
+                         "category":  "Tools",
+                         "minSubset":  "C0-S1"
                      },
                      {
                          "label":  "tty_ansi_demo.c",
                          "path":  "tty_ansi_demo.c",
                          "category":  "Tools",
+                         "minSubset":  "C0-S4",
                          "languages":  [
                                            "en",
                                            "pt",
@@ -35,6 +38,7 @@
                          "label":  "tty_calculator.c",
                          "path":  "tty_calculator.c",
                          "category":  "Tools",
+                         "minSubset":  "C0-S4",
                          "languages":  [
                                            "en",
                                            "pt",
@@ -82,6 +86,16 @@
                          "category":  "Tools"
                      },
                      {
+                         "label":  "scavenger_hunt_player.asm",
+                         "path":  "scavenger_hunt_player.asm",
+                         "category":  "Tools",
+                         "languages":  [
+                                           "en",
+                                           "pt",
+                                           "es"
+                                       ]
+                     },
+                     {
                          "label":  "mips.asm",
                          "path":  "mips.asm",
                          "category":  "Tools"
@@ -104,7 +118,17 @@
                      {
                          "label":  "floating_point_demo.asm",
                          "path":  "floating_point_demo.asm",
-                         "category":  "Math"
+                         "category":  "Tools"
+                     },
+                     {
+                         "label":  "cop1_arithmetic_demo.asm",
+                         "path":  "cop1_arithmetic_demo.asm",
+                         "category":  "Math",
+                         "languages":  [
+                                           "en",
+                                           "pt",
+                                           "es"
+                                       ]
                      },
                      {
                          "label":  "matrix_mul_3x3.asm",
@@ -127,9 +151,32 @@
                          "category":  "Learn"
                      },
                      {
+                         "label":  "hello_world.c",
+                         "path":  "hello_world.c",
+                         "category":  "Learn",
+                         "minSubset":  "C0-S1",
+                         "languages":  [
+                                           "en",
+                                           "pt",
+                                           "es"
+                                       ]
+                     },
+                     {
+                         "label":  "args_library_demo.c",
+                         "path":  "args_library_demo.c",
+                         "category":  "Learn",
+                         "minSubset":  "C0-S4",
+                         "languages":  [
+                                           "en",
+                                           "pt",
+                                           "es"
+                                       ]
+                     },
+                     {
                          "label":  "abi_stack_heap_demo.c",
                          "path":  "abi_stack_heap_demo.c",
                          "category":  "Learn",
+                         "minSubset":  "C0-S0",
                          "languages":  [
                                            "en",
                                            "pt",
@@ -140,6 +187,7 @@
                          "label":  "stdio_console_basics.c",
                          "path":  "stdio_console_basics.c",
                          "category":  "Learn",
+                         "minSubset":  "C0-S4",
                          "languages":  [
                                            "en",
                                            "pt",
@@ -150,6 +198,7 @@
                          "label":  "stdio_line_parse.c",
                          "path":  "stdio_line_parse.c",
                          "category":  "Learn",
+                         "minSubset":  "C0-S4",
                          "languages":  [
                                            "en",
                                            "pt",
@@ -160,6 +209,7 @@
                          "label":  "stdio_file_roundtrip.c",
                          "path":  "stdio_file_roundtrip.c",
                          "category":  "Learn",
+                         "minSubset":  "C0-S4",
                          "languages":  [
                                            "en",
                                            "pt",
@@ -184,14 +234,48 @@
                                    ]
                      },
                      {
+                         "label":  "c_multi_file_stats",
+                         "path":  "learn/c_multi_file_stats/main.c",
+                         "category":  "Compiler",
+                         "minSubset":  "C0-S2",
+                         "languages":  [
+                                           "en",
+                                           "pt",
+                                           "es"
+                                       ],
+                         "files":  [
+                                       {
+                                           "path":  "learn/c_multi_file_stats/main.c",
+                                           "main":  true
+                                       },
+                                       {
+                                           "path":  "learn/c_multi_file_stats/stats.h"
+                                       },
+                                       {
+                                           "path":  "learn/c_multi_file_stats/stats.c"
+                                       }
+                                   ]
+                     },
+                     {
                          "label":  "string_strlen_strcpy.asm",
                          "path":  "string_strlen_strcpy.asm",
                          "category":  "Learn"
                      },
                      {
+                         "label":  "exception_handler_recovery.asm",
+                         "path":  "exception_handler_recovery.asm",
+                         "category":  "Learn",
+                         "languages":  [
+                                           "en",
+                                           "pt",
+                                           "es"
+                                       ]
+                     },
+                     {
                          "label":  "compiler_subset_s2_loops.c",
                          "path":  "compiler_subset_s2_loops.c",
                          "category":  "Compiler",
+                         "minSubset":  "C0-S2",
                          "languages":  [
                                            "en",
                                            "pt",
@@ -202,6 +286,7 @@
                          "label":  "compiler_subset_s3_arrays.c",
                          "path":  "compiler_subset_s3_arrays.c",
                          "category":  "Compiler",
+                         "minSubset":  "C0-S2",
                          "languages":  [
                                            "en",
                                            "pt",
@@ -212,6 +297,7 @@
                          "label":  "compiler_subset_s4_strings.c",
                          "path":  "compiler_subset_s4_strings.c",
                          "category":  "Compiler",
+                         "minSubset":  "C0-S4",
                          "languages":  [
                                            "en",
                                            "pt",
@@ -222,6 +308,7 @@
                          "label":  "compiler_full_c0_core.c",
                          "path":  "compiler_full_c0_core.c",
                          "category":  "Compiler",
+                         "minSubset":  "C0-S4",
                          "languages":  [
                                            "en",
                                            "pt",
@@ -232,6 +319,18 @@
                          "label":  "compiler_c0_libraries.c",
                          "path":  "compiler_c0_libraries.c",
                          "category":  "Compiler",
+                         "minSubset":  "C0-S4",
+                         "languages":  [
+                                           "en",
+                                           "pt",
+                                           "es"
+                                       ]
+                     },
+                     {
+                         "label":  "compiler_c1_native.c",
+                         "path":  "compiler_c1_native.c",
+                         "category":  "Compiler",
+                         "minSubset":  "C1-NATIVE",
                          "languages":  [
                                            "en",
                                            "pt",

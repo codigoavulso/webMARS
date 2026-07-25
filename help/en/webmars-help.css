@@ -1,0 +1,86 @@
+:root {
+  color-scheme: light;
+  font: 14px/1.55 Inter, "Segoe UI", Arial, sans-serif;
+  --ink: #172033;
+  --muted: #5b6474;
+  --accent: #2357a6;
+  --accent-soft: #eaf1ff;
+  --surface: #fff;
+  --surface-soft: #f5f7fb;
+  --border: #ccd5e3;
+  --good: #176b43;
+  --warn: #8a4b08;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 24px 28px 42px;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+h1, h2, h3 { line-height: 1.2; color: #10254c; }
+h1 { margin: 0 0 8px; font-size: 2rem; }
+h2 { margin: 30px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); font-size: 1.3rem; }
+h3 { margin: 18px 0 6px; font-size: 1.05rem; }
+p { margin: 8px 0 12px; }
+a { color: var(--accent); }
+ul, ol { padding-left: 24px; }
+li + li { margin-top: 5px; }
+
+code, kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-soft);
+  font: .92em Consolas, "Courier New", monospace;
+}
+
+pre {
+  overflow: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-soft);
+  font: .92em/1.45 Consolas, "Courier New", monospace;
+}
+
+table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; }
+th, td { padding: 8px 10px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+th { background: var(--surface-soft); }
+
+.lead { color: var(--muted); font-size: 1.08rem; }
+.meta { color: var(--muted); font-size: .9rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin: 14px 0; }
+.card, .note, .warning {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-soft);
+}
+.card h3 { margin-top: 0; }
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); }
+.warning { border-left: 4px solid #c36a0b; color: var(--warn); }
+.good { color: var(--good); font-weight: 600; }
+.steps { counter-reset: step; list-style: none; padding: 0; }
+.steps > li { position: relative; padding: 0 0 14px 42px; }
+.steps > li::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: -2px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: white;
+  background: var(--accent);
+  text-align: center;
+  line-height: 28px;
+  font-weight: 700;
+}
+.compact td, .compact th { padding: 5px 8px; }
+.pill { display: inline-block; margin: 2px 3px 2px 0; padding: 2px 7px; border-radius: 999px; background: var(--accent-soft); color: #163f7d; font-size: .88rem; }

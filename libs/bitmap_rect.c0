@@ -1,15 +1,18 @@
+int _bitmap_base_address = 268500992;
+
 void bitmap_set_base_address(int baseAddress) {
   if (baseAddress == 0) {
     return;
   }
+  _bitmap_base_address = baseAddress;
 }
 
 int bitmap_get_base_address(void) {
-  return 268500992;
+  return _bitmap_base_address;
 }
 
 int* bitmap_framebuffer_base(void) {
-  return (int*)268500992;
+  return (int*)_bitmap_base_address;
 }
 
 int bitmap_point_in_bounds(int x, int y, int cols, int rows) {
@@ -61,4 +64,3 @@ void bitmap_fill_rect(int x, int y, int width, int height, int cols, int rows, i
     yy = yy + 1;
   }
 }
-

@@ -1,15 +1,15 @@
 ﻿Mini-C Manual for webMARS
-Draft 0.1 - 2026-03-14
+v0.4.7 scope revision - 2026-07-25
 
 1. Overview
 
 Mini-C in webMARS is a teaching-oriented C-like language that compiles to MIPS.
-The current webMARS implementation provides a closed and operational internal C0
-environment up to the cumulative profile C0-S4-.
+The current implementation provides cumulative C0 profiles through C0-S4 and a
+separate C1-NATIVE profile for selected native-compatible features.
 
-This manual is a quick project-oriented draft. It does not try to reproduce the
-academic reference word by word. Instead, it explains the language as it exists
-in webMARS today.
+This manual is a concise project-oriented reference. It does not try to
+reproduce the academic reference word by word. Instead, it explains the
+language as it exists in webMARS today.
 
 Reference documents:
 - docs/c0-reference.txt
@@ -19,7 +19,7 @@ Reference documents:
 
 2. Current language scope
 
-The currently closed Mini-C / C0 universe in webMARS includes:
+The Mini-C / C0 universe in webMARS includes:
 - int, bool, char, string
 - functions and return values
 - local and global declarations
@@ -36,10 +36,15 @@ The currently closed Mini-C / C0 universe in webMARS includes:
 - #use directives
 - contracts used by the current runtime model
 
-The closed runtime profile exposed today is:
-- C0-S4-
+The additional C1-NATIVE profile includes:
+- byte-addressed char arrays and char*
+- int main(int argc, char** argv)
+- typedef-based function pointers and indirect calls
+- generic void* support
+- native string helpers used by string.h
 
-This means the cumulative project profiles S0 through S4 are available together.
+This is a focused compatibility profile. It does not claim full ISO C or complete
+academic C1 compatibility.
 
 
 3. Internal subset model used by webMARS
@@ -50,7 +55,7 @@ webMARS organizes Mini-C in cumulative internal profiles:
 - C0-S2
 - C0-S3
 - C0-S4
-- C0-S4-  = cumulative profile from S0 to S4
+- C1-NATIVE
 
 Important note:
 These are project profiles. They are useful for pedagogy, testing, and staged
@@ -76,6 +81,16 @@ A Mini-C program starts from:
   int main(void) {
     return 0;
   }
+
+Under C1-NATIVE, the native argument form is also available:
+
+  int main(int argc, char** argv) {
+    return argc;
+  }
+
+Enable program arguments in Settings before assembling. webMARS places argc in
+$a0 and argv in $a1, using byte-addressed null-terminated strings. argv[0] is
+the first token supplied in Settings; webMARS does not prepend an executable name.
 
 Current webMARS code generation targets MIPS and emits a terminating exit syscall.
 
@@ -267,8 +282,10 @@ webMARS also ships compatibility headers intended to make simple console-style C
 - stdbool.h
 
 Notes:
-- #include <string.h> resolves to the same core string library shipped for #use <string>, plus C-style aliases such as strlen/strcmp/strncmp
-- these compatibility headers sit on top of the current S4 profile; they do not yet constitute a full native libc layer
+- under C0-S4, #include <string.h> uses the managed string compatibility layer
+- under C1-NATIVE, #include <string.h> selects byte-addressed char* helpers such
+  as strlen, strcmp, strcpy and strcat
+- the compatibility headers do not constitute a full native libc layer
 
 Examples:
 - conio: console-oriented helpers
@@ -316,6 +333,12 @@ Examples:
 The lexer/compiler supports the usual escape family used by the current runtime,
 including escaped newline and quote forms.
 
+Under C1-NATIVE, local char arrays use byte storage and decay to char*. This
+allows common bounded examples such as:
+
+  char buffer[24] = "web";
+  strcat(buffer, "MARS");
+
 
 14. Runtime model notes specific to webMARS
 
@@ -335,11 +358,12 @@ this web environment.
 
 Use these profiles depending on your goal:
 - C0-S0     : smallest teaching core
-- C0-S2-    : structured control-flow teaching with for/break/continue
-- C0-S4-    : full currently closed C0 layer in webMARS
+- C0-S2     : structured control-flow teaching with for/break/continue
+- C0-S4     : complete current C0 teaching layer
+- C1-NATIVE : argc/argv, byte char*, void* and function pointers
 
 For most real examples in the current project, prefer:
-- C0-S4-
+- C0-S4 unless the source intentionally demonstrates C1-NATIVE behavior
 
 
 16. Example progression
@@ -353,18 +377,21 @@ Suggested order for learning:
 6. structs and typedef
 7. contracts
 8. #use and libraries
-9. strings and full C0-S4-
+9. strings and full C0-S4
+10. project-local multi-file imports
+11. C1-NATIVE argv, char* and function pointers
 
-See examples/Compiler for practical samples.
+See compiler_subset_*.c, learn/c_multi_file_stats/main.c and
+compiler_c1_native.c in the example catalog.
 
 
 17. Known boundary
 
-The currently closed scope is C0 through the project profile S4-.
-C1-style features remain outside this closed scope, including for example:
-- generic pointers
-- function pointers
-- the academic C1-only control model
+C1-NATIVE is deliberately narrower than a desktop C toolchain. It provides the
+native-compatible features listed above, but not a complete preprocessor,
+standard library, operating-system process model or unrestricted ISO C surface.
+Use the profile name as a webMARS compatibility contract, not as a claim that
+arbitrary C programs will compile unchanged.
 
 
 18. Short example
@@ -384,14 +411,27 @@ C1-style features remain outside this closed scope, including for example:
   }
 
 
-19. Next improvements planned for this manual
+19. Scope and documentation roadmap
 
-Future revisions should add:
-- precise grammar summary
-- exact subset-by-feature table
-- full library API reference
-- worked examples with generated MIPS excerpts
-- differences vs academic C0 and C1
-- troubleshooting section
+This manual describes the implemented teaching profiles available in webMARS
+v0.4.7. It is an orientation guide, not a complete language specification or a
+promise of full academic C0, C1 or ISO C compatibility.
 
-End of draft.
+For exact library signatures, current compiler gates and user-facing workflow,
+consult:
+- docs/c0-reference.txt
+- docs/c0-libraries.txt
+- the Mini-C and Limits & Compatibility pages in the in-app help
+- the validated examples listed by examples/examples.json
+
+Documentation maintenance should focus on details that can be verified against
+the compiler and tests. Useful additions include a generated subset-by-feature
+matrix, a compact grammar summary, worked MIPS output examples and a
+troubleshooting guide. They should be added as implemented reference material,
+not presented as compiler features before those features exist.
+
+Historical dated status and gap reports remain snapshots of the project at
+their stated dates. This manual and the in-app help describe the current
+release and should be updated whenever the implemented profiles change.
+
+End of manual.

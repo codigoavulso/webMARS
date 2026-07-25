@@ -1,68 +1,58 @@
-# Demo de comportamiento de la cache (acceso secuencial vs con salto)
-# Abra Herramientas > Data Cache Simulation Tool y conecte a MIPS.
-# Este programa hace primero lecturas secuenciales y luego lecturas con salto.
+# Benchmark de cache: acceso secuencial frente a stride de 16 palabras.
+# Abra Herramientas > Data Cache Simulation Tool y conectela a MIPS.
+#
+# Cada ejecucion mide un solo patron con la cache fria. Defina ACCESS_PATTERN
+# como 1 o 2, reinicie las estadisticas y vuelva a ensamblar y ejecutar.
+# Ambos patrones hacen 1024 loads; no hay stores de inicializacion.
+
+.eqv ACCESS_PATTERN 1    # 1 = secuencial, 2 = stride de 16 palabras
+.eqv WORD_COUNT 1024
+.eqv STRIDE_WORDS 16
 
 .data
-arr: .space 4096          # 1024 palabras
-msg0: .asciiz "\n=== Cache stride benchmark ===\n"
-msg1: .asciiz "Phase 1: sequential read over 1024 words.\n"
-msg2: .asciiz "Phase 2: stride-16 read pattern (cache-unfriendly).\n"
-msg3: .asciiz "Done. Compare hit/miss stats in Cache Simulator.\n"
+.align 2
+arr: .space 4096
 
 .text
 main:
-  li $v0, 4
-  la $a0, msg0
-  syscall
+  li   $t9, ACCESS_PATTERN
+  li   $t8, 2
+  beq  $t9, $t8, stride_setup
+  nop
 
-  # Inicializar arr[i] = i
+  # Patron 1: direcciones secuenciales.
   la   $t0, arr
-  li   $t1, 0
-init_loop:
-  sw   $t1, 0($t0)
-  addiu $t0, $t0, 4
-  addiu $t1, $t1, 1
-  blt  $t1, 1024, init_loop
-
-  li $v0, 4
-  la $a0, msg1
-  syscall
-
-  # Fase 1: secuencial
-  la   $t0, arr
-  li   $t1, 0
-  li   $s0, 0
-seq_loop:
+  li   $t1, WORD_COUNT
+  move $s0, $zero
+sequential_loop:
   lw   $t2, 0($t0)
   addu $s0, $s0, $t2
   addiu $t0, $t0, 4
-  addiu $t1, $t1, 1
-  blt  $t1, 1024, seq_loop
+  addiu $t1, $t1, -1
+  bnez $t1, sequential_loop
+  nop
+  b    done
+  nop
 
-  li $v0, 4
-  la $a0, msg2
-  syscall
-
-  # Fase 2: stride de 16 palabras (64 bytes)
+  # Patron 2: visita cada 16a palabra y despues avanza el offset inicial.
+stride_setup:
   la   $t3, arr
-  li   $t4, 0
-  li   $s1, 0
+  move $t4, $zero
+  move $s0, $zero
 stride_outer:
   move $t5, $t4
 stride_inner:
   sll  $t6, $t5, 2
   addu $t7, $t3, $t6
-  lw   $t8, 0($t7)
-  addu $s1, $s1, $t8
-  addiu $t5, $t5, 16
-  blt  $t5, 1024, stride_inner
-
+  lw   $t2, 0($t7)
+  addu $s0, $s0, $t2
+  addiu $t5, $t5, STRIDE_WORDS
+  blt  $t5, WORD_COUNT, stride_inner
+  nop
   addiu $t4, $t4, 1
-  blt  $t4, 16, stride_outer
+  blt  $t4, STRIDE_WORDS, stride_outer
+  nop
 
-  li $v0, 4
-  la $a0, msg3
-  syscall
-
-  li $v0, 10
+done:
+  li   $v0, 10
   syscall

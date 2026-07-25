@@ -1,110 +1,49 @@
-<!DOCTYPE html>
-<html lang="pt"><head>
-<meta charset="UTF-8">
-<meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>MARS 4.5 conteúdo de ajuda
-</title>
-</head><body>
-<center>
-<h3>MARS - Simulador de montagem e tempo de execução de MIPS</h3>
-<h4>Lançamento 4.5</h4>
-<h4>Agosto de 2014</h4>
-<h4>Capacidade legal: Ferramentas de plug-in</h4>
-</center>
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ferramentas do webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Ferramentas</h1>
+  <p class="lead">Abra ferramentas no menu Ferramentas. Cada uma possui uma janela independente e pode ligar-se ao runtime MIPS para observar instruções, memória ou atividade MMIO.</p>
 
-Começando com o Release 2.0, o MARS é capaz de executar externamente desenvolvido
-software que interage com um programa MIPS em execução e sistema MIPS
-recursos.  
-Os requisitos para tal programa são:
-<ol>
-<li>implementa o <tt>mars.tools.MarsTool</tt> interface.  
-</li><li>Faz parte do <tt>mars.tools</tt> pacote.
-</li><li>Ele compila de forma limpa em um arquivo ".class", armazenado no <tt>mars/tools</tt> diretório.
-</li></ol>
-O MARS detectará todas as ferramentas de qualificação após a inicialização e as incluirá em
-seu menu Ferramentas. 
-Quando o item de menu de uma ferramenta é selecionado, uma instância dele será criada usando seu argumento sem argumento
-construtor e sua <tt>action()</tt> método será invocado.
-Se nenhuma ferramenta de qualificação for encontrada na inicialização do MARS, o menu Ferramentas não será 
-aparecem.  
+  <div class="note"><strong>Ligue antes de executar.</strong> Uma ferramenta ligada recebe snapshots e traces completos mesmo quando a velocidade máxima reduz o realce do editor.</div>
 
-<p>Para usar essa ferramenta, carregue e monte um programa de interesse MIPS, selecione a ferramenta desejada
-no menu Ferramentas.  A janela da ferramenta será aberta e, dependendo de como ela está escrita, ela será
-precisa estar "conectado" ao programa MIPS clicando em um botão ou já estará conectado.  Corrida
-o programa MIPS como você faria normalmente, para iniciar a interação da ferramenta com o programa de execução.
+  <h2>Arquitetura e desempenho</h2>
+  <table>
+    <tr><th>Ferramenta</th><th>Utilização</th></tr>
+    <tr><td>Branch History Table Simulator</td><td>Compara preditores e mede a precisão da previsão de desvios.</td></tr>
+    <tr><td>Data Cache Simulator</td><td>Configura uma cache e mede hits, misses e localidade.</td></tr>
+    <tr><td>Instruction Counter</td><td>Conta as instruções executadas.</td></tr>
+    <tr><td>Instruction Statistics</td><td>Agrupa a execução por categorias de instruções.</td></tr>
+    <tr><td>Memory Reference Visualization</td><td>Visualiza padrões espaciais e regiões de memória mais usadas.</td></tr>
+    <tr><td>MIPS X-Ray</td><td>Explora campos, descodificação, datapath e controlo.</td></tr>
+  </table>
 
-</p><p>Começando com Release 3.2, a classe abstrata <tt>mars.tools.AbstractMarsToolAndApplication</tt>
-está incluído na distribuição MARS para fornecer
-uma estrutura substancial para implementar sua própria ferramenta MARS.  Uma subclasse que a estende por
-implementar pelo menos seus dois métodos abstratos pode ser executado não apenas a partir do menu Ferramentas, mas também
-como uma aplicação independente que utiliza o montador e simulador MARS em segundo plano.
+  <h2>Ecrãs, terminais e dispositivos</h2>
+  <table>
+    <tr><th>Ferramenta</th><th>Utilização</th></tr>
+    <tr><td>Bitmap Display</td><td>Renderiza píxeis a partir de um framebuffer configurável em memória.</td></tr>
+    <tr><td>Bitmap Terminal Tool</td><td>Disponibiliza um terminal de texto em framebuffer com teclado.</td></tr>
+    <tr><td>Keyboard and Display MMIO Simulator</td><td>Simula os registos de controlo e dados de recetor/transmissor MMIO.</td></tr>
+    <tr><td>TTY Device + ANSI Terminal</td><td>Executa programas de terminal com teclado e sequências ANSI.</td></tr>
+    <tr><td>Digital Lab Sim</td><td>Controla displays de sete segmentos, teclado e MMIO do laboratório digital.</td></tr>
+    <tr><td>Mars Bot</td><td>Controla o robô simulado através da interface mapeada em memória.</td></tr>
+  </table>
 
-</p><p>Várias Ferramentas desenvolvidas por subclassificação <tt>AbstractMarsToolAndApplication</tt> estão incluídos
-com o MARS: uma Introdução às Ferramentas, um Simulador de Cache de Dados, um Visualizador de Referência de Memória, e
-uma ferramenta Ponto Flutuante.  O último é bastante útil mesmo quando não está conectado a um programa MIPS
-porque exibe representações binárias, hexadecimais e decimais para um ponto flutuante de 32 bits
-valor; quando qualquer um deles é modificado os outros dois são atualizados também.
+  <h2>Utilitários educativos</h2>
+  <table>
+    <tr><th>Ferramenta</th><th>Utilização</th></tr>
+    <tr><td>Floating Point Representation</td><td>Converte e inspeciona valores, campos e bits IEEE 754 simples.</td></tr>
+    <tr><td>Introduction to Tools</td><td>Explica o ciclo de ligação, reset e interação.</td></tr>
+    <tr><td>ScavengerHunt</td><td>Executa o desafio interativo de programação Assembly.</td></tr>
+    <tr><td>Screen Magnifier</td><td>Amplia uma zona para demonstrações e acessibilidade.</td></tr>
+  </table>
 
-</p><p>A versão 3.5 inclui novas ferramentas, mais notavelmente um simulador de teclado e exibição que permite
-para realizar E/S mapeada por memória (MMIO) utilizando técnicas pesquisadas e orientadas por interrupções conforme descrito
-em várias referências.  Clique no botão Ajuda para mais detalhes.
-
-</p><p>Se você deseja desenvolver sua própria ferramenta MARS, primeiro precisará extrair a distribuição MARS
-a partir de seu arquivo JAR se você ainda não o fez.  Todas as ferramentas do MARS devem
-ser armazenado no <tt>mars/tools</tt> diretório.
-
-</p><p>Siga o link Materiais do Tutorial na página inicial do MARS para encontrar um tutorial 
-que abrange desenvolvimento de Ferramentas MARS.
-
-</p><h4>Capacidade legal: estendendo o conjunto de syscall ou reatribuindo números de syscall</h4>
-
-Começando com Release 3.1, chamadas de sistema (<tt>syscall</tt> instrução) são implementadas usando
-uma técnica semelhante à para as ferramentas.  Isso permite que qualquer pessoa adicione uma nova syscall definindo
-uma nova classe que atenda a esses requisitos:
-<ol>
-<li>implementa o <tt>mars.mips.instructions.syscalls.Syscall</tt> interface, ou
-estende o <tt>mars.mips.instructions.syscalls.AbstractSyscall</tt> classe (que
-fornece implementações padrão de tudo, exceto o <tt>simulate()</tt> método).  
-</li><li>Faz parte do <tt>mars.mips.instructions.syscalls</tt> pacote.
-</li><li>Ele compila de forma limpa em um arquivo ".class", armazenado no 
-<tt>mars/mips/instructions/syscalls</tt> diretório.
-</li></ol>
-O MARS detectará todas as classes de syscall qualificadas após a inicialização e o simulador de tempo de execução
-invocá-los-á quando o <tt>syscall</tt> instrução é simulada e registra <tt>$v0</tt>
-contém o número de serviço de inteiro correspondente.
-
-<p>Syscalls e syscall number assignments em MARs correspondem aos de SPIM para syscalls 1 a 17.
-No entanto, se você deseja alterar as atribuições de número de syscall, você pode fazê-lo editando o
-<tt>Syscall.properties</tt> arquivo incluído na versão (isso requer extração do JAR
-arquivo).
-
-</p><p>Siga o link Materiais do Tutorial na página inicial do MARS para encontrar um tutorial 
-que abrange desenvolvimento de chamadas de sistema.
-
-</p><h4>Capacidade legal: estendendo o conjunto de instruções</h4>
-
-Você pode adicionar pseudo-instruções personalizadas ao conjunto de instruções do MIPS editando
-o <tt>PseudoOps.txt</tt> arquivo incluído na distribuição MARS.  Instrução
-formatos de especificação são explicados no próprio arquivo.  
-A especificação de uma pseudo-instrução é de uma linha de comprimento.  consiste em
-um exemplo da instrução, construída usando
-símbolos de especificação de instruções disponíveis, seguidos por uma guia separada
-lista das instruções básicas do MIPS para as quais ele se expandirá.  Cada um é um modelo de instrução
-construídos usando 
-símbolos de especificação de instruções combinados com modelo especial
-símbolos de especificação.  A última autorização de substituição no programa 
-tempo de montagem de operandos do programa do usuário para o expandido
-pseudo-instrução.
-
-<p><tt>PseudoOps.txt</tt> é lido e processado na inicialização do MARS, e as mensagens de erro serão
-ser produzido se uma especificação não estiver corretamente formatada.  Observe que se você deseja
-editá-lo você primeiro tem que extraí-lo do arquivo JAR.
-
-</p><p>Siga o link Materiais do Tutorial na página inicial do MARS para encontrar um tutorial 
-que abrange modificação do conjunto de pseudo-instrução.
-</p><p>
-</p><hr>
-<p>
-Este documento está disponível para impressão na página inicial do MARS
-<tt><b>http://www.cs.missouristate.edu/MARS/</b></tt>.
-
-</p></body></html>
+  <h2>Segurança MMIO</h2>
+  <p>Os dispositivos MMIO são mapeados perto de <code>0xffff0000</code>. As ferramentas e o runtime partilham esses endereços; programas de polling devem respeitar os bits de disponibilidade e programas com interrupções necessitam de um handler válido.</p>
+</body>
+</html>

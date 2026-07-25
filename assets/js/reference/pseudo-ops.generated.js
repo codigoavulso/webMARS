@@ -9314,7 +9314,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
   },
   {
     "lineNumber": 393,
@@ -9340,7 +9340,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
   },
   {
     "lineNumber": 394,
@@ -9373,7 +9373,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
   },
   {
     "lineNumber": 395,
@@ -9405,7 +9405,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
   },
   {
     "lineNumber": 396,
@@ -9448,7 +9448,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
   },
   {
     "lineNumber": 397,
@@ -9490,7 +9490,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
   },
   {
     "lineNumber": 398,
@@ -9533,7 +9533,7 @@
         ")"
       ]
     ],
-    "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
   },
   {
     "lineNumber": 399,
@@ -9586,7 +9586,7 @@
         ")"
       ]
     ],
-    "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
   },
   {
     "lineNumber": 400,
@@ -9620,7 +9620,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
   },
   {
     "lineNumber": 401,
@@ -9664,7 +9664,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Load Linked : Paired with Store Conditional (sc) to perform atomic read-modify-write.  Treated as equivalent to Load Word (lw) because MARS does not simulate multiple processors."
+    "description": "Load Linked : Load a word and establish a reservation for a subsequent Store Conditional (sc)."
   },
   {
     "lineNumber": 403,
@@ -9692,7 +9692,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
   },
   {
     "lineNumber": 404,
@@ -9718,7 +9718,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
   },
   {
     "lineNumber": 405,
@@ -9751,7 +9751,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
   },
   {
     "lineNumber": 406,
@@ -9783,7 +9783,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
   },
   {
     "lineNumber": 407,
@@ -9826,7 +9826,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
   },
   {
     "lineNumber": 408,
@@ -9868,7 +9868,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
   },
   {
     "lineNumber": 409,
@@ -9911,7 +9911,7 @@
         ")"
       ]
     ],
-    "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
   },
   {
     "lineNumber": 410,
@@ -9964,7 +9964,7 @@
         ")"
       ]
     ],
-    "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
   },
   {
     "lineNumber": 411,
@@ -9998,7 +9998,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
   },
   {
     "lineNumber": 412,
@@ -10042,7 +10042,7 @@
     ],
     "compactTemplates": [],
     "compactTemplateTokens": [],
-    "description": "Store Conditional : Paired with Load Linked (ll) to perform atomic read-modify-write.  Treated as equivalent to Store Word (sw) because MARS does not simulate multiple processors."
+    "description": "Store Conditional : Store only if the matching Load Linked reservation remains valid, then report success or failure in the source register."
   },
   {
     "lineNumber": 434,
