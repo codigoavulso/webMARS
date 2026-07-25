@@ -102,6 +102,7 @@
     "Adjust exception handler, memory configuration, and memory limits.": "Ajuste manejador de excepciones, configuracion de memoria y limites de memoria.",
     "Layout": "Diseno",
     "Menu position": "Posicion del menu",
+    "Show performance benchmarks": "Mostrar mediciones de rendimiento",
     "Top": "Arriba",
     "Bottom": "Abajo",
     "Editor font size (9-22)": "Tamano de fuente del editor (9-22)",

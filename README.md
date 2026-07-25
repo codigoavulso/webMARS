@@ -1,4 +1,4 @@
-# webMARS v0.4.7
+# webMARS v0.4.9
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,16 +22,14 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.4.7
+## Highlights in v0.4.9
 
-- Standardized execution on a single JavaScript engine and removed the experimental WASM/hybrid runtime.
-- Added local Compile, Assemble and Run benchmarks with estimated JavaScript utilization and execution throughput.
-- Corrected COP1 doubleword ordering and rounding, delayed-branch links and exceptions, LL/SC reservations, strict memory access and atomic stores.
-- Made breakpoints resumable, aligned direct-engine and browser execution behavior, and made Stop terminate pending execution and Sleep.
-- Expanded runtime snapshots to preserve breakpoints, random streams, virtual files and cursors, stdin, arguments and image handles.
-- Restored reproducible install, serve, build, test and validation commands with broad regression coverage.
-- Expanded and validated the multilingual C/Assembly examples, including C1-NATIVE and multi-file projects.
-- Rebuilt the in-app documentation in English, Spanish and Portuguese to match the current runtime, compiler, tools, storage and privacy behavior.
+- Guaranteed the most recent 100 backsteps while keeping sparse history memory bounded.
+- Corrected synchronous Keyboard/Display, TTY and tool-event behavior in long-running browser execution.
+- Updated the Monty Hall lab and interactive examples to cooperate with browser input without busy polling.
+- Matched random syscalls 40–44 to the seeded behavior of `java.util.Random` used by MARS.
+- Hardened state import, long instruction counters, assembler ranges, numeric directives and image metadata backsteps.
+- Expanded runtime, tool and localized-example regression coverage.
 
 ## Main Capabilities
 
@@ -134,6 +132,8 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.4.9`: dependable sparse backsteps, synchronous browser tools, Java-compatible random syscalls, stronger state import and expanded runtime/example validation
+- `v0.4.8`: delta-based backsteps, synchronous MMIO devices, faster tool delivery, corrected C bitmaps, expanded regression coverage, and optional Bench UI
 - `v0.4.7`: JavaScript runtime consolidation, benchmarks, execution correctness, stronger snapshots, expanded examples, complete multilingual help, and release validation
 - `v0.4.6`: startup hardening, help/PDF fixes, browser-storage timestamp fix, runtime cleanup, dead-code removal, legacy script/result purge
 - `v0.4.5`: cloud backend/login productionization + project/editor workflow improvements + storage/sync refinement

@@ -77,9 +77,15 @@ echo_loop:
 wait_rx:
   lbu  $t1, 0($s0)               # receiver control
   andi $t1, $t1, 1
-  beq  $t1, $zero, wait_rx
+  bne  $t1, $zero, receiver_ready
+  nop
+  li   $v0, 32                    # cooperative 4 ms wait
+  li   $a0, 4
+  syscall
+  b    wait_rx
   nop
 
+receiver_ready:
   lbu  $a0, 4($s0)               # receiver data
   jal  send_byte
   nop
@@ -107,11 +113,19 @@ send_zstr_done:
   nop
 
 send_byte:
+  move $t3, $a0                   # preserve byte while sleeping
 wait_tx:
   lbu  $t2, 8($s0)               # transmitter control
   andi $t2, $t2, 1
-  beq  $t2, $zero, wait_tx
+  bne  $t2, $zero, transmitter_ready
   nop
+  li   $v0, 32                    # cooperative 4 ms wait
+  li   $a0, 4
+  syscall
+  b    wait_tx
+  nop
+transmitter_ready:
+  move $a0, $t3
   sb   $a0, 12($s0)              # transmitter data
   jr   $ra
   nop

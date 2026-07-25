@@ -85,6 +85,10 @@ test("browser bundle and interface include benchmark instrumentation", async () 
   assert.ok(benchmarkModuleIndex < appRuntimeIndex);
   assert.match(ui, /id="benchmark-status"/);
   assert.match(ui, /id="benchmark-cpu"/);
+  assert.match(ui, /showBenchmarkPanel:\s*false/);
+  assert.match(ui, /toolbar-benchmark-group benchmark-panel-hidden/);
+  assert.match(runtime, /nextPreferences\.showBenchmarkPanel !== true/);
+  assert.match(runtime, /name:\s*"showBenchmarkPanel"/);
   assert.match(runtime, /benchmarkCollector\.measure\("compile"/);
   assert.match(runtime, /benchmarkCollector\.measure\("assemble"/);
   assert.match(runtime, /benchmarkCollector\.start\("run"/);

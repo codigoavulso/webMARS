@@ -379,6 +379,7 @@
       clearDisplay();
 
       return {
+        isConnected: () => connected,
         open() {
           shell.open();
           updateMmioLabel();
@@ -403,6 +404,9 @@
               scheduleRender();
             }
           }
+        },
+        onBackstep() {
+          if (connected) scheduleRender();
         }
       };
     }

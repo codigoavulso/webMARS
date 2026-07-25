@@ -1,5 +1,5 @@
 ﻿Mini-C Manual for webMARS
-v0.4.7 scope revision - 2026-07-25
+v0.4.8 scope revision - 2026-07-25
 
 1. Overview
 
@@ -414,7 +414,7 @@ arbitrary C programs will compile unchanged.
 19. Scope and documentation roadmap
 
 This manual describes the implemented teaching profiles available in webMARS
-v0.4.7. It is an orientation guide, not a complete language specification or a
+v0.4.8. It is an orientation guide, not a complete language specification or a
 promise of full academic C0, C1 or ISO C compatibility.
 
 For exact library signatures, current compiler gates and user-facing workflow,

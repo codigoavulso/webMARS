@@ -73,6 +73,7 @@ See the source code of existing tool/apps for further information.`;
       renderBody();
 
       return {
+        isConnected: () => false,
         open: shell.open,
         close: shell.close,
         onSnapshot() {}

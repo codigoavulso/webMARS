@@ -26,8 +26,15 @@ mmio_loop:
 wait_rx:
   lbu  $t0, 0x0000($s0)
   andi $t0, $t0, 1
-  beq  $t0, $zero, wait_rx
+  bne  $t0, $zero, receiver_ready
+  nop
+  li   $v0, 32             # cooperative 4 ms wait
+  li   $a0, 4
+  syscall
+  b    wait_rx
+  nop
 
+receiver_ready:
   # read char @ 0x0004
   lbu  $t1, 0x0004($s0)
 
@@ -35,8 +42,15 @@ wait_rx:
 wait_tx:
   lbu  $t2, 0x0008($s0)
   andi $t2, $t2, 1
-  beq  $t2, $zero, wait_tx
+  bne  $t2, $zero, transmitter_ready
+  nop
+  li   $v0, 32             # cooperative 4 ms wait
+  li   $a0, 4
+  syscall
+  b    wait_tx
+  nop
 
+transmitter_ready:
   # write char @ 0x000C
   sb   $t1, 0x000c($s0)
 

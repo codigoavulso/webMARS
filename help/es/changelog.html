@@ -8,7 +8,28 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">La versión 0.4.7 consolida el runtime JavaScript actual, los ejemplos y la documentación multilingüe. El historial del repositorio contiene los cambios individuales.</p>
+  <p class="lead">La versión 0.4.9 refuerza la ejecución prolongada, la compatibilidad con MARS y las herramientas síncronas del navegador.</p>
+
+  <h2>0.4.9 — paridad del runtime y backsteps fiables</h2>
+  <ul>
+    <li>Los 100 backsteps más recientes permanecen disponibles, con memoria limitada por un journal disperso.</li>
+    <li>Corrección del comportamiento síncrono de Keyboard/Display, TTY y eventos de herramientas en ejecuciones prolongadas.</li>
+    <li>Actualización del laboratorio Monty Hall y de los ejemplos interactivos para cooperar con la entrada del navegador sin busy polling.</li>
+    <li>Syscalls aleatorios 40–44 alineados con las secuencias y reglas de muestreo de <code>java.util.Random</code> usadas por MARS.</li>
+    <li>Refuerzo de la restauración de estado, contadores largos, límites del ensamblador y validación de directivas numéricas.</li>
+    <li>Cobertura de backstep completada para metadatos de imagen y corrección de buffers InputDialogString de longitud cero.</li>
+    <li>Cobertura de regresión ampliada en el runtime, ejemplos localizados y herramientas conectadas.</li>
+  </ul>
+
+  <h2>0.4.8 — backsteps por diferencias y dispositivos síncronos</h2>
+  <ul>
+    <li>Sustitución de snapshots completos por instrucción por diferencias inversas limitadas.</li>
+    <li>Separación entre dispositivos MMIO síncronos, eventos compactos por lotes y snapshots periódicos de las herramientas.</li>
+    <li>Corrección de causalidad de entrada/salida, backsteps y coste de herramientas ocultas en Keyboard/Display y TTY.</li>
+    <li>Corrección de actualización por lotes en las herramientas de caché, instrucciones, referencias de memoria y bitmap.</li>
+    <li>Framebuffers Mini-C alejados de los globales del compilador y Bitmap Display sincronizado con la memoria actual.</li>
+    <li>Panel Bench opcional en Preferencias de la interfaz y oculto de forma predeterminada.</li>
+  </ul>
 
   <h2>0.4.7 — refuerzo del runtime JavaScript y documentación completa</h2>
   <ul>

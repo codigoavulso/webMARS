@@ -197,62 +197,6 @@
     return cleaned.split(/[\s,]+/).filter(Boolean);
   }
 
-  function parseImmediate(token) {
-    if (typeof token !== "string") return null;
-    const text = token.trim();
-    if (!text) return 0;
-    if (/^[+-]?\d+$/.test(text)) return Number.parseInt(text, 10) | 0;
-    if (/^[+-]?0x[0-9a-f]+$/i.test(text)) return Number.parseInt(text, 16) | 0;
-    return null;
-  }
-
-  function buildRegisterMap(snapshot) {
-    const map = new Map();
-    (snapshot?.registers || []).forEach((reg) => {
-      const value = reg.value | 0;
-      const name = String(reg.name || "").toLowerCase();
-      map.set(name, value);
-      if (name.startsWith("$")) map.set(name.slice(1), value);
-      map.set(String(reg.index), value);
-      map.set(`$${reg.index}`, value);
-    });
-    return map;
-  }
-
-  function buildLabelMap(snapshot) {
-    const map = new Map();
-    (snapshot?.labels || []).forEach((label) => {
-      map.set(String(label.label || "").toLowerCase(), label.address >>> 0);
-    });
-    return map;
-  }
-
-  function resolveMemoryAddress(memArg, registers, labels, rowAddress) {
-    const token = String(memArg || "").trim();
-    const match = token.match(/^(.+?)\(([^)]+)\)$/);
-    if (match) {
-      const offsetRaw = match[1].trim();
-      const baseRaw = match[2].trim().toLowerCase();
-      const offsetImmediate = parseImmediate(offsetRaw);
-      const offsetValue = Number.isFinite(offsetImmediate)
-        ? offsetImmediate
-        : (labels.get(offsetRaw.toLowerCase()) ?? 0);
-      const baseValue = registers.get(baseRaw) ?? registers.get(baseRaw.replace(/^\$/, "")) ?? 0;
-      return (((baseValue | 0) + (offsetValue | 0)) >>> 0);
-    }
-
-    const labelAddress = labels.get(token.toLowerCase());
-    if (Number.isFinite(labelAddress)) return labelAddress >>> 0;
-
-    const imm = parseImmediate(token);
-    if (Number.isFinite(imm)) {
-      if (Math.abs(imm) < 0x10000) return (((rowAddress + 4) | 0) + ((imm | 0) << 2)) >>> 0;
-      return imm >>> 0;
-    }
-
-    return null;
-  }
-
   class CacheModel {
     constructor(numberOfBlocks, blockSizeWords, setSize, replacement) {
       this.numberOfBlocks = numberOfBlocks;
@@ -265,6 +209,7 @@
     }
 
     access(address) {
+      const previousAccessTick = this.accessTick;
       this.accessTick += 1;
       const wordAddress = Math.floor((address >>> 0) / 4);
       const blockNumber = Math.floor(wordAddress / this.blockSizeWords);
@@ -286,8 +231,9 @@
       }
 
       if (hitIndex >= 0) {
+        const previousBlock = { ...this.blocks[hitIndex] };
         this.blocks[hitIndex].lastUsed = this.accessTick;
-        return { hit: true, blockIndex: hitIndex, setIndex, tag };
+        return { hit: true, blockIndex: hitIndex, setIndex, tag, previousAccessTick, previousBlock };
       }
 
       let replaceIndex = emptyIndex;
@@ -306,8 +252,9 @@
         }
       }
 
+      const previousBlock = { ...this.blocks[replaceIndex] };
       this.blocks[replaceIndex] = { valid: true, tag, lastUsed: this.accessTick };
-      return { hit: false, blockIndex: replaceIndex, setIndex, tag };
+      return { hit: false, blockIndex: replaceIndex, setIndex, tag, previousAccessTick, previousBlock };
     }
   }
 
@@ -431,24 +378,56 @@
       let lastSnapshot = null;
       let highlightBlock = -1;
       let highlightKind = "empty";
-      let stepHistory = new Map();
+      let logLines = [];
+      let activeHistoryDelta = null;
+      const MAX_LOG_LINES = 5000;
+      const history = ctx.createToolDeltaHistory({
+        applyInverse(delta) {
+          if (!delta || !cache) return;
+          if (Array.isArray(delta.removedLog) && delta.removedLog.length) {
+            logLines = [...delta.removedLog, ...logLines];
+          }
+          logLines.length = Math.min(logLines.length, Math.max(0, delta.logLength | 0));
+          const operations = Array.isArray(delta.operations) ? delta.operations : [];
+          for (let index = operations.length - 1; index >= 0; index -= 1) {
+            const operation = operations[index];
+            accesses = operation.accesses | 0;
+            hits = operation.hits | 0;
+            misses = operation.misses | 0;
+            highlightBlock = operation.highlightBlock | 0;
+            highlightKind = String(operation.highlightKind || "empty");
+            cache.accessTick = Number(operation.accessTick) || 0;
+            if (
+              Number.isFinite(operation.blockIndex)
+              && operation.blockIndex >= 0
+              && operation.blockIndex < cache.blocks.length
+              && operation.previousBlock
+            ) {
+              cache.blocks[operation.blockIndex] = { ...operation.previousBlock };
+            }
+          }
+          flushLog();
+          render();
+        }
+      });
 
-      function appendLog(line) {
-        if (!line) return;
-        controls.log.value += `${line}\n`;
+      function flushLog() {
+        controls.log.value = logLines.length ? `${logLines.join("\n")}\n` : "";
         controls.log.scrollTop = controls.log.scrollHeight;
       }
 
-      function getSnapshotStep(snapshot = lastSnapshot) {
-        return Number.isFinite(snapshot?.steps) ? (snapshot.steps | 0) : 0;
+      function appendLog(line) {
+        if (!line) return;
+        logLines.push(line);
+        if (logLines.length > MAX_LOG_LINES) {
+          const removed = logLines.splice(0, logLines.length - MAX_LOG_LINES);
+          if (activeHistoryDelta) activeHistoryDelta.removedLog.push(...removed);
+        }
       }
 
-      function pruneFutureHistory(step) {
-        for (const historyStep of stepHistory.keys()) {
-          if ((historyStep | 0) > (step | 0)) {
-            stepHistory.delete(historyStep);
-          }
-        }
+      function getSnapshotStep(snapshot = null) {
+        if (snapshot && Number.isFinite(snapshot.steps)) return snapshot.steps | 0;
+        return Number.isFinite(ctx.engine?.steps) ? (ctx.engine.steps | 0) : 0;
       }
 
       function parseIntControl(control, fallback) {
@@ -491,67 +470,8 @@
         misses = 0;
         highlightBlock = -1;
         highlightKind = "empty";
-        controls.log.value = "";
-      }
-
-      function captureToolState() {
-        return {
-          accesses,
-          hits,
-          misses,
-          highlightBlock,
-          highlightKind,
-          log: String(controls.log.value || ""),
-          accessTick: Number(cache?.accessTick) || 0,
-          blocks: Array.isArray(cache?.blocks)
-            ? cache.blocks.map((block) => ({
-                valid: block.valid === true,
-                tag: block.tag >>> 0,
-                lastUsed: Number(block.lastUsed) || 0
-              }))
-            : []
-        };
-      }
-
-      function restoreToolState(state) {
-        if (!state || typeof state !== "object" || !cache) return false;
-        accesses = Number(state.accesses) || 0;
-        hits = Number(state.hits) || 0;
-        misses = Number(state.misses) || 0;
-        highlightBlock = Number.isFinite(state.highlightBlock) ? (state.highlightBlock | 0) : -1;
-        highlightKind = String(state.highlightKind || "empty");
-        controls.log.value = String(state.log || "");
-        cache.accessTick = Number(state.accessTick) || 0;
-        if (Array.isArray(state.blocks) && state.blocks.length === cache.blocks.length) {
-          cache.blocks = state.blocks.map((block) => ({
-            valid: block.valid === true,
-            tag: block.tag >>> 0,
-            lastUsed: Number(block.lastUsed) || 0
-          }));
-        }
-        render();
-        return true;
-      }
-
-      function captureHistoryForStep(step) {
-        const normalizedStep = step | 0;
-        pruneFutureHistory(normalizedStep);
-        stepHistory.set(normalizedStep, captureToolState());
-      }
-
-      function restoreHistoryForStep(step) {
-        const normalizedStep = step | 0;
-        if (stepHistory.has(normalizedStep)) {
-          return restoreToolState(stepHistory.get(normalizedStep));
-        }
-        let bestStep = null;
-        for (const candidate of stepHistory.keys()) {
-          if ((candidate | 0) <= normalizedStep && (bestStep == null || (candidate | 0) > (bestStep | 0))) {
-            bestStep = candidate | 0;
-          }
-        }
-        if (bestStep == null) return false;
-        return restoreToolState(stepHistory.get(bestStep));
+        logLines = [];
+        flushLog();
       }
 
       function rebuildCache() {
@@ -564,8 +484,7 @@
         cache = new CacheModel(blockCount, blockSizeWords, Math.max(1, setSize), replacement);
         controls.bytes.value = String(blockCount * blockSizeWords * 4);
         resetCounters();
-        stepHistory = new Map();
-        captureHistoryForStep(getSnapshotStep());
+        history.clear(getSnapshotStep());
         render();
       }
 
@@ -593,36 +512,29 @@
         renderBlocks();
       }
 
-      function extractMemoryAccess(previousSnapshot) {
-        const row = (previousSnapshot?.textRows || []).find((entry) => entry.isCurrent);
-        if (!row) return null;
-        const tokens = parseTokens(row.basic || row.source);
-        if (!tokens.length) return null;
-        const opcode = tokens[0].toLowerCase();
-        if (!MEMORY_OPS.has(opcode)) return null;
-
-        const args = tokens.slice(1);
-        const memArg = args[1] ?? args[0];
-        if (!memArg) return null;
-
-        const registers = buildRegisterMap(previousSnapshot);
-        const labels = buildLabelMap(previousSnapshot);
-        const address = resolveMemoryAddress(memArg, registers, labels, row.address >>> 0);
-        if (!Number.isFinite(address)) return null;
-
-        return {
-          opcode,
-          address: address >>> 0,
-          write: WRITE_OPS.has(opcode)
-        };
-      }
-
-      function processAccess(previousSnapshot) {
+      function processResolvedAccess(access, targetStep, shouldRender = true) {
         if (!cache || !controls.enabled.checked) return;
-        const access = extractMemoryAccess(previousSnapshot);
         if (!access) return;
 
+        const delta = history.ensure(targetStep, () => ({
+          operations: [],
+          logLength: logLines.length,
+          removedLog: []
+        }));
+        const inverse = {
+          accesses,
+          hits,
+          misses,
+          highlightBlock,
+          highlightKind,
+          accessTick: cache.accessTick,
+          blockIndex: -1,
+          previousBlock: null
+        };
         const result = cache.access(access.address >>> 0);
+        inverse.blockIndex = result.blockIndex | 0;
+        inverse.previousBlock = { ...result.previousBlock };
+        delta.operations.push(inverse);
         accesses += 1;
         if (result.hit) hits += 1;
         else misses += 1;
@@ -630,15 +542,53 @@
         highlightBlock = result.blockIndex;
         highlightKind = result.hit ? "hit" : "miss";
 
-        appendLog(t("({count}) {kind} {address} -> {result} (set {setIndex}, block {blockIndex})", {
-          count: accesses,
-          kind: access.write ? t("write") : t("read"),
-          address: toHex32(access.address),
-          result: result.hit ? t("HIT") : t("MISS"),
-          setIndex: result.setIndex,
-          blockIndex: result.blockIndex
-        }));
-        render();
+        activeHistoryDelta = delta;
+        try {
+          appendLog(t("({count}) {kind} {address} -> {result} (set {setIndex}, block {blockIndex})", {
+            count: accesses,
+            kind: access.write ? t("write") : t("read"),
+            address: toHex32(access.address),
+            result: result.hit ? t("HIT") : t("MISS"),
+            setIndex: result.setIndex,
+            blockIndex: result.blockIndex
+          }));
+        } finally {
+          activeHistoryDelta = null;
+        }
+        if (shouldRender) {
+          flushLog();
+          render();
+        }
+      }
+
+      function processRuntimeEvent(event, shouldRender = true) {
+        if (!event || event.type !== "instruction") return;
+        const tokens = parseTokens(event.executedInstruction);
+        const opcode = String(tokens[0] || "").toLowerCase();
+        const memoryAccesses = Array.isArray(event.memoryAccesses) ? event.memoryAccesses : [];
+        if (!memoryAccesses.length) return;
+        const desiredKind = WRITE_OPS.has(opcode) ? "write" : "read";
+        const relevantAccesses = MEMORY_OPS.has(opcode)
+          ? memoryAccesses.filter((candidate) => candidate?.kind === desiredKind)
+          : [];
+        const resolvedAccesses = [];
+        relevantAccesses.forEach((access) => {
+          const count = Math.max(1, Number(access?.accessCount) | 0);
+          const unitSize = Math.max(1, Number(access?.unitSize) | 0);
+          for (let index = 0; index < count; index += 1) {
+            resolvedAccesses.push({
+              ...access,
+              address: ((access.address >>> 0) + (index * unitSize)) >>> 0
+            });
+          }
+        });
+        resolvedAccesses.forEach((access, index) => {
+          processResolvedAccess({
+            opcode,
+            address: access.address >>> 0,
+            write: access.kind === "write"
+          }, event.stepAfter | 0, shouldRender && index === resolvedAccesses.length - 1);
+        });
       }
 
       [controls.placement, controls.blocks, controls.replacement, controls.blockSize, controls.setSize]
@@ -660,32 +610,52 @@
       refreshUiText();
 
       return {
+        isConnected: () => connected,
         open() {
           shell.open();
           refreshUiText();
         },
         close: shell.close,
         onSnapshot(snapshot) {
-          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
+          const previous = lastSnapshot;
           lastSnapshot = snapshot;
           if (!connected || !snapshot) return;
 
           const nextStep = getSnapshotStep(snapshot);
           const previousStep = getSnapshotStep(previous);
           if (!previous) {
-            captureHistoryForStep(nextStep);
+            history.sync(snapshot);
             return;
           }
 
           if (nextStep < previousStep) {
-            restoreHistoryForStep(nextStep);
-            pruneFutureHistory(nextStep);
+            history.rewind(nextStep);
+            history.sync(snapshot);
             return;
           }
           if (nextStep === previousStep) return;
 
-          processAccess(previous);
-          captureHistoryForStep(nextStep);
+          history.sync(snapshot);
+        },
+        onRuntimeEvent(event) {
+          if (!connected || !event) return;
+          if (event.type === "backstep") {
+            history.rewind(event.stepAfter | 0);
+            return;
+          }
+          processRuntimeEvent(event, false);
+          history.pruneBefore(event.historyStartStep | 0);
+        },
+        onRuntimeBatchEnd() {
+          if (!connected) return;
+          flushLog();
+          render();
+        },
+        onBackstep(event) {
+          if (!connected || !event) return;
+          history.rewind(event.stepAfter | 0);
+          flushLog();
+          render();
         }
       };
     }

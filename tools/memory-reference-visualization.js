@@ -22,11 +22,6 @@
     document.head.appendChild(style);
   }
 
-  const MEMORY_OPS = new Set([
-    "lb", "lbu", "lh", "lhu", "lw", "lwl", "lwr", "sb", "sh", "sw", "swl", "swr", "ll", "sc",
-    "lwc1", "swc1", "ldc1", "sdc1"
-  ]);
-
   const COLOR_SCALE = [
     { count: 0, color: "#000000" },
     { count: 1, color: "#1e59ff" },
@@ -45,64 +40,6 @@
     { value: 0x90000000, label: "0x90000000 (.kdata)" },
     { value: 0xffff0000, label: "0xffff0000 (MMIO)" }
   ];
-
-  function parseTokens(statement) {
-    if (!statement) return [];
-    const cleaned = String(statement).split("#")[0].trim();
-    if (!cleaned) return [];
-    return cleaned.split(/[\s,]+/).filter(Boolean);
-  }
-
-  function parseImmediate(token) {
-    if (typeof token !== "string") return null;
-    const text = token.trim();
-    if (!text) return 0;
-    if (/^[+-]?\d+$/.test(text)) return Number.parseInt(text, 10) | 0;
-    if (/^[+-]?0x[0-9a-f]+$/i.test(text)) return Number.parseInt(text, 16) | 0;
-    return null;
-  }
-
-  function buildRegisterMap(snapshot) {
-    const map = new Map();
-    (snapshot?.registers || []).forEach((reg) => {
-      const value = reg.value | 0;
-      const name = String(reg.name || "").toLowerCase();
-      map.set(name, value);
-      if (name.startsWith("$")) map.set(name.slice(1), value);
-      map.set(String(reg.index), value);
-      map.set(`$${reg.index}`, value);
-    });
-    return map;
-  }
-
-  function buildLabelMap(snapshot) {
-    const map = new Map();
-    (snapshot?.labels || []).forEach((label) => map.set(String(label.label || "").toLowerCase(), label.address >>> 0));
-    return map;
-  }
-
-  function resolveMemoryAddress(memArg, registers, labels, rowAddress) {
-    const token = String(memArg || "").trim();
-    const match = token.match(/^(.+?)\(([^)]+)\)$/);
-    if (match) {
-      const offsetRaw = match[1].trim();
-      const baseRaw = match[2].trim().toLowerCase();
-      const offset = parseImmediate(offsetRaw);
-      const offsetValue = Number.isFinite(offset) ? offset : (labels.get(offsetRaw.toLowerCase()) ?? 0);
-      const baseValue = registers.get(baseRaw) ?? registers.get(baseRaw.replace(/^\$/, "")) ?? 0;
-      return (((baseValue | 0) + (offsetValue | 0)) >>> 0);
-    }
-
-    const lbl = labels.get(token.toLowerCase());
-    if (Number.isFinite(lbl)) return lbl >>> 0;
-
-    const immediate = parseImmediate(token);
-    if (Number.isFinite(immediate)) {
-      if (Math.abs(immediate) < 0x10000) return (((rowAddress + 4) | 0) + ((immediate | 0) << 2)) >>> 0;
-      return immediate >>> 0;
-    }
-    return null;
-  }
 
   function colorForCount(count) {
     let selected = COLOR_SCALE[0].color;
@@ -159,7 +96,6 @@
       const closeButton = root.querySelector("[data-mv='close']");
 
       let connected = false;
-      let lastSnapshot = null;
       let wordsPerUnit = 1;
       let unitPixelWidth = 16;
       let unitPixelHeight = 16;
@@ -167,6 +103,17 @@
       let displayHeight = 256;
       let baseAddress = 0x10010000 >>> 0;
       let counts = new Map();
+      const history = ctx.createToolDeltaHistory({
+        applyInverse(delta) {
+          if (delta?.counts instanceof Map) {
+            delta.counts.forEach((previous, unitIndex) => {
+              if (previous == null) counts.delete(unitIndex);
+              else counts.set(unitIndex, previous | 0);
+            });
+          }
+          render();
+        }
+      });
 
       function fillOptions(control, values, current) {
         control.innerHTML = values.map((value) => `<option value="${value}"${value === current ? " selected" : ""}>${value}</option>`).join("");
@@ -217,6 +164,7 @@
       }
 
       function resetCounts() {
+        history.clear(Number(ctx.engine?.steps) | 0);
         counts = new Map();
         render();
       }
@@ -231,38 +179,47 @@
         render();
       }
 
-      function extractMemoryAccess(previousSnapshot) {
-        const row = (previousSnapshot?.textRows || []).find((entry) => entry.isCurrent);
-        if (!row) return null;
-
-        const tokens = parseTokens(row.basic || row.source);
-        if (!tokens.length) return null;
-
-        const opcode = tokens[0].toLowerCase();
-        if (!MEMORY_OPS.has(opcode)) return null;
-
-        const args = tokens.slice(1);
-        const memArg = args[1] ?? args[0];
-        if (!memArg) return null;
-
-        const registers = buildRegisterMap(previousSnapshot);
-        const labels = buildLabelMap(previousSnapshot);
-        const address = resolveMemoryAddress(memArg, registers, labels, row.address >>> 0);
-        if (!Number.isFinite(address)) return null;
-
-        return address >>> 0;
+      function incrementUnit(unitIndex, amount, delta) {
+        if (!Number.isFinite(unitIndex) || unitIndex < 0 || amount <= 0) return;
+        if (delta?.counts instanceof Map && !delta.counts.has(unitIndex)) {
+          delta.counts.set(unitIndex, counts.has(unitIndex) ? counts.get(unitIndex) : null);
+        }
+        counts.set(unitIndex, (counts.get(unitIndex) ?? 0) + amount);
       }
 
-      function incrementAddress(address) {
+      function incrementAccess(access, step, shouldRender = true) {
         const g = grid();
         const totalWords = g.units * wordsPerUnit;
-        const deltaBytes = ((address >>> 0) - (baseAddress >>> 0)) >>> 0;
-        const wordOffset = Math.floor(deltaBytes / 4);
-        if (!Number.isFinite(wordOffset) || wordOffset < 0 || wordOffset >= totalWords) return;
+        const address = access?.address >>> 0;
+        const accessCount = Math.max(1, Number(access?.accessCount) | 0);
+        const unitSize = Math.max(1, Number(access?.unitSize) | 0);
+        const visualUnitBytes = wordsPerUnit * 4;
+        const visibleStart = baseAddress >>> 0;
+        const visibleEnd = visibleStart + (totalWords * 4);
+        const delta = history.ensure(step, () => ({ counts: new Map() }));
 
-        const unitIndex = Math.floor(wordOffset / wordsPerUnit);
-        counts.set(unitIndex, (counts.get(unitIndex) ?? 0) + 1);
-        render();
+        if (accessCount === 1) {
+          const deltaBytes = address - visibleStart;
+          if (deltaBytes >= 0 && address < visibleEnd) {
+            incrementUnit(Math.floor(deltaBytes / visualUnitBytes), 1, delta);
+          }
+        } else {
+          const accessEnd = address + ((accessCount - 1) * unitSize);
+          const firstVisibleAccess = Math.max(0, Math.ceil((visibleStart - address) / unitSize));
+          const lastVisibleAccess = Math.min(accessCount - 1, Math.floor(((visibleEnd - 1) - address) / unitSize));
+          if (accessEnd >= visibleStart && address < visibleEnd && firstVisibleAccess <= lastVisibleAccess) {
+            const firstUnit = Math.floor(((address + (firstVisibleAccess * unitSize)) - visibleStart) / visualUnitBytes);
+            const lastUnit = Math.floor(((address + (lastVisibleAccess * unitSize)) - visibleStart) / visualUnitBytes);
+            for (let unitIndex = firstUnit; unitIndex <= lastUnit; unitIndex += 1) {
+              const unitStart = visibleStart + (unitIndex * visualUnitBytes);
+              const unitEnd = unitStart + visualUnitBytes;
+              const first = Math.max(firstVisibleAccess, Math.ceil((unitStart - address) / unitSize));
+              const last = Math.min(lastVisibleAccess, Math.floor(((unitEnd - 1) - address) / unitSize));
+              incrementUnit(unitIndex, Math.max(0, last - first + 1), delta);
+            }
+          }
+        }
+        if (shouldRender) render();
       }
 
       fillOptions(wordsSelect, [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048], wordsPerUnit);
@@ -291,16 +248,35 @@
       render();
 
       return {
+        isConnected: () => connected,
         open: shell.open,
         close: shell.close,
-        onSnapshot(snapshot) {
-          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
-          lastSnapshot = snapshot;
-          if (!connected || !snapshot || !previous) return;
-          if ((snapshot.steps | 0) <= (previous.steps | 0)) return;
-
-          const address = extractMemoryAccess(previous);
-          if (Number.isFinite(address)) incrementAddress(address >>> 0);
+        onRuntimeEvent(event) {
+          if (!connected || !event) return;
+          if (event.type === "backstep") {
+            history.rewind(event.stepAfter | 0);
+            return;
+          }
+          if (event.type !== "instruction") return;
+          const accesses = Array.isArray(event.memoryAccesses) ? event.memoryAccesses : [];
+          accesses.forEach((access, index) => {
+            if (Number.isFinite(access?.address)) {
+              incrementAccess(
+                access,
+                event.stepAfter | 0,
+                false
+              );
+            }
+          });
+          history.pruneBefore(event.historyStartStep | 0);
+        },
+        onRuntimeBatchEnd() {
+          if (connected) render();
+        },
+        onBackstep(event) {
+          if (!connected || !event) return;
+          history.rewind(event.stepAfter | 0);
+          render();
         }
       };
     }

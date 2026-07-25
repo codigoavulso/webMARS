@@ -201,7 +201,6 @@
       const closeButton = root.querySelector("[data-dl='close']");
 
       let connected = false;
-      let lastSnapshot = null;
       let pressedKey = null;
       let counterValueMax = 30;
       let counterValue = counterValueMax;
@@ -356,13 +355,13 @@
       refreshUiText();
 
       return {
+        isConnected: () => connected,
         open() {
           shell.open();
           refreshUiText();
         },
         close: shell.close,
         onSnapshot(snapshot) {
-          lastSnapshot = snapshot;
           if (!connected || !snapshot) return;
           updateFromMemory();
         }

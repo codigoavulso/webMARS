@@ -18,88 +18,11 @@
     document.head.appendChild(style);
   }
 
-  const WRITE_OPS = new Set(["sb", "sh", "sw", "swl", "swr", "sc", "swc1", "sdc1"]);
-  const MEMORY_OPS = new Set([
-    "lb", "lbu", "lh", "lhu", "lw", "lwl", "lwr", "sb", "sh", "sw", "swl", "swr", "ll", "sc",
-    "lwc1", "swc1", "ldc1", "sdc1"
-  ]);
-
   const ADDR_HEADING = 0xffff8010 >>> 0;
   const ADDR_LEAVETRACK = 0xffff8020 >>> 0;
   const ADDR_WHERE_X = 0xffff8030 >>> 0;
   const ADDR_WHERE_Y = 0xffff8040 >>> 0;
   const ADDR_MOVE = 0xffff8050 >>> 0;
-
-  function parseTokens(statement) {
-    if (!statement) return [];
-    const cleaned = String(statement).split("#")[0].trim();
-    if (!cleaned) return [];
-    return cleaned.split(/[\s,]+/).filter(Boolean);
-  }
-
-  function parseImmediate(token) {
-    if (typeof token !== "string") return null;
-    const text = token.trim();
-    if (!text) return 0;
-    if (/^[+-]?\d+$/.test(text)) return Number.parseInt(text, 10) | 0;
-    if (/^[+-]?0x[0-9a-f]+$/i.test(text)) return Number.parseInt(text, 16) | 0;
-    return null;
-  }
-
-  function buildRegisterMap(snapshot) {
-    const map = new Map();
-    (snapshot?.registers || []).forEach((reg) => {
-      const value = reg.value | 0;
-      const name = String(reg.name || "").toLowerCase();
-      map.set(name, value);
-      if (name.startsWith("$")) map.set(name.slice(1), value);
-      map.set(String(reg.index), value);
-      map.set(`$${reg.index}`, value);
-    });
-    return map;
-  }
-
-  function buildLabelMap(snapshot) {
-    const map = new Map();
-    (snapshot?.labels || []).forEach((label) => map.set(String(label.label || "").toLowerCase(), label.address >>> 0));
-    return map;
-  }
-
-  function resolveMemoryAddress(memArg, registers, labels, rowAddress) {
-    const token = String(memArg || "").trim();
-    const match = token.match(/^(.+?)\(([^)]+)\)$/);
-    if (match) {
-      const offsetRaw = match[1].trim();
-      const baseRaw = match[2].trim().toLowerCase();
-      const offset = parseImmediate(offsetRaw);
-      const offsetValue = Number.isFinite(offset) ? offset : (labels.get(offsetRaw.toLowerCase()) ?? 0);
-      const baseValue = registers.get(baseRaw) ?? registers.get(baseRaw.replace(/^\$/, "")) ?? 0;
-      return (((baseValue | 0) + (offsetValue | 0)) >>> 0);
-    }
-
-    const lbl = labels.get(token.toLowerCase());
-    if (Number.isFinite(lbl)) return lbl >>> 0;
-
-    const immediate = parseImmediate(token);
-    if (Number.isFinite(immediate)) {
-      if (Math.abs(immediate) < 0x10000) return (((rowAddress + 4) | 0) + ((immediate | 0) << 2)) >>> 0;
-      return immediate >>> 0;
-    }
-
-    return null;
-  }
-
-  function resolveSourceValue(opcode, sourceToken, registers, snapshot) {
-    const token = String(sourceToken || "").trim().toLowerCase();
-    const reg = registers.get(token) ?? registers.get(token.replace(/^\$/, "")) ?? 0;
-    if (opcode === "sb") return reg & 0xff;
-    if (opcode === "sh") return reg & 0xffff;
-    if (opcode === "swc1") {
-      const idx = Number.parseInt(token.replace(/^\$f/, ""), 10);
-      if (Number.isFinite(idx) && Array.isArray(snapshot?.cop1)) return snapshot.cop1[idx] | 0;
-    }
-    return reg | 0;
-  }
 
   host.register({
     id: "mars-bot",
@@ -134,8 +57,25 @@
       let x = 0;
       let y = 0;
       let tracks = [];
-      let stepHistory = new Map();
       let frameTimer = null;
+      const history = ctx.createToolDeltaHistory({
+        applyInverse(delta) {
+          if (!delta) return;
+          heading = Number(delta.heading) || 0;
+          leaveTrack = delta.leaveTrack === true;
+          moving = delta.moving === true;
+          x = Number(delta.x) || 0;
+          y = Number(delta.y) || 0;
+          if (Array.isArray(delta.removedTracks) && delta.removedTracks.length) {
+            tracks = [...delta.removedTracks.map((segment) => ({ ...segment })), ...tracks];
+          }
+          tracks.length = Math.min(tracks.length, Math.max(0, delta.trackLength | 0));
+          writeWordSafe(ADDR_WHERE_X, Math.round(x));
+          writeWordSafe(ADDR_WHERE_Y, Math.round(y));
+          render();
+          updateInfo();
+        }
+      });
 
       function writeWordSafe(address, value) {
         try {
@@ -155,72 +95,25 @@
         ].join("\n");
       }
 
-      function getSnapshotStep(snapshot = lastSnapshot) {
-        return Number.isFinite(snapshot?.steps) ? (snapshot.steps | 0) : 0;
+      function getSnapshotStep(snapshot = null) {
+        if (snapshot && Number.isFinite(snapshot.steps)) return snapshot.steps | 0;
+        return Number.isFinite(ctx.engine?.steps) ? (ctx.engine.steps | 0) : 0;
       }
 
-      function pruneFutureHistory(step) {
-        for (const historyStep of stepHistory.keys()) {
-          if ((historyStep | 0) > (step | 0)) {
-            stepHistory.delete(historyStep);
-          }
-        }
-      }
-
-      function captureToolState() {
-        return {
+      function ensureHistoryDelta(step) {
+        return history.ensure(step, () => ({
           heading,
           leaveTrack,
           moving,
           x,
           y,
-          tracks: tracks.map((segment) => ({ ...segment }))
-        };
-      }
-
-      function restoreToolState(state) {
-        if (!state || typeof state !== "object") return false;
-        heading = Number(state.heading) || 0;
-        leaveTrack = state.leaveTrack === true;
-        moving = state.moving === true;
-        x = Number(state.x) || 0;
-        y = Number(state.y) || 0;
-        tracks = Array.isArray(state.tracks)
-          ? state.tracks.map((segment) => ({
-              x1: Number(segment.x1) || 0,
-              y1: Number(segment.y1) || 0,
-              x2: Number(segment.x2) || 0,
-              y2: Number(segment.y2) || 0
-            }))
-          : [];
-        render();
-        updateInfo();
-        return true;
-      }
-
-      function captureHistoryForStep(step) {
-        const normalizedStep = step | 0;
-        pruneFutureHistory(normalizedStep);
-        stepHistory.set(normalizedStep, captureToolState());
-      }
-
-      function restoreHistoryForStep(step) {
-        const normalizedStep = step | 0;
-        if (stepHistory.has(normalizedStep)) {
-          return restoreToolState(stepHistory.get(normalizedStep));
-        }
-        let bestStep = null;
-        for (const candidate of stepHistory.keys()) {
-          if ((candidate | 0) <= normalizedStep && (bestStep == null || (candidate | 0) > (bestStep | 0))) {
-            bestStep = candidate | 0;
-          }
-        }
-        if (bestStep == null) return false;
-        return restoreToolState(stepHistory.get(bestStep));
+          trackLength: tracks.length,
+          removedTracks: []
+        }));
       }
 
       function clearState() {
-        stepHistory = new Map();
+        history.clear(getSnapshotStep());
         heading = 0;
         leaveTrack = false;
         moving = false;
@@ -231,7 +124,6 @@
         writeWordSafe(ADDR_WHERE_Y, 0);
         render();
         updateInfo();
-        captureHistoryForStep(getSnapshotStep());
       }
 
       function render() {
@@ -257,6 +149,7 @@
           return;
         }
 
+        const historyDelta = ensureHistoryDelta(getSnapshotStep());
         const oldX = x;
         const oldY = y;
 
@@ -269,14 +162,18 @@
 
         if (leaveTrack) {
           tracks.push({ x1: oldX + 10, y1: oldY + 10, x2: x + 10, y2: y + 10 });
-          if (tracks.length > 6000) tracks.splice(0, tracks.length - 6000);
+          if (tracks.length > 6000) {
+            const removed = tracks.splice(0, tracks.length - 6000);
+            if (historyDelta && Array.isArray(historyDelta.removedTracks)) {
+              historyDelta.removedTracks.push(...removed.map((segment) => ({ ...segment })));
+            }
+          }
         }
 
         writeWordSafe(ADDR_WHERE_X, Math.round(x));
        writeWordSafe(ADDR_WHERE_Y, Math.round(y));
         render();
         updateInfo();
-        captureHistoryForStep(getSnapshotStep());
       }
 
       function ensureTimer() {
@@ -284,29 +181,9 @@
         frameTimer = window.setInterval(stepMovement, 40);
       }
 
-      function extractWrite(previousSnapshot) {
-        const row = (previousSnapshot?.textRows || []).find((entry) => entry.isCurrent);
-        if (!row) return null;
-        const tokens = parseTokens(row.basic || row.source);
-        if (!tokens.length) return null;
-
-        const opcode = tokens[0].toLowerCase();
-        if (!MEMORY_OPS.has(opcode) || !WRITE_OPS.has(opcode)) return null;
-        const args = tokens.slice(1);
-        const memArg = args[1] ?? args[0];
-        if (!memArg) return null;
-
-        const registers = buildRegisterMap(previousSnapshot);
-        const labels = buildLabelMap(previousSnapshot);
-        const address = resolveMemoryAddress(memArg, registers, labels, row.address >>> 0);
-        if (!Number.isFinite(address)) return null;
-
-        const value = resolveSourceValue(opcode, args[0], registers, previousSnapshot);
-        return { address: address >>> 0, value: value | 0 };
-      }
-
-      function processWrite(write) {
+      function processWrite(write, targetStep = getSnapshotStep()) {
         if (!write) return;
+        ensureHistoryDelta(targetStep);
         if (write.address === ADDR_HEADING) {
           heading = write.value | 0;
         } else if (write.address === ADDR_LEAVETRACK) {
@@ -318,7 +195,6 @@
           moving = (write.value | 0) !== 0;
         }
         updateInfo();
-        captureHistoryForStep(getSnapshotStep());
       }
 
       connectButton.addEventListener("click", () => {
@@ -326,7 +202,7 @@
         connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
         if (connected) {
           ensureTimer();
-          captureHistoryForStep(getSnapshotStep());
+          history.sync(lastSnapshot);
           ctx.messagesPane.postMars("[tool] Mars Bot connected.");
         }
       });
@@ -338,31 +214,50 @@
       ensureTimer();
 
       return {
+        isConnected: () => connected,
         open: shell.open,
         close() {
           shell.close();
         },
         onSnapshot(snapshot) {
-          const previous = snapshot?.runtimeTrace?.previousSnapshot || lastSnapshot;
+          const previous = lastSnapshot;
           lastSnapshot = snapshot;
           if (!connected || !snapshot) return;
 
           const nextStep = getSnapshotStep(snapshot);
           const previousStep = getSnapshotStep(previous);
           if (!previous) {
-            captureHistoryForStep(nextStep);
+            history.sync(snapshot);
             return;
           }
 
           if (nextStep < previousStep) {
-            restoreHistoryForStep(nextStep);
-            pruneFutureHistory(nextStep);
+            history.rewind(nextStep);
+            history.sync(snapshot);
             return;
           }
           if (nextStep === previousStep) return;
 
-          processWrite(extractWrite(previous));
-          captureHistoryForStep(nextStep);
+          history.sync(snapshot);
+        },
+        onRuntimeEvent(event) {
+          if (!connected || !event) return;
+          if (event.type === "backstep") {
+            history.rewind(event.stepAfter | 0);
+            return;
+          }
+          if (event.type !== "instruction") return;
+          const write = (Array.isArray(event.memoryAccesses) ? event.memoryAccesses : [])
+            .find((access) => (
+              access?.kind === "write"
+              && [ADDR_HEADING, ADDR_LEAVETRACK, ADDR_MOVE].includes(access.address >>> 0)
+            ));
+          if (write) processWrite({ address: write.address >>> 0, value: write.value | 0 }, event.stepAfter | 0);
+          history.pruneBefore(event.historyStartStep | 0);
+        },
+        onBackstep(event) {
+          if (!connected || !event) return;
+          history.rewind(event.stepAfter | 0);
         }
       };
     }

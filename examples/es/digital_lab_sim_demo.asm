@@ -31,11 +31,24 @@ main:
   sb $t1, 0x12($t0)      # recorrer todas las filas
 
   sb $zero, 0x11($t0)    # digito izquierdo en blanco
+  move $s1, $zero        # ultimo codigo de escaneo procesado
 
 wait_key:
   lbu $t2, 0x14($t0)     # codigo de escaneo del teclado (col<<4 | row)
-  beq $t2, $zero, wait_key
+  beq $t2, $zero, key_idle
+  nop
+  bne $t2, $s1, key_ready
+  nop
+key_idle:
+  move $s1, $t2
+  li  $v0, 32            # espera cooperativa de 4 ms
+  li  $a0, 4
+  syscall
+  b   wait_key
+  nop
 
+key_ready:
+  move $s1, $t2
   # bit de la fila (nibble bajo) y bit de la columna (nibble alto)
   andi $t3, $t2, 0x0f    # bitFila: 1,2,4,8
   srl  $t4, $t2, 4       # bitColumna: 1,2,4,8

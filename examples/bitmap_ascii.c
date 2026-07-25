@@ -2,7 +2,7 @@
 #use <bitmap_rect>
 
 // Open Tools > Bitmap Display.
-// Configure Unit 1x1, Display 128x64, Base 0x10010000, then connect to MIPS.
+// Configure Unit 1x1, Display 128x64, Base 0x10020000, then connect to MIPS.
 void draw_ascii_line(int x, int y, int cols, int rows, int glyphs[], int length, int fg, int bg) {
   int index = 0;
   while (index < length) {
@@ -16,7 +16,7 @@ int main(void) {
   int rows = 64;
   int bg = 0x00000000;
   int fg = 0x00ffffff;
-  bitmap_set_base_address(0x10010000);
+  bitmap_set_base_address(0x10020000);
 
   int line1[] = {104, 101, 108, 108, 111, 32, 77, 65, 82, 83};
   int line2[] = {

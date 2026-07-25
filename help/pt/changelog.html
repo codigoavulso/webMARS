@@ -8,7 +8,28 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">A versão 0.4.7 consolida o runtime JavaScript atual, os exemplos e a documentação multilingue. O histórico do repositório contém as alterações individuais.</p>
+  <p class="lead">A versão 0.4.9 reforça a execução prolongada, a compatibilidade com o MARS e as ferramentas síncronas do browser.</p>
+
+  <h2>0.4.9 — paridade do runtime e backsteps fiáveis</h2>
+  <ul>
+    <li>Os 100 backsteps mais recentes permanecem disponíveis, com memória limitada por um journal esparso.</li>
+    <li>Correção do comportamento síncrono do Keyboard/Display, TTY e eventos das ferramentas em execuções prolongadas.</li>
+    <li>Atualização do laboratório Monty Hall e dos exemplos interativos para cooperarem com o input do browser sem busy polling.</li>
+    <li>Syscalls aleatórios 40–44 alinhados com as sequências e regras de amostragem de <code>java.util.Random</code> usadas pelo MARS.</li>
+    <li>Reforço do restauro de estado, contadores longos, limites do assembler e validação de diretivas numéricas.</li>
+    <li>Cobertura de backstep completada para metadados de imagem e correção de buffers InputDialogString com tamanho zero.</li>
+    <li>Cobertura de regressão ampliada no runtime, exemplos localizados e ferramentas ligadas.</li>
+  </ul>
+
+  <h2>0.4.8 — backsteps por diferenças e dispositivos síncronos</h2>
+  <ul>
+    <li>Substituição dos snapshots completos por instrução por diferenças inversas limitadas.</li>
+    <li>Separação entre dispositivos MMIO síncronos, eventos compactos em lote e snapshots periódicos das ferramentas.</li>
+    <li>Correção da causalidade de entrada/saída, backsteps e custo de ferramentas ocultas no Keyboard/Display e TTY.</li>
+    <li>Correção da atualização em lote nas ferramentas de cache, instruções, referências de memória e bitmap.</li>
+    <li>Framebuffers dos exemplos Mini-C afastados dos globais do compilador e Bitmap Display sincronizado com a memória atual.</li>
+    <li>Faixa Bench opcional nas Preferências da interface e oculta por predefinição.</li>
+  </ul>
 
   <h2>0.4.7 — reforço do runtime JavaScript e documentação completa</h2>
   <ul>

@@ -8,7 +8,28 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.4.7 consolidates the current JavaScript runtime, examples and multilingual documentation. The repository history contains the individual implementation changes.</p>
+  <p class="lead">Release 0.4.9 strengthens long-running execution, MARS compatibility and synchronous browser tools.</p>
+
+  <h2>0.4.9 — runtime parity and dependable backsteps</h2>
+  <ul>
+    <li>Kept the most recent 100 backsteps available while bounding sparse journal memory.</li>
+    <li>Corrected synchronous Keyboard/Display, TTY and tool-event behavior in long browser runs.</li>
+    <li>Updated the Monty Hall lab and interactive examples to cooperate with browser input without busy polling.</li>
+    <li>Matched random syscalls 40–44 to the seeded sequences and sampling rules of <code>java.util.Random</code> used by MARS.</li>
+    <li>Hardened runtime-state import, long instruction counters, assembler ranges and numeric directive validation.</li>
+    <li>Completed backstep coverage for image metadata and corrected zero-length InputDialogString buffers.</li>
+    <li>Expanded regression coverage across the runtime, localized examples and connected tools.</li>
+  </ul>
+
+  <h2>0.4.8 — delta backsteps and synchronous devices</h2>
+  <ul>
+    <li>Replaced full per-instruction backstep snapshots with bounded inverse deltas.</li>
+    <li>Separated synchronous MMIO devices, compact runtime-event batches and periodic tool snapshots.</li>
+    <li>Corrected Keyboard/Display and TTY input/output causality, backsteps and hidden-tool overhead.</li>
+    <li>Fixed batch rendering in cache, instruction, memory-reference and bitmap tools.</li>
+    <li>Moved Mini-C example framebuffers away from compiler globals and synchronized Bitmap Display with live memory.</li>
+    <li>Made the local benchmark strip optional in Interface Preferences and hidden by default.</li>
+  </ul>
 
   <h2>0.4.7 — JavaScript runtime hardening and complete documentation</h2>
   <ul>

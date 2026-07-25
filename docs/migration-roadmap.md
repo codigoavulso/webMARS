@@ -1,4 +1,4 @@
-# Migration Roadmap (v0.4.7 status)
+# Migration Roadmap (v0.4.8 status)
 
 This document originally tracked the migration from desktop Java MARS to a
 browser application. That baseline migration is complete for the current
@@ -43,7 +43,7 @@ every undocumented desktop edge case is identical.
   backstep, LL/SC reservations and self-modifying-code behavior.
 - Added configurable memory maps, strict MARS compatibility and runtime-state
   snapshots.
-- Removed the experimental WASM/hybrid backend; v0.4.7 has one JavaScript
+- Removed the experimental WASM/hybrid backend; v0.4.8 has one JavaScript
   execution engine.
 
 ## Phase 4 - Syscalls and runtime I/O (complete for the current target)
@@ -56,7 +56,7 @@ every undocumented desktop edge case is identical.
 Intentional browser adaptations and remaining compatibility limits belong in
 the in-app help rather than being hidden in this roadmap.
 
-## Phase 5 - UX, tools and settings parity (complete for v0.4.7)
+## Phase 5 - UX, tools and settings parity (complete for v0.4.8)
 
 - Added persistent projects, sessions, preferences and browser source storage.
 - Added breakpoints, advanced execution settings and memory/backstep limits.

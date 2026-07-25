@@ -54,75 +54,170 @@ test("tool batches reach hidden tools in order and isolate failures", async () =
   assert.equal([...context.observed.failures].filter((value) => value === "broken").length, 3);
 });
 
-test("Run trace preserves each decoded instruction and exact changed word without sharing the final map", async () => {
-  const source = await readFile(runtimePath, "utf8");
-  const helperSource = sourceBetween(source, "function createRunToolTraceContext", "\nfunction runLoopTick");
+test("runtime event batches flush each tool once even when the final event is irrelevant", async () => {
+  const source = await readFile(managerPath, "utf8");
+  const helperSource = sourceBetween(source, "function deliverToolSnapshotBatch", "\nfunction createToolManager");
   const context = vm.createContext({});
   vm.runInContext(`
-    function toHex(value) {
-      return "0x" + (value >>> 0).toString(16).padStart(8, "0");
-    }
     ${helperSource}
-    const baseline = {
-      pc: 0x00400000,
-      steps: 0,
-      registers: [{ index: 8, name: "$t0", value: 65 }],
-      cop1: [],
-      textRows: [{ address: 0x00400000, basic: "nop", source: "nop", isCurrent: true }],
-      labels: [{ label: "main", address: 0x00400000 }],
-      memoryWords: new Map()
+    const processed = [];
+    let flushes = 0;
+    const instances = new Map([["cache", {
+      runtimeEventConsumer: true,
+      onRuntimeEvent(event) {
+        if (event.memoryAccesses?.length) processed.push(event.stepAfter);
+      },
+      onRuntimeBatchEnd(delivery) {
+        flushes += 1;
+        globalThis.batchSize = delivery.batchSize;
+      }
+    }]]);
+    deliverToolRuntimeEventBatch(instances, [
+      { type: "instruction", stepAfter: 1, memoryAccesses: [{ kind: "read", address: 4 }] },
+      { type: "instruction", stepAfter: 2, memoryAccesses: [] }
+    ]);
+    globalThis.observed = { processed, flushes };
+  `, context);
+
+  assert.deepEqual([...context.observed.processed], [1]);
+  assert.equal(context.observed.flushes, 1);
+  assert.equal(context.batchSize, 2);
+});
+
+test("central tool delta history rewinds sparsely and follows the engine window", async () => {
+  const source = await readFile(managerPath, "utf8");
+  const helperSource = sourceBetween(source, "function createToolDeltaHistory", "\nfunction createToolManager");
+  const context = vm.createContext({});
+  vm.runInContext(`
+    ${helperSource}
+    const restored = [];
+    const history = createToolDeltaHistory({
+      applyInverse(delta, step) {
+        restored.push([step, delta.before]);
+      }
+    });
+    history.record(1, { before: "a" });
+    history.record(3, { before: "c" });
+    history.record(5, { before: "e" });
+    history.pruneBefore(1);
+    const beforeRewind = history.getEntryCount();
+    const applied = history.rewind(2);
+    history.record(3, { before: "new-c" });
+    history.sync({ steps: 3, backstepDepth: 1, backstepHistoryStartStep: 2 });
+    globalThis.observed = {
+      beforeRewind,
+      applied,
+      restored,
+      currentStep: history.getCurrentStep(),
+      remaining: history.getEntryCount()
     };
-    const traceContext = createRunToolTraceContext(baseline);
+  `, context);
+
+  assert.equal(context.observed.beforeRewind, 2);
+  assert.equal(context.observed.applied, 2);
+  assert.deepEqual([...context.observed.restored].map((entry) => [...entry]), [
+    [5, "e"],
+    [3, "c"]
+  ]);
+  assert.equal(context.observed.currentStep, 3);
+  assert.equal(context.observed.remaining, 1);
+});
+
+test("stateful tools use central deltas and expose active runtime consumers", async () => {
+  const paths = ["tools/tty-ansi-terminal.js", "tools/cache-simulator.js", "tools/keyboard-display-mmio.js", "tools/mars-bot.js"];
+  for (const relativePath of paths) {
+    const source = await readFile(resolve(projectRoot, relativePath), "utf8");
+    assert.doesNotMatch(source, /\bstepHistory\b/, `${relativePath} still owns a full per-step history`);
+    assert.doesNotMatch(source, /\bpreviousSnapshot\b|runtimeTrace|textRows\s*\|\|\s*\[\]\)\.find/, `${relativePath} still parses the legacy per-step snapshot trace`);
+    assert.match(source, /ctx\.createToolDeltaHistory\(/);
+    assert.match(source, /isConnected:\s*\(\)\s*=>\s*connected/);
+  }
+
+  const ttySource = await readFile(resolve(projectRoot, "tools/tty-ansi-terminal.js"), "utf8");
+  assert.match(ttySource, /cells:\s*new Map\(\)/);
+  assert.match(ttySource, /recordCellBefore\(/);
+  assert.match(ttySource, /registerMemoryObserver\(/);
+  assert.match(ttySource, /onBackstep\(event\)/);
+  assert.doesNotMatch(ttySource, /onRuntimeEvent\(/);
+
+  const keyboardSource = await readFile(resolve(projectRoot, "tools/keyboard-display-mmio.js"), "utf8");
+  assert.match(keyboardSource, /registerMemoryObserver\(/);
+  assert.match(keyboardSource, /registerInstructionObserver\(/);
+  assert.match(keyboardSource, /suppressDeviceObservers/);
+  assert.match(keyboardSource, /lastRuntimeRevision !== previousRuntimeRevision/);
+  assert.match(keyboardSource, /runtimeRevision/);
+  assert.match(keyboardSource, /onBackstep\(event\)/);
+  assert.doesNotMatch(keyboardSource, /onRuntimeEvent\(/);
+
+  const cacheSource = await readFile(resolve(projectRoot, "tools/cache-simulator.js"), "utf8");
+  assert.doesNotMatch(cacheSource, /log:\s*String\(controls\.log\.value/);
+  assert.match(cacheSource, /logLength:/);
+  assert.match(cacheSource, /onRuntimeEvent\(event\)/);
+  assert.match(cacheSource, /onRuntimeBatchEnd\(\)/);
+});
+
+test("floating-point tool accepts register zero as a valid attachment", async () => {
+  const source = await readFile(resolve(projectRoot, "tools/float-representation.js"), "utf8");
+  assert.doesNotMatch(source, /Number\.parseInt\(registerSelect\.value,\s*10\)\s*\|\|\s*-1/);
+  assert.match(source, /Number\.isInteger\(parsedRegister\)/);
+  assert.match(source, /parsedRegister >= 0 && parsedRegister < 32/);
+});
+
+test("Run requests compact runtime events without per-instruction snapshots", async () => {
+  const source = await readFile(runtimePath, "utf8");
+  const helperSource = sourceBetween(source, "function executeRunStepWithRuntimeEvent", "\nfunction runLoopTick");
+  const context = vm.createContext({});
+  vm.runInContext(`
+    ${helperSource}
     let call = 0;
     const options = [];
     const engine = {
-      memoryWords: new Map([[0xffff000c, 65]]),
       step(stepOptions) {
         options.push(stepOptions);
         call += 1;
         return {
           ok: true,
-          executedAddress: 0x00400000,
-          executedInstruction: "sw $t0,0($t1)",
-          machineWord: 0xad280000,
-          snapshot: {
-            pc: 0x00400000,
-            steps: call,
-            registers: [{ index: 8, name: "$t0", value: 65 + call }],
-            cop1: [],
-            lastMemoryWriteAddress: 0xffff000c
+          runtimeEvent: {
+            type: "instruction",
+            stepAfter: call,
+            executedInstruction: "sw $t0,0($t1)",
+            memoryAccesses: [{
+              kind: "write",
+              address: 0xffff000c,
+              size: 4,
+              value: 64 + call
+            }]
           }
         };
       }
     };
-    const first = executeRunStepWithToolTrace(engine, traceContext, true);
-    engine.memoryWords.set(0xffff000c, 66);
-    const second = executeRunStepWithToolTrace(engine, traceContext, true);
-    const plain = executeRunStepWithToolTrace(engine, traceContext, false);
+    const first = executeRunStepWithRuntimeEvent(engine, true);
+    const second = executeRunStepWithRuntimeEvent(engine, true);
+    const plain = executeRunStepWithRuntimeEvent(engine, false);
     globalThis.observed = {
-      firstInstruction: first.toolSnapshot.runtimeTrace.previousSnapshot.textRows[0].basic,
-      firstPreviousSteps: first.toolSnapshot.runtimeTrace.previousSnapshot.steps,
-      secondPreviousSteps: second.toolSnapshot.runtimeTrace.previousSnapshot.steps,
-      firstWord: first.toolSnapshot.memoryWords.get(0xffff000c),
-      secondWord: second.toolSnapshot.memoryWords.get(0xffff000c),
-      sameMap: first.toolSnapshot.memoryWords === second.toolSnapshot.memoryWords,
+      firstInstruction: first.runtimeEvent.executedInstruction,
+      firstStep: first.runtimeEvent.stepAfter,
+      secondStep: second.runtimeEvent.stepAfter,
+      firstWord: first.runtimeEvent.memoryAccesses[0].value,
+      secondWord: second.runtimeEvent.memoryAccesses[0].value,
       firstOptions: options[0],
       plainOptions: options[2],
-      plainSnapshot: plain.toolSnapshot
+      plainEvent: plain.runtimeEvent
     };
   `, context);
 
   const observed = context.observed;
   assert.equal(observed.firstInstruction, "sw $t0,0($t1)");
-  assert.equal(observed.firstPreviousSteps, 0);
-  assert.equal(observed.secondPreviousSteps, 1);
+  assert.equal(observed.firstStep, 1);
+  assert.equal(observed.secondStep, 2);
   assert.equal(observed.firstWord, 65);
   assert.equal(observed.secondWord, 66);
-  assert.equal(observed.sameMap, false);
-  assert.equal(observed.firstOptions.includeSnapshot, true);
-  assert.equal(observed.firstOptions.snapshotOptions.includeMemoryWords, false);
+  assert.equal(observed.firstOptions.includeSnapshot, false);
+  assert.equal(observed.firstOptions.includeRuntimeEvent, true);
   assert.equal(observed.plainOptions.includeSnapshot, false);
-  assert.equal(observed.plainSnapshot, null);
+  assert.equal(observed.plainOptions.includeRuntimeEvent, false);
+  assert.equal(observed.plainEvent, null);
+  assert.doesNotMatch(source, /runtimeTrace/);
 });
 
 test("runtime memory validation keeps the dialog open and preserves its selection", async () => {
@@ -200,7 +295,15 @@ test("instruction counters accept consecutive executions at the same PC", async 
   for (const relativePath of ["tools/instruction-counter.js", "tools/instruction-statistics.js"]) {
     const source = await readFile(resolve(projectRoot, relativePath), "utf8");
     assert.doesNotMatch(source, /\blastAddress\b/, `${relativePath} still deduplicates by PC`);
-    assert.match(source, /runtimeTrace\?\.previousSnapshot/);
-    assert.match(source, /delivery\.isLast !== false/);
+    assert.match(source, /onRuntimeEvent\(event\)/);
+    assert.match(source, /onRuntimeBatchEnd\(\)/);
+    assert.match(source, /processInstruction\(event\.executedInstruction,\s*event\.stepAfter\s*\|\s*0,\s*false\)/);
   }
+});
+
+test("bitmap display coalesces writes without redrawing stale snapshot memory", async () => {
+  const source = await readFile(resolve(projectRoot, "tools/bitmap-display.js"), "utf8");
+  assert.match(source, /ctx\.engine\?\.memoryWords instanceof Map/);
+  assert.match(source, /pendingWriteAddress != null && pendingWriteAddress !== nextWriteAddress/);
+  assert.match(source, /fullRedrawNeeded = true/);
 });

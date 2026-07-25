@@ -1,5 +1,5 @@
 # Benchmark de cache: acceso secuencial frente a stride de 16 palabras.
-# Abra Herramientas > Data Cache Simulation Tool y conectela a MIPS.
+# Abra Herramientas > Data Cache Simulation Tool, conectela a MIPS y marque Enabled.
 #
 # Cada ejecucion mide un solo patron con la cache fria. Defina ACCESS_PATTERN
 # como 1 o 2, reinicie las estadisticas y vuelva a ensamblar y ejecutar.

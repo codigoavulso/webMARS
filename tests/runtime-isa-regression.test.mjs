@@ -380,11 +380,17 @@ main:
     assert.equal(engine.assemble(source, { sourceName: `${opcode}-misaligned.s` }).ok, true);
     const row = instructionRow(engine, opcode);
     stepToAddress(engine, row.address);
+    const stateBeforeJump = engine.exportRuntimeState({ includeProgram: false });
     const result = engine.step({ includeSnapshot: false });
     assertAddressException(engine, result, 4, 0x00400001);
     if (opcode === "jalr") {
       assert.equal(registers(engine)[9] >>> 0, ((row.address >>> 0) + 4) >>> 0);
     }
+    assert.equal(engine.backstep().ok, true);
+    const restored = engine.exportRuntimeState({ includeProgram: false });
+    assert.equal(restored.pc >>> 0, stateBeforeJump.pc >>> 0);
+    assert.deepEqual(restored.cop0, stateBeforeJump.cop0);
+    assert.deepEqual(restored.registers, stateBeforeJump.registers);
   }
 
   const delayed = await createJavaScriptEngine({

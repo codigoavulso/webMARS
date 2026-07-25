@@ -1,5 +1,5 @@
 # Cache behavior benchmark: sequential versus stride-16 access.
-# Open Tools > Data Cache Simulation Tool and connect it to MIPS.
+# Open Tools > Data Cache Simulation Tool, connect it to MIPS, and check Enabled.
 #
 # Each execution measures exactly one cold-cache pattern. Set ACCESS_PATTERN
 # to 1 or 2, reset the simulator statistics, then assemble and run again.
