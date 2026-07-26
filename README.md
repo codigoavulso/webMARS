@@ -1,4 +1,4 @@
-# webMARS v0.4.10
+# webMARS v0.4.11
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,14 +22,12 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.4.10
+## Highlights in v0.4.11
 
-- Batched tool history retention around the engine's exact 100-instruction backstep window.
-- Reduced per-instruction DOM work in BHT, cache, counters, statistics, memory visualization, MIPS X-Ray and Mars Bot.
-- Removed redundant runtime snapshots during UI synchronization and stopped idle Mars Bot rendering.
-- Corrected the Firefox-only window-title separator repaint artifact.
-- Reduced idle TTY polling in the Monty Hall lab while preserving responsive input and complete backsteps.
-- Expanded regression and browser validation for tool batching, UI synchronization and Firefox rendering.
+- Restored an existing cloud login automatically when the application starts after a refresh or browser restart.
+- Kept credentialed cloud requests scoped to the configured API and synchronized projects only after authentication succeeds.
+- Documented the persistent authentication cookie, its one-year maximum lifetime and immediate removal on logout.
+- Added release regression coverage for automatic cloud-session restoration.
 
 ## Main Capabilities
 
@@ -132,6 +130,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.4.11`: persistent cloud login restoration across refreshes and browser restarts, with updated privacy documentation and regression coverage
 - `v0.4.10`: batched tool deltas, lighter runtime UI synchronization, Firefox separator correction, lower idle MMIO polling, and complete 100-step tool parity
 - `v0.4.9`: dependable sparse backsteps, synchronous browser tools, Java-compatible random syscalls, stronger state import and expanded runtime/example validation
 - `v0.4.8`: delta-based backsteps, synchronous MMIO devices, faster tool delivery, corrected C bitmaps, expanded regression coverage, and optional Bench UI

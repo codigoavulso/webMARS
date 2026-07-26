@@ -8,7 +8,15 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.4.10 makes connected tools and runtime UI updates substantially lighter while preserving exact backsteps.</p>
+  <p class="lead">Release 0.4.11 restores persistent cloud sessions automatically after refreshes and browser restarts.</p>
+
+  <h2>0.4.11 &mdash; persistent cloud login restoration</h2>
+  <ul>
+    <li>Checked the configured cloud server silently during application startup and restored an existing authenticated user.</li>
+    <li>Refreshed cloud project metadata after successful session restoration without blocking the local workspace.</li>
+    <li>Documented the authentication cookie's one-year maximum lifetime and immediate removal on logout.</li>
+    <li>Added regression coverage for credentialed requests and automatic startup restoration.</li>
+  </ul>
 
   <h2>0.4.10 — batched tool history and lighter UI updates</h2>
   <ul>

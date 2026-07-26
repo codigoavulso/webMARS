@@ -9892,6 +9892,12 @@ if (restoredSession && store.getState().preferences.assembleOnOpen) {
 persistWorkspaceSession();
 persistProjectNow({ syncFromEditor: projectIsOpen() });
 showAboutOnFirstVisit();
+void refreshCloudSession({
+  silent: true,
+  syncProjects: true,
+  postSyncStatus: false,
+  syncReason: "startup"
+});
 if (typeof window !== "undefined") {
   window.__webMarsRuntimeReady = true;
   try {
@@ -10156,7 +10162,6 @@ if (typeof window !== "undefined") {
     }
   };
 }
-
 
 
 

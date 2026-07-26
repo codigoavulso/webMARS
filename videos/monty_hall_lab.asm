@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Monty Hall Lab — tutorial MIPS para o webMARS 0.4.10
+# Monty Hall Lab — tutorial MIPS para o webMARS 0.4.11
 # -----------------------------------------------------------------------------
 # Interface:
 #   Ferramentas > TTY Device + ANSI Terminal > Connect to MIPS

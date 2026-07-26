@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.4.10";
+const expectedReleaseVersion = "0.4.11";
 
 async function exists(path) {
   try {
@@ -61,7 +61,7 @@ function placeholders(value) {
     .sort();
 }
 
-test("0.4.10 version is coherent across runtime and release metadata", async () => {
+test("0.4.11 version is coherent across runtime and release metadata", async () => {
   const packageJson = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
   const packageLock = JSON.parse(await readFile(resolve(projectRoot, "package-lock.json"), "utf8"));
   const appVersion = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");
@@ -205,6 +205,19 @@ test("the document language follows the selected interface language", async () =
   assert.equal(sandbox.document.documentElement.lang, "pt");
   assert.equal(sandbox.WebMarsI18n.setLanguage("es"), true);
   assert.equal(sandbox.document.documentElement.lang, "es");
+});
+
+test("cloud authentication is restored automatically after a page reload", async () => {
+  const source = await readFile(
+    resolve(projectRoot, "assets", "js", "app-modules", "20-app-runtime.js"),
+    "utf8"
+  );
+
+  assert.match(source, /credentials:\s*"include"/);
+  assert.match(
+    source,
+    /showAboutOnFirstVisit\(\);\s*void refreshCloudSession\(\{\s*silent:\s*true,\s*syncProjects:\s*true,\s*postSyncStatus:\s*false,\s*syncReason:\s*"startup"\s*\}\);/
+  );
 });
 
 test("tool, library and language manifests are unique and resolvable", async () => {

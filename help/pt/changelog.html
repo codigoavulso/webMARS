@@ -8,7 +8,15 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">A versão 0.4.10 torna as ferramentas ligadas e as atualizações da interface substancialmente mais leves, preservando backsteps exatos.</p>
+  <p class="lead">A versão 0.4.11 restaura automaticamente sessões cloud persistentes após refresh ou reinício do browser.</p>
+
+  <h2>0.4.11 &mdash; restauro persistente do login cloud</h2>
+  <ul>
+    <li>Consulta silenciosamente o servidor cloud configurado no arranque e restaura o utilizador autenticado.</li>
+    <li>Atualiza os metadados dos projetos cloud após restaurar a sessão sem bloquear o ambiente local.</li>
+    <li>Documenta a validade máxima de um ano do cookie de autenticação e a sua remoção imediata no logout.</li>
+    <li>Adiciona cobertura de regressão para pedidos autenticados e restauro automático no arranque.</li>
+  </ul>
 
   <h2>0.4.10 — histórico das ferramentas em lote e interface mais leve</h2>
   <ul>
