@@ -168,6 +168,9 @@
       let activeClass = "";
       let logLines = [];
       let activeHistoryDelta = null;
+      let currentInstruction = "";
+      let currentAddress = "";
+      let currentIndex = "";
       const MAX_LOG_LINES = 5000;
       const history = ctx.createToolDeltaHistory({
         applyInverse(delta) {
@@ -183,11 +186,12 @@
             logLines = [...delta.removedLog, ...logLines];
           }
           logLines.length = Math.min(logLines.length, Math.max(0, delta.logLength | 0));
-          instructionField.value = String(delta.instruction || "");
-          addressField.value = String(delta.address || "");
-          indexField.value = String(delta.index || "");
+          currentInstruction = String(delta.instruction || "");
+          currentAddress = String(delta.address || "");
+          currentIndex = String(delta.index || "");
           activeIndex = Number.isFinite(delta.activeIndex) ? (delta.activeIndex | 0) : null;
           activeClass = String(delta.activeClass || "");
+          renderInstructionInfo();
           flushLog();
           renderTable();
         }
@@ -227,13 +231,22 @@
         }).join("");
       }
 
+      function renderInstructionInfo() {
+        instructionField.value = currentInstruction;
+        addressField.value = currentAddress;
+        indexField.value = currentIndex;
+      }
+
       function clearInstructionInfo(shouldRender = true) {
-        instructionField.value = "";
-        addressField.value = "";
-        indexField.value = "";
+        currentInstruction = "";
+        currentAddress = "";
+        currentIndex = "";
         activeIndex = null;
         activeClass = "";
-        if (shouldRender) renderTable();
+        if (shouldRender) {
+          renderInstructionInfo();
+          renderTable();
+        }
       }
 
       function resetModel() {
@@ -247,19 +260,21 @@
         clearInstructionInfo();
       }
 
-      function processRuntimeInstruction(event, shouldRender = true) {
-        const delta = {
-          instruction: instructionField.value,
-          address: addressField.value,
-          index: indexField.value,
-          activeIndex,
-          activeClass,
-          logLength: logLines.length,
-          removedLog: [],
-          entryIndex: -1,
-          entry: null
-        };
-        history.record(event.stepAfter | 0, delta);
+      function processRuntimeInstruction(event, shouldRender = true, retainHistory = true) {
+        const delta = retainHistory
+          ? {
+              instruction: currentInstruction,
+              address: currentAddress,
+              index: currentIndex,
+              activeIndex,
+              activeClass,
+              logLength: logLines.length,
+              removedLog: [],
+              entryIndex: -1,
+              entry: null
+            }
+          : null;
+        if (delta) history.record(event.stepAfter | 0, delta);
         activeHistoryDelta = delta;
         const statement = String(event?.executedInstruction || "").trim();
         const tokens = parseTokens(statement);
@@ -286,9 +301,9 @@
         const prediction = entry.prediction;
         const correct = prediction === branchTaken;
 
-        instructionField.value = statement || opcode;
-        addressField.value = toHex32(address);
-        indexField.value = String(idx);
+        currentInstruction = statement || opcode;
+        currentAddress = toHex32(address);
+        currentIndex = String(idx);
         activeIndex = idx;
         activeClass = "";
         appendLog(`instruction ${statement || opcode} at address ${toHex32(address)}, maps to index ${idx}`);
@@ -300,6 +315,7 @@
         appendLog("");
         activeHistoryDelta = null;
         if (shouldRender) {
+          renderInstructionInfo();
           flushLog();
           renderTable();
         }
@@ -335,7 +351,11 @@
             return;
           }
           if (event.type !== "instruction") return;
-          processRuntimeInstruction(event, delivery.isLast !== false);
+          processRuntimeInstruction(
+            event,
+            delivery.isLast !== false,
+            delivery.retainHistory !== false
+          );
           history.pruneBefore(event.historyStartStep | 0);
         },
         onBackstep(event) {

@@ -187,7 +187,7 @@
         counts.set(unitIndex, (counts.get(unitIndex) ?? 0) + amount);
       }
 
-      function incrementAccess(access, step, shouldRender = true) {
+      function incrementAccess(access, step, shouldRender = true, retainHistory = true) {
         const g = grid();
         const totalWords = g.units * wordsPerUnit;
         const address = access?.address >>> 0;
@@ -196,7 +196,7 @@
         const visualUnitBytes = wordsPerUnit * 4;
         const visibleStart = baseAddress >>> 0;
         const visibleEnd = visibleStart + (totalWords * 4);
-        const delta = history.ensure(step, () => ({ counts: new Map() }));
+        const delta = retainHistory ? history.ensure(step, () => ({ counts: new Map() })) : null;
 
         if (accessCount === 1) {
           const deltaBytes = address - visibleStart;
@@ -251,7 +251,7 @@
         isConnected: () => connected,
         open: shell.open,
         close: shell.close,
-        onRuntimeEvent(event) {
+        onRuntimeEvent(event, delivery = {}) {
           if (!connected || !event) return;
           if (event.type === "backstep") {
             history.rewind(event.stepAfter | 0);
@@ -264,7 +264,8 @@
               incrementAccess(
                 access,
                 event.stepAfter | 0,
-                false
+                false,
+                delivery.retainHistory !== false
               );
             }
           });

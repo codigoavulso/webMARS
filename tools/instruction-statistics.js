@@ -150,8 +150,8 @@
         render();
       }
 
-      function processInstruction(statement, step, shouldRender = true) {
-        history.record(step, { total, counters: { ...counters } });
+      function processInstruction(statement, step, shouldRender = true, retainHistory = true) {
+        if (retainHistory) history.record(step, { total, counters: { ...counters } });
         const tokens = parseTokens(statement);
         const category = classify(tokens[0]);
         total += 1;
@@ -172,14 +172,19 @@
         isConnected: () => connected,
         open: shell.open,
         close: shell.close,
-        onRuntimeEvent(event) {
+        onRuntimeEvent(event, delivery = {}) {
           if (!connected || !event) return;
           if (event.type === "backstep") {
             history.rewind(event.stepAfter | 0);
             return;
           }
           if (event.type !== "instruction") return;
-          processInstruction(event.executedInstruction, event.stepAfter | 0, false);
+          processInstruction(
+            event.executedInstruction,
+            event.stepAfter | 0,
+            false,
+            delivery.retainHistory !== false
+          );
           history.pruneBefore(event.historyStartStep | 0);
         },
         onRuntimeBatchEnd() {

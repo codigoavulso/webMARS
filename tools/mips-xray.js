@@ -99,8 +99,8 @@
         zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
       }
 
-      function updateRuntimeInstruction(event, shouldRender = true) {
-        history.record(event.stepAfter | 0, { text: currentInfoText });
+      function updateRuntimeInstruction(event, shouldRender = true, retainHistory = true) {
+        if (retainHistory) history.record(event.stepAfter | 0, { text: currentInfoText });
         const statement = String(event?.executedInstruction || "");
         const tokens = parseTokens(statement);
         const opcode = (tokens[0] || "").toLowerCase();
@@ -141,7 +141,11 @@
             return;
           }
           if (event.type !== "instruction") return;
-          updateRuntimeInstruction(event, delivery.isLast !== false);
+          updateRuntimeInstruction(
+            event,
+            delivery.isLast !== false,
+            delivery.retainHistory !== false
+          );
           history.pruneBefore(event.historyStartStep | 0);
         },
         onBackstep(event) {

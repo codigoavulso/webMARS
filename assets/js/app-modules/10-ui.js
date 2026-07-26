@@ -5335,17 +5335,31 @@ function injectRuntimeStyles() {
     }
 
     .window-titlebar {
+      --window-titlebar-separator: #97a8bd;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: space-between;
       height: 20px;
       padding: 0 5px 0 6px;
       background: linear-gradient(180deg, #f7fbff 0%, #d7e3f2 100%);
-      border-bottom: 1px solid #97a8bd;
+      border-bottom: 1px solid transparent;
       font-size: 10px;
       color: #223347;
       user-select: none;
       cursor: move;
+    }
+
+    .window-titlebar::after {
+      content: "";
+      position: absolute;
+      z-index: 4;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: var(--window-titlebar-separator);
+      pointer-events: none;
     }
 
     .window-title {
@@ -5386,10 +5400,10 @@ function injectRuntimeStyles() {
     }
 
     .tool-window .window-titlebar {
+      --window-titlebar-separator: #a6a6a6;
       height: 22px;
       padding: 0 6px;
       background: linear-gradient(180deg, #fcfcfc 0%, #dedede 100%);
-      border-bottom-color: #a6a6a6;
       color: #111;
       font-size: 11px;
     }

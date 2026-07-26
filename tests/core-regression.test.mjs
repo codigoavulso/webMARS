@@ -130,6 +130,21 @@ test("browser bootstrap and preferences expose no WASM backend", async () => {
   assert.doesNotMatch(runtimeSettingsSource, /BACKEND_MODE|sanitizeBackendMode/);
 });
 
+test("window titlebar separators render inside the grid edge for Firefox", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const titlebarRule = ui.match(/\.window-titlebar\s*\{(?<body>[^}]+)\}/)?.groups?.body || "";
+  const separatorRule = ui.match(/\.window-titlebar::after\s*\{(?<body>[^}]+)\}/)?.groups?.body || "";
+  const toolTitlebarRule = ui.match(/\.tool-window \.window-titlebar\s*\{(?<body>[^}]+)\}/)?.groups?.body || "";
+
+  assert.match(titlebarRule, /--window-titlebar-separator:\s*#97a8bd;/);
+  assert.match(titlebarRule, /position:\s*relative;/);
+  assert.match(titlebarRule, /border-bottom:\s*1px solid transparent;/);
+  assert.match(separatorRule, /bottom:\s*0;/);
+  assert.match(separatorRule, /height:\s*1px;/);
+  assert.match(separatorRule, /background:\s*var\(--window-titlebar-separator\);/);
+  assert.match(toolTitlebarRule, /--window-titlebar-separator:\s*#a6a6a6;/);
+});
+
 test("workspace persistence keeps real fallbacks and one unload handler", async () => {
   const runtimeSource = await readFile(resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js"), "utf8");
 

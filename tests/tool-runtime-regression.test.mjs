@@ -84,6 +84,102 @@ test("runtime event batches flush each tool once even when the final event is ir
   assert.equal(context.batchSize, 2);
 });
 
+test("runtime event batches identify only deltas inside the final backstep window", async () => {
+  const source = await readFile(managerPath, "utf8");
+  const helperSource = sourceBetween(source, "function deliverToolSnapshotBatch", "\nfunction createToolManager");
+  const context = vm.createContext({});
+  vm.runInContext(`
+    ${helperSource}
+    const retention = [];
+    const instances = new Map([["counter", {
+      runtimeEventConsumer: true,
+      onRuntimeEvent(event, delivery) {
+        retention.push([
+          event.stepAfter,
+          delivery.retainHistory,
+          delivery.finalHistoryStartStep
+        ]);
+      }
+    }]]);
+    deliverToolRuntimeEventBatch(instances, [
+      { type: "instruction", stepAfter: 100, historyStartStep: 0 },
+      { type: "instruction", stepAfter: 101, historyStartStep: 1 },
+      { type: "instruction", stepAfter: 102, historyStartStep: 2 }
+    ]);
+    globalThis.retention = retention;
+  `, context);
+
+  assert.deepEqual([...context.retention].map((entry) => [...entry]), [
+    [100, true, 2],
+    [101, true, 2],
+    [102, true, 2]
+  ]);
+
+  vm.runInContext(`
+    retention.length = 0;
+    deliverToolRuntimeEventBatch(instances, [
+      { type: "instruction", stepAfter: 1, historyStartStep: 0 },
+      { type: "instruction", stepAfter: 2, historyStartStep: 0 },
+      { type: "instruction", stepAfter: 3, historyStartStep: 2 }
+    ]);
+  `, context);
+  assert.deepEqual([...context.retention].map((entry) => [...entry]), [
+    [1, false, 2],
+    [2, false, 2],
+    [3, true, 2]
+  ]);
+});
+
+test("batched tool state processes every event but journals only the backsteppable suffix", async () => {
+  const source = await readFile(managerPath, "utf8");
+  const helperSource = sourceBetween(source, "function deliverToolSnapshotBatch", "\nfunction createToolManager");
+  const context = vm.createContext({});
+  vm.runInContext(`
+    ${helperSource}
+    let total = 0;
+    const history = createToolDeltaHistory({
+      applyInverse(delta) {
+        total = delta.before;
+      }
+    });
+    const instances = new Map([["counter", {
+      runtimeEventConsumer: true,
+      onRuntimeEvent(event, delivery) {
+        if (delivery.retainHistory) history.record(event.stepAfter, { before: total });
+        total += 1;
+        history.pruneBefore(event.historyStartStep);
+      }
+    }]]);
+    const events = Array.from({ length: 720 }, (_unused, index) => ({
+      type: "instruction",
+      stepAfter: index + 1,
+      historyStartStep: Math.max(0, index - 99)
+    }));
+    deliverToolRuntimeEventBatch(instances, events);
+    const afterBatch = {
+      total,
+      entries: history.getEntryCount(),
+      currentStep: history.getCurrentStep()
+    };
+    history.rewind(719);
+    const afterOneBackstep = total;
+    history.rewind(620);
+    globalThis.observed = {
+      afterBatch,
+      afterOneBackstep,
+      afterWindowBackstep: total,
+      remaining: history.getEntryCount()
+    };
+  `, context);
+
+  assert.equal(context.observed.afterBatch.total, 720);
+  assert.equal(context.observed.afterBatch.entries, 100);
+  assert.equal(context.observed.afterBatch.currentStep, 720);
+  assert.equal(context.observed.afterOneBackstep, 719);
+  assert.equal(context.observed.afterWindowBackstep, 620);
+  assert.equal(context.observed.remaining, 0);
+});
+
 test("central tool delta history rewinds sparsely and follows the engine window", async () => {
   const source = await readFile(managerPath, "utf8");
   const helperSource = sourceBetween(source, "function createToolDeltaHistory", "\nfunction createToolManager");
@@ -152,8 +248,19 @@ test("stateful tools use central deltas and expose active runtime consumers", as
   const cacheSource = await readFile(resolve(projectRoot, "tools/cache-simulator.js"), "utf8");
   assert.doesNotMatch(cacheSource, /log:\s*String\(controls\.log\.value/);
   assert.match(cacheSource, /logLength:/);
-  assert.match(cacheSource, /onRuntimeEvent\(event\)/);
+  assert.match(cacheSource, /onRuntimeEvent\(event,\s*delivery\s*=\s*\{\}\)/);
+  assert.match(cacheSource, /delivery\.retainHistory !== false/);
   assert.match(cacheSource, /onRuntimeBatchEnd\(\)/);
+
+  const bhtSource = await readFile(resolve(projectRoot, "tools/bht-simulator.js"), "utf8");
+  assert.match(bhtSource, /let currentInstruction = ""/);
+  assert.match(bhtSource, /delivery\.retainHistory !== false/);
+  assert.doesNotMatch(bhtSource, /instructionField\.value = statement/);
+
+  const marsBotSource = await readFile(resolve(projectRoot, "tools/mars-bot.js"), "utf8");
+  assert.match(marsBotSource, /if \(!connected \|\| !moving \|\| frameTimer != null\) return/);
+  assert.match(marsBotSource, /onRuntimeBatchEnd\(\)/);
+  assert.doesNotMatch(marsBotSource, /clearState\(\);\s*ensureTimer\(\)/);
 });
 
 test("floating-point tool accepts register zero as a valid attachment", async () => {
@@ -218,6 +325,18 @@ test("Run requests compact runtime events without per-instruction snapshots", as
   assert.equal(observed.plainOptions.includeRuntimeEvent, false);
   assert.equal(observed.plainEvent, null);
   assert.doesNotMatch(source, /runtimeTrace/);
+});
+
+test("runtime UI recovery reuses the delivered snapshot and skips reads while Run is busy", async () => {
+  const source = await readFile(runtimePath, "utf8");
+  const helperSource = sourceBetween(
+    source,
+    "function scheduleBackstepButtonRecovery",
+    "\nfunction scheduleRuntimeControlRecovery"
+  );
+  assert.match(helperSource, /if \(runBusy\) \{\s*refs\.buttons\.backstep\.disabled = true;\s*return;/);
+  assert.match(helperSource, /snapshot && typeof snapshot === "object"/);
+  assert.match(source, /scheduleBackstepButtonRecovery\(snapshot\)/);
 });
 
 test("runtime memory validation keeps the dialog open and preserves its selection", async () => {
@@ -295,9 +414,9 @@ test("instruction counters accept consecutive executions at the same PC", async 
   for (const relativePath of ["tools/instruction-counter.js", "tools/instruction-statistics.js"]) {
     const source = await readFile(resolve(projectRoot, relativePath), "utf8");
     assert.doesNotMatch(source, /\blastAddress\b/, `${relativePath} still deduplicates by PC`);
-    assert.match(source, /onRuntimeEvent\(event\)/);
+    assert.match(source, /onRuntimeEvent\(event,\s*delivery\s*=\s*\{\}\)/);
     assert.match(source, /onRuntimeBatchEnd\(\)/);
-    assert.match(source, /processInstruction\(event\.executedInstruction,\s*event\.stepAfter\s*\|\s*0,\s*false\)/);
+    assert.match(source, /delivery\.retainHistory !== false/);
   }
 });
 

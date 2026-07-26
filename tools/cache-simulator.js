@@ -208,7 +208,7 @@
       this.blocks = Array.from({ length: numberOfBlocks }, () => ({ valid: false, tag: 0, lastUsed: 0 }));
     }
 
-    access(address) {
+    access(address, capturePrevious = true) {
       const previousAccessTick = this.accessTick;
       this.accessTick += 1;
       const wordAddress = Math.floor((address >>> 0) / 4);
@@ -231,7 +231,7 @@
       }
 
       if (hitIndex >= 0) {
-        const previousBlock = { ...this.blocks[hitIndex] };
+        const previousBlock = capturePrevious ? { ...this.blocks[hitIndex] } : null;
         this.blocks[hitIndex].lastUsed = this.accessTick;
         return { hit: true, blockIndex: hitIndex, setIndex, tag, previousAccessTick, previousBlock };
       }
@@ -252,7 +252,7 @@
         }
       }
 
-      const previousBlock = { ...this.blocks[replaceIndex] };
+      const previousBlock = capturePrevious ? { ...this.blocks[replaceIndex] } : null;
       this.blocks[replaceIndex] = { valid: true, tag, lastUsed: this.accessTick };
       return { hit: false, blockIndex: replaceIndex, setIndex, tag, previousAccessTick, previousBlock };
     }
@@ -512,29 +512,35 @@
         renderBlocks();
       }
 
-      function processResolvedAccess(access, targetStep, shouldRender = true) {
+      function processResolvedAccess(access, targetStep, shouldRender = true, retainHistory = true) {
         if (!cache || !controls.enabled.checked) return;
         if (!access) return;
 
-        const delta = history.ensure(targetStep, () => ({
-          operations: [],
-          logLength: logLines.length,
-          removedLog: []
-        }));
-        const inverse = {
-          accesses,
-          hits,
-          misses,
-          highlightBlock,
-          highlightKind,
-          accessTick: cache.accessTick,
-          blockIndex: -1,
-          previousBlock: null
-        };
-        const result = cache.access(access.address >>> 0);
-        inverse.blockIndex = result.blockIndex | 0;
-        inverse.previousBlock = { ...result.previousBlock };
-        delta.operations.push(inverse);
+        const delta = retainHistory
+          ? history.ensure(targetStep, () => ({
+              operations: [],
+              logLength: logLines.length,
+              removedLog: []
+            }))
+          : null;
+        const inverse = delta
+          ? {
+              accesses,
+              hits,
+              misses,
+              highlightBlock,
+              highlightKind,
+              accessTick: cache.accessTick,
+              blockIndex: -1,
+              previousBlock: null
+            }
+          : null;
+        const result = cache.access(access.address >>> 0, Boolean(delta));
+        if (inverse) {
+          inverse.blockIndex = result.blockIndex | 0;
+          inverse.previousBlock = result.previousBlock;
+          delta.operations.push(inverse);
+        }
         accesses += 1;
         if (result.hit) hits += 1;
         else misses += 1;
@@ -561,7 +567,7 @@
         }
       }
 
-      function processRuntimeEvent(event, shouldRender = true) {
+      function processRuntimeEvent(event, shouldRender = true, retainHistory = true) {
         if (!event || event.type !== "instruction") return;
         const tokens = parseTokens(event.executedInstruction);
         const opcode = String(tokens[0] || "").toLowerCase();
@@ -587,7 +593,7 @@
             opcode,
             address: access.address >>> 0,
             write: access.kind === "write"
-          }, event.stepAfter | 0, shouldRender && index === resolvedAccesses.length - 1);
+          }, event.stepAfter | 0, shouldRender && index === resolvedAccesses.length - 1, retainHistory);
         });
       }
 
@@ -637,13 +643,13 @@
 
           history.sync(snapshot);
         },
-        onRuntimeEvent(event) {
+        onRuntimeEvent(event, delivery = {}) {
           if (!connected || !event) return;
           if (event.type === "backstep") {
             history.rewind(event.stepAfter | 0);
             return;
           }
-          processRuntimeEvent(event, false);
+          processRuntimeEvent(event, false, delivery.retainHistory !== false);
           history.pruneBefore(event.historyStartStep | 0);
         },
         onRuntimeBatchEnd() {

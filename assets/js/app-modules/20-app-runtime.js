@@ -5943,15 +5943,27 @@ function refreshRuntimeControls(snapshot = null) {
   updateNoInteractionUiMode();
 }
 
-function scheduleBackstepButtonRecovery() {
+function scheduleBackstepButtonRecovery(snapshot = null) {
   if (!refs?.buttons?.backstep) return;
   if (backstepButtonRecoveryPending) return;
   backstepButtonRecoveryPending = true;
   Promise.resolve().then(() => {
     backstepButtonRecoveryPending = false;
-    const liveSnapshot = engine.getSnapshot();
     const runBusy = runActive || runPausedForInput;
-    refs.buttons.backstep.disabled = runBusy || !hasAvailableBackstep(liveSnapshot);
+    if (runBusy) {
+      refs.buttons.backstep.disabled = true;
+      return;
+    }
+    const effectiveSnapshot = snapshot && typeof snapshot === "object"
+      ? snapshot
+      : engine.getSnapshot({
+          includeTextRows: false,
+          includeLabels: false,
+          includeDataRows: false,
+          includeRegisters: false,
+          includeMemoryWords: false
+        });
+    refs.buttons.backstep.disabled = !hasAvailableBackstep(effectiveSnapshot);
   });
 }
 
@@ -6313,7 +6325,7 @@ function syncSnapshot(snapshot, options = {}) {
     captureSyncError(error);
   }
   lastControlSyncError = syncError;
-  scheduleBackstepButtonRecovery();
+  scheduleBackstepButtonRecovery(snapshot);
 }
 
 function reportDiagnostics(result, assemblyContext = null) {
@@ -10144,7 +10156,6 @@ if (typeof window !== "undefined") {
     }
   };
 }
-
 
 
 

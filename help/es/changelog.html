@@ -8,7 +8,17 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">La versión 0.4.9 refuerza la ejecución prolongada, la compatibilidad con MARS y las herramientas síncronas del navegador.</p>
+  <p class="lead">La versión 0.4.10 hace que las herramientas conectadas y las actualizaciones de la interfaz sean mucho más ligeras, conservando backsteps exactos.</p>
+
+  <h2>0.4.10 — historial de herramientas por lotes e interfaz más ligera</h2>
+  <ul>
+    <li>Retención de deltas de las herramientas únicamente para instrucciones aún cubiertas por la ventana exacta de 100 backsteps del motor.</li>
+    <li>Todos los eventos del runtime siguen disponibles para los modelos de las herramientas, con actualización visual por lotes y sin historial obsoleto.</li>
+    <li>Reducción del trabajo DOM por instrucción en BHT y de las copias de estado redundantes en el simulador de caché.</li>
+    <li>Fin del renderizado inactivo de Mars Bot y eliminación de un snapshot completo redundante en la sincronización de la interfaz.</li>
+    <li>Corrección de un artefacto de repaint del separador de títulos de ventana exclusivo de Firefox.</li>
+    <li>Reducción del polling inactivo del terminal en el laboratorio Monty Hall sin comprometer la respuesta de entrada ni los backsteps.</li>
+  </ul>
 
   <h2>0.4.9 — paridad del runtime y backsteps fiables</h2>
   <ul>

@@ -26,27 +26,42 @@ function deliverToolSnapshotBatch(instances, snapshots, onError = () => {}) {
 function deliverToolRuntimeEventBatch(instances, events, onError = () => {}) {
   const queue = Array.isArray(events) ? events.filter(Boolean) : (events ? [events] : []);
   if (!queue.length || !(instances instanceof Map) || instances.size === 0) return;
+  const finalHistoryStart = Number(queue[queue.length - 1]?.historyStartStep);
+  const hasFinalHistoryStart = Number.isFinite(finalHistoryStart);
+  const finalHistoryStartStep = hasFinalHistoryStart ? Math.max(0, Math.trunc(finalHistoryStart)) : null;
+  const createDelivery = (event, eventIndex) => ({
+    batched: queue.length > 1,
+    batchSize: queue.length,
+    batchIndex: eventIndex,
+    isLast: eventIndex === queue.length - 1,
+    finalHistoryStartStep,
+    retainHistory: finalHistoryStartStep == null
+      || !Number.isFinite(Number(event?.stepAfter))
+      || Math.trunc(Number(event.stepAfter)) > finalHistoryStartStep
+  });
+  const deliveries = queue.map(createDelivery);
 
   instances.forEach((tool, toolId) => {
     if (!tool || tool.runtimeEventConsumer !== true) return;
     try {
       if (typeof tool.onRuntimeEventBatch === "function") {
-        tool.onRuntimeEventBatch(queue);
+        tool.onRuntimeEventBatch(queue, {
+          batchSize: queue.length,
+          firstEvent: queue[0],
+          lastEvent: queue[queue.length - 1],
+          finalHistoryStartStep
+        });
       } else if (typeof tool.onRuntimeEvent === "function") {
         queue.forEach((event, eventIndex) => {
-          tool.onRuntimeEvent(event, {
-            batched: queue.length > 1,
-            batchSize: queue.length,
-            batchIndex: eventIndex,
-            isLast: eventIndex === queue.length - 1
-          });
+          tool.onRuntimeEvent(event, deliveries[eventIndex]);
         });
       }
       if (typeof tool.onRuntimeBatchEnd === "function") {
         tool.onRuntimeBatchEnd({
           batchSize: queue.length,
           firstEvent: queue[0],
-          lastEvent: queue[queue.length - 1]
+          lastEvent: queue[queue.length - 1],
+          finalHistoryStartStep
         });
       }
     } catch (error) {

@@ -511,7 +511,7 @@ test("Monty Hall video lab completes 1,000 games before entering a cooperative T
   detachReceiver();
 
   assert.ok(waitResult, "The simulation must reach its cooperative terminal wait.");
-  assert.equal(waitResult.sleepMs, 4);
+  assert.equal(waitResult.sleepMs, 16);
   assert.ok(engine.steps < 40000, "The 1,000-game simulation must finish without an instruction runaway.");
   assert.equal(engine.registers[16] | 0, 1000);
   assert.equal((engine.registers[17] | 0) + (engine.registers[18] | 0), 1000);

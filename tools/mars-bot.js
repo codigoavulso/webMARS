@@ -58,6 +58,7 @@
       let y = 0;
       let tracks = [];
       let frameTimer = null;
+      let runtimeInfoPending = false;
       const history = ctx.createToolDeltaHistory({
         applyInverse(delta) {
           if (!delta) return;
@@ -72,6 +73,7 @@
           tracks.length = Math.min(tracks.length, Math.max(0, delta.trackLength | 0));
           writeWordSafe(ADDR_WHERE_X, Math.round(x));
           writeWordSafe(ADDR_WHERE_Y, Math.round(y));
+          syncMovementTimer();
           render();
           updateInfo();
         }
@@ -122,6 +124,7 @@
         tracks = [];
         writeWordSafe(ADDR_WHERE_X, 0);
         writeWordSafe(ADDR_WHERE_Y, 0);
+        syncMovementTimer();
         render();
         updateInfo();
       }
@@ -145,7 +148,7 @@
 
       function stepMovement() {
         if (!connected || !moving) {
-          render();
+          stopTimer();
           return;
         }
 
@@ -177,13 +180,24 @@
       }
 
       function ensureTimer() {
-        if (frameTimer != null) return;
+        if (!connected || !moving || frameTimer != null) return;
         frameTimer = window.setInterval(stepMovement, 40);
       }
 
-      function processWrite(write, targetStep = getSnapshotStep()) {
+      function stopTimer() {
+        if (frameTimer == null) return;
+        window.clearInterval(frameTimer);
+        frameTimer = null;
+      }
+
+      function syncMovementTimer() {
+        if (connected && moving) ensureTimer();
+        else stopTimer();
+      }
+
+      function processWrite(write, targetStep = getSnapshotStep(), retainHistory = true) {
         if (!write) return;
-        ensureHistoryDelta(targetStep);
+        if (retainHistory) ensureHistoryDelta(targetStep);
         if (write.address === ADDR_HEADING) {
           heading = write.value | 0;
         } else if (write.address === ADDR_LEAVETRACK) {
@@ -194,29 +208,30 @@
         } else if (write.address === ADDR_MOVE) {
           moving = (write.value | 0) !== 0;
         }
-        updateInfo();
+        syncMovementTimer();
+        runtimeInfoPending = true;
       }
 
       connectButton.addEventListener("click", () => {
         connected = !connected;
         connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
         if (connected) {
-          ensureTimer();
           history.sync(lastSnapshot);
           ctx.messagesPane.postMars("[tool] Mars Bot connected.");
         }
+        syncMovementTimer();
       });
 
       clearButton.addEventListener("click", clearState);
       closeButton.addEventListener("click", shell.close);
 
       clearState();
-      ensureTimer();
 
       return {
         isConnected: () => connected,
         open: shell.open,
         close() {
+          stopTimer();
           shell.close();
         },
         onSnapshot(snapshot) {
@@ -240,7 +255,7 @@
 
           history.sync(snapshot);
         },
-        onRuntimeEvent(event) {
+        onRuntimeEvent(event, delivery = {}) {
           if (!connected || !event) return;
           if (event.type === "backstep") {
             history.rewind(event.stepAfter | 0);
@@ -252,8 +267,19 @@
               access?.kind === "write"
               && [ADDR_HEADING, ADDR_LEAVETRACK, ADDR_MOVE].includes(access.address >>> 0)
             ));
-          if (write) processWrite({ address: write.address >>> 0, value: write.value | 0 }, event.stepAfter | 0);
+          if (write) {
+            processWrite(
+              { address: write.address >>> 0, value: write.value | 0 },
+              event.stepAfter | 0,
+              delivery.retainHistory !== false
+            );
+          }
           history.pruneBefore(event.historyStartStep | 0);
+        },
+        onRuntimeBatchEnd() {
+          if (!connected || !runtimeInfoPending) return;
+          runtimeInfoPending = false;
+          updateInfo();
         },
         onBackstep(event) {
           if (!connected || !event) return;

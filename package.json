@@ -1,6 +1,6 @@
 {
   "name": "webmars",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "private": true,
   "description": "Browser implementation of the MARS MIPS 4.5 assembler and simulator.",
   "license": "MIT",

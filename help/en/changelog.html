@@ -8,7 +8,17 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.4.9 strengthens long-running execution, MARS compatibility and synchronous browser tools.</p>
+  <p class="lead">Release 0.4.10 makes connected tools and runtime UI updates substantially lighter while preserving exact backsteps.</p>
+
+  <h2>0.4.10 — batched tool history and lighter UI updates</h2>
+  <ul>
+    <li>Retained tool deltas only for instructions still covered by the engine's exact 100-step backstep window.</li>
+    <li>Kept every runtime event available to tool models while batching visual updates and avoiding obsolete history allocation.</li>
+    <li>Reduced per-instruction DOM work in BHT and redundant state copies in the cache simulator.</li>
+    <li>Stopped idle Mars Bot rendering and removed a redundant full runtime snapshot from UI synchronization.</li>
+    <li>Corrected a Firefox-only window-title separator repaint artifact.</li>
+    <li>Reduced idle terminal polling in the Monty Hall lab without compromising input responsiveness or backsteps.</li>
+  </ul>
 
   <h2>0.4.9 — runtime parity and dependable backsteps</h2>
   <ul>

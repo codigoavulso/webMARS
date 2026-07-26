@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Monty Hall Lab — tutorial MIPS para o webMARS 0.4.8
+# Monty Hall Lab — tutorial MIPS para o webMARS 0.4.10
 # -----------------------------------------------------------------------------
 # Interface:
 #   Ferramentas > TTY Device + ANSI Terminal > Connect to MIPS
@@ -934,10 +934,10 @@ tty_read_wait:
   nop
 
   # Evitar uma espera ativa que execute milhões de instruções enquanto o
-  # utilizador pensa. O Sleep cede o browser durante 4 ms, mantém o terminal
+  # utilizador pensa. O Sleep cede o browser durante 16 ms, mantém o terminal
   # responsivo e continua a produzir histórico de backstep normal.
   li    $v0, 32
-  li    $a0, 4
+  li    $a0, 16
   syscall
   b     tty_read_wait
   nop
