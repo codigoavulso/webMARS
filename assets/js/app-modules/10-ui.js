@@ -90,7 +90,7 @@ function renderLayout(root) {
       </nav>
 
       <section class="toolbar panel">
-        <div class="toolbar-group">
+        <div class="toolbar-group toolbar-file-group">
           <button class="tool-btn" id="btn-new" type="button">New</button>
           <button class="tool-btn" id="btn-open" type="button">Open</button>
           <button class="tool-btn" id="btn-save" type="button">Save</button>
@@ -7030,8 +7030,8 @@ function injectRuntimeStyles() {
         justify-content: center;
         gap: 6px;
         flex: 1 0 auto;
-        min-width: 46px;
-        min-height: 36px;
+        min-width: 44px;
+        min-height: 33px;
         max-width: 46vw;
         overflow: hidden;
         padding: 4px 10px;
@@ -7072,37 +7072,31 @@ function injectRuntimeStyles() {
         min-height: 0;
       }
 
-      /* One swipeable strip rather than a wrapping block: finger-sized buttons
-         cost less vertical space than four wrapped rows of small ones, and the
-         run controls stay on screen while stepping. */
+      /* Two compact rows: the execution controls own the first, everything else
+         shares the second. Nothing scrolls out of sight, which a single strip
+         could not manage once the file actions and the speed picker were in. */
       .toolbar {
         display: flex;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         align-items: center;
-        gap: 6px;
+        gap: 4px;
         padding: 3px 4px;
         min-height: 0;
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: none;
-      }
-
-      .toolbar::-webkit-scrollbar {
-        display: none;
+        overflow: visible;
       }
 
       /* Icon-only: the label is what made these overflow and get clipped. The
          text stays in the DOM so the accessible name survives. */
       .toolbar .tool-btn {
-        width: 38px;
-        min-height: 36px;
+        width: 34px;
+        min-height: 30px;
         font-size: 0;
         -webkit-tap-highlight-color: transparent;
         /* The per-button icon rules are keyed by id, so they outrank this
            class selector on specificity no matter the order. */
         padding: 0 !important;
         background-position: center !important;
-        background-size: 19px 19px !important;
+        background-size: 17px 17px !important;
       }
 
       /* Compile and Assemble share one icon, so icon-only would make them
@@ -7141,35 +7135,40 @@ function injectRuntimeStyles() {
         display: none !important;
       }
 
-      /* Execution controls lead the strip so stepping never needs a swipe; the
-         file operations scroll off and remain reachable from the File menu.
-         Scoped under .toolbar to outrank the generic .toolbar-group order. */
-      .toolbar .toolbar-run-group { order: 1; }
+      /* New/Open/Save/Undo/Redo are all in the File and Edit menus, and on a
+         phone the run controls are what the toolbar is for. */
+      .toolbar-file-group {
+        display: none !important;
+      }
+
+      /* Scoped under .toolbar to outrank the generic .toolbar-group order. */
+      .toolbar .toolbar-run-group {
+        order: 1;
+        flex: 1 0 100%;
+        justify-content: space-between;
+      }
+
       .toolbar .toolbar-speed-group { order: 3; }
       .toolbar .toolbar-benchmark-group { order: 4; }
 
       .toolbar-group {
         display: flex;
-        flex: 0 0 auto;
+        flex: 0 1 auto;
         flex-wrap: nowrap;
         align-items: center;
         gap: 3px;
         order: 2;
-        width: 100%;
-        padding: 3px 0 2px;
-        border-top: 1px solid var(--line-soft);
+        width: auto;
+        min-width: 0;
+        padding: 0;
       }
 
-      .toolbar-group:first-child {
-        border-top: none;
-      }
-
+      /* The status tag plus the speed picker own the second row. */
       .toolbar-speed-group {
         display: grid;
         grid-template-columns: auto 1fr;
         align-items: center;
         gap: 6px;
-        min-width: 100%;
         width: 100%;
       }
 
@@ -7191,8 +7190,9 @@ function injectRuntimeStyles() {
       .run-speed-select-mobile {
         display: block;
         width: 100%;
-        min-height: 28px;
-        font-size: 13px;
+        min-width: 0;
+        min-height: 30px;
+        font-size: 12px;
       }
 
       .toolbar-benchmark-group {
