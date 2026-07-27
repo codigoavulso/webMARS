@@ -559,6 +559,14 @@ function createWindowManager(refs) {
   const STACKED_WINDOW_ORDER = ["window-main", "window-messages", "window-registers"];
   // Fixed left-to-right order of the mobile panel tabs; tools follow after.
   const MOBILE_PANEL_ORDER = ["window-main", "window-messages", "window-registers"];
+  // Glyphs stand in for the panel names on mobile, where a readable label costs
+  // more width than the tab bar has. The full name stays as the accessible name.
+  const MOBILE_PANEL_ICONS = {
+    "window-main": "\u{1F4DD}",
+    "window-messages": "\u{1F4AC}",
+    "window-registers": "\u{1F9EE}"
+  };
+  const MOBILE_PANEL_TOOL_ICON = "\u{1F527}";
   const DESKTOP_NATIVE_ORDER = ["window-main", "window-messages", "window-registers"];
   const DESKTOP_LINKED_RESIZE_IDS = new Set(DESKTOP_NATIVE_ORDER);
   const STACKED_DEFAULT_HEIGHTS = {
@@ -1426,13 +1434,33 @@ function createWindowManager(refs) {
     host.dataset.signature = signature;
     host.innerHTML = "";
     entries.forEach((entry) => {
+      const label = translateText(getMobilePanelLabel(entry));
+      const isTool = entry.kind === "tool";
       const tab = document.createElement("button");
       tab.type = "button";
-      tab.className = `panel-tab-btn${entry.id === activeId ? " active" : ""}`;
+      tab.className = `panel-tab-btn${entry.id === activeId ? " active" : ""}${isTool ? " panel-tab-tool" : ""}`;
       tab.dataset.panel = entry.id;
       tab.setAttribute("role", "tab");
       tab.setAttribute("aria-selected", entry.id === activeId ? "true" : "false");
-      tab.textContent = translateText(getMobilePanelLabel(entry));
+      // The glyph carries the meaning visually; the name stays as the
+      // accessible name and as the tooltip.
+      tab.setAttribute("aria-label", label);
+      tab.title = label;
+
+      const icon = document.createElement("span");
+      icon.className = "panel-tab-icon";
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = MOBILE_PANEL_ICONS[entry.id] || MOBILE_PANEL_TOOL_ICON;
+      tab.appendChild(icon);
+
+      // Several tools can be open at once, so those keep a name beside the icon.
+      if (isTool) {
+        const text = document.createElement("span");
+        text.className = "panel-tab-text";
+        text.textContent = label;
+        tab.appendChild(text);
+      }
+
       tab.addEventListener("click", () => setMobilePanel(entry.id));
       host.appendChild(tab);
     });
@@ -6997,21 +7025,35 @@ function injectRuntimeStyles() {
       }
 
       .panel-tab-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
         flex: 1 0 auto;
-        min-height: 44px;
+        min-width: 46px;
+        min-height: 36px;
         max-width: 46vw;
         overflow: hidden;
-        text-overflow: ellipsis;
-        padding: 10px 16px;
+        padding: 4px 10px;
         border: 1px solid var(--line);
         border-radius: 4px;
         background: var(--btn-face);
         color: var(--text);
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
         white-space: nowrap;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
+      }
+
+      .panel-tab-icon {
+        font-size: 17px;
+        line-height: 1;
+      }
+
+      .panel-tab-tool .panel-tab-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .panel-tab-btn.active {
@@ -7049,23 +7091,54 @@ function injectRuntimeStyles() {
         display: none;
       }
 
+      /* Icon-only: the label is what made these overflow and get clipped. The
+         text stays in the DOM so the accessible name survives. */
       .toolbar .tool-btn {
-        min-height: 40px;
-        padding: 8px 12px;
+        width: 38px;
+        min-height: 36px;
+        font-size: 0;
         -webkit-tap-highlight-color: transparent;
+        /* The per-button icon rules are keyed by id, so they outrank this
+           class selector on specificity no matter the order. */
+        padding: 0 !important;
+        background-position: center !important;
+        background-size: 19px 19px !important;
+      }
+
+      /* Compile and Assemble share one icon, so icon-only would make them
+         indistinguishable. Compile takes the subset name used across the app. */
+      #btn-compile-c0 {
+        background-image: none !important;
+      }
+
+      #btn-compile-c0::after {
+        content: "C0";
+        font-size: 12px;
+        font-weight: 700;
       }
 
       .mode-tab-btn,
-      .subtab-btn,
+      .subtab-btn {
+        min-height: 30px;
+        padding: 5px 12px;
+        -webkit-tap-highlight-color: transparent;
+      }
+
       .editor-file-tab {
-        min-height: 38px;
-        padding: 8px 12px;
+        min-height: 28px;
+        padding: 4px 10px;
         -webkit-tap-highlight-color: transparent;
       }
 
       .menu-item {
-        min-height: 36px;
-        padding: 6px 10px;
+        min-height: 32px;
+        padding: 5px 9px;
+      }
+
+      /* A single panel fills the screen, so there is nothing to minimize or
+         maximize; the tab bar already does the switching. */
+      .desktop.desktop-stacked .desktop-window .window-controls {
+        display: none !important;
       }
 
       /* Execution controls lead the strip so stepping never needs a swipe; the
@@ -7130,10 +7203,6 @@ function injectRuntimeStyles() {
       .benchmark-status {
         width: 100%;
         justify-content: space-between;
-      }
-
-      .toolbar .tool-btn {
-        min-height: 24px;
       }
 
       .desktop {
@@ -7318,12 +7387,6 @@ function injectRuntimeStyles() {
 
       .toolbar {
         padding: 2px 4px;
-      }
-
-      .toolbar .tool-btn {
-        padding: 1px 5px;
-        font-size: 11px;
-        min-height: 24px;
       }
 
       .run-speed-label {
