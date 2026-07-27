@@ -329,3 +329,69 @@ test("interface colors resolve through theme tokens instead of literals", async 
     }
   }
 });
+
+test("every translatable runtime message has a catalog entry in all languages", async () => {
+  // Message keys reach the catalogs as decoded strings, so catalog keys are
+  // decoded too: comparing raw source text would never match a key holding an
+  // escape such as \n.
+  function catalogKeys(source) {
+    const keys = new Set();
+    for (const match of source.matchAll(/^\s+"((?:[^"\\]|\\.)*)"\s*:/gm)) {
+      try {
+        keys.add(JSON.parse(`"${match[1]}"`));
+      } catch {
+        keys.add(match[1]);
+      }
+    }
+    return keys;
+  }
+
+  const catalogs = {};
+  for (const language of ["en", "pt", "es"]) {
+    catalogs[language] = catalogKeys(
+      await readFile(resolve(projectRoot, `assets/js/i18n/${language}.js`), "utf8")
+    );
+  }
+
+  async function collectSources(directory, found = []) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const full = resolve(directory, entry.name);
+      if (entry.isDirectory()) {
+        if (["dist", "node_modules", ".git", "i18n", "tests", "scripts", "docs"].includes(entry.name)) continue;
+        await collectSources(full, found);
+      } else if (entry.name.endsWith(".js")) {
+        found.push(full);
+      }
+    }
+    return found;
+  }
+
+  const translatingCalls = [
+    "translateText", "postMarsMessage", "postRunSystemLine", "postRunRaw",
+    "postRun", "setMessage", "setStatus", "confirmDialog", "requestTextDialog"
+  ];
+  const callPattern = new RegExp(
+    `\\b(?:${translatingCalls.join("|")})\\s*\\(\\s*("(?:[^"\\\\]|\\\\.)*")`, "g"
+  );
+
+  const missing = [];
+  for (const file of await collectSources(projectRoot)) {
+    const source = await readFile(file, "utf8");
+    for (const match of source.matchAll(callPattern)) {
+      let key;
+      try {
+        key = JSON.parse(match[1]);
+      } catch {
+        continue;
+      }
+      if (!key.trim()) continue;
+      for (const language of ["en", "pt", "es"]) {
+        if (!catalogs[language].has(key)) {
+          missing.push(`${language}: ${relative(projectRoot, file)} -> ${JSON.stringify(key)}`);
+        }
+      }
+    }
+  }
+
+  assert.deepEqual(missing, [], `Untranslated runtime messages:\n${missing.join("\n")}`);
+});
