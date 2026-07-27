@@ -8,11 +8,11 @@
     style.id = STYLE_ID;
     style.textContent = `
       .shunt-tool { display:flex; flex-direction:column; gap:8px; height:100%; box-sizing:border-box; padding:8px; font:12px "Segoe UI", Tahoma, sans-serif; }
-      .shunt-canvas-wrap { border:1px solid #9db0c8; background:#d3d3d3; flex:1; overflow:hidden; }
+      .shunt-canvas-wrap { border:1px solid var(--line); background:#d3d3d3; flex:1; overflow:hidden; }
       .shunt-canvas { display:block; width:100%; height:100%; background:#d3d3d3; }
-      .shunt-info { border:1px solid #9db0c8; background:#fff; padding:6px; font-family:Consolas, monospace; white-space:pre-wrap; min-height:90px; }
+      .shunt-info { border:1px solid var(--line); background:var(--surface); padding:6px; font-family:Consolas, monospace; white-space:pre-wrap; min-height:90px; }
       .shunt-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-      .shunt-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#24354b; }
+      .shunt-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .shunt-footer .tool-btn { min-width:120px; }
     `;
     document.head.appendChild(style);

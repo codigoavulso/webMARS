@@ -8,15 +8,15 @@
     style.id = STYLE_ID;
     style.textContent = `
       .icount-tool { display:flex; flex-direction:column; gap:10px; height:100%; padding:10px; box-sizing:border-box; font:12px "Segoe UI", Tahoma, sans-serif; }
-      .icount-title { font-size:44px; font-weight:700; letter-spacing:0.5px; color:#1d2f48; margin:0; }
+      .icount-title { font-size:44px; font-weight:700; letter-spacing:0.5px; color:var(--text-heading); margin:0; }
       .icount-grid { display:grid; grid-template-columns:auto 1fr auto 1fr; align-items:center; gap:8px 10px; }
-      .icount-grid label { font-weight:700; text-align:right; color:#23354c; }
-      .icount-grid input { width:100%; box-sizing:border-box; padding:4px 6px; border:1px solid #9db0c8; background:#f8fbff; font-family:Consolas, monospace; }
-      .icount-bar { width:100%; height:24px; border:1px solid #9db0c8; background:linear-gradient(#f5f7fb, #dde6f3); position:relative; overflow:hidden; }
-      .icount-fill { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, #8db7ff, #5f8fe0); }
-      .icount-bar span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#3d62a5; font-weight:700; }
+      .icount-grid label { font-weight:700; text-align:right; color:var(--text); }
+      .icount-grid input { width:100%; box-sizing:border-box; padding:4px 6px; border:1px solid var(--line); background:var(--surface-raised); font-family:Consolas, monospace; }
+      .icount-bar { width:100%; height:24px; border:1px solid var(--line); background:linear-gradient(var(--surface-muted), var(--surface-strong)); position:relative; overflow:hidden; }
+      .icount-fill { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, var(--bar-hi), var(--bar-lo)); }
+      .icount-bar span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--accent); font-weight:700; }
       .icount-footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
-      .icount-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#23354c; }
+      .icount-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .icount-footer .tool-btn { min-width:130px; }
     `;
     document.head.appendChild(style);

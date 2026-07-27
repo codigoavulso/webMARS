@@ -10,12 +10,12 @@
       .xray-tool { display:flex; flex-direction:column; gap:8px; height:100%; box-sizing:border-box; padding:8px; font:12px "Segoe UI", Tahoma, sans-serif; }
       .xray-toolbar { display:flex; gap:6px; align-items:center; }
       .xray-main { display:grid; grid-template-columns: 1fr 320px; gap:8px; min-height:0; flex:1; }
-      .xray-image-wrap { border:1px solid #9db0c8; background:#fff; overflow:auto; }
+      .xray-image-wrap { border:1px solid var(--line); background:var(--surface); overflow:auto; }
       .xray-image-wrap img { display:block; max-width:none; }
-      .xray-side { border:1px solid #9db0c8; background:#f7fbff; padding:8px; overflow:auto; display:flex; flex-direction:column; gap:8px; }
-      .xray-side pre { margin:0; font:11px Consolas, monospace; background:#fff; border:1px solid #9db0c8; padding:6px; white-space:pre-wrap; }
+      .xray-side { border:1px solid var(--line); background:var(--surface-raised); padding:8px; overflow:auto; display:flex; flex-direction:column; gap:8px; }
+      .xray-side pre { margin:0; font:11px Consolas, monospace; background:var(--surface); border:1px solid var(--line); padding:6px; white-space:pre-wrap; }
       .xray-footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
-      .xray-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#24354b; }
+      .xray-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .xray-footer .tool-btn { min-width:120px; }
     `;
     document.head.appendChild(style);

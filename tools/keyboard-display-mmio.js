@@ -27,8 +27,8 @@
         width: 100%;
         min-height: 0;
         resize: none;
-        border: 1px solid #7f9db9;
-        background: #fff;
+        border: 1px solid var(--line-strong);
+        background: var(--surface);
         padding: 4px;
         font-family: "Courier New", "Lucida Console", monospace;
         font-size: 12px;

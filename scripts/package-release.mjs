@@ -118,6 +118,11 @@ const EXCLUDED_PUBLIC_FILES = new Set([
   "help/MarsHelpTools.html",
   "help/MIPSInstructionSetSong.html",
   "help/SyscallHelp.html",
+  "help/MARSlicense.txt",
+  "help/SyscallMessageDialogError.gif",
+  "help/SyscallMessageDialogInformation.gif",
+  "help/SyscallMessageDialogQuestion.gif",
+  "help/SyscallMessageDialogWarning.gif",
   "help/en/HTML_of_links_for_posting_to_MARS_website.html",
   "help/es/HTML_of_links_for_posting_to_MARS_website.html",
   "help/pt/HTML_of_links_for_posting_to_MARS_website.html"

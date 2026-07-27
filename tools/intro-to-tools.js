@@ -8,9 +8,9 @@
     style.id = STYLE_ID;
     style.textContent = `
       .intro-tool { display:flex; flex-direction:column; height:100%; padding:8px; box-sizing:border-box; gap:8px; font:12px "Segoe UI", Tahoma, sans-serif; }
-      .intro-body { border:1px solid #9db0c8; background:#fff; padding:8px; overflow:auto; font: 30px "Segoe UI", Tahoma, sans-serif; line-height:1.4; white-space:pre-wrap; flex:1; }
+      .intro-body { border:1px solid var(--line); background:var(--surface); padding:8px; overflow:auto; font: 30px "Segoe UI", Tahoma, sans-serif; line-height:1.4; white-space:pre-wrap; flex:1; }
       .intro-footer { display:flex; align-items:center; gap:8px; }
-      .intro-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#23334a; }
+      .intro-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .intro-footer .tool-btn { min-width:130px; }
     `;
     document.head.appendChild(style);

@@ -1,19 +1,345 @@
-﻿:root {
+/*
+ * webMARS theme tokens.
+ *
+ * The light theme is the original webMARS appearance and stays the default.
+ * The dark theme is opt-in: the runtime sets `data-theme="dark"` on <html>
+ * from the `theme` interface preference. Every color used by the interface
+ * must resolve through one of the tokens below so both themes stay in sync.
+ */
+:root {
+  color-scheme: light;
+
+  /* Page and panel chrome */
+  --bg-top: #e2e6eb;
   --bg: #d4d8dd;
   --bg-deep: #c2c8cf;
   --panel: #e9edf2;
   --panel-2: #dfe5ec;
-  --line: #9ea9b7;
-  --line-strong: #7f8da0;
-  --text: #1f2a38;
+  --desktop-top: #d8dee6;
+  --desktop-bottom: #cfd7e2;
+
+  /* Surfaces, from content white to the darkest strip */
+  --surface: #ffffff;
+  --surface-raised: #f7fbff;
+  --surface-muted: #f2f5f9;
+  --surface-sunken: #eef3f9;
+  --surface-inset: #e7edf5;
+  --surface-strong: #d9e2ee;
+  --code-bg: #f5f7fa;
+
+  /* Borders */
+  --line: #9db0c8;
+  --line-strong: #7f9db9;
+  --line-hover: #6f89a8;
+  --line-soft: #b7c4d4;
+  --line-subtle: #ececec;
+
+  /* Text */
+  --text: #24354b;
+  --text-strong: #111111;
+  --text-heading: #1f2f45;
   --text-muted: #4e5a69;
+  --text-soft: #5f7288;
+  --text-faint: #7c8794;
+  --text-on-accent: #ffffff;
+
+  /* Accent */
   --accent: #2f6ea9;
   --accent-2: #275b8b;
+  --accent-strong: #1f5f99;
+  --accent-soft: #d1e8ff;
+  --accent-soft-2: #d9e7f8;
+  --accent-active: #c7dcf4;
+  --accent-line: #8fb4d9;
+  --selection: rgba(100, 149, 237, 0.34);
+
+  /* Buttons */
+  --btn-face: #ffffff;
+  --btn-hi: #ffffff;
+  --btn-lo: #d9e3ee;
+  --btn-lo-hover: #c5d9ee;
+
+  /* Sliders, splitters and progress bars */
+  --track-hi: #bcc7d5;
+  --track-lo: #a5b2c3;
+  --splitter-mid: #b8c5d6;
+  --bar-hi: #8db7ff;
+  --bar-lo: #5f8fe0;
+
+  /* Tables */
+  --table-line: #eee3d7;
+  --table-head: #fcf6ef;
+  --row-good: #d6f2c8;
+  --row-bad: #f6c9c9;
+  --row-active-ring: #f3d23c;
+
+  /* Large numeric readouts in tools */
+  --readout-red: #d00000;
+  --readout-blue: #0e3cb8;
+
+  /* Status colors */
   --ok: #2f7c3d;
+  --ok-bg: #edf9ef;
+  --ok-bg-2: #e3f1c8;
+  --ok-line: #93c29d;
+  --ok-accent: #6d9b3f;
   --warn: #8f5a13;
+  --warn-bg: #fff8dc;
+  --warn-line: #d6b181;
   --error: #a0322b;
-  --code-bg: #f5f7fa;
+  --error-deep: #6f1d1d;
+  --error-bg: #fff2f2;
+  --error-line: #d9a1a1;
+  --info: #1f5f99;
+  --info-bg: #eef6ff;
+  --info-line: #8fb4d9;
+
+  /* Amber highlights: current row, flashes and tree selection */
+  --highlight: #fff6b2;
+  --highlight-strong: #ffe88f;
+  --amber-hi: #fff5bf;
+  --amber-lo: #f1df96;
+  --amber-line: #b88d26;
+  --amber-text: #5d4208;
+  --amber-2-hi: #fff0a5;
+  --amber-2-lo: #ead07d;
+  --amber-2-line: #a37a19;
+  --amber-2-text: #4f3908;
+  --amber-meta: #75561a;
+
+  /* Window chrome */
+  --titlebar-hi: #f7fbff;
+  --titlebar-lo: #d7e3f2;
+  --titlebar-text: #223347;
+  --titlebar-line: #97a8bd;
+  --window-bg: #eef3f8;
+  --window-line: #8e9cad;
+
+  /* Flat gray chrome used by MARS tool windows */
+  --flat-face: #f0f0f0;
+  --flat-face-2: #efefef;
+  --flat-field-ro: #f6f6f6;
+  --flat-hi: #ffffff;
+  --flat-lo: #e6e6e6;
+  --flat-title-hi: #fcfcfc;
+  --flat-title-lo: #dedede;
+  --flat-splitter-hi: #f7f7f7;
+  --flat-splitter-lo: #d8d8d8;
+  --flat-hi-edge: #ffffff;
+  --flat-line: #a7a7a7;
+  --flat-line-soft: #b8b8b8;
+  --flat-line-mid: #9f9f9f;
+  --flat-line-strong: #8f8f8f;
+  --flat-line-dim: #7f7f7f;
+  --flat-text: #111111;
+  --flat-text-dim: #7f7f7f;
+
+  /* Classic beige chrome used by the help window and tool buttons */
+  --classic-face: #d4d0c8;
+  --classic-btn-lo: #ece9d8;
+  --classic-btn-press-hi: #ddd7c1;
+  --classic-btn-hi-2: #f5f5f1;
+  --classic-btn-lo-2: #d8d8d1;
+  --classic-strip-hi: #efe9d7;
+  --classic-strip-lo: #d3c7a7;
+  --classic-strip-line-top: #b7a874;
+  --classic-strip-line-bottom: #9e936a;
+  --remark-bg: #ccff99;
+  --remark-line: #8ab363;
+
+  /* Message panes */
+  --msg-run: #1f3f74;
+  --msg-mars: #4d341e;
+
+  /* Syntax highlighting */
+  --syntax-comment: #37b24d;
+  --syntax-directive: #8b5cf6;
+  --syntax-label: #2f3f52;
+  --syntax-opcode: #145799;
+  --syntax-register: #9b4b18;
+  --syntax-number: #2563eb;
+  --syntax-string: #b42318;
+
+  /* Indicators */
+  --sync-green: #35a853;
+  --sync-orange: #ee8f1f;
+  --sync-red: #d94848;
+  --cop-on-bg: #9cd13f;
+  --cop-on-line: #7faa32;
+  --cop-on-text: #21340a;
+
+  /* Effects */
   --shadow: 0 4px 12px rgba(38, 55, 76, 0.2);
+  --shadow-window: 0 2px 5px rgba(22, 31, 44, 0.2);
+  --shadow-popup: 0 8px 18px rgba(20, 28, 40, 0.28);
+  --overlay: rgba(9, 13, 20, 0.5);
+  --sheen: rgba(255, 255, 255, 0.6);
+  --inset-hi: rgba(255, 255, 255, 0.9);
+  --inset-hi-soft: rgba(255, 255, 255, 0.85);
+  --inset-press: rgba(0, 0, 0, 0.18);
+  --inset-ring: rgba(18, 28, 40, 0.22);
+  --splitter-hover: rgba(76, 120, 168, 0.14);
+  --splitter-hover-strong: rgba(73, 119, 171, 0.22);
+  --focus-ring: #e8eef7;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-top: #1b2129;
+  --bg: #161b22;
+  --bg-deep: #10141a;
+  --panel: #1e242c;
+  --panel-2: #191f26;
+  --desktop-top: #141a20;
+  --desktop-bottom: #0f141a;
+
+  --surface: #171d24;
+  --surface-raised: #1e2530;
+  --surface-muted: #1b222a;
+  --surface-sunken: #1a2028;
+  --surface-inset: #222a34;
+  --surface-strong: #27303b;
+  --code-bg: #13181f;
+
+  --line: #3b4757;
+  --line-strong: #4e5f74;
+  --line-hover: #63809c;
+  --line-soft: #333d4a;
+  --line-subtle: #2a323c;
+
+  --text: #d6dfe9;
+  --text-strong: #f2f6fa;
+  --text-heading: #cfdae7;
+  --text-muted: #a3b1c1;
+  --text-soft: #93a2b4;
+  --text-faint: #7c8b9c;
+  --text-on-accent: #ffffff;
+
+  --accent: #3d7fbf;
+  --accent-2: #4a8fd4;
+  --accent-strong: #7fbaf0;
+  --accent-soft: #1e3c58;
+  --accent-soft-2: #24425f;
+  --accent-active: #2a4b6b;
+  --accent-line: #3f6d99;
+  --selection: rgba(100, 149, 237, 0.32);
+
+  --btn-face: #262d36;
+  --btn-hi: #2a323c;
+  --btn-lo: #1f262f;
+  --btn-lo-hover: #2c3949;
+
+  --track-hi: #39434f;
+  --track-lo: #2c3541;
+  --splitter-mid: #2f3a47;
+  --bar-hi: #4d7fc4;
+  --bar-lo: #35619f;
+
+  --table-line: #2b333d;
+  --table-head: #232a33;
+  --row-good: #1d3d24;
+  --row-bad: #452424;
+  --row-active-ring: #b8912a;
+
+  --readout-red: #ff6b6b;
+  --readout-blue: #7aa5ff;
+
+  --ok: #56c46b;
+  --ok-bg: #16301d;
+  --ok-bg-2: #1b3520;
+  --ok-line: #3d6b48;
+  --ok-accent: #5f9b3f;
+  --warn: #d99f3f;
+  --warn-bg: #33290f;
+  --warn-line: #7a5f22;
+  --error: #e8837a;
+  --error-deep: #ef9b93;
+  --error-bg: #341b1b;
+  --error-line: #7c4442;
+  --info: #79b8ea;
+  --info-bg: #15293c;
+  --info-line: #34618c;
+
+  --highlight: #4a3d0f;
+  --highlight-strong: #5f4d12;
+  --amber-hi: #4a3d0f;
+  --amber-lo: #3c3210;
+  --amber-line: #8a6b1e;
+  --amber-text: #f3dfa1;
+  --amber-2-hi: #544413;
+  --amber-2-lo: #453811;
+  --amber-2-line: #9a7a26;
+  --amber-2-text: #f7e8b8;
+  --amber-meta: #d8c48a;
+
+  --titlebar-hi: #2b3542;
+  --titlebar-lo: #1d242d;
+  --titlebar-text: #d3dde9;
+  --titlebar-line: #3d4a5a;
+  --window-bg: #1a2029;
+  --window-line: #3a4655;
+
+  --flat-face: #23272c;
+  --flat-face-2: #1f2226;
+  --flat-field-ro: #1c1f23;
+  --flat-hi: #2e3339;
+  --flat-lo: #22262b;
+  --flat-title-hi: #2b3037;
+  --flat-title-lo: #1e2226;
+  --flat-splitter-hi: #2b3037;
+  --flat-splitter-lo: #191c20;
+  --flat-hi-edge: #3a4046;
+  --flat-line: #4a5057;
+  --flat-line-soft: #3d4349;
+  --flat-line-mid: #494f56;
+  --flat-line-strong: #555c64;
+  --flat-line-dim: #6a7178;
+  --flat-text: #e8ebee;
+  --flat-text-dim: #8a9098;
+
+  --classic-face: #262a30;
+  --classic-btn-lo: #2b3037;
+  --classic-btn-press-hi: #1d2126;
+  --classic-btn-hi-2: #2e3238;
+  --classic-btn-lo-2: #23272c;
+  --classic-strip-hi: #2c3037;
+  --classic-strip-lo: #21252b;
+  --classic-strip-line-top: #454a52;
+  --classic-strip-line-bottom: #2b2f35;
+  --remark-bg: #223318;
+  --remark-line: #4c6b32;
+
+  --msg-run: #8fb4e6;
+  --msg-mars: #d0a97f;
+
+  --syntax-comment: #6cc47f;
+  --syntax-directive: #b18cf7;
+  --syntax-label: #a9bcd2;
+  --syntax-opcode: #6fb2ea;
+  --syntax-register: #e0925f;
+  --syntax-number: #7fa9f5;
+  --syntax-string: #e8837a;
+
+  --sync-green: #46bd66;
+  --sync-orange: #f0a13c;
+  --sync-red: #e46464;
+  --cop-on-bg: #5f8f22;
+  --cop-on-line: #7ba33a;
+  --cop-on-text: #eaf5d8;
+
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
+  --shadow-window: 0 2px 6px rgba(0, 0, 0, 0.5);
+  --shadow-popup: 0 8px 20px rgba(0, 0, 0, 0.6);
+  --overlay: rgba(4, 7, 11, 0.62);
+  --sheen: rgba(255, 255, 255, 0.05);
+  --inset-hi: rgba(255, 255, 255, 0.06);
+  --inset-hi-soft: rgba(255, 255, 255, 0.05);
+  --inset-press: rgba(0, 0, 0, 0.4);
+  --inset-ring: rgba(0, 0, 0, 0.45);
+  --splitter-hover: rgba(120, 170, 225, 0.18);
+  --splitter-hover-strong: rgba(120, 170, 225, 0.26);
+  --focus-ring: #2d3d4f;
 }
 
 * {
@@ -27,7 +353,7 @@ body {
 }
 
 body {
-  background: linear-gradient(180deg, #e2e6eb 0%, var(--bg) 35%, var(--bg-deep) 100%);
+  background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg) 35%, var(--bg-deep) 100%);
   color: var(--text);
   font-family: "Bahnschrift", "Segoe UI", "Trebuchet MS", sans-serif;
   overflow: hidden;
@@ -72,7 +398,7 @@ select {
 
 .menu-item:hover {
   border-color: var(--line);
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--sheen);
 }
 
 .toolbar {
@@ -96,7 +422,7 @@ select {
 
 .tool-btn {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--btn-face);
   border-radius: 2px;
   padding: 6px 10px;
   cursor: pointer;
@@ -114,36 +440,16 @@ select {
 .tool-btn.primary {
   border-color: var(--accent);
   background: var(--accent);
-  color: #fff;
+  color: var(--text-on-accent);
 }
 
 .tool-btn.primary:hover {
   background: var(--accent-2);
 }
 
-.workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(280px, 1fr);
-  gap: 8px;
-  min-height: 0;
-}
-
-.main-column {
-  display: grid;
-  grid-template-rows: minmax(0, 3fr) minmax(160px, 1fr);
-  gap: 8px;
-  min-height: 0;
-}
-
-.main-pane,
 .messages-pane,
 .registers-pane {
   min-height: 0;
-}
-
-.main-pane {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
 }
 
 .tabs,
@@ -155,29 +461,25 @@ select {
   border-bottom: 1px solid var(--line);
 }
 
-.tab-btn,
 .subtab-btn {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--btn-face);
   border-radius: 2px;
   padding: 5px 10px;
   cursor: pointer;
 }
 
-.tab-btn.active,
 .subtab-btn.active {
   border-color: var(--accent);
-  color: #fff;
+  color: var(--text-on-accent);
   background: var(--accent);
 }
 
-.tab-panel,
 .subtab-panel {
   display: none;
   min-height: 0;
 }
 
-.tab-panel.active,
 .subtab-panel.active {
   display: block;
   height: 100%;
@@ -229,12 +531,11 @@ select {
 
 .segment-panel,
 .labels-panel,
-.data-panel,
 .register-body,
 .message-body {
   border: 1px solid var(--line);
   border-radius: 2px;
-  background: #fff;
+  background: var(--surface);
   min-height: 0;
   overflow: auto;
 }
@@ -261,7 +562,7 @@ table {
 
 th,
 td {
-  border-bottom: 1px solid #eee3d7;
+  border-bottom: 1px solid var(--table-line);
   padding: 6px 8px;
   text-align: left;
   white-space: nowrap;
@@ -270,12 +571,12 @@ td {
 th {
   position: sticky;
   top: 0;
-  background: #fcf6ef;
+  background: var(--table-head);
   z-index: 1;
 }
 
 .current-row {
-  background: #fff6b2;
+  background: var(--highlight);
 }
 
 .labels-list {
@@ -286,7 +587,7 @@ th {
 
 .labels-list li {
   padding: 6px 4px;
-  border-bottom: 1px solid #eee3d7;
+  border-bottom: 1px solid var(--table-line);
   font-family: "Cascadia Code", "Consolas", monospace;
   font-size: 12px;
 }
@@ -306,11 +607,11 @@ th {
 }
 
 .message-body.run {
-  color: #1f3f74;
+  color: var(--msg-run);
 }
 
 .message-body.mars {
-  color: #4d341e;
+  color: var(--msg-mars);
 }
 
 .registers-pane {
@@ -333,40 +634,26 @@ th {
   border-radius: 999px;
   font-size: 11px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface);
 }
 
 .tag.ok {
   color: var(--ok);
-  border-color: #8eb497;
+  border-color: var(--ok-line);
 }
 
 .tag.warn {
   color: var(--warn);
-  border-color: #d6b181;
+  border-color: var(--warn-line);
 }
 
 .tag.error {
   color: var(--error);
-  border-color: #d9a2a0;
+  border-color: var(--error-line);
 }
 
 @media (max-width: 1100px) {
-  .workspace {
-    grid-template-columns: 1fr;
-  }
-
-  .main-column {
-    grid-template-rows: minmax(380px, 1fr) minmax(180px, 0.5fr);
-  }
-
   .execute-top {
     grid-template-columns: 1fr;
   }
 }
-
-
-
-
-
-

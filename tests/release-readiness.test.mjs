@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.4.11";
+const expectedReleaseVersion = "0.4.12";
 
 async function exists(path) {
   try {
@@ -61,7 +61,7 @@ function placeholders(value) {
     .sort();
 }
 
-test("0.4.11 version is coherent across runtime and release metadata", async () => {
+test("0.4.12 version is coherent across runtime and release metadata", async () => {
   const packageJson = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
   const packageLock = JSON.parse(await readFile(resolve(projectRoot, "package-lock.json"), "utf8"));
   const appVersion = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");
@@ -264,4 +264,68 @@ test("release packaging and CI use the supported public commands", async () => {
   assert.match(workflow, /\buses:\s*actions\/upload-artifact@v4\b/);
   assert.match(packageScript, /\bEXCLUDED_PUBLIC_FILES\b/);
   assert.match(packageScript, /\bvalidateZipArchive\b/);
+});
+
+test("the dark theme is an opt-in preference resolved through shared tokens", async () => {
+  const [styles, index, ui, runtimeSettingsSource, appRuntime, helpCss] = await Promise.all([
+    readFile(resolve(projectRoot, "assets", "css", "styles.css"), "utf8"),
+    readFile(resolve(projectRoot, "index.html"), "utf8"),
+    readFile(resolve(projectRoot, "assets", "js", "app-modules", "10-ui.js"), "utf8"),
+    readFile(resolve(projectRoot, "assets", "js", "app-modules", "19-runtime-settings.js"), "utf8"),
+    readFile(resolve(projectRoot, "assets", "js", "app-modules", "20-app-runtime.js"), "utf8"),
+    readFile(resolve(projectRoot, "help", "en", "webmars-help.css"), "utf8")
+  ]);
+
+  // The light theme stays the default and keeps its own token block.
+  assert.match(styles, /^:root \{\n\s+color-scheme: light;/m);
+  assert.match(styles, /:root\[data-theme="dark"\] \{\n\s+color-scheme: dark;/);
+  assert.match(ui, /^\s+theme: "light",$/m);
+  assert.match(helpCss, /:root\[data-theme="dark"\]/);
+
+  // Every token declared for the light theme must have a dark counterpart.
+  const lightBlock = styles.slice(styles.indexOf(":root {"), styles.indexOf(':root[data-theme="dark"]'));
+  const darkBlock = styles.slice(styles.indexOf(':root[data-theme="dark"]'), styles.indexOf("\n}", styles.indexOf(':root[data-theme="dark"]')));
+  const tokensIn = (block) => new Set([...block.matchAll(/^\s+(--[a-z0-9-]+):/gm)].map((match) => match[1]));
+  const lightTokens = tokensIn(lightBlock);
+  const darkTokens = tokensIn(darkBlock);
+  assert.ok(lightTokens.size > 60, "expected the full token palette in the light theme");
+  for (const token of lightTokens) {
+    assert.ok(darkTokens.has(token), `the dark theme is missing ${token}`);
+  }
+
+  // The theme is chosen before first paint and re-applied from the preference.
+  assert.ok(
+    index.indexOf("bootstrapWebMarsTheme") < index.indexOf("webmars-loader"),
+    "the theme bootstrap must run before the splash markup"
+  );
+  assert.match(index, /localStorage\.getItem\("mars45-web-preferences"\)/);
+  assert.match(runtimeSettingsSource, /function applyThemePreference\(theme\)/);
+  assert.match(runtimeSettingsSource, /webmars:theme-changed/);
+  assert.match(appRuntime, /function applyUiPreferences\(nextPreferences\) \{\n\s+applyThemePreference\(nextPreferences\.theme\);/);
+  assert.match(appRuntime, /theme: sanitizeTheme\(values\.theme, current\.theme\),/);
+});
+
+test("interface colors resolve through theme tokens instead of literals", async () => {
+  const themedSources = [
+    "assets/js/app-modules/10-ui.js",
+    "assets/js/app-modules/15-help-system.js",
+    "assets/js/app-modules/18-runtime-browser-storage.js"
+  ];
+  // Colors that stay literal describe simulated device output, not interface
+  // chrome: the bitmap screen and the near-black bezel that frames it.
+  const allowedLiterals = new Set(["#000", "#20242b"]);
+
+  for (const relativePath of themedSources) {
+    const source = await readFile(resolve(projectRoot, relativePath), "utf8");
+    const styleBlocks = [...source.matchAll(/style\.textContent = `(?<css>[\s\S]*?)`;/g)]
+      .map((match) => match.groups.css);
+    assert.ok(styleBlocks.length > 0, `${relativePath} declares no injected stylesheet`);
+
+    for (const css of styleBlocks) {
+      const literals = [...css.matchAll(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)/g)]
+        .map((match) => match[0])
+        .filter((color) => !allowedLiterals.has(color.toLowerCase()));
+      assert.deepEqual(literals, [], `${relativePath} still hard-codes ${literals.join(", ")}`);
+    }
+  }
 });

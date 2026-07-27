@@ -8,12 +8,12 @@
     style.id = STYLE_ID;
     style.textContent = `
       .mbot-tool { display:flex; flex-direction:column; gap:8px; height:100%; box-sizing:border-box; padding:8px; font:12px "Segoe UI", Tahoma, sans-serif; }
-      .mbot-canvas-wrap { border:1px solid #9db0c8; background:#dcdcdc; padding:0; overflow:hidden; flex:1; }
+      .mbot-canvas-wrap { border:1px solid var(--line); background:#dcdcdc; padding:0; overflow:hidden; flex:1; }
       .mbot-canvas { display:block; width:100%; height:100%; background:#dcdcdc; }
       .mbot-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-      .mbot-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#24354b; }
+      .mbot-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .mbot-footer .tool-btn { min-width:120px; }
-      .mbot-info { border:1px solid #9db0c8; background:#fff; padding:6px; font-family:Consolas, monospace; white-space:pre-wrap; min-height:64px; }
+      .mbot-info { border:1px solid var(--line); background:var(--surface); padding:6px; font-family:Consolas, monospace; white-space:pre-wrap; min-height:64px; }
     `;
     document.head.appendChild(style);
   }

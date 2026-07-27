@@ -30,6 +30,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
     }
     const closeMenuItems = [
       { label: "Active file", command: "closeFile", shortcut: "Ctrl+W", enabled: () => hasActiveFile },
+      { label: "All files", command: "closeAllFiles", enabled: () => hasActiveFile },
       { label: "Close project", command: "closeProject", enabled: () => hasOpenProject }
     ];
     const cloudMenuItems = [
@@ -110,6 +111,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Permit extended (pseudo) instructions and formats", command: "toggleExtendedAssembler", check: (st) => st.preferences.extendedAssembler },
         { label: "Delayed branching", command: "toggleDelayedBranching", check: (st) => st.preferences.delayedBranching },
         { label: "Self-modifying code", command: "toggleSelfModifyingCode", check: (st) => st.preferences.selfModifyingCode },
+        { label: "Strict MARS 4.5 compatibility mode", command: "toggleStrictMarsCompatibility", check: (st) => st.preferences.strictMarsCompatibility },
         "-",
         { label: "Open Mini-C output window after compile", command: "toggleMiniCOutputWindow", check: (st) => st.preferences.miniCOpenOutputWindow },
         { label: "Mini-C (C0) Compiler...", command: "showMiniCCompilerPreferences" },

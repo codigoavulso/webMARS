@@ -8,15 +8,15 @@
     style.id = STYLE_ID;
     style.textContent = `
       .mv-tool { display:flex; flex-direction:column; gap:8px; height:100%; box-sizing:border-box; padding:8px; font:12px "Segoe UI", Tahoma, sans-serif; }
-      .mv-title { margin:0; text-align:center; font-size:40px; color:#1f3048; line-height:1; }
+      .mv-title { margin:0; text-align:center; font-size:40px; color:var(--text-heading); line-height:1; }
       .mv-main { display:grid; grid-template-columns:280px 1fr; gap:10px; min-height:0; flex:1; }
-      .mv-controls { border:1px solid #9db0c8; background:#f7fbff; padding:8px; display:flex; flex-direction:column; gap:8px; overflow:auto; }
+      .mv-controls { border:1px solid var(--line); background:var(--surface-raised); padding:8px; display:flex; flex-direction:column; gap:8px; overflow:auto; }
       .mv-controls label { font-weight:700; display:flex; flex-direction:column; gap:4px; }
-      .mv-canvas-wrap { border:1px solid #9db0c8; background:#fff; overflow:auto; padding:6px; }
+      .mv-canvas-wrap { border:1px solid var(--line); background:var(--surface); overflow:auto; padding:6px; }
       .mv-canvas { display:block; image-rendering:pixelated; }
-      .mv-scale { border:1px solid #9db0c8; background:#fff; padding:6px; font-family:Consolas, monospace; }
+      .mv-scale { border:1px solid var(--line); background:var(--surface); padding:6px; font-family:Consolas, monospace; }
       .mv-footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
-      .mv-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#24354b; }
+      .mv-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .mv-footer .tool-btn { min-width:130px; }
     `;
     document.head.appendChild(style);

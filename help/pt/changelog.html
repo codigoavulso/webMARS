@@ -8,7 +8,17 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">A versão 0.4.11 restaura automaticamente sessões cloud persistentes após refresh ou reinício do browser.</p>
+  <p class="lead">A versão 0.4.12 adiciona tema escuro opcional, corrige a aplicação imediata do tamanho de letra e remove código morto.</p>
+
+  <h2>0.4.12 &mdash; tema escuro, correção de tamanho de letra, limpeza de código morto</h2>
+  <ul>
+    <li>Adicionado tema escuro opcional em <code>Definições &gt; Interface...</code>, aplicado ao editor, janelas de ferramentas e páginas de ajuda.</li>
+    <li>Corrigida a aplicação imediata do tamanho de letra e altura de linha do editor após alterar nas preferências, sem necessidade de recarregar a página.</li>
+    <li>Adicionada a ação <em>Fechar todos os ficheiros</em> em <code>Ficheiro &gt; Fechar &gt; Todos os ficheiros</code>.</li>
+    <li>Removido o pipeline de autosave de sessão de máquina (~400 linhas) que estava bloqueado por uma flag experimental nunca ativada.</li>
+    <li>Removidas ~15 funções mortas em cinco módulos, exports de registry não utilizados, seletores CSS mortos e 113 chaves i18n não utilizadas.</li>
+    <li>Excluídos ficheiros de ajuda inacessíveis do pacote de lançamento.</li>
+  </ul>
 
   <h2>0.4.11 &mdash; restauro persistente do login cloud</h2>
   <ul>

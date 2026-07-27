@@ -9,13 +9,13 @@
     style.textContent = `
       .istats-tool { display:flex; flex-direction:column; gap:10px; height:100%; padding:10px; box-sizing:border-box; font:12px "Segoe UI", Tahoma, sans-serif; }
       .istats-grid { display:grid; grid-template-columns:auto 1fr 1fr; gap:8px; align-items:center; }
-      .istats-grid label { font-weight:700; text-align:right; color:#20324a; }
-      .istats-grid input { width:100%; box-sizing:border-box; border:1px solid #9db0c8; background:#f7fbff; padding:4px 6px; font-family:Consolas, monospace; }
-      .istats-bar { border:1px solid #9db0c8; height:24px; position:relative; background:linear-gradient(#f7f9fc, #e2eaf4); }
-      .istats-fill { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, #88b5ff, #5d8edd); }
-      .istats-bar span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#446fb1; }
+      .istats-grid label { font-weight:700; text-align:right; color:var(--text); }
+      .istats-grid input { width:100%; box-sizing:border-box; border:1px solid var(--line); background:var(--surface-raised); padding:4px 6px; font-family:Consolas, monospace; }
+      .istats-bar { border:1px solid var(--line); height:24px; position:relative; background:linear-gradient(var(--surface-raised), var(--surface-inset)); }
+      .istats-fill { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, var(--bar-hi), var(--bar-lo)); }
+      .istats-bar span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--accent); }
       .istats-footer { margin-top:auto; display:flex; gap:10px; align-items:center; justify-content:space-between; }
-      .istats-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#22334a; }
+      .istats-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .istats-footer .tool-btn { min-width:130px; }
     `;
     document.head.appendChild(style);

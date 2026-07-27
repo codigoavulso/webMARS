@@ -8,6 +8,8 @@ experimental WASM/hybrid backend is no longer part of the application.
 
 - `index.html`
   - Loads `assets/css/styles.css` and `assets/js/app-version.js`.
+  - Resolves the stored `theme` preference inline before first paint so the
+    splash and the interface never flash the light theme on a dark-theme load.
   - Starts `assets/js/app.bundle.js` with the current application version in the
     URL so browser caches follow the release version.
 
@@ -61,7 +63,7 @@ The current bootstrap order is:
 | `15-help-system.js` | Localized in-app help, About window and internal document viewer. |
 | `17-mini-c-compiler.js` | Mini-C/C0 and C1-NATIVE source detection, parsing, semantic checks and MIPS generation. |
 | `18-runtime-browser-storage.js` | Browser source-folder storage and the related file, preference, memory-map and example-loading workflows consumed by the app runtime. |
-| `19-runtime-settings.js` | Runtime preference validation, memory/backstep limits, address parsing and language-preference helpers. |
+| `19-runtime-settings.js` | Runtime preference validation, memory/backstep limits, address parsing, language-preference and theme-preference helpers. |
 | `19-runtime-benchmarks.js` | In-memory compile, assemble and run measurements, including duration, estimated instrumented JavaScript utilization and throughput. |
 | `20-app-runtime.js` | Final composition root: preferences, projects and sessions, compiler/assembler commands, run loop, persistence, cloud adapters, tools, help and UI synchronization. |
 
@@ -98,6 +100,26 @@ should remain incremental:
 Names such as `core/syscalls` or `runtime/session` may be useful conceptual
 boundaries for future extraction, but they are not directories or modules in
 the v0.4.8 tree.
+
+## Theming
+
+`assets/css/styles.css` declares every interface color as a custom property in
+two blocks: `:root` for the light theme, which is the original webMARS
+appearance and the default, and `:root[data-theme="dark"]` for the dark theme.
+Modules, tool windows and help pages must resolve colors through those tokens
+instead of literals; `release-readiness.test.mjs` enforces this for the injected
+stylesheets and checks that both blocks declare the same token set.
+
+The `theme` preference drives `applyThemePreference` in `19-runtime-settings.js`,
+which sets `data-theme` on the document element and emits
+`webmars:theme-changed`. Help documents render in frames and cannot inherit the
+tokens, so `15-help-system.js` follows that event: pages that link
+`help/en/webmars-help.css` receive the `data-theme` attribute, and older pages
+receive a small generated stylesheet built from the current token values.
+
+Colors that represent simulated device output - bitmap and terminal screens,
+LEDs, seven-segment displays and the ANSI palette - deliberately stay literal so
+a device keeps looking like the hardware it emulates.
 
 ## Supporting directories
 

@@ -8,7 +8,17 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.4.11 restores persistent cloud sessions automatically after refreshes and browser restarts.</p>
+  <p class="lead">Release 0.4.12 adds an opt-in dark theme, fixes immediate font-size apply, and removes a large amount of dead code.</p>
+
+  <h2>0.4.12 &mdash; dark theme, font-size fix, dead-code cleanup</h2>
+  <ul>
+    <li>Added opt-in dark theme selectable via <code>Settings &gt; Interface...</code>, applied to the editor, tool windows, and help pages.</li>
+    <li>Fixed editor font size and line height applying immediately after changing them in Interface preferences without requiring a page reload.</li>
+    <li>Wired the <em>Close All Files</em> action into <code>File &gt; Close &gt; All files</code>.</li>
+    <li>Removed the machine-session autosave pipeline (~400 lines) that was gated behind an experimental flag never set in any release.</li>
+    <li>Removed ~15 dead functions across five modules, unused registry exports, dead CSS selectors, and 113 unused i18n keys.</li>
+    <li>Excluded unreachable root-level help files from the release package.</li>
+  </ul>
 
   <h2>0.4.11 &mdash; persistent cloud login restoration</h2>
   <ul>

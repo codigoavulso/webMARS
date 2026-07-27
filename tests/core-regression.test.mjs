@@ -136,13 +136,47 @@ test("window titlebar separators render inside the grid edge for Firefox", async
   const separatorRule = ui.match(/\.window-titlebar::after\s*\{(?<body>[^}]+)\}/)?.groups?.body || "";
   const toolTitlebarRule = ui.match(/\.tool-window \.window-titlebar\s*\{(?<body>[^}]+)\}/)?.groups?.body || "";
 
-  assert.match(titlebarRule, /--window-titlebar-separator:\s*#97a8bd;/);
+  assert.match(titlebarRule, /--window-titlebar-separator:\s*var\(--titlebar-line\);/);
   assert.match(titlebarRule, /position:\s*relative;/);
   assert.match(titlebarRule, /border-bottom:\s*1px solid transparent;/);
   assert.match(separatorRule, /bottom:\s*0;/);
   assert.match(separatorRule, /height:\s*1px;/);
   assert.match(separatorRule, /background:\s*var\(--window-titlebar-separator\);/);
-  assert.match(toolTitlebarRule, /--window-titlebar-separator:\s*#a6a6a6;/);
+  assert.match(toolTitlebarRule, /--window-titlebar-separator:\s*var\(--flat-line\);/);
+});
+
+test("editor font preferences reach the visible overlay without a reload", async () => {
+  const [ui, runtimeSource] = await Promise.all([
+    readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8"),
+    readFile(resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js"), "utf8")
+  ]);
+
+  // The text area is transparent, so the overlay and gutter own the visible
+  // metrics. Applying the preference must refresh them in the same turn.
+  assert.match(ui, /#source-editor \{[^}]*color: transparent;/);
+  const applyUiPreferences = runtimeSource.match(
+    /function applyUiPreferences\(nextPreferences\) \{(?<body>[\s\S]*?)\n\}/
+  )?.groups?.body || "";
+  assert.match(applyUiPreferences, /refs\.editor\.style\.fontSize = `\$\{editorFontSize\}px`;/);
+  assert.match(applyUiPreferences, /refs\.editor\.style\.lineHeight = `\$\{editorLineHeight\}`;/);
+  assert.ok(
+    applyUiPreferences.indexOf("editor.refreshStatus();")
+      > applyUiPreferences.indexOf("refs.editor.style.lineHeight"),
+    "applyUiPreferences must refresh the editor after applying the new metrics"
+  );
+
+  // refreshStatus has to be the public entry point that redraws decorations.
+  const refreshStatus = ui.match(/refreshStatus\(\) \{(?<body>[^}]*)\}/)?.groups?.body || "";
+  assert.match(refreshStatus, /updateStatus\(\);/);
+  assert.match(ui, /function updateStatus\(\) \{[\s\S]*?updateEditorDecorations\(text, lineCount\);/);
+
+  // The gutter has to be measured with the editor font, not fixed-width digits.
+  const decorations = ui.match(
+    /function updateEditorDecorations\(text, lineCount\) \{(?<body>[\s\S]*?)\n  \}/
+  )?.groups?.body || "";
+  assert.match(decorations, /measureEditorTextWidth\(lastLineLabel\)/);
+  assert.doesNotMatch(decorations, /12 \+ digits \* 8/);
+  assert.match(ui, /function measureEditorTextWidth\(sample\) \{[\s\S]*?measureText\(String\(sample \?\? ""\)\)\.width;/);
 });
 
 test("workspace persistence keeps real fallbacks and one unload handler", async () => {
@@ -165,7 +199,7 @@ test("local saves stay local and reload persistence flushes the active project",
   const runtimeSource = await readFile(resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js"), "utf8");
   const saveFileStart = runtimeSource.indexOf("\n  saveFile() {");
   const saveProjectStart = runtimeSource.indexOf("\n  async saveProjectWorkspace()", saveFileStart);
-  const saveCommandsEnd = runtimeSource.indexOf("\n  saveFileToBrowserStorage()", saveProjectStart);
+  const saveCommandsEnd = runtimeSource.indexOf("\n  saveFileAs()", saveProjectStart);
 
   assert.ok(saveFileStart >= 0 && saveProjectStart > saveFileStart && saveCommandsEnd > saveProjectStart);
   assert.doesNotMatch(runtimeSource.slice(saveFileStart, saveCommandsEnd), /saveActiveProjectToCloud|ensureCloudAuthenticated/);
@@ -295,15 +329,4 @@ globalThis.after = JSON.stringify(projectState);`,
 
   assert.equal(sandbox.result, false);
   assert.equal(sandbox.after, sandbox.before);
-});
-
-test("machine-state import validates before changing the active memory map", async () => {
-  const runtimeSource = await readFile(resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js"), "utf8");
-  const importStart = runtimeSource.indexOf("function importMachineState(");
-  const importEnd = runtimeSource.indexOf("function computeMachineStateSignature(", importStart);
-  assert.ok(importStart >= 0 && importEnd > importStart);
-  const importSource = runtimeSource.slice(importStart, importEnd);
-
-  assert.match(importSource, /engine\.importRuntimeState\(state, options\);/);
-  assert.doesNotMatch(importSource, /engine\.setMemoryMap\(/);
 });

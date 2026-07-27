@@ -8,22 +8,22 @@
     style.id = STYLE_ID;
     style.textContent = `
       .float-tool { display:flex; flex-direction:column; gap:10px; height:100%; box-sizing:border-box; padding:10px; font:12px "Segoe UI", Tahoma, sans-serif; }
-      .float-tool h2 { margin:0; text-align:center; font-size:40px; color:#1e2f47; }
+      .float-tool h2 { margin:0; text-align:center; font-size:40px; color:var(--text-heading); }
       .float-hex-row { display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:center; }
-      .float-hex { width:100%; box-sizing:border-box; border:1px solid #9db0c8; padding:6px 8px; font: 42px Consolas, monospace; color:#d00000; text-align:center; letter-spacing:1px; }
-      .float-note { font-size:30px; color:#1e2f47; }
+      .float-hex { width:100%; box-sizing:border-box; border:1px solid var(--line); padding:6px 8px; font: 42px Consolas, monospace; color:var(--readout-red); text-align:center; letter-spacing:1px; }
+      .float-note { font-size:30px; color:var(--text-heading); }
       .float-bin-row { display:grid; grid-template-columns: 80px 170px 1fr auto; gap:8px; align-items:center; }
-      .float-input { width:100%; box-sizing:border-box; border:1px solid #9db0c8; padding:4px 6px; font: 38px Consolas, monospace; text-align:center; }
+      .float-input { width:100%; box-sizing:border-box; border:1px solid var(--line); padding:4px 6px; font: 38px Consolas, monospace; text-align:center; }
       .float-input.sign { font-size:30px; }
-      .float-label-row { display:grid; grid-template-columns: 80px 170px 1fr auto; gap:8px; color:#1f2f45; font-weight:700; text-align:center; }
-      .float-expansion { font: 37px Consolas, monospace; color:#111; padding:4px 0; }
+      .float-label-row { display:grid; grid-template-columns: 80px 170px 1fr auto; gap:8px; color:var(--text-heading); font-weight:700; text-align:center; }
+      .float-expansion { font: 37px Consolas, monospace; color:var(--flat-text); padding:4px 0; }
       .float-dec-row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; align-items:center; }
-      .float-dec { width:100%; box-sizing:border-box; border:1px solid #9db0c8; padding:8px 10px; font: 38px Consolas, monospace; color:#0e3cb8; text-align:right; }
-      .float-instructions { border:1px solid #9db0c8; padding:8px; background:#f5f9ff; color:#1f2f45; }
+      .float-dec { width:100%; box-sizing:border-box; border:1px solid var(--line); padding:8px 10px; font: 38px Consolas, monospace; color:var(--readout-blue); text-align:right; }
+      .float-instructions { border:1px solid var(--line); padding:8px; background:var(--surface-raised); color:var(--text-heading); }
       .float-attach { display:flex; align-items:center; gap:8px; }
       .float-attach select { min-width:150px; }
       .float-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:auto; }
-      .float-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#23344b; }
+      .float-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .float-footer .tool-btn { min-width:130px; }
     `;
     document.head.appendChild(style);

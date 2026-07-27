@@ -3,6 +3,9 @@
   const registry = root.WebMarsModules || (root.WebMarsModules = {});
   if (registry.runtimeSettings) return;
 
+  const THEMES = ["light", "dark"];
+  const DEFAULT_THEME = "light";
+
   const MIN_MEMORY_GB = 0.25;
   const MAX_MEMORY_GB = 2;
   const MAX_MEMORY_BYTES = 0x7fffffff;
@@ -69,6 +72,40 @@
     return languages.length ? languages : ["en"];
   }
 
+  function getAvailableThemes() {
+    return THEMES.slice();
+  }
+
+  function sanitizeTheme(value, fallback = DEFAULT_THEME) {
+    const normalized = String(value ?? "").trim().toLowerCase();
+    if (THEMES.includes(normalized)) return normalized;
+    const normalizedFallback = String(fallback ?? "").trim().toLowerCase();
+    return THEMES.includes(normalizedFallback) ? normalizedFallback : DEFAULT_THEME;
+  }
+
+  // The light theme is the document default, so it carries no attribute. The
+  // same rule is inlined in index.html to pick the theme before first paint.
+  function applyThemePreference(theme) {
+    const resolved = sanitizeTheme(theme);
+    const documentRef = typeof document !== "undefined" ? document : null;
+    const rootElement = documentRef ? documentRef.documentElement : null;
+    if (!rootElement) return resolved;
+
+    const previous = rootElement.getAttribute("data-theme");
+    if (resolved === DEFAULT_THEME) {
+      rootElement.removeAttribute("data-theme");
+    } else {
+      rootElement.setAttribute("data-theme", resolved);
+    }
+
+    // Documents hosted in help frames cannot inherit the tokens, so they
+    // follow this event instead.
+    if (previous !== rootElement.getAttribute("data-theme") && typeof root.dispatchEvent === "function") {
+      root.dispatchEvent(new CustomEvent("webmars:theme-changed", { detail: { theme: resolved } }));
+    }
+    return resolved;
+  }
+
   registry.runtimeSettings = Object.freeze({
     MIN_MEMORY_GB,
     MAX_MEMORY_GB,
@@ -84,6 +121,9 @@
     memoryGbToBytes,
     getI18nApi,
     applyLanguagePreference,
-    getAvailableLanguages
+    getAvailableLanguages,
+    getAvailableThemes,
+    sanitizeTheme,
+    applyThemePreference
   });
 })(typeof window !== "undefined" ? window : globalThis);

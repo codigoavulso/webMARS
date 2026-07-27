@@ -455,10 +455,6 @@
     };
   }
 
-  function isVoidType(typeName) {
-    return normalizeTypeName(typeName) === "void";
-  }
-
   function isVoidPointerTypeName(typeName) {
     return normalizeTypeName(typeName) === "void*";
   }
@@ -634,20 +630,6 @@
       parts.push(part);
     });
     return parts.join("/");
-  }
-
-  function pathDirname(value) {
-    const normalized = normalizePathLike(value);
-    const split = normalized.lastIndexOf("/");
-    return split >= 0 ? normalized.slice(0, split) : "";
-  }
-
-  function pathJoin(baseDir, relativePath) {
-    const base = normalizePathLike(baseDir);
-    const rel = normalizePathLike(relativePath);
-    if (!base) return rel;
-    if (!rel) return base;
-    return normalizePathLike(`${base}/${rel}`);
   }
 
   function stripUseLibrarySuffix(libraryName) {

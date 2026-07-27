@@ -17,6 +17,7 @@ if (
   !runtimeSettingsModule
   || typeof runtimeSettingsModule.sanitizeMemoryGb !== "function"
   || typeof runtimeSettingsModule.parseAddressPreference !== "function"
+  || typeof runtimeSettingsModule.applyThemePreference !== "function"
 ) {
   throw new Error("[mars-web] runtimeSettings module was not loaded before app runtime.");
 }
@@ -57,10 +58,14 @@ const {
   memoryGbToBytes,
   getI18nApi,
   applyLanguagePreference,
-  getAvailableLanguages
+  getAvailableLanguages,
+  getAvailableThemes,
+  sanitizeTheme,
+  applyThemePreference
 } = runtimeSettingsModule;
 
 applyLanguagePreference(preferences.language || "en");
+applyThemePreference(preferences.theme);
 
 runtimeSettings.startAtMain = preferences.startAtMain;
 runtimeSettings.delayedBranching = preferences.delayedBranching;
@@ -210,7 +215,6 @@ const SESSION_STORAGE_KEY = "mars45-web-session-v3";
 const LEGACY_SESSION_STORAGE_KEY = "mars45-web-session-v1";
 const SESSION_SERVER_DRAFT_KEY = "mars45-web-session-server-draft-v1";
 const SESSION_SCHEMA_VERSION = 3;
-const SESSION_MAX_AUTOSAVED_BACKSTEPS = 10;
 const SESSION_PERSIST_DEBOUNCE_MS = 180;
 const SESSION_PERSIST_INTERVAL_MS = 2 * 60 * 1000;
 const SESSION_STORAGE_TARGET_MAX_CHARS = 3600000;
@@ -274,15 +278,6 @@ let cloudSessionRefreshPromise = null;
 let cloudProjectSyncRefreshPromise = null;
 const cloudProjectSyncDocuments = new Map();
 
-function getExperimentalFlags() {
-  const scope = typeof window !== "undefined" ? window : globalThis;
-  return (scope && typeof scope.WebMarsExperimental === "object" && scope.WebMarsExperimental) || {};
-}
-
-function isMachineSessionAutosaveEnabled() {
-  return getExperimentalFlags().machineSessionAutosave === true;
-}
-
 function resolveDefaultCloudApiBase() {
   const configuredDefault = normalizeCloudApiBase(DEFAULT_SETTINGS?.cloudApiBase || "");
   if (typeof window === "undefined" || !window.location) return configuredDefault || CLOUD_LOCAL_DEV_API_BASE;
@@ -328,11 +323,6 @@ function describeCloudError(error, fallback = "Cloud request failed.") {
     return error.message.trim();
   }
   return fallback;
-}
-
-function describeCloudApiBasePreference(preferenceState = store?.getState?.().preferences || preferences) {
-  const explicit = normalizeCloudApiBase(preferenceState?.cloudApiBase || "");
-  return explicit || resolveDefaultCloudApiBase();
 }
 
 function formatCloudAttemptProgress(template, url, startedAt) {
@@ -461,12 +451,6 @@ function resolveStartupActiveFileId(project, restoredSession, files = []) {
     }
   }
   return String(files[0]?.id || "");
-}
-
-function normalizeMachineStateEntry(state) {
-  if (!state || typeof state !== "object") return null;
-  if (!Array.isArray(state.registers) || !Array.isArray(state.memoryWords)) return null;
-  return state;
 }
 
 function normalizeWindowSessionData(windowState) {
@@ -1070,9 +1054,6 @@ const postMarsSystemLine = (template, variables = {}, options = {}) => {
 const postRunRaw = (template, variables = {}, options = {}) => (
   messagesPane.postRun(translateText(template, variables), { translate: false, ...options })
 );
-const postRunMessage = (template, variables = {}, options = {}) => (
-  messagesPane.postRun(`${translateText(template, variables)}\n`, { translate: false, ...options })
-);
 const postRunSystemLine = (template, variables = {}, options = {}) => {
   const prefix = messagesPane.runEndsWithNewline?.() === false ? "\n" : "";
   messagesPane.postRun(`${prefix}${translateText(template, variables)}\n`, { translate: false, ...options });
@@ -1123,9 +1104,6 @@ const RUN_LOOP_COOPERATIVE_CHECK_INTERVAL_FAST = 8;
 const RUN_LOOP_TIME_BUDGET_MS_INTERACTIVE = 7;
 const RUN_LOOP_TIME_BUDGET_MS_FAST = 6;
 const RUN_LOOP_UI_SYNC_INTERVAL_MS_INTERACTIVE = 66;
-const RUN_LOOP_UI_SYNC_INTERVAL_MS_FAST = 33;
-const RUN_LOOP_MACHINE_CAPTURE_INTERVAL_MS = 220;
-const RUN_LOOP_MACHINE_FULL_CAPTURE_INTERVAL_MS = 2200;
 const RUN_LOOP_TOOL_SYNC_INTERVAL_MS_NO_INTERACTION = 120;
 const MINI_C_DEFAULT_TEMPLATE = miniCCompilerModule.defaultTemplate;
 // Keep the framebuffer clear of Mini-C globals, which start at 0x10010000.
@@ -1501,15 +1479,6 @@ let miniCGlobalLibraryEntries = MINI_C_GLOBAL_LIBRARY_FALLBACK_ENTRIES.map((entr
 let miniCGlobalLibrariesReady = false;
 let miniCGlobalLibrariesPromise = null;
 
-let machineCurrentState = null;
-let machineCurrentSignature = "";
-let machineBackstepHistory = [];
-let lastMachineCaptureAt = 0;
-let lastMachineFullCaptureAt = 0;
-let machineCurrentProgramMarker = "";
-let lastMachinePersistScheduleAt = 0;
-let autosaveBackstepFallbackArmed = false;
-let restoredBackstepFallbackActive = false;
 let persistTimer = null;
 let lastSuccessfulAssemblyContext = null;
 let lastSuccessfulAssemblySelection = {
@@ -2485,10 +2454,6 @@ function buildProjectLibraryCandidate(project, options = {}) {
   });
 }
 
-function isProjectLibraryWithinQuota(library = projectLibraryState) {
-  return computeProjectLibraryUsageBytes(library) <= ONLINE_SOURCE_MAX_BYTES;
-}
-
 function postProjectQuotaExceededMessage(usedBytes) {
   postMarsMessage("[warn] Browser storage limit exceeded: {used}/{limit}.", {
     used: formatStoredSourceUsage(usedBytes),
@@ -2940,10 +2905,6 @@ function setProjectTreeSelection(selection) {
 
 function getProjectTreeCheckedSelection() {
   return [...projectTreeCheckedNodes.values()];
-}
-
-function hasProjectTreeCheckedSelection() {
-  return projectTreeCheckedNodes.size > 0;
 }
 
 function isProjectTreeNodeChecked(nodeKey) {
@@ -5134,273 +5095,6 @@ void ensureMiniCGlobalLibrariesLoaded()
     // Ignore global library loading errors for tree rendering.
   });
 
-function canPersistMachineState() {
-  return typeof engine.exportRuntimeState === "function" && typeof engine.importRuntimeState === "function";
-}
-
-function exportMachineState(options = {}) {
-  if (!canPersistMachineState()) return null;
-  try {
-    return engine.exportRuntimeState({
-      includeProgram: options.includeProgram === true,
-      includeBreakpoints: options.includeBreakpoints !== false,
-      includeExecutionPlan: options.includeExecutionPlan === true
-    });
-  } catch {
-    return null;
-  }
-}
-
-function importMachineState(state, options = {}) {
-  if (!canPersistMachineState() || !state || typeof state !== "object") return false;
-  try {
-    engine.importRuntimeState(state, options);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function computeMachineStateSignature(state) {
-  if (!state || typeof state !== "object") return "";
-  const pc = Number.isFinite(state.pc) ? (state.pc >>> 0) : 0;
-  const steps = Number.isFinite(state.steps) ? Math.max(0, Math.trunc(state.steps)) : 0;
-  const memoryUsage = Number.isFinite(state.memoryUsageBytes) ? (state.memoryUsageBytes >>> 0) : 0;
-  const lastWrite = state.lastMemoryWriteAddress == null ? -1 : (state.lastMemoryWriteAddress >>> 0);
-  return [
-    state.assembled ? 1 : 0,
-    state.halted ? 1 : 0,
-    pc,
-    steps,
-    memoryUsage,
-    lastWrite
-  ].join(":");
-}
-
-function resetMachineSessionTracking() {
-  machineCurrentState = null;
-  machineCurrentSignature = "";
-  machineBackstepHistory = [];
-  lastMachineCaptureAt = 0;
-  lastMachineFullCaptureAt = 0;
-  machineCurrentProgramMarker = "";
-  lastMachinePersistScheduleAt = 0;
-  autosaveBackstepFallbackArmed = false;
-  restoredBackstepFallbackActive = false;
-}
-
-function getSnapshotProgramMarker(snapshot) {
-  const rowCount = Array.isArray(snapshot?.textRows) ? snapshot.textRows.length : 0;
-  const firstAddress = rowCount > 0 && Number.isFinite(snapshot.textRows[0]?.address)
-    ? (snapshot.textRows[0].address >>> 0)
-    : 0;
-  const lastAddress = rowCount > 0 && Number.isFinite(snapshot.textRows[rowCount - 1]?.address)
-    ? (snapshot.textRows[rowCount - 1].address >>> 0)
-    : 0;
-  const sourceName = getCurrentProgramName();
-  return `${sourceName}:${rowCount}:${firstAddress}:${lastAddress}`;
-}
-
-function trackMachineStateCheckpoint(snapshot = null, options = {}) {
-  if (!isMachineSessionAutosaveEnabled()) return;
-  if (!canPersistMachineState()) return;
-  const effectiveSnapshot = snapshot || engine.getSnapshot({
-    includeDataRows: false,
-    includeMemoryWords: false,
-    shareMemoryWords: true
-  });
-  const assembled = effectiveSnapshot?.assembled === true;
-  if (!assembled) {
-    if (machineCurrentState || machineBackstepHistory.length) {
-      resetMachineSessionTracking();
-      if (!options.skipPersistSchedule) scheduleWorkspacePersist();
-    }
-    return;
-  }
-
-  const marker = getSnapshotProgramMarker(effectiveSnapshot);
-  if (marker && marker !== machineCurrentProgramMarker) {
-    machineCurrentState = null;
-    machineCurrentSignature = "";
-    machineBackstepHistory = [];
-    autosaveBackstepFallbackArmed = false;
-  }
-
-  const now = Date.now();
-  const interval = options.force === true
-    ? 0
-    : ((runActive || options.fastMode === true || options.noInteraction === true)
-      ? RUN_LOOP_MACHINE_CAPTURE_INTERVAL_MS
-      : 0);
-  if (interval > 0 && (now - lastMachineCaptureAt) < interval) return;
-  if (
-    options.force !== true
-    && (runActive || options.fastMode === true || options.noInteraction === true)
-    && (now - lastMachineFullCaptureAt) < RUN_LOOP_MACHINE_FULL_CAPTURE_INTERVAL_MS
-  ) {
-    lastMachineCaptureAt = now;
-    return;
-  }
-
-  const state = exportMachineState({
-    includeProgram: false,
-    includeBreakpoints: true,
-    includeExecutionPlan: false
-  });
-  if (!state) return;
-
-  const signature = computeMachineStateSignature(state);
-  if (!signature || signature === machineCurrentSignature) {
-    lastMachineCaptureAt = now;
-    return;
-  }
-
-  if (machineCurrentState && machineCurrentState.assembled) {
-    machineBackstepHistory.push(machineCurrentState);
-    if (machineBackstepHistory.length > SESSION_MAX_AUTOSAVED_BACKSTEPS) {
-      machineBackstepHistory = machineBackstepHistory.slice(-SESSION_MAX_AUTOSAVED_BACKSTEPS);
-    }
-  }
-
-  machineCurrentState = state;
-  machineCurrentSignature = signature;
-  lastMachineCaptureAt = now;
-  lastMachineFullCaptureAt = now;
-  machineCurrentProgramMarker = marker || machineCurrentProgramMarker;
-  if (!options.skipPersistSchedule) {
-    const minPersistInterval = runActive ? 1500 : 0;
-    if (minPersistInterval === 0 || (now - lastMachinePersistScheduleAt) >= minPersistInterval) {
-      lastMachinePersistScheduleAt = now;
-      scheduleWorkspacePersist();
-    }
-  }
-}
-
-function forceMachineStateCheckpoint() {
-  if (!isMachineSessionAutosaveEnabled()) return;
-  if (!canPersistMachineState()) return;
-  trackMachineStateCheckpoint(null, { force: true });
-}
-
-function stateHasSerializedProgram(state) {
-  if (!state || typeof state !== "object") return false;
-  if (Array.isArray(state.textRows) && state.textRows.length > 0) return true;
-  if (typeof state.source === "string" && state.source.trim().length > 0) return true;
-  return false;
-}
-
-function ensureProgramLoadedForStateRestore() {
-  const snapshot = engine.getSnapshot({
-    includeDataRows: false,
-    includeMemoryWords: false,
-    shareMemoryWords: true
-  });
-  if (snapshot?.assembled === true && Array.isArray(snapshot.textRows) && snapshot.textRows.length > 0) {
-    return true;
-  }
-  const { result } = assembleFromEditor();
-  return Boolean(result?.ok);
-}
-
-function restoreMachineSession(machineSession) {
-  autosaveBackstepFallbackArmed = false;
-  restoredBackstepFallbackActive = false;
-  if (!canPersistMachineState()) return false;
-  if (!machineSession || typeof machineSession !== "object") return false;
-  const current = normalizeMachineStateEntry(machineSession.current);
-  if (!current) return false;
-
-  const currentHasProgram = stateHasSerializedProgram(current);
-  if (!currentHasProgram && !ensureProgramLoadedForStateRestore()) return false;
-
-  let restored = importMachineState(current, {
-    preserveProgram: !currentHasProgram,
-    preserveBreakpoints: false
-  });
-  if (!restored) return false;
-
-  let restoredSnapshot = engine.getSnapshot({
-    includeDataRows: false,
-    includeMemoryWords: false,
-    shareMemoryWords: true
-  });
-  const hasRestoredProgram = Array.isArray(restoredSnapshot?.textRows) && restoredSnapshot.textRows.length > 0;
-  if (!hasRestoredProgram) {
-    if (!ensureProgramLoadedForStateRestore()) return false;
-    restored = importMachineState(current, {
-      preserveProgram: true,
-      preserveBreakpoints: false
-    });
-    if (!restored) return false;
-    restoredSnapshot = engine.getSnapshot({
-      includeDataRows: false,
-      includeMemoryWords: false,
-      shareMemoryWords: true
-    });
-    if (!Array.isArray(restoredSnapshot?.textRows) || restoredSnapshot.textRows.length === 0) return false;
-  }
-
-  machineBackstepHistory = Array.isArray(machineSession.backsteps)
-    ? machineSession.backsteps
-        .map((entry) => normalizeMachineStateEntry(entry))
-        .filter(Boolean)
-        .slice(-SESSION_MAX_AUTOSAVED_BACKSTEPS)
-    : [];
-
-  machineCurrentState = exportMachineState({
-    includeProgram: false,
-    includeBreakpoints: true,
-    includeExecutionPlan: false
-  });
-  machineCurrentSignature = computeMachineStateSignature(machineCurrentState);
-  lastMachineCaptureAt = Date.now();
-  lastMachineFullCaptureAt = lastMachineCaptureAt;
-  lastMachinePersistScheduleAt = lastMachineCaptureAt;
-  machineCurrentProgramMarker = getSnapshotProgramMarker(restoredSnapshot);
-  autosaveBackstepFallbackArmed = machineBackstepHistory.length > 0;
-  restoredBackstepFallbackActive = machineBackstepHistory.length > 0;
-  return true;
-}
-
-function backstepFromAutosaveHistory() {
-  if (!canPersistMachineState() || !machineBackstepHistory.length) return false;
-  if (!ensureProgramLoadedForStateRestore()) {
-    machineBackstepHistory = [];
-    restoredBackstepFallbackActive = false;
-    scheduleWorkspacePersist();
-    return false;
-  }
-  const previous = machineBackstepHistory[machineBackstepHistory.length - 1];
-  const restored = importMachineState(previous, {
-    preserveProgram: true,
-    preserveBreakpoints: false
-  });
-  if (!restored) {
-    machineBackstepHistory = [];
-    autosaveBackstepFallbackArmed = false;
-    restoredBackstepFallbackActive = false;
-    scheduleWorkspacePersist();
-    return false;
-  }
-  machineBackstepHistory.pop();
-  if (!machineBackstepHistory.length) {
-    autosaveBackstepFallbackArmed = false;
-    restoredBackstepFallbackActive = false;
-  }
-  machineCurrentState = previous;
-  machineCurrentSignature = computeMachineStateSignature(previous);
-  lastMachineCaptureAt = Date.now();
-  lastMachineFullCaptureAt = lastMachineCaptureAt;
-  lastMachinePersistScheduleAt = lastMachineCaptureAt;
-  machineCurrentProgramMarker = getSnapshotProgramMarker(engine.getSnapshot({
-    includeDataRows: false,
-    includeMemoryWords: false,
-    shareMemoryWords: true
-  }));
-  scheduleWorkspacePersist();
-  return true;
-}
-
 function buildServerDraftPayload(payload) {
   const files = Array.isArray(payload?.files) ? payload.files : [];
   const windowState = payload?.windowState && typeof payload.windowState === "object" ? payload.windowState : null;
@@ -5826,6 +5520,7 @@ messagesPane.setInputSubmittedHandler(() => {
 });
 
 function applyUiPreferences(nextPreferences) {
+  applyThemePreference(nextPreferences.theme);
   refs.root.classList.toggle("hide-labels-window", !nextPreferences.showLabelsWindow);
   refs.root.classList.toggle("split-messages-runio", nextPreferences.splitMessagesRunIo === true);
   refs.benchmarks?.group?.classList.toggle(
@@ -5849,6 +5544,10 @@ function applyUiPreferences(nextPreferences) {
   const editorLineHeight = Math.max(1, Math.min(2.2, Number(nextPreferences.editorLineHeight) || 1.25));
   refs.editor.style.fontSize = `${editorFontSize}px`;
   refs.editor.style.lineHeight = `${editorLineHeight}`;
+  // The text area itself is transparent: the visible text is the highlight
+  // overlay, and the gutter and overlay copy their metrics from the text area.
+  // Refresh them now instead of waiting for the next keystroke or reload.
+  editor.refreshStatus();
 
   refs.root.classList.toggle("disable-text-highlight", !nextPreferences.highlightTextUpdates);
   refs.root.classList.toggle("disable-data-highlight", !nextPreferences.highlightDataUpdates);
@@ -5896,10 +5595,6 @@ function setRunSpeedIndex(index) {
   return normalized;
 }
 
-function getRunSpeedValue() {
-  return RUN_SPEED_TABLE[getRunSpeedIndex()];
-}
-
 function formatRunSpeedLabel(index) {
   if (index <= RUN_SPEED_INDEX_INTERACTION_LIMIT) {
     const value = RUN_SPEED_TABLE[index];
@@ -5907,15 +5602,6 @@ function formatRunSpeedLabel(index) {
     return translateText("Run speed {display} inst/sec", { display });
   }
   return translateText("Run speed at max (no interaction)");
-}
-
-function formatRunSpeedSummary(index) {
-  if (index <= RUN_SPEED_INDEX_INTERACTION_LIMIT) {
-    const value = RUN_SPEED_TABLE[index];
-    const display = value < 1 ? `${value}` : `${Math.trunc(value)}`;
-    return translateText("{display} inst/sec", { display });
-  }
-  return translateText("max (no interaction)");
 }
 
 function isNoInteractionMode(index = getRunSpeedIndex()) {
@@ -6314,7 +6000,6 @@ function syncSnapshot(snapshot, options = {}) {
   try {
     if (!skipToolSync) toolManager.onSnapshot(snapshot);
     else toolManager.onSnapshot(snapshot, { snapshotOnly: true });
-    trackMachineStateCheckpoint(snapshot, options);
     store.setState({ assembled: snapshot.assembled, halted: snapshot.halted, running: runActive });
   } catch (error) {
     captureSyncError(error);
@@ -6546,7 +6231,6 @@ function runLoopTick() {
 
   const runOutputMessages = [];
   let waitingForInput = false;
-  let forceCriticalCheckpoint = false;
   let deferredDelayMs = 0;
   let stopReason = "";
   let lastStepResult = null;
@@ -6577,16 +6261,12 @@ function runLoopTick() {
         runStopRequested = true;
         break;
       }
-      restoredBackstepFallbackActive = false;
-
-      if (result.runIo) {
-        forceCriticalCheckpoint = true;
-        if (result.message) runOutputMessages.push({ text: result.message, translate: false });
+      if (result.runIo && result.message) {
+        runOutputMessages.push({ text: result.message, translate: false });
       }
 
       if (result.waitingForInput) {
         waitingForInput = true;
-        forceCriticalCheckpoint = true;
         break;
       }
 
@@ -6641,7 +6321,6 @@ function runLoopTick() {
     toolManager.onRuntimeEventBatch(toolRuntimeEvents);
   }
   flushRunOutputMessages(runOutputMessages);
-  if (forceCriticalCheckpoint) forceMachineStateCheckpoint();
 
   if (waitingForInput) {
     markPausedForInput(true);
@@ -6786,17 +6465,38 @@ function parseBooleanPreferenceToken(value, fallback = false) {
   return fallback;
 }
 
+const THEME_OPTION_LABELS = {
+  light: "Light",
+  dark: "Dark"
+};
+
 async function openInterfacePreferencesPanel() {
   const current = store.getState().preferences;
   const languages = getAvailableLanguages();
+  const themes = getAvailableThemes();
   const result = await runDialogForm({
     title: translateText("Interface Preferences"),
-    message: translateText("Adjust language, editor, and highlighting settings."),
+    message: translateText("Adjust theme, language, editor, and highlighting settings."),
     confirmLabel: translateText("OK"),
     cancelLabel: translateText("Cancel"),
     width: "540px",
-    height: "520px",
+    height: "570px",
     sections: [
+      {
+        title: translateText("Appearance"),
+        fields: [
+          {
+            name: "theme",
+            label: translateText("Theme"),
+            type: "select",
+            value: sanitizeTheme(current.theme),
+            options: themes.map((theme) => ({
+              value: theme,
+              label: translateText(THEME_OPTION_LABELS[theme] || theme)
+            }))
+          }
+        ]
+      },
       {
         title: translateText("Language"),
         fields: [
@@ -6882,7 +6582,7 @@ async function openInterfacePreferencesPanel() {
     left: "120px",
     top: "90px",
     width: "540px",
-    height: "520px"
+    height: "570px"
   });
   if (!result?.ok) return;
 
@@ -6902,6 +6602,7 @@ async function openInterfacePreferencesPanel() {
 
   updatePreferencesPatch({
     language: selectedLanguage,
+    theme: sanitizeTheme(values.theme, current.theme),
     menuPosition: parsedMenuPosition,
     showBenchmarkPanel: parseBooleanPreferenceToken(values.showBenchmarkPanel, current.showBenchmarkPanel),
     editorFontSize: Math.max(9, Math.min(22, parsedFont)),
@@ -8421,14 +8122,6 @@ const commands = {
     return { ok: true, name: projectState.rootPath };
   },
 
-  saveFileToBrowserStorage() {
-    return commands.saveFile();
-  },
-
-  async saveFileToBrowserStorageAs() {
-    return commands.saveProjectWorkspace();
-  },
-
   saveFileAs() {
     return commands.saveFileToDiskAs();
   },
@@ -8478,7 +8171,6 @@ const commands = {
       postMarsSystemLine("{action}: operation completed successfully.", { action: translateText("Assemble") });
     }
 
-    restoredBackstepFallbackActive = false;
     syncSnapshot(engine.getSnapshot());
   },
   async compileC0() {
@@ -8582,7 +8274,6 @@ const commands = {
       incrementBackstepEstimate(1);
     }
     scheduleRuntimeControlRecovery();
-    restoredBackstepFallbackActive = false;
     if (result.runtimeEvent && typeof toolManager.onRuntimeEventBatch === "function") {
       toolManager.onRuntimeEventBatch([result.runtimeEvent]);
     }
@@ -8620,11 +8311,9 @@ const commands = {
     clearInputPauseState();
     runStopRequested = false;
     runActive = true;
-    restoredBackstepFallbackActive = false;
     runLastTickAt = performance.now();
     runStepCarry = 0;
     runLastUiSyncAt = 0;
-    forceMachineStateCheckpoint();
     syncButtons(snapshot);
     if (typeof toolManager.hasSnapshotConsumers === "function" && toolManager.hasSnapshotConsumers()) {
       toolManager.onSnapshot(snapshot);
@@ -8745,7 +8434,6 @@ const commands = {
       }
     }
 
-    restoredBackstepFallbackActive = false;
     syncSnapshot(engine.getSnapshot());
   },
   undo() {
@@ -9073,13 +8761,6 @@ const commands = {
   showInterfacePreferences() { openInterfacePreferencesPanel(); },
   showRuntimeMemoryPreferences() { openRuntimeMemoryPreferencesPanel(); },
   showMiniCCompilerPreferences() { openMiniCCompilerPreferencesPanel(); },
-  showLanguagePreferences() { openLanguagePreferencesDialog(); },
-  showEditorPreferences() { openEditorPreferencesDialog(); },
-  showHighlightingPreferences() { openHighlightingPreferencesDialog(); },
-  showExceptionHandlerPreferences() { openExceptionHandlerPreferencesDialog(); },
-  showMemoryConfigurationPreferences() { openMemoryConfigurationPreferencesDialog(); },
-  showMemoryUsagePreferences() { openMemoryUsagePreferencesDialog(); },
-
   openTool(toolId) { toolManager.open(toolId); },
   revealWindow(windowId, toolId = "") {
     const windowIdText = String(windowId || "").trim();
@@ -9206,13 +8887,6 @@ const commands = {
   },
 
   helpHub() { helpSystem.open("mips", "basic"); },
-  helpIntro() { helpSystem.open("mars", "intro"); },
-  helpIde() { helpSystem.open("mars", "ide"); },
-  helpSyscalls() { helpSystem.open("mips", "syscalls"); },
-  helpLicense() { helpSystem.open("license", "main"); },
-  helpBugs() { helpSystem.open("bugs", "main"); },
-  helpAcknowledgements() { helpSystem.open("ack", "main"); },
-  helpSong() { helpSystem.open("song", "main"); },
   helpMipsPdf() { helpSystem.openDocument("./help/mipsref.pdf", "MIPS Reference PDF"); },
   helpAbout() { helpSystem.openAbout(); }
 };
@@ -9779,7 +9453,7 @@ updateRunSpeedLabel();
 if (!restoredSession && !projectIsOpen()) {
   editor.setSource(INITIAL_SOURCE);
 } else {
-  editor.refreshView?.();
+  editor.refreshStatus();
   if (restoredSession?.files?.length) {
     postMarsMessage("Workspace restored ({count} file(s)).", { count: restoredSession.files.length });
   } else if (projectIsOpen()) {
@@ -9883,7 +9557,6 @@ if (startupSavedLayout?.loaded && startupSavedLayout.snapshot && typeof windowMa
   });
 }
 
-resetMachineSessionTracking();
 modeController.setMode(projectIsOpen() ? "edit" : "project");
 syncSnapshot(engine.getSnapshot());
 if (restoredSession && store.getState().preferences.assembleOnOpen) {

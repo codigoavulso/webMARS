@@ -216,44 +216,6 @@ function getOnlineSourceMenu(files) {
     .join("\n");
 }
 
-async function chooseOnlineSourceFile() {
-  const files = loadOnlineSourceFolder();
-  if (!files.length) {
-    postMarsMessage("[warn] Browser storage folder is empty.");
-    return null;
-  }
-
-  const menu = getOnlineSourceMenu(files);
-  const usage = formatStoredSourceUsage(computeOnlineSourceUsage(files));
-  const limit = formatStoredSourceUsage(ONLINE_SOURCE_MAX_BYTES);
-  const raw = await requestTextDialog(
-    "Open from browser storage",
-    translateText("Browser storage\nUsed: {used} / {limit}\n\n{menu}\n\nChoose file number or name", {
-      used: usage,
-      limit,
-      menu
-    }),
-    files[0].name,
-    {
-      confirmLabel: "Open",
-      cancelLabel: "Cancel"
-    }
-  );
-  if (raw == null) return null;
-
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  const numeric = Number.parseInt(trimmed, 10);
-  if (Number.isFinite(numeric) && numeric >= 1 && numeric <= files.length) {
-    return files[numeric - 1];
-  }
-  const selected = files.find((file) => file.name.toLowerCase() === trimmed.toLowerCase()) || null;
-  if (!selected) {
-    postMarsMessage("[warn] Browser storage file not found.");
-  }
-  return selected;
-}
-
 function ensureBrowserStorageManagerStyles() {
   if (typeof document === "undefined") return;
   if (document.getElementById("mars-browser-storage-manager-style")) return;
@@ -266,7 +228,7 @@ function ensureBrowserStorageManagerStyles() {
       gap: 8px;
       height: 100%;
       min-height: 0;
-      background: #f0f0f0;
+      background: var(--flat-face);
     }
     .browser-storage-summary {
       display: flex;
@@ -274,15 +236,15 @@ function ensureBrowserStorageManagerStyles() {
       justify-content: space-between;
       gap: 8px;
       padding: 3px 6px;
-      border: 1px solid #a7a7a7;
-      background: linear-gradient(180deg, #fdfdfd 0%, #ebebeb 100%);
+      border: 1px solid var(--flat-line);
+      background: linear-gradient(180deg, var(--flat-title-hi) 0%, var(--flat-lo) 100%);
       font-size: 11px;
     }
     .browser-storage-path {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-      color: #2b3c4f;
+      color: var(--text);
     }
     .browser-storage-panels {
       display: grid;
@@ -294,15 +256,15 @@ function ensureBrowserStorageManagerStyles() {
     .browser-storage-file-list {
       min-height: 0;
       overflow: auto;
-      background: #fff;
-      border: 1px solid #a7a7a7;
+      background: var(--surface);
+      border: 1px solid var(--flat-line);
     }
     .browser-storage-folder-item,
     .browser-storage-file-row {
       width: 100%;
       border: none;
-      border-bottom: 1px solid #ececec;
-      background: #fff;
+      border-bottom: 1px solid var(--line-subtle);
+      background: var(--surface);
       text-align: left;
       padding: 4px 6px;
       font-size: 11px;
@@ -311,11 +273,11 @@ function ensureBrowserStorageManagerStyles() {
     }
     .browser-storage-folder-item:hover,
     .browser-storage-file-row:hover {
-      background: #eef4fb;
+      background: var(--surface-raised);
     }
     .browser-storage-folder-item.active,
     .browser-storage-file-row.active {
-      background: #d7e6f7;
+      background: var(--accent-soft);
     }
     .browser-storage-file-row {
       display: grid;
@@ -330,7 +292,7 @@ function ensureBrowserStorageManagerStyles() {
       white-space: nowrap;
     }
     .browser-storage-file-meta {
-      color: #55687d;
+      color: var(--text-muted);
       font-size: 10px;
     }
     .browser-storage-editor {
@@ -349,8 +311,8 @@ function ensureBrowserStorageManagerStyles() {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      border: 1px solid #a7a7a7;
-      background: #efefef;
+      border: 1px solid var(--flat-line);
+      background: var(--flat-face-2);
       padding: 8px;
     }
     .browser-storage-footer-actions {

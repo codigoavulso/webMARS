@@ -176,7 +176,6 @@ const BACKSTEP_HISTORY_BUDGET_CAP_BYTES = 64 * 1024 * 1024;
 const BACKSTEP_HISTORY_BUDGET_MIN_BYTES = 512 * 1024;
 const BACKSTEP_HISTORY_BUDGET_DIVISOR = 8;
 const GENERIC_MAP_ENTRY_ESTIMATE_BYTES = 40;
-const BACKSTEP_MEMORY_CHANGE_ENTRY_ESTIMATE_BYTES = 16;
 const STRING_CHAR_ESTIMATE_BYTES = 2;
 
 class BackstepJournalBuffer {
@@ -1043,9 +1042,6 @@ function isPotentialSymbolExpression(text) {
   return /^[0-9a-fxX()\s+\-*/%<>&|^~]+$/.test(substituted);
 }
 
-function escapeRegExp(text) {
-  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 function normalizePathLike(value) {
   return String(value ?? "")
     .trim()
@@ -6010,11 +6006,6 @@ class MarsEngine {
       ".macro", ".end_macro", ".include"
     ]);
     const hasAtRegister = (statementText) => /(^|[^\w$.])\$at([^\w$.]|$)/i.test(String(statementText || ""));
-    const emitsAtFromPseudo = (sourceStatement, expandedStatements) => {
-      const sourceUsesAt = hasAtRegister(sourceStatement);
-      return expandedStatements.some((item) => hasAtRegister(item)) && !sourceUsesAt;
-    };
-
     lines.forEach((entry) => {
       let statement = entry.statement;
       if (!statement) return;
@@ -7997,7 +7988,6 @@ class MarsEngine {
     const freg = (index) => this.resolveFloatRegister(tokens[index]);
     const imm = (index) => this.resolveValue(tokens[index]);
     const asSigned16 = (num) => signExtend16(num);
-    const overflow32 = (value) => value > 2147483647 || value < -2147483648;
     const saturatingInt = (value) => saturatingInt32(value);
     const roundNearestEven = (value) => roundNearestEven32(value);
     const roundUsingFpuControl = (value) => this.roundUsingFpuControl(value);

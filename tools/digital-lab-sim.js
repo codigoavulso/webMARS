@@ -48,11 +48,11 @@
         font: 12px Tahoma, "Segoe UI", sans-serif;
         appearance: none;
         -webkit-appearance: none;
-        background: #ffffff !important;
+        background: var(--flat-hi) !important;
         background-image: none !important;
-        border: 1px solid #b8b8b8;
-        border-color: #b8b8b8;
-        color: #111;
+        border: 1px solid var(--flat-line-soft);
+        border-color: var(--flat-line-soft);
+        color: var(--flat-text);
         font-weight: 600;
         cursor: pointer;
         border-radius: 0;
@@ -62,7 +62,7 @@
         background: #35b54a !important;
         background-image: none !important;
         border-color: #2f9440 !important;
-        color: #ffffff !important;
+        color: var(--text-on-accent) !important;
       }
 
       .dlab-key.active:focus,
@@ -71,17 +71,17 @@
         background: #35b54a !important;
         background-image: none !important;
         border-color: #2f9440 !important;
-        color: #ffffff !important;
+        color: var(--text-on-accent) !important;
       }
 
       .dlab-key:hover {
-        background: #f3f3f3 !important;
+        background: var(--flat-face-2) !important;
         background-image: none !important;
-        border-color: #8f8f8f;
+        border-color: var(--flat-line-strong);
       }
 
       .dlab-key:active {
-        background: #e7e7e7 !important;
+        background: var(--flat-lo) !important;
         background-image: none !important;
       }
 
@@ -248,11 +248,11 @@
           const isActive = Boolean(pressedKey && entry.row === pressedKey.row && entry.col === pressedKey.col);
           entry.button.classList.toggle("active", isActive);
           entry.button.setAttribute("aria-pressed", isActive ? "true" : "false");
-          entry.button.style.setProperty("background", isActive ? "#35b54a" : "#ffffff", "important");
-          entry.button.style.setProperty("background-color", isActive ? "#35b54a" : "#ffffff", "important");
+          entry.button.style.setProperty("background", isActive ? "#35b54a" : "var(--flat-hi)", "important");
+          entry.button.style.setProperty("background-color", isActive ? "#35b54a" : "var(--flat-hi)", "important");
           entry.button.style.setProperty("background-image", "none", "important");
-          entry.button.style.setProperty("border-color", isActive ? "#2f9440" : "#b8b8b8", "important");
-          entry.button.style.setProperty("color", isActive ? "#ffffff" : "#111111", "important");
+          entry.button.style.setProperty("border-color", isActive ? "#2f9440" : "var(--flat-line-soft)", "important");
+          entry.button.style.setProperty("color", isActive ? "#ffffff" : "var(--flat-text)", "important");
           entry.button.style.setProperty("box-shadow", "none", "important");
           entry.button.style.setProperty("transform", "none", "important");
           entry.button.style.setProperty("outline", "none", "important");

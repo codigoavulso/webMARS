@@ -42,7 +42,7 @@
       }
 
       .bitmap-control-label {
-        color: #111;
+        color: var(--flat-text);
         line-height: 1.2;
       }
 
@@ -60,8 +60,8 @@
         flex: 1 1 auto;
         min-height: 0;
         overflow: auto;
-        border: 1px solid #bdbdbd;
-        background: #fff;
+        border: 1px solid var(--flat-line-soft);
+        background: var(--surface);
         padding: 10px;
         display: flex;
         align-items: flex-start;

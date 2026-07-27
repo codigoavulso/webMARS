@@ -272,8 +272,6 @@
   }
 
   registry.runtimeBenchmarks = Object.freeze({
-    DEFAULT_HISTORY_LIMIT,
-    DEFAULT_REFRESH_INTERVAL_MS,
     createBenchmarkCollector
   });
 })(typeof window !== "undefined" ? window : globalThis);

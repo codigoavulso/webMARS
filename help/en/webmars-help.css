@@ -84,3 +84,35 @@ th { background: var(--surface-soft); }
 }
 .compact td, .compact th { padding: 5px 8px; }
 .pill { display: inline-block; margin: 2px 3px 2px 0; padding: 2px 7px; border-radius: 999px; background: var(--accent-soft); color: #163f7d; font-size: .88rem; }
+
+/*
+ * Dark theme for the in-app help pages. The application sets
+ * `data-theme="dark"` on the help frame document when the dark interface
+ * theme is active, so these pages follow the interface.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #d6dfe9;
+  --muted: #a3b1c1;
+  --accent: #7fbaf0;
+  --accent-soft: #1b2c42;
+  --surface: #171d24;
+  --surface-soft: #1e2530;
+  --border: #3b4757;
+  --good: #56c46b;
+  --warn: #d99f3f;
+}
+
+:root[data-theme="dark"] h1,
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3 {
+  color: #cfdae7;
+}
+
+:root[data-theme="dark"] .steps > li::before {
+  color: #10161d;
+}
+
+:root[data-theme="dark"] .pill {
+  color: #bcd6f5;
+}

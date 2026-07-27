@@ -1,4 +1,4 @@
-# webMARS v0.4.11
+# webMARS v0.4.12
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,12 +22,13 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.4.11
+## Highlights in v0.4.12
 
-- Restored an existing cloud login automatically when the application starts after a refresh or browser restart.
-- Kept credentialed cloud requests scoped to the configured API and synchronized projects only after authentication succeeds.
-- Documented the persistent authentication cookie, its one-year maximum lifetime and immediate removal on logout.
-- Added release regression coverage for automatic cloud-session restoration.
+- Added opt-in dark theme selectable via `Settings > Interface...`, applied consistently across the editor, tool windows, and help pages.
+- Fixed editor font size applying immediately after changing it in Interface preferences without requiring a page reload.
+- Wired the `closeAllFiles` command into `File > Close > All files`.
+- Removed dead code: machine-session autosave pipeline, ~15 dead functions across 5 modules, dead CSS selectors, unused registry exports, and 113 unused i18n keys across all three languages.
+- Excluded unreachable root-level help files (`MARSlicense.txt`, `SyscallMessageDialog*.gif`) from the release package.
 
 ## Main Capabilities
 
@@ -36,6 +37,8 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - Breakpoints, run-speed control, popup/input syscalls, and runtime state restore.
 - Registers, COP0, COP1, text segment, data segment, symbol/label table, and Mars Messages/Run I/O panes.
 - MARS-style tools such as Bitmap Display, Cache Simulator, Digital Lab Sim, Keyboard/Display MMIO, and more.
+- Light and dark interface themes, selected in `Settings > Interface...` and applied to the editor,
+  tool windows and help pages.
 - Localized UI/help resources for `en`, `pt`, and `es`.
 - Browser storage for source files with virtual folders and quota management.
 - Project/editor/runtime workflow with persistent preferences and recoverable session state.
@@ -116,6 +119,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 - `index.html`: shell page and startup loader.
 - `assets/js/app.bundle.js`: ordered module bootstrap.
 - `assets/js/app-modules/00-core.js`: assembler and simulator core in JavaScript.
+- `assets/css/styles.css`: theme tokens for the light and dark themes plus the base component styles.
 - `assets/js/app-modules/10-ui.js`: windowing/layout/UI foundation.
 - `assets/js/app-modules/19-runtime-benchmarks.js`: local timing, JS-utilization, and throughput collector.
 - `assets/js/app-modules/20-app-runtime.js`: runtime orchestration, commands, persistence, and integration glue.
@@ -130,6 +134,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.4.12`: dark theme, immediate font-size apply, dead-code cleanup (autosave pipeline, ~15 functions, dead CSS, 113 i18n keys), closeAllFiles wired to menu
 - `v0.4.11`: persistent cloud login restoration across refreshes and browser restarts, with updated privacy documentation and regression coverage
 - `v0.4.10`: batched tool deltas, lighter runtime UI synchronization, Firefox separator correction, lower idle MMIO polling, and complete 100-step tool parity
 - `v0.4.9`: dependable sparse backsteps, synchronous browser tools, Java-compatible random syscalls, stronger state import and expanded runtime/example validation

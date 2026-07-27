@@ -10,12 +10,12 @@
       .smag-tool { display:flex; flex-direction:column; gap:8px; height:100%; box-sizing:border-box; padding:8px; font:12px "Segoe UI", Tahoma, sans-serif; }
       .smag-top { display:flex; gap:8px; align-items:center; }
       .smag-top select { min-width:220px; }
-      .smag-view { position:relative; border:1px solid #9db0c8; background:#fff; overflow:auto; flex:1; min-height:220px; }
+      .smag-view { position:relative; border:1px solid var(--line); background:var(--surface); overflow:auto; flex:1; min-height:220px; }
       .smag-content { position:relative; transform-origin:top left; }
       .smag-overlay { position:absolute; inset:0; pointer-events:auto; }
-      .smag-settings { border:1px solid #9db0c8; background:#f7fbff; padding:6px; display:flex; gap:14px; align-items:center; }
+      .smag-settings { border:1px solid var(--line); background:var(--surface-raised); padding:6px; display:flex; gap:14px; align-items:center; }
       .smag-footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
-      .smag-footer .ctrl { flex:1; text-align:center; font-weight:700; color:#24354b; }
+      .smag-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .smag-footer .tool-btn { min-width:120px; }
     `;
     document.head.appendChild(style);

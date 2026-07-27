@@ -54,17 +54,17 @@
       }
 
       .cache-progress {
-        border: 1px solid #7f9db9;
+        border: 1px solid var(--line-strong);
         height: 20px;
         position: relative;
-        background: #fff;
+        background: var(--surface);
       }
 
       .cache-progress .fill {
         position: absolute;
         inset: 0 auto 0 0;
         width: 0%;
-        background: #3b6fd8;
+        background: var(--accent);
       }
 
       .cache-progress span {
@@ -74,7 +74,7 @@
         align-items: center;
         justify-content: center;
         font-weight: 700;
-        color: #1f3f84;
+        color: var(--accent-2);
       }
 
       .cache-block-table {
@@ -100,8 +100,8 @@
       }
 
       .cache-blocks {
-        border: 1px solid #a7a7a7;
-        background: #fff;
+        border: 1px solid var(--flat-line);
+        background: var(--surface);
         overflow: auto;
         min-height: 180px;
       }
@@ -111,7 +111,7 @@
         grid-template-columns: 16px minmax(0, 1fr);
         gap: 6px;
         align-items: center;
-        border-bottom: 1px solid #ececec;
+        border-bottom: 1px solid var(--line-subtle);
         padding: 2px 6px;
         font-family: "Courier New", "Lucida Console", monospace;
         font-size: 11px;
@@ -120,11 +120,11 @@
       .cache-dot {
         width: 10px;
         height: 10px;
-        border: 1px solid #6b6b6b;
-        background: #f0f0f0;
+        border: 1px solid var(--flat-line-strong);
+        background: var(--flat-face);
       }
 
-      .cache-dot.empty { background: #f0f0f0; }
+      .cache-dot.empty { background: var(--flat-face); }
       .cache-dot.hit { background: #12da12; }
       .cache-dot.miss { background: #ff2b2b; }
 
@@ -142,8 +142,8 @@
         width: 100%;
         min-height: 110px;
         resize: none;
-        border: 1px solid #7f9db9;
-        background: #fff;
+        border: 1px solid var(--line-strong);
+        background: var(--surface);
         padding: 4px;
         box-sizing: border-box;
         font-family: "Courier New", "Lucida Console", monospace;

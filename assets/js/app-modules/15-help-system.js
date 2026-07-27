@@ -108,8 +108,8 @@
       .mars-help-window-content,
       .mars-help-doc-content,
       .mars-help-about-content {
-        background: #d4d0c8;
-        color: #000;
+        background: var(--classic-face);
+        color: var(--text-strong);
         display: grid;
         height: 100%;
         min-height: 0;
@@ -126,8 +126,8 @@
         align-items: end;
         gap: 3px;
         padding: 6px 7px 0;
-        border-bottom: 1px solid #7f9db9;
-        background: #d4d0c8;
+        border-bottom: 1px solid var(--line-strong);
+        background: var(--classic-face);
       }
 
       .mars-help-subtab-row {
@@ -135,11 +135,11 @@
       }
 
       .mars-help-tab {
-        border: 1px solid #7f9db9;
+        border: 1px solid var(--line-strong);
         border-bottom: none;
         border-radius: 0;
-        background: linear-gradient(#f5f5f1, #d8d8d1);
-        color: #000;
+        background: linear-gradient(var(--classic-btn-hi-2), var(--classic-btn-lo-2));
+        color: var(--text-strong);
         min-height: 24px;
         padding: 3px 10px 4px;
         font: 11px Tahoma, sans-serif;
@@ -147,7 +147,7 @@
       }
 
       .mars-help-tab.active {
-        background: #fff;
+        background: var(--surface);
         position: relative;
         top: 1px;
       }
@@ -162,8 +162,8 @@
         height: 100%;
         display: grid;
         grid-template-rows: auto minmax(0, 1fr);
-        border: 1px solid #7f9db9;
-        background: #fff;
+        border: 1px solid var(--line-strong);
+        background: var(--surface);
         overflow: hidden;
       }
 
@@ -173,7 +173,7 @@
 
       .mars-help-panel-host {
         min-height: 0;
-        background: #fff;
+        background: var(--surface);
         overflow: hidden;
       }
 
@@ -197,11 +197,11 @@
       }
 
       .mars-help-error {
-        color: #7b0000;
+        color: var(--error);
       }
 
       .mars-help-loading {
-        color: #404040;
+        color: var(--text-muted);
       }
 
       .mars-help-frame,
@@ -210,14 +210,14 @@
         width: 100%;
         height: 100%;
         border: none;
-        background: #fff;
+        background: var(--surface);
       }
 
       .mars-help-footer {
         display: flex;
         justify-content: center;
         padding: 0 0 8px;
-        background: #d4d0c8;
+        background: var(--classic-face);
       }
 
       .mars-help-footer .tool-btn {
@@ -228,16 +228,16 @@
         height: 100%;
         display: grid;
         grid-template-rows: 132px 6px minmax(0, 1fr);
-        border: 1px solid #7f9db9;
-        background: #fff;
+        border: 1px solid var(--line-strong);
+        background: var(--surface);
         overflow: hidden;
       }
 
       .mars-help-mips-remarks-wrap {
         min-height: 0;
         overflow: auto;
-        background: #ccff99;
-        border-bottom: 1px solid #8ab363;
+        background: var(--remark-bg);
+        border-bottom: 1px solid var(--remark-line);
       }
 
       .mars-help-mips-remarks {
@@ -266,9 +266,9 @@
       }
 
       .mars-help-mips-divider {
-        background: linear-gradient(#efe9d7, #d3c7a7);
-        border-top: 1px solid #b7a874;
-        border-bottom: 1px solid #9e936a;
+        background: linear-gradient(var(--classic-strip-hi), var(--classic-strip-lo));
+        border-top: 1px solid var(--classic-strip-line-top);
+        border-bottom: 1px solid var(--classic-strip-line-bottom);
         cursor: row-resize;
       }
 
@@ -276,7 +276,7 @@
         display: grid;
         align-content: start;
         min-height: 100%;
-        background: #fff;
+        background: var(--surface);
         font: 12px "Courier New", monospace;
       }
 
@@ -285,12 +285,12 @@
         grid-template-columns: minmax(260px, auto) 1fr;
         gap: 12px;
         padding: 3px 8px;
-        border-bottom: 1px solid #efefef;
+        border-bottom: 1px solid var(--line-subtle);
         align-items: start;
       }
 
       .mars-help-list-row.alt {
-        background: #eeeeee;
+        background: var(--flat-face-2);
       }
 
       .mars-help-list-example {
@@ -307,7 +307,7 @@
       }
 
       .mars-help-about-content {
-        background: linear-gradient(#e0e6f0, #d4d0c8);
+        background: linear-gradient(var(--surface-inset), var(--classic-face));
         grid-template-rows: minmax(0, 1fr) auto;
       }
 
@@ -319,15 +319,15 @@
 
       .mars-help-about-main .mars-help-panel-fill {
         height: 100%;
-        border: 1px solid #7f9db9;
+        border: 1px solid var(--line-strong);
         border-radius: 8px;
-        box-shadow: inset 0 0 0 1px #e8eef7;
-        background: #fff;
+        box-shadow: inset 0 0 0 1px var(--focus-ring);
+        background: var(--surface);
         overflow: hidden;
       }
 
       .mars-help-about-main .mars-help-frame {
-        background: #f4f7fc;
+        background: var(--surface-muted);
       }
 
       .mars-help-doc-content {
@@ -340,7 +340,7 @@
         gap: 8px;
         align-items: center;
         padding: 8px 10px 0;
-        background: #d4d0c8;
+        background: var(--classic-face);
       }
 
       .mars-help-url-row label {
@@ -349,16 +349,16 @@
 
       .mars-help-url-row input {
         min-width: 0;
-        border: 1px solid #7f9db9;
-        background: #fff;
+        border: 1px solid var(--line-strong);
+        background: var(--surface);
         padding: 4px 6px;
         font: 12px "Courier New", monospace;
       }
 
       .mars-help-doc-host {
         margin: 8px 10px;
-        border: 1px solid #7f9db9;
-        background: #fff;
+        border: 1px solid var(--line-strong);
+        background: var(--surface);
         min-height: 0;
         overflow: hidden;
       }
@@ -640,8 +640,67 @@
     return false;
   }
 
+  const FRAME_THEME_STYLE_ID = "webmars-frame-theme";
+  const HELP_FRAME_SELECTOR = "iframe.mars-help-frame, iframe.mars-help-doc-frame";
+  let helpFrameThemeWatcherBound = false;
+
+  function readThemeToken(name, fallback) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+  }
+
+  // Help documents that predate the shared stylesheet carry no theme tokens,
+  // so the dark theme is pushed into them as plain declarations.
+  function buildHelpFrameFallbackCss() {
+    return `
+      html { color-scheme: dark; }
+      body { background: ${readThemeToken("--surface", "#171d24")}; color: ${readThemeToken("--text", "#d6dfe9")}; }
+      a { color: ${readThemeToken("--accent-strong", "#7fbaf0")}; }
+      table, th, td { border-color: ${readThemeToken("--line", "#3b4757")}; }
+      th { background: ${readThemeToken("--table-head", "#1e2530")}; }
+      hr { border-color: ${readThemeToken("--line", "#3b4757")}; }
+    `;
+  }
+
+  function applyHelpFrameTheme(frame) {
+    try {
+      const doc = frame instanceof HTMLIFrameElement ? frame.contentDocument : null;
+      if (!doc || !doc.documentElement) return;
+
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      if (isDark) {
+        doc.documentElement.setAttribute("data-theme", "dark");
+      } else {
+        doc.documentElement.removeAttribute("data-theme");
+      }
+
+      const existing = doc.getElementById(FRAME_THEME_STYLE_ID);
+      const usesSharedStylesheet = Boolean(doc.querySelector('link[href*="webmars-help.css"]'));
+      if (!isDark || usesSharedStylesheet) {
+        existing?.remove();
+        return;
+      }
+      const style = existing || doc.createElement("style");
+      style.id = FRAME_THEME_STYLE_ID;
+      style.textContent = buildHelpFrameFallbackCss();
+      if (!existing) (doc.head || doc.documentElement).appendChild(style);
+    } catch {
+      // Ignore frames the browser does not allow us to reach.
+    }
+  }
+
+  function ensureHelpFrameThemeWatcher() {
+    if (helpFrameThemeWatcherBound || typeof globalScope.addEventListener !== "function") return;
+    helpFrameThemeWatcherBound = true;
+    globalScope.addEventListener("webmars:theme-changed", () => {
+      document.querySelectorAll(HELP_FRAME_SELECTOR).forEach(applyHelpFrameTheme);
+    });
+  }
+
   function bindHelpFrameLinks(frame, openDocument) {
+    ensureHelpFrameThemeWatcher();
     frame.addEventListener("load", () => {
+      applyHelpFrameTheme(frame);
       try {
         const doc = frame.contentDocument;
         if (!doc) return;
