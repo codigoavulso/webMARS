@@ -98,7 +98,7 @@ function renderLayout(root) {
           <button class="tool-btn" id="btn-redo" type="button">Redo</button>
         </div>
 
-        <div class="toolbar-group">
+        <div class="toolbar-group toolbar-run-group">
           <button class="tool-btn" id="btn-compile-c0" type="button">Compile</button>
           <button class="tool-btn" id="btn-assemble" type="button">Assemble</button>
           <button class="tool-btn primary" id="btn-go" type="button">Go</button>
@@ -137,6 +137,8 @@ function renderLayout(root) {
           </div>
         </div>
       </section>
+
+      <nav id="mobile-panel-tabs" class="panel-tabs panel" role="tablist" aria-label="Panels"></nav>
 
       <section id="mars-desktop" class="desktop panel">
         <section class="desktop-window" id="window-main" style="left:0px; top:0px; width:75%; height:75%;">
@@ -391,6 +393,7 @@ function renderLayout(root) {
     },
     windows: {
       desktop: root.querySelector("#mars-desktop"),
+      panelTabs: root.querySelector("#mobile-panel-tabs"),
       main: root.querySelector("#window-main"),
       editor: root.querySelector("#window-main"),
       text: root.querySelector("#window-main"),
@@ -554,6 +557,8 @@ function createWindowManager(refs) {
   const STACK_BREAKPOINT_PX = layoutConfig.stackedBreakpointPx;
   const COMPACT_BREAKPOINT_PX = layoutConfig.compactBreakpointPx;
   const STACKED_WINDOW_ORDER = ["window-main", "window-messages", "window-registers"];
+  // Fixed left-to-right order of the mobile panel tabs; tools follow after.
+  const MOBILE_PANEL_ORDER = ["window-main", "window-messages", "window-registers"];
   const DESKTOP_NATIVE_ORDER = ["window-main", "window-messages", "window-registers"];
   const DESKTOP_LINKED_RESIZE_IDS = new Set(DESKTOP_NATIVE_ORDER);
   const STACKED_DEFAULT_HEIGHTS = {
@@ -574,6 +579,7 @@ function createWindowManager(refs) {
   let sharedSplittersFrame = null;
   let desktopLayoutSaveTimer = null;
   let layoutMode = window.innerWidth < STACK_BREAKPOINT_PX ? "stacked" : "desktop";
+  let mobileActivePanelId = "window-main";
   let desktopLayoutHistory = [];
   const pendingSessionWindowState = new Map();
   const pendingSavedLayoutState = new Map();
@@ -1369,70 +1375,94 @@ function createWindowManager(refs) {
     desktop.classList.toggle("desktop-main-maximized", isMainStackedMaximized());
   }
 
-  function layoutStackedWindows(persistNormalized = true) {
-    applyResponsiveClasses();
-    const desktopRect = getDesktopRect();
-    const mainEntry = windows.get("window-main");
-    const maximizeMain = Boolean(
-      mainEntry
-      && !isHiddenEntry(mainEntry)
-      && !mainEntry.minimized
-      && mainEntry.stackedMaximized
+  // Kept as the single stacked-layout entry point so the resize, drag and
+  // minimize handlers all route through the panel layout.
+  function layoutStackedWindows() {
+    layoutMobilePanels();
+  }
+
+  // Mobile shows one panel at a time behind a tab bar instead of stacking every
+  // window into one scrolling column. Desktop keeps the free-floating windows.
+  function getMobilePanelEntries() {
+    const remaining = new Map(
+      [...windows.values()]
+        .filter((entry) => !isHiddenEntry(entry) && (entry.kind === "native" || isStackedToolEntry(entry)))
+        .map((entry) => [entry.id, entry])
     );
-
-    if (maximizeMain && mainEntry) {
-      const minHeight = getStackedMinHeight(mainEntry);
-      const visibleDesktopHeight = Math.max(
-        minHeight,
-        Math.round(window.innerHeight - Math.max(0, desktopRect.top))
-      );
-      mainEntry.stackedHeight = visibleDesktopHeight;
-      mainEntry.stackedExpandedHeight = visibleDesktopHeight;
-      mainEntry.element.style.left = "0px";
-      mainEntry.element.style.top = "0px";
-      mainEntry.element.style.width = px(Math.max(0, desktopRect.width));
-      mainEntry.element.style.height = px(visibleDesktopHeight);
-      if (persistNormalized && !(isStackedMode() && isStackedFlowEntry(mainEntry))) updateNormalizedBounds(mainEntry);
-      desktop.style.height = px(visibleDesktopHeight);
-      return;
+    const entries = [];
+    for (const id of MOBILE_PANEL_ORDER) {
+      if (!remaining.has(id)) continue;
+      entries.push(remaining.get(id));
+      remaining.delete(id);
     }
+    // Tools and any window not in the fixed order follow in stacking order.
+    entries.push(...[...remaining.values()].sort((a, b) => (
+      Number.parseInt(a.element.style.zIndex || "0", 10) - Number.parseInt(b.element.style.zIndex || "0", 10)
+    )));
+    return entries;
+  }
 
-    const entries = getStackedEntries();
-    const placeEntries = () => {
-      let top = 0;
-      entries.forEach((entry) => {
-        const height = ensureStackedHeight(entry);
-        const metrics = {
-          left: 0,
-          top,
-          width: Math.max(0, desktopRect.width),
-          height
-        };
-        entry.element.style.left = "0px";
-        entry.element.style.top = px(top);
-        entry.element.style.width = px(metrics.width);
-        entry.element.style.height = px(height);
-        if (persistNormalized && !(isStackedMode() && isStackedFlowEntry(entry))) updateNormalizedBounds(entry);
-        top += height;
-      });
-      desktop.style.height = px(top);
-    };
+  function getMobilePanelLabel(entry) {
+    const title = entry.element.querySelector(".window-title");
+    const text = String(title?.textContent || "").trim();
+    if (!text) return entry.id.replace(/^window-/, "");
+    // Tool titles append a version and author ("Instruction Counter, Version
+    // 1.0 (Felipe Lessa)"); a tab only needs the name.
+    return text.split(",")[0].trim() || text;
+  }
 
-    placeEntries();
+  function setMobilePanel(panelId) {
+    const entries = getMobilePanelEntries();
+    if (!entries.some((entry) => entry.id === panelId)) return;
+    mobileActivePanelId = panelId;
+    refreshWindowLayout();
+  }
 
-    let requiresRelayout = false;
+  function renderMobilePanelTabs(entries, activeId) {
+    const host = refs.windows.panelTabs;
+    if (!host) return;
+    const signature = `${entries.map((entry) => entry.id).join("|")}::${activeId}`;
+    if (host.dataset.signature === signature) return;
+    host.dataset.signature = signature;
+    host.innerHTML = "";
     entries.forEach((entry) => {
-      const suggestedHeight = applyStackedToolZoomToFit(entry);
-      if (suggestedHeight > 0 && !entry.stackedUserSized && Math.abs(suggestedHeight - entry.stackedHeight) > 2) {
-        entry.stackedHeight = suggestedHeight;
-        entry.stackedExpandedHeight = suggestedHeight;
-        requiresRelayout = true;
-      }
+      const tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = `panel-tab-btn${entry.id === activeId ? " active" : ""}`;
+      tab.dataset.panel = entry.id;
+      tab.setAttribute("role", "tab");
+      tab.setAttribute("aria-selected", entry.id === activeId ? "true" : "false");
+      tab.textContent = translateText(getMobilePanelLabel(entry));
+      tab.addEventListener("click", () => setMobilePanel(entry.id));
+      host.appendChild(tab);
     });
+  }
 
-    if (requiresRelayout) {
-      placeEntries();
+  function layoutMobilePanels() {
+    applyResponsiveClasses();
+    const entries = getMobilePanelEntries();
+    if (!entries.some((entry) => entry.id === mobileActivePanelId)) {
+      mobileActivePanelId = entries[0]?.id || "";
     }
+    renderMobilePanelTabs(entries, mobileActivePanelId);
+
+    const desktopRect = getDesktopRect();
+    entries.forEach((entry) => {
+      const active = entry.id === mobileActivePanelId;
+      entry.element.classList.toggle("mobile-panel-hidden", !active);
+      if (!active) return;
+      // The active panel fills the desktop area exactly; CSS pins it to the
+      // edges, so only the height needs to follow the measured viewport.
+      entry.element.style.left = "0px";
+      entry.element.style.top = "0px";
+      entry.element.style.width = px(Math.max(0, desktopRect.width));
+      entry.element.style.height = px(Math.max(0, desktopRect.height));
+    });
+    windows.forEach((entry) => {
+      if (entries.includes(entry)) return;
+      entry.element.classList.remove("mobile-panel-hidden");
+    });
+    desktop.style.height = "";
   }
 
   function refreshWindowLayout() {
@@ -1444,26 +1474,10 @@ function createWindowManager(refs) {
         if (!entry || entry.kind !== "tool") return;
         entry.element.style.minWidth = "0px";
       });
-      layoutStackedWindows(false);
-      if (isMainStackedMaximized()) return;
-      const entries = getStackedEntries();
-      for (let index = 0; index < entries.length - 1; index += 1) {
-        const first = entries[index];
-        const second = entries[index + 1];
-        // In stacked/mobile mode only the Main bottom edge is user-resizable.
-        if (first.id !== "window-main") continue;
-        const firstMetrics = readWindowMetrics(first);
-        const secondMetrics = readWindowMetrics(second);
-        const boundary = (firstMetrics.top + firstMetrics.height + secondMetrics.top) / 2;
-        createSharedSplitter("horizontal", first, second, {
-          left: 0,
-          top: boundary - (SHARED_SPLITTER_THICKNESS_PX / 2),
-          width: Math.max(firstMetrics.width, secondMetrics.width),
-          height: SHARED_SPLITTER_THICKNESS_PX
-        });
-      }
+      layoutStackedWindows();
       return;
     }
+    windows.forEach((entry) => entry.element.classList.remove("mobile-panel-hidden"));
     windows.forEach((entry) => {
       clearStackedToolZoom(entry);
       if (entry.kind !== "tool") return;
@@ -5169,21 +5183,25 @@ function injectRuntimeStyles() {
       display: grid;
       height: 100vh;
       overflow: hidden;
-      grid-template-rows: auto auto 1fr;
+      grid-template-rows: auto auto auto 1fr;
       grid-template-areas:
         "menu"
         "toolbar"
+        "paneltabs"
         "desktop";
     }
 
     .menu-bar { grid-area: menu; }
     .toolbar { grid-area: toolbar; }
+    /* Collapses to nothing on desktop, where the tab bar is display:none. */
+    .panel-tabs { grid-area: paneltabs; }
     .desktop { grid-area: desktop; }
 
     .menu-at-bottom .shell {
-      grid-template-rows: 1fr auto auto;
+      grid-template-rows: 1fr auto auto auto;
       grid-template-areas:
         "desktop"
+        "paneltabs"
         "toolbar"
         "menu";
     }
@@ -6939,8 +6957,12 @@ function injectRuntimeStyles() {
     }
 
     @media (max-width: ${stackedMaxWidthPx}px) {
+      /* One panel fills the viewport at a time, so the page itself never
+         scrolls: that removes the nested-scroll conflict between the document
+         and the window bodies, and keeps the toolbar permanently in reach. */
       html, body {
-        overflow: auto;
+        overflow: hidden;
+        height: 100%;
       }
 
       .execute-top {
@@ -6952,11 +6974,50 @@ function injectRuntimeStyles() {
       }
 
       .shell {
-        height: auto;
-        min-height: 100vh;
-        overflow: visible;
-        grid-template-rows: auto auto minmax(0, 1fr);
-        align-content: start;
+        height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+        grid-template-rows: auto auto auto minmax(0, 1fr);
+        align-content: stretch;
+      }
+
+      .panel-tabs {
+        display: flex;
+        gap: 3px;
+        padding: 3px 4px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .panel-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .panel-tab-btn {
+        flex: 1 0 auto;
+        min-height: 44px;
+        max-width: 46vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 10px 16px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--btn-face);
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .panel-tab-btn.active {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: var(--text-on-accent);
       }
 
       .menu-bar {
@@ -6969,20 +7030,58 @@ function injectRuntimeStyles() {
         min-height: 0;
       }
 
+      /* One swipeable strip rather than a wrapping block: finger-sized buttons
+         cost less vertical space than four wrapped rows of small ones, and the
+         run controls stay on screen while stepping. */
       .toolbar {
-        display: grid;
-        grid-template-columns: 1fr;
-        align-content: start;
-        gap: 1px;
-        padding: 2px 4px;
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 4px;
         min-height: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
       }
+
+      .toolbar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .toolbar .tool-btn {
+        min-height: 40px;
+        padding: 8px 12px;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .mode-tab-btn,
+      .subtab-btn,
+      .editor-file-tab {
+        min-height: 38px;
+        padding: 8px 12px;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .menu-item {
+        min-height: 36px;
+        padding: 6px 10px;
+      }
+
+      /* Execution controls lead the strip so stepping never needs a swipe; the
+         file operations scroll off and remain reachable from the File menu.
+         Scoped under .toolbar to outrank the generic .toolbar-group order. */
+      .toolbar .toolbar-run-group { order: 1; }
+      .toolbar .toolbar-speed-group { order: 3; }
+      .toolbar .toolbar-benchmark-group { order: 4; }
 
       .toolbar-group {
         display: flex;
-        flex-wrap: wrap;
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
         align-items: center;
         gap: 3px;
+        order: 2;
         width: 100%;
         padding: 3px 0 2px;
         border-top: 1px solid var(--line-soft);
@@ -7049,26 +7148,25 @@ function injectRuntimeStyles() {
       }
 
       .desktop.desktop-stacked {
-        height: auto !important;
-        padding-bottom: 8px;
-        overscroll-behavior-y: auto;
-        overflow-x: hidden;
+        position: relative;
+        height: 100% !important;
+        min-height: 0;
+        padding: 0;
+        overflow: hidden;
       }
 
-      .desktop.desktop-stacked.desktop-main-maximized {
+      /* The selected panel fills the desktop area; the others are detached from
+         the flow entirely so no stray scroll height survives. Dialogs keep
+         floating above and are excluded. */
+      .desktop.desktop-stacked .desktop-window:not(.dialog-window) {
+        position: absolute;
+        inset: 0;
         height: auto !important;
-        padding-bottom: 0 !important;
-        overflow-y: hidden;
+        resize: none;
       }
 
-      .desktop.desktop-stacked.desktop-main-maximized .desktop-window:not(#window-main) {
+      .desktop.desktop-stacked .desktop-window.mobile-panel-hidden {
         display: none !important;
-      }
-
-      .desktop.desktop-stacked.desktop-main-maximized #window-main {
-        left: 0 !important;
-        right: 0 !important;
-        width: auto !important;
       }
 
       .desktop.desktop-stacked .desktop-window {

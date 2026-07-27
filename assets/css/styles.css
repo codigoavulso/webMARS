@@ -375,6 +375,11 @@ select {
   padding: 1px;
 }
 
+/* The mobile panel switcher; the stacked breakpoint turns it into a flex row. */
+.panel-tabs {
+  display: none;
+}
+
 .panel {
   background: linear-gradient(170deg, var(--panel), var(--panel-2));
   border: 1px solid var(--line);
