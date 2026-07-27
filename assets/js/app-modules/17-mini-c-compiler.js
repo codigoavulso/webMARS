@@ -3,6 +3,19 @@
   const registry = root.WebMarsModules || (root.WebMarsModules = {});
   if (registry.miniCCompiler) return;
 
+  // Diagnostics are localized here rather than at the call sites in the host,
+  // so the compiler keeps its own resolver instead of borrowing a global from
+  // another module. Without a catalog - the regression tests load this module
+  // on its own - it falls back to substituting the placeholders, which yields
+  // the original English wording.
+  const translateText = (message, variables = {}) => {
+    const i18n = root.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return String(message ?? "").replace(/\{([a-zA-Z0-9_]+)\}/g, (match, key) => (
+      Object.prototype.hasOwnProperty.call(variables, key) ? String(variables[key]) : match
+    ));
+  };
+
   const SOURCE_EXTENSION_PATTERN = /\.(c|c0)$/i;
   const DEFAULT_TEMPLATE = [
     "#include <stdio.h>",
@@ -530,7 +543,7 @@
       else if (next === "d") specifiers.push({ code: "d", expectedType: "int" });
       else if (next === "c") specifiers.push({ code: "c", expectedType: "char" });
       else {
-        return { ok: false, message: `Unsupported format specifier '%${next}'.` };
+        return { ok: false, message: translateText("Unsupported format specifier '%{next}'.", { next }) };
       }
       i += 1;
     }
@@ -685,7 +698,7 @@
       if (!normalizedTarget) {
         return {
           ok: false,
-          error: createDiagnostic(`Invalid #use target '${target}'.`, {
+          error: createDiagnostic(translateText("Invalid #use target '{target}'.", { target }), {
             line: directive.line,
             column: directive.column
           }, "preprocess")
@@ -761,7 +774,7 @@
           : trimmed.match(/^#include\s*\"([^\"]+)\"\s*$/);
         if (!useLibraryMatch && !useFileMatch && !includeLibraryMatch && !includeFileMatch) {
           warnings.push(createDiagnostic(
-            `Ignoring unsupported preprocessor directive '${trimmed}'.`,
+            translateText("Ignoring unsupported preprocessor directive '{trimmed}'.", { trimmed }),
             { line: index + 1, column: 1 },
             "preprocess"
           ));
@@ -770,7 +783,7 @@
 
         if (!subsetIsS1OrHigher) {
           diagnostics.push(createDiagnostic(
-            `#use/#include directives require subset C0-S1, current subset is ${subset}.`,
+            translateText("#use/#include directives require subset C0-S1, current subset is {subset}.", { subset }),
             { line: index + 1, column: 1 },
             "preprocess"
           ));
@@ -810,7 +823,7 @@
         const loadKey = `${directive.kind}:${resolvedName}`;
         if (activeStack.has(loadKey)) {
           diagnostics.push(createDiagnostic(
-            `Circular include detected for '${directive.target}'.`,
+            translateText("Circular include detected for '{target}'.", { target: directive.target }),
             { line: index + 1, column: 1 },
             "preprocess"
           ));
@@ -968,7 +981,7 @@
 
     return {
       code: "MC_SUGGEST_REVIEW_SNIPPET",
-      message: `Review the highlighted ${String(phase || "mini-c")} location.`,
+      message: translateText("Review the highlighted {string} location.", { string: String(phase || "mini-c") }),
       action: "Fix the syntax or typing around the marked token."
     };
   }
@@ -1082,15 +1095,15 @@
     if (!requiredSubset) return entries;
 
     const summary = createDiagnostic(
-      `Source requires compiler subset ${requiredSubset}, but the current subset is ${currentSubset}.`,
+      translateText("Source requires compiler subset {requiredSubset}, but the current subset is {currentSubset}.", { requiredSubset, currentSubset }),
       null,
       "semantic",
       {
         code: "MC_SUBSET_MISMATCH",
         suggestion: {
           code: "MC_SUGGEST_RAISE_SUBSET",
-          message: `Use compiler subset ${requiredSubset}.`,
-          action: `Select '${requiredSubset}' in Mini-C compiler preferences or rewrite the unsupported features.`
+          message: translateText("Use compiler subset {requiredSubset}.", { requiredSubset }),
+          action: translateText("Select '{requiredSubset}' in Mini-C compiler preferences or rewrite the unsupported features.", { requiredSubset })
         }
       }
     );
@@ -1327,7 +1340,7 @@
         continue;
       }
 
-      diagnostics.push(createDiagnostic(`Unexpected character '${ch}'.`, { line: tokenLine, column: tokenColumn }));
+      diagnostics.push(createDiagnostic(translateText("Unexpected character '{ch}'.", { ch }), { line: tokenLine, column: tokenColumn }));
       advance();
     }
 
@@ -1643,7 +1656,7 @@
           if (arrayShape.length) arrayShape[0] = 0;
           for (let i = 1; i < arrayShape.length; i += 1) {
             if (!Number.isFinite(arrayShape[i]) || arrayShape[i] <= 0) {
-              diagnostics.push(createDiagnostic(`Array parameter '${paramName}' requires positive inner dimensions.`, nameToken || paramTypeSpec?.typeToken, "parse"));
+              diagnostics.push(createDiagnostic(translateText("Array parameter '{paramName}' requires positive inner dimensions.", { paramName }), nameToken || paramTypeSpec?.typeToken, "parse"));
               arrayShape[i] = 1;
             }
           }
@@ -1746,7 +1759,7 @@
     }
 
     function parseContractAssert(keywordToken) {
-      consume("punct", "(", `Expected '(' after '${keywordToken?.value || "contract"}'.`);
+      consume("punct", "(", translateText("Expected '(' after '{value}'.", { value: keywordToken?.value || "contract" }));
       const expression = parseExpression();
       consume("punct", ")", "Expected ')' after contract expression.");
       consume("punct", ";", "Expected ';' after contract statement.");
@@ -1772,7 +1785,7 @@
           consume("punct", "]", "Expected ']' after array length.");
           const allowOmittedCurrent = dimensionIndex === 0 ? allowOmittedLeading : allowOmittedInner;
           if (!allowOmittedCurrent) {
-            diagnostics.push(createDiagnostic(`Array '${ownerName || "value"}' requires explicit length for dimension ${dimensionIndex + 1}.`, typeToken, "parse"));
+            diagnostics.push(createDiagnostic(translateText("Array '{value}' requires explicit length for dimension {index}.", { value: ownerName || "value", index: dimensionIndex + 1 }), typeToken, "parse"));
           }
           lengthValue = 0;
         } else {
@@ -1783,7 +1796,7 @@
               ? Number.parseInt(raw.slice(2), 16)
               : Number.parseInt(raw, 10);
             if (!Number.isFinite(parsed) || parsed <= 0) {
-              diagnostics.push(createDiagnostic(`Array '${ownerName || "value"}' must have a positive length in dimension ${dimensionIndex + 1}.`, lengthToken, "parse"));
+              diagnostics.push(createDiagnostic(translateText("Array '{value}' must have a positive length in dimension {index}.", { value: ownerName || "value", index: dimensionIndex + 1 }), lengthToken, "parse"));
             } else {
               lengthValue = parsed | 0;
             }
@@ -1836,7 +1849,7 @@
       let arrayShape = arraySpec ? normalizeArrayShape(arraySpec.arrayShape, [1]) : [1];
       if (arraySpec) {
         if (arrayShape.some((dim, index) => index > 0 && (!Number.isFinite(dim) || dim <= 0))) {
-          diagnostics.push(createDiagnostic(`Array '${name}' requires positive lengths for inner dimensions.`, nameToken || typeToken, "parse"));
+          diagnostics.push(createDiagnostic(translateText("Array '{name}' requires positive lengths for inner dimensions.", { name }), nameToken || typeToken, "parse"));
           arrayShape = arrayShape.map((dim, index) => {
             if (index === 0) return dim;
             return Number.isFinite(dim) && dim > 0 ? (dim | 0) : 1;
@@ -1848,7 +1861,7 @@
             const innerStride = arrayShapeProduct(arrayShape, 1) || 1;
             const inferredLeading = flatCount > 0 ? Math.ceil(flatCount / innerStride) : 0;
             if (inferredLeading <= 0) {
-              diagnostics.push(createDiagnostic(`Array '${name}' with omitted leading dimension requires initializer elements.`, initializer, "parse"));
+              diagnostics.push(createDiagnostic(translateText("Array '{name}' with omitted leading dimension requires initializer elements.", { name }), initializer, "parse"));
               arrayShape[0] = 1;
             } else {
               arrayShape[0] = inferredLeading | 0;
@@ -1856,7 +1869,7 @@
           } else if (declaredType === "char" && initializer?.type === "string_literal") {
             arrayShape[0] = Math.max(1, stringToByteList(initializer.value || "").length) | 0;
           } else {
-            diagnostics.push(createDiagnostic(`Array '${name}' with omitted leading dimension requires a brace initializer list.`, nameToken || typeToken, "parse"));
+            diagnostics.push(createDiagnostic(translateText("Array '{name}' with omitted leading dimension requires a brace initializer list.", { name }), nameToken || typeToken, "parse"));
             arrayShape[0] = 1;
           }
         }
@@ -2693,16 +2706,16 @@
       const valueType = normalizeTypeName(entry.valueType || "int");
       if (!alias || alias === "__error_typedef") return;
       if (FUNCTION_RETURN_TYPES.has(alias) || alias === "struct") {
-        diagnostics.push(createDiagnostic(`Invalid typedef alias '${alias}'.`, entry, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Invalid typedef alias '{alias}'.", { alias }), entry, "semantic"));
         return;
       }
       if (typedefTable.has(alias)) {
-        diagnostics.push(createDiagnostic(`Duplicate typedef alias '${alias}'.`, entry, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Duplicate typedef alias '{alias}'.", { alias }), entry, "semantic"));
         return;
       }
       if (requiresC1SubsetType(valueType) && !nativeSubsetEnabled) {
         diagnostics.push(createDiagnostic(
-          `Typedef '${alias}' requires subset C1/native, current subset is ${activeSubset}.`,
+          translateText("Typedef '{alias}' requires subset C1/native, current subset is {activeSubset}.", { alias, activeSubset }),
           entry,
           "semantic"
         ));
@@ -2711,7 +2724,7 @@
         || prototypes.some((prototype) => normalizeTypeName(prototype?.name || "") === alias)
         || functions.some((fn) => normalizeTypeName(fn?.name || "") === alias);
       if (conflictsWithValueName) {
-        diagnostics.push(createDiagnostic(`Typedef alias '${alias}' conflicts with an existing variable or function name.`, entry, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Typedef alias '{alias}' conflicts with an existing variable or function name.", { alias }), entry, "semantic"));
         return;
       }
       typedefTable.set(alias, valueType);
@@ -2730,7 +2743,7 @@
         return;
       }
       if (existing && existing.forward !== true) {
-        diagnostics.push(createDiagnostic(`Duplicate struct definition '${structName}'.`, entry, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Duplicate struct definition '{structName}'.", { structName }), entry, "semantic"));
         return;
       }
       const fields = new Map();
@@ -2739,7 +2752,7 @@
         const fieldName = String(field?.name || "").trim();
         if (!fieldName) return;
         if (fields.has(fieldName)) {
-          diagnostics.push(createDiagnostic(`Duplicate field '${fieldName}' in struct '${structName}'.`, field, "semantic"));
+          diagnostics.push(createDiagnostic(translateText("Duplicate field '{fieldName}' in struct '{structName}'.", { fieldName, structName }), field, "semantic"));
           return;
         }
         const fieldType = resolveAliasType(field?.valueType || "int");
@@ -2778,11 +2791,11 @@
       const nextSignature = signatureFromNode(prototype, false);
       const existing = signatureTable.get(nextSignature.name);
       if (existing?.intrinsic) {
-        diagnostics.push(createDiagnostic(`Function name '${nextSignature.name}' conflicts with intrinsic function.`, prototype, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Function name '{name}' conflicts with intrinsic function.", { name: nextSignature.name }), prototype, "semantic"));
         return;
       }
       if (existing && !signaturesCompatible(existing, nextSignature)) {
-        diagnostics.push(createDiagnostic(`Prototype for '${nextSignature.name}' does not match previous declaration.`, prototype, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Prototype for '{name}' does not match previous declaration.", { name: nextSignature.name }), prototype, "semantic"));
         return;
       }
       if (!existing) signatureTable.set(nextSignature.name, nextSignature);
@@ -2794,15 +2807,15 @@
       const nextSignature = signatureFromNode(fn, false);
       const existing = signatureTable.get(nextSignature.name);
       if (existing?.intrinsic) {
-        diagnostics.push(createDiagnostic(`Function name '${nextSignature.name}' conflicts with intrinsic function.`, fn, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Function name '{name}' conflicts with intrinsic function.", { name: nextSignature.name }), fn, "semantic"));
         return;
       }
       if (existing && existing.defined === true) {
-        diagnostics.push(createDiagnostic(`Duplicate function '${nextSignature.name}'.`, fn, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Duplicate function '{name}'.", { name: nextSignature.name }), fn, "semantic"));
         return;
       }
       if (existing && !signaturesCompatible(existing, nextSignature)) {
-        diagnostics.push(createDiagnostic(`Definition of '${nextSignature.name}' does not match prototype.`, fn, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Definition of '{name}' does not match prototype.", { name: nextSignature.name }), fn, "semantic"));
         return;
       }
       signatureTable.set(nextSignature.name, {
@@ -2861,7 +2874,7 @@
         const constantInfo = globalConstTable.get(expr.name);
         if (!constantInfo) {
           diagnostics.push(createDiagnostic(
-            `Global initializer '${ownerNode?.name || "value"}' can only reference previous 'const' globals.`,
+            translateText("Global initializer '{value}' can only reference previous 'const' globals.", { value: ownerNode?.name || "value" }),
             expr,
             "semantic"
           ));
@@ -2882,7 +2895,7 @@
           return { ok: true, kind: "string", typeName: "string", value: String(inner.value || "") };
         }
         if (inner.kind !== "int") {
-          diagnostics.push(createDiagnostic(`Cannot cast string expression to '${targetType}'.`, expr, "semantic"));
+          diagnostics.push(createDiagnostic(translateText("Cannot cast string expression to '{targetType}'.", { targetType }), expr, "semantic"));
           return { ok: false, kind: "int", typeName: "int", value: 0 };
         }
         let casted = inner.value | 0;
@@ -2895,7 +2908,7 @@
         const inner = evaluateStaticExpression(expr.argument, ownerNode);
         if (!inner.ok) return inner;
         if (inner.kind !== "int") {
-          diagnostics.push(createDiagnostic(`Unary '${expr.operator}' is not valid for string constant expression.`, expr, "semantic"));
+          diagnostics.push(createDiagnostic(translateText("Unary '{operator}' is not valid for string constant expression.", { operator: expr.operator }), expr, "semantic"));
           return { ok: false, kind: "int", typeName: "int", value: 0 };
         }
         switch (expr.operator) {
@@ -2908,7 +2921,7 @@
           case "!":
             return { ok: true, kind: "int", typeName: "bool", value: (inner.value | 0) === 0 ? 1 : 0 };
           default:
-            diagnostics.push(createDiagnostic(`Unsupported unary operator '${expr.operator}' in global initializer.`, expr, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("Unsupported unary operator '{operator}' in global initializer.", { operator: expr.operator }), expr, "semantic"));
             return { ok: false, kind: "int", typeName: "int", value: 0 };
         }
       }
@@ -2953,7 +2966,7 @@
           case "&&": return { ok: true, kind: "int", typeName: "bool", value: (lv !== 0 && rv !== 0) ? 1 : 0 };
           case "||": return { ok: true, kind: "int", typeName: "bool", value: (lv !== 0 || rv !== 0) ? 1 : 0 };
           default:
-            diagnostics.push(createDiagnostic(`Unsupported binary operator '${expr.operator}' in global initializer.`, expr, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("Unsupported binary operator '{operator}' in global initializer.", { operator: expr.operator }), expr, "semantic"));
             return { ok: false, kind: "int", typeName: "int", value: 0 };
         }
       }
@@ -2979,44 +2992,44 @@
       globalDecl.arrayShape = normalizedShape;
       globalDecl.arrayLength = normalizedShape[0] || 0;
       if (!isDeclarationTypeName(resolvedDeclType)) {
-        diagnostics.push(createDiagnostic(`Unsupported global declaration type '${declarationType}'.`, globalDecl, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Unsupported global declaration type '{declarationType}'.", { declarationType }), globalDecl, "semantic"));
       }
       if (resolvedDeclType === "void") {
         diagnostics.push(createDiagnostic("Global declarations cannot use raw 'void' type.", globalDecl, "semantic"));
       }
       if (requiresC1SubsetType(resolvedDeclType) && !nativeSubsetEnabled) {
         diagnostics.push(createDiagnostic(
-          `Type '${declarationType}' requires subset C1/native, current subset is ${activeSubset}.`,
+          translateText("Type '{declarationType}' requires subset C1/native, current subset is {activeSubset}.", { declarationType, activeSubset }),
           globalDecl,
           "semantic"
         ));
       }
       if (!isArray && isLargeStructTypeName(resolvedDeclType)) {
         diagnostics.push(createDiagnostic(
-          `Direct global of type '${resolvedDeclType}' is not supported in C0; use pointer or array.`,
+          translateText("Direct global of type '{resolvedDeclType}' is not supported in C0; use pointer or array.", { resolvedDeclType }),
           globalDecl,
           "semantic"
         ));
       }
       if (requiresS4SubsetType(resolvedDeclType) && activeSubsetLevel < subsetLevel("C0-S4")) {
         diagnostics.push(createDiagnostic(
-          `Type '${declarationType}' declarations require subset C0-S4, current subset is ${activeSubset}.`,
+          translateText("Type '{declarationType}' declarations require subset C0-S4, current subset is {activeSubset}.", { declarationType, activeSubset }),
           globalDecl,
           "semantic"
         ));
       }
       if (signatureTable.has(globalDecl.name)) {
-        diagnostics.push(createDiagnostic(`Global '${globalDecl.name}' conflicts with an existing function/intrinsic name.`, globalDecl, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Global '{name}' conflicts with an existing function/intrinsic name.", { name: globalDecl.name }), globalDecl, "semantic"));
       }
       if (globalTable.has(globalDecl.name)) {
-        diagnostics.push(createDiagnostic(`Duplicate global symbol '${globalDecl.name}'.`, globalDecl, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Duplicate global symbol '{name}'.", { name: globalDecl.name }), globalDecl, "semantic"));
       }
       if (isAggregate && globalDecl.initializer) {
         if (byteArrayStorage && globalDecl.initializer.type === "string_literal") {
           const byteLength = stringToByteList(globalDecl.initializer.value || "").length;
           if (byteLength > (globalDecl.arrayLength | 0)) {
             diagnostics.push(createDiagnostic(
-              `String initializer is longer than array '${globalDecl.name}' capacity.`,
+              translateText("String initializer is longer than array '{name}' capacity.", { name: globalDecl.name }),
               globalDecl.initializer,
               "semantic"
             ));
@@ -3028,7 +3041,7 @@
           const flatElements = flattenArrayInitializerElements(globalDecl.initializer, []);
           const aggregateCapacity = byteArrayStorage ? (globalDecl.arrayLength | 0) : arraySlotCount;
           if (flatElements.length > aggregateCapacity) {
-            diagnostics.push(createDiagnostic(`Initializer has more elements than array '${globalDecl.name}' capacity.`, globalDecl.initializer, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("Initializer has more elements than array '{name}' capacity.", { name: globalDecl.name }), globalDecl.initializer, "semantic"));
           }
           const foldedElements = [];
           flatElements.forEach((element) => {
@@ -3038,7 +3051,7 @@
             const inferredType = evaluated.kind === "string" ? "string" : normalizeTypeName(evaluated.typeName || "int");
             if (!typeCompatibleProfile(declarationType, inferredType)) {
               diagnostics.push(createDiagnostic(
-                `Array '${globalDecl.name}' element initializer type '${inferredType}' is incompatible with '${declarationType}'.`,
+                translateText("Array '{name}' element initializer type '{inferredType}' is incompatible with '{declarationType}'.", { name: globalDecl.name, inferredType, declarationType }),
                 element,
                 "semantic"
               ));
@@ -3055,7 +3068,7 @@
             const inferredType = evaluated.kind === "string" ? "string" : normalizeTypeName(evaluated.typeName || "int");
             if (!typeCompatibleProfile(declarationType, inferredType)) {
               diagnostics.push(createDiagnostic(
-                `Cannot initialize global '${globalDecl.name}' of type '${declarationType}' with '${inferredType}'.`,
+                translateText("Cannot initialize global '{name}' of type '{declarationType}' with '{inferredType}'.", { name: globalDecl.name, declarationType, inferredType }),
                 globalDecl,
                 "semantic"
               ));
@@ -3116,7 +3129,7 @@
         for (let i = scopeStack.length - 1; i >= 0; i -= 1) {
           if (scopeStack[i].has(name)) {
             diagnostics.push(createDiagnostic(
-              `Duplicate local symbol '${name}' in an overlapping scope.`,
+              translateText("Duplicate local symbol '{name}' in an overlapping scope.", { name }),
               node,
               "semantic"
             ));
@@ -3157,7 +3170,7 @@
       const resolve = (name, node) => {
         const symbol = lookup(name);
         if (symbol) return symbol;
-        diagnostics.push(createDiagnostic(`Unknown identifier '${name}'.`, node, "semantic"));
+        diagnostics.push(createDiagnostic(translateText("Unknown identifier '{name}'.", { name }), node, "semantic"));
         return null;
       };
 
@@ -3275,7 +3288,7 @@
               return expr.inferredType;
             }
             if (isArrayLike && exprOptions.allowArrayReference !== true) {
-              diagnostics.push(createDiagnostic(`Array '${expr.name}' requires an index expression.`, expr, "semantic"));
+              diagnostics.push(createDiagnostic(translateText("Array '{name}' requires an index expression.", { name: expr.name }), expr, "semantic"));
             }
             expr.asArrayReference = isArrayLike && exprOptions.allowArrayReference === true;
             return symbol.typeName;
@@ -3287,7 +3300,7 @@
             expr.functionLabel = String(expr.name || "");
             return expr.inferredType;
           }
-          diagnostics.push(createDiagnostic(`Unknown identifier '${expr.name}'.`, expr, "semantic"));
+          diagnostics.push(createDiagnostic(translateText("Unknown identifier '{name}'.", { name: expr.name }), expr, "semantic"));
           expr.inferredType = "int";
           return "int";
         }
@@ -3407,7 +3420,7 @@
         if (expr.type === "alloc") {
           const allocType = resolveAliasType(expr.allocType || "int");
           if (isStructTypeName(allocType) && !isDefinedStructType(allocType)) {
-            diagnostics.push(createDiagnostic(`Cannot allocate undefined struct type '${allocType}'.`, expr, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("Cannot allocate undefined struct type '{allocType}'.", { allocType }), expr, "semantic"));
           }
           expr.allocType = allocType;
           expr.elementWordSize = Math.max(1, typeWordSize(allocType));
@@ -3425,7 +3438,7 @@
             diagnostics.push(createDiagnostic("alloc_array length must be integer-compatible.", expr.length || expr, "semantic"));
           }
           if (isStructTypeName(allocType) && !isDefinedStructType(allocType)) {
-            diagnostics.push(createDiagnostic(`Cannot allocate undefined struct type '${allocType}'.`, expr, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("Cannot allocate undefined struct type '{allocType}'.", { allocType }), expr, "semantic"));
           }
           expr.allocType = allocType;
           expr.elementWordSize = Math.max(1, typeWordSize(allocType));
@@ -3458,7 +3471,7 @@
           }
           const fieldInfo = structFieldInfo(structType, expr.field);
           if (!fieldInfo) {
-            diagnostics.push(createDiagnostic(`Unknown field '${expr.field}' for ${structType}.`, expr, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("Unknown field '{field}' for {structType}.", { field: expr.field, structType }), expr, "semantic"));
             expr.inferredType = "int";
             return "int";
           }
@@ -3527,7 +3540,7 @@
           }
           if (expr.operator === "-" || expr.operator === "+") {
             if (!isNumericType(argType)) {
-              diagnostics.push(createDiagnostic(`Unary '${expr.operator}' requires int or char expression.`, expr, "semantic"));
+              diagnostics.push(createDiagnostic(translateText("Unary '{operator}' requires int or char expression.", { operator: expr.operator }), expr, "semantic"));
             }
             expr.inferredType = "int";
             return "int";
@@ -3574,7 +3587,7 @@
               diagnostics.push(createDiagnostic("Only string expressions can be cast to string.", expr, "semantic"));
             }
           } else if (isStringType(sourceType)) {
-            diagnostics.push(createDiagnostic(`Cannot cast string to '${targetType}'.`, expr, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("Cannot cast string to '{targetType}'.", { targetType }), expr, "semantic"));
           } else if (targetType === "void*") {
             if (sourceType === "void*") {
               expr.voidPointerCast = null;
@@ -3594,7 +3607,7 @@
               tagId: runtimeVoidTagId(resolveAliasType(targetType))
             };
           } else if (sourceType === "void*" && !isObjectPointerTypeName(targetType)) {
-            diagnostics.push(createDiagnostic(`Cannot cast void* to '${targetType}'.`, expr, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("Cannot cast void* to '{targetType}'.", { targetType }), expr, "semantic"));
           }
           expr.inferredType = targetType;
           return targetType;
@@ -3622,7 +3635,7 @@
                 diagnostics.push(createDiagnostic("Assignment target cannot be an array identifier.", expr.target, "semantic"));
               }
               if (symbol.isConst === true) {
-                diagnostics.push(createDiagnostic(`Cannot assign to const symbol '${expr.target.name}'.`, expr.target, "semantic"));
+                diagnostics.push(createDiagnostic(translateText("Cannot assign to const symbol '{name}'.", { name: expr.target.name }), expr.target, "semantic"));
               }
             }
           } else if (expr.target?.type === "index") {
@@ -3661,7 +3674,7 @@
           if (assignmentOperator === "=") {
             if (!typeCompatibleProfile(targetType, valueType)) {
               diagnostics.push(createDiagnostic(
-                `Cannot assign expression of type '${valueType}' to target of type '${targetType}'.`,
+                translateText("Cannot assign expression of type '{valueType}' to target of type '{targetType}'.", { valueType, targetType }),
                 expr,
                 "semantic"
               ));
@@ -3669,12 +3682,12 @@
           } else {
             const reducedOperator = COMPOUND_ASSIGN_TO_BINARY[assignmentOperator];
             if (!reducedOperator) {
-              diagnostics.push(createDiagnostic(`Unsupported assignment operator '${assignmentOperator}'.`, expr, "semantic"));
+              diagnostics.push(createDiagnostic(translateText("Unsupported assignment operator '{assignmentOperator}'.", { assignmentOperator }), expr, "semantic"));
             }
             if (["+", "-", "*", "/", "%", "&", "|", "^", "<<", ">>"].includes(reducedOperator)) {
               if (!isNumericType(targetType) || !isNumericType(valueType)) {
                 diagnostics.push(createDiagnostic(
-                  `Operator '${assignmentOperator}' requires int/char operands.`,
+                  translateText("Operator '{assignmentOperator}' requires int/char operands.", { assignmentOperator }),
                   expr,
                   "semantic"
                 ));
@@ -3689,7 +3702,7 @@
           const updateOperator = String(expr.operator || "++");
           if (activeSubsetLevel < subsetLevel("C0-S2")) {
             diagnostics.push(createDiagnostic(
-              `Operator '${updateOperator}' requires subset C0-S2, current subset is ${activeSubset}.`,
+              translateText("Operator '{updateOperator}' requires subset C0-S2, current subset is {activeSubset}.", { updateOperator, activeSubset }),
               expr,
               "semantic"
             ));
@@ -3710,7 +3723,7 @@
                 diagnostics.push(createDiagnostic("Update target cannot be an array identifier.", expr.target, "semantic"));
               }
               if (symbol.isConst === true) {
-                diagnostics.push(createDiagnostic(`Cannot modify const symbol '${expr.target.name}'.`, expr.target, "semantic"));
+                diagnostics.push(createDiagnostic(translateText("Cannot modify const symbol '{name}'.", { name: expr.target.name }), expr.target, "semantic"));
               }
             }
           } else if (expr.target?.type === "index") {
@@ -3731,7 +3744,7 @@
           const resolvedTargetType = resolveAliasType(targetType);
           const pointerUpdateAllowed = isPointerTypeName(resolvedTargetType);
           if (!isNumericType(targetType) && !pointerUpdateAllowed) {
-            diagnostics.push(createDiagnostic(`Operator '${updateOperator}' requires int/char or pointer target.`, expr, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("Operator '{updateOperator}' requires int/char or pointer target.", { updateOperator }), expr, "semantic"));
           }
           expr.operator = updateOperator === "--" ? "--" : "++";
           expr.isPostfix = expr.isPostfix === true;
@@ -3752,7 +3765,7 @@
           const rightNumeric = isNumericType(rightType);
           if (expr.operator === "&&" || expr.operator === "||") {
             if (!isBooleanType(leftType) || !isBooleanType(rightType)) {
-              diagnostics.push(createDiagnostic(`Operator '${expr.operator}' requires bool operands.`, expr, "semantic"));
+              diagnostics.push(createDiagnostic(translateText("Operator '{operator}' requires bool operands.", { operator: expr.operator }), expr, "semantic"));
             }
             expr.inferredType = "bool";
             return "bool";
@@ -3773,14 +3786,14 @@
               }
             }
             if (!leftNumeric || !rightNumeric) {
-              diagnostics.push(createDiagnostic(`Operator '${expr.operator}' requires int/char operands.`, expr, "semantic"));
+              diagnostics.push(createDiagnostic(translateText("Operator '{operator}' requires int/char operands.", { operator: expr.operator }), expr, "semantic"));
             }
             expr.inferredType = "int";
             return "int";
           }
           if (["&", "|", "^", "<<", ">>"].includes(expr.operator)) {
             if (!isNumericType(leftType) || !isNumericType(rightType)) {
-              diagnostics.push(createDiagnostic(`Operator '${expr.operator}' requires int/char operands.`, expr, "semantic"));
+              diagnostics.push(createDiagnostic(translateText("Operator '{operator}' requires int/char operands.", { operator: expr.operator }), expr, "semantic"));
             }
             expr.inferredType = "int";
             return "int";
@@ -3788,7 +3801,7 @@
           if (["<", "<=", ">", ">="].includes(expr.operator)) {
             if (!isNumericType(leftType) || !isNumericType(rightType)
               || normalizeTypeName(leftType) !== normalizeTypeName(rightType)) {
-              diagnostics.push(createDiagnostic(`Operator '${expr.operator}' requires both operands with same numeric type.`, expr, "semantic"));
+              diagnostics.push(createDiagnostic(translateText("Operator '{operator}' requires both operands with same numeric type.", { operator: expr.operator }), expr, "semantic"));
             }
             expr.inferredType = "bool";
             return "bool";
@@ -3807,7 +3820,7 @@
               && !isStringType(normalizedRight);
             if (!allowed) {
               diagnostics.push(createDiagnostic(
-                `Operator '${expr.operator}' requires same non-string type on both operands; got '${leftType}' and '${rightType}'.`,
+                translateText("Operator '{operator}' requires same non-string type on both operands; got '{leftType}' and '{rightType}'.", { operator: expr.operator, leftType, rightType }),
                 expr,
                 "semantic"
               ));
@@ -3827,7 +3840,7 @@
           const falseType = bindExpr(expr.whenFalse, exprOptions);
           if (!typeCompatibleProfile(trueType, falseType) && !typeCompatibleProfile(falseType, trueType)) {
             diagnostics.push(createDiagnostic(
-              `Ternary branches require compatible types; got '${trueType}' and '${falseType}'.`,
+              translateText("Ternary branches require compatible types; got '{trueType}' and '{falseType}'.", { trueType, falseType }),
               expr,
               "semantic"
             ));
@@ -4004,7 +4017,7 @@
           const requiredSubset = normalizeSubsetName(signature.minSubset || "C0-S0");
           if (subsetLevel(requiredSubset) > activeSubsetLevel) {
             diagnostics.push(createDiagnostic(
-              `Function '${expr.callee}' requires subset ${requiredSubset}, current subset is ${activeSubset}.`,
+              translateText("Function '{callee}' requires subset {requiredSubset}, current subset is {activeSubset}.", { callee: expr.callee, requiredSubset, activeSubset }),
               expr,
               "semantic"
             ));
@@ -4012,13 +4025,13 @@
           const actualArgCount = expr.args?.length || 0;
           if (signature.variadic !== true && signature.params !== actualArgCount) {
             diagnostics.push(createDiagnostic(
-              `Function '${expr.callee}' expects ${signature.params} argument(s), got ${actualArgCount}.`,
+              translateText("Function '{callee}' expects {params} argument(s), got {actualArgCount}.", { callee: expr.callee, params: signature.params, actualArgCount }),
               expr,
               "semantic"
             ));
           } else if (signature.variadic === true && actualArgCount < signature.params) {
             diagnostics.push(createDiagnostic(
-              `Function '${expr.callee}' expects at least ${signature.params} argument(s), got ${actualArgCount}.`,
+              translateText("Function '{callee}' expects at least {params} argument(s), got {actualArgCount}.", { callee: expr.callee, params: signature.params, actualArgCount }),
               expr,
               "semantic"
             ));
@@ -4040,13 +4053,13 @@
                 : normalizeTypeName(expected);
               if (!isArrayLike) {
                 diagnostics.push(createDiagnostic(
-                  `Argument ${i + 1} of '${expr.callee}' must be an array reference.`,
+                  translateText("Argument {index} of '{callee}' must be an array reference.", { index: i + 1, callee: expr.callee }),
                   argNode,
                   "semantic"
                 ));
               } else if (!typeCompatibleProfile(expectedElementType, actual)) {
                 diagnostics.push(createDiagnostic(
-                  `Argument ${i + 1} of '${expr.callee}' expects '${expectedElementType}[]', got '${actual}[]'.`,
+                  translateText("Argument {index} of '{callee}' expects '{expectedElementType}[]', got '{actual}[]'.", { index: i + 1, callee: expr.callee, expectedElementType, actual }),
                   argNode,
                   "semantic"
                 ));
@@ -4056,7 +4069,7 @@
                 if (expectedShape.length && actualShape.length
                   && !arrayParameterShapesCompatible(expectedShape, actualShape)) {
                   diagnostics.push(createDiagnostic(
-                    `Argument ${i + 1} of '${expr.callee}' expects shape ${formatArrayShape(expectedShape)}, got ${formatArrayShape(actualShape)}.`,
+                    translateText("Argument {index} of '{callee}' expects shape {arrayShape}, got {arrayShape2}.", { index: i + 1, callee: expr.callee, arrayShape: formatArrayShape(expectedShape), arrayShape2: formatArrayShape(actualShape) }),
                     argNode,
                     "semantic"
                   ));
@@ -4070,7 +4083,7 @@
               if (isArrayLike) {
                 if (!isNumericType(actual) && !isBooleanType(actual)) {
                   diagnostics.push(createDiagnostic(
-                    `Argument ${i + 1} of '${expr.callee}' array reference must have numeric element type.`,
+                    translateText("Argument {index} of '{callee}' array reference must have numeric element type.", { index: i + 1, callee: expr.callee }),
                     argNode,
                     "semantic"
                   ));
@@ -4083,14 +4096,14 @@
               const accepted = expected.map((entry) => normalizeTypeName(entry));
               if (!accepted.some((candidate) => typeCompatibleProfile(candidate, actual))) {
                 diagnostics.push(createDiagnostic(
-                  `Argument ${i + 1} of '${expr.callee}' expects ${accepted.join(" or ")}, got '${actual}'.`,
+                  translateText("Argument {index} of '{callee}' expects {accepted}, got '{actual}'.", { index: i + 1, callee: expr.callee, accepted: accepted.join(" or "), actual }),
                   argNode,
                   "semantic"
                 ));
               }
             } else if (!typeCompatibleProfile(expected, actual)) {
               diagnostics.push(createDiagnostic(
-                `Argument ${i + 1} of '${expr.callee}' expects '${normalizeTypeName(expected)}', got '${actual}'.`,
+                translateText("Argument {index} of '{callee}' expects '{typeName}', got '{actual}'.", { index: i + 1, callee: expr.callee, typeName: normalizeTypeName(expected), actual }),
                 argNode,
                 "semantic"
               ));
@@ -4101,7 +4114,7 @@
             const formatArg = args[0] || null;
             if (!formatArg || formatArg.type !== "string_literal") {
               diagnostics.push(createDiagnostic(
-                `Function '${expr.callee}' requires the format message to be a string literal.`,
+                translateText("Function '{callee}' requires the format message to be a string literal.", { callee: expr.callee }),
                 formatArg || expr,
                 "semantic"
               ));
@@ -4114,7 +4127,7 @@
                 const providedVarargs = Math.max(0, actualArgCount - 1);
                 if (expectedSpecs.length !== providedVarargs) {
                   diagnostics.push(createDiagnostic(
-                    `Function '${expr.callee}' expects ${expectedSpecs.length} formatted argument(s) for the given format string, got ${providedVarargs}.`,
+                    translateText("Function '{callee}' expects {length} formatted argument(s) for the given format string, got {providedVarargs}.", { callee: expr.callee, length: expectedSpecs.length, providedVarargs }),
                     expr,
                     "semantic"
                   ));
@@ -4124,7 +4137,7 @@
                     const actualType = normalizeTypeName(argTypes[i + 1] || "int");
                     if (!typeCompatibleProfile(expectedType, actualType)) {
                       diagnostics.push(createDiagnostic(
-                        `Format argument ${i + 1} of '${expr.callee}' expects '${expectedType}', got '${actualType}'.`,
+                        translateText("Format argument {index} of '{callee}' expects '{expectedType}', got '{actualType}'.", { index: i + 1, callee: expr.callee, expectedType, actualType }),
                         args[i + 1] || expr,
                         "semantic"
                       ));
@@ -4153,11 +4166,11 @@
           const declarationType = normalizeTypeName(stmt.valueType || "int");
           const resolvedDeclType = resolveAliasType(declarationType);
           if (!isDeclarationTypeName(resolvedDeclType) || resolvedDeclType === "void") {
-            diagnostics.push(createDiagnostic(`Unsupported declaration type '${declarationType}'.`, stmt, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("Unsupported declaration type '{declarationType}'.", { declarationType }), stmt, "semantic"));
           }
           if (requiresC1SubsetType(resolvedDeclType) && !nativeSubsetEnabled) {
             diagnostics.push(createDiagnostic(
-              `Type '${declarationType}' requires subset C1/native, current subset is ${activeSubset}.`,
+              translateText("Type '{declarationType}' requires subset C1/native, current subset is {activeSubset}.", { declarationType, activeSubset }),
               stmt,
               "semantic"
             ));
@@ -4165,7 +4178,7 @@
           const isArray = stmt.declarationKind === "array";
           if (!isArray && isLargeStructTypeName(resolvedDeclType)) {
             diagnostics.push(createDiagnostic(
-              `Direct variable of type '${resolvedDeclType}' is not supported in C0; use pointer or array.`,
+              translateText("Direct variable of type '{resolvedDeclType}' is not supported in C0; use pointer or array.", { resolvedDeclType }),
               stmt,
               "semantic"
             ));
@@ -4183,7 +4196,7 @@
           stmt.arrayLength = normalizedShape[0] || 0;
           if (requiresS4SubsetType(resolvedDeclType) && activeSubsetLevel < subsetLevel("C0-S4")) {
             diagnostics.push(createDiagnostic(
-              `Type '${declarationType}' declarations require subset C0-S4, current subset is ${activeSubset}.`,
+              translateText("Type '{declarationType}' declarations require subset C0-S4, current subset is {activeSubset}.", { declarationType, activeSubset }),
               stmt,
               "semantic"
             ));
@@ -4217,7 +4230,7 @@
                 const byteLength = stringToByteList(stmt.initializer.value || "").length;
                 if (byteLength > (stmt.arrayLength | 0)) {
                   diagnostics.push(createDiagnostic(
-                    `String initializer is longer than array '${stmt.name}' capacity.`,
+                    translateText("String initializer is longer than array '{name}' capacity.", { name: stmt.name }),
                     stmt.initializer,
                     "semantic"
                   ));
@@ -4228,13 +4241,13 @@
                 const flatElements = flattenArrayInitializerElements(stmt.initializer, []);
                 const aggregateCapacity = byteArrayStorage ? (stmt.arrayLength | 0) : slotCount;
                 if (flatElements.length > aggregateCapacity) {
-                  diagnostics.push(createDiagnostic(`Initializer has more elements than array '${stmt.name}' capacity.`, stmt.initializer, "semantic"));
+                  diagnostics.push(createDiagnostic(translateText("Initializer has more elements than array '{name}' capacity.", { name: stmt.name }), stmt.initializer, "semantic"));
                 }
                 flatElements.forEach((element) => {
                   const elementType = bindExpr(element);
                   if (!typeCompatibleProfile(stmt.valueType || declarationType, elementType)) {
                     diagnostics.push(createDiagnostic(
-                      `Cannot initialize array '${stmt.name}' element of type '${stmt.valueType || declarationType}' with '${elementType}'.`,
+                      translateText("Cannot initialize array '{name}' element of type '{value}' with '{elementType}'.", { name: stmt.name, value: stmt.valueType || declarationType, elementType }),
                       element,
                       "semantic"
                     ));
@@ -4248,7 +4261,7 @@
                 const initType = bindExpr(stmt.initializer, { allowArrayDecay: nativeSubsetEnabled === true });
                 if (!typeCompatibleProfile(stmt.valueType || declarationType, initType)) {
                   diagnostics.push(createDiagnostic(
-                    `Cannot initialize '${stmt.name}' of type '${stmt.valueType || declarationType}' with '${initType}'.`,
+                    translateText("Cannot initialize '{name}' of type '{value}' with '{initType}'.", { name: stmt.name, value: stmt.valueType || declarationType, initType }),
                     stmt,
                     "semantic"
                   ));
@@ -4278,7 +4291,7 @@
           const fnReturnType = resolveAliasType(fn.returnType || "int");
           if (requiresS4SubsetType(fnReturnType) && activeSubsetLevel < subsetLevel("C0-S4")) {
             diagnostics.push(createDiagnostic(
-              `Return type '${fnReturnType}' requires subset C0-S4, current subset is ${activeSubset}.`,
+              translateText("Return type '{fnReturnType}' requires subset C0-S4, current subset is {activeSubset}.", { fnReturnType, activeSubset }),
               fn,
               "semantic"
             ));
@@ -4287,13 +4300,13 @@
             diagnostics.push(createDiagnostic("Void function cannot return a value.", stmt, "semantic"));
           }
           if (fnReturnType !== "void" && !stmt.expression) {
-            diagnostics.push(createDiagnostic(`${fnReturnType} function must return a value.`, stmt, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("{fnReturnType} function must return a value.", { fnReturnType }), stmt, "semantic"));
           }
           if (stmt.expression) {
             const returnedType = bindExpr(stmt.expression, { allowArrayDecay: nativeSubsetEnabled === true });
             if (fnReturnType !== "void" && !typeCompatibleProfile(fnReturnType, returnedType)) {
               diagnostics.push(createDiagnostic(
-                `Return type mismatch: expected '${fnReturnType}', got '${returnedType}'.`,
+                translateText("Return type mismatch: expected '{fnReturnType}', got '{returnedType}'.", { fnReturnType, returnedType }),
                 stmt,
                 "semantic"
               ));
@@ -4326,7 +4339,7 @@
         }
         if (stmt.type === "for") {
           if (activeSubsetLevel < subsetLevel("C0-S2")) {
-            diagnostics.push(createDiagnostic(`'for' requires subset C0-S2, current subset is ${activeSubset}.`, stmt, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("'for' requires subset C0-S2, current subset is {activeSubset}.", { activeSubset }), stmt, "semantic"));
           }
           pushScope();
           if (stmt.init) {
@@ -4352,7 +4365,7 @@
         }
         if (stmt.type === "break") {
           if (activeSubsetLevel < subsetLevel("C0-S2")) {
-            diagnostics.push(createDiagnostic(`'break' requires subset C0-S2, current subset is ${activeSubset}.`, stmt, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("'break' requires subset C0-S2, current subset is {activeSubset}.", { activeSubset }), stmt, "semantic"));
           }
           if (loopDepth <= 0) {
             diagnostics.push(createDiagnostic("'break' can only be used inside loops.", stmt, "semantic"));
@@ -4361,7 +4374,7 @@
         }
         if (stmt.type === "continue") {
           if (activeSubsetLevel < subsetLevel("C0-S2")) {
-            diagnostics.push(createDiagnostic(`'continue' requires subset C0-S2, current subset is ${activeSubset}.`, stmt, "semantic"));
+            diagnostics.push(createDiagnostic(translateText("'continue' requires subset C0-S2, current subset is {activeSubset}.", { activeSubset }), stmt, "semantic"));
           }
           if (loopDepth <= 0) {
             diagnostics.push(createDiagnostic("'continue' can only be used inside loops.", stmt, "semantic"));
@@ -4392,21 +4405,21 @@
       const functionReturnType = normalizeTypeName(fn.returnType || "int");
       if (isLargeStructTypeName(functionReturnType)) {
         diagnostics.push(createDiagnostic(
-          `Function '${fn.name}' cannot return large type '${functionReturnType}'; use pointer or array.`,
+          translateText("Function '{name}' cannot return large type '{functionReturnType}'; use pointer or array.", { name: fn.name, functionReturnType }),
           fn,
           "semantic"
         ));
       }
       if (requiresC1SubsetType(functionReturnType) && !nativeSubsetEnabled) {
         diagnostics.push(createDiagnostic(
-          `Function return type '${functionReturnType}' requires subset C1/native, current subset is ${activeSubset}.`,
+          translateText("Function return type '{functionReturnType}' requires subset C1/native, current subset is {activeSubset}.", { functionReturnType, activeSubset }),
           fn,
           "semantic"
         ));
       }
       if (requiresS4SubsetType(functionReturnType) && activeSubsetLevel < subsetLevel("C0-S4")) {
         diagnostics.push(createDiagnostic(
-          `Function return type '${functionReturnType}' requires subset C0-S4, current subset is ${activeSubset}.`,
+          translateText("Function return type '{functionReturnType}' requires subset C0-S4, current subset is {activeSubset}.", { functionReturnType, activeSubset }),
           fn,
           "semantic"
         ));
@@ -4414,28 +4427,28 @@
       (fn.params || []).forEach((param) => {
         const paramType = resolveAliasType(param.valueType || "int");
         if (!isDeclarationTypeName(paramType)) {
-          diagnostics.push(createDiagnostic(`Unsupported parameter type '${paramType}'.`, param, "semantic"));
+          diagnostics.push(createDiagnostic(translateText("Unsupported parameter type '{paramType}'.", { paramType }), param, "semantic"));
         }
         if (paramType === "void") {
-          diagnostics.push(createDiagnostic(`Parameter '${param.name}' cannot use raw 'void' type.`, param, "semantic"));
+          diagnostics.push(createDiagnostic(translateText("Parameter '{name}' cannot use raw 'void' type.", { name: param.name }), param, "semantic"));
         }
         if (requiresC1SubsetType(paramType) && !nativeSubsetEnabled) {
           diagnostics.push(createDiagnostic(
-            `Parameter type '${paramType}' requires subset C1/native, current subset is ${activeSubset}.`,
+            translateText("Parameter type '{paramType}' requires subset C1/native, current subset is {activeSubset}.", { paramType, activeSubset }),
             param,
             "semantic"
           ));
         }
         if (param.declarationKind !== "array" && isLargeStructTypeName(paramType)) {
           diagnostics.push(createDiagnostic(
-            `Parameter '${param.name}' cannot use large type '${paramType}' directly; use pointer or array.`,
+            translateText("Parameter '{name}' cannot use large type '{paramType}' directly; use pointer or array.", { name: param.name, paramType }),
             param,
             "semantic"
           ));
         }
         if (requiresS4SubsetType(paramType) && activeSubsetLevel < subsetLevel("C0-S4")) {
           diagnostics.push(createDiagnostic(
-            `Parameter type '${paramType}' requires subset C0-S4, current subset is ${activeSubset}.`,
+            translateText("Parameter type '{paramType}' requires subset C0-S4, current subset is {activeSubset}.", { paramType, activeSubset }),
             param,
             "semantic"
           ));
@@ -4545,7 +4558,7 @@
         const slot = expr.slot | 0;
         if (!state.has(slot)) {
           diagnostics.push(createDiagnostic(
-            `Variable '${expr.name}' may be used before initialization.`,
+            translateText("Variable '{name}' may be used before initialization.", { name: expr.name }),
             expr,
             "semantic"
           ));
@@ -4716,7 +4729,7 @@
       analyzeStmtInitialization(fn.body, initialState);
       if (functionReturnType !== "void" && returnFlow(fn.body).fallsThrough) {
         diagnostics.push(createDiagnostic(
-          `Function '${fn.name}' may exit without returning '${functionReturnType}'.`,
+          translateText("Function '{name}' may exit without returning '{functionReturnType}'.", { name: fn.name, functionReturnType }),
           fn,
           "semantic"
         ));
@@ -5744,7 +5757,7 @@
         ? (node.baseSlot | 0)
         : (Number.isFinite(node.target.slot) ? (node.target.slot | 0) : null);
       if (!isGlobalBase && !isGlobalPointerBase && baseSlot == null) {
-        throw createDiagnostic(`Unknown array base slot for '${node.target.name}'.`, node, "codegen");
+        throw createDiagnostic(translateText("Unknown array base slot for '{name}'.", { name: node.target.name }), node, "codegen");
       }
       addressReg = allocReg(context, node);
       if (isGlobalPointerBase) {
@@ -5860,7 +5873,7 @@
     if (node.type === "identifier") {
       const reg = allocReg(context, node);
       if (node.storage === "global") {
-        if (!node.globalLabel) throw createDiagnostic(`Missing global label for '${node.name}'.`, node, "codegen");
+        if (!node.globalLabel) throw createDiagnostic(translateText("Missing global label for '{name}'.", { name: node.name }), node, "codegen");
         emitter.emit(`  la ${reg}, ${node.globalLabel}`);
       } else {
         const offset = (node.slot || 0) * 4;
@@ -5966,7 +5979,7 @@
         emitter.emit(`  la ${reg}, ${node.functionLabel || node.name}`);
       } else if (node.asArrayReference === true) {
         if (node.storage === "global") {
-          if (!node.globalLabel) throw createDiagnostic(`Missing global label for '${node.name}'.`, node, "codegen");
+          if (!node.globalLabel) throw createDiagnostic(translateText("Missing global label for '{name}'.", { name: node.name }), node, "codegen");
           emitter.emit(`  la ${reg}, ${node.globalLabel}`);
         } else if (node.symbolKind === "array_ref") {
           const offset = (node.slot || 0) * 4;
@@ -5976,7 +5989,7 @@
           emitter.emit(`  addiu ${reg}, $fp, ${offset}`);
         }
       } else if (node.storage === "global") {
-        if (!node.globalLabel) throw createDiagnostic(`Missing global label for '${node.name}'.`, node, "codegen");
+        if (!node.globalLabel) throw createDiagnostic(translateText("Missing global label for '{name}'.", { name: node.name }), node, "codegen");
         emitter.emit(`  la ${reg}, ${node.globalLabel}`);
         emitter.emit(`  lw ${reg}, 0(${reg})`);
       } else {
@@ -6165,7 +6178,7 @@
           resultReg = emitExpression(node.value, context);
         } else {
           if (!compoundBinaryOperator) {
-            throw createDiagnostic(`Unsupported assignment operator '${assignmentOperator}'.`, node, "codegen");
+            throw createDiagnostic(translateText("Unsupported assignment operator '{assignmentOperator}'.", { assignmentOperator }), node, "codegen");
           }
           if (node.target.storage === "global") {
             const addressReg = allocReg(context, node);
@@ -6208,7 +6221,7 @@
           valueReg = emitExpression(node.value, context);
         } else {
           if (!compoundBinaryOperator) {
-            throw createDiagnostic(`Unsupported assignment operator '${assignmentOperator}'.`, node, "codegen");
+            throw createDiagnostic(translateText("Unsupported assignment operator '{assignmentOperator}'.", { assignmentOperator }), node, "codegen");
           }
           const currentReg = allocReg(context, node);
           emitter.emit(`  lw ${currentReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
@@ -6238,7 +6251,7 @@
           valueReg = emitExpression(node.value, context);
         } else {
           if (!compoundBinaryOperator) {
-            throw createDiagnostic(`Unsupported assignment operator '${assignmentOperator}'.`, node, "codegen");
+            throw createDiagnostic(translateText("Unsupported assignment operator '{assignmentOperator}'.", { assignmentOperator }), node, "codegen");
           }
           const currentReg = allocReg(context, node);
           emitter.emit(`  lw ${currentReg}, ${tempSlotOffset(context, tempSlot)}($fp)`);
@@ -6269,7 +6282,7 @@
       return emitArithmeticBinary(node, context);
     }
 
-    throw createDiagnostic(`Unsupported expression node '${node.type}'.`, node, "codegen");
+    throw createDiagnostic(translateText("Unsupported expression node '{type}'.", { type: node.type }), node, "codegen");
   }
 
   function emitLogicalBinary(node, context) {
@@ -6400,7 +6413,7 @@
         emitter.emit(`  xori ${resultReg}, ${resultReg}, 1`);
         break;
       default:
-        throw createDiagnostic(`Unsupported binary operator '${operator}'.`, nodeForError, "codegen");
+        throw createDiagnostic(translateText("Unsupported binary operator '{operator}'.", { operator }), nodeForError, "codegen");
     }
   }
 
@@ -6443,7 +6456,7 @@
   function emitCallExpression(node, context) {
     const emitter = context.emitter;
     const signature = node.signature || null;
-    if (!signature) throw createDiagnostic(`Unknown call target '${node.callee || "__indirect_call"}'.`, node, "codegen");
+    if (!signature) throw createDiagnostic(translateText("Unknown call target '{value}'.", { value: node.callee || "__indirect_call" }), node, "codegen");
 
     if (signature.intrinsic) {
       return emitIntrinsicCall(node, context);
@@ -7090,7 +7103,7 @@
       }
       return resultReg;
     }
-    throw createDiagnostic(`Unsupported intrinsic '${node.callee}'.`, node, "codegen");
+    throw createDiagnostic(translateText("Unsupported intrinsic '{callee}'.", { callee: node.callee }), node, "codegen");
   }
 
   function deriveGeneratedAsmName(fileName = "untitled.c") {

@@ -3135,7 +3135,7 @@ class MarsEngine {
       line: lineNumber,
       message: translateText('"{opcode}": {message}', {
         opcode: opcodeToken,
-        message: `Too few or incorrectly formatted operands. Expected: ${example}`
+        message: translateText("Too few or incorrectly formatted operands. Expected: {example}", { example })
       })
     });
   }

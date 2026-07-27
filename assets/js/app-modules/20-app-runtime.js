@@ -5730,14 +5730,14 @@ function syncButtons(snapshot) {
   const actionState = getActiveFileActionState();
 
   refs.buttons.assemble.disabled = runBusy || !actionState.canAssemble;
-  refs.buttons.assemble.title = actionState.canAssemble
+  refs.buttons.assemble.title = translateText(actionState.canAssemble
     ? "Assemble active assembly source."
-    : "Open an assembly source (.s, .asm, .mips) to assemble.";
+    : "Open an assembly source (.s, .asm, .mips) to assemble.");
   if (refs.buttons.compileC0) {
     refs.buttons.compileC0.disabled = runBusy || !actionState.canCompile;
-    refs.buttons.compileC0.title = actionState.canCompile
+    refs.buttons.compileC0.title = translateText(actionState.canCompile
       ? "Compile active C0 source."
-      : "Open a .c or .c0 source file to compile.";
+      : "Open a .c or .c0 source file to compile.");
   }
   refs.buttons.reset.disabled = runBusy || !assembled;
   refs.buttons.go.disabled = runBusy || !canExecute;
