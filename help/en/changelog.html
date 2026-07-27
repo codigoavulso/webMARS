@@ -8,7 +8,18 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.4.12 adds an opt-in dark theme, fixes immediate font-size apply, and removes a large amount of dead code.</p>
+  <p class="lead">Release 0.4.13 rebuilds the mobile layout around one panel at a time and localizes every assembler and compiler diagnostic.</p>
+
+  <h2>0.4.13 &mdash; mobile single-panel layout, localized diagnostics</h2>
+  <ul>
+    <li>Mobile shows one full-screen panel at a time, chosen from a new icon tab bar listing Main, Messages/Run I/O, Registers and any open tool.</li>
+    <li>Pinned the mobile viewport so the page no longer scrolls, removing the nested-scroll conflict between the document and the window bodies.</li>
+    <li>Mobile toolbar is icon-only across two compact rows, keeping the execution controls and the run-speed picker on screen; the file actions are hidden there and remain in the File and Edit menus.</li>
+    <li>Hid the minimize and maximize buttons on mobile, where one panel fills the screen and the tab bar does the switching.</li>
+    <li>Localized every assembler and Mini-C diagnostic, converting 114 template literals into named placeholders and adding 277 keys across the three languages.</li>
+    <li>Added a release test that fails when a translatable message has no catalog entry.</li>
+    <li>Desktop layout, window positions and control sizes are unchanged.</li>
+  </ul>
 
   <h2>0.4.12 &mdash; dark theme, font-size fix, dead-code cleanup</h2>
   <ul>

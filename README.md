@@ -1,4 +1,4 @@
-# webMARS v0.4.12
+# webMARS v0.4.13
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,13 +22,15 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.4.12
+## Highlights in v0.4.13
 
-- Added opt-in dark theme selectable via `Settings > Interface...`, applied consistently across the editor, tool windows, and help pages.
-- Fixed editor font size applying immediately after changing it in Interface preferences without requiring a page reload.
-- Wired the `closeAllFiles` command into `File > Close > All files`.
-- Removed dead code: machine-session autosave pipeline, ~15 dead functions across 5 modules, dead CSS selectors, unused registry exports, and 113 unused i18n keys across all three languages.
-- Excluded unreachable root-level help files (`MARSlicense.txt`, `SyscallMessageDialog*.gif`) from the release package.
+- Rebuilt the mobile layout around one full-screen panel at a time, selected from a new icon tab bar; the page no longer scrolls and the execution controls stay on screen while stepping.
+- Mobile toolbar is icon-only in two compact rows, keeping the run controls and the speed picker visible; the file actions are hidden there since they live in the File and Edit menus.
+- Localized every assembler and Mini-C compiler diagnostic, converting 114 template literals into named placeholders so the messages can carry a catalog key.
+- Added 277 translation keys across `en`, `pt` and `es`, covering runtime messages, parser, semantic, type-checking, contract and code-generation diagnostics.
+- Added a release test that fails when any translatable message lacks a catalog entry in all three languages.
+
+Desktop layout, window positions and control sizes are unchanged.
 
 ## Main Capabilities
 
@@ -134,6 +136,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.4.13`: mobile single-panel layout with icon tabs, icon-only mobile toolbar, and fully localized assembler and Mini-C diagnostics
 - `v0.4.12`: dark theme, immediate font-size apply, dead-code cleanup (autosave pipeline, ~15 functions, dead CSS, 113 i18n keys), closeAllFiles wired to menu
 - `v0.4.11`: persistent cloud login restoration across refreshes and browser restarts, with updated privacy documentation and regression coverage
 - `v0.4.10`: batched tool deltas, lighter runtime UI synchronization, Firefox separator correction, lower idle MMIO polling, and complete 100-step tool parity

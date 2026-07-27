@@ -8,7 +8,18 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">La versión 0.4.12 añade un tema oscuro opcional, corrige la aplicación inmediata del tamaño de fuente y elimina código muerto.</p>
+  <p class="lead">La versión 0.4.13 rehace el modo móvil en torno a un panel a la vez y traduce todos los diagnósticos del ensamblador y del compilador.</p>
+
+  <h2>0.4.13 &mdash; modo móvil de panel único, diagnósticos traducidos</h2>
+  <ul>
+    <li>El modo móvil muestra un panel a pantalla completa a la vez, elegido en una nueva barra de pestañas con iconos para Main, Mensajes/Run I/O, Registros y cada herramienta abierta.</li>
+    <li>La ventana móvil quedó fija y la página dejó de desplazarse, eliminando el conflicto entre el desplazamiento del documento y el de las ventanas.</li>
+    <li>La barra de herramientas móvil pasó a mostrar solo iconos, en dos filas compactas, manteniendo visibles los controles de ejecución y el selector de velocidad; las acciones de archivo ya no aparecen ahí, pues están en los menús Archivo y Editar.</li>
+    <li>Los botones de minimizar y maximizar se ocultaron en móvil, donde un panel ocupa la pantalla y el cambio se hace con las pestañas.</li>
+    <li>Se tradujeron todos los diagnósticos del ensamblador y de Mini-C, convirtiendo 114 template literals en marcadores con nombre y añadiendo 277 claves en los tres idiomas.</li>
+    <li>Nueva prueba de lanzamiento que falla cuando un mensaje traducible no tiene entrada en el catálogo.</li>
+    <li>El diseño, las posiciones de las ventanas y los tamaños de los controles en escritorio permanecen sin cambios.</li>
+  </ul>
 
   <h2>0.4.12 &mdash; tema oscuro, corrección de tamaño de fuente, limpieza de código muerto</h2>
   <ul>
