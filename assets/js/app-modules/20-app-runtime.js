@@ -5146,6 +5146,15 @@ function extractDiagnosticDetails(message) {
   return { fileName: "", message: raw };
 }
 
+// Assembler and Mini-C diagnostics are produced deep inside the core modules
+// as plain English literals. Translating them here, at the display boundary,
+// keeps those emitters free of i18n plumbing: a message with no catalog entry
+// falls through unchanged, exactly as it behaved before.
+function translateDiagnosticMessage(message) {
+  const text = String(message ?? "").trim();
+  return text ? translateText(text) : text;
+}
+
 function formatDiagnosticMessage(kind, diagnostic, fallbackFileName = "") {
   const details = extractDiagnosticDetails(diagnostic?.message);
   const fileName = details.fileName || String(fallbackFileName || "").trim();
@@ -5155,26 +5164,26 @@ function formatDiagnosticMessage(kind, diagnostic, fallbackFileName = "") {
       kind: kind === "error" ? translateText("Error") : translateText("Warning"),
       fileName,
       line,
-      message: details.message
+      message: translateDiagnosticMessage(details.message)
     });
   }
   if (fileName) {
     return translateText("{kind} in {fileName}: {message}", {
       kind: kind === "error" ? translateText("Error") : translateText("Warning"),
       fileName,
-      message: details.message
+      message: translateDiagnosticMessage(details.message)
     });
   }
   if (line > 0) {
     return translateText("{kind} line {line}: {message}", {
       kind: kind === "error" ? translateText("Error") : translateText("Warning"),
       line,
-      message: details.message
+      message: translateDiagnosticMessage(details.message)
     });
   }
   return translateText("{kind}: {message}", {
     kind: kind === "error" ? translateText("Error") : translateText("Warning"),
-    message: details.message
+    message: translateDiagnosticMessage(details.message)
   });
 }
 
@@ -7650,9 +7659,9 @@ function formatMiniCDiagnosticEntry(diagnostic, index = 0) {
   const line = Number.isFinite(diagnostic?.line) ? diagnostic.line : 0;
   const column = Number.isFinite(diagnostic?.column) ? diagnostic.column : 0;
   const phase = String(isObjectDiagnostic && diagnostic.phase ? diagnostic.phase : "mini-c");
-  const message = typeof diagnostic === "string"
+  const message = translateDiagnosticMessage(typeof diagnostic === "string"
     ? diagnostic
-    : String((isObjectDiagnostic && diagnostic.message) || "Unknown Mini-C compiler error.");
+    : String((isObjectDiagnostic && diagnostic.message) || "Unknown Mini-C compiler error."));
   const marker = `E${index + 1}`;
   const output = [];
   if (line > 0 && column > 0) output.push(`[${marker}] [${phase}] ${line}:${column} ${message}`);
@@ -7662,24 +7671,25 @@ function formatMiniCDiagnosticEntry(diagnostic, index = 0) {
   const suggestionValue = isObjectDiagnostic ? diagnostic.suggestion : null;
   if (suggestionValue && typeof suggestionValue === "object") {
     const suggestionCode = String(suggestionValue.code || "").trim();
-    const suggestionMessage = String(suggestionValue.message || "").trim();
-    const suggestionAction = String(suggestionValue.action || "").trim();
+    const suggestionMessage = translateDiagnosticMessage(suggestionValue.message);
+    const suggestionAction = translateDiagnosticMessage(suggestionValue.action);
     if (suggestionCode || suggestionMessage) {
-      const suggestionLabel = suggestionCode ? `suggestion[${suggestionCode}]` : "suggestion";
+      const suggestionWord = translateText("suggestion");
+      const suggestionLabel = suggestionCode ? `${suggestionWord}[${suggestionCode}]` : suggestionWord;
       output.push(`    ${suggestionLabel}: ${suggestionMessage || suggestionAction}`);
     }
     if (suggestionAction && suggestionAction !== suggestionMessage) {
-      output.push(`    action: ${suggestionAction}`);
+      output.push(`    ${translateText("action")}: ${suggestionAction}`);
     }
   } else if (typeof suggestionValue === "string" && suggestionValue.trim().length) {
-    output.push(`    suggestion: ${suggestionValue.trim()}`);
+    output.push(`    ${translateText("suggestion")}: ${translateDiagnosticMessage(suggestionValue)}`);
   }
 
   const snippet = isObjectDiagnostic && typeof diagnostic.snippet === "string"
     ? diagnostic.snippet
     : "";
   if (snippet.trim().length) {
-    output.push("    snippet:");
+    output.push(`    ${translateText("snippet")}:`);
     snippet.split("\n").forEach((lineText) => output.push(`      ${lineText}`));
   }
 
