@@ -3,3 +3,7 @@ test-results/
 /dist/
 /tmp_*.generated.s
 /docs/test_tmp.txt
+/.claude/
+/todo.txt
+# Carries the deployment host and user; keep it out of the public repository.
+/deploy-pi.sh
