@@ -224,7 +224,13 @@ function renderLayout(root) {
 
                 <div class="execute-splitter" id="execute-splitter" title="Drag to resize Text/Data" aria-label="Resize text and data segments"></div>
                 <section class="execute-subwindow execute-data-window">
-                  <div class="execute-subwindow-title">Data Segment</div>
+                  <div class="execute-subwindow-title">
+                    <span class="execute-subwindow-title-text">Data Segment</span>
+                    <span class="execute-bottom-switch" id="execute-bottom-switch" role="tablist" aria-label="Bottom pane">
+                      <button class="execute-bottom-btn active" type="button" data-bottom="data">Data Segment</button>
+                      <button class="execute-bottom-btn" type="button" data-bottom="messages">Messages / Run I/O</button>
+                    </span>
+                  </div>
                   <div class="execute-subwindow-body data-subwindow-body">
                     <div class="table-wrap data-table-wrap">
                       <table class="data-segment-table">
@@ -1412,6 +1418,9 @@ function createWindowManager(refs) {
     const remaining = new Map(
       [...windows.values()]
         .filter((entry) => !isHiddenEntry(entry) && (entry.kind === "native" || isStackedToolEntry(entry)))
+        // A window whose content is on loan to the Execute split would offer an
+        // empty panel.
+        .filter((entry) => !entry.element.classList.contains("pane-on-loan"))
         .map((entry) => [entry.id, entry])
     );
     const entries = [];
@@ -3079,6 +3088,12 @@ function createWindowManager(refs) {
   scheduleSharedSplitterRefresh();
   setupMobileModeBar();
 
+  // The Execute split can borrow the messages pane, which changes what the
+  // panel tabs should offer.
+  window.addEventListener("webmars:mobile-panels-changed", () => {
+    if (isStackedMode()) refreshWindowLayout();
+  });
+
   window.addEventListener("resize", () => {
     const nextLayoutMode = getViewportMode();
     const wasStacked = isStackedMode();
@@ -4649,9 +4664,61 @@ function scrollElementWithinContainer(target, container, options = {}) {
     rerender();
   });
 
+  // On a phone the Execute split can show the messages pane in its bottom half
+  // instead of the data segment. The pane is moved rather than copied, so it
+  // keeps its listeners and carries on updating wherever it sits.
+  const bottomSwitch = document.querySelector("#execute-bottom-switch");
+  let bottomPane = "data";
+
+  function getMessagesPane() {
+    return document.querySelector("#window-messages .messages-pane")
+      || document.querySelector(".messages-pane");
+  }
+
+  function setBottomPane(next) {
+    const target = next === "messages" ? "messages" : "data";
+    const body = execute.dataBody?.closest(".data-subwindow-body")
+      || document.querySelector(".data-subwindow-body");
+    const pane = getMessagesPane();
+    const dataWrap = body?.querySelector(".data-table-wrap");
+    const messagesWindow = document.getElementById("window-messages");
+    if (!body || !pane || !dataWrap || !messagesWindow) return;
+
+    bottomPane = target;
+    if (target === "messages") {
+      if (pane.parentElement !== body) body.appendChild(pane);
+      dataWrap.hidden = true;
+      pane.hidden = false;
+    } else {
+      if (pane.parentElement === body) messagesWindow.appendChild(pane);
+      dataWrap.hidden = false;
+      pane.hidden = false;
+    }
+    // The messages window would otherwise offer an empty panel while its
+    // content is on loan to the split.
+    messagesWindow.classList.toggle("pane-on-loan", target === "messages");
+
+    bottomSwitch?.querySelectorAll(".execute-bottom-btn").forEach((button) => {
+      const active = button.dataset.bottom === target;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+    });
+
+    // The window manager owns the panel tabs and has to drop or restore the
+    // messages entry; it listens for this rather than being reached into.
+    window.dispatchEvent(new CustomEvent("webmars:mobile-panels-changed"));
+  }
+
+  bottomSwitch?.querySelectorAll(".execute-bottom-btn").forEach((button) => {
+    button.setAttribute("role", "tab");
+    button.addEventListener("click", () => setBottomPane(button.dataset.bottom));
+  });
+
   let lastDataColumns = getDataColumns();
   window.addEventListener("resize", () => {
     refreshDataControlLabels();
+    // The desktop split has no switcher, so anything on loan goes home.
+    if (getDataColumns() === DATA_COLUMNS_DESKTOP && bottomPane !== "data") setBottomPane("data");
     const columns = getDataColumns();
     if (columns === lastDataColumns) return;
     lastDataColumns = columns;
@@ -7352,6 +7419,42 @@ function injectRuntimeStyles() {
       .desktop-stacked .subtab-panel.active {
         overflow: auto;
         min-width: 0;
+      }
+
+      /* The bottom half of the Execute split can show the messages pane
+         instead of the data segment; the static title gives way to the pair. */
+      .desktop-stacked .execute-subwindow-title-text {
+        display: none;
+      }
+
+      .desktop-stacked .execute-bottom-switch {
+        display: flex;
+        gap: 4px;
+        width: 100%;
+      }
+
+      .desktop-stacked .execute-bottom-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 26px;
+        padding: 2px 6px;
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        background: var(--btn-face);
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .desktop-stacked .execute-bottom-btn.active {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: var(--text-on-accent);
       }
 
       /* Long lines wrapped, which also desynchronized the highlight overlay:
