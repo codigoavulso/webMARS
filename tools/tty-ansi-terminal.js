@@ -147,6 +147,46 @@
           grid-template-columns: minmax(0, 1fr);
         }
       }
+
+      /* On a phone the settings crowded the terminal out: stacking the fields
+         and the six readouts one per row left the canvas barely a fifth of the
+         window. Scoped to the stacked layout so the desktop grid is untouched. */
+      .desktop-stacked .tty-ansi-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px 8px;
+      }
+
+      .desktop-stacked .tty-ansi-toggle {
+        padding-top: 0;
+        min-height: 24px;
+      }
+
+      /* Prose the user reads once; the terminal is what they came for. */
+      .desktop-stacked .tty-ansi-hint {
+        display: none;
+      }
+
+      /* Readouts flow inline instead of one per row. */
+      .desktop-stacked .tty-ansi-status {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 12px;
+      }
+
+      .desktop-stacked .tty-ansi-status-item {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+      }
+
+      .desktop-stacked .tty-ansi-status-label::after {
+        content: ":";
+      }
+
+      /* The terminal takes what the settings no longer need. */
+      .desktop-stacked .tty-ansi-main {
+        grid-template-rows: auto minmax(140px, 1fr);
+      }
     `;
     document.head.appendChild(style);
   }
