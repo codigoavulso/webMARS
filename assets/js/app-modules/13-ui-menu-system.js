@@ -11,13 +11,23 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
   submenuPopupLevel2.className = "menu-popup menu-sub-popup hidden";
   document.body.appendChild(submenuPopupLevel2);
 
-  // A tap synthesizes mouseenter on whatever ends up under the finger, so a
-  // popup rendered by that tap immediately receives one and opens its own
-  // submenu, cascading through the levels. Hover opening is therefore bound
-  // only where a real pointer exists; touch drives the menus by click alone.
+  // Submenus open on hover only on the desktop layout with a real pointer.
+  //
+  // Touch is excluded because a tap synthesizes mouseenter on whatever ends up
+  // under the finger, so the popup rendered by that tap immediately receives
+  // one and opens its own submenu, cascading through the levels.
+  //
+  // The mobile layout is excluded even with a mouse: submenus there overlap
+  // their parent, so opening one merely by crossing a row hides what the
+  // pointer was aiming at. A click says which item was meant.
   const canHover = () => (
     typeof window.matchMedia !== "function" || window.matchMedia("(hover: hover)").matches
   );
+  const isStackedLayout = () => (
+    refs.windows?.desktop?.classList?.contains("desktop-stacked") === true
+    || refs.root?.classList?.contains("desktop-stacked") === true
+  );
+  const opensSubmenuOnHover = () => canHover() && !isStackedLayout();
 
   const definitions = () => {
     const state = getState();
@@ -240,14 +250,14 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
           }
         };
 
-        if (canHover()) row.addEventListener("mouseenter", openSubmenu);
+        if (opensSubmenuOnHover()) row.addEventListener("mouseenter", openSubmenu);
         row.addEventListener("click", (event) => {
           event.preventDefault();
           event.stopPropagation();
           openSubmenu();
         });
       } else {
-        if (canHover()) {
+        if (opensSubmenuOnHover()) {
           if (!inSubmenu) row.addEventListener("mouseenter", hideSubmenu);
           else if (target === submenuPopup) row.addEventListener("mouseenter", hideDeepSubmenu);
         }
