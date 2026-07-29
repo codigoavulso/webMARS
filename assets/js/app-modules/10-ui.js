@@ -7090,6 +7090,10 @@ function injectRuntimeStyles() {
       [data-mobile-mode] .toolbar,
       [data-mobile-mode] .panel-tabs {
         display: none;
+        /* One shared height, so switching mode does not shift the panel edge. */
+        box-sizing: border-box;
+        min-height: 42px;
+        align-content: center;
       }
 
       [data-mobile-mode="menu"] .menu-bar { display: flex; }
@@ -7226,6 +7230,51 @@ function injectRuntimeStyles() {
          maximize; the tab bar already does the switching. */
       .desktop.desktop-stacked .desktop-window .window-controls {
         display: none !important;
+      }
+
+      /* The tool's own output is what the screen is for. The descriptive
+         heading repeats the window title, so it goes. */
+      .desktop-stacked .tool-window .mars-tool-heading {
+        display: none;
+      }
+
+      .desktop-stacked .tool-window .mars-tool-shell {
+        gap: 5px;
+      }
+
+      /* Section titles float over the top border, overlapping the panel above
+         once the gap shrinks. In the flow they cost a line and collide with
+         nothing. */
+      .desktop-stacked .tool-window .mars-tool-panel-title {
+        position: static;
+        transform: none;
+        display: block;
+        padding: 1px 6px 0;
+        background: transparent;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 400;
+        opacity: 0.75;
+      }
+
+      /* Every tool spells this legend "Tool Control" next to self-explanatory
+         buttons; the width is worth more than the label. */
+      .desktop-stacked .tool-window [class$='-footer'] .ctrl {
+        display: none;
+      }
+
+      /* A squeezed panel scrolls rather than clipping what does not fit; the
+         keypads and block tables are otherwise cut off mid-row. */
+      .desktop-stacked .tool-window .mars-tool-panel-body {
+        padding: 4px 6px 6px;
+        overflow: auto;
+      }
+
+      .desktop-stacked .tool-window .mars-tool-footer,
+      .desktop-stacked .tool-window [class$='-footer'] {
+        gap: 5px;
+        margin-top: 0;
+        padding: 4px 6px 6px;
       }
 
       /* New/Open/Save/Undo/Redo are all in the File and Edit menus, and on a
