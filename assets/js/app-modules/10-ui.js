@@ -1465,6 +1465,15 @@ function createWindowManager(refs) {
       button.setAttribute("role", "tab");
       button.addEventListener("click", () => applyMobileMode(button.dataset.mode));
     });
+
+    // Double-tapping View toggles full screen. The runtime owns the Fullscreen
+    // API call, so this only announces the intent.
+    const viewButton = bar.querySelector('.mobile-mode-btn[data-mode="view"]');
+    viewButton?.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent("webmars:toggle-fullscreen"));
+    });
+
     applyMobileMode(mobileMode);
   }
 
@@ -4687,13 +4696,16 @@ function scrollElementWithinContainer(target, container, options = {}) {
     bottomPane = target;
     if (target === "messages") {
       if (pane.parentElement !== body) body.appendChild(pane);
-      dataWrap.hidden = true;
-      pane.hidden = false;
-    } else {
-      if (pane.parentElement === body) messagesWindow.appendChild(pane);
-      dataWrap.hidden = false;
-      pane.hidden = false;
+    } else if (pane.parentElement === body) {
+      messagesWindow.appendChild(pane);
     }
+    // Hide every sibling, not just the table: the base selector, the paging
+    // arrows and the display-base checkboxes live beside it and would
+    // otherwise sit on top of the messages pane.
+    [...body.children].forEach((child) => {
+      child.hidden = child !== pane && target === "messages";
+    });
+    pane.hidden = false;
     // The messages window would otherwise offer an empty panel while its
     // content is on loan to the split.
     messagesWindow.classList.toggle("pane-on-loan", target === "messages");
@@ -7419,6 +7431,13 @@ function injectRuntimeStyles() {
       .desktop-stacked .subtab-panel.active {
         overflow: auto;
         min-width: 0;
+      }
+
+      /* [hidden] is only a user-agent style, so the explicit display on
+         .data-nav beat it and the paging controls stayed on screen over the
+         borrowed pane. */
+      .desktop-stacked .data-subwindow-body > [hidden] {
+        display: none !important;
       }
 
       /* The bottom half of the Execute split can show the messages pane

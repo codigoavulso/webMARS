@@ -5150,6 +5150,31 @@ function extractDiagnosticDetails(message) {
 // as plain English literals. Translating them here, at the display boundary,
 // keeps those emitters free of i18n plumbing: a message with no catalog entry
 // falls through unchanged, exactly as it behaved before.
+// Safari still only exposes the webkit-prefixed Fullscreen API, so both
+// spellings are tried before giving up.
+function isFullScreenActive() {
+  return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
+async function toggleFullScreen() {
+  try {
+    if (isFullScreenActive()) {
+      if (document.exitFullscreen) await document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      return;
+    }
+    const target = document.documentElement;
+    if (target.requestFullscreen) await target.requestFullscreen({ navigationUI: "hide" });
+    else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
+    else postMarsMessage("[warn] Full screen is not available in this browser.");
+  } catch (error) {
+    // A refused request is normal: browsers require a user gesture.
+    postMarsMessage("[warn] Full screen request was refused: {message}", {
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+
 function translateDiagnosticMessage(message) {
   const text = String(message ?? "").trim();
   return text ? translateText(text) : text;
@@ -8799,6 +8824,8 @@ const commands = {
       ? windowManager.getWindowEntries()
       : [];
     const actions = [
+      { label: "Full screen", command: "toggleFullScreen", check: () => isFullScreenActive() },
+      "-",
       { label: "Reset layout", command: "resetLayout" },
       { label: "Save layout", command: "saveLayout" },
       { label: "Load layout", command: "loadLayout" }
@@ -8896,10 +8923,19 @@ const commands = {
     }
   },
 
+  toggleFullScreen() { void toggleFullScreen(); },
+
+
   helpHub() { helpSystem.open("mips", "basic"); },
   helpMipsPdf() { helpSystem.openDocument("./help/mipsref.pdf", "MIPS Reference PDF"); },
   helpAbout() { helpSystem.openAbout(); }
 };
+
+// Double-tapping the mobile View tab asks for full screen; the mode bar has no
+// access to the command table, so it announces the intent instead.
+window.addEventListener("webmars:toggle-fullscreen", () => {
+  void toggleFullScreen();
+});
 
 const editorTabContextMenu = document.createElement("div");
 editorTabContextMenu.className = "menu-popup editor-tab-context-menu hidden";

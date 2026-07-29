@@ -1028,6 +1028,9 @@
     "Compile active C0 source.": "Compilar o ficheiro C0 ativo.",
     "Open a .c or .c0 source file to compile.": "Abra um ficheiro .c ou .c0 para compilar.",
     "Menu": "Menu",
-    "Control": "Controlo"
+    "Control": "Controlo",
+    "Full screen": "Ecrã inteiro",
+    "[warn] Full screen is not available in this browser.": "[warn] O ecrã inteiro não está disponível neste browser.",
+    "[warn] Full screen request was refused: {message}": "[warn] O pedido de ecrã inteiro foi recusado: {message}"
   });
 })();

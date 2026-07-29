@@ -994,6 +994,9 @@
     "Compile active C0 source.": "Compile active C0 source.",
     "Open a .c or .c0 source file to compile.": "Open a .c or .c0 source file to compile.",
     "Menu": "Menu",
-    "Control": "Control"
+    "Control": "Control",
+    "Full screen": "Full screen",
+    "[warn] Full screen is not available in this browser.": "[warn] Full screen is not available in this browser.",
+    "[warn] Full screen request was refused: {message}": "[warn] Full screen request was refused: {message}"
   });
 })();
