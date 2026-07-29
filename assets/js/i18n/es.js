@@ -668,6 +668,8 @@
     "Error reading include file {includeName}": "Error al leer el archivo incluido {includeName}",
     "Unsupported machine instruction {instruction}.": "Instrucción máquina no soportada {instruction}.",
     "Memory exception.": "Excepción de memoria.",
+    "String at {address} is not null-terminated.": "La cadena en {address} no termina con null.",
+    "String at {address} exceeds the maximum supported length of {length} byte(s).": "La cadena en {address} supera la longitud máxima admitida de {length} byte(s).",
     "Recent Run I/O": "Run I/O reciente",
     "[error] Tool '{label}' failed to process a runtime update: {message}": "[error] La herramienta '{label}' falló al procesar una actualización de runtime: {message}",
     "Open Cloud Project": "Abrir proyecto cloud",
@@ -1031,6 +1033,22 @@
     "Control": "Control",
     "Full screen": "Pantalla completa",
     "[warn] Full screen is not available in this browser.": "[warn] La pantalla completa no está disponible en este navegador.",
-    "[warn] Full screen request was refused: {message}": "[warn] La solicitud de pantalla completa fue rechazada: {message}"
+    "[warn] Full screen request was refused: {message}": "[warn] La solicitud de pantalla completa fue rechazada: {message}",
+    "Lessons": "Clases",
+    "01 - Registers and immediates": "01 - Registros e inmediatos",
+    "02 - Two's complement": "02 - Complemento a dos",
+    "03 - Logic gates over 32 bits": "03 - Puertas lógicas en 32 bits",
+    "04 - Shifts and powers of two": "04 - Desplazamientos y potencias de dos",
+    "05 - Comparator and branch": "05 - Comparador y salto",
+    "06 - Loop as a counter": "06 - Bucle como contador",
+    "07 - Words in memory": "07 - Palabras en memoria",
+    "08 - Bytes and byte order": "08 - Bytes y orden de bytes",
+    "09 - Indexing an array": "09 - Indexar un array",
+    "10 - The stack": "10 - La pila",
+    "11 - Calling a function": "11 - Llamar a una función",
+    "12 - Recursion and frames": "12 - Recursión y tramas",
+    "13 - An instruction is a number": "13 - Una instrucción es un número",
+    "14 - Real numbers in 32 bits": "14 - Números reales en 32 bits",
+    "15 - Why stride changes the speed": "15 - Por qué el paso cambia la velocidad"
   });
 })();

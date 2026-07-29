@@ -1,0 +1,70 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { createJavaScriptEngine, projectRoot } from "./helpers/engines.mjs";
+
+const examplesRoot = resolve(projectRoot, "examples");
+const manifest = JSON.parse((await readFile(resolve(examplesRoot, "examples.json"), "utf8")).replace(/^﻿/, ""));
+const lessons = manifest.examples.filter((entry) => entry.category === "Lessons");
+
+function runToHalt(engine, maxSteps = 200000) {
+  let output = "";
+  for (let step = 0; step < maxSteps && !engine.getSnapshot().halted; step += 1) {
+    const result = engine.step({ includeSnapshot: false });
+    assert.equal(result.ok, true, result.message || "Execution failed.");
+    assert.notEqual(result.waitingForInput, true, "A lesson must not wait for input.");
+    if (result.runIo) output += result.message;
+  }
+  assert.equal(engine.getSnapshot().halted, true, `Program exceeded ${maxSteps} instructions.`);
+  return output;
+}
+
+async function runLesson(fileName) {
+  const source = await readFile(resolve(examplesRoot, fileName), "utf8");
+  const engine = await createJavaScriptEngine({
+    settings: { startAtMain: true, maxMemoryBytes: 0x7fffffff }
+  });
+  const assembled = engine.assemble(source, { sourceName: fileName });
+  assert.equal(assembled.ok, true, `${fileName} did not assemble.`);
+  return runToHalt(engine);
+}
+
+test("the lesson series is numbered, ordered and complete", () => {
+  assert.equal(lessons.length, 15, "There should be fifteen lessons.");
+  lessons.forEach((entry, index) => {
+    const expected = String(index + 1).padStart(2, "0");
+    assert.ok(
+      entry.label.startsWith(`${expected} - `),
+      `Lesson ${index + 1} is labelled '${entry.label}'.`
+    );
+    assert.match(entry.path, /^lesson\d\d_[a-z0-9_]+\.asm$/);
+  });
+});
+
+test("every lesson halts on its own and prints its result", async () => {
+  // A lesson that needs a tool still has to run without one, otherwise the
+  // reader cannot see the point being made.
+  const expected = {
+    "lesson01_registers.asm": /12 \+ 30 = 42/,
+    "lesson02_twos_complement.asm": /zero minus 5 = -5[\s\S]*add 1 = -5/,
+    "lesson03_logic_gates.asm": /AND keeps the low nibble: 12[\s\S]*OR sets the low nibble:   207[\s\S]*XOR flips the low nibble: 195/,
+    "lesson04_shifts.asm": /5 << 3 = 40[\s\S]*arithmetic = -4[\s\S]*logical    = 1073741820/,
+    "lesson05_comparator.asm": /a is smaller/,
+    "lesson06_loop_counter.asm": /1 2 3 4 5 6 7 8 9 10/,
+    "lesson07_memory_words.asm": /read back: 111 222 333/,
+    "lesson08_bytes_endianness.asm": /bytes from low address: 1 2 3 4/,
+    "lesson09_array_indexing.asm": /sum = 150/,
+    "lesson10_stack.asm": /restored: 7 9/,
+    "lesson11_function_call.asm": /max\(17, 42\) = 42/,
+    "lesson12_recursion.asm": /5! = 120/,
+    "lesson13_instruction_encoding.asm": /^$/,
+    "lesson14_ieee754.asm": /3\.5 \+ 1\.25 = 4\.75/,
+    "lesson15_memory_hierarchy.asm": /stride 1 sum = 0[\s\S]*stride 16 sum = 0/
+  };
+
+  for (const entry of lessons) {
+    const output = await runLesson(entry.path);
+    assert.match(output, expected[entry.path], `${entry.path} printed:\n${output}`);
+  }
+});

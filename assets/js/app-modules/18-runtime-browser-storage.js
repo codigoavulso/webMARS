@@ -832,7 +832,7 @@ async function loadTextResource(path) {
   });
 }
 
-const EXAMPLE_CATEGORY_ORDER = ["Tools", "Math", "Learn", "Tests"];
+const EXAMPLE_CATEGORY_ORDER = ["Tools", "Math", "Learn", "Lessons", "Tests"];
 const DEFAULT_EXAMPLE_CATEGORY = "Learn";
 const DEFAULT_EXAMPLE_LANGUAGE = "en";
 const exampleManifestState = {

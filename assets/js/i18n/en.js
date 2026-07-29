@@ -634,6 +634,8 @@
     "Error reading include file {includeName}": "Error reading include file {includeName}",
     "Unsupported machine instruction {instruction}.": "Unsupported machine instruction {instruction}.",
     "Memory exception.": "Memory exception.",
+    "String at {address} is not null-terminated.": "String at {address} is not null-terminated.",
+    "String at {address} exceeds the maximum supported length of {length} byte(s).": "String at {address} exceeds the maximum supported length of {length} byte(s).",
     "Recent Run I/O": "Recent Run I/O",
     "[error] Tool '{label}' failed to process a runtime update: {message}": "[error] Tool '{label}' failed to process a runtime update: {message}",
     "Open Cloud Project": "Open Cloud Project",
@@ -997,6 +999,22 @@
     "Control": "Control",
     "Full screen": "Full screen",
     "[warn] Full screen is not available in this browser.": "[warn] Full screen is not available in this browser.",
-    "[warn] Full screen request was refused: {message}": "[warn] Full screen request was refused: {message}"
+    "[warn] Full screen request was refused: {message}": "[warn] Full screen request was refused: {message}",
+    "Lessons": "Lessons",
+    "01 - Registers and immediates": "01 - Registers and immediates",
+    "02 - Two's complement": "02 - Two's complement",
+    "03 - Logic gates over 32 bits": "03 - Logic gates over 32 bits",
+    "04 - Shifts and powers of two": "04 - Shifts and powers of two",
+    "05 - Comparator and branch": "05 - Comparator and branch",
+    "06 - Loop as a counter": "06 - Loop as a counter",
+    "07 - Words in memory": "07 - Words in memory",
+    "08 - Bytes and byte order": "08 - Bytes and byte order",
+    "09 - Indexing an array": "09 - Indexing an array",
+    "10 - The stack": "10 - The stack",
+    "11 - Calling a function": "11 - Calling a function",
+    "12 - Recursion and frames": "12 - Recursion and frames",
+    "13 - An instruction is a number": "13 - An instruction is a number",
+    "14 - Real numbers in 32 bits": "14 - Real numbers in 32 bits",
+    "15 - Why stride changes the speed": "15 - Why stride changes the speed"
   });
 })();

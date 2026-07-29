@@ -10,8 +10,8 @@
   "scripts": {
     "start": "node scripts/serve.mjs",
     "build": "node scripts/check-static.mjs",
-    "test": "node --test tests/core-regression.test.mjs tests/runtime-regression.test.mjs tests/runtime-isa-regression.test.mjs tests/runtime-memory-invariants.test.mjs tests/benchmark-regression.test.mjs tests/runtime-stop-regression.test.mjs tests/tool-runtime-regression.test.mjs tests/examples-catalog-regression.test.mjs tests/help-documentation-regression.test.mjs tests/release-readiness.test.mjs",
-    "test:regression": "node --test tests/core-regression.test.mjs tests/runtime-regression.test.mjs tests/runtime-isa-regression.test.mjs tests/runtime-memory-invariants.test.mjs tests/benchmark-regression.test.mjs tests/runtime-stop-regression.test.mjs tests/tool-runtime-regression.test.mjs tests/examples-catalog-regression.test.mjs tests/help-documentation-regression.test.mjs tests/release-readiness.test.mjs",
+    "test": "node --test tests/core-regression.test.mjs tests/runtime-regression.test.mjs tests/runtime-isa-regression.test.mjs tests/runtime-memory-invariants.test.mjs tests/benchmark-regression.test.mjs tests/runtime-stop-regression.test.mjs tests/tool-runtime-regression.test.mjs tests/examples-catalog-regression.test.mjs tests/lessons-catalog-regression.test.mjs tests/help-documentation-regression.test.mjs tests/release-readiness.test.mjs",
+    "test:regression": "node --test tests/core-regression.test.mjs tests/runtime-regression.test.mjs tests/runtime-isa-regression.test.mjs tests/runtime-memory-invariants.test.mjs tests/benchmark-regression.test.mjs tests/runtime-stop-regression.test.mjs tests/tool-runtime-regression.test.mjs tests/examples-catalog-regression.test.mjs tests/lessons-catalog-regression.test.mjs tests/help-documentation-regression.test.mjs tests/release-readiness.test.mjs",
     "package:release": "node scripts/package-release.mjs",
     "validate": "node scripts/validate.mjs"
   }

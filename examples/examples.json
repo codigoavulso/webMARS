@@ -1,371 +1,460 @@
 ﻿{
-    "defaultLanguage":  "en",
-    "languages":  [
-                      "en",
-                      "pt",
-                      "es"
-                  ],
-    "examples":  [
-                     {
-                         "label":  "bitmap_display_bars.asm",
-                         "path":  "bitmap_display_bars.asm",
-                         "category":  "Tools"
-                     },
-                     {
-                         "label":  "bitmap_ascii.c",
-                         "path":  "bitmap_ascii.c",
-                         "category":  "Tools",
-                         "minSubset":  "C0-S1"
-                     },
-                     {
-                         "label":  "bitmap_rectangles.c",
-                         "path":  "bitmap_rectangles.c",
-                         "category":  "Tools",
-                         "minSubset":  "C0-S1"
-                     },
-                     {
-                         "label":  "tty_ansi_demo.c",
-                         "path":  "tty_ansi_demo.c",
-                         "category":  "Tools",
-                         "minSubset":  "C0-S4",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "tty_calculator.c",
-                         "path":  "tty_calculator.c",
-                         "category":  "Tools",
-                         "minSubset":  "C0-S4",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "tty_mmio_direct_debug.asm",
-                         "path":  "tty_mmio_direct_debug.asm",
-                         "category":  "Tools",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "tty_sum_repl.asm",
-                         "path":  "tty_sum_repl.asm",
-                         "category":  "Tools"
-                     },
-                     {
-                         "label":  "branch_predictor_bht_demo.asm",
-                         "path":  "branch_predictor_bht_demo.asm",
-                         "category":  "Tools"
-                     },
-                     {
-                         "label":  "cache_stride_benchmark.asm",
-                         "path":  "cache_stride_benchmark.asm",
-                         "category":  "Tools"
-                     },
-                     {
-                         "label":  "digital_lab_sim_demo.asm",
-                         "path":  "digital_lab_sim_demo.asm",
-                         "category":  "Tools"
-                     },
-                     {
-                         "label":  "keyboard_display_mmio_echo.asm",
-                         "path":  "keyboard_display_mmio_echo.asm",
-                         "category":  "Tools"
-                     },
-                     {
-                         "label":  "mars_bot_game.asm",
-                         "path":  "mars_bot_game.asm",
-                         "category":  "Tools"
-                     },
-                     {
-                         "label":  "scavenger_hunt_player.asm",
-                         "path":  "scavenger_hunt_player.asm",
-                         "category":  "Tools",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "mips.asm",
-                         "path":  "mips.asm",
-                         "category":  "Tools"
-                     },
-                     {
-                         "label":  "c_compiled_style_sum.asm",
-                         "path":  "c_compiled_style_sum.asm",
-                         "category":  "Math"
-                     },
-                     {
-                         "label":  "factorial_recursive.asm",
-                         "path":  "factorial_recursive.asm",
-                         "category":  "Math"
-                     },
-                     {
-                         "label":  "fibonacci_iterative.asm",
-                         "path":  "fibonacci_iterative.asm",
-                         "category":  "Math"
-                     },
-                     {
-                         "label":  "floating_point_demo.asm",
-                         "path":  "floating_point_demo.asm",
-                         "category":  "Tools"
-                     },
-                     {
-                         "label":  "cop1_arithmetic_demo.asm",
-                         "path":  "cop1_arithmetic_demo.asm",
-                         "category":  "Math",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "matrix_mul_3x3.asm",
-                         "path":  "matrix_mul_3x3.asm",
-                         "category":  "Math"
-                     },
-                     {
-                         "label":  "bubble_sort_array.asm",
-                         "path":  "bubble_sort_array.asm",
-                         "category":  "Learn"
-                     },
-                     {
-                         "label":  "guess_number.asm",
-                         "path":  "guess_number.asm",
-                         "category":  "Learn"
-                     },
-                     {
-                         "label":  "hello_world_runio.asm",
-                         "path":  "hello_world_runio.asm",
-                         "category":  "Learn"
-                     },
-                     {
-                         "label":  "hello_world.c",
-                         "path":  "hello_world.c",
-                         "category":  "Learn",
-                         "minSubset":  "C0-S1",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "args_library_demo.c",
-                         "path":  "args_library_demo.c",
-                         "category":  "Learn",
-                         "minSubset":  "C0-S4",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "abi_stack_heap_demo.c",
-                         "path":  "abi_stack_heap_demo.c",
-                         "category":  "Learn",
-                         "minSubset":  "C0-S0",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "stdio_console_basics.c",
-                         "path":  "stdio_console_basics.c",
-                         "category":  "Learn",
-                         "minSubset":  "C0-S4",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "stdio_line_parse.c",
-                         "path":  "stdio_line_parse.c",
-                         "category":  "Learn",
-                         "minSubset":  "C0-S4",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "stdio_file_roundtrip.c",
-                         "path":  "stdio_file_roundtrip.c",
-                         "category":  "Learn",
-                         "minSubset":  "C0-S4",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "multi_file_number_analyzer.asm",
-                         "path":  "learn/multi_file_number_analyzer/main.asm",
-                         "category":  "Learn",
-                         "files":  [
-                                       {
-                                           "path":  "learn/multi_file_number_analyzer/main.asm",
-                                           "main":  true
-                                       },
-                                       {
-                                           "path":  "learn/multi_file_number_analyzer/parity.asm"
-                                       },
-                                       {
-                                           "path":  "learn/multi_file_number_analyzer/prime.asm"
-                                       }
-                                   ]
-                     },
-                     {
-                         "label":  "c_multi_file_stats",
-                         "path":  "learn/c_multi_file_stats/main.c",
-                         "category":  "Compiler",
-                         "minSubset":  "C0-S2",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ],
-                         "files":  [
-                                       {
-                                           "path":  "learn/c_multi_file_stats/main.c",
-                                           "main":  true
-                                       },
-                                       {
-                                           "path":  "learn/c_multi_file_stats/stats.h"
-                                       },
-                                       {
-                                           "path":  "learn/c_multi_file_stats/stats.c"
-                                       }
-                                   ]
-                     },
-                     {
-                         "label":  "string_strlen_strcpy.asm",
-                         "path":  "string_strlen_strcpy.asm",
-                         "category":  "Learn"
-                     },
-                     {
-                         "label":  "exception_handler_recovery.asm",
-                         "path":  "exception_handler_recovery.asm",
-                         "category":  "Learn",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "compiler_subset_s2_loops.c",
-                         "path":  "compiler_subset_s2_loops.c",
-                         "category":  "Compiler",
-                         "minSubset":  "C0-S2",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "compiler_subset_s3_arrays.c",
-                         "path":  "compiler_subset_s3_arrays.c",
-                         "category":  "Compiler",
-                         "minSubset":  "C0-S2",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "compiler_subset_s4_strings.c",
-                         "path":  "compiler_subset_s4_strings.c",
-                         "category":  "Compiler",
-                         "minSubset":  "C0-S4",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "compiler_full_c0_core.c",
-                         "path":  "compiler_full_c0_core.c",
-                         "category":  "Compiler",
-                         "minSubset":  "C0-S4",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "compiler_c0_libraries.c",
-                         "path":  "compiler_c0_libraries.c",
-                         "category":  "Compiler",
-                         "minSubset":  "C0-S4",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "compiler_c1_native.c",
-                         "path":  "compiler_c1_native.c",
-                         "category":  "Compiler",
-                         "minSubset":  "C1-NATIVE",
-                         "languages":  [
-                                           "en",
-                                           "pt",
-                                           "es"
-                                       ]
-                     },
-                     {
-                         "label":  "test_delay_slot_exception.asm",
-                         "path":  "test_delay_slot_exception.asm",
-                         "category":  "Tests"
-                     },
-                     {
-                         "label":  "test_program_arguments.asm",
-                         "path":  "test_program_arguments.asm",
-                         "category":  "Tests"
-                     },
-                     {
-                         "label":  "test_jalr_register_order.asm",
-                         "path":  "test_jalr_register_order.asm",
-                         "category":  "Tests"
-                     },
-                     {
-                         "label":  "test_pseudo_ops_lowering.asm",
-                         "path":  "test_pseudo_ops_lowering.asm",
-                         "category":  "Tests"
-                     },
-                     {
-                         "label":  "test_start_at_main.asm",
-                         "path":  "test_start_at_main.asm",
-                         "category":  "Tests"
-                     },
-                     {
-                         "label":  "test_unaligned_memory_exception.asm",
-                         "path":  "test_unaligned_memory_exception.asm",
-                         "category":  "Tests"
-                     }
-                 ]
+    "defaultLanguage": "en",
+    "languages": [
+        "en",
+        "pt",
+        "es"
+    ],
+    "examples": [
+        {
+            "label": "bitmap_display_bars.asm",
+            "path": "bitmap_display_bars.asm",
+            "category": "Tools"
+        },
+        {
+            "label": "bitmap_ascii.c",
+            "path": "bitmap_ascii.c",
+            "category": "Tools",
+            "minSubset": "C0-S1"
+        },
+        {
+            "label": "bitmap_rectangles.c",
+            "path": "bitmap_rectangles.c",
+            "category": "Tools",
+            "minSubset": "C0-S1"
+        },
+        {
+            "label": "tty_ansi_demo.c",
+            "path": "tty_ansi_demo.c",
+            "category": "Tools",
+            "minSubset": "C0-S4",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "tty_calculator.c",
+            "path": "tty_calculator.c",
+            "category": "Tools",
+            "minSubset": "C0-S4",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "tty_mmio_direct_debug.asm",
+            "path": "tty_mmio_direct_debug.asm",
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "tty_sum_repl.asm",
+            "path": "tty_sum_repl.asm",
+            "category": "Tools"
+        },
+        {
+            "label": "branch_predictor_bht_demo.asm",
+            "path": "branch_predictor_bht_demo.asm",
+            "category": "Tools"
+        },
+        {
+            "label": "cache_stride_benchmark.asm",
+            "path": "cache_stride_benchmark.asm",
+            "category": "Tools"
+        },
+        {
+            "label": "digital_lab_sim_demo.asm",
+            "path": "digital_lab_sim_demo.asm",
+            "category": "Tools"
+        },
+        {
+            "label": "keyboard_display_mmio_echo.asm",
+            "path": "keyboard_display_mmio_echo.asm",
+            "category": "Tools"
+        },
+        {
+            "label": "mars_bot_game.asm",
+            "path": "mars_bot_game.asm",
+            "category": "Tools"
+        },
+        {
+            "label": "scavenger_hunt_player.asm",
+            "path": "scavenger_hunt_player.asm",
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "MARS-OS TTY Shell",
+            "path": "mips.asm",
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ],
+            "files": [
+                {
+                    "path": "mips.asm",
+                    "main": true
+                },
+                {
+                    "path": "mips_os_kernel.asm"
+                }
+            ]
+        },
+        {
+            "label": "c_compiled_style_sum.asm",
+            "path": "c_compiled_style_sum.asm",
+            "category": "Math"
+        },
+        {
+            "label": "factorial_recursive.asm",
+            "path": "factorial_recursive.asm",
+            "category": "Math"
+        },
+        {
+            "label": "fibonacci_iterative.asm",
+            "path": "fibonacci_iterative.asm",
+            "category": "Math"
+        },
+        {
+            "label": "floating_point_demo.asm",
+            "path": "floating_point_demo.asm",
+            "category": "Tools"
+        },
+        {
+            "label": "cop1_arithmetic_demo.asm",
+            "path": "cop1_arithmetic_demo.asm",
+            "category": "Math",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "matrix_mul_3x3.asm",
+            "path": "matrix_mul_3x3.asm",
+            "category": "Math"
+        },
+        {
+            "label": "bubble_sort_array.asm",
+            "path": "bubble_sort_array.asm",
+            "category": "Learn"
+        },
+        {
+            "label": "guess_number.asm",
+            "path": "guess_number.asm",
+            "category": "Learn"
+        },
+        {
+            "label": "hello_world_runio.asm",
+            "path": "hello_world_runio.asm",
+            "category": "Learn"
+        },
+        {
+            "label": "hello_world.c",
+            "path": "hello_world.c",
+            "category": "Learn",
+            "minSubset": "C0-S1",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "args_library_demo.c",
+            "path": "args_library_demo.c",
+            "category": "Learn",
+            "minSubset": "C0-S4",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "abi_stack_heap_demo.c",
+            "path": "abi_stack_heap_demo.c",
+            "category": "Learn",
+            "minSubset": "C0-S0",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "stdio_console_basics.c",
+            "path": "stdio_console_basics.c",
+            "category": "Learn",
+            "minSubset": "C0-S4",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "stdio_line_parse.c",
+            "path": "stdio_line_parse.c",
+            "category": "Learn",
+            "minSubset": "C0-S4",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "stdio_file_roundtrip.c",
+            "path": "stdio_file_roundtrip.c",
+            "category": "Learn",
+            "minSubset": "C0-S4",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "multi_file_number_analyzer.asm",
+            "path": "learn/multi_file_number_analyzer/main.asm",
+            "category": "Learn",
+            "files": [
+                {
+                    "path": "learn/multi_file_number_analyzer/main.asm",
+                    "main": true
+                },
+                {
+                    "path": "learn/multi_file_number_analyzer/parity.asm"
+                },
+                {
+                    "path": "learn/multi_file_number_analyzer/prime.asm"
+                }
+            ]
+        },
+        {
+            "label": "c_multi_file_stats",
+            "path": "learn/c_multi_file_stats/main.c",
+            "category": "Compiler",
+            "minSubset": "C0-S2",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ],
+            "files": [
+                {
+                    "path": "learn/c_multi_file_stats/main.c",
+                    "main": true
+                },
+                {
+                    "path": "learn/c_multi_file_stats/stats.h"
+                },
+                {
+                    "path": "learn/c_multi_file_stats/stats.c"
+                }
+            ]
+        },
+        {
+            "label": "string_strlen_strcpy.asm",
+            "path": "string_strlen_strcpy.asm",
+            "category": "Learn"
+        },
+        {
+            "label": "exception_handler_recovery.asm",
+            "path": "exception_handler_recovery.asm",
+            "category": "Learn",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "compiler_subset_s2_loops.c",
+            "path": "compiler_subset_s2_loops.c",
+            "category": "Compiler",
+            "minSubset": "C0-S2",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "compiler_subset_s3_arrays.c",
+            "path": "compiler_subset_s3_arrays.c",
+            "category": "Compiler",
+            "minSubset": "C0-S2",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "compiler_subset_s4_strings.c",
+            "path": "compiler_subset_s4_strings.c",
+            "category": "Compiler",
+            "minSubset": "C0-S4",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "compiler_full_c0_core.c",
+            "path": "compiler_full_c0_core.c",
+            "category": "Compiler",
+            "minSubset": "C0-S4",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "compiler_c0_libraries.c",
+            "path": "compiler_c0_libraries.c",
+            "category": "Compiler",
+            "minSubset": "C0-S4",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "compiler_c1_native.c",
+            "path": "compiler_c1_native.c",
+            "category": "Compiler",
+            "minSubset": "C1-NATIVE",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
+            "label": "test_delay_slot_exception.asm",
+            "path": "test_delay_slot_exception.asm",
+            "category": "Tests"
+        },
+        {
+            "label": "test_program_arguments.asm",
+            "path": "test_program_arguments.asm",
+            "category": "Tests"
+        },
+        {
+            "label": "test_jalr_register_order.asm",
+            "path": "test_jalr_register_order.asm",
+            "category": "Tests"
+        },
+        {
+            "label": "test_pseudo_ops_lowering.asm",
+            "path": "test_pseudo_ops_lowering.asm",
+            "category": "Tests"
+        },
+        {
+            "label": "test_start_at_main.asm",
+            "path": "test_start_at_main.asm",
+            "category": "Tests"
+        },
+        {
+            "label": "test_unaligned_memory_exception.asm",
+            "path": "test_unaligned_memory_exception.asm",
+            "category": "Tests"
+        },
+        {
+            "label": "01 - Registers and immediates",
+            "path": "lesson01_registers.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "02 - Two's complement",
+            "path": "lesson02_twos_complement.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "03 - Logic gates over 32 bits",
+            "path": "lesson03_logic_gates.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "04 - Shifts and powers of two",
+            "path": "lesson04_shifts.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "05 - Comparator and branch",
+            "path": "lesson05_comparator.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "06 - Loop as a counter",
+            "path": "lesson06_loop_counter.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "07 - Words in memory",
+            "path": "lesson07_memory_words.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "08 - Bytes and byte order",
+            "path": "lesson08_bytes_endianness.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "09 - Indexing an array",
+            "path": "lesson09_array_indexing.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "10 - The stack",
+            "path": "lesson10_stack.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "11 - Calling a function",
+            "path": "lesson11_function_call.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "12 - Recursion and frames",
+            "path": "lesson12_recursion.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "13 - An instruction is a number",
+            "path": "lesson13_instruction_encoding.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "14 - Real numbers in 32 bits",
+            "path": "lesson14_ieee754.asm",
+            "category": "Lessons"
+        },
+        {
+            "label": "15 - Why stride changes the speed",
+            "path": "lesson15_memory_hierarchy.asm",
+            "category": "Lessons"
+        }
+    ]
 }
