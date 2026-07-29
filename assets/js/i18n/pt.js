@@ -1026,6 +1026,8 @@
     "Assemble active assembly source.": "Montar o ficheiro assembly ativo.",
     "Open an assembly source (.s, .asm, .mips) to assemble.": "Abra um ficheiro assembly (.s, .asm, .mips) para montar.",
     "Compile active C0 source.": "Compilar o ficheiro C0 ativo.",
-    "Open a .c or .c0 source file to compile.": "Abra um ficheiro .c ou .c0 para compilar."
+    "Open a .c or .c0 source file to compile.": "Abra um ficheiro .c ou .c0 para compilar.",
+    "Menu": "Menu",
+    "Control": "Controlo"
   });
 })();

@@ -375,8 +375,9 @@ select {
   padding: 1px;
 }
 
-/* The mobile panel switcher; the stacked breakpoint turns it into a flex row. */
-.panel-tabs {
+/* Mobile-only bars; the stacked breakpoint turns them into flex rows. */
+.panel-tabs,
+.mobile-modes {
   display: none;
 }
 

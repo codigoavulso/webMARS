@@ -77,6 +77,13 @@ function tabController(root, buttonSelector, panelSelector) {
 function renderLayout(root) {
   root.innerHTML = `
     <div class="shell">
+      <nav id="mobile-mode-bar" class="mobile-modes panel" role="tablist" aria-label="Toolbars">
+        <button class="mobile-mode-btn" type="button" data-mode="menu">Menu</button>
+        <button class="mobile-mode-btn active" type="button" data-mode="run">Control</button>
+        <button class="mobile-mode-btn" type="button" data-mode="speed">Run speed</button>
+        <button class="mobile-mode-btn" type="button" data-mode="view">View</button>
+      </nav>
+
       <nav class="menu-bar panel">
         <span class="menu-logo" aria-hidden="true">&#128640;</span>
         <button class="menu-item" type="button" data-menu="File">File</button>
@@ -394,6 +401,7 @@ function renderLayout(root) {
     windows: {
       desktop: root.querySelector("#mars-desktop"),
       panelTabs: root.querySelector("#mobile-panel-tabs"),
+      modeBar: root.querySelector("#mobile-mode-bar"),
       main: root.querySelector("#window-main"),
       editor: root.querySelector("#window-main"),
       text: root.querySelector("#window-main"),
@@ -567,6 +575,9 @@ function createWindowManager(refs) {
     "window-registers": "\u{1F9EE}"
   };
   const MOBILE_PANEL_TOOL_ICON = "\u{1F527}";
+  // Which toolbar the second mobile row shows; the first row switches between
+  // them. Order matches the buttons in the shell markup.
+  const MOBILE_MODES = ["menu", "run", "speed", "view"];
   const DESKTOP_NATIVE_ORDER = ["window-main", "window-messages", "window-registers"];
   const DESKTOP_LINKED_RESIZE_IDS = new Set(DESKTOP_NATIVE_ORDER);
   const STACKED_DEFAULT_HEIGHTS = {
@@ -588,6 +599,7 @@ function createWindowManager(refs) {
   let desktopLayoutSaveTimer = null;
   let layoutMode = window.innerWidth < STACK_BREAKPOINT_PX ? "stacked" : "desktop";
   let mobileActivePanelId = "window-main";
+  let mobileMode = "run";
   let desktopLayoutHistory = [];
   const pendingSessionWindowState = new Map();
   const pendingSavedLayoutState = new Map();
@@ -1417,6 +1429,29 @@ function createWindowManager(refs) {
     // Tool titles append a version and author ("Instruction Counter, Version
     // 1.0 (Felipe Lessa)"); a tab only needs the name.
     return text.split(",")[0].trim() || text;
+  }
+
+  // Mobile keeps a single contextual bar under the mode selector, so the
+  // chrome costs two rows instead of three stacked ones.
+  function applyMobileMode(mode) {
+    mobileMode = MOBILE_MODES.includes(mode) ? mode : MOBILE_MODES[0];
+    if (refs.root) refs.root.dataset.mobileMode = mobileMode;
+    refs.windows.modeBar?.querySelectorAll(".mobile-mode-btn").forEach((button) => {
+      const active = button.dataset.mode === mobileMode;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    refreshWindowLayout();
+  }
+
+  function setupMobileModeBar() {
+    const bar = refs.windows.modeBar;
+    if (!bar) return;
+    bar.querySelectorAll(".mobile-mode-btn").forEach((button) => {
+      button.setAttribute("role", "tab");
+      button.addEventListener("click", () => applyMobileMode(button.dataset.mode));
+    });
+    applyMobileMode(mobileMode);
   }
 
   function setMobilePanel(panelId) {
@@ -2997,6 +3032,7 @@ function createWindowManager(refs) {
     captureDesktopLayoutSnapshot();
   }
   scheduleSharedSplitterRefresh();
+  setupMobileModeBar();
 
   window.addEventListener("resize", () => {
     const nextLayoutMode = getViewportMode();
@@ -5211,27 +5247,31 @@ function injectRuntimeStyles() {
       display: grid;
       height: 100vh;
       overflow: hidden;
-      grid-template-rows: auto auto auto 1fr;
+      grid-template-rows: auto auto auto auto 1fr;
       grid-template-areas:
+        "mobilemodes"
         "menu"
         "toolbar"
         "paneltabs"
         "desktop";
     }
 
+    /* Both mobile-only bars collapse to nothing on desktop, where they are
+       display:none, so the extra rows cost no height there. */
+    .mobile-modes { grid-area: mobilemodes; }
     .menu-bar { grid-area: menu; }
     .toolbar { grid-area: toolbar; }
-    /* Collapses to nothing on desktop, where the tab bar is display:none. */
     .panel-tabs { grid-area: paneltabs; }
     .desktop { grid-area: desktop; }
 
     .menu-at-bottom .shell {
-      grid-template-rows: 1fr auto auto auto;
+      grid-template-rows: 1fr auto auto auto auto;
       grid-template-areas:
         "desktop"
         "paneltabs"
         "toolbar"
-        "menu";
+        "menu"
+        "mobilemodes";
     }
 
     .mode-tabs {
@@ -7005,12 +7045,65 @@ function injectRuntimeStyles() {
         height: 100dvh;
         min-height: 0;
         overflow: hidden;
-        grid-template-rows: auto auto auto minmax(0, 1fr);
+        /* Five areas: mode bar, the three switchable toolbars, then the panel.
+           Keep this list in step with the base grid-template-areas. */
+        grid-template-rows: auto auto auto auto minmax(0, 1fr);
         align-content: stretch;
       }
 
-      .panel-tabs {
+      /* Row one picks which toolbar row two shows. Everything not selected
+         collapses to a zero-height grid row, so the chrome stays at two bars
+         however many toolbars exist. */
+      .mobile-modes {
         display: flex;
+        gap: 3px;
+        padding: 3px 4px;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .mobile-mode-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 32px;
+        padding: 4px 6px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: var(--btn-face);
+        color: var(--text-muted);
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .mobile-mode-btn.active {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: var(--text-on-accent);
+      }
+
+      [data-mobile-mode] .menu-bar,
+      [data-mobile-mode] .toolbar,
+      [data-mobile-mode] .panel-tabs {
+        display: none;
+      }
+
+      [data-mobile-mode="menu"] .menu-bar { display: flex; }
+      [data-mobile-mode="run"] .toolbar,
+      [data-mobile-mode="speed"] .toolbar { display: flex; }
+      [data-mobile-mode="view"] .panel-tabs { display: flex; }
+
+      /* Each toolbar mode shows only its own group. */
+      [data-mobile-mode="run"] .toolbar-speed-group,
+      [data-mobile-mode="speed"] .toolbar-run-group {
+        display: none !important;
+      }
+
+      .panel-tabs {
         gap: 3px;
         padding: 3px 4px;
         overflow-x: auto;

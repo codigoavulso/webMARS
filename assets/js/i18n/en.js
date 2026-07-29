@@ -992,6 +992,8 @@
     "Assemble active assembly source.": "Assemble active assembly source.",
     "Open an assembly source (.s, .asm, .mips) to assemble.": "Open an assembly source (.s, .asm, .mips) to assemble.",
     "Compile active C0 source.": "Compile active C0 source.",
-    "Open a .c or .c0 source file to compile.": "Open a .c or .c0 source file to compile."
+    "Open a .c or .c0 source file to compile.": "Open a .c or .c0 source file to compile.",
+    "Menu": "Menu",
+    "Control": "Control"
   });
 })();
