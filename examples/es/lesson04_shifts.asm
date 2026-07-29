@@ -1,23 +1,23 @@
 # ==========================================================
-# Lesson 04 - Shifts, or multiplying with wires
+# Clase 04 - Desplazamientos, o multiplicar con cables
 #
-# THE PROBLEM
-#   A general multiplier is one of the most expensive blocks in
-#   a datapath. Multiplying by 8 should not cost that much.
+# EL PROBLEMA
+#   Un multiplicador general es uno de los bloques mas caros de
+#   un datapath. Multiplicar por 8 no deberia costar tanto.
 #
-# WHAT THE HARDWARE DOES
-#   A shift is not arithmetic at all: it is the same bits read
-#   from different wires. Shifting left by n multiplies by 2^n
-#   and costs only routing.
+# LO QUE HACE EL HARDWARE
+#   Un desplazamiento no es aritmetica: son los mismos bits leidos
+#   desde cables distintos. Desplazar n a la izquierda multiplica
+#   por 2^n y solo cuesta enrutado.
 #
-# THE SOLUTION
-#   Powers of two become shifts. Note the two right shifts: srl
-#   feeds zeros in at the top, sra copies the sign bit, so only
-#   sra divides a negative number correctly.
+# LA SOLUCION
+#   Las potencias de dos pasan a ser desplazamientos. Fijese en
+#   los dos a la derecha: srl mete ceros arriba, sra copia el bit
+#   de signo, asi que solo sra divide bien un negativo.
 #
-# WATCH FOR
-#   -16 >> 2 gives -4 with sra but a huge positive with srl. The
-#   bits moved identically; only what entered at the top differs.
+# OBSERVE
+#   -16 >> 2 da -4 con sra, pero un positivo enorme con srl. Los
+#   bits se movieron igual; cambia lo que entro por arriba.
 # ==========================================================
         .data
 m1:     .asciiz "5 << 3 = "

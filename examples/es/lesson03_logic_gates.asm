@@ -1,23 +1,23 @@
 # ==========================================================
-# Lesson 03 - Logic gates across 32 bits
+# Clase 03 - Puertas logicas en 32 bits
 #
-# THE PROBLEM
-#   AND, OR and XOR are one-bit gates. A register holds 32 bits.
-#   What does a gate mean at that width?
+# EL PROBLEMA
+#   AND, OR y XOR son puertas de un bit. Un registro tiene 32.
+#   Que significa una puerta con esa anchura?
 #
-# WHAT THE HARDWARE DOES
-#   It lays 32 copies of the gate side by side. Bit 0 of the
-#   result depends only on bit 0 of each operand, bit 1 only on
-#   bit 1, and so on. No carry travels between them.
+# LO QUE HACE EL HARDWARE
+#   Pone 32 copias de la puerta en paralelo. El bit 0 del
+#   resultado depende solo del bit 0 de cada operando, el bit 1
+#   solo del bit 1. No hay acarreo entre ellos.
 #
-# THE SOLUTION
-#   That independence is what makes a mask work: choose which
-#   bits to keep with AND, force to one with OR, flip with XOR.
+# LA SOLUCION
+#   Esa independencia es lo que hace funcionar una mascara: elegir
+#   bits con AND, forzarlos a uno con OR, invertirlos con XOR.
 #
-# WATCH FOR
-#   0xCC is 11001100 and the mask 0x0F is 00001111. AND keeps
-#   the low four bits, OR sets them, XOR flips them. Only the
-#   low nibble ever changes.
+# OBSERVE
+#   0xCC es 11001100 y la mascara 0x0F es 00001111. AND mantiene
+#   los cuatro bits bajos, OR los pone a uno, XOR los invierte.
+#   Solo cambia el nibble bajo.
 # ==========================================================
         .data
 ma:     .asciiz "AND keeps the low nibble: "

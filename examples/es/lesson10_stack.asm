@@ -1,24 +1,24 @@
 # ==========================================================
-# Lesson 10 - The stack is a register and an offset
+# Clase 10 - La pila es un registro y un desplazamiento
 #
-# THE PROBLEM
-#   There are 32 registers and they are shared by every piece of
-#   code. Where does a value go when it must survive work that
-#   will reuse those registers?
+# EL PROBLEMA
+#   Hay 32 registros y los comparte todo el codigo. Donde va un
+#   valor que debe sobrevivir a trabajo que reutilizara esos
+#   registros?
 #
-# WHAT THE HARDWARE DOES
-#   Nothing special at all. $sp is an ordinary register that
-#   happens to point into memory, and the stack grows towards
-#   lower addresses purely by convention.
+# LO QUE HACE EL HARDWARE
+#   Nada especial. $sp es un registro corriente que apunta a la
+#   memoria, y la pila crece hacia direcciones mas bajas solo por
+#   convencion.
 #
-# THE SOLUTION
-#   Reserving space is a subtraction from $sp, releasing it an
-#   addition. Push and pop are just sw and lw.
+# LA SOLUCION
+#   Reservar espacio es restar a $sp, liberarlo es sumar. Apilar y
+#   desapilar son solo sw y lw.
 #
-# WATCH FOR
-#   The registers are deliberately cleared between the stores
-#   and the loads, so the printed values can only have come
-#   back from memory. Watch $sp move by 8 and back.
+# OBSERVE
+#   Los registros se limpian a proposito entre las escrituras y
+#   las lecturas, asi que los valores impresos solo pueden venir
+#   de la memoria. Siga a $sp moverse 8 y volver.
 # ==========================================================
         .data
 m1:     .asciiz "restored: "

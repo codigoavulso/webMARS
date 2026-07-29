@@ -1,26 +1,26 @@
 # ==========================================================
-# Lesson 15 - Why stride changes the speed
+# Clase 15 - Por que el paso cambia la velocidad
 #
-# THE PROBLEM
-#   The two loops below read the same array and perform the same
-#   number of loads. On a real machine one is far slower. The
-#   instruction count cannot explain it.
+# EL PROBLEMA
+#   Los dos bucles de abajo leen el mismo array y hacen el mismo
+#   numero de lecturas. En una maquina real uno es mucho mas
+#   lento. El recuento de instrucciones no lo explica.
 #
-# WHAT THE HARDWARE DOES
-#   Memory does not deliver single words. A miss fetches a whole
-#   block, betting that neighbouring words will be wanted soon.
-#   A stride of one collects that bet; a stride of sixteen pays
-#   for a block and reads one word of it.
+# LO QUE HACE EL HARDWARE
+#   La memoria no entrega palabras aisladas. Un fallo trae un
+#   bloque entero, apostando que las palabras vecinas se pediran
+#   pronto. Un paso de uno cobra esa apuesta; un paso de dieciseis
+#   paga un bloque y lee una palabra de el.
 #
-# THE SOLUTION
-#   Nothing in the code changes. Locality is a property of the
-#   access pattern, and it is the pattern that must be fixed.
+# LA SOLUCION
+#   Nada cambia en el codigo. La localidad es una propiedad del
+#   patron de acceso, y es el patron lo que hay que corregir.
 #
-# WATCH FOR
-#   Open Tools > Data Cache Simulator, press Connect to MIPS,
-#   then run. Compare the hit rate of the two loops. Both sums
-#   print 0 because the array is zeroed - the number is not the
-#   point here, the hit rate is.
+# OBSERVE
+#   Abra Herramientas > Data Cache Simulator, pulse Connect to
+#   MIPS y ejecute. Compare la tasa de aciertos de los dos
+#   bucles. Ambas sumas dan 0 porque el array esta a ceros: el
+#   numero no importa aqui, importa la tasa de aciertos.
 # ==========================================================
         .data
 buf:    .word 0:256

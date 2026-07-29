@@ -311,13 +311,16 @@
                     "main": true
                 },
                 {
-                    "path": "learn/multi_file_number_analyzer/parity.asm",
-                    "shared": true
+                    "path": "learn/multi_file_number_analyzer/parity.asm"
                 },
                 {
-                    "path": "learn/multi_file_number_analyzer/prime.asm",
-                    "shared": true
+                    "path": "learn/multi_file_number_analyzer/prime.asm"
                 }
+            ],
+            "languages": [
+                "en",
+                "pt",
+                "es"
             ]
         },
         {
@@ -331,13 +334,16 @@
                     "main": true
                 },
                 {
-                    "path": "learn/c_multi_file_stats/stats.h",
-                    "shared": true
+                    "path": "learn/c_multi_file_stats/stats.h"
                 },
                 {
-                    "path": "learn/c_multi_file_stats/stats.c",
-                    "shared": true
+                    "path": "learn/c_multi_file_stats/stats.c"
                 }
+            ],
+            "languages": [
+                "en",
+                "pt",
+                "es"
             ]
         },
         {
@@ -489,77 +495,152 @@
         {
             "label": "01 - Registers and immediates",
             "path": "lesson01_registers.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "02 - Two's complement",
             "path": "lesson02_twos_complement.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "03 - Logic gates over 32 bits",
             "path": "lesson03_logic_gates.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "04 - Shifts and powers of two",
             "path": "lesson04_shifts.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "05 - Comparator and branch",
             "path": "lesson05_comparator.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "06 - Loop as a counter",
             "path": "lesson06_loop_counter.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "07 - Words in memory",
             "path": "lesson07_memory_words.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "08 - Bytes and byte order",
             "path": "lesson08_bytes_endianness.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "09 - Indexing an array",
             "path": "lesson09_array_indexing.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "10 - The stack",
             "path": "lesson10_stack.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "11 - Calling a function",
             "path": "lesson11_function_call.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "12 - Recursion and frames",
             "path": "lesson12_recursion.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "13 - An instruction is a number",
             "path": "lesson13_instruction_encoding.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "14 - Real numbers in 32 bits",
             "path": "lesson14_ieee754.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "15 - Why stride changes the speed",
             "path": "lesson15_memory_hierarchy.asm",
-            "category": "Lessons"
+            "category": "Lessons",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         }
     ]
 }

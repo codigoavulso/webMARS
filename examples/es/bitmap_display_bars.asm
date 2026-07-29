@@ -1,6 +1,6 @@
 # Demo del Bitmap Display
 # Abra Herramientas > Bitmap Display
-# Configuracion sugerida: Unidad 1x1, Pantalla 64x64, Base 0x10010000 (.data)
+# El programa configura Unidad 1x1, Pantalla 64x64 y Base 0x10010000.
 # Dibuja una barra horizontal en movimiento con colores cambiantes.
 
 .data
@@ -10,6 +10,23 @@ msg2: .asciiz "Drawing animated color bars at 0x10010000...\n"
 
 .text
 main:
+  li $t0, 0xffff0020      # bloque de control Bitmap MMIO de webMARS
+  li $t1, 0x57424d50      # "WBMP"
+  sw $t1, 0($t0)
+  li $t1, 1
+  sw $t1, 4($t0)         # version del protocolo
+  sw $t1, 8($t0)         # destino: Bitmap Display
+  li $t1, 64
+  sw $t1, 12($t0)        # ancho de pantalla
+  sw $t1, 16($t0)        # alto de pantalla
+  li $t1, 1
+  sw $t1, 20($t0)        # ancho de unidad
+  sw $t1, 24($t0)        # alto de unidad
+  li $t1, 0x10010000
+  sw $t1, 28($t0)        # framebuffer
+  li $t1, 1
+  sw $t1, 32($t0)        # aplicacion atomica
+
   li $v0, 4
   la $a0, msg0
   syscall

@@ -1,23 +1,24 @@
 # ==========================================================
-# Lesson 02 - Two's complement
+# Aula 02 - Complemento para dois
 #
-# THE PROBLEM
-#   A register is 32 wires, each high or low. There is no wire
-#   for a minus sign, yet negative numbers must work.
+# O PROBLEMA
+#   Um registo sao 32 fios, cada um a nivel alto ou baixo. Nao ha
+#   fio para o sinal de menos, e ainda assim os negativos tem de
+#   funcionar.
 #
-# WHAT THE HARDWARE DOES
-#   It reads the top bit as a sign, but not as a separate flag:
-#   -n is stored as the bit pattern that, added to n, wraps to
-#   zero. Invert every bit and add one and you have it.
+# O QUE O HARDWARE FAZ
+#   Le o bit de topo como sinal, mas nao como flag separada: -n e
+#   guardado como o padrao de bits que, somado a n, da a volta
+#   ate zero. Inverter todos os bits e somar um chega la.
 #
-# THE SOLUTION
-#   Subtraction needs no second circuit. a - b becomes
-#   a + (-b), so one adder serves both operations.
+# A SOLUCAO
+#   A subtracao nao precisa de um segundo circuito. a - b passa a
+#   a + (-b), logo um unico somador serve as duas operacoes.
 #
-# WATCH FOR
-#   Both halves print -5. The second reaches it the long way,
-#   with nor and addi, showing what sub does internally.
-#   Set Values to hexadecimal to see 0xFFFFFFFB.
+# OBSERVE
+#   As duas metades imprimem -5. A segunda chega la pelo caminho
+#   longo, com nor e addi, mostrando o que o sub faz por dentro.
+#   Ponha os Valores em hexadecimal para ver 0xFFFFFFFB.
 # ==========================================================
         .data
 m1:     .asciiz "zero minus 5 = "

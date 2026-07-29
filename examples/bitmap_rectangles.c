@@ -1,11 +1,11 @@
 #use <bitmap_rect>
 
-// Open Tools > Bitmap Display.
-// Configure Unit 1x1, Display 128x64, Base 0x10020000, then connect to MIPS.
+// Open Tools > Bitmap Display and connect to MIPS.
+// The program configures Unit 1x1, Display 128x64 and Base 0x10020000.
 int main(void) {
   int cols = 128;
   int rows = 64;
-  bitmap_set_base_address(0x10020000);
+  bitmap_configure_display(128, 64, 1, 1, 0x10020000);
 
   bitmap_fill_rect(0, 0, cols, rows, cols, rows, 0x00000000);
 

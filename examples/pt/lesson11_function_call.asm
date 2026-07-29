@@ -1,24 +1,24 @@
 # ==========================================================
-# Lesson 11 - Calling a function
+# Aula 11 - Chamar uma funcao
 #
-# THE PROBLEM
-#   Jumping into a routine is easy. Getting back is not, because
-#   the same routine may be called from many places and the
-#   return address differs every time.
+# O PROBLEMA
+#   Saltar para uma rotina e facil. Voltar nao e, porque a mesma
+#   rotina pode ser chamada de muitos sitios e o endereco de
+#   retorno e diferente de cada vez.
 #
-# WHAT THE HARDWARE DOES
-#   jal does two things in one instruction: it stores the
-#   address of the following instruction in $ra, then jumps. jr
-#   jumps to whatever a register holds, so jr $ra returns.
+# O QUE O HARDWARE FAZ
+#   O jal faz duas coisas numa instrucao: guarda o endereco da
+#   instrucao seguinte em $ra e depois salta. O jr salta para o
+#   que um registo contiver, logo jr $ra regressa.
 #
-# THE SOLUTION
-#   Everything else is agreement, not circuitry: arguments in
-#   $a0..$a3, results in $v0. Break the convention and the code
-#   still assembles - it simply stops interoperating.
+# A SOLUCAO
+#   Tudo o resto e acordo, nao circuito: argumentos em $a0..$a3,
+#   resultados em $v0. Quebre a convencao e o codigo continua a
+#   montar - simplesmente deixa de interoperar.
 #
-# WATCH FOR
-#   Step onto the jal and read $ra. Compare it with the address
-#   of the line after the call in the Text Segment.
+# OBSERVE
+#   Pare sobre o jal e leia o $ra. Compare-o com o endereco da
+#   linha seguinte a chamada no Segmento de Texto.
 # ==========================================================
         .data
 m1:     .asciiz "max(17, 42) = "

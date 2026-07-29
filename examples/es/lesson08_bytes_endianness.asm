@@ -1,23 +1,24 @@
 # ==========================================================
-# Lesson 08 - Bytes inside a word, and byte order
+# Clase 08 - Bytes dentro de una palabra, y orden de bytes
 #
-# THE PROBLEM
-#   A word occupies four addresses. Which byte does the lowest
-#   of those addresses name?
+# EL PROBLEMA
+#   Una palabra ocupa cuatro direcciones. A cual de los bytes se
+#   refiere la mas baja de ellas?
 #
-# WHAT THE HARDWARE DOES
-#   That choice is byte order, and it is a wiring decision made
-#   once for the whole machine. MIPS here is little-endian: the
-#   least significant byte lives at the lowest address.
+# LO QUE HACE EL HARDWARE
+#   Esa eleccion es el orden de bytes, una decision de cableado
+#   tomada una vez para toda la maquina. Aqui MIPS es
+#   little-endian: el byte menos significativo esta en la
+#   direccion mas baja.
 #
-# THE SOLUTION
-#   Store one word, then read it back a byte at a time and let
-#   the order answer the question for you.
+# LA SOLUCION
+#   Guardar una palabra y leerla byte a byte, dejando que el orden
+#   responda la pregunta.
 #
-# WATCH FOR
-#   0x04030201 comes back as 1 2 3 4. The byte written last in
-#   the literal is read first. lbu is used rather than lb so a
-#   byte above 127 is not sign-extended.
+# OBSERVE
+#   0x04030201 sale como 1 2 3 4. El byte escrito ultimo en el
+#   literal se lee primero. Se usa lbu y no lb para que un byte
+#   por encima de 127 no se extienda con signo.
 # ==========================================================
         .data
 cell:   .word 0

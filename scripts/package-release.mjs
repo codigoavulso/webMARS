@@ -478,12 +478,15 @@ async function validateManifestReferences(targetRoot, generatedFiles) {
     const fileEntries = Array.isArray(example?.files) && example.files.length
       ? example.files
       : [fallbackPath];
-    const paths = fileEntries.map((entry) => (
-      manifestPath(typeof entry === "string" ? entry : entry?.path || fallbackPath, "examples manifest")
-    ));
+    const specs = fileEntries.map((entry) => ({
+      path: manifestPath(typeof entry === "string" ? entry : entry?.path || fallbackPath, "examples manifest"),
+      // A language-neutral include ships once at the root, so demanding a copy
+      // per language would fail on a file that is correct as it stands.
+      shared: typeof entry === "object" && entry?.shared === true
+    }));
     const languages = Array.isArray(example?.languages) ? example.languages : [];
 
-    for (const path of paths) {
+    for (const { path, shared } of specs) {
       const fallbackCandidates = [
         `examples/${defaultLanguage}/${path}`,
         `examples/${path}`
@@ -492,6 +495,10 @@ async function validateManifestReferences(targetRoot, generatedFiles) {
         fallbackCandidates.some((candidate) => fileSet.has(candidate)),
         `Example has no default or legacy fallback in the package: ${path}`
       );
+      if (shared) {
+        requireFile(`examples/${path}`, "examples manifest");
+        continue;
+      }
       for (const language of languages) {
         const normalizedLanguage = manifestPath(language, "examples manifest");
         requireFile(`examples/${normalizedLanguage}/${path}`, "examples manifest");

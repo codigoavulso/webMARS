@@ -47,9 +47,26 @@ test("the manifest declares exactly the localizations that exist on disk", async
   // skips it entirely for a file marked shared. A manifest that disagrees with
   // the tree therefore either fires 404s or silently loses a translation.
   const languages = manifest.languages;
+
+  // Nested examples live in subdirectories, so this has to recurse: a flat
+  // listing reports every nested file as missing, which is exactly the mistake
+  // that let a wrong manifest through.
+  async function walk(directory, prefix = "") {
+    const found = new Set();
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        for (const nested of await walk(resolve(directory, entry.name), relative)) found.add(nested);
+      } else {
+        found.add(relative);
+      }
+    }
+    return found;
+  }
+
   const present = {};
   for (const language of languages) {
-    present[language] = new Set(await readdir(resolve(examplesRoot, language)));
+    present[language] = await walk(resolve(examplesRoot, language));
   }
 
   for (const entry of manifest.examples) {

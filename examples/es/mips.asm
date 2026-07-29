@@ -1,658 +1,86 @@
-# ============================================================
-# MARS-OS v0.1 - Bootstrap + consola grafica en el Bitmap Display
-# Bitmap Display:
-#   Ancho/Alto de la unidad: 1
-#   Pantalla: 512 x 256
-#   Direccion base: 0x10010000
-#
-# Consola:
-#   celda 8x8 px => 64 columnas x 32 filas
-#   scroll por copia de lineas (copy-up)
-# ============================================================
-
-.eqv DISP_W              512
-.eqv DISP_H              256
-.eqv CELL_W              8
-.eqv CELL_H              8
-.eqv COLS                64      # 512/8
-.eqv ROWS                32      # 256/8
-
-.eqv FB_PIXELS           131072  # 512*256
-.eqv FB_BYTES            524288  # 512*256*4
-
-.eqv SCROLL_COPY_WORDS   126976  # 512*(256-8)
-.eqv CLEAR_LAST_WORDS    4096    # 512*8
-.eqv CELL_ROW_BYTES      16384   # 512*8*4 = 8 lineas de pixeles
-
-# MMIO (MARS)
-.eqv KBD_CTRL            0xFFFF0000
-.eqv KBD_DATA            0xFFFF0004
+# MARS-OS 0.2 - entorno operativo TTY interactivo
+# Abre Herramientas > TTY Device + ANSI Terminal, conectala a
+# MIPS, ensambla este proyecto y escribe "help".
 
 .data
+ansi_reset:     .byte 27, 99, 0
+ansi_clear:     .byte 27, 91, 50, 74, 27, 91, 72, 0
+ansi_normal:    .byte 27, 91, 48, 109, 0
+ansi_dim:       .byte 27, 91, 50, 109, 0
+ansi_bold_cyan: .byte 27, 91, 49, 59, 57, 54, 109, 0
+ansi_green:     .byte 27, 91, 57, 50, 109, 0
+ansi_cyan:      .byte 27, 91, 57, 54, 109, 0
+ansi_yellow:    .byte 27, 91, 57, 51, 109, 0
+ansi_white:     .byte 27, 91, 57, 55, 109, 0
+ansi_red:       .byte 27, 91, 57, 49, 109, 0
+banner: .asciiz "+----------------------------------------------------------+\r\n| MARS-OS 0.2 | Entorno TTY interactivo para MIPS32       |\r\n+----------------------------------------------------------+\r\n"
+msg_boot: .asciiz "[ ok ] Consola MMIO, shell y servicios RAM inicializados."
+msg_hint: .asciiz "Escribe help para ver los comandos. Introduce texto en la ventana TTY."
+prompt_user: .asciiz "invitado"
+prompt_host: .asciiz "@webmars"
+prompt_path: .asciiz ":/$ "
+cmd_help: .asciiz "help"
+cmd_about: .asciiz "about"
+cmd_clear: .asciiz "clear"
+cmd_echo: .asciiz "echo"
+cmd_sysinfo: .asciiz "sysinfo"
+cmd_mem: .asciiz "mem"
+cmd_uptime: .asciiz "uptime"
+cmd_calc: .asciiz "calc"
+cmd_rand: .asciiz "rand"
+cmd_sleep: .asciiz "sleep"
+cmd_history: .asciiz "history"
+cmd_ls: .asciiz "ls"
+cmd_cat: .asciiz "cat"
+cmd_color: .asciiz "color"
+cmd_ps: .asciiz "ps"
+cmd_pwd: .asciiz "pwd"
+cmd_reboot: .asciiz "reboot"
+cmd_shutdown: .asciiz "shutdown"
+help_text: .asciiz "Comandos de MARS-OS:\r\n  help                 muestra esta lista\r\n  about                describe el ejemplo y la arquitectura\r\n  clear                limpia el terminal ANSI\r\n  echo TEXTO           imprime texto\r\n  sysinfo              informacion del kernel, CPU y sesion\r\n  mem                  memoria de heap, stack e historial\r\n  uptime               milisegundos desde el arranque\r\n  calc A OP B          calculadora signed/hex (+-*/%&|^)\r\n  rand N               entero aleatorio en [0,N), N <= 1000000\r\n  sleep MS             pausa cooperativa, maximo 10000 ms\r\n  history              ultimos ocho comandos\r\n  ls / cat ARCHIVO     inspecciona el disco RAM de solo lectura\r\n  color NOMBRE         prompt: green, cyan, yellow, white, red\r\n  ps / pwd             tareas y directorio actual\r\n  reboot / shutdown    reinicia o detiene MARS-OS\r\n"
+about_text: .asciiz "MARS-OS es un pequeno kernel educativo escrito integramente en Assembly MIPS. Controla el TTY de webMARS mediante MMIO e implementa esperas cooperativas, edicion de linea, comandos, servicios numericos, ANSI, historial y un pequeno disco RAM de solo lectura.\r\n"
+msg_unknown: .asciiz "comando no encontrado: "
+sysinfo_header: .asciiz "kernel: MARS-OS 0.2\r\ncpu: MIPS32 little-endian, runtime JavaScript\r\nconsola: TTY ANSI en MMIO 0xFFFF0000\r\nplanificador: esperas cooperativas de dispositivos\r\n"
+sysinfo_commands: .asciiz "comandos ejecutados: "
+uptime_prefix: .asciiz "tiempo activo: "
+ms_suffix: .asciiz " ms"
+mem_heap: .asciiz "limite del heap: "
+mem_stack: .asciiz "puntero del stack: "
+mem_history: .asciiz "anillo de historial: "
+bytes_suffix: .asciiz " bytes"
+result_prefix: .asciiz "resultado: "
+result_hex: .asciiz " ("
+result_close: .asciiz ")\r\n"
+msg_div_zero: .asciiz "calc: division por cero\r\n"
+msg_calc_usage: .asciiz "uso: calc A OP B   ejemplo: calc 0x20 + 22\r\n"
+msg_rand_usage: .asciiz "uso: rand N   N debe estar entre 1 y 1000000\r\n"
+msg_sleep_usage: .asciiz "uso: sleep MS   MS debe estar entre 0 y 10000\r\n"
+msg_awake: .asciiz "activo\r\n"
+history_separator: .asciiz "  "
+msg_history_empty: .asciiz "el historial esta vacio\r\n"
+ls_text: .asciiz "readme.txt\r\nmotd\r\ncommands.txt\r\n"
+file_readme_name: .asciiz "readme.txt"
+file_motd_name: .asciiz "motd"
+file_commands_name: .asciiz "commands.txt"
+file_readme_text: .asciiz "Este disco RAM esta compilado en el segmento de datos de MARS-OS. Los archivos son deterministas, de solo lectura y no necesitan acceso al sistema de archivos del host.\r\n"
+file_motd_text: .asciiz "Aprende la maquina construyendo la maquina.\r\n"
+msg_file_missing: .asciiz "cat: archivo no encontrado\r\n"
+color_green_name: .asciiz "green"
+color_cyan_name: .asciiz "cyan"
+color_yellow_name: .asciiz "yellow"
+color_white_name: .asciiz "white"
+color_red_name: .asciiz "red"
+msg_color_usage: .asciiz "uso: color green|cyan|yellow|white|red\r\n"
+msg_color_set: .asciiz "color del prompt actualizado\r\n"
+ps_text: .asciiz " PID  ESTADO  TAREA\r\n   1  run     init/shell\r\n   2  wait    tty-rx\r\n   3  ready   tty-tx\r\n"
+pwd_text: .asciiz "/\r\n"
+msg_shutdown: .asciiz "Sistema detenido. Ya puedes reiniciar el simulador.\r\n"
 .align 2
-
-# --- El framebuffer TIENE que ser el primer elemento de .data
-framebuffer:
-  .space FB_BYTES        # base = 0x10010000 (si de verdad es el primero en .data)
-
-# --- Estado de la consola (queda despues del framebuffer)
-.align 2
-cursor_row: .word 0
-cursor_col: .word 0
-fg_color:   .word 0x00FFFFFF     # blanco
-bg_color:   .word 0x00000000     # negro
-
-banner:     .asciiz "MARS-OS v0.1\n> "
-
-# ------------------------------------------------------------
-# Glyphs 8x8 (tabla dispersa): cada registro tiene 9 bytes:
-#   [char_code][row0]..[row7]
-# bits de la fila: bit7 = pixel mas a la izquierda.
-# ------------------------------------------------------------
-.align 1
-glyph_table:
-  .byte 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  # ' '
-  .byte 0x21, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00, 0x10, 0x00  # '!'
-  .byte 0x3F, 0x38, 0x44, 0x04, 0x08, 0x10, 0x00, 0x10, 0x00  # '?'
-  .byte 0x2E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x10, 0x00  # '.'
-  .byte 0x3A, 0x00, 0x10, 0x10, 0x00, 0x10, 0x10, 0x00, 0x00  # ':'
-  .byte 0x2D, 0x00, 0x00, 0x00, 0x7C, 0x00, 0x00, 0x00, 0x00  # '-'
-  .byte 0x5F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7C, 0x00  # '_'
-  .byte 0x2F, 0x04, 0x08, 0x10, 0x20, 0x40, 0x00, 0x00, 0x00  # '/'
-
-  .byte 0x30, 0x38, 0x44, 0x4C, 0x54, 0x64, 0x44, 0x38, 0x00  # '0'
-  .byte 0x31, 0x10, 0x30, 0x10, 0x10, 0x10, 0x10, 0x38, 0x00  # '1'
-  .byte 0x32, 0x38, 0x44, 0x04, 0x08, 0x10, 0x20, 0x7C, 0x00  # '2'
-  .byte 0x33, 0x78, 0x04, 0x04, 0x38, 0x04, 0x04, 0x78, 0x00  # '3'
-  .byte 0x34, 0x08, 0x18, 0x28, 0x48, 0x7C, 0x08, 0x08, 0x00  # '4'
-  .byte 0x35, 0x7C, 0x40, 0x40, 0x78, 0x04, 0x04, 0x78, 0x00  # '5'
-  .byte 0x36, 0x18, 0x20, 0x40, 0x78, 0x44, 0x44, 0x38, 0x00  # '6'
-  .byte 0x37, 0x7C, 0x04, 0x08, 0x10, 0x20, 0x20, 0x20, 0x00  # '7'
-  .byte 0x38, 0x38, 0x44, 0x44, 0x38, 0x44, 0x44, 0x38, 0x00  # '8'
-  .byte 0x39, 0x38, 0x44, 0x44, 0x3C, 0x04, 0x08, 0x18, 0x00  # '9'
-
-  .byte 0x41, 0x38, 0x44, 0x44, 0x7C, 0x44, 0x44, 0x44, 0x00  # 'A'
-  .byte 0x42, 0x78, 0x44, 0x44, 0x78, 0x44, 0x44, 0x78, 0x00  # 'B'
-  .byte 0x43, 0x38, 0x44, 0x40, 0x40, 0x40, 0x44, 0x38, 0x00  # 'C'
-  .byte 0x44, 0x70, 0x48, 0x44, 0x44, 0x44, 0x48, 0x70, 0x00  # 'D'
-  .byte 0x45, 0x7C, 0x40, 0x40, 0x78, 0x40, 0x40, 0x7C, 0x00  # 'E'
-  .byte 0x46, 0x7C, 0x40, 0x40, 0x78, 0x40, 0x40, 0x40, 0x00  # 'F'
-  .byte 0x47, 0x38, 0x44, 0x40, 0x5C, 0x44, 0x44, 0x38, 0x00  # 'G'
-  .byte 0x48, 0x44, 0x44, 0x44, 0x7C, 0x44, 0x44, 0x44, 0x00  # 'H'
-  .byte 0x49, 0x38, 0x10, 0x10, 0x10, 0x10, 0x10, 0x38, 0x00  # 'I'
-  .byte 0x4A, 0x1C, 0x08, 0x08, 0x08, 0x48, 0x48, 0x30, 0x00  # 'J'
-  .byte 0x4B, 0x44, 0x48, 0x50, 0x60, 0x50, 0x48, 0x44, 0x00  # 'K'
-  .byte 0x4C, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x7C, 0x00  # 'L'
-  .byte 0x4D, 0x44, 0x6C, 0x54, 0x54, 0x44, 0x44, 0x44, 0x00  # 'M'
-  .byte 0x4E, 0x44, 0x64, 0x54, 0x4C, 0x44, 0x44, 0x44, 0x00  # 'N'
-  .byte 0x4F, 0x38, 0x44, 0x44, 0x44, 0x44, 0x44, 0x38, 0x00  # 'O'
-  .byte 0x50, 0x78, 0x44, 0x44, 0x78, 0x40, 0x40, 0x40, 0x00  # 'P'
-  .byte 0x51, 0x38, 0x44, 0x44, 0x44, 0x54, 0x48, 0x34, 0x00  # 'Q'
-  .byte 0x52, 0x78, 0x44, 0x44, 0x78, 0x50, 0x48, 0x44, 0x00  # 'R'
-  .byte 0x53, 0x3C, 0x40, 0x40, 0x38, 0x04, 0x04, 0x78, 0x00  # 'S'
-  .byte 0x54, 0x7C, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x00  # 'T'
-  .byte 0x55, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x38, 0x00  # 'U'
-  .byte 0x56, 0x44, 0x44, 0x44, 0x44, 0x44, 0x28, 0x10, 0x00  # 'V'
-  .byte 0x57, 0x44, 0x44, 0x44, 0x54, 0x54, 0x54, 0x28, 0x00  # 'W'
-  .byte 0x58, 0x44, 0x44, 0x28, 0x10, 0x28, 0x44, 0x44, 0x00  # 'X'
-  .byte 0x59, 0x44, 0x44, 0x28, 0x10, 0x10, 0x10, 0x10, 0x00  # 'Y'
-  .byte 0x5A, 0x7C, 0x04, 0x08, 0x10, 0x20, 0x40, 0x7C, 0x00  # 'Z'
-
-  .byte 0x00  # marcador final
-
-.text
-.globl main
-main:
-  jal  console_init
-  nop
-
-  la   $a0, banner
-  jal  console_puts
-  nop
-
-  j    kernel_main
-  nop
-
-# ------------------------------------------------------------
-# console_init: limpia y reinicia el cursor
-# ------------------------------------------------------------
-console_init:
-  addiu $sp, $sp, -8
-  sw    $ra, 4($sp)
-
-  la    $t0, cursor_row
-  sw    $zero, 0($t0)
-  la    $t0, cursor_col
-  sw    $zero, 0($t0)
-
-  jal   fb_clear
-  nop
-
-  lw    $ra, 4($sp)
-  addiu $sp, $sp, 8
-  jr    $ra
-  nop
-
-# ------------------------------------------------------------
-# fb_clear: rellena el framebuffer con bg_color
-# ------------------------------------------------------------
-# ------------------------------------------------------------
-# fb_clear: rellena el framebuffer con bg_color
-# version optimizada: limpia bloques 8x8 (64 pixeles)
-# ------------------------------------------------------------
-fb_clear:
-  addiu $sp,$sp,-8
-  sw    $ra,4($sp)
-
-  la    $t0,framebuffer
-  la    $t1,bg_color
-  lw    $t2,0($t1)
-
-  li    $t3,FB_PIXELS
-  srl   $t3,$t3,6          # /64 (64 pixeles por bucle)
-
-fb_clear_loop:
-
-  sw $t2,0($t0)
-  sw $t2,4($t0)
-  sw $t2,8($t0)
-  sw $t2,12($t0)
-  sw $t2,16($t0)
-  sw $t2,20($t0)
-  sw $t2,24($t0)
-  sw $t2,28($t0)
-
-  sw $t2,32($t0)
-  sw $t2,36($t0)
-  sw $t2,40($t0)
-  sw $t2,44($t0)
-  sw $t2,48($t0)
-  sw $t2,52($t0)
-  sw $t2,56($t0)
-  sw $t2,60($t0)
-
-  sw $t2,64($t0)
-  sw $t2,68($t0)
-  sw $t2,72($t0)
-  sw $t2,76($t0)
-  sw $t2,80($t0)
-  sw $t2,84($t0)
-  sw $t2,88($t0)
-  sw $t2,92($t0)
-
-  sw $t2,96($t0)
-  sw $t2,100($t0)
-  sw $t2,104($t0)
-  sw $t2,108($t0)
-  sw $t2,112($t0)
-  sw $t2,116($t0)
-  sw $t2,120($t0)
-  sw $t2,124($t0)
-
-  sw $t2,128($t0)
-  sw $t2,132($t0)
-  sw $t2,136($t0)
-  sw $t2,140($t0)
-  sw $t2,144($t0)
-  sw $t2,148($t0)
-  sw $t2,152($t0)
-  sw $t2,156($t0)
-
-  sw $t2,160($t0)
-  sw $t2,164($t0)
-  sw $t2,168($t0)
-  sw $t2,172($t0)
-  sw $t2,176($t0)
-  sw $t2,180($t0)
-  sw $t2,184($t0)
-  sw $t2,188($t0)
-
-  sw $t2,192($t0)
-  sw $t2,196($t0)
-  sw $t2,200($t0)
-  sw $t2,204($t0)
-  sw $t2,208($t0)
-  sw $t2,212($t0)
-  sw $t2,216($t0)
-  sw $t2,220($t0)
-
-  sw $t2,224($t0)
-  sw $t2,228($t0)
-  sw $t2,232($t0)
-  sw $t2,236($t0)
-  sw $t2,240($t0)
-  sw $t2,244($t0)
-  sw $t2,248($t0)
-  sw $t2,252($t0)
-
-  addiu $t0,$t0,256
-  addiu $t3,$t3,-1
-  bnez  $t3,fb_clear_loop
-  nop
-
-  lw    $ra,4($sp)
-  addiu $sp,$sp,8
-  jr    $ra
-  nop
-
-# ------------------------------------------------------------
-# console_puts($a0=asciiz)
-# ------------------------------------------------------------
-console_puts:
-  addiu $sp, $sp, -12
-  sw    $ra, 8($sp)
-  sw    $s0, 4($sp)
-
-  move  $s0, $a0
-
-puts_loop:
-  lbu   $t0, 0($s0)
-  beqz  $t0, puts_done
-  nop
-
-  move  $a0, $t0
-  jal   console_putc
-  nop
-
-  addiu $s0, $s0, 1
-  j     puts_loop
-  nop
-
-puts_done:
-  lw    $s0, 4($sp)
-  lw    $ra, 8($sp)
-  addiu $sp, $sp, 12
-  jr    $ra
-  nop
-
-# ------------------------------------------------------------
-# console_backspace: retrocede el cursor y borra la celda (dibuja ' ')
-# ------------------------------------------------------------
-console_backspace:
-  addiu $sp, $sp, -16
-  sw    $ra, 12($sp)
-  sw    $s0, 8($sp)
-  sw    $s1, 4($sp)
-
-  # cargar fila/columna
-  la    $t0, cursor_row
-  lw    $s0, 0($t0)          # fila
-  la    $t1, cursor_col
-  lw    $s1, 0($t1)          # columna
-
-  # si estamos en (0,0) no hace nada
-  bnez  $s1, bs_dec_col
-  nop
-  bnez  $s0, bs_prev_line
-  nop
-  j     bs_done
-  nop
-
-bs_prev_line:
-  addiu $s0, $s0, -1
-  li    $s1, COLS
-  addiu $s1, $s1, -1
-  j     bs_store
-  nop
-
-bs_dec_col:
-  addiu $s1, $s1, -1
-
-bs_store:
-  # guardar cursor
-  la    $t0, cursor_row
-  sw    $s0, 0($t0)
-  la    $t0, cursor_col
-  sw    $s1, 0($t0)
-
-  # dibujar espacio en la celda actual
-  li    $a0, 0x20
-  move  $a1, $s1
-  move  $a2, $s0
-  jal   draw_char_cell
-  nop
-
-bs_done:
-  lw    $s1, 4($sp)
-  lw    $s0, 8($sp)
-  lw    $ra, 12($sp)
-  addiu $sp, $sp, 16
-  jr    $ra
-  nop
-
-# ------------------------------------------------------------
-# console_putc($a0=char)
-#   soporta: '\n' (LF), '\r' (CR), '\t' (tab=4), backspace
-#   convierte 'a'..'z' en 'A'..'Z' (por ahora)
-# ------------------------------------------------------------
-console_putc:
-  addiu $sp, $sp, -20
-  sw    $ra, 16($sp)
-  sw    $s0, 12($sp)
-  sw    $s1, 8($sp)
-  sw    $s2, 4($sp)
-
-  move  $s0, $a0
-
-  # backspace (0x08) o DEL (0x7F)
-  li    $t0, 0x08
-  beq   $s0, $t0, do_bs
-  nop
-  li    $t0, 0x7F
-  beq   $s0, $t0, do_bs
-  nop
-  j     chk_tab
-  nop
-do_bs:
-  jal   console_backspace
-  nop
-  j     putc_done
-  nop
-
-chk_tab:
-  # tab => 4 espacios
-  li    $t0, 0x09
-  bne   $s0, $t0, chk_nl
-  nop
-  li    $s1, 4
-tab_loop:
-  li    $a0, 0x20
-  jal   console_putc
-  nop
-  addiu $s1, $s1, -1
-  bnez  $s1, tab_loop
-  nop
-  j     putc_done
-  nop
-
-chk_nl:
-  li    $t0, 0x0A
-  bne   $s0, $t0, chk_cr
-  nop
-  jal   console_newline
-  nop
-  j     putc_done
-  nop
-
-chk_cr:
-  li    $t0, 0x0D
-  bne   $s0, $t0, chk_lower
-  nop
-  la    $t1, cursor_col
-  sw    $zero, 0($t1)
-  j     putc_done
-  nop
-
-chk_lower:
-  # 'a'..'z' => mayusculas
-  li    $t1, 'a'
-  li    $t2, 'z'
-  blt   $s0, $t1, draw_it
-  nop
-  bgt   $s0, $t2, draw_it
-  nop
-  addiu $s0, $s0, -32
-
-draw_it:
-  la    $t0, cursor_row
-  lw    $s1, 0($t0)          # fila
-  la    $t0, cursor_col
-  lw    $s2, 0($t0)          # columna
-
-  move  $a0, $s0
-  move  $a1, $s2
-  move  $a2, $s1
-  jal   draw_char_cell
-  nop
-
-  addiu $s2, $s2, 1
-  li    $t3, COLS
-  blt   $s2, $t3, store_cursor
-  nop
-
-  jal   console_newline
-  nop
-  j     putc_done
-  nop
-
-store_cursor:
-  la    $t0, cursor_col
-  sw    $s2, 0($t0)
-
-putc_done:
-  lw    $s2, 4($sp)
-  lw    $s1, 8($sp)
-  lw    $s0, 12($sp)
-  lw    $ra, 16($sp)
-  addiu $sp, $sp, 20
-  jr    $ra
-  nop
-
-# ------------------------------------------------------------
-# console_newline: col=0; row++; scroll si es necesario
-# ------------------------------------------------------------
-console_newline:
-  addiu $sp, $sp, -12
-  sw    $ra, 8($sp)
-  sw    $s0, 4($sp)
-
-  la    $t0, cursor_col
-  sw    $zero, 0($t0)
-
-  la    $t0, cursor_row
-  lw    $s0, 0($t0)
-  addiu $s0, $s0, 1
-
-  li    $t1, ROWS
-  blt   $s0, $t1, nl_store
-  nop
-
-  jal   console_scroll
-  nop
-  li    $s0, ROWS
-  addi  $s0, $s0, -1
-
-nl_store:
-  la    $t0, cursor_row
-  sw    $s0, 0($t0)
-
-  lw    $s0, 4($sp)
-  lw    $ra, 8($sp)
-  addiu $sp, $sp, 12
-  jr    $ra
-  nop
-
-# ------------------------------------------------------------
-# console_scroll: copia el framebuffer 8 lineas hacia arriba + limpia la ultima banda
-# ------------------------------------------------------------
-console_scroll:
-  addiu $sp, $sp, -12
-  sw    $ra, 8($sp)
-  sw    $s0, 4($sp)
-
-  la    $t0, framebuffer
-  addiu $t1, $t0, CELL_ROW_BYTES
-  move  $t2, $t0
-  move  $t3, $t1
-
-  li    $t4, SCROLL_COPY_WORDS
-scroll_copy_loop:
-  lw    $t5, 0($t3)
-  sw    $t5, 0($t2)
-  addiu $t3, $t3, 4
-  addiu $t2, $t2, 4
-  addiu $t4, $t4, -1
-  bnez  $t4, scroll_copy_loop
-  nop
-
-  la    $t6, bg_color
-  lw    $t7, 0($t6)
-  li    $t4, CLEAR_LAST_WORDS
-
-scroll_clear_loop:
-  sw    $t7, 0($t2)
-  addiu $t2, $t2, 4
-  addiu $t4, $t4, -1
-  bnez  $t4, scroll_clear_loop
-  nop
-
-  lw    $s0, 4($sp)
-  lw    $ra, 8($sp)
-  addiu $sp, $sp, 12
-  jr    $ra
-  nop
-
-# ------------------------------------------------------------
-# draw_char_cell($a0=char, $a1=col, $a2=row)
-# ------------------------------------------------------------
-draw_char_cell:
-  addiu $sp, $sp, -20
-  sw    $ra, 16($sp)
-  sw    $s0, 12($sp)
-  sw    $s1, 8($sp)
-  sw    $s2, 4($sp)
-
-  move  $s0, $a0
-  move  $s1, $a1
-  move  $s2, $a2
-
-  sll   $a1, $s1, 3
-  sll   $a2, $s2, 3
-  move  $a0, $s0
-
-  jal   draw_glyph8x8
-  nop
-
-  lw    $s2, 4($sp)
-  lw    $s1, 8($sp)
-  lw    $s0, 12($sp)
-  lw    $ra, 16($sp)
-  addiu $sp, $sp, 20
-  jr    $ra
-  nop
-
-# ------------------------------------------------------------
-# glyph_lookup($a0=char) -> $v0 = ptr para 8 bytes (row0..row7)
-# ------------------------------------------------------------
-glyph_lookup:
-  move  $t9,$a0
-  la    $t0,glyph_table
-
-gl_find:
-  lbu   $t1,0($t0)
-  beqz  $t1,gl_return_q
-  nop
-
-  beq   $t1,$t9,gl_found
-  nop
-
-  addiu $t0,$t0,9
-  j     gl_find
-  nop
-
-gl_found:
-  addiu $v0,$t0,1
-  jr    $ra
-  nop
-
-gl_return_q:
-  la    $t0,glyph_table
-gl_q_loop:
-  lbu   $t1,0($t0)
-  li    $t2,0x3F
-  beq   $t1,$t2,gl_found
-  nop
-  addiu $t0,$t0,9
-  j     gl_q_loop
-  nop
-
-# ------------------------------------------------------------
-# draw_glyph8x8($a0=char, $a1=x, $a2=y)
-# ------------------------------------------------------------
-draw_glyph8x8:
-  addiu $sp, $sp, -28
-  sw    $ra, 24($sp)
-  sw    $s0, 20($sp)
-  sw    $s1, 16($sp)
-  sw    $s2, 12($sp)
-  sw    $s3, 8($sp)
-  sw    $s4, 4($sp)
-
-  move  $s0, $a0
-  move  $s1, $a1
-  move  $s2, $a2
-
-  move  $a0, $s0
-  jal   glyph_lookup
-  nop
-  move  $s3, $v0
-
-  la    $t0, fg_color
-  lw    $s4, 0($t0)
-  la    $t0, bg_color
-  lw    $t1, 0($t0)
-
-  la    $t2, framebuffer
-
-  li    $t3, 0
-dg_row_loop:
-  addu  $t4, $s3, $t3
-  lbu   $t5, 0($t4)
-
-  addu  $t6, $s2, $t3
-  sll   $t6, $t6, 9
-  addu  $t6, $t6, $s1
-  sll   $t6, $t6, 2
-  addu  $t6, $t6, $t2
-
-  li    $t7, 0
-dg_bit_loop:
-  li    $t8, 0x80
-  srlv  $t8, $t8, $t7
-  and   $t9, $t5, $t8
-  beqz  $t9, dg_bg
-  nop
-  sw    $s4, 0($t6)
-  j     dg_next
-  nop
-dg_bg:
-  sw    $t1, 0($t6)
-dg_next:
-  addiu $t6, $t6, 4
-  addiu $t7, $t7, 1
-  blt   $t7, 8, dg_bit_loop
-  nop
-
-  addiu $t3, $t3, 1
-  blt   $t3, 8, dg_row_loop
-  nop
-
-  lw    $s4, 4($sp)
-  lw    $s3, 8($sp)
-  lw    $s2, 12($sp)
-  lw    $s1, 16($sp)
-  lw    $s0, 20($sp)
-  lw    $ra, 24($sp)
-  addiu $sp, $sp, 28
-  jr    $ra
-  nop
-
-# ------------------------------------------------------------
-# kernel_main: lee el teclado por MMIO y hace eco
-# ------------------------------------------------------------
-kernel_main:
-loop:
-  li   $t0,KBD_CTRL
-  lw   $t1,0($t0)
-  andi $t1,$t1,1
-  beqz $t1,loop
-  nop
-
-  lw   $a0,4($t0)
-  andi $a0,$a0,0xFF
-
-  jal  console_putc
-  nop
-
-  j loop
-  nop
+boot_time_low: .word 0
+command_count: .word 0
+history_count: .word 0
+prompt_color: .word 0
+line_buf: .space 128
+history_buf: .space 1024
+digit_buf: .space 16
+.include "mips_os_kernel.asm"

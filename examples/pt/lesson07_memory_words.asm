@@ -1,23 +1,23 @@
 # ==========================================================
-# Lesson 07 - Words in memory, and why addresses jump by four
+# Aula 07 - Palavras em memoria, e porque os enderecos saltam 4
 #
-# THE PROBLEM
-#   Memory is addressed one byte at a time, but a register holds
-#   four bytes. What does a single address actually select?
+# O PROBLEMA
+#   A memoria e enderecada byte a byte, mas um registo tem quatro
+#   bytes. O que e que um endereco seleciona de facto?
 #
-# WHAT THE HARDWARE DOES
-#   lw and sw move four bytes in one access, so consecutive
-#   words sit four addresses apart. The low two bits of the
-#   address must be zero: that alignment is what lets the
-#   hardware fetch a whole word in one cycle.
+# O QUE O HARDWARE FAZ
+#   O lw e o sw movem quatro bytes num unico acesso, logo palavras
+#   consecutivas ficam a quatro enderecos de distancia. Os dois
+#   bits baixos do endereco tem de ser zero: e esse alinhamento
+#   que permite buscar uma palavra inteira num ciclo.
 #
-# THE SOLUTION
-#   Address arithmetic is done in bytes, so an index into words
-#   is always scaled by four.
+# A SOLUCAO
+#   A aritmetica de enderecos e feita em bytes, logo um indice de
+#   palavras e sempre escalado por quatro.
 #
-# WATCH FOR
-#   Assemble, then open the Data Segment at 0x10010000. The
-#   three values appear in adjacent columns of one row.
+# OBSERVE
+#   Monte e abra o Segmento de Dados em 0x10010000. Os tres
+#   valores aparecem em colunas adjacentes da mesma linha.
 # ==========================================================
         .data
 cell:   .word 0, 0, 0

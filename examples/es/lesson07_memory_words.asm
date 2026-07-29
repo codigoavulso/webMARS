@@ -1,23 +1,23 @@
 # ==========================================================
-# Lesson 07 - Words in memory, and why addresses jump by four
+# Clase 07 - Palabras en memoria, y por que los saltos son de 4
 #
-# THE PROBLEM
-#   Memory is addressed one byte at a time, but a register holds
-#   four bytes. What does a single address actually select?
+# EL PROBLEMA
+#   La memoria se direcciona byte a byte, pero un registro tiene
+#   cuatro bytes. Que selecciona realmente una direccion?
 #
-# WHAT THE HARDWARE DOES
-#   lw and sw move four bytes in one access, so consecutive
-#   words sit four addresses apart. The low two bits of the
-#   address must be zero: that alignment is what lets the
-#   hardware fetch a whole word in one cycle.
+# LO QUE HACE EL HARDWARE
+#   lw y sw mueven cuatro bytes en un acceso, asi que palabras
+#   consecutivas quedan a cuatro direcciones. Los dos bits bajos
+#   deben ser cero: esa alineacion es lo que permite traer una
+#   palabra entera en un ciclo.
 #
-# THE SOLUTION
-#   Address arithmetic is done in bytes, so an index into words
-#   is always scaled by four.
+# LA SOLUCION
+#   La aritmetica de direcciones es en bytes, asi que un indice de
+#   palabras siempre se escala por cuatro.
 #
-# WATCH FOR
-#   Assemble, then open the Data Segment at 0x10010000. The
-#   three values appear in adjacent columns of one row.
+# OBSERVE
+#   Ensamble y abra el Segmento de Datos en 0x10010000. Los tres
+#   valores aparecen en columnas adyacentes de la misma fila.
 # ==========================================================
         .data
 cell:   .word 0, 0, 0

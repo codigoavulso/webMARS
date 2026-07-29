@@ -1,23 +1,23 @@
 # ==========================================================
-# Lesson 09 - Indexing an array
+# Clase 09 - Indexar un array
 #
-# THE PROBLEM
-#   A load instruction offers a base register and a constant
-#   offset. Nothing else. So how is a[i] reached when i is only
-#   known at run time, sitting in a register?
+# EL PROBLEMA
+#   Una instruccion de carga ofrece un registro base y un
+#   desplazamiento constante. Nada mas. Como se llega a a[i]
+#   cuando i solo se conoce en ejecucion, en un registro?
 #
-# WHAT THE HARDWARE DOES
-#   It adds the base to whatever the register holds. The index
-#   must therefore already be in bytes, not in elements.
+# LO QUE HACE EL HARDWARE
+#   Suma la base a lo que contenga el registro. Por tanto el
+#   indice debe venir ya en bytes, no en elementos.
 #
-# THE SOLUTION
-#   Scale the index by the element size, then add. For four-byte
-#   words that scaling is a shift left by two, which costs
-#   nothing.
+# LA SOLUCION
+#   Escalar el indice por el tamano del elemento y luego sumar.
+#   Para palabras de cuatro bytes ese escalado es un
+#   desplazamiento de dos a la izquierda, que no cuesta nada.
 #
-# WATCH FOR
-#   The three lines sll, add, lw are what a[i] compiles to.
-#   Step through one iteration and read $t5 and $t6.
+# OBSERVE
+#   Las tres lineas sll, add, lw son en lo que se traduce a[i].
+#   Recorra una iteracion y lea $t5 y $t6.
 # ==========================================================
         .data
 arr:    .word 10, 20, 30, 40, 50

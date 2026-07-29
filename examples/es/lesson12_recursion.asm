@@ -1,24 +1,24 @@
 # ==========================================================
-# Lesson 12 - Recursion needs a frame per call
+# Clase 12 - La recursion necesita un marco por llamada
 #
-# THE PROBLEM
-#   A recursive call overwrites $ra and the argument register.
-#   The outer call then has no way back and no idea what its
-#   own n was.
+# EL PROBLEMA
+#   Una llamada recursiva sobreescribe $ra y el registro del
+#   argumento. La llamada exterior queda sin camino de vuelta y
+#   sin saber cual era su propio n.
 #
-# WHAT THE HARDWARE DOES
-#   It provides one $ra, not a stack of them. Nothing is saved
-#   automatically; if the code does not save it, it is gone.
+# LO QUE HACE EL HARDWARE
+#   Ofrece un $ra, no una pila de ellos. Nada se guarda solo; si
+#   el codigo no lo guarda, se pierde.
 #
-# THE SOLUTION
-#   Each activation opens a frame on the stack, keeps what it
-#   will still need after the call, and restores it on the way
-#   out. The stack depth is the recursion depth.
+# LA SOLUCION
+#   Cada activacion abre un marco en la pila, guarda lo que aun
+#   necesitara tras la llamada y lo restaura al salir. La
+#   profundidad de la pila es la de la recursion.
 #
-# WATCH FOR
-#   Set a breakpoint on the mul and watch $sp descend by 8 per
-#   level. The five saved copies of n are what makes the
-#   multiplication on the way back possible.
+# OBSERVE
+#   Ponga un punto de ruptura en el mul y siga a $sp bajar 8 por
+#   nivel. Las cinco copias guardadas de n son lo que hace
+#   posible la multiplicacion al regresar.
 # ==========================================================
         .data
 m1:     .asciiz "5! = "

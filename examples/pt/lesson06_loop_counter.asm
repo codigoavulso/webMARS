@@ -1,23 +1,22 @@
 # ==========================================================
-# Lesson 06 - A counter, in software and in hardware
+# Aula 06 - Um contador, em software e em hardware
 #
-# THE PROBLEM
-#   A hardware counter is a register, an incrementer and a
-#   comparator. What does the same machine look like written
-#   as instructions?
+# O PROBLEMA
+#   Um contador em hardware e um registo, um incrementador e um
+#   comparador. Como e essa mesma maquina escrita em instrucoes?
 #
-# WHAT THE HARDWARE DOES
-#   Exactly those three parts, one per instruction: the register
-#   holds the count, addi is the incrementer, slt with a branch
-#   is the comparator that decides on another round.
+# O QUE O HARDWARE FAZ
+#   Exatamente essas tres pecas, uma por instrucao: o registo
+#   guarda a contagem, o addi e o incrementador, e o slt com o
+#   desvio e o comparador que decide dar outra volta.
 #
-# THE SOLUTION
-#   A loop is not a new concept. It is sequential logic spelled
-#   out, with the PC as the clock.
+# A SOLUCAO
+#   Um ciclo nao e um conceito novo. E logica sequencial escrita
+#   por extenso, com o PC no papel de relogio.
 #
-# WATCH FOR
-#   $t0 is the count register and $t1 the limit. Step through
-#   one full round and name which line is which part.
+# OBSERVE
+#   $t0 e o registo de contagem e $t1 o limite. Percorra uma
+#   volta completa e diga qual linha e qual peca.
 # ==========================================================
         .data
 sp:     .asciiz " "
