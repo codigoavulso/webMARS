@@ -1118,6 +1118,44 @@ const MINI_C_NATIVE_LIB_BITMAP_RECT = [
   "  _bitmap_base_address = baseAddress;",
   "}",
   "",
+  "// webMARS Bitmap MMIO extension; MARS 4.5 ignores these unused words.",
+  "void bitmap_configure_target(int displayWidth, int displayHeight, int unitWidth, int unitHeight, int baseAddress, int target) {",
+  "  if (displayWidth <= 0) return;",
+  "  if (displayHeight <= 0) return;",
+  "  if (unitWidth <= 0) return;",
+  "  if (unitHeight <= 0) return;",
+  "  if (baseAddress == 0) return;",
+  "  if (target < 1 || target > 3) return;",
+  "  int* control = (int*)-65504;",
+  "  control[0] = 1463962960;",
+  "  control[1] = 1;",
+  "  control[2] = target;",
+  "  control[3] = displayWidth;",
+  "  control[4] = displayHeight;",
+  "  control[5] = unitWidth;",
+  "  control[6] = unitHeight;",
+  "  control[7] = baseAddress;",
+  "  control[8] = 1;",
+  "  _bitmap_base_address = baseAddress;",
+  "}",
+  "",
+  "void bitmap_configure_display(int displayWidth, int displayHeight, int unitWidth, int unitHeight, int baseAddress) {",
+  "  bitmap_configure_target(displayWidth, displayHeight, unitWidth, unitHeight, baseAddress, 1);",
+  "}",
+  "",
+  "void bitmap_configure_terminal(int displayWidth, int displayHeight, int unitWidth, int unitHeight, int baseAddress) {",
+  "  bitmap_configure_target(displayWidth, displayHeight, unitWidth, unitHeight, baseAddress, 2);",
+  "}",
+  "",
+  "void bitmap_configure_all(int displayWidth, int displayHeight, int unitWidth, int unitHeight, int baseAddress) {",
+  "  bitmap_configure_target(displayWidth, displayHeight, unitWidth, unitHeight, baseAddress, 3);",
+  "}",
+  "",
+  "void bitmap_clear_tool_configuration(void) {",
+  "  int* control = (int*)-65504;",
+  "  control[8] = 2;",
+  "}",
+  "",
   "int bitmap_get_base_address(void) {",
   "  return _bitmap_base_address;",
   "}",
@@ -1500,6 +1538,7 @@ const miniCCompilerState = {
   lastCompilerLog: "",
   lastCompiledAt: 0
 };
+let miniCCompileRequestId = 0;
 let projectLibraryState = normalizeProjectLibraryData(bootstrapProjectLibrary);
 let projectState = normalizeProjectData(bootstrapProject) || createDefaultProjectData({ settings: preferences });
 let projectPersistTimer = null;
@@ -6950,7 +6989,8 @@ function normalizeExampleFileEntry(entry, fallbackPath) {
     return {
       path: relativePath,
       name: relativePath,
-      main: false
+      main: false,
+      shared: false
     };
   }
   if (!entry || typeof entry !== "object") return null;
@@ -6961,7 +7001,9 @@ function normalizeExampleFileEntry(entry, fallbackPath) {
   return {
     path: relativePath,
     name: displayName,
-    main: entry.main === true
+    main: entry.main === true,
+    // Language-neutral include: never looked for under a language folder.
+    shared: entry.shared === true
   };
 }
 
@@ -7010,10 +7052,24 @@ async function loadExampleVariant(example, language) {
   const files = Array.isArray(example?.files) ? example.files : [];
   const loadedFiles = [];
   for (const file of files) {
-    const candidatePath = language
-      ? `./examples/${language}/${normalizeExampleRelativePath(file.path)}`
-      : toExampleResourcePath(file.path);
-    const source = await loadTextResource(candidatePath);
+    const logicalPath = normalizeExampleRelativePath(file.path);
+    const sharedPath = toExampleResourcePath(file.path);
+    // A file the manifest marks as shared has no localized copy anywhere, so
+    // asking for one is a guaranteed 404.
+    let candidatePath = language && file.shared !== true
+      ? `./examples/${language}/${logicalPath}`
+      : sharedPath;
+    let source;
+    try {
+      source = await loadTextResource(candidatePath);
+    } catch (error) {
+      // A shared include with no localized copy must not discard the whole
+      // localized variant: MARS-OS keeps its translated shell and takes the
+      // language-neutral kernel from the root.
+      if (!language || candidatePath === sharedPath) throw error;
+      candidatePath = sharedPath;
+      source = await loadTextResource(candidatePath);
+    }
     loadedFiles.push({
       path: candidatePath,
       source,
@@ -7040,7 +7096,12 @@ async function loadLocalizedExample(example) {
   }
 
   const attempted = [];
-  const languages = buildExampleLanguageOrder(example);
+  // Only entries that declare a localized copy are probed per language. Without
+  // this, every shared example fired one 404 per language before falling back
+  // to the root file it was always going to use.
+  const languages = normalizeExampleLanguageList(example?.languages).length
+    ? buildExampleLanguageOrder(example)
+    : [];
   for (const language of languages) {
     try {
       const variant = await loadExampleVariant(example, language);
@@ -7721,7 +7782,7 @@ function formatMiniCDiagnosticEntry(diagnostic, index = 0) {
   return output.join("\n");
 }
 
-async function buildMiniCOutput(activeFile, sourceText, compilerPreferences) {
+async function buildMiniCOutput(activeFile, sourceText, compilerPreferences, options = {}) {
   const sourceName = String(activeFile?.name || "untitled.c");
   const source = String(sourceText || "");
   const targetAbi = String(compilerPreferences?.miniCTargetAbi || "o32").toLowerCase() === "o32" ? "o32" : "o32";
@@ -7731,7 +7792,8 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences) {
 
   let compileResult = null;
   try {
-    await ensureMiniCGlobalLibrariesLoaded(true);
+    await ensureMiniCGlobalLibrariesLoaded();
+    if (typeof options.isCurrent === "function" && !options.isCurrent()) return null;
     const includeSourceMap = collectMiniCIncludeSourceMap();
     const includeResolver = createMiniCIncludeResolver(sourceName, includeSourceMap);
     const useLibrarySources = buildMiniCUseLibrarySources(includeSourceMap, subset);
@@ -8209,6 +8271,7 @@ const commands = {
     syncSnapshot(engine.getSnapshot());
   },
   async compileC0() {
+    const compileRequestId = ++miniCCompileRequestId;
     try {
       if (runActive || runPausedForInput) return;
       const active = editor.getActiveFile();
@@ -8231,7 +8294,11 @@ const commands = {
       }
 
       const currentPreferences = store.getState().preferences || preferences;
-      const output = await buildMiniCOutput(active, source, currentPreferences);
+      const output = await buildMiniCOutput(active, source, currentPreferences, {
+        isCurrent: () => compileRequestId === miniCCompileRequestId
+      });
+      if (compileRequestId !== miniCCompileRequestId) return;
+      if (!output) return;
       miniCCompilerState.lastSourceName = output.sourceName;
       miniCCompilerState.lastGeneratedAsmName = output.generatedAsmName;
       miniCCompilerState.lastGeneratedAsm = output.asm;
@@ -8269,6 +8336,7 @@ const commands = {
         commands.openMiniCAsmAsFile({ closeMiniCWindow: true });
       }
     } catch (error) {
+      if (compileRequestId !== miniCCompileRequestId) return;
       const message = error instanceof Error ? error.message : String(error || "Unknown compile error.");
       postMarsMessage("[error] Compile C0 failed unexpectedly: {message}", { message });
     }
@@ -9881,9 +9949,6 @@ if (typeof window !== "undefined") {
     }
   };
 }
-
-
-
 
 
 

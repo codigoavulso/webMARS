@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createJavaScriptEngine, projectRoot } from "./helpers/engines.mjs";
 
@@ -40,6 +40,40 @@ test("the lesson series is numbered, ordered and complete", () => {
     );
     assert.match(entry.path, /^lesson\d\d_[a-z0-9_]+\.asm$/);
   });
+});
+
+test("the manifest declares exactly the localizations that exist on disk", async () => {
+  // The loader probes a language folder only when the entry claims one, and
+  // skips it entirely for a file marked shared. A manifest that disagrees with
+  // the tree therefore either fires 404s or silently loses a translation.
+  const languages = manifest.languages;
+  const present = {};
+  for (const language of languages) {
+    present[language] = new Set(await readdir(resolve(examplesRoot, language)));
+  }
+
+  for (const entry of manifest.examples) {
+    const specs = Array.isArray(entry.files) ? entry.files : [{ path: entry.path, main: true }];
+    const main = specs.find((file) => file.main === true) || specs[0];
+    const actual = languages.filter((language) => present[language].has(main.path));
+    const declared = Array.isArray(entry.languages) ? entry.languages : [];
+
+    assert.deepEqual(
+      declared,
+      actual,
+      `'${entry.label}' declares ${JSON.stringify(declared)} but the tree holds ${JSON.stringify(actual)}.`
+    );
+
+    for (const spec of specs) {
+      if (spec.main === true) continue;
+      const localized = declared.some((language) => present[language].has(spec.path));
+      assert.equal(
+        spec.shared === true,
+        !localized,
+        `'${entry.label}' file '${spec.path}' is ${localized ? "localized but marked shared" : "language-neutral but not marked shared"}.`
+      );
+    }
+  }
 });
 
 test("every lesson halts on its own and prints its result", async () => {

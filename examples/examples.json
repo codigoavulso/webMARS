@@ -9,7 +9,12 @@
         {
             "label": "bitmap_display_bars.asm",
             "path": "bitmap_display_bars.asm",
-            "category": "Tools"
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "bitmap_ascii.c",
@@ -63,27 +68,52 @@
         {
             "label": "branch_predictor_bht_demo.asm",
             "path": "branch_predictor_bht_demo.asm",
-            "category": "Tools"
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "cache_stride_benchmark.asm",
             "path": "cache_stride_benchmark.asm",
-            "category": "Tools"
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "digital_lab_sim_demo.asm",
             "path": "digital_lab_sim_demo.asm",
-            "category": "Tools"
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "keyboard_display_mmio_echo.asm",
             "path": "keyboard_display_mmio_echo.asm",
-            "category": "Tools"
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "mars_bot_game.asm",
             "path": "mars_bot_game.asm",
-            "category": "Tools"
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "scavenger_hunt_player.asm",
@@ -110,29 +140,50 @@
                     "main": true
                 },
                 {
-                    "path": "mips_os_kernel.asm"
+                    "path": "mips_os_kernel.asm",
+                    "shared": true
                 }
             ]
         },
         {
             "label": "c_compiled_style_sum.asm",
             "path": "c_compiled_style_sum.asm",
-            "category": "Math"
+            "category": "Math",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "factorial_recursive.asm",
             "path": "factorial_recursive.asm",
-            "category": "Math"
+            "category": "Math",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "fibonacci_iterative.asm",
             "path": "fibonacci_iterative.asm",
-            "category": "Math"
+            "category": "Math",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "floating_point_demo.asm",
             "path": "floating_point_demo.asm",
-            "category": "Tools"
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "cop1_arithmetic_demo.asm",
@@ -147,22 +198,42 @@
         {
             "label": "matrix_mul_3x3.asm",
             "path": "matrix_mul_3x3.asm",
-            "category": "Math"
+            "category": "Math",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "bubble_sort_array.asm",
             "path": "bubble_sort_array.asm",
-            "category": "Learn"
+            "category": "Learn",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "guess_number.asm",
             "path": "guess_number.asm",
-            "category": "Learn"
+            "category": "Learn",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "hello_world_runio.asm",
             "path": "hello_world_runio.asm",
-            "category": "Learn"
+            "category": "Learn",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "hello_world.c",
@@ -240,10 +311,12 @@
                     "main": true
                 },
                 {
-                    "path": "learn/multi_file_number_analyzer/parity.asm"
+                    "path": "learn/multi_file_number_analyzer/parity.asm",
+                    "shared": true
                 },
                 {
-                    "path": "learn/multi_file_number_analyzer/prime.asm"
+                    "path": "learn/multi_file_number_analyzer/prime.asm",
+                    "shared": true
                 }
             ]
         },
@@ -252,28 +325,30 @@
             "path": "learn/c_multi_file_stats/main.c",
             "category": "Compiler",
             "minSubset": "C0-S2",
-            "languages": [
-                "en",
-                "pt",
-                "es"
-            ],
             "files": [
                 {
                     "path": "learn/c_multi_file_stats/main.c",
                     "main": true
                 },
                 {
-                    "path": "learn/c_multi_file_stats/stats.h"
+                    "path": "learn/c_multi_file_stats/stats.h",
+                    "shared": true
                 },
                 {
-                    "path": "learn/c_multi_file_stats/stats.c"
+                    "path": "learn/c_multi_file_stats/stats.c",
+                    "shared": true
                 }
             ]
         },
         {
             "label": "string_strlen_strcpy.asm",
             "path": "string_strlen_strcpy.asm",
-            "category": "Learn"
+            "category": "Learn",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "exception_handler_recovery.asm",
@@ -354,32 +429,62 @@
         {
             "label": "test_delay_slot_exception.asm",
             "path": "test_delay_slot_exception.asm",
-            "category": "Tests"
+            "category": "Tests",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "test_program_arguments.asm",
             "path": "test_program_arguments.asm",
-            "category": "Tests"
+            "category": "Tests",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "test_jalr_register_order.asm",
             "path": "test_jalr_register_order.asm",
-            "category": "Tests"
+            "category": "Tests",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "test_pseudo_ops_lowering.asm",
             "path": "test_pseudo_ops_lowering.asm",
-            "category": "Tests"
+            "category": "Tests",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "test_start_at_main.asm",
             "path": "test_start_at_main.asm",
-            "category": "Tests"
+            "category": "Tests",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "test_unaligned_memory_exception.asm",
             "path": "test_unaligned_memory_exception.asm",
-            "category": "Tests"
+            "category": "Tests",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
         },
         {
             "label": "01 - Registers and immediates",
