@@ -18,6 +18,13 @@
       .icount-footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
       .icount-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .icount-footer .tool-btn { min-width:130px; }
+
+      /* The four-column grid squeezed the percentage bars into a sliver on a
+         phone, so they read as empty. Two columns, with each bar on its own
+         full-width row under its counter. */
+      .desktop-stacked .icount-grid { grid-template-columns:auto 1fr; gap:5px 8px; }
+      .desktop-stacked .icount-bar { grid-column:1 / -1; height:20px; }
+      .desktop-stacked .icount-footer .tool-btn { min-width:0; flex:1 1 auto; }
     `;
     document.head.appendChild(style);
   }

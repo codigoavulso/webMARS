@@ -6548,6 +6548,12 @@ function injectRuntimeStyles() {
 
     .subtab-panel.active {
       display: block;
+      /* The panel is sized by its window, so taller content has to scroll here.
+         It was hidden, which clipped the lower registers out of reach whenever
+         the window was shorter than the table - on any short desktop window,
+         not just on a phone. */
+      overflow: auto;
+      min-height: 0;
     }
 
     #window-messages .messages-subtab-panel.active {
