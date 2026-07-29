@@ -4350,16 +4350,32 @@ function scrollElementWithinContainer(target, container, options = {}) {
 
   function createExecutePane(refs, engine) {
   const { execute } = refs;
-  const DATA_COLUMNS = 8;
+  const DATA_COLUMNS_DESKTOP = 8;
+  const DATA_COLUMNS_STACKED = 4;
   const DATA_ROWS_PER_PAGE = 16;
   const WORD_SIZE_BYTES = 4;
-  const DATA_PAGE_BYTES = DATA_COLUMNS * DATA_ROWS_PER_PAGE * WORD_SIZE_BYTES;
-  const DATA_ROW_BYTES = DATA_COLUMNS * WORD_SIZE_BYTES;
   const DATA_VIEW_MAX_RANGE = 0x01000000;
+
+  // A phone cannot show eight words across, so the row is halved. Everything
+  // downstream - row stride, page size, alignment, paging and the header - is
+  // derived from this rather than assuming eight.
+  function getDataColumns() {
+    const desktop = refs.windows?.desktop;
+    const stacked = desktop?.classList?.contains("desktop-stacked") === true;
+    return stacked ? DATA_COLUMNS_STACKED : DATA_COLUMNS_DESKTOP;
+  }
+
+  function getDataRowBytes() {
+    return getDataColumns() * WORD_SIZE_BYTES;
+  }
+
+  function getDataPageBytes() {
+    return getDataColumns() * DATA_ROWS_PER_PAGE * WORD_SIZE_BYTES;
+  }
 
   function alignToDataRow(address) {
     const value = Number(address) >>> 0;
-    return (value - (value % DATA_ROW_BYTES)) >>> 0;
+    return (value - (value % getDataRowBytes())) >>> 0;
   }
 
   const DATA_BASE_PRESETS = [
@@ -4524,7 +4540,7 @@ function scrollElementWithinContainer(target, container, options = {}) {
 
   function updateDataNavButtons() {
     if (execute.dataNavPrev) execute.dataNavPrev.disabled = dataState.pageOffset === 0;
-    if (execute.dataNavNext) execute.dataNavNext.disabled = dataState.pageOffset >= (DATA_VIEW_MAX_RANGE - DATA_PAGE_BYTES);
+    if (execute.dataNavNext) execute.dataNavNext.disabled = dataState.pageOffset >= (DATA_VIEW_MAX_RANGE - getDataPageBytes());
   }
 
   function rerender() {
@@ -4590,20 +4606,25 @@ function scrollElementWithinContainer(target, container, options = {}) {
     }
 
     const suffixes = ["0", "4", "8", "c", "10", "14", "18", "1c"];
+    const columns = getDataColumns();
     execute.dataHeaders?.forEach((header, index) => {
       if (!(header instanceof HTMLElement)) return;
+      // The markup always carries eight headers; the narrow layout renders
+      // four cells per row, so the rest are taken out of the table.
+      header.hidden = index >= columns;
+      if (index >= columns) return;
       const suffix = suffixes[index] || "0";
       header.textContent = compact ? `Value+${suffix}` : `Value (+${suffix})`;
     });
   }
 
   execute.dataNavPrev?.addEventListener("click", () => {
-    dataState.pageOffset = Math.max(0, dataState.pageOffset - DATA_PAGE_BYTES);
+    dataState.pageOffset = Math.max(0, dataState.pageOffset - getDataPageBytes());
     rerender();
   });
 
   execute.dataNavNext?.addEventListener("click", () => {
-    dataState.pageOffset = Math.min(DATA_VIEW_MAX_RANGE - DATA_PAGE_BYTES, dataState.pageOffset + DATA_PAGE_BYTES);
+    dataState.pageOffset = Math.min(DATA_VIEW_MAX_RANGE - getDataPageBytes(), dataState.pageOffset + getDataPageBytes());
     rerender();
   });
 
@@ -4628,7 +4649,18 @@ function scrollElementWithinContainer(target, container, options = {}) {
     rerender();
   });
 
-  window.addEventListener("resize", refreshDataControlLabels);
+  let lastDataColumns = getDataColumns();
+  window.addEventListener("resize", () => {
+    refreshDataControlLabels();
+    const columns = getDataColumns();
+    if (columns === lastDataColumns) return;
+    lastDataColumns = columns;
+    // Halving the row also halves the page, so the current offset has to land
+    // on a boundary of the new geometry before the table is drawn again.
+    const pageBytes = getDataPageBytes();
+    dataState.pageOffset = Math.floor(dataState.pageOffset / pageBytes) * pageBytes;
+    rerender();
+  });
 
   const api = {
     render(snapshot, options = {}) {
@@ -4675,7 +4707,7 @@ function scrollElementWithinContainer(target, container, options = {}) {
         const baseAddress = resolveBaseAddress(dataState.baseSelection, snapshot);
         if (currentWriteAddress >= baseAddress && (currentWriteAddress - baseAddress) < DATA_VIEW_MAX_RANGE) {
           const relative = currentWriteAddress - baseAddress;
-          dataState.pageOffset = Math.floor(relative / DATA_PAGE_BYTES) * DATA_PAGE_BYTES;
+          dataState.pageOffset = Math.floor(relative / getDataPageBytes()) * getDataPageBytes();
         }
       }
 
@@ -4683,10 +4715,10 @@ function scrollElementWithinContainer(target, container, options = {}) {
       const memoryWords = snapshot.memoryWords instanceof Map ? snapshot.memoryWords : new Map(snapshot.memoryWords ?? []);
       const rows = [];
       for (let rowIndex = 0; rowIndex < DATA_ROWS_PER_PAGE; rowIndex += 1) {
-        const rowAddress = (pageStart + rowIndex * DATA_COLUMNS * WORD_SIZE_BYTES) >>> 0;
+        const rowAddress = (pageStart + rowIndex * getDataColumns() * WORD_SIZE_BYTES) >>> 0;
         const valueCells = [];
 
-        for (let col = 0; col < DATA_COLUMNS; col += 1) {
+        for (let col = 0; col < getDataColumns(); col += 1) {
           const cellAddress = (rowAddress + col * WORD_SIZE_BYTES) >>> 0;
           const rawValue = memoryWords.get(cellAddress) ?? 0;
           const isActiveCell = activeDataAddress != null && cellAddress === activeDataAddress;
