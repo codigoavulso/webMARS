@@ -114,10 +114,10 @@ function renderLayout(root) {
           <button class="tool-btn" id="btn-reset" type="button">Reset</button>
           <button class="tool-btn" id="btn-pause" type="button">Pause</button>
           <button class="tool-btn" id="btn-stop" type="button">Stop</button>
+          <span id="assembly-status" class="tag warn">not assembled</span>
         </div>
 
         <div class="toolbar-group toolbar-speed-group">
-          <span id="assembly-status" class="tag warn">not assembled</span>
           <label id="run-speed-label" class="run-speed-label" for="run-speed-slider">Run speed at max (no interaction)</label>
           <div class="run-speed-slider-wrap">
             <input id="run-speed-slider" type="range" min="0" max="40" step="1" value="40" />
@@ -774,7 +774,9 @@ function createWindowManager(refs) {
     const el = entry.element;
     if (!(el instanceof HTMLElement)) return false;
     if (!el.classList.contains("tool-window")) return false;
-    if (el.classList.contains("dialog-window")) return false;
+    // Dialogs stay floating so a modal prompt cannot be dismissed by switching
+    // panels, unless they opt in as plain content.
+    if (el.classList.contains("dialog-window") && !el.classList.contains("mobile-panel-window")) return false;
     return true;
   }
 
@@ -1143,6 +1145,9 @@ function createWindowManager(refs) {
       entry.element.classList.remove("window-minimized");
     }
     entry.element.style.zIndex = `${nextZ(entry.kind)}`;
+    // Stacked mode has no z-order to bring forward, so focusing a window means
+    // making it the visible panel.
+    activateMobilePanelForEntry(entry);
     entry.element.classList.add("window-focus");
     window.setTimeout(() => entry.element.classList.remove("window-focus"), 180);
   }
@@ -1461,6 +1466,33 @@ function createWindowManager(refs) {
     refreshWindowLayout();
   }
 
+  function activateMobilePanelForEntry(entry) {
+    if (!isStackedMode() || !entry || isHiddenEntry(entry)) return false;
+    if (entry.kind !== "native" && !isStackedToolEntry(entry)) return false;
+    if (mobileActivePanelId === entry.id) return true;
+    mobileActivePanelId = entry.id;
+    // Redraw now. Setting the id alone left the window open but behind the
+    // previous panel until some unrelated refresh happened to run, which is
+    // why opening a tool looked like it did nothing.
+    refreshWindowLayout();
+    return true;
+  }
+
+  function getWindowCloseControl(entry) {
+    if (!entry?.element) return null;
+    const control = entry.element.querySelector('[data-win-action="close"]');
+    if (!(control instanceof HTMLButtonElement)) return null;
+    if (control.disabled || control.hidden || control.getAttribute("aria-disabled") === "true") return null;
+    return control;
+  }
+
+  function closeMobilePanelEntry(entry) {
+    const closeControl = getWindowCloseControl(entry);
+    if (!closeControl) return false;
+    closeControl.click();
+    return true;
+  }
+
   function renderMobilePanelTabs(entries, activeId) {
     const host = refs.windows.panelTabs;
     if (!host) return;
@@ -1471,10 +1503,12 @@ function createWindowManager(refs) {
     entries.forEach((entry) => {
       const label = translateText(getMobilePanelLabel(entry));
       const isTool = entry.kind === "tool";
+      const isClosable = Boolean(getWindowCloseControl(entry));
       const tab = document.createElement("button");
       tab.type = "button";
-      tab.className = `panel-tab-btn${entry.id === activeId ? " active" : ""}${isTool ? " panel-tab-tool" : ""}`;
+      tab.className = `panel-tab-btn${entry.id === activeId ? " active" : ""}${isTool ? " panel-tab-tool" : ""}${isClosable ? " panel-tab-closable" : ""}`;
       tab.dataset.panel = entry.id;
+      tab.dataset.closable = isClosable ? "true" : "false";
       tab.setAttribute("role", "tab");
       tab.setAttribute("aria-selected", entry.id === activeId ? "true" : "false");
       // The glyph carries the meaning visually; the name stays as the
@@ -1497,6 +1531,13 @@ function createWindowManager(refs) {
       }
 
       tab.addEventListener("click", () => setMobilePanel(entry.id));
+      if (isClosable) {
+        tab.addEventListener("contextmenu", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          closeMobilePanelEntry(entry);
+        });
+      }
       host.appendChild(tab);
     });
   }
@@ -2451,9 +2492,12 @@ function createWindowManager(refs) {
     if (!(win instanceof HTMLElement) || !win.id || windows.has(win.id)) return;
 
     const kind = getKind(win);
+    const closable = Boolean(win.querySelector('[data-win-action="close"]'));
+    win.classList.toggle("window-closable", closable);
     const entry = {
       id: win.id,
       kind,
+      closable,
       element: win,
       minimized: false,
       maximized: false,
@@ -2619,6 +2663,7 @@ function createWindowManager(refs) {
         };
       }
     }
+    activateMobilePanelForEntry(entry);
     focus(windowId);
     scheduleSharedSplitterRefresh();
     if (!isStackedMode()) scheduleDesktopLayoutSave(120);
@@ -6715,7 +6760,7 @@ function injectRuntimeStyles() {
     }
     .toolbar-speed-group {
       display: inline-grid;
-      grid-template-columns: auto auto minmax(188px, 210px);
+      grid-template-columns: auto minmax(188px, 210px);
       align-items: center;
       gap: 6px;
       min-width: 360px;
@@ -7056,15 +7101,23 @@ function injectRuntimeStyles() {
          however many toolbars exist. */
       .mobile-modes {
         display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
         gap: 3px;
         padding: 3px 4px;
+        height: 42px;
+        min-height: 42px;
+        max-height: 42px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
         border-radius: 0;
         box-shadow: none;
       }
 
       .mobile-mode-btn {
-        flex: 1 1 0;
-        min-width: 0;
+        flex: 1 0 auto;
+        min-width: max-content;
         min-height: 32px;
         padding: 4px 6px;
         border: 1px solid var(--line);
@@ -7092,8 +7145,14 @@ function injectRuntimeStyles() {
         display: none;
         /* One shared height, so switching mode does not shift the panel edge. */
         box-sizing: border-box;
+        height: 42px;
         min-height: 42px;
-        align-content: center;
+        max-height: 42px;
+        flex-wrap: nowrap;
+        align-items: center;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
       }
 
       [data-mobile-mode="menu"] .menu-bar { display: flex; }
@@ -7117,6 +7176,9 @@ function injectRuntimeStyles() {
         box-shadow: none;
       }
 
+      .mobile-modes::-webkit-scrollbar,
+      .menu-bar::-webkit-scrollbar,
+      .toolbar::-webkit-scrollbar,
       .panel-tabs::-webkit-scrollbar {
         display: none;
       }
@@ -7161,25 +7223,31 @@ function injectRuntimeStyles() {
 
       .menu-bar {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
-        row-gap: 3px;
-        column-gap: 2px;
+        gap: 2px;
         padding: 2px 4px;
-        min-height: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
       }
 
-      /* Two compact rows: the execution controls own the first, everything else
-         shares the second. Nothing scrolls out of sight, which a single strip
-         could not manage once the file actions and the speed picker were in. */
+      .menu-bar .menu-item {
+        flex: 0 0 auto;
+        white-space: nowrap;
+      }
+
+      /* Every mobile toolbar remains one strip. Wider control groups continue
+         horizontally instead of increasing the chrome height. */
       .toolbar {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
         gap: 4px;
         padding: 3px 4px;
-        min-height: 0;
-        overflow: visible;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
       }
 
       /* Icon-only: the label is what made these overflow and get clipped. The
@@ -7226,10 +7294,46 @@ function injectRuntimeStyles() {
         padding: 5px 9px;
       }
 
-      /* A single panel fills the screen, so there is nothing to minimize or
-         maximize; the tab bar already does the switching. */
+      /* A single panel fills the screen, so minimize and maximize stay hidden.
+         Windows that already expose a close action keep only that action in
+         the title bar; the three fixed native panels have no close action. */
       .desktop.desktop-stacked .desktop-window .window-controls {
         display: none !important;
+      }
+
+      .desktop.desktop-stacked .desktop-window.window-closable .window-controls {
+        display: flex !important;
+      }
+
+      .desktop.desktop-stacked .desktop-window.window-closable .window-controls [data-win-action="min"],
+      .desktop.desktop-stacked .desktop-window.window-closable .window-controls [data-win-action="max"] {
+        display: none !important;
+      }
+
+      /* A panel fills the screen but its content still overflows on a phone.
+         These bodies clipped instead of scrolling, so the right-hand columns of
+         the register and segment tables were simply unreachable. */
+      .desktop-stacked .register-body,
+      .desktop-stacked .message-body,
+      .desktop-stacked .segment-panel,
+      .desktop-stacked .labels-panel,
+      .desktop-stacked .subtab-panel.active {
+        overflow: auto;
+        min-width: 0;
+      }
+
+      /* Long lines wrapped, which also desynchronized the highlight overlay:
+         that layer is white-space: pre, so the two disagreed on where a line
+         ended. Scrolling sideways keeps them in step. */
+      .desktop-stacked #source-editor {
+        white-space: pre;
+        overflow: auto;
+      }
+
+      .desktop.desktop-stacked .desktop-window.window-closable .window-controls [data-win-action="close"] {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
       }
 
       /* The tool's own output is what the screen is for. The descriptive
@@ -7305,7 +7409,7 @@ function injectRuntimeStyles() {
         padding: 0;
       }
 
-      /* The status tag plus the speed picker own the second row. */
+      /* The speed label and preset stay together in their dedicated mode. */
       .toolbar-speed-group {
         display: grid;
         grid-template-columns: auto 1fr;
@@ -7369,7 +7473,8 @@ function injectRuntimeStyles() {
       /* The selected panel fills the desktop area; the others are detached from
          the flow entirely so no stray scroll height survives. Dialogs keep
          floating above and are excluded. */
-      .desktop.desktop-stacked .desktop-window:not(.dialog-window) {
+      .desktop.desktop-stacked .desktop-window:not(.dialog-window),
+      .desktop.desktop-stacked .desktop-window.mobile-panel-window {
         position: absolute;
         inset: 0;
         height: auto !important;
@@ -7410,7 +7515,8 @@ function injectRuntimeStyles() {
         min-height: 31px !important;
       }
 
-      .desktop.desktop-stacked .desktop-window.tool-window:not(.dialog-window) {
+      .desktop.desktop-stacked .desktop-window.tool-window:not(.dialog-window),
+      .desktop.desktop-stacked .desktop-window.tool-window.mobile-panel-window {
         left: 0 !important;
         right: 0 !important;
         width: auto !important;
@@ -7476,10 +7582,16 @@ function injectRuntimeStyles() {
         min-width: 0;
       }
 
+      /* These were visible so the whole page could scroll them. The page no
+         longer scrolls, so visible now means clipped: the body scrolls itself. */
       .desktop.desktop-stacked #window-registers .window-content,
-      .desktop.desktop-stacked #window-registers .subtab-panel,
+      .desktop.desktop-stacked #window-registers .subtab-panel {
+        overflow: hidden;
+        min-height: 0;
+      }
+
       .desktop.desktop-stacked #window-registers .register-body {
-        overflow: visible;
+        overflow: auto;
       }
 
       .desktop.desktop-stacked .desktop-window:not(#window-main) .window-controls [data-win-action="max"] {

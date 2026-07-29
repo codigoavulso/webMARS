@@ -752,7 +752,9 @@
 
     const aboutWin = buildWindowShell(
       "window-help-about",
-      "mars-java-about-window dialog-window",
+      // Floats as a dialog on the desktop, but it is plain content: on mobile
+      // it joins the panel tabs instead of hovering over them.
+      "mars-java-about-window dialog-window mobile-panel-window",
       ABOUT_MARS_TITLE,
       625,
       425,
