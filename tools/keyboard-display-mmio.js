@@ -138,7 +138,7 @@
             <section class="mars-tool-panel">
               <div class="mars-tool-panel-title" data-kd="keyboardtitle"></div>
               <div class="mars-tool-panel-body kd-panel-body">
-                <textarea class="kd-keyboard" data-kd="keyboard" spellcheck="false" wrap="off" placeholder="Type here to send keyboard MMIO input"></textarea>
+        <textarea class="kd-keyboard" data-kd="keyboard" spellcheck="false" wrap="off" inputmode="text" enterkeyhint="send" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="Type here to send keyboard MMIO input"></textarea>
               </div>
             </section>
           </div>

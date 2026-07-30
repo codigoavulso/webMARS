@@ -36,6 +36,17 @@ function sourceSpecs(entry) {
   return [{ path: entry.path, main: true }];
 }
 
+function teachingComments(source, logicalPath) {
+  const isAssembly = [".asm", ".s"].includes(extname(logicalPath).toLowerCase());
+  return String(source).split(/\r?\n/).flatMap((line) => {
+    const marker = isAssembly ? line.indexOf("#") : line.indexOf("//");
+    if (marker < 0) return [];
+    const comment = line.slice(marker + (isAssembly ? 1 : 2)).trim();
+    if (!comment || (!isAssembly && comment.startsWith("#use"))) return [];
+    return [comment];
+  });
+}
+
 function formatDiagnostics(result) {
   return JSON.stringify(result?.errors || result?.diagnostics || [], null, 2);
 }
@@ -123,6 +134,74 @@ async function assembleSource(source, sourceName, settings = {}, assemblyOptions
   return engine;
 }
 
+async function assembleMarsOs(language = "en") {
+  const entry = entries.find((candidate) => candidate.path === "mips.asm");
+  assert.ok(entry, "MARS-OS catalog entry is missing.");
+  const files = [];
+  for (const spec of sourceSpecs(entry)) {
+    const physicalPath = await resolveExampleFile(language, spec.path);
+    files.push({
+      name: spec.path.replaceAll("\\", "/"),
+      source: await readFile(physicalPath, "utf8"),
+      main: spec.main === true
+    });
+  }
+  const engine = await createJavaScriptEngine({
+    settings: { startAtMain: true, maxMemoryBytes: 0x7fffffff, maxBacksteps: 0 }
+  });
+  engine.setSourceFiles(files);
+  const main = files.find((file) => file.main);
+  const assembled = engine.assemble(main.source, { sourceName: main.name });
+  assert.equal(assembled.ok, true, formatDiagnostics(assembled));
+  return engine;
+}
+
+function attachTtyHarness(engine, inputText = "") {
+  const input = Array.from(Buffer.from(String(inputText), "ascii"));
+  const output = [];
+  const receiverControl = 0xffff0000;
+  const receiverData = 0xffff0004;
+  const transmitterControl = 0xffff0008;
+  const transmitterData = 0xffff000c;
+
+  const feedReceiver = () => {
+    if (!input.length || (engine.getByte(receiverControl) & 1) !== 0) return;
+    engine.writeByte(receiverData, input.shift());
+    engine.writeByte(receiverControl, 1);
+  };
+
+  engine.writeByte(transmitterControl, 1);
+  const detach = engine.registerMemoryObserver({
+    start: receiverData,
+    end: transmitterData,
+    onRead(detail) {
+      if ((detail.address >>> 0) !== receiverData) return;
+      engine.writeByte(receiverControl, 0);
+      engine.writeByte(receiverData, 0);
+      feedReceiver();
+    },
+    onWrite(detail) {
+      if ((detail.address >>> 0) !== transmitterData) return;
+      if ((engine.getByte(transmitterControl) & 1) === 0) return;
+      engine.writeByte(transmitterControl, 0);
+      output.push(detail.value & 0xff);
+      engine.writeByte(transmitterData, 0);
+      engine.writeByte(transmitterControl, 1);
+    }
+  });
+  feedReceiver();
+
+  return {
+    detach,
+    get output() {
+      return Buffer.from(output).toString("utf8");
+    },
+    get remainingInput() {
+      return input.length;
+    }
+  };
+}
+
 function runToHalt(engine, maxSteps = 200000) {
   let output = "";
   for (let step = 0; step < maxSteps && !engine.getSnapshot().halted; step += 1) {
@@ -173,6 +252,38 @@ test("example catalog has unique, resolvable entries", async () => {
   }
 });
 
+test("Learn and Lessons examples keep explanatory comments localized in every language", async () => {
+  const teachingEntries = entries.filter((entry) => ["Learn", "Lessons"].includes(entry.category));
+  assert.ok(teachingEntries.length > 0, "The teaching categories must not be empty.");
+
+  const untranslatedEnglish = /\b(?:Concepts|Register plan|After pass|A word occupies|The compiler lowers|One-element arrays|This module owns|By definition|Both routines walk|Execution resumes here|Skip the known|immediate -> register|the adder does|invert all bits|sign preserved|zeros shifted|the count register|the limit|base address|first word|next word|least significant|byte offset|unsigned byte|length|accumulator|scaled index|reserve two words|clobber|first argument|second argument|return address|result came back|this call's|base case|our n again|same shape|different registers|constant is in the word|shift amount|into the FPU|the FPU adder|print float)\b/i;
+  for (const entry of teachingEntries) {
+    for (const spec of sourceSpecs(entry)) {
+      const englishPath = await resolveExampleFile("en", spec.path);
+      const englishComments = teachingComments(await readFile(englishPath, "utf8"), spec.path);
+      assert.ok(
+        englishComments.length >= 4,
+        `${spec.path} needs enough inline explanation to be useful as a lesson.`
+      );
+
+      for (const language of languages.filter((value) => value !== "en")) {
+        const localizedPath = await resolveExampleFile(language, spec.path);
+        const localizedComments = teachingComments(await readFile(localizedPath, "utf8"), spec.path);
+        const allowedLineDifference = entry.category === "Lessons" ? 1 : 0;
+        assert.ok(
+          localizedComments.length >= englishComments.length - allowedLineDifference,
+          `${spec.path} (${language}) lost explanatory comments from the English lesson.`
+        );
+        assert.doesNotMatch(
+          localizedComments.join("\n"),
+          untranslatedEnglish,
+          `${spec.path} (${language}) still contains an English teaching comment.`
+        );
+      }
+    }
+  }
+});
+
 test("every Assembly example variant assembles", async () => {
   const engine = await createJavaScriptEngine({
     settings: { startAtMain: true, maxMemoryBytes: 0x7fffffff }
@@ -214,6 +325,38 @@ test("every Assembly example variant assembles", async () => {
     [".asm", ".s"].includes(extname(entry.path).toLowerCase())
   )).length;
   assert.ok(assembledVariants >= canonicalCount, "Expected all canonical Assembly examples to be assembled.");
+});
+
+test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdown", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(
+    engine,
+    "calc 0x20 + 22\rcat motd\rcolor yellow\rsysinfo\rhistory\rshutdown\r"
+  );
+  const result = engine.go(100000);
+  tty.detach();
+
+  assert.equal(result.ok, true);
+  assert.equal(result.haltReason, "exit");
+  assert.equal(engine.getSnapshot().halted, true);
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /MARS-OS 0\.2/);
+  assert.match(tty.output, /result: 54 \(0x00000036\)/);
+  assert.match(tty.output, /Learn the machine by building the machine\./);
+  assert.match(tty.output, /\x1b\[93mguest@webmars:\/\$ /);
+  assert.match(tty.output, /commands executed: 4/);
+  assert.match(tty.output, /1  calc 0x20 \+ 22/);
+  assert.match(tty.output, /5  history/);
+  assert.match(tty.output, /System halted/);
+  assert.ok(engine.steps < 30000, "The shell session used unexpectedly many instructions.");
+
+  const kernelSource = await readFile(resolve(examplesRoot, "mips_os_kernel.asm"), "utf8");
+  assert.match(kernelSource, /tty_getc_wait:[\s\S]*?li\s+\$a0,\s*4[\s\S]*?syscall/);
+  for (const language of languages) {
+    const mainSource = await readFile(await resolveExampleFile(language, "mips.asm"), "utf8");
+    assert.match(mainSource, /\.include "mips_os_kernel\.asm"/);
+    assert.doesNotMatch(mainSource, /Bitmap Display|framebuffer/i);
+  }
 });
 
 test("every C example variant compiles and its generated Assembly assembles", async () => {
@@ -317,7 +460,7 @@ test("corrected C examples have observable results and honor the bitmap base", a
   const bitmapProbe = await compileCSource(`
 #use <bitmap_rect>
 int main(void) {
-  bitmap_set_base_address(0x10040000);
+  bitmap_configure_display(1, 1, 1, 1, 0x10040000);
   bitmap_put_pixel(0, 0, 1, 1, 0x12345678);
   return 0;
 }
@@ -325,6 +468,16 @@ int main(void) {
   const bitmapEngine = await assembleSource(bitmapProbe.asm, bitmapProbe.generatedAsmName);
   runToHalt(bitmapEngine);
   assert.equal(bitmapEngine.readWord(0x10040000) >>> 0, 0x12345678);
+  assert.deepEqual({ ...bitmapEngine.getBitmapMmioConfig() }, {
+    protocolVersion: 1,
+    target: 1,
+    displayWidth: 1,
+    displayHeight: 1,
+    unitWidth: 1,
+    unitHeight: 1,
+    baseAddress: 0x10040000,
+    controlAddress: 0xffff0020
+  });
 
   const appRuntimeSource = await readFile(
     resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js"),
@@ -332,6 +485,8 @@ int main(void) {
   );
   assert.match(appRuntimeSource, /int _bitmap_base_address = \$\{MINI_C_BITMAP_DEFAULT_BASE\};/);
   assert.match(appRuntimeSource, /_bitmap_base_address = baseAddress;/);
+  assert.match(appRuntimeSource, /void bitmap_configure_display\(/);
+  assert.match(appRuntimeSource, /control\[8\] = 1;/);
   assert.match(appRuntimeSource, /return \(int\*\)_bitmap_base_address;/);
 });
 

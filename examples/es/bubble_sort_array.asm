@@ -1,5 +1,7 @@
 # Demo de bubble sort
 # Ordena un array fijo e imprime los valores ordenados.
+# Conceptos: acceso indexado a words, bucles anidados, comparación signed e intercambio in-place.
+# Plan de registros: $s0 = base del array, $s1 = longitud, $t0/$t1 = índices.
 
 .data
 arr: .word 42, 7, 19, -3, 88, 0, 15, 15, 2, 100
@@ -14,6 +16,7 @@ main:
 
   li  $t0, 0              # i
 outer:
+  # Tras la pasada i, los i valores mayores ya están fijados en el extremo derecho.
   bge $t0, $s1, print
   li  $t1, 0              # j
   subu $t2, $s1, $t0
@@ -21,12 +24,14 @@ outer:
 inner:
   bge $t1, $t2, next_i
 
+  # Una word ocupa cuatro bytes: arr[j] está en base + j*4.
   sll $t3, $t1, 2
   addu $t4, $s0, $t3
   lw  $t5, 0($t4)
   lw  $t6, 4($t4)
 
   ble $t5, $t6, no_swap
+  # Los valores adyacentes están desordenados; intercambiarlos en memoria.
   sw  $t6, 0($t4)
   sw  $t5, 4($t4)
 no_swap:
@@ -38,12 +43,14 @@ next_i:
   j outer
 
 print:
+  # La syscall 4 imprime la etiqueta antes de recorrer los elementos.
   li $v0, 4
   la $a0, msg
   syscall
 
   li $t7, 0
 print_loop:
+  # Reutilizar el mismo cálculo de dirección para obtener arr[index].
   bge $t7, $s1, end
   sll $t3, $t7, 2
   addu $t4, $s0, $t3

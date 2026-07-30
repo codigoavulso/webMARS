@@ -31,11 +31,13 @@ main:
         li   $t3, 0             # accumulator
 
 sum:
+        # Loop invariant: $t3 is the sum of arr[0] through arr[i-1].
         slt  $t4, $t1, $t2
         beq  $t4, $zero, ends
 
         sll  $t5, $t1, 2        # i * 4 bytes
         add  $t6, $t0, $t5      # base + scaled index
+        # $t6 now names exactly one element; lw fetches its 32-bit value.
         lw   $t7, 0($t6)
         add  $t3, $t3, $t7
 

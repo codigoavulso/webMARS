@@ -36,9 +36,11 @@ main:
 
         li   $t2, 0             # byte offset
 bloop:
+        # The loop visits offsets 0, 1, 2 and 3 inside the stored word.
         slti $t3, $t2, 4
         beq  $t3, $zero, endb
 
+        # Effective address = base address + current byte offset.
         add  $t4, $t0, $t2
         lbu  $a0, 0($t4)        # unsigned byte
         li   $v0, 1

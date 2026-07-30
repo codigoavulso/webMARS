@@ -235,6 +235,13 @@ test("stateful tools use central deltas and expose active runtime consumers", as
   assert.match(ttySource, /registerMemoryObserver\(/);
   assert.match(ttySource, /onBackstep\(event\)/);
   assert.doesNotMatch(ttySource, /onRuntimeEvent\(/);
+  assert.match(ttySource, /data-tty="keyboard-input"/);
+  assert.match(ttySource, /inputmode="text"/);
+  assert.match(ttySource, /canvas\.addEventListener\("pointerdown", \(event\) => \{/);
+  assert.match(ttySource, /if \(connected\) event\.preventDefault\(\);/);
+  assert.match(ttySource, /keyboardInput\?\.addEventListener\("input"/);
+  assert.match(ttySource, /keyboardInput\?\.addEventListener\("compositionend"/);
+  assert.match(ttySource, /event\.inputType !== "deleteContentBackward"/);
 
   const keyboardSource = await readFile(resolve(projectRoot, "tools/keyboard-display-mmio.js"), "utf8");
   assert.match(keyboardSource, /registerMemoryObserver\(/);
@@ -425,4 +432,16 @@ test("bitmap display coalesces writes without redrawing stale snapshot memory", 
   assert.match(source, /ctx\.engine\?\.memoryWords instanceof Map/);
   assert.match(source, /pendingWriteAddress != null && pendingWriteAddress !== nextWriteAddress/);
   assert.match(source, /fullRedrawNeeded = true/);
+});
+
+test("both Bitmap tools consume committed runtime configuration and accept dynamic dimensions", async () => {
+  for (const relativePath of ["tools/bitmap-display.js", "tools/bitmap-terminal-tool.js"]) {
+    const source = await readFile(resolve(projectRoot, relativePath), "utf8");
+    assert.match(source, /getBitmapMmioConfig/);
+    assert.match(source, /function syncBitmapMmioConfig/);
+    assert.match(source, /function ensureSelectOption/);
+    assert.match(source, /onRuntimeEvent\(event\)/);
+    assert.match(source, /syncBitmapMmioConfig\(false\)/);
+    assert.match(source, /ctx\.engine\?\.memoryWords instanceof Map/);
+  }
 });

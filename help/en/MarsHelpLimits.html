@@ -15,10 +15,11 @@
     <tr><th>Area</th><th>Limit or behavior</th></tr>
     <tr><td>Memory</td><td>User-selectable 0.25–2 GiB, with an architectural hard ceiling below <code>0x80000000</code>. Sparse allocation means untouched address space is not committed byte-for-byte.</td></tr>
     <tr><td>Heap</td><td><code>sbrk</code> validates the full unsigned reservation before changing the heap pointer. Requests cannot wrap or bypass the configured memory ceiling.</td></tr>
-    <tr><td>Backstep</td><td>0–1,000,000 snapshots. Large values can consume substantial browser memory.</td></tr>
+    <tr><td>Runtime strings</td><td>Null-terminated strings can contain up to 1 MiB. A missing terminator or a longer string raises an explicit syscall error instead of returning truncated text.</td></tr>
+    <tr><td>Backstep</td><td>0–1,000,000 inverse deltas. History is bounded by the configured budget while always retaining the latest 100 complete steps when backstep is enabled.</td></tr>
     <tr><td>Browser file storage</td><td>Project/session data is subject to browser quota; the app limits user browser-storage payloads to 1 MiB where applicable and falls back to smaller recovery payloads if needed.</td></tr>
     <tr><td>Run timing</td><td>Sleep, MIDI and UI timing are scheduled by the browser and are not cycle-accurate.</td></tr>
-    <tr><td>Distribution</td><td>webMARS 0.4.13 is a static web application, not an installable/offline PWA. It must be served over HTTP by the included local server or another static host.</td></tr>
+    <tr><td>Distribution</td><td>webMARS 0.5.0 is a static web application, not an installable/offline PWA. It must be served over HTTP by the included local server or another static host.</td></tr>
   </table>
 
   <h2>Memory maps</h2>

@@ -31,6 +31,7 @@ main:
 
         li   $a0, 17            # first argument
         li   $a1, 42            # second argument
+        # jal changes both control flow and $ra in one architectural operation.
         jal  maxof              # $ra = address of the next line
 
         move $a0, $v0           # result came back in $v0
@@ -44,6 +45,7 @@ main:
 
 # ---- int maxof(int a, int b) ----
 maxof:
+        # maxof is a leaf function, so it can return without saving $ra on the stack.
         slt  $t0, $a0, $a1
         beq  $t0, $zero, keepa
         move $v0, $a1

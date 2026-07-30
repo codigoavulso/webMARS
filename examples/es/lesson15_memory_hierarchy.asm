@@ -35,6 +35,7 @@ main:
         li   $t2, 256
         li   $t3, 0
 near:
+        # Los índices consecutivos reutilizan cada bloque de caché antes de avanzar.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endnear
         sll  $t5, $t1, 2
@@ -58,6 +59,7 @@ endnear:
         li   $t1, 0
         li   $t3, 0
 far:
+        # Sumar 16 salta 64 bytes por iteración: normalmente un bloque de caché entero.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

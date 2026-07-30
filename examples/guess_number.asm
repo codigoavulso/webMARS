@@ -1,5 +1,6 @@
 # Guess the Number (1..100)
 # Uses syscall 42 for random number generation and syscall 5 for integer input.
+# $s0 keeps the secret across syscalls; $s1 counts attempts across loop iterations.
 
 .data
 title:      .asciiz "\n=== Guess the Number ===\n"
@@ -22,6 +23,7 @@ main:
   li $a0, 1
   li $a1, 100
   syscall
+  # Syscall 42 returns the generated value in $a0, not in $v0.
   addiu $s0, $a0, 1      # secret number
   li $s1, 0              # attempts
 
@@ -30,12 +32,14 @@ main:
   syscall
 
 guess_loop:
+  # Syscalls may overwrite argument/result registers, so persistent state stays in $s registers.
   li $v0, 4
   la $a0, prompt
   syscall
 
   li $v0, 5
   syscall
+  # Integer input is returned in $v0.
   move $t0, $v0          # guess
   addiu $s1, $s1, 1
 
@@ -64,6 +68,7 @@ guess_loop:
   syscall
 
 too_low:
+  # Both feedback branches converge on the next iteration.
   li $v0, 4
   la $a0, lowMsg
   syscall

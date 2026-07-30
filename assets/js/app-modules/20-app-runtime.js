@@ -1951,12 +1951,14 @@ async function openCloudLoginDialog() {
             name: "username",
             label: translateText("Username"),
             type: "text",
+            autocomplete: "username",
             value: ""
           },
           {
             name: "password",
             label: translateText("Password"),
             type: "password",
+            autocomplete: "current-password",
             value: ""
           }
         ]
@@ -2038,24 +2040,29 @@ async function openCloudRegisterDialog() {
             name: "username",
             label: translateText("Username"),
             type: "text",
+            autocomplete: "username",
             value: ""
           },
           {
             name: "email",
             label: translateText("Email"),
             type: "text",
+            inputMode: "email",
+            autocomplete: "email",
             value: ""
           },
           {
             name: "password",
             label: translateText("Password"),
             type: "password",
+            autocomplete: "new-password",
             value: ""
           },
           {
             name: "repeatPassword",
             label: translateText("Repeat Password"),
             type: "password",
+            autocomplete: "new-password",
             value: ""
           }
         ]
@@ -2167,6 +2174,8 @@ async function openCloudServerPreferencesDialog() {
             name: "cloudApiBase",
             label: translateText("Cloud server URL"),
             type: "text",
+            inputMode: "url",
+            autocomplete: "url",
             value: currentApiBase,
             placeholder: translateText("Leave blank to use the default cloud server.")
           }
@@ -5402,6 +5411,22 @@ function getPopupRunIoContext() {
   return recent.trim().length ? recent : "";
 }
 
+function getRuntimeInputKeyboard(kind = "") {
+  const normalizedKind = String(kind || "").trim().toLowerCase();
+  if (normalizedKind === "read-int" || normalizedKind === "input-int") {
+    return { inputMode: "numeric", enterKeyHint: "send" };
+  }
+  if (
+    normalizedKind === "read-float"
+    || normalizedKind === "read-double"
+    || normalizedKind === "input-float"
+    || normalizedKind === "input-double"
+  ) {
+    return { inputMode: "decimal", enterKeyHint: "send" };
+  }
+  return { inputMode: "text", enterKeyHint: "send" };
+}
+
 function consumePopupPrompt(request, label, fallback) {
   const key = `input:${request.service || ""}:${label}:${fallback}`;
   if (!popupDialogState.input || popupDialogState.input.key !== key) {
@@ -5417,6 +5442,7 @@ function consumePopupPrompt(request, label, fallback) {
       contextText: getPopupRunIoContext(),
       contextLabel: "",
       defaultValue: fallback,
+      ...getRuntimeInputKeyboard(request.kind),
       confirmLabel: translateText("Send"),
       cancelLabel: translateText("Cancel")
     }, {
@@ -5542,7 +5568,10 @@ engine.setRuntimeHooks({
 
     const queued = messagesPane.consumeInput();
     if (queued == null) {
-      messagesPane.requestInput(label || translateText("input"));
+      messagesPane.requestInput(
+        label || translateText("input"),
+        getRuntimeInputKeyboard(request.kind)
+      );
       return { wait: true, message: translateText("[input] Waiting for Run I/O input: {label}", {
         label: label || translateText("input")
       }) };
@@ -5561,7 +5590,10 @@ engine.setRuntimeHooks({
 
     const queued = messagesPane.consumeInput();
     if (queued == null) {
-      messagesPane.requestInput(translateText("{message} [yes/no/cancel]", { message }));
+      messagesPane.requestInput(
+        translateText("{message} [yes/no/cancel]", { message }),
+        { inputMode: "text", enterKeyHint: "send" }
+      );
       return { wait: true, message: translateText("[input] Waiting for confirmation in Run I/O: {message}", { message }) };
     }
 
@@ -9949,7 +9981,5 @@ if (typeof window !== "undefined") {
     }
   };
 }
-
-
 
 

@@ -32,6 +32,7 @@ main:
         la   $a0, ma
         li   $v0, 4
         syscall
+        # AND clears every position where the mask contains zero.
         and  $t2, $t0, $t1
         move $a0, $t2
         li   $v0, 1
@@ -52,6 +53,7 @@ main:
         la   $a0, mx
         li   $v0, 4
         syscall
+        # XOR toggles only the positions selected by ones in the mask.
         xor  $t4, $t0, $t1
         move $a0, $t4
         li   $v0, 1

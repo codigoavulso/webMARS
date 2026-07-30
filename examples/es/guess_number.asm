@@ -1,5 +1,6 @@
 # Adivina el Numero (1..100)
 # Usa la syscall 42 para generar aleatorios y la syscall 5 para leer enteros.
+# $s0 conserva el secreto entre syscalls; $s1 cuenta intentos entre iteraciones.
 
 .data
 title:      .asciiz "\n=== Guess the Number ===\n"
@@ -22,6 +23,7 @@ main:
   li $a0, 1
   li $a1, 100
   syscall
+  # La syscall 42 devuelve el valor generado en $a0, no en $v0.
   addiu $s0, $a0, 1      # numero secreto
   li $s1, 0              # intentos
 
@@ -30,12 +32,14 @@ main:
   syscall
 
 guess_loop:
+  # Las syscalls pueden sobrescribir argumentos/resultados; el estado persistente usa $s.
   li $v0, 4
   la $a0, prompt
   syscall
 
   li $v0, 5
   syscall
+  # La entrada entera se devuelve en $v0.
   move $t0, $v0          # intento
   addiu $s1, $s1, 1
 
@@ -64,6 +68,7 @@ guess_loop:
   syscall
 
 too_low:
+  # Las dos ramas de ayuda convergen en la siguiente iteración.
   li $v0, 4
   la $a0, lowMsg
   syscall

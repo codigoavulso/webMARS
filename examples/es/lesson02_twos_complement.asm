@@ -28,8 +28,9 @@ main:
         la   $a0, m1
         li   $v0, 4
         syscall
+        # Restar desde cero crea el inverso aditivo sin ningún bit de signo separado.
         li   $t0, 5
-        sub  $t1, $zero, $t0    # the adder does the work
+        sub  $t1, $zero, $t0    # el sumador realiza el trabajo
         move $a0, $t1
         li   $v0, 1
         syscall
@@ -39,9 +40,10 @@ main:
         la   $a0, m2
         li   $v0, 4
         syscall
-        nor  $t2, $t0, $zero    # invert all bits
-        addi $t2, $t2, 1        # add one
-        move $a0, $t2           # same value as above
+        # nor con $zero equivale a NOT; sumar uno completa el complemento a dos.
+        nor  $t2, $t0, $zero    # invertir todos los bits
+        addi $t2, $t2, 1        # sumar uno
+        move $a0, $t2           # mismo valor que arriba
         li   $v0, 1
         syscall
         li   $v0, 11

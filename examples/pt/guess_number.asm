@@ -11,6 +11,7 @@ newline:    .asciiz "\n"
 
 .text
 main:
+  # $s0 preserva o segredo entre syscalls; $s1 preserva o número de tentativas.
   # Inicializar a stream aleatoria id=1 com uma seed arbitraria.
   li $v0, 40
   li $a0, 1
@@ -22,6 +23,7 @@ main:
   li $a0, 1
   li $a1, 100
   syscall
+  # A syscall 42 devolve o inteiro aleatório em $a0, não em $v0.
   addiu $s0, $a0, 1      # numero secreto
   li $s1, 0              # tentativas
 
@@ -30,15 +32,18 @@ main:
   syscall
 
 guess_loop:
+  # As syscalls podem alterar registos temporários; o estado persistente fica em $s0/$s1.
   li $v0, 4
   la $a0, prompt
   syscall
 
   li $v0, 5
   syscall
+  # A syscall 5 devolve o inteiro lido em $v0.
   move $t0, $v0          # palpite
   addiu $s1, $s1, 1
 
+  # Cada comparação reduz o intervalo possível até o palpite coincidir com o segredo.
   # se palpite < segredo => demasiado baixo
   slt $t1, $t0, $s0
   bne $t1, $zero, too_low

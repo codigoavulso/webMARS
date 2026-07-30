@@ -5,6 +5,7 @@
 .text
 .globl is_prime
 is_prime:
+  # By definition, values below 2 are not prime.
   slti $t0, $a0, 2
   bne $t0, $zero, prime_no
   nop
@@ -12,11 +13,13 @@ is_prime:
   li $t1, 2
 
 prime_loop:
+  # No divisor greater than sqrt(n) needs to be tested.
   mul $t2, $t1, $t1
   slt $t3, $a0, $t2
   bne $t3, $zero, prime_yes
   nop
 
+  # div places the quotient in LO and the remainder in HI.
   div $a0, $t1
   mfhi $t4
   beq $t4, $zero, prime_no

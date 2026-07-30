@@ -9,11 +9,14 @@ msg: .asciiz "Sorted: "
 
 .text
 main:
+  # Conceitos: words indexadas, ciclos aninhados, comparação signed e troca in-place.
+  # Plano: $s0 = base do array, $s1 = tamanho e $t0/$t1 = índices i/j.
   la  $s0, arr
   lw  $s1, n
 
   li  $t0, 0              # i
 outer:
+  # Após a passagem i, os i maiores valores já estão fixos no extremo direito.
   bge $t0, $s1, print
   li  $t1, 0              # j
   subu $t2, $s1, $t0
@@ -21,12 +24,14 @@ outer:
 inner:
   bge $t1, $t2, next_i
 
+  # Cada word ocupa quatro bytes: arr[j] fica em base + j*4.
   sll $t3, $t1, 2
   addu $t4, $s0, $t3
   lw  $t5, 0($t4)
   lw  $t6, 4($t4)
 
   ble $t5, $t6, no_swap
+  # Os vizinhos estão fora de ordem; trocá-los diretamente em memória.
   sw  $t6, 0($t4)
   sw  $t5, 4($t4)
 no_swap:
@@ -38,6 +43,7 @@ next_i:
   j outer
 
 print:
+  # A syscall 4 imprime a legenda; a syscall 1 imprime cada inteiro.
   li $v0, 4
   la $a0, msg
   syscall
@@ -45,6 +51,7 @@ print:
   li $t7, 0
 print_loop:
   bge $t7, $s1, end
+  # Percorrer novamente o array com o mesmo cálculo base + índice*4.
   sll $t3, $t7, 2
   addu $t4, $s0, $t3
   lw  $a0, 0($t4)

@@ -7,9 +7,11 @@ int main(void) {
   int repeat = 1;
   string name = "MARS";
 
+  // Registrar opciones y las direcciones donde se guardarán sus valores.
   args_flag("verbose", &verbose);
   args_int("repeat", &repeat);
   args_string("name", &name);
+  // args_parse consume las opciones conocidas y devuelve solo los argumentos posicionales.
   args_t remaining = args_parse();
 
   if (remaining == NULL) {
@@ -31,6 +33,7 @@ int main(void) {
   print_int(remaining->argc);
   print_char(10);
   for (int i = 0; i < remaining->argc; i++) {
+    // argv es un array de strings; cada índice contiene un token no consumido.
     print_string(remaining->argv[i]);
     print_char(10);
   }

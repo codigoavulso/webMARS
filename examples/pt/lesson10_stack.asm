@@ -29,16 +29,18 @@ main:
         li   $t0, 7
         li   $t1, 9
 
-        addi $sp, $sp, -8       # reserve two words
-        sw   $t0, 0($sp)        # push
+        # A pilha cresce para baixo, por isso reservar espaço subtrai a $sp.
+        addi $sp, $sp, -8       # reservar duas words
+        sw   $t0, 0($sp)        # guardar na pilha
         sw   $t1, 4($sp)
 
-        li   $t0, 0             # clobber the registers
+        li   $t0, 0             # sobrescrever os registos
         li   $t1, 0
 
-        lw   $t0, 0($sp)        # pop
+        lw   $t0, 0($sp)        # recuperar da pilha
         lw   $t1, 4($sp)
-        addi $sp, $sp, 8        # release
+        # Cada reserva deve ser equilibrada para devolver ao chamador o $sp original.
+        addi $sp, $sp, 8        # libertar o frame
 
         la   $a0, m1
         li   $v0, 4

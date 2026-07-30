@@ -25,6 +25,64 @@
       .float-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:auto; }
       .float-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .float-footer .tool-btn { min-width:130px; }
+
+      /* The desktop presentation deliberately uses display-sized type. On a
+         phone, preserve the IEEE-754 hierarchy without forcing horizontal
+         overflow or allowing annotations to compete with the values. */
+      .desktop-stacked .float-tool { gap:7px; padding:7px; font-size:12px; }
+      .desktop-stacked .float-tool h2 { font-size:21px; line-height:1.15; }
+      .desktop-stacked .float-hex-row {
+        grid-template-columns:minmax(0, 1fr);
+        gap:2px;
+      }
+      .desktop-stacked .float-hex { padding:5px 7px; font-size:24px; }
+      .desktop-stacked .float-note {
+        font-size:11px;
+        line-height:1.2;
+        text-align:center;
+        color:var(--text-muted);
+      }
+      .desktop-stacked .float-bin-row {
+        grid-template-columns:36px 82px minmax(0, 1fr);
+        gap:5px;
+      }
+      .desktop-stacked .float-bin-row .float-note {
+        grid-column:1 / -1;
+      }
+      .desktop-stacked .float-input {
+        min-width:0;
+        padding:5px 3px;
+        font-size:clamp(11px, 3.4vw, 16px);
+        letter-spacing:0;
+      }
+      .desktop-stacked .float-input.sign { font-size:16px; }
+      .desktop-stacked .float-label-row {
+        grid-template-columns:36px 82px minmax(0, 1fr);
+        gap:5px;
+        font-size:11px;
+      }
+      .desktop-stacked .float-label-row > :last-child { display:none; }
+      .desktop-stacked .float-dec-row {
+        grid-template-columns:minmax(0, 1fr);
+        gap:5px;
+      }
+      .desktop-stacked .float-expansion {
+        padding:2px 0;
+        font-size:13px;
+        line-height:1.35;
+        overflow-wrap:anywhere;
+      }
+      .desktop-stacked .float-dec { padding:6px 8px; font-size:20px; text-align:center; }
+      .desktop-stacked .float-instructions { padding:6px; line-height:1.3; }
+      .desktop-stacked .float-attach {
+        display:grid;
+        grid-template-columns:minmax(0, 1fr) auto;
+        gap:6px;
+      }
+      .desktop-stacked .float-attach select { min-width:86px; width:100%; }
+      .desktop-stacked .float-footer { gap:5px; overflow-x:auto; }
+      .desktop-stacked .float-footer .ctrl { display:none; }
+      .desktop-stacked .float-footer .tool-btn { min-width:max-content; flex:1 0 auto; }
     `;
     document.head.appendChild(style);
   }
@@ -85,13 +143,13 @@
         <div class="float-tool">
           <h2>32-bit IEEE 754 Floating Point Representation</h2>
           <div class="float-hex-row">
-            <input class="float-hex" maxlength="8" data-fr="hex" value="00000000">
+              <input class="float-hex" maxlength="8" data-fr="hex" inputmode="text" enterkeyhint="next" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" value="00000000">
             <div class="float-note">&lt; Hexadecimal representation</div>
           </div>
           <div class="float-bin-row">
-            <input class="float-input sign" maxlength="1" data-fr="sign" value="0">
-            <input class="float-input" maxlength="8" data-fr="exp" value="00000000">
-            <input class="float-input" maxlength="23" data-fr="frac" value="00000000000000000000000">
+                  <input class="float-input sign" maxlength="1" data-fr="sign" inputmode="numeric" enterkeyhint="next" autocomplete="off" value="0">
+                  <input class="float-input" maxlength="8" data-fr="exp" inputmode="numeric" enterkeyhint="next" autocomplete="off" value="00000000">
+                  <input class="float-input" maxlength="23" data-fr="frac" inputmode="numeric" enterkeyhint="next" autocomplete="off" value="00000000000000000000000">
             <div class="float-note">&lt; Binary representation</div>
           </div>
           <div class="float-label-row">
@@ -99,7 +157,7 @@
           </div>
           <div class="float-dec-row">
             <div class="float-expansion" data-fr="expansion">-1<sup>0</sup> * 2<sup>-127</sup> * .00000000000000000000000 =</div>
-            <input class="float-dec" data-fr="dec" value="0.0">
+              <input class="float-dec" data-fr="dec" inputmode="decimal" enterkeyhint="done" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" value="0.0">
           </div>
           <div class="float-instructions" data-fr="instructions">Modify any value then press Enter to update all values.</div>
           <div class="float-attach">

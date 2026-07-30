@@ -29,11 +29,12 @@ main:
         li   $v0, 4
         syscall
 
-        li   $a0, 17            # first argument
-        li   $a1, 42            # second argument
-        jal  maxof              # $ra = address of the next line
+        li   $a0, 17            # primeiro argumento
+        li   $a1, 42            # segundo argumento
+        # jal altera o fluxo de controlo e $ra numa única operação arquitetural.
+        jal  maxof              # $ra = endereço de retorno
 
-        move $a0, $v0           # result came back in $v0
+        move $a0, $v0           # o resultado regressou em $v0
         li   $v0, 1
         syscall
         li   $v0, 11
@@ -44,6 +45,7 @@ main:
 
 # ---- int maxof(int a, int b) ----
 maxof:
+        # maxof é uma função-folha, portanto pode regressar sem guardar $ra na pilha.
         slt  $t0, $a0, $a1
         beq  $t0, $zero, keepa
         move $v0, $a1

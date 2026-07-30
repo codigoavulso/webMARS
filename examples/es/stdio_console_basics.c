@@ -2,6 +2,7 @@
 
 int main(void) {
   // E/S basica de consola con wrappers de stdio.
+  // Los arrays de un elemento funcionan como parámetros de salida editables en C0.
   int number_box[1] = {0};
   int char_box[1] = {0};
 
@@ -14,11 +15,13 @@ int main(void) {
   print_char(10);
 
   printf("Escribe un caracter visible y pulsa Enter: ");
+  // scanf_char guarda el código del carácter en char_box[0].
   scanf_char(char_box);
   printf("Codigo del caracter: ");
   print_int(char_box[0]);
   print_char(10);
   printf("Eco con putchar: ");
+  // putchar interpreta el entero como un carácter ASCII.
   putchar(char_box[0]);
   print_char(10);
 

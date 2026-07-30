@@ -14,9 +14,11 @@ saved_badvaddr:.word 0
 
 .text
 main:
+  # Esta store desalinhada é deliberada: transfere o controlo para 0x80000180.
   li $t0, 0x12345678
   sw $t0, 1($zero)
 
+  # O handler altera EPC para que a execução retome precisamente nesta instrução.
   li $v0, 4
   la $a0, recovered
   syscall
@@ -53,6 +55,8 @@ main:
 
 .ktext 0x80000180
 exception_handler:
+  # No CP0, Cause=$13, EPC=$14 e BadVAddr=$8.
+  # $k0/$k1 são reservados ao kernel e não corrompem os registos do programa interrompido.
   mfc0 $k0, $13
   sw   $k0, saved_cause
   mfc0 $k0, $14
@@ -60,6 +64,7 @@ exception_handler:
   mfc0 $k1, $8
   sw   $k1, saved_badvaddr
 
+  # Ignorar a instrução de quatro bytes que causou a exceção antes de executar ERET.
   addiu $k0, $k0, 4
   mtc0  $k0, $14
   eret

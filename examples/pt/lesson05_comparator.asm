@@ -26,7 +26,9 @@ hi:     .asciiz "a is not smaller"
 main:
         li   $t0, 7             # a
         li   $t1, 12            # b
-        slt  $t2, $t0, $t1      # t2 = 1 if a < b
+        # slt materializa a comparação como um inteiro normal, sem flags ocultos.
+        slt  $t2, $t0, $t1      # t2 = 1 se a < b
+        # Saltar para notless apenas quando o resultado booleano for zero.
         beq  $t2, $zero, notless
 
         la   $a0, lo

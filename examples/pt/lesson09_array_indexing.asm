@@ -25,17 +25,19 @@ m1:     .asciiz "sum = "
         .text
         .globl main
 main:
-        la   $t0, arr           # base
+        la   $t0, arr           # endereço base
         li   $t1, 0             # i
-        li   $t2, 5             # length
-        li   $t3, 0             # accumulator
+        li   $t2, 5             # comprimento
+        li   $t3, 0             # acumulador
 
 sum:
+        # Invariante: $t3 contém a soma desde arr[0] até arr[i-1].
         slt  $t4, $t1, $t2
         beq  $t4, $zero, ends
 
         sll  $t5, $t1, 2        # i * 4 bytes
-        add  $t6, $t0, $t5      # base + scaled index
+        add  $t6, $t0, $t5      # base + índice escalado
+        # $t6 identifica agora um elemento exato; lw carrega o seu valor de 32 bits.
         lw   $t7, 0($t6)
         add  $t3, $t3, $t7
 

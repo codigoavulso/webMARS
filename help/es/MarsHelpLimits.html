@@ -15,10 +15,11 @@
     <tr><th>Área</th><th>Límite o comportamiento</th></tr>
     <tr><td>Memoria</td><td>0,25–2 GiB seleccionables, con techo arquitectónico por debajo de <code>0x80000000</code>. La asignación dispersa evita reservar cada byte sin usar.</td></tr>
     <tr><td>Heap</td><td><code>sbrk</code> valida la reserva completa antes de mover el puntero y no puede desbordar el límite.</td></tr>
-    <tr><td>Paso atrás</td><td>0–1.000.000 instantáneas; valores altos pueden consumir mucha memoria.</td></tr>
+    <tr><td>Cadenas del runtime</td><td>Las cadenas terminadas en null pueden contener hasta 1 MiB. Si falta el terminador o la cadena es mayor, se genera un error explícito de syscall en lugar de devolver texto truncado.</td></tr>
+    <tr><td>Paso atrás</td><td>0–1.000.000 deltas inversos. El historial queda limitado por el presupuesto configurado y conserva siempre los últimos 100 pasos completos cuando el paso atrás está activo.</td></tr>
     <tr><td>Almacenamiento del navegador</td><td>Sujeto a cuota. La aplicación limita a 1 MiB determinadas cargas guardadas y usa recuperaciones más pequeñas cuando es necesario.</td></tr>
     <tr><td>Temporización</td><td>Sleep, MIDI y la interfaz usan el planificador del navegador y no son exactos por ciclo.</td></tr>
-    <tr><td>Distribución</td><td>webMARS 0.4.13 es una aplicación web estática, no una PWA instalable u offline. Debe servirse por HTTP con el servidor local incluido u otro host estático.</td></tr>
+    <tr><td>Distribución</td><td>webMARS 0.5.0 es una aplicación web estática, no una PWA instalable u offline. Debe servirse por HTTP con el servidor local incluido u otro host estático.</td></tr>
   </table>
 
   <h2>Mapas de memoria</h2>

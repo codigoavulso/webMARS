@@ -8,7 +8,18 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.4.13 rebuilds the mobile layout around one panel at a time and localizes every assembler and compiler diagnostic.</p>
+  <p class="lead">Release 0.5.0 hardens the MIPS runtime, replaces full snapshots with compact backstep deltas, and completes the mobile and tool workflows.</p>
+
+  <h2>0.5.0 &mdash; mature runtime, delta backstep, mobile workflows</h2>
+  <ul>
+    <li>Corrected high-impact runtime behavior across memory limits, atomic stores, COP1 doubles and rounding, delayed branches, exceptions, LL/SC reservations and breakpoints.</li>
+    <li>Replaced full per-instruction snapshots with bounded inverse deltas while retaining an exact backstep window and synchronized tool state.</li>
+    <li>Reduced execution overhead through compact runtime event batches, coalesced tool rendering and lighter UI synchronization.</li>
+    <li>Added dynamic Bitmap MMIO configuration and updated the Bitmap examples and libraries to use it while remaining compatible with MARS 4.5.</li>
+    <li>Expanded the TTY examples with a practical MIPS shell and improved the Assembly and Mini-C lesson catalog in all three languages.</li>
+    <li>Integrated tools, dialogs, Cloud and Settings into the mobile window system, including Android keyboard-aware sizing, semantic virtual keyboards and contained scrolling.</li>
+    <li>Added comprehensive runtime, tool, example, documentation, mobile UI and release regression coverage.</li>
+  </ul>
 
   <h2>0.4.13 &mdash; mobile single-panel layout, localized diagnostics</h2>
   <ul>

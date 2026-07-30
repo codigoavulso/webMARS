@@ -1,4 +1,4 @@
-# webMARS v0.4.13
+# webMARS v0.5.0
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,15 +22,15 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.4.13
+## Highlights in v0.5.0
 
-- Rebuilt the mobile layout around one full-screen panel at a time, selected from a new icon tab bar; the page no longer scrolls and the execution controls stay on screen while stepping.
-- Mobile toolbar is icon-only in two compact rows, keeping the run controls and the speed picker visible; the file actions are hidden there since they live in the File and Edit menus.
-- Localized every assembler and Mini-C compiler diagnostic, converting 114 template literals into named placeholders so the messages can carry a catalog key.
-- Added 277 translation keys across `en`, `pt` and `es`, covering runtime messages, parser, semantic, type-checking, contract and code-generation diagnostics.
-- Added a release test that fails when any translatable message lacks a catalog entry in all three languages.
-
-Desktop layout, window positions and control sizes are unchanged.
+- Hardened the JavaScript MIPS runtime across memory limits, atomic stores, COP1 doubles and rounding, delayed branches, exceptions, LL/SC reservations, breakpoints and state roundtrips.
+- Replaced full per-instruction snapshots with bounded inverse deltas while preserving an exact backstep window and tool state.
+- Reduced runtime-to-tool and runtime-to-UI work through compact event batches, coalesced rendering and lighter benchmark instrumentation.
+- Added dynamic Bitmap MMIO configuration, richer TTY workflows and improved mobile layouts for the visual tools.
+- Reworked mobile window navigation, dialogs, virtual-keyboard handling and contained scrolling for short viewports, landscape and Android keyboards.
+- Expanded and localized the Assembly and Mini-C examples, lessons and in-app documentation in English, Portuguese and Spanish.
+- Added broad regression coverage for the runtime, examples, tools, mobile interface, documentation and release metadata.
 
 ## Main Capabilities
 
@@ -136,6 +136,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.5.0`: hardened JavaScript runtime, inverse-delta backstep, batched tools, dynamic Bitmap MMIO, expanded examples/documentation, and complete mobile workflows
 - `v0.4.13`: mobile single-panel layout with icon tabs, icon-only mobile toolbar, and fully localized assembler and Mini-C diagnostics
 - `v0.4.12`: dark theme, immediate font-size apply, dead-code cleanup (autosave pipeline, ~15 functions, dead CSS, 113 i18n keys), closeAllFiles wired to menu
 - `v0.4.11`: persistent cloud login restoration across refreshes and browser restarts, with updated privacy documentation and regression coverage

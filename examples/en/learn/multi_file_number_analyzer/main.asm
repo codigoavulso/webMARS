@@ -11,6 +11,7 @@
 # 4. Repeat
 
 .data
+# This module owns user-facing strings; helper modules own their private data/code.
 title:         .asciiz "\n=== Multi-file number analyzer ===\n"
 hint:          .asciiz "This example uses 3 separate files assembled together.\n"
 prompt:        .asciiz "Enter a number [1..100] (0 to exit): "
@@ -33,6 +34,7 @@ main:
   syscall
 
 input_loop:
+  # Syscall 5 returns the entered integer in $v0.
   li $v0, 4
   la $a0, prompt
   syscall
@@ -44,6 +46,7 @@ input_loop:
   beq $s0, $zero, exit_program
   nop
 
+  # Validate the lower and upper bounds with signed comparisons.
   slti $t0, $s0, 1
   bne $t0, $zero, invalid_input
   nop
@@ -57,6 +60,7 @@ input_loop:
   syscall
 
   li $v0, 1
+  # o32 call convention: argument in $a0, result pointer in $v0.
   move $a0, $s0
   syscall
 
@@ -64,6 +68,7 @@ input_loop:
   la $a0, parity_prefix
   syscall
 
+  # The second module returns a boolean in $v0.
   move $a0, $s0
   jal get_parity_message
   nop
@@ -108,5 +113,6 @@ exit_program:
   li $v0, 10
   syscall
 
+# Includes are resolved from the project files during assembly.
 .include "learn/multi_file_number_analyzer/parity.asm"
 .include "learn/multi_file_number_analyzer/prime.asm"

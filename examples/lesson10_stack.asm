@@ -29,6 +29,7 @@ main:
         li   $t0, 7
         li   $t1, 9
 
+        # The stack grows downward, so allocation subtracts from $sp.
         addi $sp, $sp, -8       # reserve two words
         sw   $t0, 0($sp)        # push
         sw   $t1, 4($sp)
@@ -38,6 +39,7 @@ main:
 
         lw   $t0, 0($sp)        # pop
         lw   $t1, 4($sp)
+        # Every allocation must be balanced so the caller sees its original $sp.
         addi $sp, $sp, 8        # release
 
         la   $a0, m1

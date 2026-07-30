@@ -25,11 +25,13 @@
         .text
         .globl main
 main:
-        add  $t0, $t1, $t2      # R-type: opcode, rs, rt, rd, funct
-        add  $t3, $t4, $t5      # same shape, different registers
-        addi $t0, $t1, 100      # I-type: the constant is in the word
-        sll  $t0, $t1, 4        # shift amount has its own field
-        j    tail               # J-type: an address, not a register
+        # Depois de montar, observe Code: estes mnemónicos não são guardados como texto.
+        add  $t0, $t1, $t2      # tipo R: opcode, rs, rt, rd, funct
+        add  $t3, $t4, $t5      # mesmo formato, outros registos
+        addi $t0, $t1, 100      # tipo I: a constante está na word
+        sll  $t0, $t1, 4        # o deslocamento tem o seu próprio campo
+        j    tail               # tipo J: um endereço, não um registo
 tail:
+        # li também é expandido antes da execução; o processador só vê words codificadas.
         li   $v0, 10
         syscall

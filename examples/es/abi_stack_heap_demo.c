@@ -5,6 +5,7 @@
 // - valor de retorno en $v0
 
 int sum5(int a, int b, int c, int d, int e) {
+  // Los cuatro primeros argumentos usan $a0-$a3; el quinto se lee de la pila.
   int total = a + b;
   total = total + c;
   total = total + d;
@@ -15,6 +16,7 @@ int sum5(int a, int b, int c, int d, int e) {
 int write_and_double(int* slot, int x, int y) {
   // Escritura por puntero en memoria del heap.
   *slot = x + y;
+  // Desreferenciar vuelve a leer el valor desde la memoria MIPS simulada.
   return *slot * 2;
 }
 
@@ -22,6 +24,7 @@ int main(void) {
   int local = 7;                // variable local en pila
   int* heap_value = alloc(int); // heap (syscall sbrk)
 
+  // El puntero sigue válido tras volver de la función porque apunta al heap.
   int doubled = write_and_double(heap_value, local, 5);
   int combined = sum5(local, 2, 3, 4, *heap_value); // el 5o argumento pasa por pila
 

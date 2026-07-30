@@ -29,6 +29,42 @@
       .bht-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:auto; }
       .bht-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .bht-footer .tool-btn { min-width:130px; }
+
+      /* In the app's stacked/mobile mode the inputs form a compact header and
+         the complete predictor table gets the full width below it. */
+      .desktop-stacked .bht-tool { gap:6px; padding:6px; }
+      .desktop-stacked .bht-tool h2 { font-size:22px; line-height:1.1; }
+      .desktop-stacked .bht-row {
+        align-items:stretch;
+        gap:5px;
+        overflow-x:auto;
+        padding-bottom:2px;
+      }
+      .desktop-stacked .bht-row label {
+        flex:1 0 112px;
+        flex-direction:column;
+        align-items:stretch;
+        gap:2px;
+        font-size:11px;
+      }
+      .desktop-stacked .bht-row select { width:100%; min-width:0; }
+      .desktop-stacked .bht-main {
+        grid-template-columns:minmax(0, 1fr);
+        grid-template-rows:auto minmax(150px, 1fr);
+        gap:6px;
+      }
+      .desktop-stacked .bht-info {
+        display:grid;
+        grid-template-columns:auto minmax(0, 1fr);
+        gap:4px 7px;
+        align-items:center;
+      }
+      .desktop-stacked .bht-info input { min-width:0; }
+      .desktop-stacked .bht-table-wrap { width:100%; }
+      .desktop-stacked .bht-log-wrap { min-height:84px; }
+      .desktop-stacked .bht-footer { gap:5px; overflow-x:auto; }
+      .desktop-stacked .bht-footer .ctrl { display:none; }
+      .desktop-stacked .bht-footer .tool-btn { min-width:max-content; flex:1 0 auto; }
     `;
     document.head.appendChild(style);
   }

@@ -1,4 +1,6 @@
 # Demo de utilidades de cadenas: strlen + strcpy (manual)
+# Ambas rutinas avanzan byte a byte hasta encontrar el terminador cero.
+# Son funciones leaf y no necesitan guardar $ra en la pila.
 
 .data
 src: .asciiz "MIPS assembly for webMARS"
@@ -8,6 +10,7 @@ msg1: .asciiz "\nCopied text: "
 
 .text
 main:
+  # jal guarda el retorno en $ra; argumentos/resultados siguen la ABI o32.
   la   $a0, src
   jal  my_strlen
   move $s0, $v0
@@ -44,6 +47,7 @@ my_strlen:
   move $t0, $a0
   li   $v0, 0
 len_loop:
+  # lbu evita extensión de signo al cargar un carácter individual.
   lbu  $t1, 0($t0)
   beq  $t1, $zero, len_end
   addiu $v0, $v0, 1
@@ -57,6 +61,7 @@ my_strcpy:
   move $t0, $a0
   move $t1, $a1
 cpy_loop:
+  # Copiar antes de comprobar permite copiar también el cero terminador.
   lbu  $t2, 0($t1)
   sb   $t2, 0($t0)
   beq  $t2, $zero, cpy_end

@@ -1,4 +1,6 @@
 # String utilities demo: strlen + strcpy (manual)
+# Both routines walk byte-by-byte until the zero terminator.
+# They are leaf functions, so they do not need to save $ra on the stack.
 
 .data
 src: .asciiz "MIPS assembly for webMARS"
@@ -8,6 +10,7 @@ msg1: .asciiz "\nCopied text: "
 
 .text
 main:
+  # jal stores the return address in $ra; arguments/results follow o32 registers.
   la   $a0, src
   jal  my_strlen
   move $s0, $v0
@@ -44,6 +47,7 @@ my_strlen:
   move $t0, $a0
   li   $v0, 0
 len_loop:
+  # lbu avoids sign extension when loading an individual character.
   lbu  $t1, 0($t0)
   beq  $t1, $zero, len_end
   addiu $v0, $v0, 1
@@ -57,6 +61,7 @@ my_strcpy:
   move $t0, $a0
   move $t1, $a1
 cpy_loop:
+  # Copy first, then test: this also copies the terminating zero byte.
   lbu  $t2, 0($t1)
   sb   $t2, 0($t0)
   beq  $t2, $zero, cpy_end

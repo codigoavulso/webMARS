@@ -28,6 +28,7 @@ sp:     .asciiz " "
 main:
         la   $t0, cell          # base address
 
+        # Every offset below is relative to $t0 and remains word-aligned.
         li   $t1, 111
         sw   $t1, 0($t0)        # first word
         li   $t1, 222
@@ -39,6 +40,7 @@ main:
         li   $v0, 4
         syscall
 
+        # lw reconstructs the same 32-bit values previously written by sw.
         lw   $a0, 0($t0)
         li   $v0, 1
         syscall

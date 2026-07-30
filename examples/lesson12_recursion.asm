@@ -43,6 +43,7 @@ main:
 
 # ---- int fact(int n) ----
 fact:
+        # Each invocation owns a distinct eight-byte frame.
         addi $sp, $sp, -8
         sw   $ra, 0($sp)        # this call's return address
         sw   $a0, 4($sp)        # this call's n
@@ -60,6 +61,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
+        # Restore callee state and discard exactly the frame allocated on entry.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

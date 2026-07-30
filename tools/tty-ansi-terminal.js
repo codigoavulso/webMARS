@@ -73,6 +73,7 @@
         flex: 1 1 auto;
         min-height: 0;
         overflow: auto;
+        position: relative;
         border: 1px solid #7f9db9;
         background: linear-gradient(180deg, #0f1622 0%, #080d15 100%);
         padding: 12px;
@@ -87,6 +88,29 @@
         outline: none;
         box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 12px 28px rgba(0,0,0,0.35);
         background: #000;
+      }
+
+      /* A canvas can receive a physical keyboard but cannot summon a mobile
+         virtual keyboard. Keep a genuine editable control inside the viewport
+         and move focus to it when the user touches the terminal. */
+      .tty-ansi-keyboard-input {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        z-index: 1;
+        width: 2px;
+        height: 2px;
+        min-height: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        opacity: 0.01;
+        overflow: hidden;
+        resize: none;
+        background: transparent;
+        color: transparent;
+        caret-color: transparent;
+        font-size: 16px;
       }
 
       .tty-ansi-status {
@@ -333,6 +357,17 @@
             <section class="mars-tool-panel tty-ansi-stage">
               <div class="mars-tool-panel-body tty-ansi-viewport">
                 <canvas class="tty-ansi-canvas" data-tty="canvas" tabindex="0" aria-label="TTY terminal"></canvas>
+                <textarea
+                  class="tty-ansi-keyboard-input"
+                  data-tty="keyboard-input"
+                  aria-label="TTY terminal input"
+                  inputmode="text"
+                  enterkeyhint="enter"
+                  autocomplete="off"
+                  autocapitalize="off"
+                  autocorrect="off"
+                  spellcheck="false"
+                ></textarea>
               </div>
             </section>
           </div>
@@ -350,6 +385,7 @@
 
       const root = shell.root;
       const canvas = root.querySelector("[data-tty='canvas']");
+      const keyboardInput = root.querySelector("[data-tty='keyboard-input']");
       const fontSizeSelect = root.querySelector("[data-tty='fontsize']");
       const encodingSelect = root.querySelector("[data-tty='encoding']");
       const localEchoToggle = root.querySelector("[data-tty='localecho']");
@@ -1280,6 +1316,7 @@
 
       function handleKeydown(event) {
         if (!connected) return;
+        if (event.isComposing) return;
         if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
           const bytes = [event.key.charCodeAt(0) & 0xff];
           queueInputBytes(bytes);
@@ -1334,16 +1371,76 @@
         }
       }
 
+      function queueKeyboardText(value) {
+        if (!connected) return;
+        const text = String(value || "");
+        if (!text) return;
+        const bytes = [];
+        for (let index = 0; index < text.length; index += 1) {
+          const code = text.charCodeAt(index);
+          if (code === 13 || code === 10) {
+            if (code === 13 && text.charCodeAt(index + 1) === 10) index += 1;
+            bytes.push(...(crlfTranslationEnabled ? [13, 10] : [13]));
+          } else {
+            bytes.push(code & 0xff);
+          }
+        }
+        queueInputBytes(bytes);
+        echoInputBytes(bytes);
+      }
+
+      function focusTerminalInput() {
+        if (!connected || !(keyboardInput instanceof HTMLElement)) {
+          canvas.focus();
+          return;
+        }
+        keyboardInput.value = "";
+        keyboardInput.focus({ preventScroll: true });
+      }
+
+      let keyboardCompositionActive = false;
       canvas.addEventListener("keydown", handleKeydown);
-      canvas.addEventListener("focus", () => {
+      keyboardInput?.addEventListener("keydown", handleKeydown);
+      keyboardInput?.addEventListener("beforeinput", (event) => {
+        if (!connected || event.inputType !== "deleteContentBackward") return;
+        if (keyboardInput.value) return;
+        queueInputBytes([8]);
+        echoInputBytes([8]);
+        event.preventDefault();
+      });
+      keyboardInput?.addEventListener("compositionstart", () => {
+        keyboardCompositionActive = true;
+      });
+      keyboardInput?.addEventListener("compositionend", (event) => {
+        keyboardCompositionActive = false;
+        const value = keyboardInput.value || event.data || "";
+        keyboardInput.value = "";
+        queueKeyboardText(value);
+      });
+      keyboardInput?.addEventListener("input", () => {
+        if (keyboardCompositionActive) return;
+        const value = keyboardInput.value;
+        keyboardInput.value = "";
+        queueKeyboardText(value);
+      });
+
+      const showTerminalFocus = () => {
         focusVisible = true;
         dirtyAll = true;
         scheduleRender();
-      });
-      canvas.addEventListener("blur", () => {
+      };
+      const hideTerminalFocus = () => {
         focusVisible = false;
         dirtyAll = true;
         scheduleRender();
+      };
+      canvas.addEventListener("focus", showTerminalFocus);
+      canvas.addEventListener("blur", hideTerminalFocus);
+      keyboardInput?.addEventListener("focus", showTerminalFocus);
+      keyboardInput?.addEventListener("blur", hideTerminalFocus);
+      canvas.addEventListener("pointerdown", (event) => {
+        focusTerminalInput();
+        if (connected) event.preventDefault();
       });
 
       fontSizeSelect.addEventListener("change", updateMetrics);
@@ -1371,7 +1468,7 @@
           startSyncTimer();
           feedReceiverFromQueue();
           history.sync(lastSnapshot);
-          canvas.focus();
+          focusTerminalInput();
           ctx.messagesPane.postMars(`${t("[tool] TTY ANSI Terminal connected to keyboard/display MMIO {address}.", {
             address: toHex32(mmioBase())
           })}\n`);
@@ -1385,7 +1482,7 @@
 
       resetButton.addEventListener("click", () => {
         resetDevice();
-        canvas.focus();
+        focusTerminalInput();
       });
 
       helpButton.addEventListener("click", () => {

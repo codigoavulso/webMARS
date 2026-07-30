@@ -112,6 +112,7 @@ const EXAMPLE_FILES = [
 ];
 
 const SYSCALL_MAX_FILES = 32;
+const RUNTIME_STRING_SCAN_HARD_LIMIT = 1024 * 1024;
 const STDIN_FD = 0;
 const STDOUT_FD = 1;
 const STDERR_FD = 2;
@@ -166,6 +167,30 @@ const WEBMARS_CUSTOM_SYSCALLS = Object.freeze({
   cstrFromString: 102,
   stringFromCstr: 103
 });
+const BITMAP_MMIO_PROTOCOL = Object.freeze({
+  magic: 0x57424d50,
+  version: 1,
+  targetDisplay: 1,
+  targetTerminal: 2,
+  targetBoth: 3,
+  commandApply: 1,
+  commandClear: 2,
+  offsets: Object.freeze({
+    signature: 0x20,
+    version: 0x24,
+    target: 0x28,
+    displayWidth: 0x2c,
+    displayHeight: 0x30,
+    unitWidth: 0x34,
+    unitHeight: 0x38,
+    framebuffer: 0x3c,
+    command: 0x40
+  }),
+  maxDisplayDimension: 2048,
+  maxUnitDimension: 256,
+  maxFramebufferPixels: 1024 * 1024
+});
+globalThis.WebMarsBitmapMmio = BITMAP_MMIO_PROTOCOL;
 const MIDI_DEFAULTS = Object.freeze({
   pitch: 60,
   duration: 1000,
@@ -335,6 +360,7 @@ const SYSCALL_STRING_HARD_LIMIT_CHARACTERS = 1024 * 1024;
 const SYSCALL_ARRAY_HARD_LIMIT_ELEMENTS = 1024 * 1024;
 const SYSCALL_IMAGE_HARD_LIMIT_PIXELS = 1024 * 1024;
 const SYSCALL_IMAGE_HARD_LIMIT_DIMENSION = 32768;
+const DATA_DIRECTIVE_REPETITION_HARD_LIMIT = 1024 * 1024;
 const UINT32_WRAP = 0x1_0000_0000n;
 const JAVA_RANDOM_MULTIPLIER = 0x5deece66dn;
 const JAVA_RANDOM_ADDEND = 0xbn;
@@ -379,6 +405,109 @@ function compactAddressSpaceEnd(mmioBase) {
   let end = 1;
   while (end <= base && end < 0x1_0000_0000) end *= 2;
   return end;
+}
+
+function getBitmapMmioAddresses(memoryMap = DEFAULT_MEMORY_MAP) {
+  const mmioBase = (memoryMap?.mmioBase ?? DEFAULT_MEMORY_MAP.mmioBase) >>> 0;
+  const addresses = { mmioBase };
+  Object.entries(BITMAP_MMIO_PROTOCOL.offsets).forEach(([name, offset]) => {
+    addresses[name] = (mmioBase + offset) >>> 0;
+  });
+  return addresses;
+}
+
+function cloneBitmapMmioConfig(config) {
+  if (!config || typeof config !== "object") return null;
+  return {
+    protocolVersion: Number(config.protocolVersion) | 0,
+    target: Number(config.target) | 0,
+    displayWidth: Number(config.displayWidth) | 0,
+    displayHeight: Number(config.displayHeight) | 0,
+    unitWidth: Number(config.unitWidth) | 0,
+    unitHeight: Number(config.unitHeight) | 0,
+    baseAddress: Number(config.baseAddress) >>> 0,
+    controlAddress: Number(config.controlAddress) >>> 0
+  };
+}
+
+function bitmapMmioConfigsEqual(left, right) {
+  if (left === right) return true;
+  if (!left || !right) return false;
+  return (
+    (left.protocolVersion | 0) === (right.protocolVersion | 0)
+    && (left.target | 0) === (right.target | 0)
+    && (left.displayWidth | 0) === (right.displayWidth | 0)
+    && (left.displayHeight | 0) === (right.displayHeight | 0)
+    && (left.unitWidth | 0) === (right.unitWidth | 0)
+    && (left.unitHeight | 0) === (right.unitHeight | 0)
+    && (left.baseAddress >>> 0) === (right.baseAddress >>> 0)
+    && (left.controlAddress >>> 0) === (right.controlAddress >>> 0)
+  );
+}
+
+function normalizeBitmapMmioConfig(config, memoryMap = DEFAULT_MEMORY_MAP) {
+  if (!config || typeof config !== "object") return null;
+  const addresses = getBitmapMmioAddresses(memoryMap);
+  const target = Number(config.target);
+  const displayWidth = Number(config.displayWidth);
+  const displayHeight = Number(config.displayHeight);
+  const unitWidth = Number(config.unitWidth);
+  const unitHeight = Number(config.unitHeight);
+  const baseAddress = Number(config.baseAddress) >>> 0;
+  const protocolVersion = Number(config.protocolVersion);
+
+  if (protocolVersion !== BITMAP_MMIO_PROTOCOL.version) return null;
+  if (![BITMAP_MMIO_PROTOCOL.targetDisplay, BITMAP_MMIO_PROTOCOL.targetTerminal, BITMAP_MMIO_PROTOCOL.targetBoth].includes(target)) {
+    return null;
+  }
+  if (
+    !Number.isSafeInteger(displayWidth)
+    || !Number.isSafeInteger(displayHeight)
+    || displayWidth < 1
+    || displayHeight < 1
+    || displayWidth > BITMAP_MMIO_PROTOCOL.maxDisplayDimension
+    || displayHeight > BITMAP_MMIO_PROTOCOL.maxDisplayDimension
+  ) return null;
+  if (
+    !Number.isSafeInteger(unitWidth)
+    || !Number.isSafeInteger(unitHeight)
+    || unitWidth < 1
+    || unitHeight < 1
+    || unitWidth > BITMAP_MMIO_PROTOCOL.maxUnitDimension
+    || unitHeight > BITMAP_MMIO_PROTOCOL.maxUnitDimension
+    || unitWidth > displayWidth
+    || unitHeight > displayHeight
+    || displayWidth % unitWidth !== 0
+    || displayHeight % unitHeight !== 0
+  ) return null;
+  if ((baseAddress & 0x3) !== 0) return null;
+
+  const columns = displayWidth / unitWidth;
+  const rows = displayHeight / unitHeight;
+  const pixelCount = columns * rows;
+  const framebufferBytes = pixelCount * 4;
+  const framebufferEnd = baseAddress + framebufferBytes;
+  const controlStart = addresses.signature;
+  const controlEnd = addresses.command + 4;
+  if (
+    !Number.isSafeInteger(pixelCount)
+    || pixelCount < 1
+    || pixelCount > BITMAP_MMIO_PROTOCOL.maxFramebufferPixels
+    || !Number.isSafeInteger(framebufferEnd)
+    || framebufferEnd > 0x1_0000_0000
+    || (baseAddress < controlEnd && controlStart < framebufferEnd)
+  ) return null;
+
+  return {
+    protocolVersion: BITMAP_MMIO_PROTOCOL.version,
+    target,
+    displayWidth,
+    displayHeight,
+    unitWidth,
+    unitHeight,
+    baseAddress,
+    controlAddress: addresses.signature
+  };
 }
 
 function buildStrictMemoryRanges(memoryMap = DEFAULT_MEMORY_MAP) {
@@ -2240,6 +2369,59 @@ class MarsEngine {
     return map;
   }
 
+  createByteArrayUndo(previousValue, nextValue) {
+    if (previousValue == null) return { existed: false };
+    const previous = previousValue instanceof Uint8Array
+      ? previousValue
+      : cloneByteArray(previousValue);
+    const next = nextValue == null
+      ? new Uint8Array(0)
+      : (nextValue instanceof Uint8Array ? nextValue : cloneByteArray(nextValue));
+    const sharedLength = Math.min(previous.length, next.length);
+    let start = 0;
+    while (start < sharedLength && previous[start] === next[start]) start += 1;
+    let suffixLength = 0;
+    while (
+      suffixLength < (sharedLength - start)
+      && previous[previous.length - 1 - suffixLength] === next[next.length - 1 - suffixLength]
+    ) {
+      suffixLength += 1;
+    }
+    const previousEnd = previous.length - suffixLength;
+    return {
+      existed: true,
+      oldLength: previous.length,
+      nextLength: next.length,
+      start,
+      suffixLength,
+      oldBytes: previous.slice(start, previousEnd)
+    };
+  }
+
+  applyByteArrayUndo(currentValue, undo) {
+    if (!undo || undo.existed !== true) return null;
+    const current = currentValue == null ? new Uint8Array(0) : cloneByteArray(currentValue);
+    const oldLength = Math.max(0, Number(undo.oldLength) | 0);
+    const nextLength = Math.max(0, Number(undo.nextLength) | 0);
+    const start = Math.max(0, Math.min(oldLength, Number(undo.start) | 0));
+    const suffixLength = Math.max(0, Math.min(
+      oldLength - start,
+      nextLength,
+      Number(undo.suffixLength) | 0
+    ));
+    const output = new Uint8Array(oldLength);
+    if (start > 0) output.set(current.slice(0, start), 0);
+    const oldBytes = cloneByteArray(undo.oldBytes);
+    if (oldBytes.length) output.set(oldBytes.slice(0, oldLength - start), start);
+    if (suffixLength > 0) {
+      output.set(
+        current.slice(Math.max(0, nextLength - suffixLength), nextLength),
+        oldLength - suffixLength
+      );
+    }
+    return output;
+  }
+
   reserveHeapBytes(byteCount = 0, alignment = 4) {
     const requestedSize = Number(byteCount);
     const requestedAlignment = Number(alignment);
@@ -2325,8 +2507,8 @@ class MarsEngine {
 
   createImageHandle(width, height, dataAddress, path = "") {
     const dimensions = this.getBoundedImageDimensions(width, height, "image");
-    this.markImageHandlesDirty();
     const handle = (0x60000000 + (this.nextImageHandleId | 0)) | 0;
+    this.markImageHandlesDirty(handle);
     this.nextImageHandleId = (this.nextImageHandleId + 1) | 0;
     this.imageHandles.set(handle, {
       id: handle,
@@ -2440,7 +2622,7 @@ class MarsEngine {
     } catch {
       return false;
     }
-    this.markVirtualFileSystemDirty();
+    this.markVirtualFileSystemDirty(key, payload);
     this.virtualFileSystem.set(key, payload);
     return this.persistVirtualFileSystemToStorage();
   }
@@ -2485,14 +2667,17 @@ class MarsEngine {
     this.executionHistory = new BackstepJournalBuffer();
     this.executionHistoryBytes = 0;
     this.activeHistoryJournal = null;
+    this.activeSyscallJournal = null;
     this.activeRuntimeMemoryAccesses = null;
 
     this.heapPointer = this.memoryMap.heapBase >>> 0;
     this.randomStreams = new Map();
     this.delayedBranchTarget = null;
+    this.delayedBranchAddress = null;
     this.llReservationAddress = null;
     this.breakpointResumeAddress = null;
     this.lastMemoryWriteAddress = null;
+    this.bitmapMmioConfig = null;
 
     this.openFiles = this.createStdioOpenFileTable();
     this.virtualFileSystem = this.cloneVirtualFileSystemMap(this.persistentVirtualFileSystem);
@@ -2510,6 +2695,52 @@ class MarsEngine {
       warnings: [],
       errors: []
     };
+  }
+
+  getBitmapMmioAddresses() {
+    return { ...getBitmapMmioAddresses(this.memoryMap) };
+  }
+
+  getBitmapMmioConfig() {
+    return cloneBitmapMmioConfig(this.bitmapMmioConfig);
+  }
+
+  readRawWord(address) {
+    const addr = address >>> 0;
+    return (
+      this.memoryWords.get(addr)
+      ?? composeWord(
+        this.getByte(addr),
+        this.getByte((addr + 1) >>> 0),
+        this.getByte((addr + 2) >>> 0),
+        this.getByte((addr + 3) >>> 0)
+      )
+    ) >>> 0;
+  }
+
+  handleBitmapMmioCommandWrite(address, value) {
+    const addresses = getBitmapMmioAddresses(this.memoryMap);
+    if ((address >>> 0) !== addresses.command) return;
+
+    const command = value >>> 0;
+    if (command === BITMAP_MMIO_PROTOCOL.commandClear) {
+      this.bitmapMmioConfig = null;
+      return;
+    }
+    if (command !== BITMAP_MMIO_PROTOCOL.commandApply) return;
+    if (this.readRawWord(addresses.signature) !== BITMAP_MMIO_PROTOCOL.magic) return;
+    if (this.readRawWord(addresses.version) !== BITMAP_MMIO_PROTOCOL.version) return;
+
+    const config = normalizeBitmapMmioConfig({
+      protocolVersion: this.readRawWord(addresses.version),
+      target: this.readRawWord(addresses.target),
+      displayWidth: this.readRawWord(addresses.displayWidth),
+      displayHeight: this.readRawWord(addresses.displayHeight),
+      unitWidth: this.readRawWord(addresses.unitWidth),
+      unitHeight: this.readRawWord(addresses.unitHeight),
+      baseAddress: this.readRawWord(addresses.framebuffer)
+    }, this.memoryMap);
+    if (config) this.bitmapMmioConfig = config;
   }
 
   applyUndoPairs(target, pairs) {
@@ -2576,8 +2807,16 @@ class MarsEngine {
     };
   }
 
-  recordIndexedUndo(key, target, index) {
-    const journal = this.activeHistoryJournal;
+  getActiveUndoJournals() {
+    const journals = [];
+    if (this.activeHistoryJournal) journals.push(this.activeHistoryJournal);
+    if (this.activeSyscallJournal && this.activeSyscallJournal !== this.activeHistoryJournal) {
+      journals.push(this.activeSyscallJournal);
+    }
+    return journals;
+  }
+
+  recordIndexedUndoForJournal(journal, key, target, index) {
     const normalizedIndex = index | 0;
     if (!journal || !target || normalizedIndex < 0 || normalizedIndex >= target.length) return;
     let pairs = journal[key];
@@ -2592,6 +2831,12 @@ class MarsEngine {
     }
     pairs.push(normalizedIndex, target[normalizedIndex] | 0);
     journal.estimatedBytes += 16;
+  }
+
+  recordIndexedUndo(key, target, index) {
+    this.getActiveUndoJournals().forEach((journal) => {
+      this.recordIndexedUndoForJournal(journal, key, target, index);
+    });
   }
 
   setRegisterValue(index, value) {
@@ -2645,6 +2890,7 @@ class MarsEngine {
       heapPointer: this.heapPointer >>> 0,
       reservedHeapMappedBytes: this.reservedHeapMappedBytes,
       delayedBranchTarget: this.delayedBranchTarget == null ? null : (this.delayedBranchTarget >>> 0),
+      delayedBranchAddress: this.delayedBranchAddress == null ? null : (this.delayedBranchAddress >>> 0),
       llReservationAddress: this.llReservationAddress == null ? null : (this.llReservationAddress >>> 0),
       lastMemoryWriteAddress: this.lastMemoryWriteAddress == null ? null : (this.lastMemoryWriteAddress >>> 0),
       memoryChanges: null,
@@ -2655,7 +2901,8 @@ class MarsEngine {
       argsRegistry: null,
       imageHandles: null,
       nextImageHandleId: this.nextImageHandleId | 0,
-      estimatedBytes: 112
+      bitmapMmioConfig: cloneBitmapMmioConfig(this.bitmapMmioConfig),
+      estimatedBytes: 128
     };
   }
 
@@ -2689,6 +2936,7 @@ class MarsEngine {
       journal.hm = Number(state.reservedHeapMappedBytes);
     }
     if (state.delayedBranchTarget !== this.delayedBranchTarget) journal.db = state.delayedBranchTarget;
+    if (state.delayedBranchAddress !== this.delayedBranchAddress) journal.da = state.delayedBranchAddress;
     if (state.llReservationAddress !== this.llReservationAddress) journal.ll = state.llReservationAddress;
     if (state.lastMemoryWriteAddress !== this.lastMemoryWriteAddress) journal.mw = state.lastMemoryWriteAddress;
     if (state.stdinClosed !== this.stdinClosed) journal.si = state.stdinClosed === true;
@@ -2696,8 +2944,12 @@ class MarsEngine {
     if (state.openFiles instanceof Map) journal.of = state.openFiles;
     if (state.virtualFileSystem instanceof Map) journal.vf = state.virtualFileSystem;
     if (state.randomStreams instanceof Map) journal.rs = state.randomStreams;
-    if (Array.isArray(state.argsRegistry)) journal.ar = state.argsRegistry;
+    if (Number.isSafeInteger(state.argsRegistry)) journal.ar = state.argsRegistry;
     if (state.imageHandles instanceof Map) journal.ih = state.imageHandles;
+    if (!bitmapMmioConfigsEqual(state.bitmapMmioConfig, this.bitmapMmioConfig)) {
+      journal.bc = cloneBitmapMmioConfig(state.bitmapMmioConfig);
+      state.estimatedBytes += 64;
+    }
     journal.estimatedBytes = Math.max(112, Number(state.estimatedBytes) || 0);
     return journal;
   }
@@ -2716,30 +2968,61 @@ class MarsEngine {
     this.activeRuntimeMemoryAccesses = null;
 
     if (state.rs instanceof Map) {
-      this.randomStreams = new Map(state.rs);
+      state.rs.forEach((previous, stream) => {
+        if (previous == null) this.randomStreams.delete(stream | 0);
+        else this.randomStreams.set(stream | 0, previous);
+      });
     }
 
     if (state.of instanceof Map) {
-      const restoredOpen = this.cloneOpenFilesTable(state.of);
-      const stdio = this.createStdioOpenFileTable();
-      stdio.forEach((entry, fd) => {
-        if (!restoredOpen.has(fd)) restoredOpen.set(fd, entry);
+      state.of.forEach((undo, fdValue) => {
+        const fd = fdValue | 0;
+        if (!undo || undo.existed !== true) {
+          this.openFiles.delete(fd);
+          return;
+        }
+        const current = this.openFiles.get(fd);
+        this.openFiles.set(fd, {
+          fd,
+          name: String(undo.name ?? ""),
+          flag: Number(undo.flag) | 0,
+          cursor: Math.max(0, Number(undo.cursor) | 0),
+          stdio: Boolean(undo.stdio),
+          data: undo.restoreDataFromVfs === true
+            ? (this.getVirtualFileBytes(undo.name) ?? new Uint8Array(0))
+            : (this.applyByteArrayUndo(current?.data, undo.data) ?? new Uint8Array(0))
+        });
       });
-      this.openFiles = restoredOpen;
     }
 
     if (state.vf instanceof Map) {
-      this.virtualFileSystem = this.cloneVirtualFileSystemMap(state.vf);
+      state.vf.forEach((undo, nameValue) => {
+        const name = String(nameValue ?? "");
+        const restored = this.applyByteArrayUndo(this.virtualFileSystem.get(name), undo);
+        if (restored == null) this.virtualFileSystem.delete(name);
+        else this.virtualFileSystem.set(name, restored);
+      });
       this.persistVirtualFileSystemToStorage();
     }
     if (Object.hasOwn(state, "si")) this.stdinClosed = state.si === true;
-    if (Array.isArray(state.ar)) {
-      this.argsRegistry = this.cloneArgsRegistry(state.ar);
+    if (Number.isSafeInteger(state.ar)) {
+      this.argsRegistry.length = Math.max(0, Math.min(this.argsRegistry.length, state.ar));
     }
     if (state.ih instanceof Map) {
-      this.imageHandles = this.cloneImageHandleMap(state.ih);
+      state.ih.forEach((previous, handleValue) => {
+        const handle = handleValue | 0;
+        if (previous == null) {
+          this.imageHandles.delete(handle);
+          return;
+        }
+        const restored = this.cloneImageHandleMap(new Map([[handle, previous]])).get(handle);
+        if (restored) this.imageHandles.set(handle, restored);
+      });
     }
     if (Object.hasOwn(state, "ni")) this.nextImageHandleId = Math.max(1, Number(state.ni) | 0);
+    if (Object.hasOwn(state, "bc")) {
+      this.bitmapMmioConfig = cloneBitmapMmioConfig(state.bc);
+    }
 
     const memoryChanges = Array.isArray(state.m) ? state.m : [];
     if (memoryChanges.length) {
@@ -2768,6 +3051,9 @@ class MarsEngine {
     if (Object.hasOwn(state, "db")) {
       this.delayedBranchTarget = state.db == null ? null : (state.db >>> 0);
     }
+    if (Object.hasOwn(state, "da")) {
+      this.delayedBranchAddress = state.da == null ? null : (state.da >>> 0);
+    }
     if (Object.hasOwn(state, "ll")) {
       this.llReservationAddress = state.ll == null ? null : (state.ll >>> 0);
     }
@@ -2789,6 +3075,7 @@ class MarsEngine {
       steps: this.steps,
       heapPointer: this.heapPointer >>> 0,
       delayedBranchTarget: this.delayedBranchTarget == null ? null : (this.delayedBranchTarget >>> 0),
+      delayedBranchAddress: this.delayedBranchAddress == null ? null : (this.delayedBranchAddress >>> 0),
       llReservationAddress: this.llReservationAddress == null ? null : (this.llReservationAddress >>> 0),
       lastMemoryWriteAddress: this.lastMemoryWriteAddress == null ? null : (this.lastMemoryWriteAddress >>> 0),
       memoryUsageBytes: this.getMemoryUsageBytes(),
@@ -2828,6 +3115,7 @@ class MarsEngine {
         { ...image }
       ]),
       nextImageHandleId: Math.max(1, this.nextImageHandleId | 0),
+      bitmapMmioConfig: cloneBitmapMmioConfig(this.bitmapMmioConfig),
       memoryMap: { ...this.memoryMap },
       source: includeProgram ? String(this.program.source ?? "") : "",
       textRows: includeProgram
@@ -2935,9 +3223,13 @@ class MarsEngine {
     this.steps = normalizeStepCount(snapshot.steps);
     this.heapPointer = Number.isFinite(snapshot.heapPointer) ? (snapshot.heapPointer >>> 0) : (this.memoryMap.heapBase >>> 0);
     this.delayedBranchTarget = snapshot.delayedBranchTarget == null ? null : (snapshot.delayedBranchTarget >>> 0);
+    this.delayedBranchAddress = snapshot.delayedBranchAddress == null ? null : (snapshot.delayedBranchAddress >>> 0);
     this.llReservationAddress = snapshot.llReservationAddress == null ? null : (snapshot.llReservationAddress >>> 0);
     this.breakpointResumeAddress = null;
     this.lastMemoryWriteAddress = snapshot.lastMemoryWriteAddress == null ? null : (snapshot.lastMemoryWriteAddress >>> 0);
+    this.bitmapMmioConfig = hasSnapshotField("bitmapMmioConfig")
+      ? normalizeBitmapMmioConfig(snapshot.bitmapMmioConfig, this.memoryMap)
+      : null;
     this.registers = new Int32Array(USER_REGISTER_NAMES.length + EXTRA_REGISTER_NAMES.length);
     this.cop0Registers = new Int32Array(32);
     this.cop1Registers = new Int32Array(32);
@@ -2969,6 +3261,7 @@ class MarsEngine {
     this.executionHistory = new BackstepJournalBuffer();
     this.executionHistoryBytes = 0;
     this.activeHistoryJournal = null;
+    this.activeSyscallJournal = null;
     this.activeRuntimeMemoryAccesses = null;
 
     if (hasSnapshotField("randomStreams")) {
@@ -3759,59 +4052,108 @@ class MarsEngine {
   }
 
   recordMemoryChange(address, nextValue = null) {
-    const journal = this.activeHistoryJournal;
-    if (!journal || journal.captureResources !== true) return;
-    if (!(journal.memoryChanges instanceof BackstepMemoryJournal)) {
-      journal.memoryChanges = new BackstepMemoryJournal();
-    }
     const addr = address >>> 0;
     const previousByte = this.getByte(addr);
     if (nextValue != null && previousByte === (nextValue & 0xff)) return;
-    journal.memoryChanges.record(addr, previousByte);
+    this.getActiveUndoJournals().forEach((journal) => {
+      if (!journal || journal.captureResources !== true) return;
+      if (!(journal.memoryChanges instanceof BackstepMemoryJournal)) {
+        journal.memoryChanges = new BackstepMemoryJournal();
+      }
+      journal.memoryChanges.record(addr, previousByte);
+    });
   }
 
-  markOpenFilesDirty() {
-    const journal = this.activeHistoryJournal;
-    if (!journal || journal.captureResources !== true || journal.openFiles instanceof Map) return;
-    journal.openFiles = this.cloneOpenFilesTable(this.openFiles);
-    journal.estimatedBytes += this.estimateOpenFilesTableBytes(journal.openFiles);
+  markOpenFilesDirty(fdValue, nextFile = null, options = {}) {
+    const fd = Number(fdValue) | 0;
+    this.getActiveUndoJournals().forEach((journal) => {
+      if (!journal || journal.captureResources !== true) return;
+      if (!(journal.openFiles instanceof Map)) {
+        journal.openFiles = new Map();
+        journal.estimatedBytes += 32;
+      }
+      if (journal.openFiles.has(fd)) return;
+      const previous = this.openFiles.get(fd);
+      const undo = previous
+        ? {
+            existed: true,
+            fd,
+            name: String(previous.name ?? ""),
+            flag: Number(previous.flag) | 0,
+            cursor: Math.max(0, Number(previous.cursor) | 0),
+            stdio: Boolean(previous.stdio),
+            restoreDataFromVfs: options.restoreDataFromVfs === true,
+            data: options.restoreDataFromVfs === true
+              ? null
+              : this.createByteArrayUndo(previous.data, nextFile?.data)
+          }
+        : { existed: false };
+      journal.openFiles.set(fd, undo);
+      journal.estimatedBytes += GENERIC_MAP_ENTRY_ESTIMATE_BYTES
+        + this.estimateStringStorageBytes(undo.name)
+        + (undo.data?.oldBytes instanceof Uint8Array ? undo.data.oldBytes.byteLength : 0);
+    });
   }
 
-  markVirtualFileSystemDirty() {
-    const journal = this.activeHistoryJournal;
-    if (!journal || journal.captureResources !== true || journal.virtualFileSystem instanceof Map) return;
-    journal.virtualFileSystem = this.cloneVirtualFileSystemMap(this.virtualFileSystem);
-    journal.estimatedBytes += this.estimateVirtualFileSystemBytes(journal.virtualFileSystem);
+  markVirtualFileSystemDirty(nameValue, nextValue = null) {
+    const name = String(nameValue ?? "");
+    this.getActiveUndoJournals().forEach((journal) => {
+      if (!journal || journal.captureResources !== true) return;
+      if (!(journal.virtualFileSystem instanceof Map)) {
+        journal.virtualFileSystem = new Map();
+        journal.estimatedBytes += 32;
+      }
+      if (journal.virtualFileSystem.has(name)) return;
+      const undo = this.createByteArrayUndo(
+        this.virtualFileSystem.has(name) ? this.virtualFileSystem.get(name) : null,
+        nextValue
+      );
+      journal.virtualFileSystem.set(name, undo);
+      journal.estimatedBytes += GENERIC_MAP_ENTRY_ESTIMATE_BYTES
+        + this.estimateStringStorageBytes(name)
+        + (undo.oldBytes instanceof Uint8Array ? undo.oldBytes.byteLength : 0);
+    });
   }
 
-  markRandomStreamsDirty() {
-    const journal = this.activeHistoryJournal;
-    if (!journal || journal.captureResources !== true || journal.randomStreams instanceof Map) return;
-    journal.randomStreams = new Map(this.randomStreams);
-    journal.estimatedBytes += journal.randomStreams.size * GENERIC_MAP_ENTRY_ESTIMATE_BYTES;
+  markRandomStreamsDirty(streamValue) {
+    const stream = Number(streamValue) | 0;
+    this.getActiveUndoJournals().forEach((journal) => {
+      if (!journal || journal.captureResources !== true) return;
+      if (!(journal.randomStreams instanceof Map)) {
+        journal.randomStreams = new Map();
+        journal.estimatedBytes += 32;
+      }
+      if (journal.randomStreams.has(stream)) return;
+      journal.randomStreams.set(stream, this.randomStreams.has(stream) ? this.randomStreams.get(stream) : null);
+      journal.estimatedBytes += GENERIC_MAP_ENTRY_ESTIMATE_BYTES;
+    });
   }
 
   markArgsRegistryDirty() {
-    const journal = this.activeHistoryJournal;
-    if (!journal || journal.captureResources !== true || Array.isArray(journal.argsRegistry)) return;
-    journal.argsRegistry = this.cloneArgsRegistry(this.argsRegistry);
-    journal.estimatedBytes += journal.argsRegistry.reduce((total, entry) => (
-      total
-      + GENERIC_MAP_ENTRY_ESTIMATE_BYTES
-      + this.estimateStringStorageBytes(entry?.kind)
-      + this.estimateStringStorageBytes(entry?.name)
-    ), 0);
+    this.getActiveUndoJournals().forEach((journal) => {
+      if (!journal || journal.captureResources !== true || Number.isSafeInteger(journal.argsRegistry)) return;
+      journal.argsRegistry = this.argsRegistry.length;
+      journal.estimatedBytes += 16;
+    });
   }
 
-  markImageHandlesDirty() {
-    const journal = this.activeHistoryJournal;
-    if (!journal || journal.captureResources !== true || journal.imageHandles instanceof Map) return;
-    journal.imageHandles = this.cloneImageHandleMap(this.imageHandles);
-    journal.estimatedBytes += Array.from(journal.imageHandles.values()).reduce((total, image) => (
-      total
-      + GENERIC_MAP_ENTRY_ESTIMATE_BYTES
-      + this.estimateStringStorageBytes(image?.path)
-    ), 0);
+  markImageHandlesDirty(handleValue) {
+    const handle = Number(handleValue) | 0;
+    this.getActiveUndoJournals().forEach((journal) => {
+      if (!journal || journal.captureResources !== true) return;
+      if (!(journal.imageHandles instanceof Map)) {
+        journal.imageHandles = new Map();
+        journal.estimatedBytes += 32;
+      }
+      if (journal.imageHandles.has(handle)) return;
+      const previous = this.imageHandles.get(handle);
+      const cloned = previous
+        ? this.cloneImageHandleMap(new Map([[handle, previous]])).get(handle)
+        : null;
+      journal.imageHandles.set(handle, cloned ?? null);
+      journal.estimatedBytes += GENERIC_MAP_ENTRY_ESTIMATE_BYTES
+        + this.estimateStringStorageBytes(cloned?.path);
+    });
   }
 
   clearExecutionHistory() {
@@ -4506,6 +4848,7 @@ class MarsEngine {
       (numeric >>> 16) & 0xff,
       (numeric >>> 24) & 0xff
     ]);
+    this.handleBitmapMmioCommandWrite(addr, numeric);
     this.notifyMemoryObservers("write", addr, 4, numeric | 0);
   }
 
@@ -4549,16 +4892,38 @@ class MarsEngine {
     this.notifyMemoryObservers("write", addr, 4, low | 0);
     this.notifyMemoryObservers("write", (addr + 4) >>> 0, 4, high | 0);
   }
-  readNullTerminatedString(address, maxLen = 16384) {
-    let out = "";
+  readNullTerminatedString(address, maxLen = RUNTIME_STRING_SCAN_HARD_LIMIT) {
+    const requestedLimit = Number(maxLen);
+    const scanLimit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0
+      ? Math.min(requestedLimit, RUNTIME_STRING_SCAN_HARD_LIMIT)
+      : RUNTIME_STRING_SCAN_HARD_LIMIT;
+    const chunks = [];
+    let chunk = "";
     let cursor = address >>> 0;
-    for (let i = 0; i < maxLen; i += 1) {
+    for (let i = 0; i < scanLimit; i += 1) {
       const byte = this.readByte(cursor, false);
-      if (byte === 0) break;
-      out += String.fromCharCode(byte);
+      if (byte === 0) {
+        if (chunk) chunks.push(chunk);
+        return chunks.join("");
+      }
+      chunk += String.fromCharCode(byte);
+      if (chunk.length >= 8192) {
+        chunks.push(chunk);
+        chunk = "";
+      }
+      if (cursor === 0xffffffff) {
+        throw new MarsSyscallLimitError(
+          translateText("String at {address} is not null-terminated.", { address: toHex(address) })
+        );
+      }
       cursor = (cursor + 1) >>> 0;
     }
-    return out;
+    throw new MarsSyscallLimitError(
+      translateText("String at {address} exceeds the maximum supported length of {length} byte(s).", {
+        address: toHex(address),
+        length: scanLimit
+      })
+    );
   }
 
   writeString(address, text, includeNull = true, maxBytes = Number.MAX_SAFE_INTEGER) {
@@ -5409,7 +5774,11 @@ class MarsEngine {
       const match = /^(.+?)\s*:\s*(.+)$/.exec(arg);
       if (!match) return { valueToken: arg, repetitions: 1 };
       const count = parseImmediate(match[2]);
-      if (!Number.isFinite(count) || (count | 0) <= 0) {
+      if (
+        !Number.isSafeInteger(count)
+        || count <= 0
+        || count > DATA_DIRECTIVE_REPETITION_HARD_LIMIT
+      ) {
         errors.push({ line: lineNumber, message: translateText("Invalid repetition factor '{factor}' in '{arg}'.", {
           factor: match[2],
           arg
@@ -5418,7 +5787,7 @@ class MarsEngine {
       }
       return {
         valueToken: match[1].trim(),
-        repetitions: count | 0
+        repetitions: count
       };
     };
 
@@ -5555,9 +5924,21 @@ class MarsEngine {
       for (const arg of args) {
         const repetition = parseRepeatedArg(arg);
         if (!repetition) continue;
+        const repeatedBytes = repetition.repetitions * size;
+        const currentAddress = getAddr();
+        if (
+          !Number.isSafeInteger(repeatedBytes)
+          || repeatedBytes > (0xffffffff - currentAddress)
+        ) {
+          errors.push({ line: lineNumber, message: translateText("Invalid repetition factor '{factor}' in '{arg}'.", {
+            factor: repetition.repetitions,
+            arg
+          }) });
+          return;
+        }
+        if (!enforceStrictDataRange(repeatedBytes, directive)) return;
 
         for (let rep = 0; rep < repetition.repetitions; rep += 1) {
-          if (!enforceStrictDataRange(size, directive)) return;
           const token = repetition.valueToken;
           if (directive === ".float" || directive === ".double") {
             const raw = stripToken(token);
@@ -6392,9 +6773,19 @@ class MarsEngine {
       });
     }
 
-    const row = this.program.textRowByAddress?.get(this.pc) ?? this.program.textRows.find((entry) => entry.address === this.pc);
+    const row = this.program.textRowByAddress?.get(currentPc) ?? this.program.textRows.find((entry) => entry.address === currentPc);
+    const hasDynamicInstruction = this.memoryWords.has(currentPc)
+      || this.memoryBytes.has(currentPc)
+      || this.memoryBytes.has((currentPc + 1) >>> 0)
+      || this.memoryBytes.has((currentPc + 2) >>> 0)
+      || this.memoryBytes.has((currentPc + 3) >>> 0);
+    const canExecuteDynamicInstruction = (
+      this.settings.selfModifyingCode === true
+      && this.isTextAddress(currentPc)
+      && hasDynamicInstruction
+    );
 
-    if (!row) {
+    if (!row && !canExecuteDynamicInstruction) {
       this.breakpointResumeAddress = null;
       this.halted = true;
       return attachSnapshot({
@@ -6487,6 +6878,7 @@ class MarsEngine {
 
     const sequentialPc = (this.pc + 4) >>> 0;
     const pendingBranchTarget = this.delayedBranchTarget == null ? null : (this.delayedBranchTarget >>> 0);
+    const pendingBranchAddress = this.delayedBranchAddress == null ? null : (this.delayedBranchAddress >>> 0);
     const hasDelaySlot = decodedEntry.hasDelaySlot === true;
 
     let resolvedNextPc = sequentialPc;
@@ -6495,35 +6887,39 @@ class MarsEngine {
       result.exception
       && result.exceptionContextCaptured !== false
       && this.settings.delayedBranching
-      && pendingBranchTarget !== null
+      && pendingBranchAddress !== null
     ) {
       this.setCop0Value(
         COP0_REGISTERS.cause,
         (this.cop0Registers[COP0_REGISTERS.cause] >>> 0) | 0x80000000
       );
-      this.setCop0Value(COP0_REGISTERS.epc, (this.pc - 4) >>> 0);
+      this.setCop0Value(COP0_REGISTERS.epc, pendingBranchAddress);
     }
 
     if (result.exception || result.noDelay) {
       this.delayedBranchTarget = null;
+      this.delayedBranchAddress = null;
       if (typeof result.nextPc === "number") {
         resolvedNextPc = result.nextPc >>> 0;
       }
     } else if (this.settings.delayedBranching) {
-      resolvedNextPc = pendingBranchTarget ?? sequentialPc;
+      resolvedNextPc = pendingBranchAddress !== null
+        ? (pendingBranchTarget ?? sequentialPc)
+        : sequentialPc;
       this.delayedBranchTarget = null;
-      if (typeof result.nextPc === "number") {
-        if (hasDelaySlot) {
-          if (pendingBranchTarget === null) {
-            resolvedNextPc = sequentialPc;
-          }
-          this.delayedBranchTarget = result.nextPc >>> 0;
-        } else {
-          resolvedNextPc = result.nextPc >>> 0;
-        }
+      this.delayedBranchAddress = null;
+      if (hasDelaySlot) {
+        if (pendingBranchAddress === null) resolvedNextPc = sequentialPc;
+        this.delayedBranchAddress = currentPc;
+        this.delayedBranchTarget = typeof result.nextPc === "number"
+          ? (result.nextPc >>> 0)
+          : null;
+      } else if (typeof result.nextPc === "number") {
+        resolvedNextPc = result.nextPc >>> 0;
       }
     } else {
       this.delayedBranchTarget = null;
+      this.delayedBranchAddress = null;
       if (typeof result.nextPc === "number") {
         resolvedNextPc = result.nextPc >>> 0;
       }
@@ -6538,6 +6934,7 @@ class MarsEngine {
         invalidPc
       );
       this.delayedBranchTarget = null;
+      this.delayedBranchAddress = null;
       result = { ...result, ...fetchException };
       if (typeof fetchException.nextPc === "number") {
         this.pc = fetchException.nextPc >>> 0;
@@ -6547,7 +6944,21 @@ class MarsEngine {
       this.halted = true;
     }
 
-    const hasNextInstruction = this.program.textRowByAddress?.has(this.pc) ?? this.program.textRows.some((entry) => entry.address === this.pc);
+    const nextPc = this.pc >>> 0;
+    const hasNextStaticInstruction = this.program.textRowByAddress?.has(nextPc)
+      ?? this.program.textRows.some((entry) => entry.address === nextPc);
+    const hasNextDynamicInstruction = (
+      this.settings.selfModifyingCode === true
+      && this.isTextAddress(nextPc)
+      && (
+        this.memoryWords.has(nextPc)
+        || this.memoryBytes.has(nextPc)
+        || this.memoryBytes.has((nextPc + 1) >>> 0)
+        || this.memoryBytes.has((nextPc + 2) >>> 0)
+        || this.memoryBytes.has((nextPc + 3) >>> 0)
+      )
+    );
+    const hasNextInstruction = hasNextStaticInstruction || hasNextDynamicInstruction;
     let fellOffBottom = false;
     if (!hasNextInstruction && !this.halted) {
       this.halted = true;
@@ -6789,6 +7200,7 @@ class MarsEngine {
         : new Map(),
       llReservationAddress: this.llReservationAddress == null ? null : (this.llReservationAddress >>> 0),
       lastMemoryWriteAddress: this.lastMemoryWriteAddress == null ? null : (this.lastMemoryWriteAddress >>> 0),
+      bitmapMmioConfig: cloneBitmapMmioConfig(this.bitmapMmioConfig),
       cop0: Array.from(this.cop0Registers),
       cop1: Array.from(this.cop1Registers),
       fpuFlags: Array.from(this.fpuConditionFlags),
@@ -6809,6 +7221,19 @@ class MarsEngine {
   }
   executeSyscall() {
     const service = this.registers[2] | 0;
+    const outerHistoryJournal = this.activeHistoryJournal;
+    const syscallTransaction = this.captureState({ captureMemory: true });
+    this.activeSyscallJournal = syscallTransaction;
+    let syscallTransactionRolledBack = false;
+    const rollbackSyscallTransaction = () => {
+      if (syscallTransactionRolledBack) return;
+      syscallTransactionRolledBack = true;
+      const rollbackJournal = this.finalizeCapturedState(syscallTransaction);
+      this.activeSyscallJournal = null;
+      this.activeHistoryJournal = null;
+      this.restoreState(rollbackJournal);
+      this.activeHistoryJournal = outerHistoryJournal;
+    };
 
     const runtimeHooks = this.runtimeHooks && typeof this.runtimeHooks === "object" ? this.runtimeHooks : {};
 
@@ -6928,7 +7353,7 @@ class MarsEngine {
     const streamKey = this.registers[4] | 0;
     const getStream = () => {
       if (!this.randomStreams.has(streamKey)) {
-        this.markRandomStreamsDirty();
+        this.markRandomStreamsDirty(streamKey);
         this.randomStreams.set(
           streamKey,
           javaRandomStateFromSeed((0x9e3779b9 ^ (streamKey >>> 0)) | 0)
@@ -6937,7 +7362,7 @@ class MarsEngine {
       return this.randomStreams.get(streamKey);
     };
     const setStream = (value) => {
-      this.markRandomStreamsDirty();
+      this.markRandomStreamsDirty(streamKey);
       this.randomStreams.set(streamKey, Math.trunc(Number(value)));
     };
     const nextRandomBits = (bits) => {
@@ -7004,15 +7429,16 @@ class MarsEngine {
       if (existing === null) return 0;
       const fd = this.allocateFileDescriptor();
       if (fd < 0) return 0;
-      this.markOpenFilesDirty();
-      this.openFiles.set(fd, {
+      const file = {
         fd,
         name: filename,
         flag: FILE_OPEN_RDONLY,
         cursor: 0,
         stdio: false,
         data: cloneByteArray(existing)
-      });
+      };
+      this.markOpenFilesDirty(fd, file);
+      this.openFiles.set(fd, file);
       return fd | 0;
     };
     const readManagedFileLine = (file) => {
@@ -7024,7 +7450,7 @@ class MarsEngine {
       const line = bytesToText(data.slice(start, end));
       if (end < data.length && data[end] === 13) end += 1;
       if (end < data.length && data[end] === 10) end += 1;
-      this.markOpenFilesDirty();
+      this.markOpenFilesDirty(file.fd, { ...file, cursor: end | 0 });
       file.cursor = end | 0;
       return line;
     };
@@ -7320,7 +7746,7 @@ class MarsEngine {
           stdio: false,
           data: cloneByteArray(existing)
         };
-        this.markOpenFilesDirty();
+        this.markOpenFilesDirty(fd, file);
         this.openFiles.set(fd, file);
         this.setRegisterValue(2, fd);
         return {};
@@ -7353,7 +7779,7 @@ class MarsEngine {
 
         writeBufferBytes(address, payload);
         if (sourceFile && sourceNextCursor !== null) {
-          this.markOpenFilesDirty();
+          this.markOpenFilesDirty(fd, { ...sourceFile, cursor: sourceNextCursor });
           sourceFile.cursor = sourceNextCursor;
         }
         this.setRegisterValue(2, payload.length);
@@ -7395,7 +7821,7 @@ class MarsEngine {
           this.setRegisterValue(2, -1);
           return {};
         }
-        this.markOpenFilesDirty();
+        this.markOpenFilesDirty(fd, { ...file, data: merged, cursor: requiredLength });
         file.data = merged;
         file.cursor = requiredLength;
 
@@ -7407,7 +7833,7 @@ class MarsEngine {
         if (fd <= STDERR_FD || fd >= SYSCALL_MAX_FILES) {
           return {};
         }
-        this.markOpenFilesDirty();
+        this.markOpenFilesDirty(fd, null, { restoreDataFromVfs: true });
         this.openFiles.delete(fd);
         return {};
       }
@@ -7658,7 +8084,7 @@ class MarsEngine {
       case WEBMARS_CUSTOM_SYSCALLS.fileClose: {
         const fd = this.registers[4] | 0;
         if (fd > STDERR_FD) {
-          this.markOpenFilesDirty();
+          this.markOpenFilesDirty(fd, null, { restoreDataFromVfs: true });
           this.openFiles.delete(fd);
         }
         return {};
@@ -7953,7 +8379,7 @@ class MarsEngine {
         }
         const imageHandle = this.getImageHandle(handleValue);
         if (imageHandle) {
-          this.markImageHandlesDirty();
+          this.markImageHandlesDirty(handleValue);
           imageHandle.path = path;
         }
         return {};
@@ -7967,13 +8393,18 @@ class MarsEngine {
         return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid or unimplemented syscall service: {service}", { service }));
       }
     } catch (error) {
-      if (error instanceof MarsSyscallLimitError) {
-        return this.raiseException(
-          EXCEPTION_CODES.SYSCALL,
-          error.message || tx("syscall resource limit exceeded")
-        );
+      rollbackSyscallTransaction();
+      if (error instanceof MarsMemoryAccessError) throw error;
+      return this.raiseException(
+        EXCEPTION_CODES.SYSCALL,
+        error instanceof Error
+          ? error.message
+          : (error || tx("syscall resource limit exceeded"))
+      );
+    } finally {
+      if (this.activeSyscallJournal === syscallTransaction) {
+        this.activeSyscallJournal = null;
       }
-      throw error;
     }
   }
   executeInstruction(source, preparedTokens = null) {

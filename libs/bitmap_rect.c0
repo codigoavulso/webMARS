@@ -7,6 +7,46 @@ void bitmap_set_base_address(int baseAddress) {
   _bitmap_base_address = baseAddress;
 }
 
+// webMARS Bitmap MMIO extension. MARS 4.5 safely ignores these otherwise
+// unused MMIO words, so the framebuffer code remains source-compatible.
+void bitmap_configure_target(int displayWidth, int displayHeight, int unitWidth, int unitHeight, int baseAddress, int target) {
+  if (displayWidth <= 0) return;
+  if (displayHeight <= 0) return;
+  if (unitWidth <= 0) return;
+  if (unitHeight <= 0) return;
+  if (baseAddress == 0) return;
+  if (target < 1 || target > 3) return;
+
+  int* control = (int*)-65504;
+  control[0] = 1463962960;
+  control[1] = 1;
+  control[2] = target;
+  control[3] = displayWidth;
+  control[4] = displayHeight;
+  control[5] = unitWidth;
+  control[6] = unitHeight;
+  control[7] = baseAddress;
+  control[8] = 1;
+  _bitmap_base_address = baseAddress;
+}
+
+void bitmap_configure_display(int displayWidth, int displayHeight, int unitWidth, int unitHeight, int baseAddress) {
+  bitmap_configure_target(displayWidth, displayHeight, unitWidth, unitHeight, baseAddress, 1);
+}
+
+void bitmap_configure_terminal(int displayWidth, int displayHeight, int unitWidth, int unitHeight, int baseAddress) {
+  bitmap_configure_target(displayWidth, displayHeight, unitWidth, unitHeight, baseAddress, 2);
+}
+
+void bitmap_configure_all(int displayWidth, int displayHeight, int unitWidth, int unitHeight, int baseAddress) {
+  bitmap_configure_target(displayWidth, displayHeight, unitWidth, unitHeight, baseAddress, 3);
+}
+
+void bitmap_clear_tool_configuration(void) {
+  int* control = (int*)-65504;
+  control[8] = 2;
+}
+
 int bitmap_get_base_address(void) {
   return _bitmap_base_address;
 }

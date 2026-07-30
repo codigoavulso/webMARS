@@ -44,6 +44,7 @@
     <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
   </p>
   <p>These headers are webMARS compatibility libraries built around MIPS syscalls and devices. They implement their documented subset, not the full host C standard library.</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> also provides <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> and <code>bitmap_configure_all</code>, allowing a C0 program to send its display size, unit size and framebuffer address to the Bitmap tools.</p>
 
   <h2>Good starting examples</h2>
   <ul>

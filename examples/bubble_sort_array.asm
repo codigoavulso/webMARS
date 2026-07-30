@@ -1,5 +1,7 @@
 # Bubble sort demo
 # Sorts a fixed array and prints sorted values.
+# Concepts: indexed word access, nested loops, signed comparison and in-place swap.
+# Register plan: $s0 = array base, $s1 = length, $t0/$t1 = loop indexes.
 
 .data
 arr: .word 42, 7, 19, -3, 88, 0, 15, 15, 2, 100
@@ -14,6 +16,7 @@ main:
 
   li  $t0, 0              # i
 outer:
+  # After pass i, the i largest values are already fixed at the right edge.
   bge $t0, $s1, print
   li  $t1, 0              # j
   subu $t2, $s1, $t0
@@ -21,12 +24,14 @@ outer:
 inner:
   bge $t1, $t2, next_i
 
+  # A word occupies four bytes, so arr[j] is at base + j*4.
   sll $t3, $t1, 2
   addu $t4, $s0, $t3
   lw  $t5, 0($t4)
   lw  $t6, 4($t4)
 
   ble $t5, $t6, no_swap
+  # Adjacent values are out of order: exchange them in memory.
   sw  $t6, 0($t4)
   sw  $t5, 4($t4)
 no_swap:
@@ -38,12 +43,14 @@ next_i:
   j outer
 
 print:
+  # Syscall 4 prints the label before the element-by-element traversal.
   li $v0, 4
   la $a0, msg
   syscall
 
   li $t7, 0
 print_loop:
+  # Reuse the same address calculation to fetch arr[index].
   bge $t7, $s1, end
   sll $t3, $t7, 2
   addu $t4, $s0, $t3

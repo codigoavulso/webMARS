@@ -25,11 +25,13 @@
         .text
         .globl main
 main:
+        # Inspect the Code column after assembly: these mnemonics are not stored as text.
         add  $t0, $t1, $t2      # R-type: opcode, rs, rt, rd, funct
         add  $t3, $t4, $t5      # same shape, different registers
         addi $t0, $t1, 100      # I-type: the constant is in the word
         sll  $t0, $t1, 4        # shift amount has its own field
         j    tail               # J-type: an address, not a register
 tail:
+        # li is itself expanded before execution; the processor only sees encoded words.
         li   $v0, 10
         syscall

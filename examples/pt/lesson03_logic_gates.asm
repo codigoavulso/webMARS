@@ -27,11 +27,12 @@ mx:     .asciiz "XOR flips the low nibble: "
         .globl main
 main:
         li   $t0, 204           # 0xCC
-        li   $t1, 15            # 0x0F mask
+        li   $t1, 15            # máscara 0x0F
 
         la   $a0, ma
         li   $v0, 4
         syscall
+        # AND apaga cada posição onde a máscara contém zero.
         and  $t2, $t0, $t1
         move $a0, $t2
         li   $v0, 1
@@ -52,6 +53,7 @@ main:
         la   $a0, mx
         li   $v0, 4
         syscall
+        # XOR inverte apenas as posições selecionadas pelos uns da máscara.
         xor  $t4, $t0, $t1
         move $a0, $t4
         li   $v0, 1

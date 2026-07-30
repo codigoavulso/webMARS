@@ -24,13 +24,15 @@ lbl:    .asciiz "12 + 30 = "
         .text
         .globl main
 main:
+        # As syscalls usam $v0 como seletor e $a0 como primeiro argumento.
         la   $a0, lbl
         li   $v0, 4
         syscall
 
-        li   $t0, 12            # immediate -> register
-        li   $t1, 30            # immediate -> register
-        add  $t2, $t0, $t1      # ALU reads two registers
+        # li é uma pseudoinstrução; Assemble mostra em que instrução real se transforma.
+        li   $t0, 12            # imediato -> registo
+        li   $t1, 30            # imediato -> registo
+        add  $t2, $t0, $t1      # a ALU lê dois registos
 
         move $a0, $t2
         li   $v0, 1

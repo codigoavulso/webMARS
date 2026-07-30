@@ -28,6 +28,7 @@ main:
         la   $a0, m1
         li   $v0, 4
         syscall
+        # Subtracting from zero forms the additive inverse without a minus-sign bit.
         li   $t0, 5
         sub  $t1, $zero, $t0    # the adder does the work
         move $a0, $t1
@@ -39,6 +40,7 @@ main:
         la   $a0, m2
         li   $v0, 4
         syscall
+        # nor with $zero is bitwise NOT; adding one completes two's complement.
         nor  $t2, $t0, $zero    # invert all bits
         addi $t2, $t2, 1        # add one
         move $a0, $t2           # same value as above

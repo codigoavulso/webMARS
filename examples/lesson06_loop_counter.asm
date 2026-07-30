@@ -28,6 +28,7 @@ main:
         li   $t1, 11            # the limit
 
 loop:
+        # Loop invariant: $t0 is the next value to print and remains below $t1.
         slt  $t2, $t0, $t1      # comparator
         beq  $t2, $zero, endl   # exit when count reaches limit
 
@@ -38,6 +39,7 @@ loop:
         li   $v0, 4
         syscall
 
+        # Updating the counter before jumping guarantees progress toward termination.
         addi $t0, $t0, 1        # the adder
         j    loop
 

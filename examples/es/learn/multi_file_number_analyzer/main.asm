@@ -11,6 +11,7 @@
 # 4. Repetir
 
 .data
+# Este módulo contiene los textos; los auxiliares poseen sus propios datos/código.
 title:         .asciiz "\n=== Analizador multiarchivo de numeros ===\n"
 hint:          .asciiz "Este ejemplo usa 3 ficheros separados ensamblados juntos.\n"
 prompt:        .asciiz "Introduzca un numero [1..100] (0 para salir): "
@@ -33,6 +34,7 @@ main:
   syscall
 
 input_loop:
+  # La syscall 5 devuelve el entero introducido en $v0.
   li $v0, 4
   la $a0, prompt
   syscall
@@ -44,6 +46,7 @@ input_loop:
   beq $s0, $zero, exit_program
   nop
 
+  # Validar los límites inferior y superior mediante comparaciones signed.
   slti $t0, $s0, 1
   bne $t0, $zero, invalid_input
   nop
@@ -57,6 +60,7 @@ input_loop:
   syscall
 
   li $v0, 1
+  # Convención o32: argumento en $a0 y dirección resultado en $v0.
   move $a0, $s0
   syscall
 
@@ -64,6 +68,7 @@ input_loop:
   la $a0, parity_prefix
   syscall
 
+  # El segundo módulo devuelve un booleano en $v0.
   move $a0, $s0
   jal get_parity_message
   nop
@@ -108,5 +113,6 @@ exit_program:
   li $v0, 10
   syscall
 
+# Los includes se resuelven desde los archivos del proyecto al ensamblar.
 .include "learn/multi_file_number_analyzer/parity.asm"
 .include "learn/multi_file_number_analyzer/prime.asm"

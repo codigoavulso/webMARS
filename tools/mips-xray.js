@@ -17,6 +17,47 @@
       .xray-footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
       .xray-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .xray-footer .tool-btn { min-width:120px; }
+
+      /* On mobile decoded information is the upper pane and the datapath image
+         is the larger, scrollable pane below it. */
+      .desktop-stacked .xray-tool { gap:6px; padding:6px; }
+      .desktop-stacked .xray-toolbar {
+        gap:5px;
+        overflow-x:auto;
+        flex-wrap:nowrap;
+      }
+      .desktop-stacked .xray-toolbar .tool-btn { min-width:max-content; flex:1 0 auto; }
+      .desktop-stacked .xray-main {
+        display:grid;
+        grid-template-columns:minmax(0, 1fr);
+        grid-template-rows:auto minmax(160px, 1fr);
+        gap:6px;
+      }
+      .desktop-stacked .xray-side {
+        order:1;
+        display:grid;
+        grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+        gap:4px 6px;
+        max-height:160px;
+        padding:5px;
+      }
+      .desktop-stacked .xray-side strong { font-size:11px; }
+      .desktop-stacked .xray-side pre {
+        min-height:0;
+        max-height:110px;
+        overflow:auto;
+        padding:4px;
+        font-size:10px;
+      }
+      .desktop-stacked .xray-image-wrap {
+        order:2;
+        width:100%;
+        min-height:160px;
+      }
+      .desktop-stacked .xray-image-wrap img { max-width:none; }
+      .desktop-stacked .xray-footer { gap:5px; overflow-x:auto; }
+      .desktop-stacked .xray-footer .ctrl { display:none; }
+      .desktop-stacked .xray-footer .tool-btn { min-width:max-content; flex:1 0 auto; }
     `;
     document.head.appendChild(style);
   }

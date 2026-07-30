@@ -28,18 +28,20 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
+        # Las direcciones enteras ubican los datos; lwc1 traslada sus bits a COP1.
         la   $a0, m1
         li   $v0, 4
         syscall
 
         la   $t0, a
-        lwc1 $f0, 0($t0)        # into the FPU register file
+        lwc1 $f0, 0($t0)        # cargar en los registros de la FPU
         la   $t0, b
         lwc1 $f2, 0($t0)
-        add.s $f4, $f0, $f2     # the FPU adder
+        add.s $f4, $f0, $f2     # sumador de la FPU
 
+        # La syscall 2 espera su argumento float específicamente en $f12.
         mov.s $f12, $f4
-        li   $v0, 2             # print float
+        li   $v0, 2             # imprimir float
         syscall
         li   $v0, 11
         li   $a0, 10

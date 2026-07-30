@@ -43,23 +43,25 @@ main:
 
 # ---- int fact(int n) ----
 fact:
+        # Cada invocação possui um frame distinto de oito bytes.
         addi $sp, $sp, -8
-        sw   $ra, 0($sp)        # this call's return address
-        sw   $a0, 4($sp)        # this call's n
+        sw   $ra, 0($sp)        # retorno desta chamada
+        sw   $a0, 4($sp)        # n desta chamada
 
         li   $t0, 2
         slt  $t1, $a0, $t0
         beq  $t1, $zero, recurse
-        li   $v0, 1             # base case: 0! = 1! = 1
+        li   $v0, 1             # caso base: 0! = 1! = 1
         j    factend
 
 recurse:
         addi $a0, $a0, -1
         jal  fact               # $v0 = (n-1)!
-        lw   $a0, 4($sp)        # our n again
+        lw   $a0, 4($sp)        # recuperar o nosso n
         mul  $v0, $v0, $a0
 
 factend:
+        # Restaurar o estado e descartar exatamente o frame reservado à entrada.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

@@ -26,7 +26,9 @@ hi:     .asciiz "a is not smaller"
 main:
         li   $t0, 7             # a
         li   $t1, 12            # b
+        # slt materializes the comparison as an ordinary integer, never as hidden flags.
         slt  $t2, $t0, $t1      # t2 = 1 if a < b
+        # Branch to notless only when that Boolean result is zero.
         beq  $t2, $zero, notless
 
         la   $a0, lo

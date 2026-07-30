@@ -118,6 +118,7 @@
   const UNIT_OPTIONS = [1, 2, 4, 8, 16, 32];
   const WIDTH_OPTIONS = [64, 128, 256, 512, 1024];
   const HEIGHT_OPTIONS = [64, 128, 256, 512, 1024];
+  const BITMAP_MMIO_TARGET_DISPLAY = 1;
   const BASE_OPTIONS = [
     { value: 0x10000000, label: "0x10000000 (global data)" },
     { value: 0x10008000, label: "0x10008000 ($gp)" },
@@ -165,6 +166,17 @@
     return BASE_OPTIONS
       .map(({ value, label }) => `<option value="${value}"${value === selected ? " selected" : ""}>${label}</option>`)
       .join("");
+  }
+
+  function ensureSelectOption(select, value, label = String(value)) {
+    const normalized = String(value >>> 0);
+    if (![...select.options].some((option) => option.value === normalized)) {
+      const option = document.createElement("option");
+      option.value = normalized;
+      option.textContent = label;
+      select.appendChild(option);
+    }
+    select.value = normalized;
   }
 
   function isMobileLayoutMode() {
@@ -284,6 +296,9 @@
       let fullRedrawNeeded = true;
       let pendingWriteAddress = null;
       let lastSnapshotStep = null;
+      let lastBitmapMmioKey = null;
+      let bitmapMmioActive = false;
+      let manualConfigBeforeMmio = null;
 
       function getGrid() {
         const cols = Math.max(1, Math.floor(config.displayWidth / config.unitWidth));
@@ -350,11 +365,63 @@
       }
 
       function applyConfigToControls() {
-        unitWidthSelect.value = String(config.unitWidth);
-        unitHeightSelect.value = String(config.unitHeight);
-        displayWidthSelect.value = String(config.displayWidth);
-        displayHeightSelect.value = String(config.displayHeight);
-        baseAddressSelect.value = String(config.baseAddress >>> 0);
+        ensureSelectOption(unitWidthSelect, config.unitWidth);
+        ensureSelectOption(unitHeightSelect, config.unitHeight);
+        ensureSelectOption(displayWidthSelect, config.displayWidth);
+        ensureSelectOption(displayHeightSelect, config.displayHeight);
+        ensureSelectOption(baseAddressSelect, config.baseAddress, `${toHex32(config.baseAddress)} (program)`);
+      }
+
+      function bitmapMmioConfigKey(value) {
+        if (!value) return "none";
+        return [
+          value.protocolVersion,
+          value.target,
+          value.displayWidth,
+          value.displayHeight,
+          value.unitWidth,
+          value.unitHeight,
+          value.baseAddress >>> 0
+        ].join(":");
+      }
+
+      function syncBitmapMmioConfig(force = false) {
+        const runtimeConfig = typeof ctx.engine?.getBitmapMmioConfig === "function"
+          ? ctx.engine.getBitmapMmioConfig()
+          : null;
+        const key = bitmapMmioConfigKey(runtimeConfig);
+        if (!force && key === lastBitmapMmioKey) return false;
+        lastBitmapMmioKey = key;
+
+        const applies = runtimeConfig && (runtimeConfig.target & BITMAP_MMIO_TARGET_DISPLAY) !== 0;
+        if (applies) {
+          if (!bitmapMmioActive) manualConfigBeforeMmio = { ...config };
+          config = {
+            unitWidth: runtimeConfig.unitWidth,
+            unitHeight: runtimeConfig.unitHeight,
+            displayWidth: runtimeConfig.displayWidth,
+            displayHeight: runtimeConfig.displayHeight,
+            baseAddress: runtimeConfig.baseAddress >>> 0
+          };
+          bitmapMmioActive = true;
+          autoLayoutResolution = false;
+        } else if (bitmapMmioActive) {
+          config = manualConfigBeforeMmio
+            ? { ...manualConfigBeforeMmio }
+            : createDefaultConfigForLayout(isMobileLayoutMode());
+          bitmapMmioActive = false;
+          manualConfigBeforeMmio = null;
+          autoLayoutResolution = isLayoutManagedResolution(config.displayWidth, config.displayHeight);
+        } else {
+          return false;
+        }
+
+        applyConfigToControls();
+        resizeCanvases();
+        fullRedrawNeeded = true;
+        pendingWriteAddress = null;
+        if (connected) scheduleRender();
+        return true;
       }
 
       function updateConnectButtonLabel() {
@@ -484,6 +551,8 @@
         const nextConfig = readConfigFromControls();
         const displayChanged = nextConfig.displayWidth !== config.displayWidth || nextConfig.displayHeight !== config.displayHeight;
         config = nextConfig;
+        bitmapMmioActive = false;
+        manualConfigBeforeMmio = null;
         if (displayChanged) {
           autoLayoutResolution = isLayoutManagedResolution(config.displayWidth, config.displayHeight);
         }
@@ -561,6 +630,7 @@
         connected = !connected;
         updateConnectButtonLabel();
         if (connected) {
+          syncBitmapMmioConfig(true);
           fullRedrawNeeded = true;
           pendingWriteAddress = null;
           lastSnapshotStep = Number.isFinite(latestSnapshot?.steps) ? (latestSnapshot.steps | 0) : null;
@@ -577,6 +647,8 @@
       resetButton.addEventListener("click", () => {
         activeLayoutIsMobile = isMobileLayoutMode();
         config = createDefaultConfigForLayout(activeLayoutIsMobile);
+        bitmapMmioActive = false;
+        manualConfigBeforeMmio = null;
         autoLayoutResolution = true;
         applyConfigToControls();
         resizeCanvases();
@@ -607,6 +679,7 @@
         isConnected: () => connected,
         open() {
           shell.open();
+          syncBitmapMmioConfig(true);
           applyLayoutDefaultResolution(false);
           if (connected) {
             fullRedrawNeeded = true;
@@ -617,6 +690,7 @@
         close: shell.close,
         onSnapshot(snapshot) {
           latestSnapshot = snapshot;
+          syncBitmapMmioConfig(false);
           if (!connected) return;
 
           const nextStep = Number.isFinite(snapshot?.steps) ? (snapshot.steps | 0) : null;
@@ -642,6 +716,7 @@
           }
         },
         onRuntimeEvent(event) {
+          syncBitmapMmioConfig(false);
           if (!connected || !event) return;
           if (event.type === "backstep") {
             lastSnapshotStep = event.stepAfter | 0;
@@ -670,6 +745,7 @@
           scheduleRender();
         },
         onBackstep(event) {
+          syncBitmapMmioConfig(false);
           if (!connected || !event) return;
           lastSnapshotStep = event.stepAfter | 0;
           fullRedrawNeeded = true;

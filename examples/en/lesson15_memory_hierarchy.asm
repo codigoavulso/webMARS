@@ -35,6 +35,7 @@ main:
         li   $t2, 256
         li   $t3, 0
 near:
+        # Sequential indexes reuse words from each cache block before moving on.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endnear
         sll  $t5, $t1, 2
@@ -58,6 +59,7 @@ endnear:
         li   $t1, 0
         li   $t3, 0
 far:
+        # Adding 16 skips 64 bytes per iteration: commonly one whole cache block.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

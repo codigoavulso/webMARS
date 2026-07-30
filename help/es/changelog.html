@@ -8,7 +8,18 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">La versión 0.4.13 rehace el modo móvil en torno a un panel a la vez y traduce todos los diagnósticos del ensamblador y del compilador.</p>
+  <p class="lead">La versión 0.5.0 refuerza el runtime MIPS, sustituye las instantáneas completas por deltas compactos para el paso atrás y completa los flujos móviles y de herramientas.</p>
+
+  <h2>0.5.0 &mdash; runtime maduro, paso atrás por deltas, flujos móviles</h2>
+  <ul>
+    <li>Corregido el comportamiento crítico del runtime en límites de memoria, stores atómicos, doubles y redondeo COP1, branches retardados, excepciones, reservas LL/SC y breakpoints.</li>
+    <li>Sustituidas las instantáneas completas por instrucción por deltas inversos limitados, conservando una ventana exacta de paso atrás y el estado sincronizado de las herramientas.</li>
+    <li>Reducida la sobrecarga de ejecución mediante lotes compactos de eventos, renderizado agrupado de herramientas y sincronización más ligera de la interfaz.</li>
+    <li>Añadida configuración dinámica de Bitmap por MMIO y actualizados sus ejemplos y bibliotecas, manteniendo la compatibilidad con MARS 4.5.</li>
+    <li>Ampliados los ejemplos de TTY con una shell MIPS práctica y mejorado el catálogo de lecciones Assembly y Mini-C en los tres idiomas.</li>
+    <li>Integradas las herramientas, diálogos, Cloud y Configuración en el sistema de ventanas móvil, incluido el ajuste al teclado Android, teclados virtuales semánticos y desplazamiento contenido.</li>
+    <li>Añadida cobertura completa de regresión para runtime, herramientas, ejemplos, documentación, interfaz móvil y metadatos de lanzamiento.</li>
+  </ul>
 
   <h2>0.4.13 &mdash; modo móvil de panel único, diagnósticos traducidos</h2>
   <ul>

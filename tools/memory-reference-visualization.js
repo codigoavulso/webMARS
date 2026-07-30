@@ -18,6 +18,48 @@
       .mv-footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
       .mv-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .mv-footer .tool-btn { min-width:130px; }
+
+      /* Mobile uses a vertical split: compact controls first, visualizer below. */
+      .desktop-stacked .mv-tool { gap:6px; padding:6px; }
+      .desktop-stacked .mv-title { font-size:21px; line-height:1.1; }
+      .desktop-stacked .mv-main {
+        grid-template-columns:minmax(0, 1fr);
+        grid-template-rows:auto minmax(150px, 1fr);
+        gap:6px;
+      }
+      .desktop-stacked .mv-controls {
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:4px 7px;
+        padding:5px;
+        overflow:visible;
+      }
+      .desktop-stacked .mv-controls label {
+        gap:2px;
+        min-width:0;
+        font-size:11px;
+      }
+      .desktop-stacked .mv-controls label select { width:100%; min-width:0; }
+      .desktop-stacked .mv-controls label:has([data-mv="hash"]) {
+        flex-direction:row;
+        align-items:center;
+      }
+      .desktop-stacked .mv-scale {
+        grid-column:1 / -1;
+        max-height:58px;
+        overflow:auto;
+        padding:4px;
+        font-size:10px;
+        white-space:pre-wrap;
+      }
+      .desktop-stacked .mv-canvas-wrap {
+        width:100%;
+        min-height:150px;
+        padding:4px;
+      }
+      .desktop-stacked .mv-footer { gap:5px; overflow-x:auto; }
+      .desktop-stacked .mv-footer .ctrl { display:none; }
+      .desktop-stacked .mv-footer .tool-btn { min-width:max-content; flex:1 0 auto; }
     `;
     document.head.appendChild(style);
   }

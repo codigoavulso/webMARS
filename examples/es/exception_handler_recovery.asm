@@ -15,8 +15,10 @@ saved_badvaddr:.word 0
 .text
 main:
   li $t0, 0x12345678
+  # La dirección 1 no está alineada a word; esta instrucción falla intencionadamente.
   sw $t0, 1($zero)
 
+  # La ejecución continúa aquí después de que el handler avance EPC una instrucción.
   li $v0, 4
   la $a0, recovered
   syscall
@@ -53,6 +55,8 @@ main:
 
 .ktext 0x80000180
 exception_handler:
+  # Registros CP0: 13 = Cause, 14 = EPC y 8 = BadVAddr.
+  # $k0/$k1 evitan corromper los registros del programa interrumpido.
   mfc0 $k0, $13
   sw   $k0, saved_cause
   mfc0 $k0, $14
@@ -60,6 +64,7 @@ exception_handler:
   mfc0 $k1, $8
   sw   $k1, saved_badvaddr
 
+  # Saltar la instrucción de 4 bytes; reintentar causaría la misma excepción.
   addiu $k0, $k0, 4
   mtc0  $k0, $14
   eret

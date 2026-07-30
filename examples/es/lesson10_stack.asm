@@ -29,16 +29,18 @@ main:
         li   $t0, 7
         li   $t1, 9
 
-        addi $sp, $sp, -8       # reserve two words
-        sw   $t0, 0($sp)        # push
+        # La pila crece hacia abajo, por eso reservar resta a $sp.
+        addi $sp, $sp, -8       # reservar dos palabras
+        sw   $t0, 0($sp)        # guardar en la pila
         sw   $t1, 4($sp)
 
-        li   $t0, 0             # clobber the registers
+        li   $t0, 0             # sobrescribir los registros
         li   $t1, 0
 
-        lw   $t0, 0($sp)        # pop
+        lw   $t0, 0($sp)        # recuperar de la pila
         lw   $t1, 4($sp)
-        addi $sp, $sp, 8        # release
+        # Cada reserva debe quedar equilibrada para devolver al llamador su $sp original.
+        addi $sp, $sp, 8        # liberar el frame
 
         la   $a0, m1
         li   $v0, 4

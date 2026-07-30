@@ -33,6 +33,7 @@
     <tr><td>Digital Lab Sim</td><td>Controla displays de sete segmentos, teclado e MMIO do laboratório digital.</td></tr>
     <tr><td>Mars Bot</td><td>Controla o robô simulado através da interface mapeada em memória.</td></tr>
   </table>
+  <div class="note"><strong>Exemplo MARS-OS TTY Shell.</strong> Abra o exemplo multificheiro <em>MARS-OS TTY Shell</em>, ligue esta ferramenta, monte e execute. Demonstra uma shell MMIO completa com esperas cooperativas, edição de linha, ANSI, histórico, calculadora, informação do sistema e um pequeno disco RAM apenas de leitura.</div>
 
   <h2>Utilitários educativos</h2>
   <table>
@@ -42,6 +43,19 @@
     <tr><td>ScavengerHunt</td><td>Executa o desafio interativo de programação Assembly.</td></tr>
     <tr><td>Screen Magnifier</td><td>Amplia uma zona para demonstrações e acessibilidade.</td></tr>
   </table>
+
+  <h2>Configuração Bitmap a partir do MIPS</h2>
+  <p>Um programa pode configurar qualquer uma das ferramentas Bitmap escrevendo este bloco versionado relativamente à base MMIO ativa (normalmente <code>0xffff0000</code>). Escreva primeiro todos os campos e, por último, <code>1</code> no comando; a ferramenta só muda após esse commit atómico.</p>
+  <table>
+    <tr><th>Offset</th><th>Valor</th></tr>
+    <tr><td><code>+0x20</code></td><td>Assinatura <code>0x57424d50</code> (<code>WBMP</code>)</td></tr>
+    <tr><td><code>+0x24</code></td><td>Versão do protocolo <code>1</code></td></tr>
+    <tr><td><code>+0x28</code></td><td>Destino: <code>1</code> Display, <code>2</code> Terminal, <code>3</code> ambos</td></tr>
+    <tr><td><code>+0x2c … +0x38</code></td><td>Largura e altura do ecrã; largura e altura da unidade</td></tr>
+    <tr><td><code>+0x3c</code></td><td>Endereço base do framebuffer</td></tr>
+    <tr><td><code>+0x40</code></td><td>Comando: <code>1</code> aplicar, <code>2</code> limpar a configuração do programa</td></tr>
+  </table>
+  <p>Blocos inválidos ou incompletos são ignorados. Passo atrás, exportação e restauro preservam a configuração confirmada. Esta é uma extensão opcional do webMARS: o MARS 4.5 ignora estas words MMIO não utilizadas e o mesmo framebuffer continua a funcionar com configuração manual.</p>
 
   <h2>Segurança MMIO</h2>
   <p>Os dispositivos MMIO são mapeados perto de <code>0xffff0000</code>. As ferramentas e o runtime partilham esses endereços; programas de polling devem respeitar os bits de disponibilidade e programas com interrupções necessitam de um handler válido.</p>

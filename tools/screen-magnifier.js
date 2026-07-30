@@ -50,14 +50,14 @@
               <select data-sm="target">${options.map((option) => `<option value="${option.value}">${option.label}</option>`).join("")}</select>
             </label>
             <label>Scale
-              <input type="number" min="1" max="4" step="0.5" value="2" data-sm="scale" style="width:72px;">
+              <input type="number" inputmode="decimal" enterkeyhint="done" min="1" max="4" step="0.5" value="2" data-sm="scale" style="width:72px;">
             </label>
           </div>
           <div class="smag-settings" data-sm="settings-panel" style="display:none;">
             <label><input type="checkbox" data-sm="auto-resize"> Auto capture on resize</label>
             <label><input type="checkbox" data-sm="auto-scale" checked> Auto capture on scale</label>
             <label><input type="checkbox" data-sm="center" checked> Center capture in view</label>
-            <label>Scribble width <input type="number" data-sm="scribble-width" min="1" max="12" step="1" value="2" style="width:56px;"></label>
+            <label>Scribble width <input type="number" inputmode="numeric" enterkeyhint="done" data-sm="scribble-width" min="1" max="12" step="1" value="2" style="width:56px;"></label>
           </div>
           <div class="smag-view" data-sm="view">
             <div class="smag-content" data-sm="content"></div>

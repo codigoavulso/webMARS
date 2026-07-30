@@ -185,7 +185,7 @@ function renderLayout(root) {
                       <div class="editor-gutter" id="editor-gutter" aria-hidden="true"><pre id="editor-gutter-lines"></pre></div>
                       <div class="editor-code-wrap">
                         <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"></pre>
-                        <textarea id="source-editor" spellcheck="false"></textarea>
+                        <textarea id="source-editor" spellcheck="false" inputmode="text" enterkeyhint="enter" autocomplete="off" autocapitalize="off" autocorrect="off"></textarea>
                       </div>
                     </div>
                   </div>
@@ -297,7 +297,7 @@ function renderLayout(root) {
                 <div class="run-io-body">
                   <textarea id="run-messages" class="message-body run" readonly spellcheck="false" wrap="off"></textarea>
                   <div class="run-io-input-bar">
-                    <input id="run-input-field" class="run-io-input" type="text" autocomplete="off" placeholder="Type input for syscall and press Enter">
+                    <input id="run-input-field" class="run-io-input" type="text" inputmode="text" enterkeyhint="send" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type input for syscall and press Enter">
                     <button id="run-input-send" class="tool-btn" type="button">Send</button>
                   </div>
                 </div>
@@ -606,6 +606,9 @@ function createWindowManager(refs) {
   let layoutMode = window.innerWidth < STACK_BREAKPOINT_PX ? "stacked" : "desktop";
   let mobileActivePanelId = "window-main";
   let mobileMode = "run";
+  let visualViewportFrame = null;
+  let visualViewportBaselineWidth = 0;
+  let visualViewportBaselineHeight = 0;
   let desktopLayoutHistory = [];
   const pendingSessionWindowState = new Map();
   const pendingSavedLayoutState = new Map();
@@ -627,6 +630,52 @@ function createWindowManager(refs) {
   const getDesktopRect = () => desktop.getBoundingClientRect();
   const overlapSize = (aStart, aEnd, bStart, bEnd) => Math.min(aEnd, bEnd) - Math.max(aStart, bStart);
   const isStackedMode = () => layoutMode !== "desktop";
+  const isKeyboardInput = (element) => {
+    if (!(element instanceof HTMLElement)) return false;
+    if (element instanceof HTMLTextAreaElement) return !element.readOnly && !element.disabled;
+    if (element.isContentEditable) return true;
+    if (!(element instanceof HTMLInputElement) || element.readOnly || element.disabled) return false;
+    return !["button", "checkbox", "color", "file", "hidden", "image", "radio", "range", "reset", "submit"].includes(element.type);
+  };
+
+  function syncVisualViewport(refreshLayout = true) {
+    visualViewportFrame = null;
+    const viewport = window.visualViewport;
+    const visibleWidth = Math.max(1, Number(viewport?.width) || window.innerWidth || 1);
+    const visibleHeight = Math.max(1, Number(viewport?.height) || window.innerHeight || 1);
+    const offsetTop = Math.max(0, Number(viewport?.offsetTop) || 0);
+    const focusedInput = isKeyboardInput(document.activeElement) ? document.activeElement : null;
+    const orientationChanged = visualViewportBaselineWidth > 0
+      && Math.abs(visibleWidth - visualViewportBaselineWidth) > 48;
+
+    if (!visualViewportBaselineHeight || orientationChanged || !focusedInput) {
+      visualViewportBaselineWidth = visibleWidth;
+      visualViewportBaselineHeight = visibleHeight;
+    } else {
+      visualViewportBaselineHeight = Math.max(visualViewportBaselineHeight, visibleHeight);
+    }
+
+    const keyboardInset = Math.max(0, visualViewportBaselineHeight - visibleHeight);
+    const keyboardVisible = isStackedMode() && Boolean(focusedInput) && keyboardInset >= 96;
+    document.documentElement.style.setProperty("--visual-viewport-height", `${visibleHeight.toFixed(3)}px`);
+    document.documentElement.style.setProperty("--visual-viewport-offset-top", `${offsetTop.toFixed(3)}px`);
+    document.documentElement.classList.toggle("mobile-keyboard-visible", keyboardVisible);
+
+    if (!refreshLayout || !isStackedMode()) return;
+    refreshWindowLayout();
+    if (focusedInput) {
+      window.requestAnimationFrame(() => {
+        if (document.activeElement !== focusedInput) return;
+        focusedInput.scrollIntoView({ block: "nearest", inline: "nearest" });
+      });
+    }
+  }
+
+  function scheduleVisualViewportSync() {
+    if (visualViewportFrame !== null) return;
+    visualViewportFrame = window.requestAnimationFrame(() => syncVisualViewport(true));
+  }
+
   const isMainStackedMaximized = () => {
     if (!isStackedMode()) return false;
     const mainEntry = windows.get("window-main");
@@ -780,8 +829,9 @@ function createWindowManager(refs) {
     const el = entry.element;
     if (!(el instanceof HTMLElement)) return false;
     if (!el.classList.contains("tool-window")) return false;
-    // Dialogs stay floating so a modal prompt cannot be dismissed by switching
-    // panels, unless they opt in as plain content.
+    // Dialogs normally stay floating, but the shared dialog system opts into a
+    // full mobile panel so forms from Cloud, Settings and runtime prompts cannot
+    // open behind the currently selected window.
     if (el.classList.contains("dialog-window") && !el.classList.contains("mobile-panel-window")) return false;
     return true;
   }
@@ -3085,6 +3135,7 @@ function createWindowManager(refs) {
     return true;
   }
 
+  syncVisualViewport(false);
   desktop.querySelectorAll(".desktop-window").forEach((win) => registerWindow(win));
   windows.forEach((entry) => ensureDesktopNormalizedBounds(entry));
   applyResponsiveClasses();
@@ -3102,8 +3153,14 @@ function createWindowManager(refs) {
   window.addEventListener("webmars:mobile-panels-changed", () => {
     if (isStackedMode()) refreshWindowLayout();
   });
+  window.visualViewport?.addEventListener("resize", scheduleVisualViewportSync);
+  window.visualViewport?.addEventListener("scroll", scheduleVisualViewportSync);
+  window.addEventListener("orientationchange", scheduleVisualViewportSync);
+  document.addEventListener("focusin", scheduleVisualViewportSync);
+  document.addEventListener("focusout", scheduleVisualViewportSync);
 
   window.addEventListener("resize", () => {
+    scheduleVisualViewportSync();
     const nextLayoutMode = getViewportMode();
     const wasStacked = isStackedMode();
     if (!wasStacked && nextLayoutMode !== "desktop") {
@@ -3787,7 +3844,9 @@ function createDialogSystem(windowManager, desktop, options = {}) {
   const defaultHeight = String(options.height || "200px");
   const windowTitle = String(options.title || "Dialog");
   const win = document.createElement("section");
-  win.className = "desktop-window window-hidden tool-window dialog-window";
+  // Desktop still renders this as a floating dialog. In stacked/mobile mode it
+  // participates in the same tab, focus and close lifecycle as every other window.
+  win.className = "desktop-window window-hidden tool-window dialog-window mobile-panel-window";
   win.id = windowId;
   win.style.left = defaultLeft;
   win.style.top = defaultTop;
@@ -3803,7 +3862,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
     <div class="window-content dialog-window-content">
       <textarea data-dialog-role="message" class="dialog-message" readonly spellcheck="false" wrap="soft"></textarea>
       <div data-dialog-role="form" class="dialog-form" hidden></div>
-      <input data-dialog-role="input" class="run-io-input dialog-input" type="text" autocomplete="off">
+      <input data-dialog-role="input" class="run-io-input dialog-input" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
       <div class="dialog-actions">
         <button class="tool-btn" data-dialog-role="cancel" type="button">Cancel</button>
         <button class="tool-btn primary" data-dialog-role="confirm" type="button">OK</button>
@@ -3984,6 +4043,25 @@ function createDialogSystem(windowManager, desktop, options = {}) {
         const inputType = type === "number"
           ? "number"
           : (type === "password" ? "password" : "text");
+        const fieldName = String(field?.name || "").toLowerCase();
+        const inferredInputMode = inputType === "number"
+          ? (Number.isFinite(field?.step) && !Number.isInteger(field.step) ? "decimal" : "numeric")
+          : (fieldName.includes("email")
+            ? "email"
+            : (fieldName.includes("url") || fieldName.includes("uri") || fieldName.includes("apibase")
+              ? "url"
+              : "text"));
+        const inputMode = String(field?.inputMode || inferredInputMode);
+        const hasFollowingInput = fields.slice(fieldIndex + 1).some((candidate) => {
+          const candidateType = String(candidate?.type || "text");
+          return candidateType !== "checkbox" && candidateType !== "select";
+        });
+        const enterKeyHint = String(field?.enterKeyHint || (hasFollowingInput ? "next" : "done"));
+        const autocomplete = String(field?.autocomplete || "off");
+        const autocapitalize = String(field?.autocapitalize || "off");
+        const placeholder = field?.placeholder === undefined
+          ? ""
+          : ` placeholder="${escapeHtml(String(field.placeholder))}"`;
         return `
           <label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
             <span class="dialog-form-label">${label}</span>
@@ -3992,8 +4070,14 @@ function createDialogSystem(windowManager, desktop, options = {}) {
               data-field-name="${escapeHtml(String(field?.name || ""))}"
               class="dialog-form-control"
               type="${inputType}"
+              inputmode="${escapeHtml(inputMode)}"
+              enterkeyhint="${escapeHtml(enterKeyHint)}"
+              autocomplete="${escapeHtml(autocomplete)}"
+              autocapitalize="${escapeHtml(autocapitalize)}"
+              autocorrect="off"
+              spellcheck="false"
               value="${escapeHtml(String(value ?? ""))}"
-              ${min}${max}${step}
+              ${min}${max}${step}${placeholder}
             >
           </label>
           ${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}
@@ -4029,6 +4113,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
       return;
     }
 
+    win.classList.toggle("dialog-form-active", active.kind === "form");
     win.style.width = active.width || defaultSize.width;
     win.style.height = active.height || defaultSize.height;
     titleNode.textContent = active.title || "Dialog";
@@ -4050,6 +4135,10 @@ function createDialogSystem(windowManager, desktop, options = {}) {
       inputNode.hidden = false;
       inputNode.value = active.defaultValue || "";
       inputNode.placeholder = active.placeholder || "";
+      inputNode.inputMode = active.inputMode || "text";
+      inputNode.enterKeyHint = active.enterKeyHint || "done";
+      inputNode.autocomplete = active.autocomplete || "off";
+      inputNode.autocapitalize = active.autocapitalize || "off";
       setFormDisabled(false);
     } else if (active.kind === "form") {
       renderForm(active);
@@ -4190,6 +4279,10 @@ function createDialogSystem(windowManager, desktop, options = {}) {
             : String(options.contextLabel ?? ""),
           defaultValue: String(options.defaultValue || ""),
           placeholder: String(options.placeholder || ""),
+          inputMode: String(options.inputMode || "text"),
+          enterKeyHint: String(options.enterKeyHint || "done"),
+          autocomplete: String(options.autocomplete || "off"),
+          autocapitalize: String(options.autocapitalize || "off"),
           confirmLabel: String(options.confirmLabel || translateText("OK")),
           cancelLabel: String(options.cancelLabel || translateText("Cancel")),
           resolve
@@ -5164,8 +5257,12 @@ function createMessagesPane(refs, limit) {
       setBuffer(refs.messages.run, "");
       scheduleFlush();
     },
-    requestInput(promptText = "") {
+    requestInput(promptText = "", options = {}) {
       pendingPrompt = String(promptText || "");
+      if (refs.messages.runInput instanceof HTMLInputElement) {
+        refs.messages.runInput.inputMode = String(options.inputMode || "text");
+        refs.messages.runInput.enterKeyHint = String(options.enterKeyHint || "send");
+      }
       refreshInputPlaceholder();
       refs.tabs.messages.activate("panel-run-io");
       refs.messages.runInput?.focus();
@@ -5176,6 +5273,10 @@ function createMessagesPane(refs, limit) {
     },
     clearInputRequest() {
       pendingPrompt = "";
+      if (refs.messages.runInput instanceof HTMLInputElement) {
+        refs.messages.runInput.inputMode = "text";
+        refs.messages.runInput.enterKeyHint = "send";
+      }
       refreshInputPlaceholder();
     },
     refreshTranslations() {
@@ -5294,8 +5395,23 @@ function injectRuntimeStyles() {
     .menu-logo { width: 16px; height: 16px; margin: 0 4px 0 1px; align-self: center; flex: 0 0 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; line-height: 1; }
     .menu-bar { padding: 3px 5px; gap: 3px; }
     .menu-item { padding: 2px 7px; font-size: 12px; line-height: 1.1; }
-    .toolbar { padding: 4px 5px; gap: 4px; }
-    .toolbar-group { gap: 3px; padding-right: 6px; }
+    /* Desktop toolbars are a single responsive strip. Individual groups may
+       compact or disappear at narrower widths, but never create extra rows. */
+    .toolbar {
+      padding: 4px 5px;
+      gap: 4px;
+      flex-wrap: nowrap;
+      overflow-x: hidden;
+      overflow-y: hidden;
+    }
+    .toolbar-group {
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 3px;
+      min-width: 0;
+      padding-right: 6px;
+      white-space: nowrap;
+    }
     .tool-btn { padding: 2px 7px; font-size: 11px; min-height: 20px; border-radius: 1px; }
     .toolbar .tool-btn { min-height: 18px; padding: 2px 6px; }
     .data-nav .tool-btn { min-height: 18px; padding: 1px 6px; }
@@ -5397,7 +5513,20 @@ function injectRuntimeStyles() {
     .editor-token-number { color: var(--syntax-number); }
     .editor-token-string { color: var(--syntax-string); }
 
-    html, body { overflow: hidden; }
+    html, body {
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    .window-content,
+    .dialog-form,
+    .dialog-message,
+    .message-body,
+    .project-tree,
+    .editor-scroll,
+    textarea {
+      overscroll-behavior: contain;
+    }
 
     .shell {
       display: grid;
@@ -6538,6 +6667,18 @@ function injectRuntimeStyles() {
 
     #window-registers .register-body {
       margin: 4px;
+      min-width: 0;
+      min-height: 0;
+      overflow: auto;
+      overscroll-behavior: contain;
+      touch-action: pan-x pan-y;
+    }
+
+    #window-registers .subtab-panel.active {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr);
+      min-height: 0;
+      overflow: hidden;
     }
 
     .subtab-panel {
@@ -7178,11 +7319,25 @@ function injectRuntimeStyles() {
     .hide-labels-window .desktop:not(.desktop-stacked) .labels-panel { display: none; }
     .hide-labels-window .desktop:not(.desktop-stacked) .execute-top { grid-template-columns: 1fr; }
 
+    /* File actions already exist in the menus. On a constrained desktop they
+       yield their space first so execution and speed controls stay on one row. */
+    @media (min-width: ${stackedMaxWidthPx + 1}px) and (max-width: 1400px) {
+      .toolbar-file-group { display: none; }
+    }
+
     @media (max-width: 1250px) {
-      .toolbar-speed-group { min-width: 100%; grid-template-columns: auto 1fr; }
+      .toolbar-speed-group {
+        flex: 1 1 190px;
+        grid-template-columns: minmax(150px, 1fr);
+        min-width: 150px;
+      }
       .toolbar-speed-group .run-speed-label { display: none; }
       #run-speed-slider, .run-speed-ruler { width: 100%; }
-      .toolbar-benchmark-group { min-width: 100%; width: 100%; }
+      .toolbar-benchmark-group {
+        flex: 0 1 310px;
+        min-width: 260px;
+        width: auto;
+      }
       .bitmap-main { grid-template-columns: 1fr; }
     }
 
@@ -7204,13 +7359,22 @@ function injectRuntimeStyles() {
       }
 
       .shell {
-        height: 100dvh;
+        height: var(--visual-viewport-height, 100dvh);
         min-height: 0;
         overflow: hidden;
         /* Five areas: mode bar, the three switchable toolbars, then the panel.
            Keep this list in step with the base grid-template-areas. */
         grid-template-rows: auto auto auto auto minmax(0, 1fr);
         align-content: stretch;
+      }
+
+      /* While an on-screen keyboard is reducing the visual viewport, devote the
+         remaining height to the active panel and its focused editor/control. */
+      html.mobile-keyboard-visible .mobile-modes,
+      html.mobile-keyboard-visible .menu-bar,
+      html.mobile-keyboard-visible .toolbar,
+      html.mobile-keyboard-visible .panel-tabs {
+        display: none !important;
       }
 
       /* Row one picks which toolbar row two shows. Everything not selected
@@ -7720,7 +7884,7 @@ function injectRuntimeStyles() {
         min-height: 0;
         overflow-y: auto;
         overflow-x: hidden;
-        overscroll-behavior: auto;
+        overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-y;
       }
@@ -7730,7 +7894,7 @@ function injectRuntimeStyles() {
         padding: 2px;
         overflow-y: auto;
         overflow-x: hidden;
-        overscroll-behavior: auto;
+        overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
         touch-action: pan-y;
       }
@@ -7742,12 +7906,43 @@ function injectRuntimeStyles() {
         min-width: 0;
       }
 
+      .desktop.desktop-stacked .desktop-window.mobile-panel-window .window-titlebar {
+        cursor: default;
+        height: 29px;
+        font-size: 12px;
+        padding: 0 7px 0 8px;
+      }
+
+      .desktop.desktop-stacked .desktop-window.mobile-panel-window .dialog-window-content {
+        min-height: 0;
+        padding: 6px;
+        overflow: hidden;
+      }
+
+      .desktop.desktop-stacked .desktop-window.mobile-panel-window.dialog-form-active .dialog-window-content {
+        grid-template-rows: minmax(48px, 96px) minmax(0, 1fr) auto;
+      }
+
+      .desktop.desktop-stacked .desktop-window.mobile-panel-window .dialog-form,
+      .desktop.desktop-stacked .desktop-window.mobile-panel-window .dialog-message {
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .desktop.desktop-stacked .desktop-window.mobile-panel-window .dialog-form {
+        align-content: start;
+      }
+
       /* These were visible so the whole page could scroll them. The page no
          longer scrolls, so visible now means clipped: the body scrolls itself. */
       .desktop.desktop-stacked #window-registers .window-content,
       .desktop.desktop-stacked #window-registers .subtab-panel {
         overflow: hidden;
         min-height: 0;
+      }
+
+      .desktop.desktop-stacked #window-registers .window-content {
+        touch-action: pan-x pan-y;
       }
 
       .desktop.desktop-stacked #window-registers .register-body {

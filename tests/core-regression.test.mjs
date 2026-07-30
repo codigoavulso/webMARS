@@ -80,6 +80,91 @@ test("JavaScript engine assembles and executes a representative program", async 
   assert.equal(engine.readWord(registers[29] >>> 0), 24);
 });
 
+test("Bitmap MMIO configuration commits atomically and participates in backstep and state roundtrip", async () => {
+  const engine = await createJavaScriptEngine({ settings: { maxBacksteps: 100 } });
+  const assembled = engine.assemble(`
+.text
+main:
+  li $t0, 0xffff0020
+  li $t1, 0x57424d50
+  sw $t1, 0($t0)
+  li $t1, 1
+  sw $t1, 4($t0)
+  li $t1, 3
+  sw $t1, 8($t0)
+  li $t1, 128
+  sw $t1, 12($t0)
+  li $t1, 64
+  sw $t1, 16($t0)
+  li $t1, 2
+  sw $t1, 20($t0)
+  sw $t1, 24($t0)
+  li $t1, 0x10020000
+  sw $t1, 28($t0)
+  li $t1, 1
+  sw $t1, 32($t0)
+  nop
+`, { sourceName: "bitmap-mmio.asm" });
+  assert.equal(assembled.ok, true, JSON.stringify(assembled.errors || []));
+
+  for (let index = 0; index < 40 && !engine.getBitmapMmioConfig(); index += 1) {
+    assert.equal(engine.step().ok, true);
+  }
+  assert.deepEqual({ ...engine.getBitmapMmioConfig() }, {
+    protocolVersion: 1,
+    target: 3,
+    displayWidth: 128,
+    displayHeight: 64,
+    unitWidth: 2,
+    unitHeight: 2,
+    baseAddress: 0x10020000,
+    controlAddress: 0xffff0020
+  });
+  assert.deepEqual(
+    { ...engine.getSnapshot().bitmapMmioConfig },
+    { ...engine.getBitmapMmioConfig() }
+  );
+
+  assert.equal(engine.backstep().ok, true);
+  assert.equal(engine.getBitmapMmioConfig(), null);
+  assert.equal(engine.step().ok, true);
+  assert.equal(engine.getBitmapMmioConfig()?.displayWidth, 128);
+
+  const exported = engine.exportRuntimeState();
+  const restored = await createJavaScriptEngine();
+  restored.importRuntimeState(exported);
+  assert.deepEqual(
+    { ...restored.getBitmapMmioConfig() },
+    { ...engine.getBitmapMmioConfig() }
+  );
+});
+
+test("Bitmap MMIO ignores incomplete or unsafe configurations and supports explicit clear", async () => {
+  const engine = await createJavaScriptEngine();
+  const addresses = engine.getBitmapMmioAddresses();
+
+  engine.writeWord(addresses.version, 1);
+  engine.writeWord(addresses.target, 1);
+  engine.writeWord(addresses.displayWidth, 64);
+  engine.writeWord(addresses.displayHeight, 64);
+  engine.writeWord(addresses.unitWidth, 1);
+  engine.writeWord(addresses.unitHeight, 1);
+  engine.writeWord(addresses.framebuffer, 0x10010000);
+  engine.writeWord(addresses.command, 1);
+  assert.equal(engine.getBitmapMmioConfig(), null, "missing signature must not commit");
+
+  engine.writeWord(addresses.signature, 0x57424d50);
+  engine.writeWord(addresses.framebuffer, addresses.signature);
+  engine.writeWord(addresses.command, 1);
+  assert.equal(engine.getBitmapMmioConfig(), null, "framebuffer must not overlap the control block");
+
+  engine.writeWord(addresses.framebuffer, 0x10010000);
+  engine.writeWord(addresses.command, 1);
+  assert.equal(engine.getBitmapMmioConfig()?.baseAddress, 0x10010000);
+  engine.writeWord(addresses.command, 2);
+  assert.equal(engine.getBitmapMmioConfig(), null);
+});
+
 test("JavaScript assembler reports invalid instructions without crashing", async () => {
   const engine = await createJavaScriptEngine();
   const result = engine.assemble(".text\nmain:\n  definitely_not_mips $t0, $t1", { sourceName: "invalid.asm" });
@@ -143,6 +228,159 @@ test("window titlebar separators render inside the grid edge for Firefox", async
   assert.match(separatorRule, /height:\s*1px;/);
   assert.match(separatorRule, /background:\s*var\(--window-titlebar-separator\);/);
   assert.match(toolTitlebarRule, /--window-titlebar-separator:\s*var\(--flat-line\);/);
+});
+
+test("opening a window makes it the active mobile panel", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const activateMobilePanel = extractNamedFunction(ui, "activateMobilePanelForEntry");
+  const showWindow = extractNamedFunction(ui, "show");
+
+  assert.match(activateMobilePanel, /if \(!isStackedMode\(\) \|\| !entry \|\| isHiddenEntry\(entry\)\) return false;/);
+  assert.match(activateMobilePanel, /if \(entry\.kind !== "native" && !isStackedToolEntry\(entry\)\) return false;/);
+  assert.match(activateMobilePanel, /mobileActivePanelId = entry\.id;/);
+  assert.ok(
+    showWindow.indexOf("activateMobilePanelForEntry(entry);") < showWindow.indexOf("scheduleSharedSplitterRefresh();"),
+    "show must select the newly opened mobile panel before refreshing the layout"
+  );
+});
+
+test("Cloud, Settings and other shared dialogs participate in the mobile window system", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const applyDialog = extractNamedFunction(ui, "applyActiveDialog");
+
+  assert.match(
+    ui,
+    /desktop-window window-hidden tool-window dialog-window mobile-panel-window/,
+    "shared dialogs must opt into mobile panel selection and tabs"
+  );
+  assert.match(applyDialog, /win\.classList\.toggle\("dialog-form-active", active\.kind === "form"\);/);
+  assert.match(
+    ui,
+    /\.desktop\.desktop-stacked \.desktop-window\.mobile-panel-window\.dialog-form-active \.dialog-window-content \{\s+grid-template-rows: minmax\(48px, 96px\) minmax\(0, 1fr\) auto;/,
+    "mobile forms must reserve a scrollable row for long Cloud and Settings content"
+  );
+  assert.match(
+    ui,
+    /\.desktop\.desktop-stacked \.desktop-window\.mobile-panel-window \.dialog-form \{\s+align-content: start;/,
+    "short mobile forms must stay packed at the top instead of stretching vertically"
+  );
+});
+
+test("right-click closes only closable mobile window tabs", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const getCloseControl = extractNamedFunction(ui, "getWindowCloseControl");
+  const closeMobilePanel = extractNamedFunction(ui, "closeMobilePanelEntry");
+  const renderTabs = extractNamedFunction(ui, "renderMobilePanelTabs");
+
+  assert.match(getCloseControl, /querySelector\('\[data-win-action="close"\]'\)/);
+  assert.match(getCloseControl, /control\.disabled \|\| control\.hidden \|\| control\.getAttribute\("aria-disabled"\) === "true"/);
+  assert.match(closeMobilePanel, /if \(!closeControl\) return false;/);
+  assert.match(closeMobilePanel, /closeControl\.click\(\);/);
+  assert.match(renderTabs, /tab\.dataset\.closable = isClosable \? "true" : "false";/);
+  assert.match(renderTabs, /tab\.addEventListener\("contextmenu", \(event\) => \{/);
+  assert.match(renderTabs, /event\.preventDefault\(\);/);
+  assert.match(renderTabs, /closeMobilePanelEntry\(entry\);/);
+});
+
+test("mobile titlebars show only close for closable windows", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const registerWindow = extractNamedFunction(ui, "registerWindow");
+
+  assert.match(registerWindow, /const closable = Boolean\(win\.querySelector\('\[data-win-action="close"\]'\)\);/);
+  assert.match(registerWindow, /win\.classList\.toggle\("window-closable", closable\);/);
+  assert.match(registerWindow, /\bclosable,\s+element: win,/);
+  assert.match(ui, /\.desktop\.desktop-stacked \.desktop-window \.window-controls \{\s+display: none !important;/);
+  assert.match(ui, /\.desktop\.desktop-stacked \.desktop-window\.window-closable \.window-controls \{\s+display: flex !important;/);
+  assert.match(ui, /\.window-closable \.window-controls \[data-win-action="min"\],[\s\S]*?\[data-win-action="max"\] \{\s+display: none !important;/);
+  assert.match(ui, /\.window-closable \.window-controls \[data-win-action="close"\] \{[\s\S]*?display: inline-flex !important;/);
+});
+
+test("mobile bars stay one row high and scroll horizontally", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+
+  assert.match(ui, /\.mobile-modes \{\s+display: flex;\s+flex-wrap: nowrap;[\s\S]*?height: 42px;[\s\S]*?overflow-x: auto;/);
+  assert.match(ui, /\[data-mobile-mode\] \.menu-bar,[\s\S]*?height: 42px;[\s\S]*?max-height: 42px;[\s\S]*?flex-wrap: nowrap;[\s\S]*?overflow-x: auto;/);
+  assert.match(ui, /\.menu-bar \{\s+display: flex;\s+flex-wrap: nowrap;[\s\S]*?overflow-x: auto;\s+overflow-y: hidden;/);
+  assert.match(ui, /\.toolbar \{\s+display: flex;\s+flex-wrap: nowrap;[\s\S]*?overflow-x: auto;\s+overflow-y: hidden;/);
+  assert.match(ui, /\.menu-bar \.menu-item \{[\s\S]*?flex: 0 0 auto;[\s\S]*?white-space: nowrap;/);
+  assert.match(ui, /\.mobile-modes::-webkit-scrollbar,[\s\S]*?\.panel-tabs::-webkit-scrollbar \{\s+display: none;/);
+});
+
+test("mobile layout follows the visual viewport while the Android keyboard is open", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const html = await readFile(resolve(projectRoot, "index.html"), "utf8");
+  const syncViewport = extractNamedFunction(ui, "syncVisualViewport");
+  const scheduleViewport = extractNamedFunction(ui, "scheduleVisualViewportSync");
+
+  assert.match(html, /interactive-widget=resizes-content/);
+  assert.match(syncViewport, /window\.visualViewport/);
+  assert.match(syncViewport, /--visual-viewport-height/);
+  assert.match(syncViewport, /keyboardInset >= 96/);
+  assert.match(syncViewport, /mobile-keyboard-visible/);
+  assert.match(syncViewport, /scrollIntoView\(\{ block: "nearest", inline: "nearest" \}\)/);
+  assert.match(scheduleViewport, /requestAnimationFrame\(\(\) => syncVisualViewport\(true\)\)/);
+  assert.match(ui, /window\.visualViewport\?\.addEventListener\("resize", scheduleVisualViewportSync\)/);
+  assert.match(ui, /window\.visualViewport\?\.addEventListener\("scroll", scheduleVisualViewportSync\)/);
+  assert.match(ui, /\.shell \{\s+height: var\(--visual-viewport-height, 100dvh\);/);
+  assert.match(
+    ui,
+    /html\.mobile-keyboard-visible \.mobile-modes,[\s\S]*?html\.mobile-keyboard-visible \.panel-tabs \{\s+display: none !important;/,
+    "non-essential mobile chrome should collapse while typing"
+  );
+});
+
+test("desktop toolbar stays on one row and sheds file actions when constrained", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+
+  assert.match(ui, /\.toolbar \{\s+padding: 4px 5px;[\s\S]*?flex-wrap: nowrap;[\s\S]*?overflow-x: hidden;[\s\S]*?overflow-y: hidden;/);
+  assert.match(ui, /@media \(min-width: \$\{stackedMaxWidthPx \+ 1\}px\) and \(max-width: 1400px\) \{\s+\.toolbar-file-group \{ display: none; \}/);
+  assert.match(ui, /@media \(max-width: 1250px\) \{\s+\.toolbar-speed-group \{[\s\S]*?flex: 1 1 190px;[\s\S]*?grid-template-columns: minmax\(150px, 1fr\);[\s\S]*?min-width: 150px;/);
+  assert.doesNotMatch(ui, /\.toolbar-speed-group \{ min-width: 100%;/);
+  assert.doesNotMatch(ui, /\.toolbar-benchmark-group \{ min-width: 100%; width: 100%; \}/);
+});
+
+test("large visual tools use vertical, full-width layouts in mobile mode", async () => {
+  const [bht, bitmapTerminal, floatRepresentation, memoryReference, mipsXray] = await Promise.all([
+    readFile(resolve(projectRoot, "tools/bht-simulator.js"), "utf8"),
+    readFile(resolve(projectRoot, "tools/bitmap-terminal-tool.js"), "utf8"),
+    readFile(resolve(projectRoot, "tools/float-representation.js"), "utf8"),
+    readFile(resolve(projectRoot, "tools/memory-reference-visualization.js"), "utf8"),
+    readFile(resolve(projectRoot, "tools/mips-xray.js"), "utf8")
+  ]);
+
+  assert.match(bht, /\.desktop-stacked \.bht-main \{[\s\S]*?grid-template-columns:minmax\(0, 1fr\);[\s\S]*?grid-template-rows:auto minmax\(150px, 1fr\);/);
+  assert.match(bht, /\.desktop-stacked \.bht-table-wrap \{ width:100%; \}/);
+
+  assert.match(bitmapTerminal, /\.desktop-stacked \.bt-main \{[\s\S]*?grid-template-columns:minmax\(0, 1fr\);[\s\S]*?grid-template-rows:auto minmax\(150px, 1fr\);/);
+  assert.match(bitmapTerminal, /\.desktop-stacked \.bt-controls \{[\s\S]*?grid-template-columns:repeat\(2, minmax\(0, 1fr\)\);/);
+
+  assert.match(floatRepresentation, /\.desktop-stacked \.float-tool h2 \{ font-size:21px;/);
+  assert.match(floatRepresentation, /\.desktop-stacked \.float-bin-row \{[\s\S]*?grid-template-columns:36px 82px minmax\(0, 1fr\);/);
+  assert.match(floatRepresentation, /\.desktop-stacked \.float-dec-row \{[\s\S]*?grid-template-columns:minmax\(0, 1fr\);/);
+
+  assert.match(memoryReference, /\.desktop-stacked \.mv-main \{[\s\S]*?grid-template-columns:minmax\(0, 1fr\);[\s\S]*?grid-template-rows:auto minmax\(150px, 1fr\);/);
+  assert.match(memoryReference, /\.desktop-stacked \.mv-canvas-wrap \{[\s\S]*?width:100%;/);
+
+  assert.match(mipsXray, /\.desktop-stacked \.xray-main \{[\s\S]*?grid-template-columns:minmax\(0, 1fr\);[\s\S]*?grid-template-rows:auto minmax\(160px, 1fr\);/);
+  assert.match(mipsXray, /\.desktop-stacked \.xray-side \{[\s\S]*?order:1;/);
+  assert.match(mipsXray, /\.desktop-stacked \.xray-image-wrap \{[\s\S]*?order:2;[\s\S]*?width:100%;/);
+});
+
+test("assembly state belongs to the Control toolbar instead of Run speed", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const runGroupStart = ui.indexOf('<div class="toolbar-group toolbar-run-group">');
+  const speedGroupStart = ui.indexOf('<div class="toolbar-group toolbar-speed-group">');
+  const benchmarkGroupStart = ui.indexOf('<div class="toolbar-group toolbar-benchmark-group');
+  const runGroup = ui.slice(runGroupStart, speedGroupStart);
+  const speedGroup = ui.slice(speedGroupStart, benchmarkGroupStart);
+
+  assert.ok(runGroupStart >= 0 && speedGroupStart > runGroupStart && benchmarkGroupStart > speedGroupStart);
+  assert.match(runGroup, /id="assembly-status"/);
+  assert.doesNotMatch(speedGroup, /id="assembly-status"/);
+  assert.match(speedGroup, /id="run-speed-label"/);
+  assert.match(speedGroup, /id="run-speed-slider"/);
+  assert.match(speedGroup, /id="run-speed-select-mobile"/);
+  assert.match(ui, /\.toolbar-speed-group \{\s+display: inline-grid;\s+grid-template-columns: auto minmax\(188px, 210px\);/);
 });
 
 test("editor font preferences reach the visible overlay without a reload", async () => {
@@ -329,4 +567,74 @@ globalThis.after = JSON.stringify(projectState);`,
 
   assert.equal(sandbox.result, false);
   assert.equal(sandbox.after, sandbox.before);
+});
+
+test("Mini-C compilation reuses loaded libraries and ignores stale requests", async () => {
+  const runtimeSource = await readFile(resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js"), "utf8");
+  const buildStart = runtimeSource.indexOf("async function buildMiniCOutput(");
+  const buildEnd = runtimeSource.indexOf("\nfunction writeMiniCCompilerOutput(", buildStart);
+  assert.ok(buildStart >= 0 && buildEnd > buildStart);
+  const buildSource = runtimeSource.slice(buildStart, buildEnd);
+
+  assert.match(buildSource, /await ensureMiniCGlobalLibrariesLoaded\(\);/);
+  assert.doesNotMatch(buildSource, /ensureMiniCGlobalLibrariesLoaded\(true\)/);
+  assert.match(buildSource, /typeof options\.isCurrent === "function" && !options\.isCurrent\(\)/);
+  assert.match(runtimeSource, /let miniCCompileRequestId = 0;/);
+  assert.match(runtimeSource, /const compileRequestId = \+\+miniCCompileRequestId;/);
+  assert.match(
+    runtimeSource,
+    /isCurrent: \(\) => compileRequestId === miniCCompileRequestId[\s\S]*?if \(compileRequestId !== miniCCompileRequestId\) return;[\s\S]*?miniCCompilerState\.lastSourceName = output\.sourceName;/
+  );
+  assert.match(
+    runtimeSource,
+    /catch \(error\) \{\s*if \(compileRequestId !== miniCCompileRequestId\) return;/
+  );
+});
+
+test("mobile inputs expose semantic keyboards across the app and tools", async () => {
+  const uiSource = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const runtimeSource = await readFile(resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js"), "utf8");
+  const bitmapTerminalSource = await readFile(resolve(projectRoot, "tools/bitmap-terminal-tool.js"), "utf8");
+  const floatRepresentationSource = await readFile(resolve(projectRoot, "tools/float-representation.js"), "utf8");
+  const keyboardDisplaySource = await readFile(resolve(projectRoot, "tools/keyboard-display-mmio.js"), "utf8");
+
+  assert.match(uiSource, /id="source-editor"[^>]*inputmode="text"[^>]*enterkeyhint="enter"/);
+  assert.match(uiSource, /id="run-input-field"[^>]*inputmode="text"[^>]*enterkeyhint="send"/);
+  assert.match(uiSource, /inputmode="\$\{escapeHtml\(inputMode\)\}"/);
+  assert.match(uiSource, /enterkeyhint="\$\{escapeHtml\(enterKeyHint\)\}"/);
+  assert.match(uiSource, /inputNode\.inputMode = active\.inputMode \|\| "text";/);
+  assert.match(runtimeSource, /function getRuntimeInputKeyboard\(kind = ""\)/);
+  assert.match(runtimeSource, /normalizedKind === "read-int"[\s\S]*?inputMode: "numeric"/);
+  assert.match(runtimeSource, /normalizedKind === "read-float"[\s\S]*?inputMode: "decimal"/);
+  assert.match(runtimeSource, /name: "email"[\s\S]*?inputMode: "email"[\s\S]*?autocomplete: "email"/);
+  assert.match(runtimeSource, /name: "cloudApiBase"[\s\S]*?inputMode: "url"/);
+  assert.match(bitmapTerminalSource, /data-bt="kb-input"[^>]*inputmode="text"[^>]*enterkeyhint="send"/);
+  assert.match(floatRepresentationSource, /data-fr="sign"[^>]*inputmode="numeric"/);
+  assert.match(floatRepresentationSource, /data-fr="dec"[^>]*inputmode="decimal"/);
+  assert.match(keyboardDisplaySource, /data-kd="keyboard"[^>]*inputmode="text"[^>]*enterkeyhint="send"/);
+});
+
+test("mobile scrolling is contained and disables document pull-to-refresh", async () => {
+  const uiSource = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+
+  assert.match(uiSource, /html, body \{\s*overflow: hidden;\s*overscroll-behavior: none;/);
+  assert.match(uiSource, /\.window-content,[\s\S]*?textarea \{\s*overscroll-behavior: contain;/);
+  assert.doesNotMatch(uiSource, /overscroll-behavior: auto;/);
+});
+
+test("Registers owns its scroll area when the mobile viewport becomes short", async () => {
+  const uiSource = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+
+  assert.match(
+    uiSource,
+    /#window-registers \.subtab-panel\.active \{\s*display: grid;\s*grid-template-rows: minmax\(0, 1fr\);\s*min-height: 0;\s*overflow: hidden;/
+  );
+  assert.match(
+    uiSource,
+    /#window-registers \.register-body \{[\s\S]*?overflow: auto;[\s\S]*?overscroll-behavior: contain;[\s\S]*?touch-action: pan-x pan-y;/
+  );
+  assert.match(
+    uiSource,
+    /\.desktop\.desktop-stacked #window-registers \.window-content \{\s*touch-action: pan-x pan-y;/
+  );
 });

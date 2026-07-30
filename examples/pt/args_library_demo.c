@@ -7,9 +7,11 @@ int main(void) {
   int repeat = 1;
   string name = "MARS";
 
+  // Estas funções registam as opções e os endereços onde guardar os valores.
   args_flag("verbose", &verbose);
   args_int("repeat", &repeat);
   args_string("name", &name);
+  // args_parse consome as opções conhecidas e conserva os argumentos posicionais.
   args_t remaining = args_parse();
 
   if (remaining == NULL) {
@@ -17,6 +19,7 @@ int main(void) {
     return 0;
   }
 
+  // remaining->argc/argv descrevem apenas os argumentos que não eram opções.
   print_string("nome=");
   print_string(name);
   print_char(10);

@@ -23,12 +23,13 @@ sp:     .asciiz " "
         .text
         .globl main
 main:
-        li   $t0, 1             # the count register
-        li   $t1, 11            # the limit
+        li   $t0, 1             # registo contador
+        li   $t1, 11            # limite exclusivo
 
 loop:
-        slt  $t2, $t0, $t1      # comparator
-        beq  $t2, $zero, endl   # exit when count reaches limit
+        # Invariante: $t0 é o próximo valor a imprimir e permanece abaixo de $t1.
+        slt  $t2, $t0, $t1      # comparador
+        beq  $t2, $zero, endl   # sair ao atingir o limite
 
         move $a0, $t0
         li   $v0, 1
@@ -37,7 +38,8 @@ loop:
         li   $v0, 4
         syscall
 
-        addi $t0, $t0, 1        # the adder
+        # Incrementar antes do salto garante progresso em direção ao fim.
+        addi $t0, $t0, 1        # incrementador
         j    loop
 
 endl:

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createJavaScriptEngine } from "./helpers/engines.mjs";
+import { createJavaScriptEngine, loadMiniCCompiler } from "./helpers/engines.mjs";
 
 function registers(engine) {
   return engine.exportRuntimeState({ includeProgram: false }).registers;
@@ -1336,4 +1336,210 @@ main:
   assert.equal(engine.backstep().ok, true);
   assert.equal(engine.getImageHandle(handle).path, "old-image.json");
   assert.equal(engine.getVirtualFileBytes("new-image.json"), null);
+});
+
+async function compileAndRunMiniC(source, sourceName = "runtime-guard.c", maxSteps = 500) {
+  const compiler = await loadMiniCCompiler();
+  const compiled = compiler.compile(source, {
+    sourceName,
+    subset: "C0",
+    targetAbi: "o32"
+  });
+  assert.equal(compiled.ok, true, JSON.stringify(compiled.errors || []));
+  const engine = await createJavaScriptEngine({ settings: { startAtMain: true } });
+  const assembled = engine.assemble(compiled.asm, { sourceName: `${sourceName}.s` });
+  assert.equal(assembled.ok, true, JSON.stringify(assembled.errors || []));
+  return { engine, result: engine.go(maxSteps), asm: compiled.asm };
+}
+
+test("Mini-C rejects overflowing allocations before multiplication or zero-fill", async () => {
+  for (const length of [1073741823, 1073741825]) {
+    const { engine, result } = await compileAndRunMiniC(
+      `int main(void) { int* values = alloc_array(int, ${length}); return 0; }`,
+      `alloc-overflow-${length}.c`,
+      100
+    );
+    assert.equal(result.done, true);
+    assert.equal(result.exception, true);
+    assert.match(result.message, /code = 8/);
+    assert.equal(engine.exportRuntimeState({ includeProgram: false }).heapPointer >>> 0, 0x10040000);
+  }
+});
+
+test("Mini-C invalid shifts and safety guards raise runtime exceptions", async () => {
+  const cases = [
+    ["shift-high.c", "int main(void) { return 1 << 32; }", 11],
+    ["shift-negative.c", "int main(void) { return 8 >> -1; }", 11],
+    ["assert.c", "int main(void) { assert(false); return 0; }", 1],
+    ["null.c", "int main(void) { int* value = NULL; return *value; }", 3],
+    ["bounds.c", "int main(void) { int* values = alloc_array(int, 1); return values[1]; }", 5]
+  ];
+  for (const [sourceName, source, breakCode] of cases) {
+    const { result } = await compileAndRunMiniC(source, sourceName, 200);
+    assert.equal(result.done, true, sourceName);
+    assert.equal(result.exception, true, sourceName);
+    assert.match(result.message, new RegExp(`code = ${breakCode}$`), sourceName);
+  }
+});
+
+test("data repetition factors are bounded before either assembly pass", async () => {
+  const engine = await createJavaScriptEngine();
+  const result = engine.assemble(`
+.data
+values: .word 0:1073741824
+`, { sourceName: "oversized-repetition.s" });
+  assert.equal(result.ok, false);
+  assert.match(result.errors[0]?.message || "", /repetition factor/i);
+  assert.equal(engine.exportRuntimeState({ includeProgram: false }).memoryUsageBytes, 0);
+});
+
+test("not-taken branches still identify exceptions in their delay slot", async () => {
+  const engine = await createJavaScriptEngine({
+    settings: { startAtMain: true, delayedBranching: true }
+  });
+  assert.equal(engine.assemble(`
+.text
+main:
+  li $t0, 1
+branch:
+  beq $t0, $zero, target
+  lw $t1, 1($zero)
+target:
+  nop
+.ktext 0x80000180
+handler:
+  li $v0, 10
+  syscall
+`, { sourceName: "not-taken-delay-exception.s" }).ok, true);
+  assert.equal(engine.go(50).done, true);
+  const state = engine.exportRuntimeState({ includeProgram: false });
+  assert.equal((state.cop0[13] >>> 31) & 1, 1);
+  assert.equal(state.cop0[14] >>> 0, 0x00400004);
+});
+
+test("file and VFS backstep history stores byte-range deltas", async () => {
+  const engine = await createJavaScriptEngine({
+    settings: { startAtMain: true, maxBacksteps: 100, maxMemoryBytes: 64 * 1024 * 1024 }
+  });
+  const initialLength = 64 * 1024;
+  assert.equal(engine.setVirtualFileBytes("delta.bin", new Uint8Array(initialLength)), true);
+  assert.equal(engine.assemble(`
+.data
+name: .asciiz "delta.bin"
+one: .byte 1
+.text
+main:
+  la $a0, name
+  li $a1, 9
+  li $v0, 13
+  syscall
+  move $s0, $v0
+  li $t0, 10
+loop:
+  move $a0, $s0
+  la $a1, one
+  li $a2, 1
+  li $v0, 15
+  syscall
+  addiu $t0, $t0, -1
+  bnez $t0, loop
+  nop
+  move $a0, $s0
+  li $v0, 16
+  syscall
+  li $v0, 10
+  syscall
+`, { sourceName: "resource-deltas.s" }).ok, true);
+  assert.equal(engine.go(500).done, true);
+  const finalState = engine.exportRuntimeState({ includeProgram: false });
+  assert.equal(engine.getVirtualFileBytes("delta.bin").length, initialLength + 10);
+  assert.ok(finalState.backstepHistoryBytes < 64 * 1024, finalState.backstepHistoryBytes);
+
+  while (engine.exportRuntimeState({ includeProgram: false }).backstepDepth > 0) {
+    assert.equal(engine.backstep().ok, true);
+  }
+  assert.equal(engine.getVirtualFileBytes("delta.bin").length, initialLength);
+  assert.equal(
+    Array.from(engine.exportRuntimeState({ includeProgram: false }).openFiles, ([fd]) => fd).join(","),
+    "0,1,2"
+  );
+});
+
+test("failed allocating syscalls roll back resources and raise Syscall exceptions", async () => {
+  const engine = await createJavaScriptEngine({
+    settings: { startAtMain: true, maxMemoryBytes: 256 }
+  });
+  assert.equal(
+    engine.setVirtualFileBytes("f", new TextEncoder().encode(`${"x".repeat(300)}\n`)),
+    true
+  );
+  assert.equal(engine.assemble(`
+.data
+name: .asciiz "f"
+.text
+main:
+  la $a0, name
+  li $a1, 0
+  li $v0, 13
+  syscall
+  move $a0, $v0
+  li $v0, 69
+  syscall
+  li $v0, 10
+  syscall
+.ktext 0x80000180
+handler:
+  li $v0, 10
+  syscall
+`, { sourceName: "atomic-file-readline.s" }).ok, true);
+  assert.equal(engine.go(100).done, true);
+  const state = engine.exportRuntimeState({ includeProgram: false });
+  const file = state.openFiles.find(([fd]) => fd === 3)?.[1];
+  assert.equal((state.cop0[13] >>> 2) & 0x1f, 8);
+  assert.equal(file?.cursor, 0);
+  assert.equal(state.heapPointer >>> 0, 0x10040000);
+});
+
+test("self-modifying code executes words written into empty text addresses", async () => {
+  const engine = await createJavaScriptEngine({
+    settings: { startAtMain: true, selfModifyingCode: true }
+  });
+  assert.equal(engine.assemble(`
+.text
+.globl main
+main:
+  la $t0, generated
+  li $t1, 0x0000000c
+  sw $t1, 0($t0)
+  li $v0, 10
+  jr $t0
+  nop
+generated:
+`, { sourceName: "self-modifying-empty-text.s" }).ok, true);
+
+  const result = engine.go(30);
+  assert.equal(result.done, true);
+  assert.equal(result.exception, false);
+  assert.equal(result.haltReason, "exit");
+  assert.equal(engine.exportRuntimeState({ includeProgram: false }).steps, 7);
+});
+
+test("null-terminated strings beyond 16 KiB are complete and bounded scans fail explicitly", async () => {
+  const engine = await createJavaScriptEngine({ settings: { maxMemoryBytes: 1024 * 1024 } });
+  const address = 0x10010000;
+  const textLength = 20000;
+  const bytes = new Uint8Array(textLength + 1);
+  bytes.fill("a".charCodeAt(0), 0, textLength);
+  engine.writeBytesAtomic(address, bytes);
+
+  engine.registers[2] = 4;
+  engine.registers[4] = address;
+  const result = engine.executeSyscall();
+  assert.equal(result.runIo, true);
+  assert.equal(result.message.length, textLength);
+  assert.equal(result.message, "a".repeat(textLength));
+  assert.throws(
+    () => engine.readNullTerminatedString(address, 1024),
+    /maximum supported length/i
+  );
 });

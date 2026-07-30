@@ -28,20 +28,22 @@ sp:     .asciiz " "
         .globl main
 main:
         la   $t0, cell
-        li   $t1, 0x04030201    # byte 01 is least significant
+        li   $t1, 0x04030201    # o byte 01 é o menos significativo
         sw   $t1, 0($t0)
 
         la   $a0, m1
         li   $v0, 4
         syscall
 
-        li   $t2, 0             # byte offset
+        li   $t2, 0             # deslocamento em bytes
 bloop:
+        # O ciclo visita os deslocamentos 0, 1, 2 e 3 dentro da word.
         slti $t3, $t2, 4
         beq  $t3, $zero, endb
 
+        # Endereço efetivo = endereço base + deslocamento atual.
         add  $t4, $t0, $t2
-        lbu  $a0, 0($t4)        # unsigned byte
+        lbu  $a0, 0($t4)        # byte sem sinal
         li   $v0, 1
         syscall
         la   $a0, sp

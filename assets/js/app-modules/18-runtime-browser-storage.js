@@ -372,11 +372,11 @@ function createBrowserStorageManager(refs, windowManager) {
       <div class="browser-storage-editor">
         <label class="browser-storage-field">
           <span id="browser-storage-folder-label">Folder</span>
-          <input id="browser-storage-folder-input" type="text" autocomplete="off">
+          <input id="browser-storage-folder-input" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
         </label>
         <label class="browser-storage-field">
           <span id="browser-storage-name-label">File name</span>
-          <input id="browser-storage-name-input" type="text" autocomplete="off">
+          <input id="browser-storage-name-input" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
         </label>
       </div>
       <div class="browser-storage-footer">
@@ -840,4 +840,3 @@ const exampleManifestState = {
   languages: [DEFAULT_EXAMPLE_LANGUAGE]
 };
 const exampleVariantCache = new Map();
-

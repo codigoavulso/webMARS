@@ -24,10 +24,12 @@ lbl:    .asciiz "12 + 30 = "
         .text
         .globl main
 main:
+        # Syscalls use $v0 as the service selector and $a0 as the first argument.
         la   $a0, lbl
         li   $v0, 4
         syscall
 
+        # li is a pseudo-instruction; Assemble shows which real instruction it becomes.
         li   $t0, 12            # immediate -> register
         li   $t1, 30            # immediate -> register
         add  $t2, $t0, $t1      # ALU reads two registers

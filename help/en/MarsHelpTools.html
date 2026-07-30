@@ -33,6 +33,7 @@
     <tr><td>Digital Lab Sim</td><td>Drive seven-segment displays, keypad input and related digital-lab MMIO.</td></tr>
     <tr><td>Mars Bot</td><td>Control the simulated robot through its memory-mapped interface.</td></tr>
   </table>
+  <div class="note"><strong>MARS-OS TTY Shell example.</strong> Open the multi-file <em>MARS-OS TTY Shell</em> example, connect this tool, assemble and run. It demonstrates a complete MMIO shell with cooperative waits, line editing, ANSI output, command history, calculator, system information and a small read-only RAM disk.</div>
 
   <h2>Learning utilities</h2>
   <table>
@@ -42,6 +43,19 @@
     <tr><td>ScavengerHunt</td><td>Run the interactive assembly programming challenge.</td></tr>
     <tr><td>Screen Magnifier</td><td>Magnify a selected part of the workspace for demonstrations and accessibility.</td></tr>
   </table>
+
+  <h2>Bitmap configuration from MIPS</h2>
+  <p>A program may configure either Bitmap tool by writing this versioned control block relative to the active MMIO base (normally <code>0xffff0000</code>). Write all fields first and write <code>1</code> to the command last; the tool changes only after that atomic commit.</p>
+  <table>
+    <tr><th>Offset</th><th>Value</th></tr>
+    <tr><td><code>+0x20</code></td><td>Signature <code>0x57424d50</code> (<code>WBMP</code>)</td></tr>
+    <tr><td><code>+0x24</code></td><td>Protocol version <code>1</code></td></tr>
+    <tr><td><code>+0x28</code></td><td>Target: <code>1</code> Display, <code>2</code> Terminal, <code>3</code> both</td></tr>
+    <tr><td><code>+0x2c … +0x38</code></td><td>Display width, display height, unit width and unit height</td></tr>
+    <tr><td><code>+0x3c</code></td><td>Framebuffer base address</td></tr>
+    <tr><td><code>+0x40</code></td><td>Command: <code>1</code> apply, <code>2</code> clear program configuration</td></tr>
+  </table>
+  <p>Invalid or incomplete blocks are ignored. Backstep, runtime export and session restore preserve the committed configuration. This is an optional webMARS extension: MARS 4.5 ignores these unused MMIO words, while the same framebuffer code continues to work with manual tool settings.</p>
 
   <h2>MMIO safety</h2>
   <p>MMIO devices are mapped near <code>0xffff0000</code>. Device tools and the runtime share those addresses; polling programs should honor ready bits, and interrupt-driven programs should install a valid exception handler. Resetting a tool clears its visualization or device state, not necessarily the assembled program.</p>

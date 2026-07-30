@@ -19,6 +19,54 @@
       .bt-footer { margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:8px; }
       .bt-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .bt-footer .tool-btn { min-width:130px; }
+
+      /* Settings stay compact above the framebuffer on phones, leaving the
+         remaining height to the screen instead of squeezing it sideways. */
+      .desktop-stacked .bt-tool { gap:6px; padding:6px; }
+      .desktop-stacked .bt-title { font-size:21px; line-height:1.1; }
+      .desktop-stacked .bt-main {
+        grid-template-columns:minmax(0, 1fr);
+        grid-template-rows:auto minmax(150px, 1fr);
+        gap:6px;
+      }
+      .desktop-stacked .bt-controls {
+        display:grid;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:4px 7px;
+        overflow:visible;
+      }
+      .desktop-stacked .bt-controls label {
+        gap:2px;
+        min-width:0;
+        font-size:11px;
+      }
+      .desktop-stacked .bt-controls select { width:100%; min-width:0; }
+      .desktop-stacked .bt-kb {
+        grid-column:1 / -1;
+        display:grid;
+        grid-template-columns:auto minmax(0, 1fr);
+        align-items:center;
+        gap:3px 7px;
+        padding:4px;
+      }
+      .desktop-stacked .bt-kb strong { grid-row:1; }
+      .desktop-stacked .bt-kb [data-bt="mmio"] {
+        grid-row:1;
+        min-width:0;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        font-size:10px;
+      }
+      .desktop-stacked .bt-kb input { grid-column:1 / -1; padding:5px 7px; }
+      .desktop-stacked .bt-canvas-wrap {
+        width:100%;
+        min-height:150px;
+        padding:4px;
+      }
+      .desktop-stacked .bt-footer { gap:5px; overflow-x:auto; }
+      .desktop-stacked .bt-footer .ctrl { display:none; }
+      .desktop-stacked .bt-footer .tool-btn { min-width:max-content; flex:1 0 auto; }
     `;
     document.head.appendChild(style);
   }
@@ -30,6 +78,7 @@
     displayHeight: 256,
     baseAddress: 0x10010000
   };
+  const BITMAP_MMIO_TARGET_TERMINAL = 2;
 
   const BASE_OPTIONS = [
     { value: 0x10008000, label: "0x10008000 (global data)" },
@@ -49,6 +98,17 @@
 
   function buildBaseOptions(selected) {
     return BASE_OPTIONS.map(({ value, label }) => `<option value="${value}"${value === selected ? " selected" : ""}>${label}</option>`).join("");
+  }
+
+  function ensureSelectOption(select, value, label = String(value)) {
+    const normalized = String(value >>> 0);
+    if (![...select.options].some((option) => option.value === normalized)) {
+      const option = document.createElement("option");
+      option.value = normalized;
+      option.textContent = label;
+      select.appendChild(option);
+    }
+    select.value = normalized;
   }
 
   host.register({
@@ -78,7 +138,7 @@
               <div class="bt-kb">
                 <strong>Keyboard MMIO</strong>
                 <div data-bt="mmio"></div>
-                <input data-bt="kb-input" placeholder="Type to enqueue key codes">
+          <input data-bt="kb-input" inputmode="text" enterkeyhint="send" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type to enqueue key codes">
               </div>
             </div>
             <div class="bt-canvas-wrap">
@@ -120,6 +180,9 @@
       let framePending = false;
       let keyQueue = [];
       let detachMemoryObserver = () => {};
+      let lastBitmapMmioKey = null;
+      let bitmapMmioActive = false;
+      let manualConfigBeforeMmio = null;
 
       function mmioBase() {
         return (ctx.engine?.memoryMap?.mmioBase ?? ctx.defaultMemoryMap?.mmioBase ?? 0xffff0000) >>> 0;
@@ -257,6 +320,7 @@
       }
 
       function readMemoryWords(snapshot) {
+        if (ctx.engine?.memoryWords instanceof Map) return ctx.engine.memoryWords;
         if (!snapshot) return new Map();
         if (snapshot.memoryWords instanceof Map) return snapshot.memoryWords;
         if (Array.isArray(snapshot.memoryWords)) return new Map(snapshot.memoryWords);
@@ -303,6 +367,68 @@
         });
       }
 
+      function applyConfigToControls() {
+        ensureSelectOption(unitWidthSelect, config.unitWidth);
+        ensureSelectOption(unitHeightSelect, config.unitHeight);
+        ensureSelectOption(displayWidthSelect, config.displayWidth);
+        ensureSelectOption(displayHeightSelect, config.displayHeight);
+        ensureSelectOption(baseAddressSelect, config.baseAddress, `${toHex32(config.baseAddress)} (program)`);
+      }
+
+      function bitmapMmioConfigKey(value) {
+        if (!value) return "none";
+        return [
+          value.protocolVersion,
+          value.target,
+          value.displayWidth,
+          value.displayHeight,
+          value.unitWidth,
+          value.unitHeight,
+          value.baseAddress >>> 0
+        ].join(":");
+      }
+
+      function syncBitmapMmioConfig(force = false) {
+        const runtimeConfig = typeof ctx.engine?.getBitmapMmioConfig === "function"
+          ? ctx.engine.getBitmapMmioConfig()
+          : null;
+        const key = bitmapMmioConfigKey(runtimeConfig);
+        if (!force && key === lastBitmapMmioKey) return false;
+        lastBitmapMmioKey = key;
+
+        const applies = runtimeConfig && (runtimeConfig.target & BITMAP_MMIO_TARGET_TERMINAL) !== 0;
+        if (applies) {
+          if (!bitmapMmioActive) manualConfigBeforeMmio = { ...config };
+          config = {
+            unitWidth: runtimeConfig.unitWidth,
+            unitHeight: runtimeConfig.unitHeight,
+            displayWidth: runtimeConfig.displayWidth,
+            displayHeight: runtimeConfig.displayHeight,
+            baseAddress: runtimeConfig.baseAddress >>> 0
+          };
+          bitmapMmioActive = true;
+        } else if (bitmapMmioActive) {
+          config = manualConfigBeforeMmio ? { ...manualConfigBeforeMmio } : { ...DEFAULT_CONFIG };
+          bitmapMmioActive = false;
+          manualConfigBeforeMmio = null;
+        } else {
+          return false;
+        }
+
+        applyConfigToControls();
+        resizeCanvas();
+        if (connected) scheduleRender();
+        return true;
+      }
+
+      function isAddressVisible(address) {
+        if (!Number.isFinite(address)) return false;
+        const range = getRange();
+        const addr = address >>> 0;
+        if (addr < range.start) return false;
+        return ((addr - range.start) >>> 0) < (range.pixels * 4);
+      }
+
       function readConfig() {
         config = {
           unitWidth: Number.parseInt(unitWidthSelect.value, 10) || DEFAULT_CONFIG.unitWidth,
@@ -311,6 +437,8 @@
           displayHeight: Number.parseInt(displayHeightSelect.value, 10) || DEFAULT_CONFIG.displayHeight,
           baseAddress: (Number.parseInt(baseAddressSelect.value, 10) || DEFAULT_CONFIG.baseAddress) >>> 0
         };
+        bitmapMmioActive = false;
+        manualConfigBeforeMmio = null;
         resizeCanvas();
         if (connected) scheduleRender();
       }
@@ -338,6 +466,7 @@
         connected = !connected;
         connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
         if (connected) {
+          syncBitmapMmioConfig(true);
           const { RECEIVER_CONTROL } = addresses();
           writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
           attachMmioObserver();
@@ -352,11 +481,9 @@
 
       resetButton.addEventListener("click", () => {
         config = { ...DEFAULT_CONFIG };
-        unitWidthSelect.value = String(config.unitWidth);
-        unitHeightSelect.value = String(config.unitHeight);
-        displayWidthSelect.value = String(config.displayWidth);
-        displayHeightSelect.value = String(config.displayHeight);
-        baseAddressSelect.value = String(config.baseAddress);
+        bitmapMmioActive = false;
+        manualConfigBeforeMmio = null;
+        applyConfigToControls();
         keyQueue = [];
         const { RECEIVER_CONTROL } = addresses();
         detachMmioObserver();
@@ -383,6 +510,7 @@
         open() {
           shell.open();
           updateMmioLabel();
+          syncBitmapMmioConfig(true);
           if (connected) {
             attachMmioObserver();
             scheduleRender();
@@ -394,6 +522,7 @@
         },
         onSnapshot(snapshot) {
           latestSnapshot = snapshot;
+          syncBitmapMmioConfig(false);
           if (!connected) return;
 
           const writeAddress = Number.isFinite(snapshot?.lastMemoryWriteAddress) ? (snapshot.lastMemoryWriteAddress >>> 0) : null;
@@ -405,7 +534,21 @@
             }
           }
         },
+        onRuntimeEvent(event) {
+          const configChanged = syncBitmapMmioConfig(false);
+          if (!connected || !event) return;
+          if (configChanged || event.type === "backstep") {
+            fullRedrawNeeded = true;
+            scheduleRender();
+            return;
+          }
+          if (event.type !== "instruction") return;
+          const hasVisibleWrite = (Array.isArray(event.memoryAccesses) ? event.memoryAccesses : [])
+            .some((access) => access?.kind === "write" && isAddressVisible(access.address));
+          if (hasVisibleWrite) scheduleRender();
+        },
         onBackstep() {
+          syncBitmapMmioConfig(false);
           if (connected) scheduleRender();
         }
       };

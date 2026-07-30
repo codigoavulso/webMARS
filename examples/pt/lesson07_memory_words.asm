@@ -26,19 +26,21 @@ sp:     .asciiz " "
         .text
         .globl main
 main:
-        la   $t0, cell          # base address
+        la   $t0, cell          # endereço base
 
+        # Cada deslocamento é relativo a $t0 e permanece alinhado a uma word.
         li   $t1, 111
-        sw   $t1, 0($t0)        # first word
+        sw   $t1, 0($t0)        # primeira word
         li   $t1, 222
-        sw   $t1, 4($t0)        # +4 bytes = next word
+        sw   $t1, 4($t0)        # +4 bytes = word seguinte
         li   $t1, 333
-        sw   $t1, 8($t0)        # +8 bytes
+        sw   $t1, 8($t0)        # +8 bytes desde a base
 
         la   $a0, m1
         li   $v0, 4
         syscall
 
+        # lw reconstrói os mesmos valores de 32 bits anteriormente escritos por sw.
         lw   $a0, 0($t0)
         li   $v0, 1
         syscall

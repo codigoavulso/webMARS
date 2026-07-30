@@ -5444,8 +5444,7 @@
       const okLabel = emitter.createLabel("assert_ok");
       emitter.emit(`  bne ${condReg}, $zero, ${okLabel}`);
       emitter.emit("  nop");
-      emitter.emit("  li $v0, 10");
-      emitter.emit("  syscall");
+      emitAbortProgram(emitter, 1);
       emitter.emit(`${okLabel}:`);
       freeReg(context, condReg);
       return;
@@ -5455,8 +5454,7 @@
       emitter.emit(`  move $a0, ${messageReg}`);
       emitter.emit("  li $v0, 4");
       emitter.emit("  syscall");
-      emitter.emit("  li $v0, 10");
-      emitter.emit("  syscall");
+      emitAbortProgram(emitter, 10);
       freeReg(context, messageReg);
       return;
     }
@@ -5559,9 +5557,8 @@
     }
   }
 
-  function emitAbortProgram(emitter) {
-    emitter.emit("  li $v0, 10");
-    emitter.emit("  syscall");
+  function emitAbortProgram(emitter, breakCode = 1) {
+    emitter.emit(`  break ${Math.max(0, Math.min(0xfffff, Number(breakCode) | 0))}`);
   }
 
   function emitAbortIfNull(pointerReg, context, node, labelPrefix = "ptr_ok") {
@@ -5569,7 +5566,7 @@
     const okLabel = emitter.createLabel(labelPrefix);
     emitter.emit(`  bne ${pointerReg}, $zero, ${okLabel}`);
     emitter.emit("  nop");
-    emitAbortProgram(emitter);
+    emitAbortProgram(emitter, 3);
     emitter.emit(`${okLabel}:`);
   }
 
@@ -5580,7 +5577,7 @@
     emitter.emit(`  slt ${checkReg}, ${valueReg}, $zero`);
     emitter.emit(`  beq ${checkReg}, $zero, ${okLabel}`);
     emitter.emit("  nop");
-    emitAbortProgram(emitter);
+    emitAbortProgram(emitter, 4);
     emitter.emit(`${okLabel}:`);
     freeReg(context, checkReg);
   }
@@ -5671,7 +5668,7 @@
     emitter.emit(`  li ${magicReg}, ${tagId | 0}`);
     emitter.emit(`  beq ${tagReg}, ${magicReg}, ${okLabel}`);
     emitter.emit("  nop");
-    emitAbortProgram(emitter);
+    emitAbortProgram(emitter, 9);
     emitter.emit(`${okLabel}:`);
     emitter.emit(`  lw ${resultReg}, 8(${sourceReg})`);
     emitter.emit(`  b ${endLabel}`);
@@ -5728,7 +5725,7 @@
     const okLabel = emitter.createLabel(labelPrefix);
     emitter.emit(`  bne ${condReg}, $zero, ${okLabel}`);
     emitter.emit("  nop");
-    emitAbortProgram(emitter);
+    emitAbortProgram(emitter, 2);
     emitter.emit(`${okLabel}:`);
     freeReg(context, condReg);
   }
@@ -5796,7 +5793,7 @@
       emitter.emit(`  slt ${checkReg}, ${indexReg}, $zero`);
       emitter.emit(`  beq ${checkReg}, $zero, ${okLabel}`);
       emitter.emit("  nop");
-      emitAbortProgram(emitter);
+      emitAbortProgram(emitter, 5);
       emitter.emit(`${okLabel}:`);
       const upperOkLabel = emitter.createLabel("idx_upper_ok");
       if (hasStaticBound) {
@@ -5809,7 +5806,7 @@
       emitter.emit(`  slt ${checkReg}, ${indexReg}, ${boundReg}`);
       emitter.emit(`  bne ${checkReg}, $zero, ${upperOkLabel}`);
       emitter.emit("  nop");
-      emitAbortProgram(emitter);
+      emitAbortProgram(emitter, 5);
       emitter.emit(`${upperOkLabel}:`);
       freeReg(context, checkReg);
       freeReg(context, boundReg);
@@ -5948,6 +5945,14 @@
       const allocType = resolveTypeName(node.allocType || "int");
       const stringOffsets = collectStringDefaultWordOffsets(allocType, context.structTable, resolveTypeName);
       const elementBytes = Math.max(1, Number(node.storageByteSize || ((Number(node.elementWordSize || 1) | 0) * 4)) | 0);
+      const maxElements = Math.floor((0x7fffffff - 4) / elementBytes);
+      const sizeOkLabel = emitter.createLabel("alloc_array_size_ok");
+      emitter.emit(`  li ${sizeReg}, ${maxElements}`);
+      emitter.emit(`  sltu ${baseReg}, ${sizeReg}, ${lenReg}`);
+      emitter.emit(`  beq ${baseReg}, $zero, ${sizeOkLabel}`);
+      emitter.emit("  nop");
+      emitAbortProgram(emitter, 8);
+      emitter.emit(`${sizeOkLabel}:`);
       if (elementBytes === 4) {
         emitter.emit(`  sll ${sizeReg}, ${lenReg}, 2`);
       } else {
@@ -6385,9 +6390,25 @@
         emitter.emit(`  xor ${resultReg}, ${resultReg}, ${rightReg}`);
         break;
       case "<<":
+        {
+          const shiftOkLabel = emitter.createLabel("shift_count_ok");
+          emitter.emit(`  sltiu $t8, ${rightReg}, 32`);
+          emitter.emit(`  bne $t8, $zero, ${shiftOkLabel}`);
+          emitter.emit("  nop");
+          emitAbortProgram(emitter, 11);
+          emitter.emit(`${shiftOkLabel}:`);
+        }
         emitter.emit(`  sllv ${resultReg}, ${resultReg}, ${rightReg}`);
         break;
       case ">>":
+        {
+          const shiftOkLabel = emitter.createLabel("shift_count_ok");
+          emitter.emit(`  sltiu $t8, ${rightReg}, 32`);
+          emitter.emit(`  bne $t8, $zero, ${shiftOkLabel}`);
+          emitter.emit("  nop");
+          emitAbortProgram(emitter, 11);
+          emitter.emit(`${shiftOkLabel}:`);
+        }
         emitter.emit(`  srav ${resultReg}, ${resultReg}, ${rightReg}`);
         break;
       case "==":

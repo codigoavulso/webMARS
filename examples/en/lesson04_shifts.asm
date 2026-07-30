@@ -30,6 +30,7 @@ main:
         li   $v0, 4
         syscall
         li   $t0, 5
+        # Three left shifts multiply by 2^3 while retaining only 32 result bits.
         sll  $t1, $t0, 3        # 5 * 8
         move $a0, $t1
         li   $v0, 1
@@ -42,6 +43,7 @@ main:
         la   $a0, m2
         li   $v0, 4
         syscall
+        # Compare $t3 and $t4 in hexadecimal to see the different incoming bits.
         sra  $t3, $t2, 2        # sign preserved: -4
         move $a0, $t3
         li   $v0, 1

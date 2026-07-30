@@ -29,6 +29,7 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
+        # Integer addresses still locate the data; lwc1 moves its bits into COP1.
         la   $a0, m1
         li   $v0, 4
         syscall
@@ -39,6 +40,7 @@ main:
         lwc1 $f2, 0($t0)
         add.s $f4, $f0, $f2     # the FPU adder
 
+        # Syscall 2 expects its float argument specifically in $f12.
         mov.s $f12, $f4
         li   $v0, 2             # print float
         syscall

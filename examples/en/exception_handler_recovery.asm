@@ -15,8 +15,10 @@ saved_badvaddr:.word 0
 .text
 main:
   li $t0, 0x12345678
+  # Address 1 is not word-aligned, so this instruction deliberately faults.
   sw $t0, 1($zero)
 
+  # Execution resumes here after the handler advances EPC by one instruction.
   li $v0, 4
   la $a0, recovered
   syscall
@@ -53,6 +55,8 @@ main:
 
 .ktext 0x80000180
 exception_handler:
+  # CP0 register 13 = Cause, 14 = EPC, 8 = BadVAddr.
+  # Kernel registers $k0/$k1 avoid corrupting the interrupted user registers.
   mfc0 $k0, $13
   sw   $k0, saved_cause
   mfc0 $k0, $14
@@ -60,6 +64,7 @@ exception_handler:
   mfc0 $k1, $8
   sw   $k1, saved_badvaddr
 
+  # Skip the known faulting 4-byte instruction; retrying it would fault forever.
   addiu $k0, $k0, 4
   mtc0  $k0, $14
   eret
