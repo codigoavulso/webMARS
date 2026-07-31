@@ -1,4 +1,4 @@
-# webMARS v0.5.0
+# webMARS v0.5.1
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,15 +22,14 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.5.0
+## Highlights in v0.5.1
 
-- Hardened the JavaScript MIPS runtime across memory limits, atomic stores, COP1 doubles and rounding, delayed branches, exceptions, LL/SC reservations, breakpoints and state roundtrips.
-- Replaced full per-instruction snapshots with bounded inverse deltas while preserving an exact backstep window and tool state.
-- Reduced runtime-to-tool and runtime-to-UI work through compact event batches, coalesced rendering and lighter benchmark instrumentation.
-- Added dynamic Bitmap MMIO configuration, richer TTY workflows and improved mobile layouts for the visual tools.
-- Reworked mobile window navigation, dialogs, virtual-keyboard handling and contained scrolling for short viewports, landscape and Android keyboards.
-- Expanded and localized the Assembly and Mini-C examples, lessons and in-app documentation in English, Portuguese and Spanish.
-- Added broad regression coverage for the runtime, examples, tools, mobile interface, documentation and release metadata.
+- Added exact external interrupt delivery for timer, keyboard, display and hexadecimal-keypad devices, including simultaneous pending lines.
+- Added System Clock and Stack Visualizer tools with synchronized, backsteppable runtime state.
+- Added a localized timer-interrupt example and extended MARS-OS with functional `clock` and real-time `bench` commands.
+- Reduced tool overhead through decoded instruction batches and sparse central delta history while retaining the exact backstep window.
+- Hardened compact snapshot/UI recovery so assembled text rows cannot disappear during execution updates.
+- Expanded regression coverage for interrupt delivery, tools, localized examples and MARS-OS behavior.
 
 ## Main Capabilities
 
@@ -136,6 +135,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.5.1`: external device interrupts, System Clock and Stack Visualizer tools, faster tool batching, resilient text snapshots, and MARS-OS clock/benchmark commands
 - `v0.5.0`: hardened JavaScript runtime, inverse-delta backstep, batched tools, dynamic Bitmap MMIO, expanded examples/documentation, and complete mobile workflows
 - `v0.4.13`: mobile single-panel layout with icon tabs, icon-only mobile toolbar, and fully localized assembler and Mini-C diagnostics
 - `v0.4.12`: dark theme, immediate font-size apply, dead-code cleanup (autosave pipeline, ~15 functions, dead CSS, 113 i18n keys), closeAllFiles wired to menu

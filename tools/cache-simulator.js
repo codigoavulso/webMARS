@@ -569,31 +569,34 @@
 
       function processRuntimeEvent(event, shouldRender = true, retainHistory = true) {
         if (!event || event.type !== "instruction") return;
-        const tokens = parseTokens(event.executedInstruction);
-        const opcode = String(tokens[0] || "").toLowerCase();
         const memoryAccesses = Array.isArray(event.memoryAccesses) ? event.memoryAccesses : [];
         if (!memoryAccesses.length) return;
+        const opcode = String(
+          event.opcode
+          || event.instructionTokens?.[0]
+          || parseTokens(event.executedInstruction)[0]
+          || ""
+        ).toLowerCase();
+        if (!MEMORY_OPS.has(opcode)) return;
         const desiredKind = WRITE_OPS.has(opcode) ? "write" : "read";
-        const relevantAccesses = MEMORY_OPS.has(opcode)
-          ? memoryAccesses.filter((candidate) => candidate?.kind === desiredKind)
-          : [];
-        const resolvedAccesses = [];
-        relevantAccesses.forEach((access) => {
+        let remainingAccesses = 0;
+        memoryAccesses.forEach((access) => {
+          if (access?.kind === desiredKind) {
+            remainingAccesses += Math.max(1, Number(access?.accessCount) | 0);
+          }
+        });
+        memoryAccesses.forEach((access) => {
+          if (access?.kind !== desiredKind) return;
           const count = Math.max(1, Number(access?.accessCount) | 0);
           const unitSize = Math.max(1, Number(access?.unitSize) | 0);
           for (let index = 0; index < count; index += 1) {
-            resolvedAccesses.push({
-              ...access,
-              address: ((access.address >>> 0) + (index * unitSize)) >>> 0
-            });
+            remainingAccesses -= 1;
+            processResolvedAccess({
+              opcode,
+              address: ((access.address >>> 0) + (index * unitSize)) >>> 0,
+              write: access.kind === "write"
+            }, event.stepAfter | 0, shouldRender && remainingAccesses === 0, retainHistory);
           }
-        });
-        resolvedAccesses.forEach((access, index) => {
-          processResolvedAccess({
-            opcode,
-            address: access.address >>> 0,
-            write: access.kind === "write"
-          }, event.stepAfter | 0, shouldRender && index === resolvedAccesses.length - 1, retainHistory);
         });
       }
 
@@ -651,6 +654,22 @@
           }
           processRuntimeEvent(event, false, delivery.retainHistory !== false);
           history.pruneBefore(event.historyStartStep | 0);
+        },
+        onRuntimeEventBatch(events, batch = {}) {
+          if (!connected || !Array.isArray(events)) return;
+          const historyStart = Number.isFinite(batch.finalHistoryStartStep)
+            ? Math.max(0, batch.finalHistoryStartStep | 0)
+            : null;
+          events.forEach((event) => {
+            if (!event) return;
+            if (event.type === "backstep") {
+              history.rewind(event.stepAfter | 0);
+              return;
+            }
+            const step = event.stepAfter | 0;
+            processRuntimeEvent(event, false, historyStart == null || step > historyStart);
+          });
+          if (historyStart != null) history.pruneBefore(historyStart);
         },
         onRuntimeBatchEnd() {
           if (!connected) return;

@@ -204,6 +204,10 @@
       let pressedKey = null;
       let counterValueMax = 30;
       let counterValue = counterValueMax;
+      let releaseCounterObserver = null;
+      // mars.tools.DigitalLabSim.EXTERNAL_INTERRUPT_TIMER
+      const TIMER_INTERRUPT_CAUSE = (globalThis.WebMarsExternalInterrupts?.timer ?? 0x100) | 0;
+      const HEXA_KEYBOARD_INTERRUPT_CAUSE = (globalThis.WebMarsExternalInterrupts?.hexaKeyboard ?? 0x200) | 0;
 
       const keyButtons = [];
 
@@ -276,23 +280,53 @@
         writeByteSafe(a.KEYBOARD_OUT, out);
       }
 
+      function requestInterrupt(cause) {
+        if (typeof ctx.engine?.requestExternalInterrupt !== "function") return;
+        ctx.engine.requestExternalInterrupt(cause);
+      }
+
       function updateFromMemory() {
         const a = addresses();
         const rightValue = readByteSafe(a.DISPLAY_1);
         const leftValue = readByteSafe(a.DISPLAY_2);
         drawSevenSegment(rightDigit, rightValue);
         drawSevenSegment(leftDigit, leftValue);
-
-        const counterCtrl = readByteSafe(a.COUNTER_CTRL);
-        const counterEnabled = (counterCtrl & 0xff) !== 0;
-        if (counterEnabled) {
-          if (counterValue > 0) counterValue -= 1;
-          else counterValue = counterValueMax;
-        } else {
-          counterValue = counterValueMax;
-        }
-
         updateKeyboardOutput();
+      }
+
+      // MARS ticks this counter once per executed instruction and raises the timer
+      // interrupt when it wraps, provided the program enabled it and the CPU is not
+      // already inside an exception.
+      function tickCounter() {
+        if (!connected) return;
+        const enabled = (readByteSafe(addresses().COUNTER_CTRL) & 0xff) !== 0;
+        if (!enabled) {
+          counterValue = counterValueMax;
+          return;
+        }
+        if (counterValue > 0) {
+          counterValue -= 1;
+          return;
+        }
+        counterValue = counterValueMax;
+        requestInterrupt(TIMER_INTERRUPT_CAUSE);
+      }
+
+      function installCounterObserver() {
+        if (releaseCounterObserver || typeof ctx.engine?.registerInstructionObserver !== "function") return;
+        releaseCounterObserver = ctx.engine.registerInstructionObserver(() => {
+          try {
+            tickCounter();
+          } catch {
+            // A device must never interrupt the simulated program.
+          }
+        });
+      }
+
+      function removeCounterObserver() {
+        if (!releaseCounterObserver) return;
+        releaseCounterObserver();
+        releaseCounterObserver = null;
       }
 
       KEY_LAYOUT.forEach((row, rowIndex) => {
@@ -313,6 +347,9 @@
                 col: colIndex,
                 code: ((COL_BITS[colIndex] << 4) | ROW_BITS[rowIndex]) >>> 0
               };
+              if ((readByteSafe(addresses().KEYBOARD_CTRL) & 0x80) !== 0) {
+                requestInterrupt(HEXA_KEYBOARD_INTERRUPT_CAUSE);
+              }
             }
             highlightKeypad();
             updateKeyboardOutput();
@@ -326,10 +363,12 @@
         connected = !connected;
         refreshUiText();
         if (connected) {
+          installCounterObserver();
           updateFromMemory();
           ctx.messagesPane.postMars(`${t("[tool] Digital Lab Sim connected.")}\n`);
           return;
         }
+        removeCounterObserver();
         ctx.messagesPane.postMars(`${t("[tool] Digital Lab Sim disconnected.")}\n`);
         writeByteSafe(addresses().KEYBOARD_OUT, 0);
       });
@@ -347,7 +386,10 @@
         ctx.messagesPane.postMars(`${t("[tool] Digital Lab Sim: display bytes at mmio+0x10/0x11 drive seven-segment; keyboard scan row bits in mmio+0x12 and read code from mmio+0x14.")}\n`);
       });
 
-      closeButton.addEventListener("click", shell.close);
+      closeButton.addEventListener("click", () => {
+        removeCounterObserver();
+        shell.close();
+      });
 
       subscribeLanguageChange(refreshUiText);
       drawSevenSegment(leftDigit, 0);
@@ -358,9 +400,13 @@
         isConnected: () => connected,
         open() {
           shell.open();
+          if (connected) installCounterObserver();
           refreshUiText();
         },
-        close: shell.close,
+        close() {
+          removeCounterObserver();
+          shell.close();
+        },
         onSnapshot(snapshot) {
           if (!connected || !snapshot) return;
           updateFromMemory();

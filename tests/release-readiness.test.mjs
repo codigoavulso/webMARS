@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.5.0";
+const expectedReleaseVersion = "0.5.1";
 
 async function exists(path) {
   try {
@@ -61,7 +61,7 @@ function placeholders(value) {
     .sort();
 }
 
-test("0.5.0 version is coherent across runtime and release metadata", async () => {
+test("0.5.1 version is coherent across runtime and release metadata", async () => {
   const packageJson = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
   const packageLock = JSON.parse(await readFile(resolve(projectRoot, "package-lock.json"), "utf8"));
   const appVersion = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");

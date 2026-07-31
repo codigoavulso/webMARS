@@ -42,13 +42,6 @@
     "cvt.s.d", "cvt.s.w", "cvt.d.s", "cvt.d.w", "cvt.w.s", "cvt.w.d", "round.w.s", "round.w.d", "trunc.w.s", "trunc.w.d", "ceil.w.s", "ceil.w.d", "floor.w.s", "floor.w.d"
   ]);
 
-  function parseTokens(statement) {
-    if (!statement) return [];
-    const cleaned = String(statement).split("#")[0].trim();
-    if (!cleaned) return [];
-    return cleaned.split(/[\s,]+/).filter(Boolean);
-  }
-
   function classify(opcode) {
     const op = String(opcode || "").toLowerCase();
     if (!op) return "Other";
@@ -150,10 +143,9 @@
         render();
       }
 
-      function processInstruction(statement, step, shouldRender = true, retainHistory = true) {
+      function processInstruction(opcode, step, shouldRender = true, retainHistory = true) {
         if (retainHistory) history.record(step, { total, counters: { ...counters } });
-        const tokens = parseTokens(statement);
-        const category = classify(tokens[0]);
+        const category = classify(opcode);
         total += 1;
         counters[category] += 1;
         if (shouldRender) render();
@@ -180,12 +172,34 @@
           }
           if (event.type !== "instruction") return;
           processInstruction(
-            event.executedInstruction,
+            event.opcode || event.instructionTokens?.[0],
             event.stepAfter | 0,
             false,
             delivery.retainHistory !== false
           );
           history.pruneBefore(event.historyStartStep | 0);
+        },
+        onRuntimeEventBatch(events, batch = {}) {
+          if (!connected || !Array.isArray(events)) return;
+          const historyStart = Number.isFinite(batch.finalHistoryStartStep)
+            ? Math.max(0, batch.finalHistoryStartStep | 0)
+            : null;
+          events.forEach((event) => {
+            if (!event) return;
+            if (event.type === "backstep") {
+              history.rewind(event.stepAfter | 0);
+              return;
+            }
+            if (event.type !== "instruction") return;
+            const step = event.stepAfter | 0;
+            processInstruction(
+              event.opcode || event.instructionTokens?.[0],
+              step,
+              false,
+              historyStart == null || step > historyStart
+            );
+          });
+          if (historyStart != null) history.pruneBefore(historyStart);
         },
         onRuntimeBatchEnd() {
           if (connected) render();

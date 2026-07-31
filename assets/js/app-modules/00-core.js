@@ -38,6 +38,7 @@ const DEFAULT_MEMORY_MAP = {
   mmioBase: 0xffff0000
 };
 const JAVA_MARS_ENDIANNESS = "little";
+const EMPTY_RUNTIME_EVENT_LIST = Object.freeze([]);
 const MEMORY_CONFIG_PRESETS = {
   Default: {
     id: "Default",
@@ -2102,6 +2103,22 @@ const COP0_REGISTERS = {
 const COP0_DEFAULT_STATUS = 0x0000ff11;
 const EXCEPTION_HANDLER_ADDRESS = 0x80000180;
 
+// Device interrupt causes as Java MARS 4.5 defines them: mars.simulator.Exceptions
+// for the keyboard and display, mars.tools.DigitalLabSim for the timer and the hexa
+// keyboard. The value is stored two bits left, which lands it on the Cause IP field
+// and leaves the exception code at 0 (Int), exactly like Exceptions.setRegisters.
+const EXTERNAL_INTERRUPT_CAUSES = Object.freeze({
+  keyboard: 0x40,
+  display: 0x80,
+  timer: 0x100,
+  hexaKeyboard: 0x200
+});
+const EXTERNAL_INTERRUPT_CAUSE_MASK = 0x3ff;
+const COP0_STATUS_INTERRUPT_ENABLE = 1 << 0;
+const COP0_STATUS_EXCEPTION_LEVEL = 1 << 1;
+const COP0_STATUS_INTERRUPT_MASK = 0x0000ff00;
+globalThis.WebMarsExternalInterrupts = EXTERNAL_INTERRUPT_CAUSES;
+
 class MarsMemoryAccessError extends Error {
   constructor(message, accessKind, badAddress) {
     super(String(message ?? "Memory access error."));
@@ -2678,6 +2695,7 @@ class MarsEngine {
     this.breakpointResumeAddress = null;
     this.lastMemoryWriteAddress = null;
     this.bitmapMmioConfig = null;
+    this.pendingExternalInterrupt = 0;
 
     this.openFiles = this.createStdioOpenFileTable();
     this.virtualFileSystem = this.cloneVirtualFileSystemMap(this.persistentVirtualFileSystem);
@@ -2754,7 +2772,7 @@ class MarsEngine {
 
   createRuntimeChangeTriples(undoPairs, currentValues) {
     if (!Array.isArray(undoPairs) || !currentValues || undoPairs.length === 0) {
-      return [];
+      return EMPTY_RUNTIME_EVENT_LIST;
     }
     const triples = new Array((undoPairs.length / 2) * 3);
     let targetOffset = 0;
@@ -2780,6 +2798,13 @@ class MarsEngine {
       pcAfter: this.pc >>> 0,
       executedAddress: Number.isFinite(details.executedAddress) ? (details.executedAddress >>> 0) : (journal.p >>> 0),
       executedInstruction: String(details.executedInstruction || ""),
+      opcode: String(details.opcode || ""),
+      instructionTokens: Array.isArray(details.instructionTokens)
+        ? details.instructionTokens
+        : EMPTY_RUNTIME_EVENT_LIST,
+      instructionOperands: Array.isArray(details.instructionOperands)
+        ? details.instructionOperands
+        : EMPTY_RUNTIME_EVENT_LIST,
       machineWord: Number.isFinite(details.machineWord) ? (details.machineWord >>> 0) : null,
       controlTransferTarget: Number.isFinite(details.controlTransferTarget)
         ? (details.controlTransferTarget >>> 0)
@@ -2788,18 +2813,12 @@ class MarsEngine {
       cop0Changes: this.createRuntimeChangeTriples(journal.c0, this.cop0Registers),
       cop1Changes: this.createRuntimeChangeTriples(journal.c1, this.cop1Registers),
       fpuFlagChanges: this.createRuntimeChangeTriples(journal.ff, this.fpuConditionFlags),
-      memoryAccesses: Array.isArray(details.memoryAccesses)
-        ? details.memoryAccesses.map((access) => ({
-            kind: access?.kind === "write" ? "write" : "read",
-            address: Number(access?.address) >>> 0,
-            size: Math.max(1, Number(access?.size) | 0),
-            unitSize: Math.max(1, Number(access?.unitSize) | 0),
-            accessCount: Math.max(1, Number(access?.accessCount) | 0),
-            value: Number(access?.value) | 0
-          }))
-        : [],
+      memoryAccesses: Array.isArray(details.memoryAccesses) && details.memoryAccesses.length
+        ? details.memoryAccesses
+        : EMPTY_RUNTIME_EVENT_LIST,
       lastMemoryWriteAddress: this.lastMemoryWriteAddress == null ? null : (this.lastMemoryWriteAddress >>> 0),
       exception: details.exception === true,
+      interrupt: details.interrupt === true,
       halted: this.halted === true,
       haltReason: details.haltReason ?? null,
       backstepDepth: this.executionHistory.length,
@@ -2834,9 +2853,14 @@ class MarsEngine {
   }
 
   recordIndexedUndo(key, target, index) {
-    this.getActiveUndoJournals().forEach((journal) => {
-      this.recordIndexedUndoForJournal(journal, key, target, index);
-    });
+    const historyJournal = this.activeHistoryJournal;
+    if (historyJournal) {
+      this.recordIndexedUndoForJournal(historyJournal, key, target, index);
+    }
+    const syscallJournal = this.activeSyscallJournal;
+    if (syscallJournal && syscallJournal !== historyJournal) {
+      this.recordIndexedUndoForJournal(syscallJournal, key, target, index);
+    }
   }
 
   setRegisterValue(index, value) {
@@ -2881,41 +2905,27 @@ class MarsEngine {
       pc: this.pc >>> 0,
       steps: this.steps,
       halted: this.halted,
-      r: null,
-      c0: null,
-      c1: null,
-      ff: null,
       captureResources: captureMemory,
-      fpuControlStatus: this.getFpuControlStatus(),
+      fpuControlStatus: this.fpuControlStatus | 0,
       heapPointer: this.heapPointer >>> 0,
       reservedHeapMappedBytes: this.reservedHeapMappedBytes,
       delayedBranchTarget: this.delayedBranchTarget == null ? null : (this.delayedBranchTarget >>> 0),
       delayedBranchAddress: this.delayedBranchAddress == null ? null : (this.delayedBranchAddress >>> 0),
       llReservationAddress: this.llReservationAddress == null ? null : (this.llReservationAddress >>> 0),
       lastMemoryWriteAddress: this.lastMemoryWriteAddress == null ? null : (this.lastMemoryWriteAddress >>> 0),
-      memoryChanges: null,
-      openFiles: null,
-      virtualFileSystem: null,
-      randomStreams: null,
       stdinClosed: this.stdinClosed === true,
-      argsRegistry: null,
-      imageHandles: null,
       nextImageHandleId: this.nextImageHandleId | 0,
       bitmapMmioConfig: cloneBitmapMmioConfig(this.bitmapMmioConfig),
+      pendingExternalInterrupt: this.pendingExternalInterrupt | 0,
       estimatedBytes: 128
     };
   }
 
   finalizeCapturedState(state) {
     if (!state || typeof state !== "object") return null;
-    const journal = {
-      p: state.pc >>> 0,
-      s: normalizeStepCount(state.steps)
-    };
-    if (Array.isArray(state.r) && state.r.length) journal.r = state.r;
-    if (Array.isArray(state.c0) && state.c0.length) journal.c0 = state.c0;
-    if (Array.isArray(state.c1) && state.c1.length) journal.c1 = state.c1;
-    if (Array.isArray(state.ff) && state.ff.length) journal.ff = state.ff;
+    const journal = state;
+    journal.p = state.pc >>> 0;
+    journal.s = normalizeStepCount(state.steps);
     if (state.memoryChanges instanceof BackstepMemoryJournal) {
       const changes = state.memoryChanges.compact();
       if (changes) {
@@ -2929,8 +2939,9 @@ class MarsEngine {
         ), 0);
       }
     }
+    state.memoryChanges = null;
     if (state.halted !== this.halted) journal.h = state.halted === true;
-    if ((state.fpuControlStatus | 0) !== (this.getFpuControlStatus() | 0)) journal.fc = state.fpuControlStatus | 0;
+    if ((state.fpuControlStatus | 0) !== (this.fpuControlStatus | 0)) journal.fc = state.fpuControlStatus | 0;
     if ((state.heapPointer >>> 0) !== (this.heapPointer >>> 0)) journal.hp = state.heapPointer >>> 0;
     if (Number(state.reservedHeapMappedBytes) !== Number(this.reservedHeapMappedBytes)) {
       journal.hm = Number(state.reservedHeapMappedBytes);
@@ -2940,6 +2951,9 @@ class MarsEngine {
     if (state.llReservationAddress !== this.llReservationAddress) journal.ll = state.llReservationAddress;
     if (state.lastMemoryWriteAddress !== this.lastMemoryWriteAddress) journal.mw = state.lastMemoryWriteAddress;
     if (state.stdinClosed !== this.stdinClosed) journal.si = state.stdinClosed === true;
+    if ((state.pendingExternalInterrupt | 0) !== (this.pendingExternalInterrupt | 0)) {
+      journal.xi = state.pendingExternalInterrupt | 0;
+    }
     if ((state.nextImageHandleId | 0) !== (this.nextImageHandleId | 0)) journal.ni = state.nextImageHandleId | 0;
     if (state.openFiles instanceof Map) journal.of = state.openFiles;
     if (state.virtualFileSystem instanceof Map) journal.vf = state.virtualFileSystem;
@@ -2950,6 +2964,11 @@ class MarsEngine {
       journal.bc = cloneBitmapMmioConfig(state.bitmapMmioConfig);
       state.estimatedBytes += 64;
     }
+    state.openFiles = null;
+    state.virtualFileSystem = null;
+    state.randomStreams = null;
+    state.imageHandles = null;
+    state.bitmapMmioConfig = null;
     journal.estimatedBytes = Math.max(112, Number(state.estimatedBytes) || 0);
     return journal;
   }
@@ -2964,6 +2983,7 @@ class MarsEngine {
     this.applyUndoPairs(this.fpuConditionFlags, state.ff);
     if (Object.hasOwn(state, "fc")) this.fpuControlStatus = clamp32(state.fc);
     if (Object.hasOwn(state, "hp")) this.heapPointer = state.hp >>> 0;
+    if (Object.hasOwn(state, "xi")) this.pendingExternalInterrupt = state.xi | 0;
     this.activeHistoryJournal = null;
     this.activeRuntimeMemoryAccesses = null;
 
@@ -4993,6 +5013,64 @@ class MarsEngine {
     this.registers[29] = clamp32(stackCursor);
     this.forceZeroRegister();
   }
+  // Devices ask for an interrupt exactly like a MARS tool sets
+  // Simulator.externalInterruptingDevice: the request is latched and consumed before
+  // the next instruction runs.
+  requestExternalInterrupt(cause) {
+    const value = Number(cause) | 0;
+    if (!Number.isFinite(value) || value <= 0) return false;
+    this.pendingExternalInterrupt = (
+      this.pendingExternalInterrupt | value
+    ) & EXTERNAL_INTERRUPT_CAUSE_MASK;
+    return true;
+  }
+
+  clearExternalInterrupt() {
+    this.pendingExternalInterrupt = 0;
+  }
+
+  isExternalInterruptEnabled() {
+    const status = this.cop0Registers[COP0_REGISTERS.status] | 0;
+    return (status & COP0_STATUS_EXCEPTION_LEVEL) === 0
+      && (status & COP0_STATUS_INTERRUPT_ENABLE) !== 0;
+  }
+
+  // MARS delivers a device interrupt unconditionally and leaves the gating to the
+  // device. The default Status (0x0000ff11) enables IE and every IM bit, so programs
+  // written for MARS behave identically here, while a program that deliberately masks
+  // an interrupt line gets the MIPS behaviour it asked for.
+  canDeliverExternalInterrupt(cause = this.pendingExternalInterrupt) {
+    const value = (Number(cause) | 0) & EXTERNAL_INTERRUPT_CAUSE_MASK;
+    if (value <= 0 || !this.isExternalInterruptEnabled()) return false;
+    const status = this.cop0Registers[COP0_REGISTERS.status] | 0;
+    const pendingBits = (value << 2) & COP0_STATUS_INTERRUPT_MASK;
+    if (pendingBits === 0) return true;
+    return (status & pendingBits) !== 0;
+  }
+
+  deliverExternalInterrupt() {
+    const value = this.pendingExternalInterrupt & EXTERNAL_INTERRUPT_CAUSE_MASK;
+    this.pendingExternalInterrupt = 0;
+    if (value <= 0) return null;
+    this.llReservationAddress = null;
+    const preserved = this.cop0Registers[COP0_REGISTERS.cause] & 0x7ffffc83;
+    this.setCop0Value(COP0_REGISTERS.cause, preserved | ((value << 2) >>> 0));
+    this.setCop0Value(COP0_REGISTERS.epc, this.pc);
+    this.setCop0Value(
+      COP0_REGISTERS.status,
+      this.cop0Registers[COP0_REGISTERS.status] | COP0_STATUS_EXCEPTION_LEVEL
+    );
+
+    const handlerAddress = (this.memoryMap.exceptionHandlerAddress ?? EXCEPTION_HANDLER_ADDRESS) >>> 0;
+    const hasHandler = this.program.textRowByAddress?.has(handlerAddress)
+      ?? this.program.textRows.some((row) => row.address === handlerAddress);
+    const message = translateText("External interrupt {cause}.", { cause: toHex(value) });
+    if (hasHandler) {
+      return { nextPc: handlerAddress, message, exception: true, interrupt: true };
+    }
+    return { halt: true, message, exception: true, interrupt: true };
+  }
+
   raiseException(cause, message, badAddress = null) {
     this.llReservationAddress = null;
     const code = cause | 0;
@@ -6774,15 +6852,16 @@ class MarsEngine {
     }
 
     const row = this.program.textRowByAddress?.get(currentPc) ?? this.program.textRows.find((entry) => entry.address === currentPc);
-    const hasDynamicInstruction = this.memoryWords.has(currentPc)
-      || this.memoryBytes.has(currentPc)
-      || this.memoryBytes.has((currentPc + 1) >>> 0)
-      || this.memoryBytes.has((currentPc + 2) >>> 0)
-      || this.memoryBytes.has((currentPc + 3) >>> 0);
     const canExecuteDynamicInstruction = (
       this.settings.selfModifyingCode === true
       && this.isTextAddress(currentPc)
-      && hasDynamicInstruction
+      && (
+        this.memoryWords.has(currentPc)
+        || this.memoryBytes.has(currentPc)
+        || this.memoryBytes.has((currentPc + 1) >>> 0)
+        || this.memoryBytes.has((currentPc + 2) >>> 0)
+        || this.memoryBytes.has((currentPc + 3) >>> 0)
+      )
     );
 
     if (!row && !canExecuteDynamicInstruction) {
@@ -6809,13 +6888,17 @@ class MarsEngine {
     let decodedEntry = cachedInstruction?.machineWord === machineWord ? cachedInstruction : null;
     if (!decodedEntry) {
       const statement = decodeInstructionWordToStatement(machineWord, currentPc);
-      const tokens = statement ? tokenizeStatement(statement) : [];
+      const tokens = statement ? Object.freeze(tokenizeStatement(statement)) : EMPTY_RUNTIME_EVENT_LIST;
       const opcode = tokens[0]?.toLowerCase() ?? "";
       decodedEntry = {
         machineWord,
         statement,
         tokens,
+        operands: tokens.length > 1 ? Object.freeze(tokens.slice(1)) : EMPTY_RUNTIME_EVENT_LIST,
         opcode,
+        registerOperands: new Array(tokens.length),
+        floatRegisterOperands: new Array(tokens.length),
+        immediateOperands: new Array(tokens.length),
         hasDelaySlot: ["beq", "bne", "bgtz", "blez", "bltz", "bgez", "bgezal", "bltzal", "bc1f", "bc1t", "j", "jal", "jr", "jalr"].includes(opcode)
       };
       this.decodedInstructionCache.set(currentPc, decodedEntry);
@@ -6832,9 +6915,14 @@ class MarsEngine {
     this.lastMemoryWriteAddress = null;
     let runtimeMemoryAccesses = [];
     let result;
+    // A latched device interrupt is taken in place of the instruction at the current
+    // PC, which is where EPC points and where eret resumes.
+    const interruptDelivered = this.pendingExternalInterrupt !== 0 && this.canDeliverExternalInterrupt();
     try {
-      result = decodedInstruction
-        ? this.executeInstruction(decodedInstruction, decodedEntry.tokens)
+      result = interruptDelivered
+        ? this.deliverExternalInterrupt()
+        : decodedInstruction
+        ? this.executeInstruction(decodedInstruction, decodedEntry.tokens, decodedEntry)
         : this.raiseException(
             EXCEPTION_CODES.RESERVED,
             translateText("Unsupported machine instruction {instruction}.", { instruction: toHex(machineWord) })
@@ -6974,9 +7062,11 @@ class MarsEngine {
     this.notifyInstructionObservers({
       type: "instruction",
       executedAddress: currentPc,
-      executedInstruction: decodedInstruction ?? "",
+      // An interrupt replaced the instruction, so nothing at this address ran yet.
+      executedInstruction: interruptDelivered ? "" : (decodedInstruction ?? ""),
       machineWord,
       exception: result.exception === true,
+      interrupt: interruptDelivered,
       haltReason: result.haltReason
     });
     let runtimeEvent = null;
@@ -6986,11 +7076,15 @@ class MarsEngine {
       if (includeRuntimeEvent) {
         runtimeEvent = this.createRuntimeEvent(journal, {
           executedAddress: currentPc,
-          executedInstruction: decodedInstruction ?? "",
+          executedInstruction: interruptDelivered ? "" : (decodedInstruction ?? ""),
+          opcode: interruptDelivered ? "" : decodedEntry.opcode,
+          instructionTokens: interruptDelivered ? EMPTY_RUNTIME_EVENT_LIST : decodedEntry.tokens,
+          instructionOperands: interruptDelivered ? EMPTY_RUNTIME_EVENT_LIST : decodedEntry.operands,
           machineWord,
           controlTransferTarget: result.nextPc,
           memoryAccesses: runtimeMemoryAccesses,
           exception: result.exception === true,
+          interrupt: interruptDelivered,
           haltReason: result.haltReason
         });
       }
@@ -7191,8 +7285,11 @@ class MarsEngine {
       maxMemoryBytes: this.getMaxMemoryBytes(),
       pc: this.pc,
       pcHex: toHex(this.pc),
+      textRowsIncluded: includeTextRows,
+      textRowCount: this.program.textRows.length,
       textRows: rows,
       dataRows,
+      labelsIncluded: includeLabels,
       labels,
       registers: registerRows,
       memoryWords: includeMemoryWords
@@ -7201,6 +7298,7 @@ class MarsEngine {
       llReservationAddress: this.llReservationAddress == null ? null : (this.llReservationAddress >>> 0),
       lastMemoryWriteAddress: this.lastMemoryWriteAddress == null ? null : (this.lastMemoryWriteAddress >>> 0),
       bitmapMmioConfig: cloneBitmapMmioConfig(this.bitmapMmioConfig),
+      pendingExternalInterrupt: this.pendingExternalInterrupt | 0,
       cop0: Array.from(this.cop0Registers),
       cop1: Array.from(this.cop1Registers),
       fpuFlags: Array.from(this.fpuConditionFlags),
@@ -8407,17 +8505,41 @@ class MarsEngine {
       }
     }
   }
-  executeInstruction(source, preparedTokens = null) {
+  executeInstruction(source, preparedTokens = null, preparedInstruction = null) {
     const tokens = Array.isArray(preparedTokens) ? preparedTokens : tokenizeStatement(source);
     if (!tokens.length) return {};
 
-    const opcode = tokens[0].toLowerCase();
+    const opcode = preparedInstruction?.opcode || tokens[0].toLowerCase();
     const nextPc = (this.pc + 4) >>> 0;
     const linkPc = (nextPc + (this.settings.delayedBranching ? 4 : 0)) >>> 0;
 
-    const reg = (index) => this.resolveRegister(tokens[index]);
-    const freg = (index) => this.resolveFloatRegister(tokens[index]);
-    const imm = (index) => this.resolveValue(tokens[index]);
+    const registerOperands = preparedInstruction?.registerOperands;
+    const floatRegisterOperands = preparedInstruction?.floatRegisterOperands;
+    const immediateOperands = preparedInstruction?.immediateOperands;
+    const reg = (index) => {
+      if (!Array.isArray(registerOperands)) return this.resolveRegister(tokens[index]);
+      const cached = registerOperands[index];
+      if (cached !== undefined) return cached;
+      const resolved = this.resolveRegister(tokens[index]);
+      registerOperands[index] = resolved;
+      return resolved;
+    };
+    const freg = (index) => {
+      if (!Array.isArray(floatRegisterOperands)) return this.resolveFloatRegister(tokens[index]);
+      const cached = floatRegisterOperands[index];
+      if (cached !== undefined) return cached;
+      const resolved = this.resolveFloatRegister(tokens[index]);
+      floatRegisterOperands[index] = resolved;
+      return resolved;
+    };
+    const imm = (index) => {
+      if (!Array.isArray(immediateOperands)) return this.resolveValue(tokens[index]);
+      const cached = immediateOperands[index];
+      if (cached !== undefined) return cached;
+      const resolved = this.resolveValue(tokens[index]);
+      immediateOperands[index] = resolved;
+      return resolved;
+    };
     const asSigned16 = (num) => signExtend16(num);
     const saturatingInt = (value) => saturatingInt32(value);
     const roundNearestEven = (value) => roundNearestEven32(value);

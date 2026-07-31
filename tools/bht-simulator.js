@@ -203,11 +203,14 @@
       let activeIndex = null;
       let activeClass = "";
       let logLines = [];
+      let logHead = 0;
       let activeHistoryDelta = null;
       let currentInstruction = "";
       let currentAddress = "";
       let currentIndex = "";
-      const MAX_LOG_LINES = 5000;
+      let runtimeRenderQueued = false;
+      const MAX_LOG_LINES = 1000;
+      const MAX_LOGGED_BRANCHES_PER_BATCH = 128;
       const history = ctx.createToolDeltaHistory({
         applyInverse(delta) {
           if (!delta) return;
@@ -219,9 +222,14 @@
             entry.incorrect = delta.entry.incorrect | 0;
           }
           if (Array.isArray(delta.removedLog) && delta.removedLog.length) {
-            logLines = [...delta.removedLog, ...logLines];
+            logLines = [...delta.removedLog, ...logLines.slice(logHead)];
+            logHead = 0;
           }
-          logLines.length = Math.min(logLines.length, Math.max(0, delta.logLength | 0));
+          const restoredLength = Math.min(
+            logLines.length - logHead,
+            Math.max(0, delta.logLength | 0)
+          );
+          logLines.length = logHead + restoredLength;
           currentInstruction = String(delta.instruction || "");
           currentAddress = String(delta.address || "");
           currentIndex = String(delta.index || "");
@@ -234,18 +242,24 @@
       });
 
       function flushLog() {
-        logArea.value = logLines.length ? `${logLines.join("\n")}\n` : "";
+        const visibleLines = logLines.slice(logHead);
+        logArea.value = visibleLines.length ? `${visibleLines.join("\n")}\n` : "";
         logArea.scrollTop = logArea.scrollHeight;
       }
 
       function appendLog(line) {
         if (!line) return;
         logLines.push(String(line));
-        if (logLines.length > MAX_LOG_LINES) {
-          const removed = logLines.splice(0, logLines.length - MAX_LOG_LINES);
+        if (logLines.length - logHead > MAX_LOG_LINES) {
+          const removed = logLines[logHead];
+          logHead += 1;
           if (activeHistoryDelta && Array.isArray(activeHistoryDelta.removedLog)) {
-            activeHistoryDelta.removedLog.push(...removed);
+            activeHistoryDelta.removedLog.push(removed);
           }
+        }
+        if (logHead >= MAX_LOG_LINES && logHead * 2 >= logLines.length) {
+          logLines = logLines.slice(logHead);
+          logHead = 0;
         }
       }
 
@@ -273,6 +287,17 @@
         indexField.value = currentIndex;
       }
 
+      function scheduleRuntimeRender() {
+        if (runtimeRenderQueued) return;
+        runtimeRenderQueued = true;
+        requestAnimationFrame(() => {
+          runtimeRenderQueued = false;
+          renderInstructionInfo();
+          flushLog();
+          renderTable();
+        });
+      }
+
       function clearInstructionInfo(shouldRender = true) {
         currentInstruction = "";
         currentAddress = "";
@@ -292,11 +317,24 @@
         initTake = initSelect.value === "t";
         model = Array.from({ length: entries }, () => new BHTEntry(historySize, initTake));
         logLines = [];
+        logHead = 0;
         flushLog();
         clearInstructionInfo();
       }
 
-      function processRuntimeInstruction(event, shouldRender = true, retainHistory = true) {
+      function processRuntimeInstruction(event, shouldRender = true, retainHistory = true, captureLog = true) {
+        const statement = String(event?.executedInstruction || "").trim();
+        const opcode = String(
+          event?.opcode
+          || event?.instructionTokens?.[0]
+          || parseTokens(statement)[0]
+          || ""
+        ).toLowerCase();
+        if (!BRANCH_OPS.has(opcode)) {
+          clearInstructionInfo(shouldRender);
+          if (shouldRender) flushLog();
+          return;
+        }
         const delta = retainHistory
           ? {
               instruction: currentInstruction,
@@ -304,7 +342,7 @@
               index: currentIndex,
               activeIndex,
               activeClass,
-              logLength: logLines.length,
+              logLength: logLines.length - logHead,
               removedLog: [],
               entryIndex: -1,
               entry: null
@@ -312,28 +350,21 @@
           : null;
         if (delta) history.record(event.stepAfter | 0, delta);
         activeHistoryDelta = delta;
-        const statement = String(event?.executedInstruction || "").trim();
-        const tokens = parseTokens(statement);
-        const opcode = String(tokens[0] || "").toLowerCase();
-        if (!BRANCH_OPS.has(opcode)) {
-          clearInstructionInfo(shouldRender);
-          activeHistoryDelta = null;
-          if (shouldRender) flushLog();
-          return;
-        }
 
         const address = event.executedAddress >>> 0;
         const branchTaken = Number.isFinite(event.controlTransferTarget);
         const targetAddress = branchTaken ? (event.controlTransferTarget >>> 0) : null;
         const idx = ((address >>> 2) % entries) >>> 0;
         const entry = model[idx];
-        delta.entryIndex = idx;
-        delta.entry = {
-          prediction: entry.prediction,
-          history: [...entry.history],
-          correct: entry.correct,
-          incorrect: entry.incorrect
-        };
+        if (delta) {
+          delta.entryIndex = idx;
+          delta.entry = {
+            prediction: entry.prediction,
+            history: [...entry.history],
+            correct: entry.correct,
+            incorrect: entry.incorrect
+          };
+        }
         const prediction = entry.prediction;
         const correct = prediction === branchTaken;
 
@@ -342,13 +373,17 @@
         currentIndex = String(idx);
         activeIndex = idx;
         activeClass = "";
-        appendLog(`instruction ${statement || opcode} at address ${toHex32(address)}, maps to index ${idx}`);
-        if (targetAddress != null) appendLog(`branches to address ${toHex32(targetAddress)}`);
-        appendLog(`prediction is: ${prediction ? "take" : "do not take"}...`);
+        if (captureLog) {
+          appendLog(`instruction ${statement || opcode} at address ${toHex32(address)}, maps to index ${idx}`);
+          if (targetAddress != null) appendLog(`branches to address ${toHex32(targetAddress)}`);
+          appendLog(`prediction is: ${prediction ? "take" : "do not take"}...`);
+        }
         entry.update(branchTaken);
         activeClass = correct ? "ok" : "bad";
-        appendLog(`branch ${branchTaken ? "taken" : "not taken"}, prediction was ${correct ? "correct" : "incorrect"}`);
-        appendLog("");
+        if (captureLog) {
+          appendLog(`branch ${branchTaken ? "taken" : "not taken"}, prediction was ${correct ? "correct" : "incorrect"}`);
+          appendLog("");
+        }
         activeHistoryDelta = null;
         if (shouldRender) {
           renderInstructionInfo();
@@ -394,11 +429,55 @@
           );
           history.pruneBefore(event.historyStartStep | 0);
         },
+        onRuntimeEventBatch(events, batch = {}) {
+          if (!connected || !Array.isArray(events)) return;
+          const historyStart = Number.isFinite(batch.finalHistoryStartStep)
+            ? Math.max(0, batch.finalHistoryStartStep | 0)
+            : null;
+          let loggedBranchesRemaining = MAX_LOGGED_BRANCHES_PER_BATCH;
+          let branchCount = 0;
+          let firstLoggedIndex = events.length;
+          for (let index = events.length - 1; index >= 0; index -= 1) {
+            const event = events[index];
+            const opcode = String(
+              event?.opcode
+              || event?.instructionTokens?.[0]
+              || parseTokens(event?.executedInstruction)[0]
+              || ""
+            ).toLowerCase();
+            if (!BRANCH_OPS.has(opcode)) continue;
+            branchCount += 1;
+            if (loggedBranchesRemaining > 0) {
+              firstLoggedIndex = index;
+              loggedBranchesRemaining -= 1;
+            }
+          }
+          const omittedBranches = Math.max(0, branchCount - MAX_LOGGED_BRANCHES_PER_BATCH);
+          if (omittedBranches > 0) {
+            appendLog(`[${omittedBranches} earlier branch events processed without individual log lines]`);
+          }
+          events.forEach((event, index) => {
+            if (!event) return;
+            if (event.type === "backstep") {
+              history.rewind(event.stepAfter | 0);
+              return;
+            }
+            if (event.type !== "instruction") return;
+            const step = event.stepAfter | 0;
+            processRuntimeInstruction(
+              event,
+              false,
+              historyStart == null || step > historyStart,
+              index >= firstLoggedIndex
+            );
+          });
+          if (historyStart != null) history.pruneBefore(historyStart);
+          scheduleRuntimeRender();
+        },
         onBackstep(event) {
           if (!connected || !event) return;
           history.rewind(event.stepAfter | 0);
-          flushLog();
-          renderTable();
+          scheduleRuntimeRender();
         }
       };
     }

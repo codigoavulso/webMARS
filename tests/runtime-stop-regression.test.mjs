@@ -39,6 +39,8 @@ test("user Stop cancels a pending sleep and terminates the engine exactly once",
     let runLastUiSyncAt = 456;
     let runPausedForInput = true;
     let resumeRunAfterInput = true;
+    let runScheduleGeneration = 0;
+    let runImmediateTaskPending = true;
     let synchronizedSnapshot = null;
     let synchronizedOptions = null;
     let benchmarkOutcome = null;
@@ -48,8 +50,12 @@ test("user Stop cancels a pending sleep and terminates the engine exactly once",
     const window = {
       clearTimeout(timer) {
         calls.push(["clearTimeout", timer]);
+      },
+      setTimeout() {
+        throw new Error("The stop path must not schedule more runtime work.");
       }
     };
+    const runLoopTaskChannel = null;
     const messagesPane = {
       clearInputRequest() {
         calls.push(["clearInputRequest"]);

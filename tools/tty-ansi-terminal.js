@@ -24,6 +24,21 @@
         gap: 8px;
       }
 
+      .tty-ansi-settings-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .tty-ansi-settings-toggle {
+        display: none;
+        min-height: 20px;
+        padding: 1px 7px;
+        font: inherit;
+        white-space: nowrap;
+      }
+
       .tty-ansi-controls {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -180,6 +195,16 @@
         gap: 4px 8px;
       }
 
+      .desktop-stacked .tty-ansi-settings-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .desktop-stacked .tty-ansi-settings-collapsed .tty-ansi-top {
+        display: none;
+      }
+
       .desktop-stacked .tty-ansi-toggle {
         padding-top: 0;
         min-height: 24px;
@@ -313,7 +338,15 @@
           <h2 class="mars-tool-heading">TTY Device + ANSI Terminal</h2>
           <div class="tty-ansi-main">
             <section class="mars-tool-panel">
-              <div class="mars-tool-panel-title">Terminal Settings</div>
+              <div class="mars-tool-panel-title tty-ansi-settings-title">
+                <span>Terminal Settings</span>
+                <button
+                  class="tool-btn tty-ansi-settings-toggle"
+                  data-tty="settings-toggle"
+                  type="button"
+                  aria-expanded="true"
+                >Hide settings</button>
+              </div>
               <div class="mars-tool-panel-body">
                 <div class="tty-ansi-top">
                   <div class="tty-ansi-controls">
@@ -390,6 +423,7 @@
       const encodingSelect = root.querySelector("[data-tty='encoding']");
       const localEchoToggle = root.querySelector("[data-tty='localecho']");
       const crlfToggle = root.querySelector("[data-tty='crlf']");
+      const settingsToggle = root.querySelector("[data-tty='settings-toggle']");
       const statusNode = root.querySelector("[data-tty='status']");
       const hintNode = root.querySelector("[data-tty='hint']");
       const baseNode = root.querySelector("[data-tty='base']");
@@ -425,6 +459,7 @@
       let polledTxCount = 0;
       let localEchoEnabled = false;
       let crlfTranslationEnabled = true;
+      let settingsCollapsed = false;
       let activeHistoryStep = null;
       let suppressHistory = false;
       const history = ctx.createToolDeltaHistory({
@@ -1240,6 +1275,13 @@
         connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
       }
 
+      function updateSettingsVisibility() {
+        root.classList.toggle("tty-ansi-settings-collapsed", settingsCollapsed);
+        if (!(settingsToggle instanceof HTMLButtonElement)) return;
+        settingsToggle.textContent = settingsCollapsed ? t("Show settings") : t("Hide settings");
+        settingsToggle.setAttribute("aria-expanded", settingsCollapsed ? "false" : "true");
+      }
+
       function updateStatus() {
         if (!statusNode || !terminalState) return;
         if (statusFrame !== null) {
@@ -1282,6 +1324,7 @@
         if (baseNode) baseNode.value = toHex32(mmioBase());
         if (localEchoToggle) localEchoToggle.checked = localEchoEnabled;
         if (crlfToggle) crlfToggle.checked = crlfTranslationEnabled;
+        updateSettingsVisibility();
         updateConnectButtonLabel();
         updateStatus();
       }
@@ -1455,6 +1498,12 @@
       crlfToggle?.addEventListener("change", () => {
         crlfTranslationEnabled = crlfToggle.checked === true;
         updateStatus();
+      });
+      settingsToggle?.addEventListener("click", () => {
+        settingsCollapsed = !settingsCollapsed;
+        updateSettingsVisibility();
+        dirtyAll = true;
+        scheduleRender();
       });
 
       connectButton.addEventListener("click", () => {

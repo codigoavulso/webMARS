@@ -331,7 +331,7 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
   const engine = await assembleMarsOs("en");
   const tty = attachTtyHarness(
     engine,
-    "calc 0x20 + 22\rcat motd\rcolor yellow\rsysinfo\rhistory\rshutdown\r"
+    "calc 0x20 + 22\rcat motd\rcolor yellow\rclock\rsysinfo\rhistory\rshutdown\r"
   );
   const result = engine.go(100000);
   tty.detach();
@@ -344,9 +344,14 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
   assert.match(tty.output, /result: 54 \(0x00000036\)/);
   assert.match(tty.output, /Learn the machine by building the machine\./);
   assert.match(tty.output, /\x1b\[93mguest@webmars:\/\$ /);
-  assert.match(tty.output, /commands executed: 4/);
+  const clockMatch = tty.output.match(/clock epoch: (0x[0-9a-f]{8}) \/ (0x[0-9a-f]{8})/i);
+  assert.ok(clockMatch, "The clock command must print the native 64-bit epoch.");
+  assert.notEqual(BigInt(`${clockMatch[1]}${clockMatch[2].slice(2)}`), 0n);
+  assert.match(tty.output, /timer device: inactive/);
+  assert.match(tty.output, /uptime: \d+ ms/);
+  assert.match(tty.output, /commands executed: 5/);
   assert.match(tty.output, /1  calc 0x20 \+ 22/);
-  assert.match(tty.output, /5  history/);
+  assert.match(tty.output, /6  history/);
   assert.match(tty.output, /System halted/);
   assert.ok(engine.steps < 30000, "The shell session used unexpectedly many instructions.");
 
@@ -355,8 +360,27 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
   for (const language of languages) {
     const mainSource = await readFile(await resolveExampleFile(language, "mips.asm"), "utf8");
     assert.match(mainSource, /\.include "mips_os_kernel\.asm"/);
+    assert.match(mainSource, /cmd_clock:\s*\.asciiz "clock"/);
+    assert.match(mainSource, /cmd_bench:\s*\.asciiz "bench"/);
     assert.doesNotMatch(mainSource, /Bitmap Display|framebuffer/i);
   }
+});
+
+test("MARS-OS bench measures real instruction throughput over a timed sample", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(engine, "bench\rshutdown\r");
+  const result = engine.go(20_000_000);
+  tty.detach();
+
+  assert.equal(result.ok, true);
+  assert.equal(result.haltReason, "exit");
+  const resultMatch = tty.output.match(/benchmark: (\d+) instructions\/s/);
+  const sampleMatch = tty.output.match(/sample: (\d+) ms, (\d+) instructions/);
+  assert.ok(resultMatch, "The bench command must report instructions per second.");
+  assert.ok(sampleMatch, "The bench command must report its measurement sample.");
+  assert.ok(Number(resultMatch[1]) > 0);
+  assert.ok(Number(sampleMatch[1]) >= 250);
+  assert.ok(Number(sampleMatch[2]) > 0);
 });
 
 test("every C example variant compiles and its generated Assembly assembles", async () => {

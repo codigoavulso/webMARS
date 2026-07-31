@@ -200,6 +200,8 @@
       let detachMemoryObserver = () => {};
       let detachInstructionObserver = () => {};
       let suppressDeviceObservers = false;
+      const KEYBOARD_INTERRUPT_CAUSE = (globalThis.WebMarsExternalInterrupts?.keyboard ?? 0x40) | 0;
+      const DISPLAY_INTERRUPT_CAUSE = (globalThis.WebMarsExternalInterrupts?.display ?? 0x80) | 0;
       const history = ctx.createToolDeltaHistory({
         applyInverse(delta) {
           if (!delta) return;
@@ -292,6 +294,11 @@
 
       function readyBitCleared(address) {
         return (readByteSafe(address) & ~1) & 0xff;
+      }
+
+      function requestInterrupt(cause) {
+        if (typeof ctx.engine?.requestExternalInterrupt !== "function") return;
+        ctx.engine.requestExternalInterrupt(cause);
       }
 
       function applySplitLayout() {
@@ -557,6 +564,9 @@
         const value = keyQueue.shift() | 0;
         writeByteSafe(RECEIVER_DATA, value & 0xff);
         writeByteSafe(RECEIVER_CONTROL, readyBitSet(RECEIVER_CONTROL));
+        if ((readByteSafe(RECEIVER_CONTROL) & 0x2) !== 0) {
+          requestInterrupt(KEYBOARD_INTERRUPT_CAUSE);
+        }
       }
 
       function queueKey(value) {
@@ -595,6 +605,9 @@
             if (displayAfterDelay) displayCharacter(pendingWord);
             countingInstructions = false;
             writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
+            if ((readByteSafe(TRANSMITTER_CONTROL) & 0x2) !== 0) {
+              requestInterrupt(DISPLAY_INTERRUPT_CAUSE);
+            }
           }
         }
 

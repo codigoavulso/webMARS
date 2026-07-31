@@ -14,6 +14,12 @@
 .eqv LINE_CAP       128
 .eqv HISTORY_SLOTS  8
 .eqv HISTORY_SHIFT  7
+.eqv CLOCK_CONTROL  0xffff0050
+.eqv CLOCK_PERIOD   0xffff0058
+.eqv CLOCK_COUNTER  0xffff005c
+.eqv CLOCK_TIME_LOW 0xffff0060
+.eqv CLOCK_TIME_HIGH 0xffff0064
+.eqv CLOCK_UPTIME   0xffff0068
 
 .text
 .globl main
@@ -105,6 +111,20 @@ shell_loop:
   jal   str_equal
   nop
   bne   $v0, $zero, command_uptime
+  nop
+
+  move  $a0, $s1
+  la    $a1, cmd_clock
+  jal   str_equal
+  nop
+  bne   $v0, $zero, command_clock
+  nop
+
+  move  $a0, $s1
+  la    $a1, cmd_bench
+  jal   str_equal
+  nop
+  bne   $v0, $zero, command_bench
   nop
 
   move  $a0, $s1
@@ -212,6 +232,12 @@ os_boot:
   li    $v0, 30
   syscall
   sw    $a0, boot_time_low
+  li    $t0, CLOCK_PERIOD
+  li    $t1, 1000
+  sw    $t1, 0($t0)
+  li    $t0, CLOCK_CONTROL
+  li    $t1, 1
+  sw    $t1, 0($t0)
   la    $t0, ansi_green
   sw    $t0, prompt_color
 
@@ -342,6 +368,163 @@ command_mem:
 
 command_uptime:
   jal   print_uptime
+  nop
+  b     shell_loop
+  nop
+
+command_clock:
+  # Syscall 30 is the authoritative host clock.  The command therefore works
+  # even when the optional System Clock tool has not been opened or connected.
+  li    $v0, 30
+  syscall
+  move  $s3, $a0
+  move  $s4, $a1
+
+  la    $a0, clock_time_prefix
+  jal   tty_puts
+  nop
+  move  $a0, $s4
+  jal   tty_put_hex32
+  nop
+  la    $a0, clock_separator
+  jal   tty_puts
+  nop
+  move  $a0, $s3
+  jal   tty_put_hex32
+  nop
+  jal   tty_crlf
+  nop
+
+  # The remaining registers belong to the optional MMIO clock device.  Its
+  # time words are populated by the tool, so zero means that no device has
+  # serviced this machine since boot.
+  li    $t0, CLOCK_TIME_HIGH
+  lw    $t1, 0($t0)
+  li    $t0, CLOCK_TIME_LOW
+  lw    $t2, 0($t0)
+  or    $t1, $t1, $t2
+  beq   $t1, $zero, command_clock_device_offline
+  nop
+
+  la    $a0, clock_timer_prefix
+  jal   tty_puts
+  nop
+  li    $t0, CLOCK_COUNTER
+  lw    $a0, 0($t0)
+  jal   tty_put_uint
+  nop
+  la    $a0, clock_separator
+  jal   tty_puts
+  nop
+  li    $t0, CLOCK_PERIOD
+  lw    $a0, 0($t0)
+  jal   tty_put_uint
+  nop
+  jal   tty_crlf
+  nop
+
+  la    $a0, clock_uptime_prefix
+  jal   tty_puts
+  nop
+  li    $t0, CLOCK_UPTIME
+  lw    $a0, 0($t0)
+  jal   tty_put_uint
+  nop
+  la    $a0, ms_suffix
+  jal   tty_puts
+  nop
+  jal   tty_crlf
+  nop
+  b     command_clock_uptime
+  nop
+
+command_clock_device_offline:
+  la    $a0, clock_device_offline
+  jal   tty_puts
+  nop
+
+command_clock_uptime:
+  # Process uptime is also native and remains useful without the MMIO tool.
+  jal   print_uptime
+  nop
+  b     shell_loop
+  nop
+
+command_bench:
+  # Wall-clock benchmark. Detect whether branch delay slots are active so the
+  # instruction total remains exact in either simulator mode.
+  move  $t8, $zero
+  b     bench_delay_probe_done
+  addiu $t8, $t8, 1
+bench_delay_probe_done:
+  li    $v0, 30
+  syscall
+  move  $s3, $a0
+  move  $s4, $zero
+
+bench_sample_loop:
+  addu  $t4, $t4, $zero
+  addu  $t5, $t5, $zero
+  addu  $t6, $t6, $zero
+  addu  $t7, $t7, $zero
+  addu  $t4, $t4, $zero
+  addu  $t5, $t5, $zero
+  addu  $t6, $t6, $zero
+  addu  $t7, $t7, $zero
+  addu  $t4, $t4, $zero
+  addu  $t5, $t5, $zero
+  addu  $t6, $t6, $zero
+  addu  $t7, $t7, $zero
+  addu  $t4, $t4, $zero
+  addu  $t5, $t5, $zero
+  addu  $t6, $t6, $zero
+  addu  $t7, $t7, $zero
+  addiu $s4, $s4, 1
+  li    $v0, 30
+  syscall
+  subu  $s5, $a0, $s3
+  sltiu $t0, $s5, 250
+  bne   $t0, $zero, bench_sample_loop
+  nop
+
+  # The loop has 22 instructions without delayed branching and 23 with it.
+  addiu $t0, $t8, 22
+  multu $s4, $t0
+  mflo  $s6
+  divu  $s6, $s5
+  mflo  $s7
+  li    $t0, 1000
+  multu $s7, $t0
+  mflo  $s7
+
+  la    $a0, bench_result_prefix
+  jal   tty_puts
+  nop
+  move  $a0, $s7
+  jal   tty_put_uint
+  nop
+  la    $a0, bench_ips_suffix
+  jal   tty_puts
+  nop
+  jal   tty_crlf
+  nop
+
+  la    $a0, bench_sample_prefix
+  jal   tty_puts
+  nop
+  move  $a0, $s5
+  jal   tty_put_uint
+  nop
+  la    $a0, bench_ms_middle
+  jal   tty_puts
+  nop
+  move  $a0, $s6
+  jal   tty_put_uint
+  nop
+  la    $a0, bench_instructions_suffix
+  jal   tty_puts
+  nop
+  jal   tty_crlf
   nop
   b     shell_loop
   nop

@@ -20,8 +20,18 @@ main:
   assert.notEqual(firstAssemblyRevision, initialRevision);
 
   assert.equal(engine.assemble(source, { sourceName: "revision-two.s" }).ok, true);
-  const secondAssemblyRevision = engine.getSnapshot().runtimeRevision;
+  const fullSnapshot = engine.getSnapshot();
+  const secondAssemblyRevision = fullSnapshot.runtimeRevision;
   assert.notEqual(secondAssemblyRevision, firstAssemblyRevision);
+
+  const compactSnapshot = engine.getSnapshot({
+    includeTextRows: false,
+    includeLabels: false
+  });
+  assert.equal(compactSnapshot.textRowsIncluded, false);
+  assert.equal(compactSnapshot.textRowCount, fullSnapshot.textRows.length);
+  assert.deepEqual(Array.from(compactSnapshot.textRows), []);
+  assert.equal(compactSnapshot.labelsIncluded, false);
 });
 
 test("data directives, labels, and load instructions work together", async () => {
@@ -137,6 +147,11 @@ main:
   const first = engine.step({ includeSnapshot: false, includeRuntimeEvent: true });
   assert.equal(first.ok, true);
   assert.equal(first.runtimeEvent.type, "instruction");
+  assert.equal(first.runtimeEvent.opcode, "addiu");
+  assert.deepEqual(Array.from(first.runtimeEvent.instructionTokens), ["addiu", "$8", "$0", "1"]);
+  assert.deepEqual(Array.from(first.runtimeEvent.instructionOperands), ["$8", "$0", "1"]);
+  assert.equal(Object.isFrozen(first.runtimeEvent.instructionTokens), true);
+  assert.equal(Object.isFrozen(first.runtimeEvent.instructionOperands), true);
   assert.deepEqual(Array.from(first.runtimeEvent.registerChanges), [8, 0, 1]);
 
   const firstJournal = engine.executionHistory.at(0);

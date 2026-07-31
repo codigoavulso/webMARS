@@ -11,6 +11,7 @@ const commands = [
     "tests/runtime-regression.test.mjs",
     "tests/runtime-isa-regression.test.mjs",
     "tests/runtime-memory-invariants.test.mjs",
+    "tests/runtime-interrupt-regression.test.mjs",
     "tests/benchmark-regression.test.mjs",
     "tests/runtime-stop-regression.test.mjs",
     "tests/tool-runtime-regression.test.mjs",

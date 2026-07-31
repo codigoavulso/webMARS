@@ -1096,15 +1096,38 @@ let resumeRunAfterInput = false;
 let backstepDepthEstimate = 0;
 let allowPageUnload = false;
 let suppressPersistenceForResetReload = false;
+let runScheduleGeneration = 0;
+let runImmediateTaskPending = false;
 const RUN_LOOP_INTERVAL_MS = 16;
+const RUN_LOOP_MAX_IDLE_DELAY_MS = 50;
 const RUN_LOOP_MAX_BATCH = 240;
-const RUN_LOOP_MAX_BATCH_UNLIMITED = 720;
+const RUN_LOOP_MAX_BATCH_UNLIMITED = 2048;
 const RUN_LOOP_COOPERATIVE_CHECK_INTERVAL_INTERACTIVE = 24;
 const RUN_LOOP_COOPERATIVE_CHECK_INTERVAL_FAST = 8;
 const RUN_LOOP_TIME_BUDGET_MS_INTERACTIVE = 7;
 const RUN_LOOP_TIME_BUDGET_MS_FAST = 6;
 const RUN_LOOP_UI_SYNC_INTERVAL_MS_INTERACTIVE = 66;
 const RUN_LOOP_TOOL_SYNC_INTERVAL_MS_NO_INTERACTION = 120;
+const RUN_STEP_OPTIONS_PLAIN = Object.freeze({
+  includeSnapshot: false,
+  includeMessage: false,
+  includeRuntimeEvent: false
+});
+const RUN_STEP_OPTIONS_TRACED = Object.freeze({
+  includeSnapshot: false,
+  includeMessage: false,
+  includeRuntimeEvent: true
+});
+const runLoopTaskChannel = typeof window.MessageChannel === "function"
+  ? new window.MessageChannel()
+  : null;
+if (runLoopTaskChannel) {
+  runLoopTaskChannel.port1.onmessage = (event) => {
+    if (event.data !== runScheduleGeneration) return;
+    runImmediateTaskPending = false;
+    if (runActive) runLoopTick();
+  };
+}
 const MINI_C_DEFAULT_TEMPLATE = miniCCompilerModule.defaultTemplate;
 // Keep the framebuffer clear of Mini-C globals, which start at 0x10010000.
 const MINI_C_BITMAP_DEFAULT_BASE = 0x10020000;
@@ -5797,10 +5820,25 @@ function updateRunSpeedLabel() {
 }
 
 function clearRunTimer() {
+  runScheduleGeneration += 1;
+  runImmediateTaskPending = false;
   if (runTimer !== null) {
     window.clearTimeout(runTimer);
     runTimer = null;
   }
+}
+
+function scheduleRunLoop(delayMs, preferImmediateTask = false) {
+  if (preferImmediateTask && runLoopTaskChannel) {
+    if (runImmediateTaskPending) return;
+    runImmediateTaskPending = true;
+    runLoopTaskChannel.port2.postMessage(runScheduleGeneration);
+    return;
+  }
+  runTimer = window.setTimeout(() => {
+    runTimer = null;
+    runLoopTick();
+  }, Math.max(0, Number(delayMs) || 0));
 }
 
 function shouldPostRunLoopMessage(result) {
@@ -5816,10 +5854,17 @@ function setAssemblyTag(kind, text) {
   tag.textContent = translateText(text);
 }
 
+function snapshotHasProgramRows(snapshot) {
+  if (!snapshot || snapshot.assembled !== true) return false;
+  const declaredCount = Number(snapshot.textRowCount);
+  if (Number.isFinite(declaredCount)) return declaredCount > 0;
+  return Array.isArray(snapshot.textRows) && snapshot.textRows.length > 0;
+}
+
 function syncButtons(snapshot) {
   const assembled = snapshot?.assembled === true;
   const halted = snapshot?.halted === true;
-  const hasProgramRows = Array.isArray(snapshot?.textRows) && snapshot.textRows.length > 0;
+  const hasProgramRows = snapshotHasProgramRows(snapshot);
   const runBusy = runActive || runPausedForInput;
   const canExecute = assembled && hasProgramRows && !halted;
   const canBackstep = hasAvailableBackstep(snapshot);
@@ -5895,7 +5940,7 @@ function syncBackstepEstimateFromSnapshot(snapshot) {
 
 function hasAvailableBackstep(snapshot) {
   const assembled = snapshot?.assembled === true;
-  const hasProgramRows = Array.isArray(snapshot?.textRows) && snapshot.textRows.length > 0;
+  const hasProgramRows = snapshotHasProgramRows(snapshot);
   if (!assembled || !hasProgramRows) return false;
   const backstepDepth = Number(snapshot?.backstepDepth) || 0;
   if (backstepDepth > 0) return true;
@@ -6027,7 +6072,26 @@ function createSnapshotDiffBaseline(snapshot, options = {}) {
   };
 }
 
+// A snapshot that claims to carry the program but arrives without rows would blank
+// the Text Segment even though the engine still holds the assembled program, so the
+// engine itself is asked again before anything is rendered.
+function withProgramRows(snapshot) {
+  if (!snapshot || snapshot.assembled !== true) return snapshot;
+  if (snapshot.textRowsIncluded === false) return snapshot;
+  if (Array.isArray(snapshot.textRows) && snapshot.textRows.length > 0) return snapshot;
+  try {
+    const authoritative = engine.getSnapshot();
+    if (Array.isArray(authoritative?.textRows) && authoritative.textRows.length > 0) {
+      return chooseFresherSnapshot(snapshot, authoritative);
+    }
+  } catch {
+    // Falling back to the delivered snapshot is always safe.
+  }
+  return snapshot;
+}
+
 function syncSnapshot(snapshot, options = {}) {
+  snapshot = withProgramRows(snapshot);
   const skipHeavyRender = options.skipHeavyRender === true;
   const noInteraction = options.noInteraction === true;
   const suppressPulse = options.suppressPulse === true;
@@ -6073,7 +6137,8 @@ function syncSnapshot(snapshot, options = {}) {
       registersPane.render(snapshot, diff.changedRegisters, {
         disableHighlights: noInteraction,
         disableAutoScroll: noInteraction,
-        displayValuesHex: currentPreferences.displayValuesHex === true
+        displayValuesHex: currentPreferences.displayValuesHex === true,
+        incrementalRuntime: options.incrementalRuntime === true
       });
     } catch (error) {
       captureSyncError(error);
@@ -6292,15 +6357,24 @@ function finishRunBenchmark(outcome = "completed", metadata = {}) {
 }
 
 function executeRunStepWithRuntimeEvent(engineInstance, captureRuntimeEvent = false) {
-  const result = engineInstance.step({
-    includeSnapshot: false,
-    includeMessage: false,
-    includeRuntimeEvent: captureRuntimeEvent
-  });
+  const result = engineInstance.step(
+    captureRuntimeEvent ? RUN_STEP_OPTIONS_TRACED : RUN_STEP_OPTIONS_PLAIN
+  );
   return {
     result,
     runtimeEvent: captureRuntimeEvent ? (result?.runtimeEvent ?? null) : null
   };
+}
+
+function getNextRunLoopDelay(speed, now = performance.now()) {
+  if (speed === RUN_SPEED_UNLIMITED || !Number.isFinite(speed) || speed <= 0) {
+    return RUN_LOOP_INTERVAL_MS;
+  }
+  const elapsedSinceTick = runLastTickAt > 0 ? Math.max(0, now - runLastTickAt) : 0;
+  const projectedCarry = runStepCarry + ((speed * elapsedSinceTick) / 1000);
+  const remainingSteps = Math.max(0, 1 - projectedCarry);
+  const delay = Math.ceil((remainingSteps * 1000) / speed);
+  return Math.max(1, Math.min(RUN_LOOP_MAX_IDLE_DELAY_MS, delay));
 }
 
 function runLoopTick() {
@@ -6330,7 +6404,7 @@ function runLoopTick() {
 
   if (stepBudget <= 0) {
     addRunBenchmarkCpu(performance.now() - benchmarkTickStartedAt, 0);
-    runTimer = window.setTimeout(runLoopTick, RUN_LOOP_INTERVAL_MS);
+    scheduleRunLoop(getNextRunLoopDelay(speed));
     return;
   }
 
@@ -6356,9 +6430,14 @@ function runLoopTick() {
         break;
       }
 
-      const tracedStep = executeRunStepWithRuntimeEvent(engine, runtimeEventTraceEnabled);
-      const result = tracedStep.result;
-      if (tracedStep.runtimeEvent) toolRuntimeEvents.push(tracedStep.runtimeEvent);
+      let result;
+      if (runtimeEventTraceEnabled) {
+        const tracedStep = executeRunStepWithRuntimeEvent(engine, true);
+        result = tracedStep.result;
+        if (tracedStep.runtimeEvent) toolRuntimeEvents.push(tracedStep.runtimeEvent);
+      } else {
+        result = engine.step(RUN_STEP_OPTIONS_PLAIN);
+      }
       lastStepResult = result;
       if (!result.ok) {
         postExecutionError(translateText("Go"), result.message);
@@ -6388,10 +6467,13 @@ function runLoopTick() {
           || ((nowSync - runLastUiSyncAt) >= RUN_LOOP_UI_SYNC_INTERVAL_MS_INTERACTIVE);
         if (shouldSyncNow) {
           syncSnapshot(engine.getSnapshot({
+            includeTextRows: false,
+            includeLabels: false,
             shareMemoryWords: true,
             includeDataRows: false
           }), {
             fastMode: true,
+            incrementalRuntime: true,
             suppressPulse: true,
             skipToolSync: toolTraceEnabled
           });
@@ -6486,8 +6568,13 @@ function runLoopTick() {
     }
   }
   addRunBenchmarkCpu(performance.now() - benchmarkTickStartedAt, benchmarkExecutedInstructions);
-  const nextDelay = deferredDelayMs > 0 ? deferredDelayMs : (speed === RUN_SPEED_UNLIMITED ? 1 : RUN_LOOP_INTERVAL_MS);
-  runTimer = window.setTimeout(runLoopTick, nextDelay);
+  if (deferredDelayMs > 0) {
+    scheduleRunLoop(deferredDelayMs);
+  } else if (speed === RUN_SPEED_UNLIMITED) {
+    scheduleRunLoop(0, true);
+  } else {
+    scheduleRunLoop(getNextRunLoopDelay(speed));
+  }
 }
 function togglePreference(key, label) {
   const current = store.getState().preferences;
@@ -8504,7 +8591,7 @@ const commands = {
     clearInputPauseState();
     windowManager.focus("window-text"); windowManager.focus("window-data");
     const snapshot = engine.getSnapshot();
-    if (!snapshot.assembled || !Array.isArray(snapshot?.textRows) || snapshot.textRows.length === 0) {
+    if (!snapshotHasProgramRows(snapshot)) {
       refreshRuntimeControls(snapshot);
       return;
     }
@@ -9364,6 +9451,16 @@ refs.buttons.backstep.addEventListener("click", commands.backstep);
 refs.buttons.reset.addEventListener("click", commands.reset);
 refs.buttons.pause.addEventListener("click", commands.pause);
 refs.buttons.stop.addEventListener("click", commands.stop);
+// Tools that drive execution use the same commands as the toolbar buttons.
+toolManager.setRuntimeControls?.({
+  isRunning: () => runActive === true,
+  go: () => commands.go(),
+  step: () => commands.step(),
+  backstep: () => commands.backstep(),
+  pause: () => commands.pause(),
+  stop: () => commands.stop(),
+  reset: () => commands.reset()
+});
 if (refs.miniC?.close) refs.miniC.close.addEventListener("click", () => { hideMiniCCompilerWindow(); });
 if (refs.miniC?.openAsm) refs.miniC.openAsm.addEventListener("click", commands.openMiniCAsmAsFile);
 if (refs.miniC?.copyAsm) refs.miniC.copyAsm.addEventListener("click", () => { void commands.copyMiniCAsm(); });
@@ -9792,7 +9889,7 @@ if (typeof window !== "undefined") {
       const snapshot = engine.getSnapshot();
       const assembled = snapshot?.assembled === true;
       const halted = snapshot?.halted === true;
-      const hasProgramRows = Array.isArray(snapshot?.textRows) && snapshot.textRows.length > 0;
+      const hasProgramRows = snapshotHasProgramRows(snapshot);
       const runBusy = runActive || runPausedForInput;
       const canExecute = assembled && hasProgramRows && !halted;
       const canBackstep = hasAvailableBackstep(snapshot);
@@ -9981,5 +10078,3 @@ if (typeof window !== "undefined") {
     }
   };
 }
-
-

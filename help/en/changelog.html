@@ -8,7 +8,16 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.5.0 hardens the MIPS runtime, replaces full snapshots with compact backstep deltas, and completes the mobile and tool workflows.</p>
+  <p class="lead">Release 0.5.1 adds external device interrupts, new runtime tools, faster tool synchronization and functional clock services in MARS-OS.</p>
+
+  <h2>0.5.1 &mdash; device interrupts, runtime tools, MARS-OS clock</h2>
+  <ul>
+    <li>Implemented simultaneous external interrupts for the timer, keyboard, display and Digital Lab hexadecimal keypad, with CPU-side masking and pending-state delivery.</li>
+    <li>Added System Clock and Stack Visualizer tools, including centralized sparse deltas compatible with exact backsteps.</li>
+    <li>Reduced connected-tool overhead through decoded instruction batches, coalesced rendering and bounded runtime event history.</li>
+    <li>Added a localized timer-interrupt example and expanded MARS-OS with working <code>clock</code> and real-time <code>bench</code> commands.</li>
+    <li>Prevented compact runtime snapshots from temporarily clearing an assembled text segment in the execution UI.</li>
+  </ul>
 
   <h2>0.5.0 &mdash; mature runtime, delta backstep, mobile workflows</h2>
   <ul>

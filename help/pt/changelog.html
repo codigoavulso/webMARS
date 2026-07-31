@@ -8,7 +8,16 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">A versão 0.5.0 reforça o runtime MIPS, substitui snapshots completos por deltas compactos de backstep e completa os fluxos mobile e das ferramentas.</p>
+  <p class="lead">A versão 0.5.1 adiciona interrupções externas dos dispositivos, novas ferramentas de runtime, sincronização mais rápida e serviços de relógio funcionais no MARS-OS.</p>
+
+  <h2>0.5.1 &mdash; interrupções dos dispositivos, ferramentas de runtime, relógio MARS-OS</h2>
+  <ul>
+    <li>Implementadas interrupções externas simultâneas para temporizador, teclado, display e teclado hexadecimal do Digital Lab, com máscaras e pedidos pendentes tratados pelo CPU.</li>
+    <li>Adicionadas as ferramentas System Clock e Stack Visualizer, com deltas esparsos centralizados compatíveis com backsteps exatos.</li>
+    <li>Reduzido o custo das ferramentas ligadas através de lotes de instruções descodificadas, rendering agregado e histórico limitado de eventos.</li>
+    <li>Adicionado um exemplo localizado de interrupção de temporizador e expandidos os comandos funcionais <code>clock</code> e <code>bench</code> do MARS-OS.</li>
+    <li>Impedido que snapshots compactos do runtime limpem temporariamente o segmento de texto montado na interface de execução.</li>
+  </ul>
 
   <h2>0.5.0 &mdash; runtime maduro, backstep por deltas, fluxos mobile</h2>
   <ul>

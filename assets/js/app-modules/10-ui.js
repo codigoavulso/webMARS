@@ -4841,6 +4841,57 @@ function scrollElementWithinContainer(target, container, options = {}) {
       const disableHighlights = options.disableHighlights === true;
       const disableAutoScroll = options.disableAutoScroll === true;
       const displayAddressesHex = options.displayAddressesHex !== false;
+      const sameAssembly = Boolean(lastSnapshot)
+        && Number(snapshot?.runtimeRevision) === Number(lastSnapshot?.runtimeRevision);
+      const preservesProgramRows = snapshot?.textRowsIncluded === false
+        && lastSnapshot
+        && snapshot?.assembled === true
+        && sameAssembly;
+      if (preservesProgramRows) {
+        snapshot = {
+          ...lastSnapshot,
+          ...snapshot,
+          textRows: Array.isArray(lastSnapshot.textRows) ? lastSnapshot.textRows : [],
+          labels: snapshot?.labelsIncluded === false && Array.isArray(lastSnapshot.labels)
+            ? lastSnapshot.labels
+            : (Array.isArray(snapshot.labels) ? snapshot.labels : [])
+        };
+      } else if (
+        // One assembly never loses its rows halfway: a snapshot that claims to
+        // carry them but arrives empty would blank a program that is still loaded.
+        snapshot?.assembled === true
+        && sameAssembly
+        && Array.isArray(snapshot.textRows) && snapshot.textRows.length === 0
+        && Array.isArray(lastSnapshot.textRows) && lastSnapshot.textRows.length > 0
+      ) {
+        snapshot = {
+          ...snapshot,
+          textRows: lastSnapshot.textRows,
+          labels: Array.isArray(snapshot.labels) && snapshot.labels.length
+            ? snapshot.labels
+            : (Array.isArray(lastSnapshot.labels) ? lastSnapshot.labels : [])
+        };
+      }
+      // The incremental path only moves highlights, so it has to be sure the table
+      // on screen is still the program this snapshot describes.
+      const renderedRowCount = execute.textBody.querySelectorAll("tr[data-text-address]").length;
+      const incrementalRuntime = options.incrementalRuntime === true
+        && lastSnapshot
+        && sameAssembly
+        && renderedRowCount > 0
+        && (!Array.isArray(lastSnapshot.textRows) || lastSnapshot.textRows.length === renderedRowCount);
+      if (incrementalRuntime) {
+        snapshot = {
+          ...lastSnapshot,
+          ...snapshot,
+          textRows: snapshot?.textRowsIncluded === false && Array.isArray(lastSnapshot.textRows)
+            ? lastSnapshot.textRows
+            : (Array.isArray(snapshot.textRows) ? snapshot.textRows : []),
+          labels: snapshot?.labelsIncluded === false && Array.isArray(lastSnapshot.labels)
+            ? lastSnapshot.labels
+            : (Array.isArray(snapshot.labels) ? snapshot.labels : [])
+        };
+      }
       lastSnapshot = snapshot;
       lastRenderOptions = {
         ...options,
@@ -4848,21 +4899,31 @@ function scrollElementWithinContainer(target, container, options = {}) {
         focusDataAddress
       };
 
-      execute.textBody.innerHTML = snapshot.textRows.length
-        ? snapshot.textRows.map((row) => {
-            const checked = row.breakpoint ? "checked" : "";
-            const classes = [];
-            if (row.isCurrent && !disableHighlights) classes.push("current-row", "updated-row");
-            const cls = classes.join(" ");
-            return `<tr class="${cls}" data-text-address="${row.address}"><td><input type="checkbox" data-breakpoint-address="${row.address}" ${checked}></td><td>${formatProgramAddress(row.address, row.addressHex, displayAddressesHex)}</td><td>${row.code}</td><td>${escapeHtml(row.basic)}</td><td>${escapeHtml(row.source)}</td></tr>`;
-          }).join("")
-        : `<tr><td colspan="5" class="muted">${escapeHtml(translateText("No text segment loaded."))}</td></tr>`;
+      if (incrementalRuntime) {
+        execute.textBody.querySelectorAll("tr.current-row, tr.updated-row").forEach((row) => {
+          row.classList.remove("current-row", "updated-row");
+        });
+        if (!disableHighlights && Number.isFinite(snapshot.pc)) {
+          const currentRow = execute.textBody.querySelector(`tr[data-text-address="${snapshot.pc >>> 0}"]`);
+          currentRow?.classList.add("current-row", "updated-row");
+        }
+      } else {
+        execute.textBody.innerHTML = snapshot.textRows.length
+          ? snapshot.textRows.map((row) => {
+              const checked = row.breakpoint ? "checked" : "";
+              const classes = [];
+              if (row.isCurrent && !disableHighlights) classes.push("current-row", "updated-row");
+              const cls = classes.join(" ");
+              return `<tr class="${cls}" data-text-address="${row.address}"><td><input type="checkbox" data-breakpoint-address="${row.address}" ${checked}></td><td>${formatProgramAddress(row.address, row.addressHex, displayAddressesHex)}</td><td>${row.code}</td><td>${escapeHtml(row.basic)}</td><td>${escapeHtml(row.source)}</td></tr>`;
+            }).join("")
+          : `<tr><td colspan="5" class="muted">${escapeHtml(translateText("No text segment loaded."))}</td></tr>`;
 
-      execute.labelsList.innerHTML = snapshot.labels.length
-        ? snapshot.labels.map((entry) => `<li>${escapeHtml(entry.label)} = ${formatProgramAddress(entry.address, entry.addressHex, displayAddressesHex)}</li>`).join("")
-        : `<li class="muted">${escapeHtml(translateText("No labels"))}</li>`;
+        execute.labelsList.innerHTML = snapshot.labels.length
+          ? snapshot.labels.map((entry) => `<li>${escapeHtml(entry.label)} = ${formatProgramAddress(entry.address, entry.addressHex, displayAddressesHex)}</li>`).join("")
+          : `<li class="muted">${escapeHtml(translateText("No labels"))}</li>`;
 
-      refreshBaseOptions(snapshot);
+        refreshBaseOptions(snapshot);
+      }
 
       const latestChangedAddress = getLatestChangedAddress(changedDataAddresses);
       const activeDataAddress = focusDataAddress ?? latestChangedAddress;
@@ -5040,21 +5101,41 @@ function createRegistersPane(refs) {
       const snapshot = Array.isArray(snapshotOrRows)
         ? { registers: snapshotOrRows }
         : (snapshotOrRows && typeof snapshotOrRows === "object" ? snapshotOrRows : { registers: [] });
+      const incrementalRuntime = options.incrementalRuntime === true
+        && refs.registers.body.querySelector("tr[data-register-key]");
 
       const registerRows = sortRegistersLikeMars(Array.isArray(snapshot.registers) ? snapshot.registers : []);
-      refs.registers.body.innerHTML = registerRows
-        .map((register) => {
+      if (incrementalRuntime) {
+        const renderedRows = new Map(
+          Array.from(refs.registers.body.querySelectorAll("tr[data-register-key]"))
+            .map((row) => [String(row.dataset.registerKey || ""), row])
+        );
+        registerRows.forEach((register) => {
           const key = register.name === "$pc" ? "pc" : String(register.index);
           const changed = !disableHighlights && (changedRegisters.has(key) || changedRegisters.has(register.name));
-          const cls = changed ? "updated-row" : "";
-          const isSpecial = register.name === "$pc" || register.name === "$hi" || register.name === "$lo";
-          const numberCell = isSpecial ? "" : register.index;
-          const displayName = register.name === "$pc"
-            ? "pc"
-            : (register.name === "$hi" ? "hi" : (register.name === "$lo" ? "lo" : register.name));
-          return `<tr class="${cls}" data-register-key="${escapeHtml(key)}"><td>${displayName}</td><td>${numberCell}</td><td>${register.valueHex}</td><td>${register.value}</td></tr>`;
-        })
-        .join("");
+          const row = renderedRows.get(key);
+          if (!row) return;
+          row.classList.toggle("updated-row", changed);
+          const cells = row.cells;
+          if (cells[2] && cells[2].textContent !== register.valueHex) cells[2].textContent = register.valueHex;
+          const decimalValue = String(register.value);
+          if (cells[3] && cells[3].textContent !== decimalValue) cells[3].textContent = decimalValue;
+        });
+      } else {
+        refs.registers.body.innerHTML = registerRows
+          .map((register) => {
+            const key = register.name === "$pc" ? "pc" : String(register.index);
+            const changed = !disableHighlights && (changedRegisters.has(key) || changedRegisters.has(register.name));
+            const cls = changed ? "updated-row" : "";
+            const isSpecial = register.name === "$pc" || register.name === "$hi" || register.name === "$lo";
+            const numberCell = isSpecial ? "" : register.index;
+            const displayName = register.name === "$pc"
+              ? "pc"
+              : (register.name === "$hi" ? "hi" : (register.name === "$lo" ? "lo" : register.name));
+            return `<tr class="${cls}" data-register-key="${escapeHtml(key)}"><td>${displayName}</td><td>${numberCell}</td><td>${register.valueHex}</td><td>${register.value}</td></tr>`;
+          })
+          .join("");
+      }
 
       if (!disableAutoScroll) {
         const changedRow = refs.registers.body.querySelector("tr.updated-row");

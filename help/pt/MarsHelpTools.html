@@ -31,6 +31,7 @@
     <tr><td>Keyboard and Display MMIO Simulator</td><td>Simula os registos de controlo e dados de recetor/transmissor MMIO.</td></tr>
     <tr><td>TTY Device + ANSI Terminal</td><td>Executa programas de terminal com teclado e sequências ANSI.</td></tr>
     <tr><td>Digital Lab Sim</td><td>Controla displays de sete segmentos, teclado e MMIO do laboratório digital.</td></tr>
+    <tr><td>System Clock and Timer</td><td>Comanda um temporizador mapeado em memória que conta instruções executadas ou milissegundos reais, e gera a interrupção de temporizador do MARS para correr um tratador de exceção a cada tique.</td></tr>
     <tr><td>Mars Bot</td><td>Controla o robô simulado através da interface mapeada em memória.</td></tr>
   </table>
   <div class="note"><strong>Exemplo MARS-OS TTY Shell.</strong> Abra o exemplo multificheiro <em>MARS-OS TTY Shell</em>, ligue esta ferramenta, monte e execute. Demonstra uma shell MMIO completa com esperas cooperativas, edição de linha, ANSI, histórico, calculadora, informação do sistema e um pequeno disco RAM apenas de leitura.</div>
@@ -42,6 +43,7 @@
     <tr><td>Introduction to Tools</td><td>Explica o ciclo de ligação, reset e interação.</td></tr>
     <tr><td>ScavengerHunt</td><td>Executa o desafio interativo de programação Assembly.</td></tr>
     <tr><td>Screen Magnifier</td><td>Amplia uma zona para demonstrações e acessibilidade.</td></tr>
+    <tr><td>Stack Visualizer</td><td>Acompanha todo o espaço de endereços e a pilha palavra a palavra: frames abertos por cada chamada, registos guardados e repostos, zoom desde os blocos de cada segmento até aos bits, e um registo em linguagem corrente de cada movimento de $sp com avisos para os erros clássicos de frame. Também comanda a execução com paragens ligadas à pilha: correr até à próxima chamada, passar por cima de uma chamada, correr até o frame atual retornar, até $sp mexer ou até uma palavra vigiada mudar, e pausar assim que surge um aviso.</td></tr>
   </table>
 
   <h2>Configuração Bitmap a partir do MIPS</h2>

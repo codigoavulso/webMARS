@@ -96,6 +96,16 @@
             ]
         },
         {
+            "label": "timer_interrupt_demo.asm",
+            "path": "timer_interrupt_demo.asm",
+            "category": "Tools",
+            "languages": [
+                "en",
+                "pt",
+                "es"
+            ]
+        },
+        {
             "label": "keyboard_display_mmio_echo.asm",
             "path": "keyboard_display_mmio_echo.asm",
             "category": "Tools",

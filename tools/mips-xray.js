@@ -140,12 +140,13 @@
         zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
       }
 
-      function updateRuntimeInstruction(event, shouldRender = true, retainHistory = true) {
-        if (retainHistory) history.record(event.stepAfter | 0, { text: currentInfoText });
+      function formatRuntimeInstruction(event) {
         const statement = String(event?.executedInstruction || "");
-        const tokens = parseTokens(statement);
-        const opcode = (tokens[0] || "").toLowerCase();
-        currentInfoText = [
+        const tokens = Array.isArray(event?.instructionTokens) && event.instructionTokens.length
+          ? event.instructionTokens
+          : parseTokens(statement);
+        const opcode = String(event?.opcode || tokens[0] || "").toLowerCase();
+        return [
           "Line: -",
           `Address: ${toHex32(event?.executedAddress >>> 0)}`,
           `Machine code: ${Number.isFinite(event?.machineWord) ? toHex32(event.machineWord) : "-"}`,
@@ -155,6 +156,11 @@
           `Instruction: ${statement || "-"}`,
           `Next address: ${toHex32(event?.pcAfter >>> 0)}`
         ].join("\n");
+      }
+
+      function updateRuntimeInstruction(event, shouldRender = true, retainHistory = true) {
+        if (retainHistory) history.record(event.stepAfter | 0, { text: currentInfoText });
+        currentInfoText = formatRuntimeInstruction(event);
         if (shouldRender) info.textContent = currentInfoText;
       }
 
@@ -188,6 +194,33 @@
             delivery.retainHistory !== false
           );
           history.pruneBefore(event.historyStartStep | 0);
+        },
+        onRuntimeEventBatch(events, batch = {}) {
+          if (!connected || !Array.isArray(events) || !events.length) return;
+          const instructionEvents = events.filter((event) => event?.type === "instruction");
+          if (!instructionEvents.length) return;
+          const historyStart = Number.isFinite(batch.finalHistoryStartStep)
+            ? Math.max(0, batch.finalHistoryStartStep | 0)
+            : null;
+          let firstRetainedIndex = 0;
+          if (historyStart != null) {
+            firstRetainedIndex = instructionEvents.findIndex((event) => (event.stepAfter | 0) > historyStart);
+            if (firstRetainedIndex < 0) firstRetainedIndex = instructionEvents.length;
+          }
+          if (firstRetainedIndex > 0) {
+            currentInfoText = formatRuntimeInstruction(instructionEvents[firstRetainedIndex - 1]);
+          }
+          for (let index = firstRetainedIndex; index < instructionEvents.length; index += 1) {
+            updateRuntimeInstruction(
+              instructionEvents[index],
+              index === instructionEvents.length - 1,
+              true
+            );
+          }
+          if (firstRetainedIndex === instructionEvents.length) {
+            info.textContent = currentInfoText;
+          }
+          if (historyStart != null) history.pruneBefore(historyStart);
         },
         onBackstep(event) {
           if (!connected || !event) return;

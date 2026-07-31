@@ -39,8 +39,6 @@ function deliverToolRuntimeEventBatch(instances, events, onError = () => {}) {
       || !Number.isFinite(Number(event?.stepAfter))
       || Math.trunc(Number(event.stepAfter)) > finalHistoryStartStep
   });
-  const deliveries = queue.map(createDelivery);
-
   instances.forEach((tool, toolId) => {
     if (!tool || tool.runtimeEventConsumer !== true) return;
     try {
@@ -52,8 +50,14 @@ function deliverToolRuntimeEventBatch(instances, events, onError = () => {}) {
           finalHistoryStartStep
         });
       } else if (typeof tool.onRuntimeEvent === "function") {
+        const delivery = createDelivery(queue[0], 0);
         queue.forEach((event, eventIndex) => {
-          tool.onRuntimeEvent(event, deliveries[eventIndex]);
+          delivery.batchIndex = eventIndex;
+          delivery.isLast = eventIndex === queue.length - 1;
+          delivery.retainHistory = finalHistoryStartStep == null
+            || !Number.isFinite(Number(event?.stepAfter))
+            || Math.trunc(Number(event.stepAfter)) > finalHistoryStartStep;
+          tool.onRuntimeEvent(event, delivery);
         });
       }
       if (typeof tool.onRuntimeBatchEnd === "function") {
@@ -233,6 +237,8 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
     { id: "mips-xray", label: "MIPS X-Ray", script: "./tools/mips-xray.js" },
     { id: "scavenger-hunt", label: "ScavengerHunt", script: "./tools/scavenger-hunt.js" },
     { id: "screen-magnifier", label: "Screen Magnifier", script: "./tools/screen-magnifier.js" },
+    { id: "system-clock", label: "System Clock and Timer", script: "./tools/system-clock.js" },
+    { id: "stack-visualizer", label: "Stack Visualizer", script: "./tools/stack-visualizer.js" },
     { id: "tty-ansi-terminal", label: "TTY Device + ANSI Terminal", script: "./tools/tty-ansi-terminal.js" }
   ];
 
@@ -256,6 +262,19 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
 
   const instances = new Map();
   const reportedSnapshotFailures = new Set();
+  // Tools that drive execution (rather than only observing it) go through this
+  // bridge, so they never reach into the runtime command implementations.
+  let runtimeControls = null;
+  const runtimeControlBridge = Object.freeze({
+    isAvailable: () => runtimeControls != null,
+    isRunning: () => runtimeControls?.isRunning?.() === true,
+    go: () => runtimeControls?.go?.(),
+    step: () => runtimeControls?.step?.(),
+    backstep: () => runtimeControls?.backstep?.(),
+    pause: () => runtimeControls?.pause?.(),
+    stop: () => runtimeControls?.stop?.(),
+    reset: () => runtimeControls?.reset?.()
+  });
   let placementIndex = 0;
   let loadPromise = null;
   let latestSnapshot = null;
@@ -523,6 +542,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
           createToolWindowShell,
           createPlaceholderTool,
           createToolDeltaHistory,
+          runtimeControls: runtimeControlBridge,
           nextPlacement
         });
 
@@ -621,6 +641,9 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
   }
 
   return {
+    setRuntimeControls(controls) {
+      runtimeControls = controls && typeof controls === "object" ? controls : null;
+    },
     getTools() {
       return toolEntries.map(({ id, label }) => ({ id, label }));
     },

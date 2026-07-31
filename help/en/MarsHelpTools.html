@@ -31,6 +31,7 @@
     <tr><td>Keyboard and Display MMIO Simulator</td><td>Exercise receiver/transmitter control and data registers in the standard MMIO range.</td></tr>
     <tr><td>TTY Device + ANSI Terminal</td><td>Run terminal-oriented programs with keyboard input and ANSI escape-sequence rendering.</td></tr>
     <tr><td>Digital Lab Sim</td><td>Drive seven-segment displays, keypad input and related digital-lab MMIO.</td></tr>
+    <tr><td>System Clock and Timer</td><td>Drive a memory-mapped timer that counts executed instructions or real milliseconds, and raise the MARS timer interrupt so an exception handler runs on every tick.</td></tr>
     <tr><td>Mars Bot</td><td>Control the simulated robot through its memory-mapped interface.</td></tr>
   </table>
   <div class="note"><strong>MARS-OS TTY Shell example.</strong> Open the multi-file <em>MARS-OS TTY Shell</em> example, connect this tool, assemble and run. It demonstrates a complete MMIO shell with cooperative waits, line editing, ANSI output, command history, calculator, system information and a small read-only RAM disk.</div>
@@ -42,6 +43,7 @@
     <tr><td>Introduction to Tools</td><td>Learn the standard connect, reset and interaction lifecycle.</td></tr>
     <tr><td>ScavengerHunt</td><td>Run the interactive assembly programming challenge.</td></tr>
     <tr><td>Screen Magnifier</td><td>Magnify a selected part of the workspace for demonstrations and accessibility.</td></tr>
+    <tr><td>Stack Visualizer</td><td>Follow the whole address space and the stack word by word: frames opened by each call, registers saved and restored, a zoom from segment blocks down to single bits, and a plain-language log of every $sp movement with warnings for the classic frame mistakes. It also drives execution with stack-aware stops: run to the next call, step over a call, run until the current frame returns, until $sp moves or until a watched word changes, and pause as soon as a stack warning appears.</td></tr>
   </table>
 
   <h2>Bitmap configuration from MIPS</h2>
