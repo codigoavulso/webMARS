@@ -462,6 +462,7 @@
       let settingsCollapsed = false;
       let activeHistoryStep = null;
       let suppressHistory = false;
+      let suppressDeviceObservers = false;
       const history = ctx.createToolDeltaHistory({
         applyInverse(delta) {
           if (!delta) return;
@@ -556,6 +557,26 @@
         }
       }
 
+      function withoutDeviceObservers(callback) {
+        const previous = suppressDeviceObservers;
+        suppressDeviceObservers = true;
+        try {
+          return callback();
+        } finally {
+          suppressDeviceObservers = previous;
+        }
+      }
+
+      function captureMmioState() {
+        const { RECEIVER_CONTROL, RECEIVER_DATA, TRANSMITTER_CONTROL, TRANSMITTER_DATA } = addresses();
+        return withoutDeviceObservers(() => ({
+          receiverControl: readByteSafe(RECEIVER_CONTROL),
+          receiverData: readByteSafe(RECEIVER_DATA),
+          transmitterControl: readByteSafe(TRANSMITTER_CONTROL),
+          transmitterData: readByteSafe(TRANSMITTER_DATA)
+        }));
+      }
+
       function readyBitSet(address) {
         return (readByteSafe(address) | 1) & 0xff;
       }
@@ -599,7 +620,9 @@
           currentInverse: !!state.currentInverse,
           parserState: String(state.parserState || "normal"),
           csiBuffer: String(state.csiBuffer || ""),
-          charsetMode: String(state.charsetMode || "ascii")
+          charsetMode: String(state.charsetMode || "ascii"),
+          mouseTrackingMode: state.mouseTrackingMode | 0,
+          mouseSgrMode: !!state.mouseSgrMode
         };
       }
 
@@ -618,13 +641,14 @@
           currentInverse: !!terminalState.currentInverse,
           parserState: String(terminalState.parserState || "normal"),
           csiBuffer: String(terminalState.csiBuffer || ""),
-          charsetMode: String(terminalState.charsetMode || "ascii")
+          charsetMode: String(terminalState.charsetMode || "ascii"),
+          mouseTrackingMode: terminalState.mouseTrackingMode | 0,
+          mouseSgrMode: !!terminalState.mouseSgrMode
         };
       }
 
       function ensureHistoryDelta(step = activeHistoryStep ?? getSnapshotStep()) {
         if (suppressHistory) return null;
-        const { RECEIVER_CONTROL, RECEIVER_DATA, TRANSMITTER_CONTROL, TRANSMITTER_DATA } = addresses();
         return history.ensure(step, () => ({
           inputQueue: Array.isArray(inputQueue) ? inputQueue.map((value) => value & 0xff) : [],
           savedCursor: {
@@ -639,12 +663,9 @@
           snapshotReadCount: snapshotReadCount | 0,
           snapshotWriteCount: snapshotWriteCount | 0,
           polledTxCount: polledTxCount | 0,
-          mmio: {
-            receiverControl: readByteSafe(RECEIVER_CONTROL),
-            receiverData: readByteSafe(RECEIVER_DATA),
-            transmitterControl: readByteSafe(TRANSMITTER_CONTROL),
-            transmitterData: readByteSafe(TRANSMITTER_DATA)
-          }
+          // These reads are bookkeeping, not guest MMIO reads. Suppressing the
+          // observer prevents history creation from recursively creating itself.
+          mmio: captureMmioState()
         }));
       }
 
@@ -691,7 +712,9 @@
           currentInverse: false,
           parserState: "normal",
           csiBuffer: "",
-          charsetMode: "ascii"
+          charsetMode: "ascii",
+          mouseTrackingMode: 0,
+          mouseSgrMode: false
         };
         savedCursor = { row: 0, col: 0 };
         dirtyAll = true;
@@ -977,6 +1000,16 @@
             if (privateMode && params[0] === "25") {
               // cursor visibility hint ignored for now
             }
+            if (privateMode) {
+              const enabled = finalChar === "h";
+              params.forEach((parameter) => {
+                if (parameter === "1000" || parameter === "1002" || parameter === "1003") {
+                  terminalState.mouseTrackingMode = enabled ? Number.parseInt(parameter, 10) : 0;
+                } else if (parameter === "1006") {
+                  terminalState.mouseSgrMode = enabled;
+                }
+              });
+            }
             break;
           default:
             break;
@@ -1187,8 +1220,10 @@
         if (isReadyBitSet(RECEIVER_CONTROL)) return;
         ensureHistoryDelta();
         const byte = inputQueue.shift() | 0;
-        writeByteSafe(RECEIVER_DATA, byte & 0xff);
-        writeByteSafe(RECEIVER_CONTROL, readyBitSet(RECEIVER_CONTROL));
+        withoutDeviceObservers(() => {
+          writeByteSafe(RECEIVER_DATA, byte & 0xff);
+          writeByteSafe(RECEIVER_CONTROL, readyBitSet(RECEIVER_CONTROL));
+        });
       }
 
       function syncDeviceRegisters() {
@@ -1203,8 +1238,10 @@
             ensureHistoryDelta(getSnapshotStep());
             polledTxCount += 1;
             processTerminalByte(txByte);
-            writeByteSafe(TRANSMITTER_DATA, 0);
-            writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
+            withoutDeviceObservers(() => {
+              writeByteSafe(TRANSMITTER_DATA, 0);
+              writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
+            });
           }
         }
         if (inputQueue.length > 0 && !isReadyBitSet(RECEIVER_CONTROL)) {
@@ -1243,28 +1280,34 @@
           start: RECEIVER_DATA,
           end: TRANSMITTER_DATA,
           onRead(detail) {
-            if (!connected || suppressHistory) return;
+            if (!connected || suppressHistory || suppressDeviceObservers) return;
             if ((detail?.address >>> 0) !== (RECEIVER_DATA >>> 0)) return;
             withHistoryStep((detail?.steps | 0) + 1, () => {
               ensureHistoryDelta();
               observerReadCount += 1;
-              writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
-              writeByteSafe(RECEIVER_DATA, 0);
+              withoutDeviceObservers(() => {
+                writeByteSafe(RECEIVER_CONTROL, readyBitCleared(RECEIVER_CONTROL));
+                writeByteSafe(RECEIVER_DATA, 0);
+              });
               feedReceiverFromQueue();
               scheduleStatusUpdate();
             });
           },
           onWrite(detail) {
-            if (!connected || suppressHistory) return;
+            if (!connected || suppressHistory || suppressDeviceObservers) return;
             if ((detail?.address >>> 0) !== (TRANSMITTER_DATA >>> 0)) return;
             withHistoryStep((detail?.steps | 0) + 1, () => {
               ensureHistoryDelta();
               observerWriteCount += 1;
               if (!isReadyBitSet(TRANSMITTER_CONTROL)) return;
-              writeByteSafe(TRANSMITTER_CONTROL, readyBitCleared(TRANSMITTER_CONTROL));
+              withoutDeviceObservers(() => {
+                writeByteSafe(TRANSMITTER_CONTROL, readyBitCleared(TRANSMITTER_CONTROL));
+              });
               processTerminalByte(detail?.value | 0);
-              writeByteSafe(TRANSMITTER_DATA, 0);
-              writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
+              withoutDeviceObservers(() => {
+                writeByteSafe(TRANSMITTER_DATA, 0);
+                writeByteSafe(TRANSMITTER_CONTROL, readyBitSet(TRANSMITTER_CONTROL));
+              });
               scheduleStatusUpdate();
             });
           }
@@ -1346,6 +1389,8 @@
           terminalState.parserState = "normal";
           terminalState.csiBuffer = "";
           terminalState.charsetMode = "ascii";
+          terminalState.mouseTrackingMode = 0;
+          terminalState.mouseSgrMode = false;
         }
         resetTerminalState();
         suppressHistory = false;
@@ -1366,6 +1411,16 @@
           echoInputBytes(bytes);
           event.preventDefault();
           return;
+        }
+        // Ctrl plus a letter is the classic control byte, so full screen
+        // programs running on the guest can bind ^S, ^Q, ^X and friends.
+        if (event.ctrlKey && !event.metaKey && !event.altKey && event.key.length === 1) {
+          const letter = event.key.toUpperCase().charCodeAt(0);
+          if (letter >= 64 && letter <= 95) {
+            queueInputBytes([letter & 0x1f]);
+            event.preventDefault();
+            return;
+          }
         }
         if (event.key === "Enter") {
           const bytes = crlfTranslationEnabled ? [13, 10] : [13];
@@ -1481,10 +1536,75 @@
       canvas.addEventListener("blur", hideTerminalFocus);
       keyboardInput?.addEventListener("focus", showTerminalFocus);
       keyboardInput?.addEventListener("blur", hideTerminalFocus);
+
+      function pointerCell(event) {
+        const rect = canvas.getBoundingClientRect();
+        if (!(rect.width > 0) || !(rect.height > 0)) return null;
+        const x = ((event.clientX - rect.left) * canvas.width) / rect.width;
+        const y = ((event.clientY - rect.top) * canvas.height) / rect.height;
+        return {
+          col: Math.max(1, Math.min(terminalState.columns, Math.floor(x / cellWidth) + 1)),
+          row: Math.max(1, Math.min(terminalState.rows, Math.floor(y / cellHeight) + 1))
+        };
+      }
+
+      function mouseButtonCode(event, motion = false, wheelDelta = 0) {
+        let code;
+        if (wheelDelta !== 0) code = wheelDelta < 0 ? 64 : 65;
+        else if (motion) {
+          if ((event.buttons & 1) !== 0) code = 32;
+          else if ((event.buttons & 4) !== 0) code = 33;
+          else if ((event.buttons & 2) !== 0) code = 34;
+          else code = 35;
+        } else if (event.button === 0) code = 0;
+        else if (event.button === 1) code = 1;
+        else if (event.button === 2) code = 2;
+        else code = 3;
+        if (event.shiftKey) code += 4;
+        if (event.altKey) code += 8;
+        if (event.ctrlKey) code += 16;
+        return code;
+      }
+
+      function sendMouseEvent(event, kind, wheelDelta = 0) {
+        if (!connected || !terminalState || terminalState.mouseTrackingMode === 0 || !terminalState.mouseSgrMode) return false;
+        const cell = pointerCell(event);
+        if (!cell) return false;
+        const motion = kind === "move";
+        if (motion) {
+          if (terminalState.mouseTrackingMode === 1000) return false;
+          if (terminalState.mouseTrackingMode === 1002 && event.buttons === 0) return false;
+        }
+        const code = mouseButtonCode(event, motion, wheelDelta);
+        const suffix = kind === "up" ? "m" : "M";
+        const sequence = `\u001b[<${code};${cell.col};${cell.row}${suffix}`;
+        queueInputBytes(Array.from(sequence, (character) => character.charCodeAt(0) & 0xff));
+        return true;
+      }
+
       canvas.addEventListener("pointerdown", (event) => {
         focusTerminalInput();
+        if (sendMouseEvent(event, "down")) {
+          try {
+            canvas.setPointerCapture(event.pointerId);
+          } catch {
+            // Pointer capture is only an interaction enhancement.
+          }
+        }
         if (connected) event.preventDefault();
       });
+      canvas.addEventListener("pointerup", (event) => {
+        if (sendMouseEvent(event, "up")) event.preventDefault();
+      });
+      canvas.addEventListener("pointermove", (event) => {
+        if (sendMouseEvent(event, "move")) event.preventDefault();
+      });
+      canvas.addEventListener("contextmenu", (event) => {
+        if (connected && terminalState?.mouseTrackingMode) event.preventDefault();
+      });
+      canvas.addEventListener("wheel", (event) => {
+        if (sendMouseEvent(event, "wheel", event.deltaY)) event.preventDefault();
+      }, { passive: false });
 
       fontSizeSelect.addEventListener("change", updateMetrics);
       encodingSelect.addEventListener("change", () => {
@@ -1535,7 +1655,7 @@
       });
 
       helpButton.addEventListener("click", () => {
-        ctx.messagesPane.postMars(`${t("[tool] TTY ANSI Terminal: writes to transmitter data are rendered as terminal bytes; receiver data is fed from keyboard input. Supported ANSI includes cursor movement, clear screen/line, colors, ESC(0 line drawing, optional local echo, CRLF translation, and destructive backspace.")}\n`);
+        ctx.messagesPane.postMars(`${t("[tool] TTY ANSI Terminal: writes to transmitter data are rendered as terminal bytes; receiver data is fed from keyboard input. Supported ANSI includes cursor movement, clear screen/line, colors, ESC(0 line drawing, optional local echo, CRLF translation, and destructive backspace Arrow keys send ESC[A-D and Ctrl plus a letter sends the matching control byte.")}\n`);
       });
 
       closeButton.addEventListener("click", () => {

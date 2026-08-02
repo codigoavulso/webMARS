@@ -234,6 +234,10 @@ test("stateful tools use central deltas and expose active runtime consumers", as
   assert.match(ttySource, /cells:\s*new Map\(\)/);
   assert.match(ttySource, /recordCellBefore\(/);
   assert.match(ttySource, /registerMemoryObserver\(/);
+  assert.match(ttySource, /let suppressDeviceObservers = false;/);
+  assert.match(ttySource, /function captureMmioState\(\)/);
+  assert.match(ttySource, /mmio: captureMmioState\(\)/);
+  assert.match(ttySource, /suppressHistory \|\| suppressDeviceObservers/);
   assert.match(ttySource, /onBackstep\(event\)/);
   assert.doesNotMatch(ttySource, /onRuntimeEvent\(/);
   assert.match(ttySource, /data-tty="keyboard-input"/);
@@ -249,6 +253,14 @@ test("stateful tools use central deltas and expose active runtime consumers", as
   assert.match(ttySource, /root\.classList\.toggle\("tty-ansi-settings-collapsed", settingsCollapsed\);/);
   assert.match(ttySource, /settingsToggle\?\.addEventListener\("click"/);
   assert.match(ttySource, /settingsToggle\.setAttribute\("aria-expanded", settingsCollapsed \? "false" : "true"\);/);
+  assert.match(ttySource, /mouseTrackingMode:\s*0/);
+  assert.match(ttySource, /parameter === "1000" \|\| parameter === "1002" \|\| parameter === "1003"/);
+  assert.match(ttySource, /parameter === "1006"/);
+  assert.match(ttySource, /function sendMouseEvent\(event, kind, wheelDelta = 0\)/);
+  assert.match(ttySource, /`\\u001b\[<\$\{code\};\$\{cell\.col\};\$\{cell\.row\}\$\{suffix\}`/);
+  assert.match(ttySource, /canvas\.addEventListener\("pointerup"/);
+  assert.match(ttySource, /canvas\.addEventListener\("pointermove"/);
+  assert.match(ttySource, /canvas\.addEventListener\("wheel"/);
 
   const keyboardSource = await readFile(resolve(projectRoot, "tools/keyboard-display-mmio.js"), "utf8");
   assert.match(keyboardSource, /registerMemoryObserver\(/);

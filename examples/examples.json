@@ -618,7 +618,7 @@
             ]
         },
         {
-            "label": "MARS-OS TTY Shell",
+            "label": "MARS-OS TTY Operating System",
             "path": "mips.asm",
             "category": "Devices and system",
             "languages": [
@@ -630,6 +630,34 @@
                 {
                     "path": "mips.asm",
                     "main": true
+                },
+                {
+                    "path": "mips_os_lib.asm",
+                    "shared": true
+                },
+                {
+                    "path": "mips_os_fs.asm",
+                    "shared": true
+                },
+                {
+                    "path": "mips_os_apps.asm",
+                    "shared": true
+                },
+                {
+                    "path": "mips_os_edit.asm",
+                    "shared": true
+                },
+                {
+                    "path": "mips_os_sheet.asm",
+                    "shared": true
+                },
+                {
+                    "path": "mips_os_basic.asm",
+                    "shared": true
+                },
+                {
+                    "path": "mips_os_desktop.asm",
+                    "shared": true
                 },
                 {
                     "path": "mips_os_kernel.asm",

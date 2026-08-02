@@ -29,12 +29,12 @@
     <tr><td>Bitmap Display</td><td>Renderiza píxeles desde un framebuffer en memoria configurable.</td></tr>
     <tr><td>Bitmap Terminal Tool</td><td>Ofrece un terminal de texto en framebuffer con entrada de teclado.</td></tr>
     <tr><td>Keyboard and Display MMIO Simulator</td><td>Simula registros de control y datos de receptor/transmisor MMIO.</td></tr>
-    <tr><td>TTY Device + ANSI Terminal</td><td>Ejecuta programas de terminal con teclado y secuencias ANSI.</td></tr>
+    <tr><td>TTY Device + ANSI Terminal</td><td>Ejecuta programas con teclado, ANSI y eventos de ratón xterm activados por el programa.</td></tr>
     <tr><td>Digital Lab Sim</td><td>Controla displays de siete segmentos, teclado y MMIO del laboratorio digital.</td></tr>
     <tr><td>System Clock and Timer</td><td>Dirige un temporizador mapeado en memoria que cuenta instrucciones ejecutadas o milisegundos reales, y genera la interrupción de temporizador de MARS para ejecutar un manejador de excepción en cada tic.</td></tr>
     <tr><td>Mars Bot</td><td>Controla el robot simulado mediante su interfaz mapeada en memoria.</td></tr>
   </table>
-  <div class="note"><strong>Ejemplo MARS-OS TTY Shell.</strong> Abre el ejemplo multiarquivo <em>MARS-OS TTY Shell</em>, conecta esta herramienta, ensambla y ejecuta. Demuestra una shell MMIO completa con esperas cooperativas, edición de línea, ANSI, historial, calculadora, información del sistema y un pequeño disco RAM de solo lectura.</div>
+  <div class="note"><strong>Ejemplo MARS-OS TTY Operating System.</strong> Abre el ejemplo multiarchivo, conecta la herramienta, ensambla y ejecuta. El sistema arranca directamente en Program Manager al estilo Windows 95; abre la aplicación Terminal para acceder al shell de 46 comandos. El menú Inicio, las ventanas y los lanzadores se dibujan enteramente en Assembly MIPS y se controlan mediante eventos de ratón xterm SGR. El disco RAM, el editor, la hoja de cálculo y BASIC siguen disponibles; el cursor del editor y las celdas de la hoja también aceptan clics.</div>
 
   <h2>Utilidades educativas</h2>
   <table>

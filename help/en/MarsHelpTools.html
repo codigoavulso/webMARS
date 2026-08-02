@@ -29,12 +29,12 @@
     <tr><td>Bitmap Display</td><td>Render pixels from a configurable memory-backed framebuffer.</td></tr>
     <tr><td>Bitmap Terminal Tool</td><td>Use a framebuffer-based text terminal together with keyboard input.</td></tr>
     <tr><td>Keyboard and Display MMIO Simulator</td><td>Exercise receiver/transmitter control and data registers in the standard MMIO range.</td></tr>
-    <tr><td>TTY Device + ANSI Terminal</td><td>Run terminal-oriented programs with keyboard input and ANSI escape-sequence rendering.</td></tr>
+    <tr><td>TTY Device + ANSI Terminal</td><td>Run terminal programs with keyboard input, ANSI rendering and opt-in xterm mouse events.</td></tr>
     <tr><td>Digital Lab Sim</td><td>Drive seven-segment displays, keypad input and related digital-lab MMIO.</td></tr>
     <tr><td>System Clock and Timer</td><td>Drive a memory-mapped timer that counts executed instructions or real milliseconds, and raise the MARS timer interrupt so an exception handler runs on every tick.</td></tr>
     <tr><td>Mars Bot</td><td>Control the simulated robot through its memory-mapped interface.</td></tr>
   </table>
-  <div class="note"><strong>MARS-OS TTY Shell example.</strong> Open the multi-file <em>MARS-OS TTY Shell</em> example, connect this tool, assemble and run. It demonstrates a complete MMIO shell with cooperative waits, line editing, ANSI output, command history, calculator, system information and a small read-only RAM disk.</div>
+  <div class="note"><strong>MARS-OS TTY Operating System example.</strong> Open the multi-file example, connect this tool, assemble and run. It boots directly into its Windows 95-style Program Manager; open the Terminal app for the 46-command shell. The Start menu, windows and application launchers are drawn entirely by MIPS assembly and controlled with xterm SGR mouse reports. The writable RAM disk, editor, spreadsheet and BASIC interpreter remain available; the editor cursor and spreadsheet cells also accept mouse clicks.</div>
 
   <h2>Learning utilities</h2>
   <table>

@@ -136,7 +136,7 @@ async function assembleSource(source, sourceName, settings = {}, assemblyOptions
   return engine;
 }
 
-async function assembleMarsOs(language = "en") {
+async function assembleMarsOs(language = "en", settings = {}) {
   const entry = entries.find((candidate) => candidate.path === "mips.asm");
   assert.ok(entry, "MARS-OS catalog entry is missing.");
   const files = [];
@@ -149,7 +149,7 @@ async function assembleMarsOs(language = "en") {
     });
   }
   const engine = await createJavaScriptEngine({
-    settings: { startAtMain: true, maxMemoryBytes: 0x7fffffff, maxBacksteps: 0 }
+    settings: { startAtMain: true, maxMemoryBytes: 0x7fffffff, maxBacksteps: 0, ...settings }
   });
   engine.setSourceFiles(files);
   const main = files.find((file) => file.main);
@@ -202,6 +202,22 @@ function attachTtyHarness(engine, inputText = "") {
       return input.length;
     }
   };
+}
+
+function runMarsOs(engine, maxSteps = 1_000_000) {
+  // engine.go() rebuilds a full snapshot on every instruction, which turns the
+  // longer MARS-OS sessions into minutes of work. Stepping without snapshots
+  // keeps these tests to a couple of seconds each.
+  let steps = 0;
+  for (; steps < maxSteps; steps += 1) {
+    const result = engine.step({ includeSnapshot: false });
+    assert.equal(result.ok, true, result.message || "MARS-OS execution failed.");
+    assert.notEqual(result.waitingForInput, true, "Unexpected console input request.");
+    if (result.done === true || result.haltReason) break;
+  }
+  const snapshot = engine.getSnapshot({ includeProgram: false, includeBreakpoints: false });
+  assert.equal(snapshot.halted, true, `MARS-OS did not halt within ${maxSteps} instructions.`);
+  return steps;
 }
 
 function runToHalt(engine, maxSteps = 200000) {
@@ -339,16 +355,15 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
   const engine = await assembleMarsOs("en");
   const tty = attachTtyHarness(
     engine,
-    "calc 0x20 + 22\rcat motd\rcolor yellow\rclock\rsysinfo\rhistory\rshutdown\r"
+    "tcalc 0x20 + 22\rcat motd\rcolor yellow\rclock\rsysinfo\rhistory\rshutdown\r"
   );
-  const result = engine.go(100000);
+  const steps = runMarsOs(engine, 200_000);
   tty.detach();
 
-  assert.equal(result.ok, true);
-  assert.equal(result.haltReason, "exit");
-  assert.equal(engine.getSnapshot().halted, true);
   assert.equal(tty.remainingInput, 0);
-  assert.match(tty.output, /MARS-OS 0\.2/);
+  assert.ok(steps < 120_000, "The shell session used unexpectedly many instructions.");
+  assert.match(tty.output, /MARS-OS 1\.0/);
+  assert.match(tty.output, /RAM disk mounted: 5 files, \d+ bytes/);
   assert.match(tty.output, /result: 54 \(0x00000036\)/);
   assert.match(tty.output, /Learn the machine by building the machine\./);
   assert.match(tty.output, /\x1b\[93mguest@webmars:\/\$ /);
@@ -358,30 +373,212 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
   assert.match(tty.output, /timer device: inactive/);
   assert.match(tty.output, /uptime: \d+ ms/);
   assert.match(tty.output, /commands executed: 5/);
+  assert.match(tty.output, /commands installed: 46/);
   assert.match(tty.output, /1  calc 0x20 \+ 22/);
   assert.match(tty.output, /6  history/);
   assert.match(tty.output, /System halted/);
-  assert.ok(engine.steps < 30000, "The shell session used unexpectedly many instructions.");
 
-  const kernelSource = await readFile(resolve(examplesRoot, "mips_os_kernel.asm"), "utf8");
-  assert.match(kernelSource, /tty_getc_wait:[\s\S]*?li\s+\$a0,\s*4[\s\S]*?syscall/);
+  const libSource = await readFile(resolve(examplesRoot, "mips_os_lib.asm"), "utf8");
+  assert.match(libSource, /tty_getc_wait:[\s\S]*?li\s+\$a0,\s*4[\s\S]*?syscall/);
   for (const language of languages) {
     const mainSource = await readFile(await resolveExampleFile(language, "mips.asm"), "utf8");
-    assert.match(mainSource, /\.include "mips_os_kernel\.asm"/);
+    for (const module of ["lib", "fs", "apps", "edit", "sheet", "basic", "desktop", "kernel"]) {
+      assert.match(mainSource, new RegExp(`\.include "mips_os_${module}\.asm"`));
+    }
     assert.match(mainSource, /cmd_clock:\s*\.asciiz "clock"/);
     assert.match(mainSource, /cmd_bench:\s*\.asciiz "bench"/);
+    assert.match(mainSource, /cmd_edit:\s*\.asciiz "edit"/);
+    assert.match(mainSource, /cmd_sheet:\s*\.asciiz "sheet"/);
+    assert.match(mainSource, /cmd_basic:\s*\.asciiz "basic"/);
+    assert.match(mainSource, /cmd_exit:\s*\.asciiz "exit"/);
     assert.doesNotMatch(mainSource, /Bitmap Display|framebuffer/i);
   }
 });
 
-test("MARS-OS bench measures real instruction throughput over a timed sample", async () => {
+test("MARS-OS boots to Program Manager and runs the shell inside Terminal", async () => {
   const engine = await assembleMarsOs("en");
-  const tty = attachTtyHarness(engine, "bench\rshutdown\r");
-  const result = engine.go(20_000_000);
+  const click = (column, row) => `\x1b[<0;${column};${row}M`;
+  const tty = attachTtyHarness(
+    engine,
+    click(3, 25)       // Start
+      + click(5, 23)   // About
+      + click(72, 9)   // close About
+      + click(3, 25)   // Start
+      + click(5, 19)   // Terminal
+      + "exit\r"      // Return to Program Manager
+      + "tshutdown\r" // Keyboard shortcut reopens Terminal
+  );
+  runMarsOs(engine, 2_000_000);
   tty.detach();
 
-  assert.equal(result.ok, true);
-  assert.equal(result.haltReason, "exit");
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /\x1b\[\?1000h\x1b\[\?1006h/);
+  assert.match(tty.output, /MARS-OS Program Manager/);
+  assert.match(tty.output, /Welcome to the mouse driven MARS-OS desktop/);
+  assert.ok((tty.output.match(/MARS-OS Program Manager/g) ?? []).length >= 2);
+  assert.match(tty.output, /\x1b\[\?1000l\x1b\[\?1006l/);
+  assert.match(tty.output, /System halted/);
+});
+
+test("MARS-OS boots from the lowest text address without the start-at-main shortcut", async () => {
+  // The app does not force execution to begin at main, so the reset vector has
+  // to be the first instruction the assembler emits.
+  const engine = await assembleMarsOs("en", { startAtMain: false });
+  const snapshot = engine.getSnapshot({ includeTextRows: false });
+  const entry = snapshot.labels.find((label) => label.label === "main");
+  assert.ok(entry, "MARS-OS must export a main label.");
+  assert.equal(entry.address >>> 0, snapshot.pc >>> 0, "main must sit at the reset address.");
+
+  const tty = attachTtyHarness(engine, "tls\rshutdown\r");
+  runMarsOs(engine, 200_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /RAM disk mounted: 5 files/);
+  assert.match(tty.output, /readme\.txt\s+188\s+4/);
+});
+
+test("MARS-OS RAM disk supports the full create, inspect and remove cycle", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(
+    engine,
+    "t" + [
+      "write list.txt zebra",
+      "append list.txt alpha",
+      "wc list.txt",
+      "sort list.txt",
+      "grep alpha list.txt",
+      "cp motd copy.txt",
+      "mv copy.txt greeting.txt",
+      "ls",
+      "df",
+      "rm greeting.txt",
+      "ls",
+      "shutdown"
+    ].join("\r") + "\r"
+  );
+  runMarsOs(engine, 1_000_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /lines: 2  words: 2  bytes: 12/);
+  // sort never rewrites the file, it only prints the ordered lines.
+  assert.match(tty.output, /alpha\r\nzebra/);
+  assert.match(tty.output, /2: alpha/);
+  assert.match(tty.output, /greeting\.txt\s+43\s+1/);
+  assert.match(tty.output, /files: 7 of 16/);
+  const afterRemoval = tty.output.slice(tty.output.lastIndexOf("rm greeting.txt"));
+  assert.doesNotMatch(afterRemoval, /greeting\.txt\s+43/);
+});
+
+test("MARS-OS editor writes a new file back to the RAM disk", async () => {
+  const engine = await assembleMarsOs("en");
+  // ESC followed by x is the save-and-exit entry of the editor menu.
+  const tty = attachTtyHarness(
+    engine,
+    "tedit demo.txt\rline one\rline two\x1bxwc demo.txt\rcat demo.txt\rshutdown\r"
+  );
+  runMarsOs(engine, 3_000_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /\x1b\[7m MARS-OS edit   demo\.txt/);
+  assert.match(tty.output, /line 2   column 9   bytes 17\/1023/);
+  assert.match(tty.output, /edit: closed demo\.txt, 17 bytes/);
+  assert.match(tty.output, /lines: 2  words: 4  bytes: 17/);
+  assert.match(tty.output, /line one\r\nline two/);
+});
+
+test("MARS-OS spreadsheet evaluates formulas and round-trips through a text file", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(
+    engine,
+    // Read the seeded sheet, then build a new one cell by cell and save it.
+    "tsheet budget.sht\r\x1bq"
+      + "sheet totals.sht\r10\r\x1b[B32\r\x1b[B=A1+A2\r\x1bx"
+      + "cat totals.sht\rshutdown\r"
+  );
+  runMarsOs(engine, 6_000_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  // The seeded sheet totals 3*12 plus 2*45 through =SUM(D2:D3).
+  assert.match(tty.output, /5TOTAL {27}126/);
+  // A3 stays selected after the last entry, so its value is drawn inverted.
+  assert.match(tty.output, /\x1b\[7m {6}42\x1b\[0m/);
+  assert.match(tty.output, /cell A3   content: =A1\+A2/);
+  assert.match(tty.output, /A1:10\r\nA2:32\r\nA3:=A1\+A2/);
+});
+
+test("MARS-OS BASIC edits, runs and saves a line numbered program", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(
+    engine,
+    "t" + [
+      "basic",
+      // Immediate mode evaluates a statement without storing it.
+      "PRINT 2 + 3 * 4, ABS(-9), 17 MOD 5",
+      // A leading number edits the program instead of running anything.
+      "10 LET T = 0",
+      "20 FOR I = 1 TO 4",
+      "30 GOSUB 100",
+      "40 NEXT I",
+      "50 IF T > 20 THEN PRINT \"BIG\"",
+      "60 END",
+      "100 LET T = T + I * I",
+      "110 PRINT I; \" -> \"; T",
+      "120 RETURN",
+      "RUN",
+      "SAVE squares.bas",
+      "NEW",
+      "LIST",
+      "LOAD squares.bas",
+      "RUN",
+      "BYE",
+      "cat squares.bas",
+      "shutdown"
+    ].join("\r") + "\r"
+  );
+  runMarsOs(engine, 2_000_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  // Precedence, the built-in functions and the comma print zones.
+  assert.match(tty.output, /14 {6}9 {7}2/);
+  // GOSUB, FOR/NEXT and IF/THEN over the stored program.
+  assert.match(tty.output, /1 -> 1\r\n2 -> 5\r\n3 -> 14\r\n4 -> 30\r\nBIG/);
+  // NEW empties the program, and LOAD brings the saved listing back.
+  const afterNew = tty.output.slice(tty.output.indexOf("NEW"));
+  assert.match(afterNew, /loaded 9 lines/);
+  assert.match(afterNew, /1 -> 1\r\n2 -> 5\r\n3 -> 14\r\n4 -> 30\r\nBIG/);
+  // The saved file is the listing itself, readable by cat and edit.
+  assert.match(tty.output, /10 LET T = 0\r\n20 FOR I = 1 TO 4\r\n30 GOSUB 100/);
+});
+
+test("MARS-OS BASIC reports errors and can be interrupted with Ctrl-C", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(
+    engine,
+    "tbasic\rPRINT 1/0\rGOTO 999\r10 PRINT \"X\"\r20 GOTO 10\rRUN\r\x03LIST\rBYE\rshutdown\r"
+  );
+  runMarsOs(engine, 2_000_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /\?DIVISION BY ZERO ERROR/);
+  assert.match(tty.output, /\?UNDEFINED LINE ERROR/);
+  // Ctrl-C leaves the run loop without losing the program.
+  assert.match(tty.output, /BREAK/);
+  assert.match(tty.output, /10 PRINT "X"\r\n {3}20 GOTO 10/);
+  assert.match(tty.output, /basic: back to the shell/);
+});
+
+test("MARS-OS bench measures real instruction throughput over a timed sample", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(engine, "tbench\rshutdown\r");
+  runMarsOs(engine, 20_000_000);
+  tty.detach();
+
   const resultMatch = tty.output.match(/benchmark: (\d+) instructions\/s/);
   const sampleMatch = tty.output.match(/sample: (\d+) ms, (\d+) instructions/);
   assert.ok(resultMatch, "The bench command must report instructions per second.");

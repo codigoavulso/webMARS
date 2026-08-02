@@ -29,12 +29,12 @@
     <tr><td>Bitmap Display</td><td>Renderiza píxeis a partir de um framebuffer configurável em memória.</td></tr>
     <tr><td>Bitmap Terminal Tool</td><td>Disponibiliza um terminal de texto em framebuffer com teclado.</td></tr>
     <tr><td>Keyboard and Display MMIO Simulator</td><td>Simula os registos de controlo e dados de recetor/transmissor MMIO.</td></tr>
-    <tr><td>TTY Device + ANSI Terminal</td><td>Executa programas de terminal com teclado e sequências ANSI.</td></tr>
+    <tr><td>TTY Device + ANSI Terminal</td><td>Executa programas com teclado, ANSI e eventos de rato xterm ativados pelo programa.</td></tr>
     <tr><td>Digital Lab Sim</td><td>Controla displays de sete segmentos, teclado e MMIO do laboratório digital.</td></tr>
     <tr><td>System Clock and Timer</td><td>Comanda um temporizador mapeado em memória que conta instruções executadas ou milissegundos reais, e gera a interrupção de temporizador do MARS para correr um tratador de exceção a cada tique.</td></tr>
     <tr><td>Mars Bot</td><td>Controla o robô simulado através da interface mapeada em memória.</td></tr>
   </table>
-  <div class="note"><strong>Exemplo MARS-OS TTY Shell.</strong> Abra o exemplo multificheiro <em>MARS-OS TTY Shell</em>, ligue esta ferramenta, monte e execute. Demonstra uma shell MMIO completa com esperas cooperativas, edição de linha, ANSI, histórico, calculadora, informação do sistema e um pequeno disco RAM apenas de leitura.</div>
+  <div class="note"><strong>Exemplo MARS-OS TTY Operating System.</strong> Abra o exemplo multificheiro, ligue a ferramenta, monte e execute. O sistema arranca diretamente no Gestor de Programas ao estilo Windows 95; abra a aplicação Terminal para aceder à shell de 46 comandos. O menu Iniciar, as janelas e os lançadores são desenhados integralmente por Assembly MIPS e controlados através de eventos de rato xterm SGR. O disco RAM, o editor, a folha de cálculo e o BASIC continuam disponíveis; o cursor do editor e as células da folha também aceitam cliques.</div>
 
   <h2>Utilitários educativos</h2>
   <table>
