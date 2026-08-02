@@ -16,6 +16,7 @@
     "./assets/js/app-modules/05-layout-config.js",
     "./assets/js/app-modules/09-ui-translation.js",
     "./assets/js/app-modules/10-ui.js",
+    "./assets/js/app-modules/11-ui-file-manager.js",
     "./assets/js/app-modules/12-ui-tool-manager.js",
     "./assets/js/app-modules/13-ui-menu-system.js",
     "./assets/js/app-modules/15-help-system.js",

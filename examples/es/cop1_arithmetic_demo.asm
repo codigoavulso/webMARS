@@ -3,7 +3,7 @@
 # conversion a entero de 32 bits con el modo de redondeo activo del FCSR.
 
 .data
-.align 3
+.align 3   # los doubles exigen alineación a ocho bytes
 left:          .double 1.5
 right:         .double 2.25
 stored_sum:    .space 8
@@ -16,9 +16,9 @@ newline:       .asciiz "\n"
 
 .text
 main:
-  ldc1  $f0, left
+  ldc1  $f0, left   # un double ocupa un par de registros pares
   ldc1  $f2, right
-  add.d $f4, $f0, $f2
+  add.d $f4, $f0, $f2   # la aritmética corre en el coprocesador, no en la CPU
   sdc1  $f4, stored_sum
 
   li    $v0, 4
@@ -31,8 +31,8 @@ main:
   la    $a0, newline
   syscall
 
-  c.lt.d $f0, $f2
-  bc1t   comparison_ok
+  c.lt.d $f0, $f2   # la comparación escribe una bandera, no salta
+  bc1t   comparison_ok   # este es el salto que lee esa bandera
   nop
   la     $a0, compare_false
   b      print_comparison
@@ -44,8 +44,8 @@ print_comparison:
   syscall
 
   lwc1    $f6, round_source
-  cvt.w.s $f8, $f6
-  mfc1    $a0, $f8
+  cvt.w.s $f8, $f6   # 1,6 pasa a entero según el modo de redondeo del FCSR
+  mfc1    $a0, $f8   # traer el resultado de vuelta a la CPU para imprimirlo
   li      $v0, 4
   la      $a0, round_label
   syscall

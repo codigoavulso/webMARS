@@ -2,6 +2,20 @@
   const host = window.MarsWebTools;
   if (!host || typeof host.register !== "function") return;
 
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return String(message ?? "");
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
+  }
+
+
   const STYLE_ID = "mars-web-tool-memory-viz-style";
   if (!document.getElementById(STYLE_ID)) {
     const style = document.createElement("style");
@@ -162,7 +176,7 @@
       }
 
       function fillBaseOptions() {
-        baseSelect.innerHTML = BASE_OPTIONS.map((option) => `<option value="${option.value}"${option.value === baseAddress ? " selected" : ""}>${option.label}</option>`).join("");
+        baseSelect.innerHTML = BASE_OPTIONS.map((option) => `<option value="${option.value}"${option.value === baseAddress ? " selected" : ""}>${t(option.label)}</option>`).join("");
       }
 
       function grid() {
@@ -173,7 +187,12 @@
 
       function updateScaleLegend() {
         const rows = COLOR_SCALE.map((step) => `${step.count.toString().padStart(4, " ")} -> ${step.color}`).join("\n");
-        scaleBox.textContent = `Color scale (count -> color)\n${rows}\nBase: 0x${baseAddress.toString(16).padStart(8, "0")}\nWords/unit: ${wordsPerUnit}`;
+        scaleBox.textContent = [
+          t("Color scale (count -> color)"),
+          rows,
+          t("Base: {address}", { address: `0x${baseAddress.toString(16).padStart(8, "0")}` }),
+          t("Words/unit: {value}", { value: wordsPerUnit })
+        ].join("\n");
       }
 
       function clearCanvas() {
@@ -274,20 +293,29 @@
       [wordsSelect, unitWSelect, unitHSelect, dispWSelect, dispHSelect, baseSelect, hashCheck]
         .forEach((control) => control.addEventListener("change", reconfigure));
 
+      // The connect label is rewritten at runtime, so the shell's static-tree
+      // pass cannot keep it in the current language on its own.
+      function refreshToolText() {
+        connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
+      }
+
       connectButton.addEventListener("click", () => {
         connected = !connected;
-        connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
+        refreshToolText();
       });
 
       resetButton.addEventListener("click", resetCounts);
 
       helpButton.addEventListener("click", () => {
-        ctx.messagesPane.postMars("[tool] Memory Reference Visualization: each memory load/store increments the visual unit containing that address.");
+        ctx.messagesPane.postMars(t("[tool] Memory Reference Visualization: each memory load/store increments the visual unit containing that address."));
       });
 
       closeButton.addEventListener("click", shell.close);
 
       render();
+
+      subscribeLanguageChange(refreshToolText);
+      refreshToolText();
 
       return {
         isConnected: () => connected,

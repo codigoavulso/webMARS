@@ -1,16 +1,16 @@
 ﻿#use <conio>
 
-struct stats {
+struct stats {   // a struct is a block of consecutive words in memory
   int count;
   int total;
 };
 
-typedef struct stats* stats_t;
+typedef struct stats* stats_t;   // the program passes the address, never the whole block
 
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {
+int accumulate(stats_t box, int values[], int n) {   // the contracts above are checked by the compiler, not printed
   box->count = n;
   box->total = 0;
 
@@ -18,7 +18,7 @@ int accumulate(stats_t box, int values[], int n) {
   //@loop_invariant 0 <= i && i <= n;
   //@loop_invariant box->count == n;
   while (i < n) {
-    box->total += values[i];
+    box->total += values[i];   // box-> reads a field at a fixed offset from the address
     i++;
   }
 

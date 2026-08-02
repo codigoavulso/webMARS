@@ -5,7 +5,7 @@
 title:  .asciiz "\n=== Floating-point demo ===\n"
 label:  .asciiz "Value in $f12 = "
 nl:     .asciiz "\n"
-values: .word 0x00000000, 0x3f800000, 0x40490fdb, 0xbf800000, 0x41200000, 0xc1200000
+values: .word 0x00000000, 0x3f800000, 0x40490fdb, 0xbf800000, 0x41200000, 0xc1200000   # patrones de bits IEEE 754 en bruto, no números decimales
 
 .text
 main:
@@ -19,21 +19,21 @@ main:
 fp_loop:
   beq $t1, $zero, done
 
-  lw $t2, 0($t0)
-  mtc1 $t2, $f12
+  lw $t2, 0($t0)   # leer el patrón de 32 bits como entero
+  mtc1 $t2, $f12   # mover los mismos bits a la FPU: no hay conversión
 
   li $v0, 4
   la $a0, label
   syscall
 
-  li $v0, 2
+  li $v0, 2   # la syscall 2 imprime $f12 leído como float
   syscall
 
   li $v0, 4
   la $a0, nl
   syscall
 
-  addiu $t0, $t0, 4
+  addiu $t0, $t0, 4   # palabra siguiente: cada patrón ocupa cuatro bytes
   addiu $t1, $t1, -1
   j fp_loop
 

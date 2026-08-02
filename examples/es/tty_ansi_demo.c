@@ -1,14 +1,14 @@
 #use <tty>
 
-void tty_frame(int left, int top, int width, int height) {
+void tty_frame(int left, int top, int width, int height) {   // dibuja una caja con el juego de caracteres de líneas del terminal
   int col = 0;
   int row = 0;
 
-  tty_box_on();
-  tty_move(top, left);
+  tty_box_on();   // cambia el juego de caracteres: 'l' y 'q' pasan a esquinas y líneas
+  tty_move(top, left);   // cada secuencia ANSI viaja por el transmisor MMIO
   tty_putc('l');
   col = 0;
-  while (col < width - 2) {
+  while (col < width - 2) {   // un carácter por iteración: el terminal no tiene primitiva de relleno
     tty_putc('q');
     col++;
   }

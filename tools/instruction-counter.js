@@ -38,6 +38,19 @@
     "lwc1", "swc1", "ldc1", "sdc1", "mfc0", "mtc0", "mfc1", "mtc1"
   ]);
 
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return String(message ?? "");
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
+  }
+
   function classify(opcode) {
     const op = String(opcode || "").toLowerCase();
     if (!op) return "R";
@@ -148,14 +161,24 @@
         if (shouldRender) render();
       }
 
-      root.querySelector("[data-ic='connect']").addEventListener("click", (event) => {
+      const connectButton = root.querySelector("[data-ic='connect']");
+
+      // The connect label is rewritten at runtime, so the shell's static-tree
+      // pass cannot keep it in the current language on its own.
+      function refreshUiText() {
+        connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
+      }
+
+      connectButton.addEventListener("click", () => {
         connected = !connected;
-        event.currentTarget.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
+        refreshUiText();
       });
       root.querySelector("[data-ic='reset']").addEventListener("click", resetCounters);
       root.querySelector("[data-ic='close']").addEventListener("click", shell.close);
 
+      subscribeLanguageChange(refreshUiText);
       resetCounters();
+      refreshUiText();
 
       return {
         isConnected: () => connected,

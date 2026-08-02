@@ -13,7 +13,13 @@
       if (original && original.trim()) {
         const parentTag = node.parentElement?.tagName || "";
         if (parentTag !== "SCRIPT" && parentTag !== "STYLE") {
-          textNodes.push({ node, key: original });
+          // Markup indentation lands inside the text node, so the raw value is
+          // not the catalog key. Look the trimmed text up and put the original
+          // padding back, otherwise "<label><input> Draw hash marks</label>"
+          // and every label written across several lines silently stay English.
+          const leading = original.slice(0, original.length - original.trimStart().length);
+          const trailing = original.slice(original.trimEnd().length);
+          textNodes.push({ node, key: original.trim(), leading, trailing });
         }
       }
       node = walker.nextNode();
@@ -31,7 +37,7 @@
     const refresh = () => {
       textNodes.forEach((entry) => {
         if (!entry.node?.isConnected) return;
-        entry.node.nodeValue = translateText(entry.key);
+        entry.node.nodeValue = `${entry.leading}${translateText(entry.key)}${entry.trailing}`;
       });
 
       attributes.forEach((entry) => {

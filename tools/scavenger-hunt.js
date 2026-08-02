@@ -2,6 +2,20 @@
   const host = window.MarsWebTools;
   if (!host || typeof host.register !== "function") return;
 
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return String(message ?? "");
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
+  }
+
+
   const STYLE_ID = "mars-web-tool-scavenger-style";
   if (!document.getElementById(STYLE_ID)) {
     const style = document.createElement("style");
@@ -151,11 +165,11 @@
         if (!gameOn) {
           g.fillStyle = "#222";
           g.font = "18px Segoe UI";
-          g.fillText("ScavengerHunt not initialized by administrator program.", 42, 200);
+          g.fillText(t("ScavengerHunt not initialized by administrator program."), 42, 200);
           info.textContent = [
-            `GameOn: false (${toHex32(ADDR_GAME_ON)})`,
-            `Turns remaining: ${turns}`,
-            `Admin memory: auth=${toHex32(ADDR_AUTHENTICATION)}, player=${toHex32(ADDR_PLAYER_ID)}`
+            t("GameOn: {value}", { value: `false (${toHex32(ADDR_GAME_ON)})` }),
+            t("Turns remaining: {value}", { value: turns }),
+            t("Admin memory: auth={auth}, player={player}", { auth: toHex32(ADDR_AUTHENTICATION), player: toHex32(ADDR_PLAYER_ID) })
           ].join("\n");
           return;
         }
@@ -165,10 +179,10 @@
 
         const alive = players.filter((player) => player.energy > 0).length;
         info.textContent = [
-          `GameOn: true`,
-          `Turns remaining: ${turns}`,
-          `Players alive: ${alive}/${NUM_PLAYERS}`,
-          `Player memory base: ${toHex32(ADDR_BASE)} (${MEM_PER_PLAYER} bytes each)`
+          t("GameOn: {value}", { value: "true" }),
+          t("Turns remaining: {value}", { value: turns }),
+          t("Players alive: {alive}/{total}", { alive, total: NUM_PLAYERS }),
+          t("Player memory base: {address} ({bytes} bytes each)", { address: toHex32(ADDR_BASE), bytes: MEM_PER_PLAYER })
         ].join("\n");
       }
 
@@ -201,13 +215,19 @@
         render();
       }
 
+      // The connect label is rewritten at runtime, so the shell's static-tree
+      // pass cannot keep it in the current language on its own.
+      function refreshToolText() {
+        connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
+      }
+
       connectButton.addEventListener("click", () => {
         connected = !connected;
-        connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
+        refreshToolText();
         if (connected) {
           updatePlayers();
           render();
-          ctx.messagesPane.postMars("[tool] ScavengerHunt connected.");
+          ctx.messagesPane.postMars(t("[tool] ScavengerHunt connected."));
         }
       });
 
@@ -215,6 +235,9 @@
       closeButton.addEventListener("click", shell.close);
 
       resetState();
+
+      subscribeLanguageChange(refreshToolText);
+      refreshToolText();
 
       return {
         isConnected: () => connected,

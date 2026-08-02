@@ -108,9 +108,10 @@ syscall
 li $v0, 10
 syscall`;
 
-const EXAMPLE_FILES = [
-  { label: "mips.asm", path: "./examples/mips.asm", category: "Tools" }
-];
+// examples/examples.json is the only source of the catalog. This seed used to
+// hardcode examples/mips.asm, which stopped existing when examples moved into
+// per-language folders; the manifest merge hid it by overwriting the entry.
+const EXAMPLE_FILES = [];
 
 const SYSCALL_MAX_FILES = 32;
 const RUNTIME_STRING_SCAN_HARD_LIMIT = 1024 * 1024;
@@ -1457,8 +1458,10 @@ function encodeInstructionWordFromPlanRow(row) {
     case "maddu": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rt & 0x1f) << 16) | 0x01) >>> 0);
     case "msub": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rt & 0x1f) << 16) | 0x04) >>> 0);
     case "msubu": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rt & 0x1f) << 16) | 0x05) >>> 0);
-    case "clz": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rd & 0x1f) << 11) | 0x20) >>> 0);
-    case "clo": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rd & 0x1f) << 11) | 0x21) >>> 0);
+    // MIPS32 requires rt to carry the destination alongside rd, and MARS emits
+    // it that way. The decoder still reads rd, so only the printed word changes.
+    case "clz": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rd & 0x1f) << 16) | ((rd & 0x1f) << 11) | 0x20) >>> 0);
+    case "clo": return (((0x1c << 26) | ((rs & 0x1f) << 21) | ((rd & 0x1f) << 16) | ((rd & 0x1f) << 11) | 0x21) >>> 0);
     default: {
       const fmt = opcode.endsWith(".s") ? 0x10
         : opcode.endsWith(".d") ? 0x11

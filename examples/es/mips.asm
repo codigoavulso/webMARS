@@ -3,11 +3,11 @@
 # MIPS, ensambla este proyecto y escribe "help".
 
 .data
-ansi_reset:     .byte 27, 99, 0
-ansi_clear:     .byte 27, 91, 50, 74, 27, 91, 72, 0
+ansi_reset:     .byte 27, 99, 0   # las secuencias de escape son bytes normales enviados al terminal
+ansi_clear:     .byte 27, 91, 50, 74, 27, 91, 72, 0   # 27 es ESC: lo que sigue es comando, no texto
 ansi_normal:    .byte 27, 91, 48, 109, 0
 ansi_dim:       .byte 27, 91, 50, 109, 0
-ansi_bold_cyan: .byte 27, 91, 49, 59, 57, 54, 109, 0
+ansi_bold_cyan: .byte 27, 91, 49, 59, 57, 54, 109, 0   # el color se elige por número dentro de la secuencia
 ansi_green:     .byte 27, 91, 57, 50, 109, 0
 ansi_cyan:      .byte 27, 91, 57, 54, 109, 0
 ansi_yellow:    .byte 27, 91, 57, 51, 109, 0

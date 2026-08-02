@@ -277,6 +277,10 @@ let cloudLastSyncAt = 0;
 let cloudSessionRefreshPromise = null;
 let cloudProjectSyncRefreshPromise = null;
 const cloudProjectSyncDocuments = new Map();
+// ETag per project root, so a save can tell the service which version it read.
+const cloudProjectVersionTokens = new Map();
+// Server clock minus browser clock, refreshed whenever the project list loads.
+let cloudServerClockSkewMs = 0;
 
 function resolveDefaultCloudApiBase() {
   const configuredDefault = normalizeCloudApiBase(DEFAULT_SETTINGS?.cloudApiBase || "");
@@ -1574,8 +1578,7 @@ const projectTreeExpandedNodes = new Set();
 const projectTreeKnownNodes = new Set();
 let projectTreeSelectedNode = null;
 const projectTreeCheckedNodes = new Map();
-let projectTreeDragPayload = null;
-let lastProjectTreeClickInfo = { key: "", at: 0 };
+let projectFileManagerViews = [];
 let lastProjectTreeActivationInfo = { key: "", at: 0 };
 
 editor.setFilesChangeGuard?.((files, _activeFileId, context = {}) => {
@@ -1769,7 +1772,7 @@ function deserializeProjectFromCloudDocument(documentPayload, fallbackRootPath =
 function chooseLatestRemoteProjectByName(projects = []) {
   const out = new Map();
   projects.forEach((project) => {
-    const key = String(project?.name || "").trim();
+    const key = normalizeProjectRootKey(project?.name || "");
     if (!key) return;
     const existing = out.get(key);
     if (!existing || parseTimestampValue(project.updatedAt, 0) >= parseTimestampValue(existing.updatedAt, 0)) {
@@ -1779,14 +1782,110 @@ function chooseLatestRemoteProjectByName(projects = []) {
   return out;
 }
 
-async function listCloudProjects() {
-  const payload = await cloudRequestJson("/projects");
+async function listCloudProjects(options = {}) {
+  const startedAt = Date.now();
+  const payload = await cloudRequestJson(options.includeDocuments === true ? "/projects?include=documents" : "/projects");
+  const receivedAt = Date.now();
+  // Local timestamps come from the browser clock and remote ones from the
+  // server clock. Comparing them directly let a skewed machine pick the wrong
+  // sync direction and overwrite the newer copy, so record the offset and
+  // convert before comparing.
+  const serverTime = Date.parse(String(payload?.serverTime || ""));
+  cloudServerClockSkewMs = Number.isFinite(serverTime)
+    ? serverTime - Math.floor((startedAt + receivedAt) / 2)
+    : 0;
   return Array.isArray(payload?.projects) ? payload.projects.filter((entry) => entry && typeof entry === "object") : [];
+}
+
+function toCloudServerTime(localTimestamp) {
+  return parseTimestampValue(localTimestamp, 0) + cloudServerClockSkewMs;
 }
 
 async function loadCloudProject(projectId) {
   const payload = await cloudRequestJson(`/projects/${projectId}`);
   return payload?.project && typeof payload.project === "object" ? payload.project : null;
+}
+
+async function deleteCloudProjectsByName(rootPath) {
+  if (cloudAuthState !== "authenticated") return 0;
+  const name = String(rootPath || "").trim();
+  if (!name) return 0;
+  try {
+    const remoteProjects = await listCloudProjects({ includeDocuments: true });
+    const matches = remoteProjects.filter((entry) => (
+      normalizeProjectRootKey(entry?.name || "") === normalizeProjectRootKey(name)
+    ));
+    let deleted = 0;
+    for (const match of matches) {
+      if (!Number.isFinite(Number(match?.id))) continue;
+      let versionToken = String(match?.etag || getCloudProjectVersionToken(name) || "").trim();
+      if (!versionToken) {
+        const current = await loadCloudProject(match.id);
+        versionToken = String(current?.etag || "").trim();
+      }
+      if (!versionToken) throw new Error(translateText("The cloud service did not provide a project version token."));
+      await cloudRequestJson(`/projects/${match.id}`, {
+        method: "DELETE",
+        headers: { "If-Match": versionToken }
+      });
+      deleted += 1;
+    }
+    if (deleted) postMarsMessage("Deleted '{name}' from the cloud workspace.", { name });
+    return deleted;
+  } catch (error) {
+    // A failed remote delete must not block the local one; say so instead of
+    // letting the project quietly reappear on the next sync.
+    postMarsMessage("[warn] Could not delete '{name}' from the cloud: {message}", {
+      name,
+      message: describeCloudError(error, "Cloud request failed.")
+    });
+    return 0;
+  }
+}
+
+async function renameCloudProjectByName(previousRootPath, nextRootPath) {
+  if (cloudAuthState !== "authenticated") return false;
+  const previousName = String(previousRootPath || "").trim();
+  const nextName = String(nextRootPath || "").trim();
+  if (!previousName || !nextName || previousName === nextName) return false;
+  try {
+    const remoteProjects = await listCloudProjects();
+    const remote = remoteProjects.find((entry) => (
+      normalizeProjectRootKey(entry?.name || "") === normalizeProjectRootKey(previousName)
+    ));
+    if (!remote || !Number.isFinite(Number(remote.id))) return false;
+    let versionToken = String(remote.etag || getCloudProjectVersionToken(previousName) || "").trim();
+    if (!versionToken) {
+      const current = await loadCloudProject(remote.id);
+      versionToken = String(current?.etag || "").trim();
+    }
+    if (!versionToken) throw new Error(translateText("The cloud service did not provide a project version token."));
+    const payload = await cloudRequestJson(`/projects/${remote.id}`, {
+      method: "PUT",
+      headers: { "If-Match": versionToken },
+      body: { name: nextName }
+    });
+    setCloudProjectSyncDocument(previousName, null);
+    setCloudProjectSyncDocument(
+      nextName,
+      deserializeProjectFromCloudDocument(payload?.project?.project, nextName),
+      payload?.project?.etag
+    );
+    return true;
+  } catch (error) {
+    const conflict = isCloudStaleVersionError(error) || isCloudDuplicateNameError(error);
+    postMarsMessage(
+      conflict
+        ? "[warn] Could not rename '{from}' in the cloud because its stored version changed or '{to}' already exists."
+        : "[warn] Could not rename '{from}' in the cloud: {message}",
+      {
+        from: previousName,
+        to: nextName,
+        message: describeCloudError(error, "Cloud request failed.")
+      }
+    );
+    return false;
+  }
 }
 
 async function refreshCloudProjectSyncDocuments(options = {}) {
@@ -1821,12 +1920,14 @@ async function refreshCloudProjectSyncDocuments(options = {}) {
     for (let index = 0; index < localProjects.length; index += 1) {
       const localProject = normalizeProjectData(localProjects[index]);
       if (!localProject) continue;
-      const remoteMeta = remoteByName.get(localProject.rootPath);
+      const remoteMeta = remoteByName.get(normalizeProjectRootKey(localProject.rootPath));
       if (!remoteMeta?.id) continue;
       try {
-        const projectRecord = await loadCloudProject(remoteMeta.id);
+        const projectRecord = remoteMeta.project
+          ? remoteMeta
+          : await loadCloudProject(remoteMeta.id);
         const normalizedRemote = deserializeProjectFromCloudDocument(projectRecord?.project, remoteMeta.name || localProject.rootPath);
-        setCloudProjectSyncDocument(localProject.rootPath, normalizedRemote);
+        setCloudProjectSyncDocument(localProject.rootPath, normalizedRemote, projectRecord?.etag);
       } catch {
         setCloudProjectSyncDocument(localProject.rootPath, null);
       }
@@ -1890,15 +1991,36 @@ async function saveProjectToCloud(project, remoteProjectsByName = null) {
   if (!document) throw new Error("Failed to serialize project for cloud sync.");
 
   const projectName = normalized.rootPath;
-  const existing = remoteProjectsByName instanceof Map ? remoteProjectsByName.get(projectName) : null;
+  const existing = remoteProjectsByName instanceof Map
+    ? remoteProjectsByName.get(normalizeProjectRootKey(projectName))
+    : null;
   if (existing && Number.isFinite(Number(existing.id))) {
+    // Send the version this workspace last read. The service answers 412 when
+    // the stored copy moved on, which turns a silent overwrite into a reported
+    // conflict.
+    let versionToken = getCloudProjectVersionToken(projectName) || String(existing.etag || "").trim();
+    if (!versionToken) {
+      const current = await loadCloudProject(existing.id);
+      versionToken = String(current?.etag || "").trim();
+      const currentDocument = deserializeProjectFromCloudDocument(current?.project, projectName);
+      if (currentDocument && versionToken) {
+        setCloudProjectSyncDocument(projectName, currentDocument, versionToken);
+      }
+    }
+    if (!versionToken) throw new Error(translateText("The cloud service did not provide a project version token."));
     const payload = await cloudRequestJson(`/projects/${existing.id}`, {
       method: "PUT",
+      headers: { "If-Match": versionToken },
       body: {
         name: projectName,
         project: document
       }
     });
+    setCloudProjectSyncDocument(
+      projectName,
+      deserializeProjectFromCloudDocument(payload?.project?.project, projectName),
+      payload?.project?.etag
+    );
     return {
       created: false,
       project: payload?.project || null
@@ -1912,10 +2034,41 @@ async function saveProjectToCloud(project, remoteProjectsByName = null) {
       project: document
     }
   });
+  setCloudProjectSyncDocument(
+    projectName,
+    deserializeProjectFromCloudDocument(payload?.project?.project, projectName),
+    payload?.project?.etag
+  );
   return {
     created: true,
     project: payload?.project || null
   };
+}
+
+function isCloudStaleVersionError(error) {
+  return Number(error?.status) === 412 || String(error?.payload?.code || "") === "stale_version";
+}
+
+function isCloudDuplicateNameError(error) {
+  return Number(error?.status) === 409;
+}
+
+// A conflict means somebody else's work is in the way. Keep both copies: the
+// remote one is adopted as the new sync baseline so the tree turns amber, and
+// the local project is left untouched for the user to merge.
+function reportCloudSaveConflict(rootPath, error) {
+  const remote = error?.payload?.project;
+  if (remote) {
+    setCloudProjectSyncDocument(
+      rootPath,
+      deserializeProjectFromCloudDocument(remote.project, rootPath),
+      remote.etag
+    );
+  }
+  postMarsMessage(
+    "[warn] '{name}' changed in the cloud since it was loaded; nothing was overwritten. Sync again to review the difference.",
+    { name: rootPath }
+  );
 }
 
 async function chooseCloudProjectId(projects = []) {
@@ -2266,10 +2419,9 @@ async function saveActiveProjectToCloud(options = {}) {
   setCloudSyncState(true, "");
   try {
     const localProject = normalizeProjectData(options.localProject) || syncOpenProjectBeforeCloudAction();
-    const remoteProjects = await listCloudProjects();
+    const remoteProjects = await listCloudProjects({ includeDocuments: true });
     const remoteByName = chooseLatestRemoteProjectByName(remoteProjects);
     const result = await saveProjectToCloud(localProject, remoteByName);
-    setCloudProjectSyncDocument(localProject.rootPath, localProject);
     setCloudSyncState(false, "", { updateTimestamp: true });
     renderProjectTree(true);
     if (options.silentSuccess !== true) {
@@ -2281,6 +2433,21 @@ async function saveActiveProjectToCloud(options = {}) {
       name: localProject.rootPath
     };
   } catch (error) {
+    // A stale version or a name clash is somebody else's work in the way, not a
+    // service failure: report it as a conflict and keep the local copy intact.
+    if (isCloudStaleVersionError(error)) {
+      reportCloudSaveConflict(String(options.localProject?.rootPath || projectState?.rootPath || ""), error);
+      setCloudSyncState(false, "");
+      renderProjectTree(true);
+      return { ok: false, conflict: true };
+    }
+    if (isCloudDuplicateNameError(error)) {
+      postMarsMessage("[warn] The cloud already holds a different project named '{name}'.", {
+        name: String(projectState?.rootPath || "")
+      });
+      setCloudSyncState(false, "");
+      return { ok: false, conflict: true };
+    }
     const message = describeCloudError(error, "Cloud save failed.");
     setCloudSyncState(false, message);
     postMarsMessage("[error] Cloud save failed: {message}", { message });
@@ -2303,7 +2470,7 @@ async function openProjectFromCloud() {
     const projectRecord = await loadCloudProject(selectedId);
     const imported = importCloudProjectRecord(projectRecord, { open: true });
     if (!imported) throw new Error("Cloud project payload is invalid.");
-    setCloudProjectSyncDocument(imported.rootPath, imported);
+    setCloudProjectSyncDocument(imported.rootPath, imported, projectRecord?.etag);
     setCloudSyncState(false, "", { updateTimestamp: true });
     renderProjectTree(true);
     postMarsMessage("Cloud project opened: {name}.", { name: imported.rootPath });
@@ -2329,6 +2496,7 @@ async function syncAllProjectsWithCloud() {
     let uploaded = 0;
     let downloaded = 0;
     let skipped = 0;
+    let conflicted = 0;
 
     for (let index = 0; index < localProjects.length; index += 1) {
       const localProject = normalizeProjectData(localProjects[index]);
@@ -2337,7 +2505,8 @@ async function syncAllProjectsWithCloud() {
         continue;
       }
 
-      const remoteMeta = remoteByName.get(localProject.rootPath);
+      const remoteKey = normalizeProjectRootKey(localProject.rootPath);
+      const remoteMeta = remoteByName.get(remoteKey);
       if (!remoteMeta) {
         await saveProjectToCloud(localProject);
         uploaded += 1;
@@ -2345,21 +2514,37 @@ async function syncAllProjectsWithCloud() {
       }
 
       const remoteUpdatedAt = parseTimestampValue(remoteMeta.updatedAt, 0);
-      const localUpdatedAt = parseTimestampValue(localProject.updatedAt, 0);
+      const localUpdatedAt = toCloudServerTime(localProject.updatedAt);
       if (remoteUpdatedAt > localUpdatedAt + 1000) {
-        const projectRecord = await loadCloudProject(remoteMeta.id);
+        const projectRecord = remoteMeta.project
+          ? remoteMeta
+          : await loadCloudProject(remoteMeta.id);
         const imported = importCloudProjectRecord(projectRecord, { open: false });
         if (imported) downloaded += 1;
         else skipped += 1;
       } else {
-        await saveProjectToCloud(localProject, remoteByName);
-        uploaded += 1;
+        try {
+          await saveProjectToCloud(localProject, remoteByName);
+          uploaded += 1;
+        } catch (error) {
+          if (!isCloudStaleVersionError(error) && !isCloudDuplicateNameError(error)) throw error;
+          if (isCloudDuplicateNameError(error)) {
+            postMarsMessage("[warn] The cloud already holds a different project named '{name}'.", {
+              name: localProject.rootPath
+            });
+          } else {
+            reportCloudSaveConflict(localProject.rootPath, error);
+          }
+          conflicted += 1;
+        }
       }
-      remoteByName.delete(localProject.rootPath);
+      remoteByName.delete(remoteKey);
     }
 
     for (const remoteMeta of remoteByName.values()) {
-      const projectRecord = await loadCloudProject(remoteMeta.id);
+      const projectRecord = remoteMeta.project
+        ? remoteMeta
+        : await loadCloudProject(remoteMeta.id);
       const imported = importCloudProjectRecord(projectRecord, { open: false });
       if (imported) downloaded += 1;
       else skipped += 1;
@@ -2367,12 +2552,13 @@ async function syncAllProjectsWithCloud() {
 
     await refreshCloudProjectSyncDocuments({ render: true });
     setCloudSyncState(false, "", { updateTimestamp: true });
-    postMarsMessage("Cloud sync complete: {uploaded} uploaded, {downloaded} downloaded, {skipped} skipped.", {
+    postMarsMessage("Cloud sync complete: {uploaded} uploaded, {downloaded} downloaded, {skipped} skipped, {conflicted} in conflict.", {
       uploaded,
       downloaded,
-      skipped
+      skipped,
+      conflicted
     });
-    return { ok: true, uploaded, downloaded, skipped };
+    return { ok: true, uploaded, downloaded, skipped, conflicted };
   } catch (error) {
     const message = describeCloudError(error, "Cloud sync failed.");
     setCloudSyncState(false, message);
@@ -2446,29 +2632,6 @@ function getProjectLibrarySignature(library) {
       .join("\u0001");
     return `${rootPath}|${updatedAt}|${folderSignature}|${fileSignature}`;
   }).join("\u0002");
-}
-
-function getProjectTreeTargets() {
-  const targets = [];
-  if (refs.project?.mainTree instanceof HTMLElement) {
-    targets.push({
-      tree: refs.project.mainTree,
-      rootLabel: refs.project.mainRootLabel,
-      statusSelected: refs.project.mainStatusSelected,
-      statusSize: refs.project.mainStatusSize,
-      statusUsage: refs.project.mainStatusUsage
-    });
-  }
-  if (refs.project?.toolTree instanceof HTMLElement) {
-    targets.push({
-      tree: refs.project.toolTree,
-      rootLabel: refs.project.toolRootLabel,
-      statusSelected: refs.project.toolStatusSelected,
-      statusSize: refs.project.toolStatusSize,
-      statusUsage: refs.project.toolStatusUsage
-    });
-  }
-  return targets;
 }
 
 function formatProjectTimestamp(value) {
@@ -2553,21 +2716,33 @@ function computeEditorProjectOwnedUsageBytes(files = []) {
 
 function clearCloudProjectSyncDocuments() {
   cloudProjectSyncDocuments.clear();
+  cloudProjectVersionTokens.clear();
 }
 
-function setCloudProjectSyncDocument(rootPath, projectDocument = null) {
+function setCloudProjectSyncDocument(rootPath, projectDocument = null, versionToken = "") {
   const rootKey = normalizeProjectRootKey(rootPath);
   if (!rootKey) return;
   if (!projectDocument) {
     cloudProjectSyncDocuments.delete(rootKey);
+    cloudProjectVersionTokens.delete(rootKey);
     return;
   }
   const normalized = normalizeProjectData(projectDocument);
   if (!normalized) {
     cloudProjectSyncDocuments.delete(rootKey);
+    cloudProjectVersionTokens.delete(rootKey);
     return;
   }
   cloudProjectSyncDocuments.set(rootKey, normalized);
+  const token = String(versionToken || "").trim();
+  if (token) cloudProjectVersionTokens.set(rootKey, token);
+  else cloudProjectVersionTokens.delete(rootKey);
+}
+
+function getCloudProjectVersionToken(rootPath) {
+  const rootKey = normalizeProjectRootKey(rootPath);
+  if (!rootKey) return "";
+  return cloudProjectVersionTokens.get(rootKey) || "";
 }
 
 function getCloudProjectSyncDocument(rootPath) {
@@ -2683,19 +2858,6 @@ function summarizeProjectTreeBranch(node) {
   return summary;
 }
 
-function formatProjectTreeMeta(options = {}) {
-  const parts = [];
-  const timestampLabel = formatProjectTimestamp(options.updatedAt);
-  if (timestampLabel) parts.push(timestampLabel);
-  if (options.includeSize === true && Number.isFinite(Number(options.bytes))) {
-    parts.push(formatStoredSourceUsage(Number(options.bytes) || 0));
-  }
-  if (options.includeLines === true && Number.isFinite(Number(options.lineCount))) {
-    parts.push(translateText("lines: {count}", { count: Math.max(0, Number(options.lineCount) || 0) }));
-  }
-  return parts.join(" | ");
-}
-
 function buildProjectTreeSelectionSummaryLabel(fileCount = 0) {
   return translateText("files: {count}", { count: Math.max(0, Number(fileCount) || 0) });
 }
@@ -2745,7 +2907,7 @@ function replaceProjectInLibrary(previousRootPath, nextProject, options = {}) {
   return normalizedProject;
 }
 
-function removeProjectFromLibrary(rootPath) {
+function removeProjectFromLibrary(rootPath, options = {}) {
   const rootKey = normalizeProjectRootKey(rootPath);
   if (!rootKey) return false;
   const sourceProjects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
@@ -2769,6 +2931,12 @@ function removeProjectFromLibrary(rootPath) {
   )) || candidateProjects[0] || null;
   if (!saveProjectAndLibraryData(candidateActiveProject, candidateLibrary)) return false;
   projectLibraryState = candidateLibrary;
+  setCloudProjectSyncDocument(rootPath, null);
+  // Without this the project stays in the cloud and the next "Sync All
+  // Projects" downloads it straight back, so deleting one never sticks.
+  if (options.deleteFromCloud !== false) {
+    void deleteCloudProjectsByName(normalizeProjectRootPath(rootPath, "project"));
+  }
   return true;
 }
 
@@ -2790,7 +2958,7 @@ function persistProjectStorageFromLibrary(preferredRootPath = "") {
   return saveProjectData(preferredProject);
 }
 
-function activateProjectInLibrary(rootPath) {
+function activateProjectInLibrary(rootPath, options = {}) {
   const rootKey = normalizeProjectRootKey(rootPath);
   const projects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
   if (!rootKey || !projects.length) return false;
@@ -2804,7 +2972,10 @@ function activateProjectInLibrary(rootPath) {
   if (!saveProjectLibraryData(candidateLibrary)) return false;
   const projectNodeKey = getProjectTreeNodeKey("project", project.rootPath);
   projectTreeKnownNodes.add(projectNodeKey);
-  projectTreeExpandedNodes.add(projectNodeKey);
+  // Switching to a project programmatically reveals its contents. A click on
+  // the project row must not, or the row-click toggle would be undone by the
+  // activation it triggers and the project could never be collapsed.
+  if (options.revealContents !== false) projectTreeExpandedNodes.add(projectNodeKey);
   projectLibraryState = candidateLibrary;
   return true;
 }
@@ -2970,8 +3141,7 @@ function setProjectTreeSelection(selection) {
       readOnly: selection.readOnly === true
     };
   }
-  updateProjectTreeActionButtons();
-  updateProjectTreeStatusBars();
+  refreshProjectFileManagerChrome();
 }
 
 function getProjectTreeCheckedSelection() {
@@ -3001,15 +3171,13 @@ function setProjectTreeNodeChecked(selection, checked) {
   } else {
     projectTreeCheckedNodes.delete(key);
   }
-  updateProjectTreeActionButtons();
-  updateProjectTreeStatusBars();
+  refreshProjectFileManagerChrome();
 }
 
 function clearProjectTreeCheckedSelection() {
   if (!projectTreeCheckedNodes.size) return;
   projectTreeCheckedNodes.clear();
-  updateProjectTreeActionButtons();
-  updateProjectTreeStatusBars();
+  refreshProjectFileManagerChrome();
 }
 
 function getProjectTreeStatusSelection() {
@@ -3162,267 +3330,341 @@ function activateProjectTreeNode(info) {
   }
 }
 
-function updateProjectTreeStatusBars() {
-  const summary = buildProjectTreeStatusSummary();
-  getProjectTreeTargets().forEach((target) => {
-    if (target.statusSelected instanceof HTMLElement) {
-      target.statusSelected.textContent = buildProjectTreeSelectionSummaryLabel(summary.fileCount);
-    }
-    if (target.statusSize instanceof HTMLElement) {
-      target.statusSize.textContent = translateText("size: {size}", {
-        size: formatStoredSourceUsage(summary.selectedBytes)
-      });
-    }
-    if (target.statusUsage instanceof HTMLElement) {
-      target.statusUsage.textContent = translateText("used: {used} / {limit}", {
-        used: formatStoredSourceUsage(summary.usedBytes),
-        limit: formatStoredSourceUsage(summary.limitBytes)
-      });
-    }
-  });
+function getProjectFileManagerViews() {
+  return projectFileManagerViews.filter(Boolean);
 }
 
-function updateProjectTreeActionButtons() {
-  const buttons = [
-    refs.project?.mainNewFolder,
-    refs.project?.mainRename,
-    refs.project?.mainDelete,
-    refs.project?.toolNewFolder,
-    refs.project?.toolRename,
-    refs.project?.toolDelete
-  ].filter((button) => button instanceof HTMLButtonElement);
-  if (!buttons.length) return;
+// Only the toolbar and the status bar depend on the selection, so a selection
+// change refreshes those instead of rebuilding every row.
+function refreshProjectFileManagerChrome() {
+  getProjectFileManagerViews().forEach((view) => view.refreshChrome());
+}
 
+function describeProjectSyncTone(tone) {
+  if (tone === "green") return translateText("Cloud sync: synced");
+  if (tone === "orange") return translateText("Cloud sync: partial");
+  return translateText("Cloud sync: not synced");
+}
+
+// The shared file manager consumes a plain node tree; these builders project
+// the library model and the read-only global libraries onto it.
+function buildProjectFileManagerBranchNodes(branch, context, parentPath = "") {
+  const folderNodes = [...branch.folders.entries()]
+    .sort((left, right) => left[0].localeCompare(right[0]))
+    .map(([folderName, childBranch]) => {
+      const folderPath = parentPath ? `${parentPath}/${folderName}` : folderName;
+      const summary = childBranch.summary || summarizeProjectTreeBranch(childBranch);
+      const tone = context.syncSummary?.folderTones?.get(folderPath) || "red";
+      return {
+        key: getProjectTreeNodeKey("folder", context.rootPath, folderPath),
+        type: "folder",
+        name: folderName,
+        path: folderPath,
+        rootPath: context.rootPath,
+        bytes: summary.totalBytes,
+        updatedAt: summary.latestUpdatedAt,
+        badge: tone,
+        badgeTitle: describeProjectSyncTone(tone),
+        title: `${context.rootPath}/${folderPath}`,
+        children: buildProjectFileManagerBranchNodes(childBranch, context, folderPath)
+      };
+    });
+
+  const fileNodes = [...branch.files]
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((file) => {
+      const tone = context.syncSummary?.fileTones?.get(file.path) || "red";
+      return {
+        key: getProjectTreeNodeKey("file", context.rootPath, file.path),
+        type: "file",
+        name: file.name,
+        path: file.path,
+        rootPath: context.rootPath,
+        bytes: file.bytes,
+        lineCount: file.lineCount,
+        updatedAt: file.updatedAt,
+        badge: tone,
+        badgeTitle: describeProjectSyncTone(tone),
+        draggable: true,
+        title: `${context.rootPath}/${file.path}`
+      };
+    });
+
+  return [...folderNodes, ...fileNodes];
+}
+
+function buildGlobalLibraryFileManagerNodes(branch, parentPath = "") {
+  const folderNodes = [...branch.folders.entries()]
+    .sort((left, right) => left[0].localeCompare(right[0]))
+    .map(([folderName, childBranch]) => {
+      const folderPath = parentPath ? `${parentPath}/${folderName}` : folderName;
+      return {
+        key: getProjectTreeNodeKey("libs-folder", "", folderPath),
+        type: "libs-folder",
+        name: folderName,
+        path: folderPath,
+        readOnly: true,
+        checkboxDisabled: true,
+        title: `libs/${folderPath}`,
+        children: buildGlobalLibraryFileManagerNodes(childBranch, folderPath)
+      };
+    });
+
+  const fileNodes = [...branch.files]
+    .sort((left, right) => left.name.localeCompare(right.name))
+    .map((file) => ({
+      key: getProjectTreeNodeKey("libs-file", "", file.path),
+      type: "libs-file",
+      name: file.name,
+      path: file.path,
+      bytes: file.bytes,
+      lineCount: file.lineCount,
+      readOnly: true,
+      checkboxDisabled: true,
+      title: `libs/${file.path}`
+    }));
+
+  return [...folderNodes, ...fileNodes];
+}
+
+function getActiveProjectFileManagerKey() {
+  return projectIsOpen()
+    ? normalizeProjectRootKey(projectState.rootPath)
+    : normalizeProjectRootKey(projectLibraryState?.activeRootPath || "");
+}
+
+function isActiveProjectFileManagerNode(node) {
+  if (!node) return false;
+  if (node.type === "project") {
+    return normalizeProjectRootKey(node.rootPath) === getActiveProjectFileManagerKey();
+  }
+  if (node.type !== "file" || !projectIsOpen()) return false;
+  return normalizeProjectRootKey(node.rootPath) === getActiveProjectFileManagerKey()
+    && String(editor.getActiveFile()?.name || "") === node.path;
+}
+
+function buildProjectFileManagerModel() {
+  const projects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+  const nodes = projects
+    .slice()
+    .sort((left, right) => String(left.rootPath || "").localeCompare(
+      String(right.rootPath || ""),
+      undefined,
+      { sensitivity: "base" }
+    ))
+    .map((project) => {
+      const rootPath = String(project.rootPath || "project.p");
+      const model = buildProjectTreeModel(project);
+      const summary = summarizeProjectTreeBranch(model);
+      const syncSummary = getProjectTreeCloudSyncSummary(rootPath);
+      return {
+        key: getProjectTreeNodeKey("project", rootPath),
+        type: "project",
+        name: rootPath,
+        rootPath,
+        bytes: summary.totalBytes,
+        updatedAt: Number(project.updatedAt) || summary.latestUpdatedAt,
+        badge: syncSummary.projectTone,
+        badgeTitle: describeProjectSyncTone(syncSummary.projectTone),
+        title: rootPath,
+        children: buildProjectFileManagerBranchNodes(model, { rootPath, syncSummary })
+      };
+    });
+
+  const libraryModel = buildGlobalLibraryTreeModel();
+  summarizeProjectTreeBranch(libraryModel);
+  nodes.push({
+    key: getProjectTreeNodeKey("libs-root", "", "libs"),
+    type: "libs-root",
+    name: "libs/",
+    path: "libs",
+    readOnly: true,
+    checkboxDisabled: true,
+    sortLast: true,
+    title: translateText("Global libraries (read-only)"),
+    children: buildGlobalLibraryFileManagerNodes(libraryModel)
+  });
+  return nodes;
+}
+
+function getProjectFileManagerStatusCells() {
+  const summary = buildProjectTreeStatusSummary();
+  return [
+    buildProjectTreeSelectionSummaryLabel(summary.fileCount),
+    translateText("size: {size}", { size: formatStoredSourceUsage(summary.selectedBytes) }),
+    translateText("used: {used} / {limit}", {
+      used: formatStoredSourceUsage(summary.usedBytes),
+      limit: formatStoredSourceUsage(summary.limitBytes)
+    })
+  ];
+}
+
+const PROJECT_FILE_MANAGER_ACTIONS = Object.freeze([
+  { id: "new-file", label: "New File", icon: "newFile" },
+  { id: "new-folder", label: "New Folder", icon: "newFolder" },
+  { id: "rename", label: "Rename", icon: "rename" },
+  { id: "delete", label: "Delete", icon: "trash", danger: true }
+]);
+
+function isProjectFileManagerActionEnabled(actionId) {
+  const action = String(actionId || "");
   const checkedSelection = getProjectTreeCheckedSelection();
   if (checkedSelection.length) {
-    const canDeleteChecked = checkedSelection.some((selection) => (
+    // A checkbox selection spans several nodes, so only the bulk-safe action
+    // stays live; renaming many files at once has no meaning here.
+    if (action !== "delete") return false;
+    return checkedSelection.some((selection) => (
       selection
       && selection.readOnly !== true
       && (selection.type === "project" || selection.type === "folder" || selection.type === "file")
     ));
-    buttons.forEach((button) => {
-      const action = String(button.dataset.projectAction || "");
-      button.disabled = action !== "delete" || !canDeleteChecked;
-    });
-    return;
   }
 
   const selection = projectTreeSelectedNode;
-  const hasSelection = Boolean(selection?.type);
   const selectionType = String(selection?.type || "");
   const isReadOnly = selection?.readOnly === true || selectionType.startsWith("libs-");
-  const canCreateFolder = (
-    (!hasSelection && projectIsOpen())
-    || (selectionType === "root" && projectIsOpen())
-    || (!isReadOnly && (selectionType === "project" || selectionType === "folder" || selectionType === "file"))
+  const targetsProjectContent = selectionType === "project"
+    || selectionType === "folder"
+    || selectionType === "file";
+
+  if (action === "new-file") return projectIsOpen() && (!selectionType || (!isReadOnly && targetsProjectContent));
+  if (action === "new-folder") return (!selectionType && projectIsOpen()) || (!isReadOnly && targetsProjectContent);
+  if (action === "rename" || action === "delete") return !isReadOnly && targetsProjectContent;
+  return true;
+}
+
+function getProjectFileManagerContextItems(node) {
+  if (!node) return [];
+  const type = String(node.type || "");
+  const readOnly = node.readOnly === true || type.startsWith("libs-");
+  const items = type === "file" || type === "libs-file"
+    ? [{ id: "open", label: "Open", icon: "file" }]
+    : [{ id: "toggle", label: "Expand / Collapse", icon: "folder" }];
+  if (readOnly) return items;
+  return [
+    ...items,
+    "-",
+    { id: "new-file", label: "New File", icon: "newFile", disabled: !projectIsOpen() },
+    { id: "new-folder", label: "New Folder", icon: "newFolder" },
+    "-",
+    { id: "rename", label: "Rename", icon: "rename" },
+    { id: "delete", label: "Delete", icon: "trash", danger: true }
+  ];
+}
+
+async function handleProjectFileManagerAction(actionId, node) {
+  const action = String(actionId || "").trim().toLowerCase();
+  // Toolbar actions carry no node and run against the current selection;
+  // context-menu actions target the row they were opened on.
+  if (node) setProjectTreeSelection(node);
+
+  if (action === "open") {
+    activateProjectTreeNode(node);
+    return;
+  }
+  if (action === "toggle") {
+    if (!node?.key) return;
+    toggleProjectTreeNodeExpanded(node.key);
+    renderProjectTree(true);
+    return;
+  }
+  if (action === "new-file") {
+    await handleProjectTreeCreateFileAction();
+    return;
+  }
+  await handleProjectTreeAction(action);
+}
+
+function handleProjectFileManagerDragStart(node, event) {
+  if (!node?.rootPath || !node?.path || !event?.dataTransfer) return;
+  event.dataTransfer.effectAllowed = "copyMove";
+  event.dataTransfer.setData(
+    "text/plain",
+    `${node.rootPath}|${normalizeProjectPath(node.path, "untitled.s")}`
   );
-  const canRename = !isReadOnly && (selectionType === "project" || selectionType === "folder" || selectionType === "file");
-  const canDelete = !isReadOnly && (selectionType === "project" || selectionType === "folder" || selectionType === "file");
-
-  buttons.forEach((button) => {
-    const action = String(button.dataset.projectAction || "");
-    if (action === "new-folder") {
-      button.disabled = !canCreateFolder;
-    } else if (action === "rename") {
-      button.disabled = !canRename;
-    } else if (action === "delete") {
-      button.disabled = !canDelete;
-    }
-  });
 }
 
-function clearProjectTreeDropTargets() {
-  const targets = getProjectTreeTargets();
-  targets.forEach((entry) => {
-    if (!(entry.tree instanceof HTMLElement)) return;
-    entry.tree.querySelectorAll(".project-tree-project.drop-target, .project-tree-folder.drop-target")
-      .forEach((node) => node.classList.remove("drop-target"));
-  });
+function resolveProjectFileManagerDropEffect(targetNode, sourceNode) {
+  if (!targetNode || !sourceNode) return null;
+  if (targetNode.readOnly === true) return null;
+  if (targetNode.type !== "project" && targetNode.type !== "folder") return null;
+  if (sourceNode.type !== "file") return null;
+  return isSameProjectRootPath(targetNode.rootPath, sourceNode.rootPath) ? "move" : "copy";
 }
 
-function renderProjectTreeRow(options = {}) {
-  const type = String(options.type || "file").trim();
-  const nodeKey = String(options.nodeKey || "").trim();
-  const label = String(options.label || "");
-  const meta = String(options.meta || "");
-  const rootPath = String(options.rootPath || "");
-  const path = String(options.path || "");
-  const hasChildren = options.hasChildren === true;
-  const expanded = options.expanded === true;
-  const active = options.active === true;
-  const selected = options.selected === true;
-  const readOnly = options.readOnly === true;
-  const draggable = options.draggable === true;
-  const checkboxVisible = options.checkboxVisible !== false;
-  const checkboxChecked = options.checkboxChecked === true;
-  const checkboxDisabled = options.checkboxDisabled === true;
-  const syncTone = String(options.syncTone || "").trim().toLowerCase();
-  const title = String(options.title || label || path || rootPath || "");
-  const toggle = hasChildren
-    ? `<button class="project-tree-toggle" type="button" data-tree-toggle="1" data-tree-node-key="${escapeHtml(nodeKey)}" aria-label="${expanded ? escapeHtml(translateText("Collapse")) : escapeHtml(translateText("Expand"))}">${expanded ? "v" : ">"}</button>`
-    : `<span class="project-tree-toggle spacer" aria-hidden="true">.</span>`;
-  const checkbox = checkboxVisible
-    ? `<label class="project-tree-check" title="${checkboxDisabled ? escapeHtml(translateText("Read-only")) : escapeHtml(translateText("Select"))}"><input type="checkbox" data-tree-checkbox="1" data-tree-node-key="${escapeHtml(nodeKey)}" data-tree-node-type="${escapeHtml(type)}"${rootPath ? ` data-project-root="${escapeHtml(rootPath)}"` : ""}${path ? ` data-project-path="${escapeHtml(path)}"` : ""}${readOnly ? " data-tree-readonly=\"true\"" : ""}${checkboxChecked ? " checked" : ""}${checkboxDisabled ? " disabled" : ""}></label>`
-    : "<span class=\"project-tree-check\" aria-hidden=\"true\"></span>";
-  const classes = [
-    `project-tree-${type}`,
-    active ? "active" : "",
-    selected ? "selected" : "",
-    readOnly ? "readonly" : ""
-  ].filter(Boolean).join(" ");
-  const attrs = [
-    "type=\"button\"",
-    `class="${classes}"`,
-    `data-tree-node-key="${escapeHtml(nodeKey)}"`,
-    `data-tree-node-type="${escapeHtml(type)}"`,
-    rootPath ? `data-project-root="${escapeHtml(rootPath)}"` : "",
-    path ? `data-project-path="${escapeHtml(path)}"` : "",
-    readOnly ? "data-tree-readonly=\"true\"" : "",
-    draggable ? "draggable=\"true\"" : "",
-    `title="${escapeHtml(title)}"`
-  ].filter(Boolean).join(" ");
-  const syncMarker = syncTone
-    ? `<span class="project-tree-sync project-tree-sync-${escapeHtml(syncTone)}" title="${escapeHtml(translateText(syncTone === "green" ? "Cloud sync: synced" : (syncTone === "orange" ? "Cloud sync: partial" : "Cloud sync: not synced")))}" aria-hidden="true"></span>`
+async function handleProjectFileManagerDrop(targetNode, sourceNode) {
+  const effect = resolveProjectFileManagerDropEffect(targetNode, sourceNode);
+  if (!effect) return;
+  const destinationFolder = targetNode.type === "folder"
+    ? normalizeProjectFolderPath(targetNode.path, "folder")
     : "";
-  return `<div class="project-tree-row">${toggle}${checkbox}<button ${attrs}><span class="project-tree-main">${syncMarker}<span class="project-tree-node-label">${escapeHtml(label)}</span></span>${meta ? `<span class="project-tree-meta">${escapeHtml(meta)}</span>` : ""}</button></div>`;
+  const sourcePath = normalizeProjectPath(sourceNode.path, "untitled.s");
+
+  if (effect === "move") {
+    const movedPath = moveProjectFileToFolder(sourceNode.rootPath, sourcePath, destinationFolder);
+    if (movedPath && movedPath !== sourcePath) {
+      postMarsMessage("Moved file to: {path}.", { path: movedPath });
+    }
+    return;
+  }
+
+  const copiedPath = await copyProjectFileToProjectFolder(
+    sourceNode.rootPath,
+    sourcePath,
+    targetNode.rootPath,
+    destinationFolder
+  );
+  if (copiedPath) {
+    postMarsMessage("Copied file to: {path}.", { path: copiedPath });
+  }
 }
 
-function renderProjectTreeBranch(node, context, parentPath = "") {
-  const folders = [...node.folders.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  const files = [...node.files].sort((a, b) => a.name.localeCompare(b.name));
-  let html = "<ul class=\"project-tree-list\">";
-
-  folders.forEach(([folderName, childNode]) => {
-    const folderPath = parentPath ? `${parentPath}/${folderName}` : folderName;
-    const nodeKey = getProjectTreeNodeKey("folder", context.rootPath, folderPath);
-    const hasChildren = childNode.folders.size > 0 || childNode.files.length > 0;
-    const expanded = isProjectTreeNodeExpanded(nodeKey, true);
-    const selected = projectTreeSelectedNode?.key === nodeKey || isProjectTreeNodeChecked(nodeKey);
-    const folderSummary = childNode.summary || summarizeProjectTreeBranch(childNode);
-    html += "<li class=\"project-tree-item\">";
-    html += renderProjectTreeRow({
-      type: "folder",
-      nodeKey,
-      label: folderName,
-      meta: formatProjectTreeMeta({
-        updatedAt: folderSummary.latestUpdatedAt
-      }),
-      rootPath: context.rootPath,
-      path: folderPath,
-      hasChildren,
-      expanded,
-      selected,
-      syncTone: context.syncSummary?.folderTones?.get(folderPath) || "red",
-      checkboxChecked: isProjectTreeNodeChecked(nodeKey),
-      title: folderPath
-    });
-    if (hasChildren && expanded) {
-      html += renderProjectTreeBranch(childNode, context, folderPath);
+function createProjectFileManagerView(host) {
+  return createFileManager({
+    host,
+    label: translateText("Project files"),
+    rootLabel: "/",
+    features: { checkboxes: true, dragDrop: true },
+    actions: PROJECT_FILE_MANAGER_ACTIONS,
+    getModel: buildProjectFileManagerModel,
+    // Projects open by default only when they are the active one; the global
+    // library stays collapsed so it never buries the project it sits beside.
+    isExpanded: (node) => isProjectTreeNodeExpanded(
+      node.key,
+      node.type === "libs-root" ? false : (node.type !== "project" || isActiveProjectFileManagerNode(node))
+    ),
+    onToggle: (node) => toggleProjectTreeNodeExpanded(node.key),
+    isSelected: (node) => projectTreeSelectedNode?.key === node.key || isProjectTreeNodeChecked(node.key),
+    isActive: isActiveProjectFileManagerNode,
+    isChecked: (node) => isProjectTreeNodeChecked(node.key),
+    onSelect: (node) => {
+      setProjectTreeSelection(node);
+      if (node.type === "project" && node.rootPath) {
+        activateProjectInLibrary(node.rootPath, { revealContents: false });
+      }
+    },
+    onActivate: (node) => activateProjectTreeNode(node),
+    onCheck: (node, checked) => setProjectTreeNodeChecked(node, checked),
+    onAction: (actionId, node) => {
+      void handleProjectFileManagerAction(actionId, node);
+    },
+    isActionEnabled: isProjectFileManagerActionEnabled,
+    getContextItems: getProjectFileManagerContextItems,
+    getStatusCells: getProjectFileManagerStatusCells,
+    emptyText: () => translateText("No files in project."),
+    onDragStart: handleProjectFileManagerDragStart,
+    onDragOver: resolveProjectFileManagerDropEffect,
+    onDrop: (targetNode, sourceNode) => {
+      void handleProjectFileManagerDrop(targetNode, sourceNode);
     }
-    html += "</li>";
   });
-
-  files.forEach((file) => {
-    const nodeKey = getProjectTreeNodeKey("file", context.rootPath, file.path);
-    const isActive = context.projectKey === context.activeProjectKey && context.activePath === file.path;
-    const selected = projectTreeSelectedNode?.key === nodeKey || isProjectTreeNodeChecked(nodeKey);
-    const metaLabel = formatProjectTreeMeta({
-      updatedAt: file.updatedAt,
-      bytes: file.bytes,
-      lineCount: file.lineCount,
-      includeSize: true,
-      includeLines: true
-    });
-    const titleTimestamp = formatProjectTimestamp(file.updatedAt);
-    const title = titleTimestamp
-      ? `${file.path} - ${translateText("Last write: {date}", { date: titleTimestamp })}`
-      : file.path;
-    html += "<li class=\"project-tree-item\">";
-    html += renderProjectTreeRow({
-      type: "file",
-      nodeKey,
-      label: file.name,
-      meta: metaLabel,
-      rootPath: context.rootPath,
-      path: file.path,
-      active: isActive,
-      selected,
-      syncTone: context.syncSummary?.fileTones?.get(file.path) || "red",
-      draggable: true,
-      checkboxChecked: isProjectTreeNodeChecked(nodeKey),
-      title
-    });
-    html += "</li>";
-  });
-
-  html += "</ul>";
-  return html;
-}
-
-function renderGlobalLibraryTreeBranch(node, parentPath = "") {
-  const folders = [...node.folders.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  const files = [...node.files].sort((a, b) => a.name.localeCompare(b.name));
-  let html = "<ul class=\"project-tree-list\">";
-
-  folders.forEach(([folderName, childNode]) => {
-    const folderPath = parentPath ? `${parentPath}/${folderName}` : folderName;
-    const nodeKey = getProjectTreeNodeKey("libs-folder", "", folderPath);
-    const hasChildren = childNode.folders.size > 0 || childNode.files.length > 0;
-    const expanded = isProjectTreeNodeExpanded(nodeKey, true);
-    const selected = projectTreeSelectedNode?.key === nodeKey;
-    html += "<li class=\"project-tree-item\">";
-    html += renderProjectTreeRow({
-      type: "libs-folder",
-      nodeKey,
-      label: folderName,
-      path: folderPath,
-      hasChildren,
-      expanded,
-      selected,
-      readOnly: true,
-      checkboxDisabled: true,
-      title: `libs/${folderPath}`
-    });
-    if (hasChildren && expanded) {
-      html += renderGlobalLibraryTreeBranch(childNode, folderPath);
-    }
-    html += "</li>";
-  });
-
-  files.forEach((file) => {
-    const nodeKey = getProjectTreeNodeKey("libs-file", "", file.path);
-    const selected = projectTreeSelectedNode?.key === nodeKey;
-    html += "<li class=\"project-tree-item\">";
-    html += renderProjectTreeRow({
-      type: "libs-file",
-      nodeKey,
-      label: file.name,
-      meta: formatProjectTreeMeta({
-        bytes: file.bytes,
-        lineCount: file.lineCount,
-        includeSize: true,
-        includeLines: true
-      }),
-      path: file.path,
-      selected,
-      readOnly: true,
-      checkboxDisabled: true,
-      title: `libs/${file.path}`
-    });
-    html += "</li>";
-  });
-
-  html += "</ul>";
-  return html;
 }
 
 function renderProjectTree(force = false) {
-  const targets = getProjectTreeTargets();
-  if (!targets.length) return;
+  const views = getProjectFileManagerViews();
+  if (!views.length) return;
 
-  const activeProjectKey = projectIsOpen()
-    ? normalizeProjectRootKey(projectState.rootPath)
-    : normalizeProjectRootKey(projectLibraryState?.activeRootPath || "");
+  const activeProjectKey = getActiveProjectFileManagerKey();
   const activePath = projectIsOpen() ? String(editor.getActiveFile()?.name || "") : "";
   const librarySignature = getProjectLibrarySignature(projectLibraryState);
   const globalLibrarySignature = getProjectTreeGlobalLibrarySignature();
@@ -3436,96 +3678,7 @@ function renderProjectTree(force = false) {
     return;
   }
 
-  const projects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
-  const projectRows = projects
-    .slice()
-    .sort((a, b) => String(a.rootPath || "").localeCompare(String(b.rootPath || ""), undefined, { sensitivity: "base" }))
-    .map((project) => {
-      const rootPath = String(project.rootPath || "project.p");
-      const projectKey = normalizeProjectRootKey(rootPath);
-      const nodeKey = getProjectTreeNodeKey("project", rootPath);
-      const isActiveProject = projectKey === activeProjectKey;
-      const selected = projectTreeSelectedNode?.key === nodeKey || isProjectTreeNodeChecked(nodeKey);
-      const model = buildProjectTreeModel(project);
-      const projectSummary = summarizeProjectTreeBranch(model);
-      const updatedLabel = formatProjectTreeMeta({
-        updatedAt: Number(project.updatedAt) || projectSummary.latestUpdatedAt,
-        bytes: projectSummary.totalBytes,
-        includeSize: true
-      });
-      const hasChildren = model.folders.size > 0 || model.files.length > 0;
-      const expanded = isProjectTreeNodeExpanded(nodeKey, isActiveProject);
-      const syncSummary = getProjectTreeCloudSyncSummary(rootPath);
-      let branchHtml = "";
-      if (hasChildren && expanded) {
-        branchHtml = renderProjectTreeBranch(model, {
-          rootPath,
-          projectKey,
-          activeProjectKey,
-          activePath,
-          syncSummary
-        });
-      } else if (!hasChildren) {
-        branchHtml = `<div class="project-tree-empty">${escapeHtml(translateText("No files in project."))}</div>`;
-      }
-      return `<li class="project-tree-item">${renderProjectTreeRow({
-        type: "project",
-        nodeKey,
-        label: rootPath,
-        meta: updatedLabel,
-        rootPath,
-        active: isActiveProject,
-        selected,
-        syncTone: syncSummary.projectTone,
-        hasChildren,
-        expanded,
-        checkboxChecked: isProjectTreeNodeChecked(nodeKey),
-        title: rootPath
-      })}${branchHtml}</li>`;
-    })
-    .join("");
-
-  const libsNodeKey = getProjectTreeNodeKey("libs-root", "", "libs");
-  const libsModel = buildGlobalLibraryTreeModel();
-  const libsHasChildren = libsModel.folders.size > 0 || libsModel.files.length > 0;
-  summarizeProjectTreeBranch(libsModel);
-  const libsExpanded = isProjectTreeNodeExpanded(libsNodeKey, false);
-  const libsSelected = projectTreeSelectedNode?.key === libsNodeKey;
-  const libsBranchHtml = libsHasChildren && libsExpanded
-    ? renderGlobalLibraryTreeBranch(libsModel)
-    : (!libsHasChildren
-      ? `<div class="project-tree-empty">${escapeHtml(translateText("No global libraries."))}</div>`
-      : "");
-
-  const rootNodeKey = getProjectTreeNodeKey("root", "", "/");
-  const rootSelected = projectTreeSelectedNode?.key === rootNodeKey;
-  const treeHtml = `<ul class="project-tree-list root"><li class="project-tree-item">${renderProjectTreeRow({
-    type: "root",
-    nodeKey: rootNodeKey,
-    label: "/",
-    selected: rootSelected,
-    checkboxVisible: false,
-    title: "/"
-  })}<ul class="project-tree-list">${projectRows}<li class="project-tree-item">${renderProjectTreeRow({
-    type: "libs-root",
-    nodeKey: libsNodeKey,
-    label: "libs/",
-    hasChildren: libsHasChildren,
-    expanded: libsExpanded,
-    selected: libsSelected,
-    readOnly: true,
-    checkboxDisabled: true,
-    path: "libs",
-    title: "Global libraries (read-only)"
-  })}${libsBranchHtml}</li></ul></li></ul>`;
-
-  targets.forEach((target) => {
-    if (!(target.tree instanceof HTMLElement)) return;
-    if (target.rootLabel instanceof HTMLElement) target.rootLabel.textContent = "/";
-    target.tree.innerHTML = treeHtml;
-  });
-  updateProjectTreeActionButtons();
-  updateProjectTreeStatusBars();
+  views.forEach((view) => view.render());
   lastProjectTreeGlobalLibrarySignature = globalLibrarySignature;
   lastProjectTreeLibrarySignature = librarySignature;
   lastProjectTreePathSignature = activeProjectKey;
@@ -4091,21 +4244,6 @@ function isSameProjectRootPath(a, b) {
   return normalizeProjectRootKey(a) === normalizeProjectRootKey(b);
 }
 
-function resolveProjectTreeNodeFromElement(element) {
-  if (!(element instanceof HTMLElement)) return null;
-  const type = String(element.dataset.treeNodeType || "").trim();
-  if (!type) return null;
-  const rootPath = String(element.dataset.projectRoot || "").trim();
-  const path = String(element.dataset.projectPath || "").trim();
-  return {
-    type,
-    rootPath,
-    path,
-    key: getProjectTreeNodeKey(type, rootPath, path),
-    readOnly: element.dataset.treeReadonly === "true" || type.startsWith("libs-")
-  };
-}
-
 function resolveProjectActionRootPath() {
   const selected = projectTreeSelectedNode;
   if (selected && !selected.readOnly && (selected.type === "project" || selected.type === "folder" || selected.type === "file")) {
@@ -4367,22 +4505,72 @@ async function copyProjectFileToProjectFolder(sourceProjectRootPath, sourceFileP
   return targetPath;
 }
 
-async function handleProjectTreeCreateFolderAction() {
+// The folder a new node lands in: the selected folder, the folder holding the
+// selected file, or the project root when nothing useful is selected.
+function resolveProjectTreeTargetFolder() {
   const selected = projectTreeSelectedNode;
+  if (!selected || selected.readOnly) return "";
+  if (selected.type === "folder") return normalizeProjectFolderPath(selected.path, "folder");
+  if (selected.type === "file") return projectPathDirname(normalizeProjectPath(selected.path, "untitled.s"));
+  return "";
+}
+
+function resolveNewProjectFileTemplate(path) {
+  const extension = getPathExtension(path);
+  if (C_SOURCE_FILE_EXTENSIONS.includes(extension)) return MINI_C_DEFAULT_TEMPLATE;
+  if (C_HEADER_FILE_EXTENSIONS.includes(extension)) return "";
+  if (ASM_SOURCE_FILE_EXTENSIONS.includes(extension)) return "# new MIPS file\n.text\nmain:\n";
+  return "";
+}
+
+async function handleProjectTreeCreateFileAction() {
+  if (!ensureProjectOpenForAction("creating files")) return;
+  if (runActive) stopRunLoop();
+
+  const baseFolder = resolveProjectTreeTargetFolder();
+  const suggested = baseFolder ? `${baseFolder}/untitled.c` : "src/untitled.c";
+  const candidate = await requestTextDialog("New File", "File name", suggested, {
+    confirmLabel: "Create",
+    cancelLabel: "Cancel"
+  });
+  if (candidate == null) return;
+  const trimmed = String(candidate || "").trim();
+  if (!trimmed) return;
+
+  const path = normalizeProjectPath(
+    trimmed.includes("/") ? trimmed : (baseFolder ? `${baseFolder}/${trimmed}` : trimmed),
+    "untitled.s"
+  );
+  if (!SUPPORTED_PROJECT_FILE_EXTENSIONS.has(getPathExtension(path))) {
+    postMarsMessage("[warn] Unsupported file type: {name}.", { name: path });
+    return;
+  }
+
+  const created = editor.createFile({ name: path, source: resolveNewProjectFileTemplate(path) });
+  if (!created) return;
+  modeController.syncForFileName?.(created.name || path, { activate: true });
+  windowManager.focus("window-main");
+  editor.focus();
+  postMarsMessage("New file created: {name}.", { name: created.name });
+  syncProjectFromEditor(true);
+  scheduleProjectPersist({ syncFromEditor: true });
+  setProjectTreeSelection({
+    type: "file",
+    rootPath: normalizeProjectRootPath(projectState.rootPath, projectState.name || "project"),
+    path: created.name || path,
+    readOnly: false
+  });
+  renderProjectTree(true);
+}
+
+async function handleProjectTreeCreateFolderAction() {
   const rootPath = resolveProjectActionRootPath();
   if (!rootPath) {
     postMarsMessage("[warn] No project selected.");
     return;
   }
 
-  let baseFolder = "";
-  if (selected && !selected.readOnly) {
-    if (selected.type === "folder") {
-      baseFolder = normalizeProjectFolderPath(selected.path, "folder");
-    } else if (selected.type === "file") {
-      baseFolder = projectPathDirname(normalizeProjectPath(selected.path, "untitled.s"));
-    }
-  }
+  const baseFolder = resolveProjectTreeTargetFolder();
   const suggested = baseFolder ? `${baseFolder}/new_folder` : "new_folder";
   const candidate = await requestTextDialog("New Folder", "Folder name", suggested, {
     confirmLabel: "Create",
@@ -4481,6 +4669,7 @@ async function handleProjectTreeRenameAction() {
       readOnly: false
     });
     renderProjectTree(true);
+    await renameCloudProjectByName(rootPath, nextRootPath);
     if (uniqueName !== requestedName) {
       postMarsMessage("[warn] Project name already exists. Renamed to '{name}' instead.", { name: nextRootPath });
     } else {
@@ -4998,164 +5187,9 @@ async function handleProjectTreeAction(action) {
   }
 }
 
-function resolveProjectTreeDropTarget(target) {
-  if (!(target instanceof HTMLElement)) return null;
-  const node = target.closest("[data-tree-node-type]");
-  if (!(node instanceof HTMLElement)) return null;
-  const info = resolveProjectTreeNodeFromElement(node);
-  if (!info || info.readOnly) return null;
-  if (info.type !== "project" && info.type !== "folder") return null;
-  return { node, info };
-}
-
-const projectTreeNodes = [refs.project?.mainTree, refs.project?.toolTree]
-  .filter((node) => node instanceof HTMLElement);
-projectTreeNodes.forEach((treeNode) => {
-  treeNode.addEventListener("change", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLInputElement)) return;
-    if (!target.matches("[data-tree-checkbox]")) return;
-    const info = resolveProjectTreeNodeFromElement(target);
-    if (!info) return;
-    setProjectTreeSelection(info);
-    setProjectTreeNodeChecked(info, target.checked);
-    renderProjectTree(true);
-  });
-
-  treeNode.addEventListener("click", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    if (target instanceof HTMLInputElement && target.matches("[data-tree-checkbox]")) {
-      const info = resolveProjectTreeNodeFromElement(target);
-      if (!info) return;
-      setProjectTreeSelection(info);
-      setProjectTreeNodeChecked(info, target.checked);
-      renderProjectTree(true);
-      return;
-    }
-    const toggle = target.closest("[data-tree-toggle]");
-    if (toggle instanceof HTMLElement) {
-      const key = String(toggle.dataset.treeNodeKey || "").trim();
-      if (key) {
-        toggleProjectTreeNodeExpanded(key);
-        renderProjectTree(true);
-      }
-      return;
-    }
-    const node = target.closest("[data-tree-node-type]");
-    if (!(node instanceof HTMLElement)) return;
-    const info = resolveProjectTreeNodeFromElement(node);
-    if (!info) return;
-    setProjectTreeSelection(info);
-    if (info.type === "project" && info.rootPath) {
-      activateProjectInLibrary(info.rootPath);
-    }
-    const now = Date.now();
-    const repeatedClick = info.key === lastProjectTreeClickInfo.key && (now - lastProjectTreeClickInfo.at) <= 420;
-    lastProjectTreeClickInfo = {
-      key: info.key,
-      at: now
-    };
-    renderProjectTree(true);
-    if (repeatedClick) {
-      activateProjectTreeNode(info);
-    }
-  });
-
-  treeNode.addEventListener("dblclick", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    if (target.closest("[data-tree-checkbox]")) return;
-    const node = target.closest("[data-tree-node-type]");
-    if (!(node instanceof HTMLElement)) return;
-    const info = resolveProjectTreeNodeFromElement(node);
-    if (!info) return;
-    activateProjectTreeNode(info);
-  });
-
-  treeNode.addEventListener("dragstart", (event) => {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    const node = target.closest("[data-tree-node-type='file']");
-    if (!(node instanceof HTMLElement)) return;
-    const info = resolveProjectTreeNodeFromElement(node);
-    if (!info || !info.rootPath || !info.path) return;
-    projectTreeDragPayload = {
-      rootPath: info.rootPath,
-      path: normalizeProjectPath(info.path, "untitled.s")
-    };
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = "copyMove";
-      event.dataTransfer.setData("text/plain", `${projectTreeDragPayload.rootPath}|${projectTreeDragPayload.path}`);
-    }
-    node.classList.add("dragging");
-  });
-
-  treeNode.addEventListener("dragover", (event) => {
-    if (!projectTreeDragPayload) return;
-    const dropTarget = resolveProjectTreeDropTarget(event.target);
-    clearProjectTreeDropTargets();
-    if (!dropTarget) return;
-    event.preventDefault();
-    const isSameProject = isSameProjectRootPath(dropTarget.info.rootPath, projectTreeDragPayload.rootPath);
-    if (event.dataTransfer) event.dataTransfer.dropEffect = isSameProject ? "move" : "copy";
-    dropTarget.node.classList.add("drop-target");
-  });
-
-  treeNode.addEventListener("drop", async (event) => {
-    if (!projectTreeDragPayload) return;
-    event.preventDefault();
-    const dropTarget = resolveProjectTreeDropTarget(event.target);
-    clearProjectTreeDropTargets();
-    if (!dropTarget) return;
-    const destinationFolder = dropTarget.info.type === "folder"
-      ? normalizeProjectFolderPath(dropTarget.info.path, "folder")
-      : "";
-    const sameProject = isSameProjectRootPath(dropTarget.info.rootPath, projectTreeDragPayload.rootPath);
-    if (sameProject) {
-      const movedPath = moveProjectFileToFolder(
-        projectTreeDragPayload.rootPath,
-        projectTreeDragPayload.path,
-        destinationFolder
-      );
-      if (movedPath && movedPath !== projectTreeDragPayload.path) {
-        postMarsMessage("Moved file to: {path}.", { path: movedPath });
-      }
-    } else {
-      const copiedPath = await copyProjectFileToProjectFolder(
-        projectTreeDragPayload.rootPath,
-        projectTreeDragPayload.path,
-        dropTarget.info.rootPath,
-        destinationFolder
-      );
-      if (copiedPath) {
-        postMarsMessage("Copied file to: {path}.", { path: copiedPath });
-      }
-    }
-    projectTreeDragPayload = null;
-    treeNode.querySelectorAll(".project-tree-file.dragging").forEach((node) => node.classList.remove("dragging"));
-  });
-
-  treeNode.addEventListener("dragend", () => {
-    projectTreeDragPayload = null;
-    clearProjectTreeDropTargets();
-    treeNode.querySelectorAll(".project-tree-file.dragging").forEach((node) => node.classList.remove("dragging"));
-  });
-});
-
-const projectTreeActionButtons = [
-  refs.project?.mainNewFolder,
-  refs.project?.mainRename,
-  refs.project?.mainDelete,
-  refs.project?.toolNewFolder,
-  refs.project?.toolRename,
-  refs.project?.toolDelete
-].filter((button) => button instanceof HTMLButtonElement);
-projectTreeActionButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    void handleProjectTreeAction(button.dataset.projectAction || "");
-  });
-});
+projectFileManagerViews = [refs.project?.mainTree, refs.project?.toolTree]
+  .filter((host) => host instanceof HTMLElement)
+  .map((host) => createProjectFileManagerView(host));
 
 renderProjectTree(true);
 void ensureMiniCGlobalLibrariesLoaded()
@@ -6597,7 +6631,7 @@ async function openLanguagePreferencesDialog() {
   const current = store.getState().preferences;
   const languages = getAvailableLanguages();
   const menu = languages
-    .map((language, index) => `${index + 1}: ${language}`)
+    .map((language, index) => `${index + 1}: ${describeLanguageOption(language)}`)
     .join("\n");
   const raw = await requestTextDialog(
     "Language",
@@ -6662,6 +6696,20 @@ const THEME_OPTION_LABELS = {
   dark: "Dark"
 };
 
+// Endonyms, never translated: someone stranded in a language they cannot read
+// has to recognize their own on sight. The code stays visible as the anchor.
+const LANGUAGE_ENDONYMS = {
+  en: "English",
+  es: "Español",
+  pt: "Português"
+};
+
+function describeLanguageOption(language) {
+  const code = String(language || "").trim();
+  const endonym = LANGUAGE_ENDONYMS[code.toLowerCase()];
+  return endonym ? `${endonym} (${code})` : code;
+}
+
 async function openInterfacePreferencesPanel() {
   const current = store.getState().preferences;
   const languages = getAvailableLanguages();
@@ -6697,7 +6745,7 @@ async function openInterfacePreferencesPanel() {
             label: translateText("Language"),
             type: "select",
             value: current.language || "en",
-            options: languages.map((language) => ({ value: language, label: language }))
+            options: languages.map((language) => ({ value: language, label: describeLanguageOption(language) }))
           }
         ]
       },
@@ -10010,11 +10058,10 @@ if (typeof window !== "undefined") {
         isOpen: projectIsOpen(),
         selected: projectTreeSelectedNode ? { ...projectTreeSelectedNode } : null,
         checked: getProjectTreeCheckedSelection().map((entry) => ({ ...entry })),
-        mainStatus: {
-          selected: String(refs.project?.mainStatusSelected?.textContent || ""),
-          size: String(refs.project?.mainStatusSize?.textContent || ""),
-          usage: String(refs.project?.mainStatusUsage?.textContent || "")
-        },
+        mainStatus: (() => {
+          const [selected, size, usage] = getProjectFileManagerStatusCells();
+          return { selected, size, usage };
+        })(),
         syncDocuments: Array.from(cloudProjectSyncDocuments.entries()).map(([rootKey, project]) => ({
           rootKey,
           rootPath: String(project?.rootPath || ""),

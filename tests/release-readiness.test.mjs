@@ -153,6 +153,53 @@ test("release shell and localized toolbar labels are complete", async () => {
   }
 });
 
+test("no i18n catalog declares the same key twice", async () => {
+  // A repeated key is silently dropped by the object literal, so a translation
+  // can be edited in the file and still never reach the UI.
+  for (const language of ["en", "es", "pt"]) {
+    const source = await readFile(resolve(projectRoot, "assets", "js", "i18n", `${language}.js`), "utf8");
+    const seen = new Set();
+    const duplicated = [];
+    for (const match of source.matchAll(/^\s*"((?:[^"\\]|\\.)*)":/gm)) {
+      const key = match[1];
+      if (seen.has(key)) duplicated.push(key);
+      else seen.add(key);
+    }
+    assert.deepEqual(duplicated, [], `${language}.js repeats these keys`);
+  }
+});
+
+test("assembler directive diagnostics are translated, not left in English", async () => {
+  // Spanish and Portuguese seed themselves from the English catalog, so a
+  // missing translation is present as a key and silently shows English text.
+  // These are the messages a student hits first when a directive is malformed.
+  const directiveDiagnostics = [
+    "\"{directive}\" directive is invalid or not implemented in MARS",
+    "\"{directive}\" directive cannot appear in text segment",
+    "\".align\" requires one operand",
+    "\".align\" requires a non-negative integer",
+    "\".space\" requires one operand",
+    "\".space\" requires a non-negative integer",
+    "\".globl\" directive requires at least one argument.",
+    "\".globl\" directive argument must be label.",
+    "\".extern\" directive requires two operands (label and size).",
+    "\".extern\" requires a non-negative integer size"
+  ];
+
+  const english = await loadCatalog("en");
+  for (const language of ["es", "pt"]) {
+    const catalog = await loadCatalog(language, english);
+    for (const key of directiveDiagnostics) {
+      assert.ok(Object.hasOwn(english, key), `English catalog is missing '${key}'`);
+      assert.notEqual(
+        catalog[key],
+        english[key],
+        `${language} still shows the English text for '${key}'`
+      );
+    }
+  }
+});
+
 test("localized MIPS reference catalogs do not fall back to English", async () => {
   const english = JSON.parse(
     await readFile(resolve(projectRoot, "help", "en", "help-reference.json"), "utf8")
@@ -308,6 +355,7 @@ test("the dark theme is an opt-in preference resolved through shared tokens", as
 test("interface colors resolve through theme tokens instead of literals", async () => {
   const themedSources = [
     "assets/js/app-modules/10-ui.js",
+    "assets/js/app-modules/11-ui-file-manager.js",
     "assets/js/app-modules/15-help-system.js",
     "assets/js/app-modules/18-runtime-browser-storage.js"
   ];

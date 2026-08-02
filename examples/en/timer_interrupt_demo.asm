@@ -2,7 +2,7 @@
 # Open Tools > System Clock and Timer, connect it to MIPS, assemble and run.
 # A deterministic simulated timer interrupts the program every 200 instructions.
 
-.eqv CLOCK_CONTROL 0xffff0050
+.eqv CLOCK_CONTROL 0xffff0050   # device registers live in the MMIO block
 .eqv CLOCK_PERIOD  0xffff0058
 .data
 ticks: .word 0
@@ -11,16 +11,16 @@ message: .asciiz "Timer interrupts handled: "
 .globl main
 main:
   li $t0, CLOCK_PERIOD
-  li $t1, 200
+  li $t1, 200   # period measured in executed instructions, so the run repeats exactly
   sw $t1, 0($t0)
   li $t0, CLOCK_CONTROL
-  li $t1, 3
+  li $t1, 3   # bit 0 starts the timer, bit 1 lets it raise interrupts
   sw $t1, 0($t0)
 wait_for_ticks:
-  lw $t2, ticks
+  lw $t2, ticks   # main never calls the handler: the CPU jumps to it on its own
   blt $t2, 5, wait_for_ticks
   nop
-  sw $zero, 0($t0)
+  sw $zero, 0($t0)   # stop the timer before finishing
   li $v0, 4
   la $a0, message
   syscall

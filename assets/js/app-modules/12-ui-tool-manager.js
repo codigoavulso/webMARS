@@ -276,6 +276,26 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
     reset: () => runtimeControls?.reset?.()
   });
   let placementIndex = 0;
+
+  // Tool windows used to re-translate only when reopened, so switching language
+  // left every open tool stranded in the previous one. One subscription here
+  // covers each shell the manager hands out.
+  const toolTranslationRefreshers = new Set();
+
+  function registerToolTranslationRefresher(refresh) {
+    if (typeof refresh !== "function") return;
+    toolTranslationRefreshers.add(refresh);
+  }
+
+  (typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n)?.subscribe?.(() => {
+    toolTranslationRefreshers.forEach((refresh) => {
+      try {
+        refresh();
+      } catch {
+        // A single tool must never block the others from re-translating.
+      }
+    });
+  });
   let loadPromise = null;
   let latestSnapshot = null;
   let toolEntries = [...FALLBACK_TOOLS].sort((a, b) => a.label.localeCompare(b.label));
@@ -331,6 +351,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
     desktop.appendChild(win);
     windowManager.registerWindow(win);
     const refreshWindowTranslations = translateStaticTree(win);
+    registerToolTranslationRefresher(refreshWindowTranslations);
     const content = win.querySelector(".window-content");
     const resizeListeners = new Set();
     let resizeFrame = null;

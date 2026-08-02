@@ -2,6 +2,20 @@
   const host = window.MarsWebTools;
   if (!host || typeof host.register !== "function") return;
 
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return String(message ?? "");
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
+  }
+
+
   const STYLE_ID = "mars-web-tool-bht-style";
   if (!document.getElementById(STYLE_ID)) {
     const style = document.createElement("style");
@@ -119,7 +133,7 @@
     }
 
     predictionText() {
-      return this.prediction ? "TAKE" : "NOT TAKE";
+      return this.prediction ? t("TAKE") : t("NOT TAKE");
     }
   }
 
@@ -392,10 +406,19 @@
         }
       }
 
+      // The connect label is rewritten at runtime, so the shell's static-tree
+      // pass cannot keep it in the current language on its own.
+      function refreshToolText() {
+        connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
+        // The prediction column is rebuilt from the model, so it needs a repaint
+        // rather than the shell's static-tree pass.
+        renderTable();
+      }
+
       connectButton.addEventListener("click", () => {
         connected = !connected;
-        connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
-        ctx.messagesPane.postMars(`[tool] BHT Simulator ${connected ? "connected" : "disconnected"}.`);
+        refreshToolText();
+        ctx.messagesPane.postMars(t("[tool] BHT Simulator {state}.", { state: connected ? t("connected") : t("disconnected") }));
         if (!connected) clearInstructionInfo();
       });
 
@@ -410,6 +433,9 @@
       closeButton.addEventListener("click", shell.close);
 
       resetModel();
+
+      subscribeLanguageChange(refreshToolText);
+      refreshToolText();
 
       return {
         isConnected: () => connected,

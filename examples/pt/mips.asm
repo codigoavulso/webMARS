@@ -3,11 +3,11 @@
 # monte este projeto e escreva "help".
 
 .data
-ansi_reset:     .byte 27, 99, 0
-ansi_clear:     .byte 27, 91, 50, 74, 27, 91, 72, 0
+ansi_reset:     .byte 27, 99, 0   # as sequências de escape são bytes normais enviados ao terminal
+ansi_clear:     .byte 27, 91, 50, 74, 27, 91, 72, 0   # 27 é ESC: o que vem a seguir é comando, não texto
 ansi_normal:    .byte 27, 91, 48, 109, 0
 ansi_dim:       .byte 27, 91, 50, 109, 0
-ansi_bold_cyan: .byte 27, 91, 49, 59, 57, 54, 109, 0
+ansi_bold_cyan: .byte 27, 91, 49, 59, 57, 54, 109, 0   # a cor é escolhida por número dentro da sequência
 ansi_green:     .byte 27, 91, 57, 50, 109, 0
 ansi_cyan:      .byte 27, 91, 57, 54, 109, 0
 ansi_yellow:    .byte 27, 91, 57, 51, 109, 0

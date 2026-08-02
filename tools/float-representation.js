@@ -2,6 +2,20 @@
   const host = window.MarsWebTools;
   if (!host || typeof host.register !== "function") return;
 
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return String(message ?? "");
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
+  }
+
+
   const STYLE_ID = "mars-web-tool-float-style";
   if (!document.getElementById(STYLE_ID)) {
     const style = document.createElement("style");
@@ -200,9 +214,9 @@
         expansion.innerHTML = `${signValue}1<sup>${sign}</sup> * 2<sup>${exponentPow}</sup> * .${fraction} =`;
 
         if (exponentValue === 0) {
-          instructions.textContent = "Denormalized representation (no hidden bit).";
+          instructions.textContent = t("Denormalized representation (no hidden bit).");
         } else {
-          instructions.textContent = "Normalized representation (hidden leading 1).";
+          instructions.textContent = t("Normalized representation (hidden leading 1).");
         }
       }
 
@@ -227,7 +241,7 @@
       function applyHex() {
         const normalized = hexInput.value.trim().replace(/^0x/i, "");
         if (!/^[0-9a-fA-F]{1,8}$/.test(normalized)) {
-          instructions.textContent = "Invalid hex input. Please provide up to 8 hex digits.";
+          instructions.textContent = t("Invalid hex input. Please provide up to 8 hex digits.");
           return;
         }
         bits = Number.parseInt(normalized, 16) >>> 0;
@@ -240,7 +254,7 @@
         const e = expInput.value.trim();
         const f = fracInput.value.trim();
         if (!/^[01]$/.test(s) || !/^[01]{8}$/.test(e) || !/^[01]{23}$/.test(f)) {
-          instructions.textContent = "Invalid binary input. Expected 1/8/23 bits.";
+          instructions.textContent = t("Invalid binary input. Expected 1/8/23 bits.");
           return;
         }
         bits = Number.parseInt(`${s}${e}${f}`, 2) >>> 0;
@@ -251,7 +265,7 @@
       function applyDecimal() {
         const value = Number.parseFloat(decInput.value.trim());
         if (!Number.isFinite(value)) {
-          instructions.textContent = "Invalid decimal input.";
+          instructions.textContent = t("Invalid decimal input.");
           return;
         }
         bits = floatToBits(value);
@@ -288,16 +302,22 @@
           ? parsedRegister
           : -1;
         if (attachedRegister >= 0) {
-          instructions.textContent = `Attached to $f${attachedRegister}.`;
+          instructions.textContent = t("Attached to $f{register}.", { register: attachedRegister });
           readAttachedRegister(lastSnapshot);
         } else {
-          instructions.textContent = "Detached from floating-point registers.";
+          instructions.textContent = t("Detached from floating-point registers.");
         }
       });
 
+      // The connect label is rewritten at runtime, so the shell's static-tree
+      // pass cannot keep it in the current language on its own.
+      function refreshToolText() {
+        connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
+      }
+
       connectButton.addEventListener("click", () => {
         connected = !connected;
-        connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
+        refreshToolText();
         if (connected) readAttachedRegister(lastSnapshot);
       });
 
@@ -305,12 +325,15 @@
         bits = 0 >>> 0;
         refreshInputs();
         writeAttachedRegister();
-        instructions.textContent = "Modify any value then press Enter to update all values.";
+        instructions.textContent = t("Modify any value then press Enter to update all values.");
       });
 
       closeButton.addEventListener("click", shell.close);
 
       refreshInputs();
+
+      subscribeLanguageChange(refreshToolText);
+      refreshToolText();
 
       return {
         isConnected: () => connected,

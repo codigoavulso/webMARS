@@ -27,6 +27,13 @@
     node.querySelectorAll("[id]").forEach((entry) => entry.removeAttribute("id"));
   }
 
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return String(message ?? "");
+  }
+
   function buildTargetOptions() {
     return [
       { value: "#mars-desktop", label: "Desktop (all windows)" },
@@ -136,7 +143,7 @@
         const selector = targetSelect.value;
         const target = document.querySelector(selector);
         if (!(target instanceof HTMLElement)) {
-          ctx.messagesPane.postMars(`[tool] Screen Magnifier: target '${selector}' not found.`);
+          ctx.messagesPane.postMars(t("[tool] Screen Magnifier: target '{selector}' not found.", { selector }));
           return;
         }
 

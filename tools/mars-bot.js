@@ -2,6 +2,20 @@
   const host = window.MarsWebTools;
   if (!host || typeof host.register !== "function") return;
 
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return String(message ?? "");
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
+  }
+
+
   const STYLE_ID = "mars-web-tool-mars-bot-style";
   if (!document.getElementById(STYLE_ID)) {
     const style = document.createElement("style");
@@ -88,11 +102,12 @@
       }
 
       function updateInfo() {
+        const yesNo = (value) => (value ? t("yes") : t("no"));
         info.textContent = [
-          `Heading: ${heading}`,
-          `Position: (${x.toFixed(2)}, ${y.toFixed(2)})`,
-          `Moving: ${moving ? "yes" : "no"}`,
-          `Leave Track: ${leaveTrack ? "yes" : "no"}`,
+          t("Heading: {value}", { value: heading }),
+          t("Position: ({x}, {y})", { x: x.toFixed(2), y: y.toFixed(2) }),
+          t("Moving: {value}", { value: yesNo(moving) }),
+          t("Leave Track: {value}", { value: yesNo(leaveTrack) }),
           `MMIO: heading=${ADDR_HEADING.toString(16)} move=${ADDR_MOVE.toString(16)} x=${ADDR_WHERE_X.toString(16)} y=${ADDR_WHERE_Y.toString(16)}`
         ].join("\n");
       }
@@ -212,12 +227,18 @@
         runtimeInfoPending = true;
       }
 
+      // The connect label is rewritten at runtime, so the shell's static-tree
+      // pass cannot keep it in the current language on its own.
+      function refreshToolText() {
+        connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
+      }
+
       connectButton.addEventListener("click", () => {
         connected = !connected;
-        connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
+        refreshToolText();
         if (connected) {
           history.sync(lastSnapshot);
-          ctx.messagesPane.postMars("[tool] Mars Bot connected.");
+          ctx.messagesPane.postMars(t("[tool] Mars Bot connected."));
         }
         syncMovementTimer();
       });
@@ -226,6 +247,9 @@
       closeButton.addEventListener("click", shell.close);
 
       clearState();
+
+      subscribeLanguageChange(refreshToolText);
+      refreshToolText();
 
       return {
         isConnected: () => connected,

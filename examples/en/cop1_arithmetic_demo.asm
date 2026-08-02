@@ -3,7 +3,7 @@
 # conversion to a 32-bit integer using the active FCSR rounding mode.
 
 .data
-.align 3
+.align 3   # doubles need eight-byte alignment
 left:          .double 1.5
 right:         .double 2.25
 stored_sum:    .space 8
@@ -16,9 +16,9 @@ newline:       .asciiz "\n"
 
 .text
 main:
-  ldc1  $f0, left
+  ldc1  $f0, left   # a double occupies an even register pair
   ldc1  $f2, right
-  add.d $f4, $f0, $f2
+  add.d $f4, $f0, $f2   # arithmetic runs in the coprocessor, not in the CPU
   sdc1  $f4, stored_sum
 
   li    $v0, 4
@@ -31,8 +31,8 @@ main:
   la    $a0, newline
   syscall
 
-  c.lt.d $f0, $f2
-  bc1t   comparison_ok
+  c.lt.d $f0, $f2   # the comparison writes a flag, it does not branch
+  bc1t   comparison_ok   # this is the branch that reads that flag
   nop
   la     $a0, compare_false
   b      print_comparison
@@ -44,8 +44,8 @@ print_comparison:
   syscall
 
   lwc1    $f6, round_source
-  cvt.w.s $f8, $f6
-  mfc1    $a0, $f8
+  cvt.w.s $f8, $f6   # 1.6 becomes an integer using the FCSR rounding mode
+  mfc1    $a0, $f8   # bring the result back to the CPU to print it
   li      $v0, 4
   la      $a0, round_label
   syscall

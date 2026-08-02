@@ -3,11 +3,11 @@
 # assemble this project and type "help".
 
 .data
-ansi_reset:     .byte 27, 99, 0
-ansi_clear:     .byte 27, 91, 50, 74, 27, 91, 72, 0
+ansi_reset:     .byte 27, 99, 0   # escape sequences are plain bytes sent to the terminal
+ansi_clear:     .byte 27, 91, 50, 74, 27, 91, 72, 0   # 27 is ESC: everything after it is a command, not text
 ansi_normal:    .byte 27, 91, 48, 109, 0
 ansi_dim:       .byte 27, 91, 50, 109, 0
-ansi_bold_cyan: .byte 27, 91, 49, 59, 57, 54, 109, 0
+ansi_bold_cyan: .byte 27, 91, 49, 59, 57, 54, 109, 0   # colour is chosen by number inside the sequence
 ansi_green:     .byte 27, 91, 57, 50, 109, 0
 ansi_cyan:      .byte 27, 91, 57, 54, 109, 0
 ansi_yellow:    .byte 27, 91, 57, 51, 109, 0

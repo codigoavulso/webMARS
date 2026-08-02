@@ -785,3 +785,279 @@ test("both Bitmap tools consume committed runtime configuration and accept dynam
     assert.match(source, /ctx\.engine\?\.memoryWords instanceof Map/);
   }
 });
+
+test("every tool speaks the selected language and refreshes when it changes", async () => {
+  // Static markup is translated by the shell, but anything a tool writes at
+  // runtime needs its own t() call, and an open window has to re-translate
+  // instead of waiting to be reopened.
+  const toolsDirectory = resolve(projectRoot, "tools");
+  const manifest = JSON.parse(
+    (await readFile(resolve(toolsDirectory, "tools.json"), "utf8")).replace(/^\uFEFF/, "")
+  );
+  const entries = Array.isArray(manifest) ? manifest : (manifest.tools || []);
+  assert.ok(entries.length > 0, "The tool manifest must not be empty.");
+
+  const catalogs = {};
+  const i18n = {
+    getCatalog(code) { return catalogs[code] || null; },
+    registerLanguage(code, table) { catalogs[code] = table; }
+  };
+  for (const language of ["en", "es", "pt"]) {
+    const source = await readFile(resolve(projectRoot, "assets", "js", "i18n", `${language}.js`), "utf8");
+    vm.runInNewContext(source, { window: { WebMarsI18n: i18n }, globalThis: { WebMarsI18n: i18n } });
+  }
+
+  for (const entry of entries) {
+    const label = String(entry.label || entry.name || "");
+    const script = String(entry.script || `./tools/${entry.id}.js`);
+    const source = await readFile(resolve(projectRoot, script.replace(/^\.\//, "")), "utf8");
+
+    assert.ok(
+      Object.hasOwn(catalogs.en, label),
+      `'${label}' is missing from the English catalog, so the Tools menu cannot translate it`
+    );
+
+    // A tool that rewrites text at runtime must own a t() helper and re-run it
+    // on a language change; one that only ships static markup needs neither.
+    const rewritesAtRuntime = /\.(?:textContent|innerHTML)\s*=|postMars\(/.test(source);
+    if (!rewritesAtRuntime) continue;
+
+    assert.match(
+      source,
+      /function t\(message/,
+      `'${label}' writes text at runtime but has no t() helper`
+    );
+    assert.doesNotMatch(
+      source,
+      /textContent\s*=\s*(?:connected\s*\?\s*)?"(?:Connect to MIPS|Disconnect from MIPS)"/,
+      `'${label}' hardcodes the English connect label`
+    );
+  }
+});
+
+test("static markup translation ignores the indentation around a label", async () => {
+  // Labels written across several lines, and text after an inline <input>,
+  // carry whitespace into the text node. Keying on the raw value left them
+  // permanently English.
+  const source = await readFile(
+    resolve(projectRoot, "assets/js/app-modules/09-ui-translation.js"),
+    "utf8"
+  );
+  const context = {
+    translateText: (value) => (value === "Draw hash marks" ? "Desenhar marcas de escala" : value),
+    document: null,
+    window: {}
+  };
+  context.window = context;
+  vm.runInNewContext(source, context, { filename: "09-ui-translation.js" });
+  const translateStaticTree = context.WebMarsModules.uiTranslation.translateStaticTree;
+
+  const textNode = { nodeValue: " Draw hash marks\n            ", isConnected: true, parentElement: { tagName: "LABEL" } };
+  let served = false;
+  const root = {
+    querySelectorAll: () => [],
+  };
+  context.document = {
+    createTreeWalker: () => ({
+      nextNode() {
+        if (served) return null;
+        served = true;
+        return textNode;
+      }
+    })
+  };
+  context.NodeFilter = { SHOW_TEXT: 4 };
+
+  translateStaticTree(root);
+  assert.equal(textNode.nodeValue, " Desenhar marcas de escala\n            ");
+});
+
+test("the memory map ends free space exactly at $sp, never inside the stack band", async () => {
+  // Padding the stack band downwards painted memory the program has never
+  // touched as stack and left the $sp marker floating in the middle of the
+  // band, which reads as a stack that is already deep.
+  const source = await readFile(resolve(projectRoot, "tools/stack-visualizer.js"), "utf8");
+  const buildSource = sourceBetween(source, "      function buildSegments()", "      function segmentAt(");
+
+  function segmentsFor({ sp, deepest }) {
+    const context = vm.createContext({
+      memoryMap: () => ({
+        textBase: 0x00400000,
+        externBase: 0x10000000,
+        dataBase: 0x10010000,
+        heapBase: 0x10040000,
+        stackPointer: 0x7fffeffc,
+        stackBase: 0x7ffffffc,
+        kernelTextBase: 0x80000000,
+        kernelDataBase: 0x90000000,
+        mmioBase: 0xffff0000
+      }),
+      currentSp: () => sp,
+      deepestSp: deepest,
+      ctx: { engine: { reservedHeapMappedBytes: 0 } }
+    });
+    vm.runInContext(`${buildSource}\nglobalThis.result = buildSegments();`, context);
+    return context.result;
+  }
+
+  const pick = (segments, id) => segments.find((segment) => segment.id === id);
+
+  const atRest = segmentsFor({ sp: 0x7fffeffc, deepest: 0x7fffeffc });
+  assert.equal(pick(atRest, "free").end, 0x7fffeffc, "free space must run up to $sp");
+  assert.equal(pick(atRest, "stack").start, 0x7fffeffc, "the stack band must start at $sp");
+
+  // Once the program pushes, the band grows downwards to the deepest $sp seen
+  // and free space still stops precisely where the stack begins.
+  const pushed = segmentsFor({ sp: 0x7fffef00, deepest: 0x7fffee80 });
+  assert.equal(pick(pushed, "stack").start, 0x7fffee80);
+  assert.equal(pick(pushed, "free").end, 0x7fffee80);
+
+  for (const segments of [atRest, pushed]) {
+    const stack = pick(segments, "stack");
+    assert.ok(stack.end > stack.start, "the stack band must never collapse");
+    assert.equal(pick(segments, "free").end, stack.start, "the bands must not overlap or leave a gap");
+  }
+
+  // The argument page MARS keeps above the initial $sp is 4 KB against a stack of
+  // tens of bytes. Folded into one band it left the frames as an invisible sliver,
+  // so it is its own band and the stack band stops at the initial $sp.
+  for (const segments of [atRest, pushed]) {
+    const stack = pick(segments, "stack");
+    const args = pick(segments, "args");
+    assert.ok(args, "the argument page must have its own band");
+    assert.equal(stack.end, 0x7ffff000, "the stack band stops just above the initial $sp");
+    assert.equal(args.start, stack.end, "the argument band continues where the stack band ends");
+    assert.equal(args.end, 0x80000000, "the argument band reaches the top of the stack segment");
+  }
+
+  // Every address from the heap to the top of the segment stays covered: a gap
+  // would make segmentAt() return null and the detail view lose its colouring.
+  const ordered = [...atRest].sort((a, b) => a.start - b.start);
+  for (let index = 1; index < ordered.length; index += 1) {
+    if (ordered[index].start > ordered[index - 1].end) {
+      assert.fail(`gap between '${ordered[index - 1].label}' and '${ordered[index].label}'`);
+    }
+  }
+});
+
+test("the map usage cache returns the same record shape on a hit as on a miss", async () => {
+  // computeDensity caches per segment list. Returning only the bucket array on a
+  // cache hit, while the miss path returned the whole record, blanked the memory
+  // map on every second frame with "cannot read properties of undefined".
+  const source = await readFile(resolve(projectRoot, "tools/stack-visualizer.js"), "utf8");
+  const densitySource = sourceBetween(source, "      function computeDensity(", "      // Bytes are what a student counts");
+
+  const words = new Map([[0x10010000, 1], [0x10010004, 2], [0x7fffeffc, 3]]);
+  const context = vm.createContext({
+    performance: { now: () => 1000 },
+    memoryWords: () => words,
+    densityCache: null,
+    densityStamp: 0,
+    DENSITY_REFRESH_MS: 250,
+    MAX_DENSITY_SCAN: 60000
+  });
+  const segments = [
+    { id: "data", start: 0x10010000, end: 0x10040000 },
+    { id: "stack", start: 0x7fffef00, end: 0x7ffff000 }
+  ];
+  vm.runInContext(`
+    ${densitySource}
+    globalThis.run = (segments) => computeDensity(segments, 8);
+  `, context);
+
+  const miss = context.run(segments);
+  const hit = context.run(segments);
+
+  for (const [name, result] of [["miss", miss], ["hit", hit]]) {
+    assert.ok(Array.isArray(result.data), `${name}: data must be the per-segment buckets`);
+    assert.ok(Array.isArray(result.touched), `${name}: touched must carry the per-segment totals`);
+    assert.equal(result.data.length, segments.length, `${name}: one bucket array per segment`);
+  }
+  assert.deepEqual([...hit.touched], [...miss.touched], "a cache hit must report the same totals");
+  assert.deepEqual([...hit.touched], [2, 1], "words are counted into the segment that contains them");
+});
+
+test("map band heights come from region size alone, on one shared scale", async () => {
+  // The bands used to carry hand-tuned weights, so a 64 KB region could be drawn
+  // taller than a 256 MB one. Height now derives from the span and nothing else:
+  // equal sizes must produce equal heights, and bigger must never be shorter.
+  const source = await readFile(resolve(projectRoot, "tools/stack-visualizer.js"), "utf8");
+  const scaleSource = sourceBetween(source, "      function bandShare(", "      // Colour carries the second dimension");
+  const context = vm.createContext({});
+  vm.runInContext(`${scaleSource}\nglobalThis.bandShare = bandShare;`, context);
+  const { bandShare } = context;
+
+  const buildSource = sourceBetween(source, "      function buildSegments()", "      function segmentAt(");
+  assert.doesNotMatch(buildSource, /weight:/, "segments must not carry hand-tuned weights any more");
+
+  // Real spans from the default memory map.
+  const spans = {
+    mmio: 0x10000,
+    extern: 0x10000,
+    text: 0x0fc00000,
+    ktext: 0x10000000,
+    data: 0x30000,
+    stack: 44,
+    args: 0x1000
+  };
+
+  assert.equal(
+    bandShare(spans.mmio),
+    bandShare(spans.extern),
+    "two 64 KB regions must claim exactly the same height"
+  );
+  for (const [smaller, bigger] of [["data", "text"], ["stack", "args"], ["args", "data"], ["text", "ktext"]]) {
+    assert.ok(
+      bandShare(spans[smaller]) < bandShare(spans[bigger]),
+      `'${smaller}' is smaller than '${bigger}' and must not be drawn taller`
+    );
+  }
+
+  // One law for every band: doubling the size adds the same amount of height
+  // wherever it happens, which is what makes the strip readable end to end.
+  const step = bandShare(2048) - bandShare(1024);
+  for (const size of [4096, 0x100000, 0x10000000]) {
+    assert.ok(
+      Math.abs((bandShare(size * 2) - bandShare(size)) - step) < 0.01,
+      `the scale must treat a doubling at ${size} like a doubling anywhere else`
+    );
+  }
+});
+
+test("stack visualizer keeps its memory map inside the medium layout", async () => {
+  const source = await readFile(resolve(projectRoot, "tools/stack-visualizer.js"), "utf8");
+
+  // At medium widths the inspector becomes a second grid row. The fixed-height
+  // bottom chart and readout must yield space, and the canvas must be allowed to
+  // shrink, otherwise the map overflows its pane at ordinary laptop heights.
+  assert.match(source, /\.sv-tool\.sv-medium \.sv-side \{[\s\S]*?max-height:110px;/);
+  assert.match(source, /\.sv-tool\.sv-medium \.sv-map-pane canvas\[data-sv="map"\] \{ min-height:0; \}/);
+  assert.match(source, /\.sv-tool\.sv-medium \.sv-readout \{ display:none; \}/);
+  assert.match(source, /\.sv-tool\.sv-medium \.sv-bottom \{ height:120px; \}/);
+});
+
+test("stack visualizer initially centers the memory window on $sp", async () => {
+  const source = await readFile(resolve(projectRoot, "tools/stack-visualizer.js"), "utf8");
+  const helperSource = sourceBetween(source, "      function defaultViewAddress()", "      function centerView(");
+
+  assert.match(
+    source,
+    /function renderAll\(\) \{\s*if \(followSp\) centerView\(currentSp\(\)\);/,
+    "Follow $sp must keep the view centered before the tool is connected too"
+  );
+
+  for (const highTop of [true, false]) {
+    const context = vm.createContext({
+      currentSp: () => 0x7fffeffc,
+      ZOOM_LEVELS: [{ bytesPerRow: 4 }],
+      zoomIndex: 0,
+      visibleRowCount: () => 10,
+      highTop
+    });
+    vm.runInContext(`${helperSource}\nglobalThis.top = defaultViewAddress();`, context);
+
+    const direction = highTop ? -1 : 1;
+    const middle = (context.top + direction * 5 * 4) >>> 0;
+    assert.equal(middle, 0x7fffeffc, `the ${highTop ? "high-top" : "low-top"} view must center on $sp`);
+  }
+});

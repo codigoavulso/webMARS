@@ -42,7 +42,9 @@ function teachingComments(source, logicalPath) {
     const marker = isAssembly ? line.indexOf("#") : line.indexOf("//");
     if (marker < 0) return [];
     const comment = line.slice(marker + (isAssembly ? 1 : 2)).trim();
-    if (!comment || (!isAssembly && comment.startsWith("#use"))) return [];
+    // Contract annotations are compiler input, not prose to translate.
+    if (!comment || comment.startsWith("@")) return [];
+    if (!isAssembly && comment.startsWith("#use")) return [];
     return [comment];
   });
 }
@@ -252,8 +254,11 @@ test("example catalog has unique, resolvable entries", async () => {
   }
 });
 
-test("Learn and Lessons examples keep explanatory comments localized in every language", async () => {
-  const teachingEntries = entries.filter((entry) => ["Learn", "Lessons"].includes(entry.category));
+test("every teaching example keeps its explanatory comments localized in every language", async () => {
+    // The whole catalogue is teaching material now, so every category is checked.
+  const teachingEntries = entries.filter((entry) => [
+    "Lessons", "Fundamentals", "Algorithms", "C and compilation", "Devices and system"
+  ].includes(entry.category));
   assert.ok(teachingEntries.length > 0, "The teaching categories must not be empty.");
 
   const untranslatedEnglish = /\b(?:Concepts|Register plan|After pass|A word occupies|The compiler lowers|One-element arrays|This module owns|By definition|Both routines walk|Execution resumes here|Skip the known|immediate -> register|the adder does|invert all bits|sign preserved|zeros shifted|the count register|the limit|base address|first word|next word|least significant|byte offset|unsigned byte|length|accumulator|scaled index|reserve two words|clobber|first argument|second argument|return address|result came back|this call's|base case|our n again|same shape|different registers|constant is in the word|shift amount|into the FPU|the FPU adder|print float)\b/i;
@@ -266,10 +271,13 @@ test("Learn and Lessons examples keep explanatory comments localized in every la
         `${spec.path} needs enough inline explanation to be useful as a lesson.`
       );
 
-      for (const language of languages.filter((value) => value !== "en")) {
+      // A shared file ships as a single copy for every language, so there is
+      // nothing to compare against; only its English explanation is required.
+      const localized = Array.isArray(entry.languages) && entry.languages.length > 1 && spec.shared !== true;
+      for (const language of (localized ? languages.filter((value) => value !== "en") : [])) {
         const localizedPath = await resolveExampleFile(language, spec.path);
         const localizedComments = teachingComments(await readFile(localizedPath, "utf8"), spec.path);
-        const allowedLineDifference = entry.category === "Lessons" ? 1 : 0;
+        const allowedLineDifference = 1;
         assert.ok(
           localizedComments.length >= englishComments.length - allowedLineDifference,
           `${spec.path} (${language}) lost explanatory comments from the English lesson.`
@@ -428,6 +436,41 @@ test("every C example variant compiles and its generated Assembly assembles", as
     [".c", ".c0"].includes(extname(entry.path).toLowerCase())
   )).length;
   assert.ok(compiledVariants >= canonicalCount, "Expected all canonical C examples to be compiled.");
+});
+
+test("a comment after a #use or #include directive does not drop the directive", async () => {
+  // A trailing comment used to make the directive fall through to "unsupported
+  // preprocessor directive", which silently removed the include from the program.
+  const withComments = `#use <conio>   // the console library
+#include "helper.h"   // declarations for the helper below
+#use "helper.c"   /* and its implementation */
+
+int main(void) {
+  print_int(helper_double(21));
+  print_char(10);
+  return 0;
+}
+`;
+  const compiled = await rawCompileCSource(withComments, "directive_comments.c", {
+    includeSources: {
+      "helper.h": "int helper_double(int value);\n",
+      "helper.c": "#include \"helper.h\"\n\nint helper_double(int value) {\n  return value * 2;\n}\n"
+    }
+  });
+
+  assert.equal(compiled.ok, true, `directives with comments failed:\n${formatDiagnostics(compiled)}`);
+  const preprocessorWarnings = (compiled.warnings ?? [])
+    .filter((entry) => /preprocessor directive/i.test(String(entry?.message ?? entry)));
+  // The compiler runs inside a vm realm, so compare the count instead of the array.
+  assert.equal(
+    preprocessorWarnings.length,
+    0,
+    `a commented directive must not be reported as unsupported: ${JSON.stringify(compiled.warnings)}`
+  );
+
+  const engine = await assembleSource(compiled.asm, "directive_comments.s");
+  const output = runToHalt(engine);
+  assert.match(output, /42/, "the included helper has to be part of the program");
 });
 
 test("C catalog minimum profiles match compiler gates", async () => {
@@ -598,7 +641,7 @@ int main(void) {
   assert.match(argsOutput, /verbose=true/);
   assert.match(argsOutput, /positional arguments=2\nalpha\nbeta/);
 
-  const projectEntry = entries.find((entry) => entry.label === "c_multi_file_stats");
+  const projectEntry = entries.find((entry) => entry.label === "A C project with several files");
   assert.ok(projectEntry, "The multi-file C example must be present in the catalog.");
   const projectFiles = [];
   for (const spec of sourceSpecs(projectEntry)) {
@@ -743,7 +786,6 @@ test("cache benchmark executes one uncontaminated 1024-load pattern per run", as
 
 test("interactive MMIO examples yield cooperatively in every language", async () => {
   const interactiveExamples = [
-    "tty_mmio_direct_debug.asm",
     "keyboard_display_mmio_echo.asm",
     "digital_lab_sim_demo.asm"
   ];

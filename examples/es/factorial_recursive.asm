@@ -15,7 +15,7 @@ main:
   syscall
   move $a0, $v0
 
-  jal fact
+  jal fact   # n está en $a0; el resultado vuelve en $v0
   move $s0, $v0
 
   li $v0, 4
@@ -35,18 +35,18 @@ main:
 
 # int fact(int n)
 fact:
-  addiu $sp, $sp, -8
-  sw    $ra, 4($sp)
-  sw    $a0, 0($sp)
+  addiu $sp, $sp, -8   # un marco por llamada: dos palabras
+  sw    $ra, 4($sp)   # guardar la dirección de retorno antes de llamar otra vez
+  sw    $a0, 0($sp)   # guardar n: la llamada recursiva sobrescribe $a0
 
-  blez  $a0, fact_base
+  blez  $a0, fact_base   # condición de parada: sin ella la pila nunca se deshace
   li    $t0, 1
   beq   $a0, $t0, fact_base
 
   addiu $a0, $a0, -1
   jal   fact
 
-  lw    $t1, 0($sp)
+  lw    $t1, 0($sp)   # nuestro n otra vez, intacto pese a la llamada
   mul   $v0, $v0, $t1
   j     fact_end
 
@@ -54,6 +54,6 @@ fact_base:
   li    $v0, 1
 
 fact_end:
-  lw    $ra, 4($sp)
+  lw    $ra, 4($sp)   # restaurar y liberar el marco antes de retornar
   addiu $sp, $sp, 8
   jr    $ra

@@ -14,6 +14,7 @@ const commands = [
     "tests/runtime-interrupt-regression.test.mjs",
     "tests/benchmark-regression.test.mjs",
     "tests/runtime-stop-regression.test.mjs",
+    "tests/c-compiler-regression.test.mjs",
     "tests/tool-runtime-regression.test.mjs",
     "tests/examples-catalog-regression.test.mjs",
     "tests/help-documentation-regression.test.mjs",

@@ -1,15 +1,15 @@
 ﻿int main(void) {
   // Requer C0-S2- ou superior: ciclos for, break/continue e ++/--.
-  int sum = 0;
+  int sum = 0;   // o acumulador vive num registo depois de compilado
 
-  for (int i = 0; i < 10; i++) {
-    if ((i % 2) == 0) continue;
-    if (i > 7) break;
+  for (int i = 0; i < 10; i++) {   // um ciclo for torna-se uma comparação mais um desvio para trás
+    if ((i % 2) == 0) continue;   // continue salta para o incremento, ignorando o corpo
+    if (i > 7) break;   // break salta para lá do fim do ciclo
     sum += i;
   }
 
   int down = 3;
-  down--;
+  down--;   // pós-decremento e pré-incremento compilam para a mesma soma
   int up = 3;
   ++up;
 

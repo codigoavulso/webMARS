@@ -1,14 +1,14 @@
 #use <tty>
 
-void tty_frame(int left, int top, int width, int height) {
+void tty_frame(int left, int top, int width, int height) {   // draws a box using the terminal's line-drawing charset
   int col = 0;
   int row = 0;
 
-  tty_box_on();
-  tty_move(top, left);
+  tty_box_on();   // switches the character set: 'l' and 'q' become corners and lines
+  tty_move(top, left);   // every ANSI escape sequence travels through the MMIO transmitter
   tty_putc('l');
   col = 0;
-  while (col < width - 2) {
+  while (col < width - 2) {   // one character per iteration: the terminal has no fill primitive
     tty_putc('q');
     col++;
   }

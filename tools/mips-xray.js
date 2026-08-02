@@ -66,6 +66,19 @@
   const JUMP_OPS = new Set(["j", "jal", "jr", "jalr"]);
   const MEMORY_OPS = new Set(["lb", "lbu", "lh", "lhu", "lw", "lwl", "lwr", "sb", "sh", "sw", "swl", "swr", "ll", "sc", "lwc1", "swc1", "ldc1", "sdc1"]);
 
+  function t(message, variables = {}) {
+    if (typeof translateText === "function") return translateText(message, variables);
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (i18n && typeof i18n.t === "function") return i18n.t(message, variables);
+    return String(message ?? "");
+  }
+
+  function subscribeLanguageChange(listener) {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    if (!i18n || typeof i18n.subscribe !== "function" || typeof listener !== "function") return () => {};
+    return i18n.subscribe(listener);
+  }
+
   function parseTokens(statement) {
     if (!statement) return [];
     const cleaned = String(statement).split("#")[0].trim();
@@ -127,11 +140,13 @@
 
       let connected = false;
       let zoom = 1;
-      let currentInfoText = info.textContent;
+      // The panel keeps the decoded event rather than its rendered text, so a
+      // language switch can re-render it instead of stranding the old labels.
+      let currentInfoEvent = null;
       const history = ctx.createToolDeltaHistory({
         applyInverse(delta) {
-          currentInfoText = String(delta?.text || "");
-          info.textContent = currentInfoText;
+          currentInfoEvent = delta?.event || null;
+          renderInfo();
         }
       });
       function applyZoom() {
@@ -147,35 +162,48 @@
           : parseTokens(statement);
         const opcode = String(event?.opcode || tokens[0] || "").toLowerCase();
         return [
-          "Line: -",
-          `Address: ${toHex32(event?.executedAddress >>> 0)}`,
-          `Machine code: ${Number.isFinite(event?.machineWord) ? toHex32(event.machineWord) : "-"}`,
-          `Opcode: ${opcode || "-"}`,
-          `Category: ${classify(opcode)}`,
-          `Registers: ${formatRegisters(tokens.slice(1))}`,
-          `Instruction: ${statement || "-"}`,
-          `Next address: ${toHex32(event?.pcAfter >>> 0)}`
+          t("Line: {value}", { value: "-" }),
+          t("Address: {value}", { value: toHex32(event?.executedAddress >>> 0) }),
+          t("Machine code: {value}", { value: Number.isFinite(event?.machineWord) ? toHex32(event.machineWord) : "-" }),
+          t("Opcode: {value}", { value: opcode || "-" }),
+          t("Category: {value}", { value: classify(opcode) }),
+          t("Registers: {value}", { value: formatRegisters(tokens.slice(1)) }),
+          t("Instruction: {value}", { value: statement || "-" }),
+          t("Next address: {value}", { value: toHex32(event?.pcAfter >>> 0) })
         ].join("\n");
       }
 
+      function renderInfo() {
+        info.textContent = currentInfoEvent
+          ? formatRuntimeInstruction(currentInfoEvent)
+          : t("No instruction yet.");
+      }
+
+      function refreshUiText() {
+        connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
+        renderInfo();
+      }
+
       function updateRuntimeInstruction(event, shouldRender = true, retainHistory = true) {
-        if (retainHistory) history.record(event.stepAfter | 0, { text: currentInfoText });
-        currentInfoText = formatRuntimeInstruction(event);
-        if (shouldRender) info.textContent = currentInfoText;
+        if (retainHistory) history.record(event.stepAfter | 0, { event: currentInfoEvent });
+        currentInfoEvent = event;
+        if (shouldRender) renderInfo();
       }
 
       connectButton.addEventListener("click", () => {
         connected = !connected;
-        connectButton.textContent = connected ? "Disconnect from MIPS" : "Connect to MIPS";
+        refreshUiText();
       });
       zoomInButton.addEventListener("click", () => { zoom = Math.min(2.5, zoom + 0.1); applyZoom(); });
       zoomOutButton.addEventListener("click", () => { zoom = Math.max(0.4, zoom - 0.1); applyZoom(); });
       helpButton.addEventListener("click", () => {
-        ctx.messagesPane.postMars("[tool] MIPS X-Ray: this browser version decodes each executed instruction and overlays datapath context on the static datapath figure.");
+        ctx.messagesPane.postMars(t("[tool] MIPS X-Ray: this browser version decodes each executed instruction and overlays datapath context on the static datapath figure."));
       });
       closeButton.addEventListener("click", shell.close);
 
+      subscribeLanguageChange(refreshUiText);
       applyZoom();
+      refreshUiText();
 
       return {
         isConnected: () => connected,
@@ -208,7 +236,7 @@
             if (firstRetainedIndex < 0) firstRetainedIndex = instructionEvents.length;
           }
           if (firstRetainedIndex > 0) {
-            currentInfoText = formatRuntimeInstruction(instructionEvents[firstRetainedIndex - 1]);
+            currentInfoEvent = instructionEvents[firstRetainedIndex - 1];
           }
           for (let index = firstRetainedIndex; index < instructionEvents.length; index += 1) {
             updateRuntimeInstruction(
@@ -218,7 +246,7 @@
             );
           }
           if (firstRetainedIndex === instructionEvents.length) {
-            info.textContent = currentInfoText;
+            renderInfo();
           }
           if (historyStart != null) history.pruneBefore(historyStart);
         },

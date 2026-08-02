@@ -158,22 +158,7 @@ function renderLayout(root) {
             </div>
 
             <section id="main-panel-project" class="main-tab-panel">
-              <div class="project-tree-pane project-tree-pane-main">
-                <div class="project-tree-header">
-                  <div class="project-tree-actions" role="group" aria-label="Project actions">
-                    <button id="project-main-new-folder" class="project-tree-action-btn" type="button" data-project-action="new-folder">New Folder</button>
-                    <button id="project-main-rename" class="project-tree-action-btn" type="button" data-project-action="rename">Rename</button>
-                    <button id="project-main-delete" class="project-tree-action-btn project-tree-action-btn-danger" type="button" data-project-action="delete">Delete</button>
-                  </div>
-                  <span id="project-tree-main-root-label" class="project-tree-root-label">/</span>
-                </div>
-                <div id="project-tree-main" class="project-tree-container" role="tree" aria-label="Project files"></div>
-                <div class="project-tree-status" aria-live="polite">
-                  <span id="project-tree-main-status-selected">files: 0</span>
-                  <span id="project-tree-main-status-size">size: 0 B</span>
-                  <span id="project-tree-main-status-usage">used: 0 B / 0 B</span>
-                </div>
-              </div>
+              <div id="project-tree-main" class="project-tree-host"></div>
             </section>
 
             <section id="main-panel-editor" class="main-tab-panel active">
@@ -336,22 +321,7 @@ function renderLayout(root) {
               <button class="win-btn win-btn-close" data-win-action="close" type="button">x</button>
             </div>
           </div>
-          <div class="window-content project-tree-pane">
-            <div class="project-tree-header">
-              <div class="project-tree-actions" role="group" aria-label="Project actions">
-                <button id="project-tool-new-folder" class="project-tree-action-btn" type="button" data-project-action="new-folder">New Folder</button>
-                <button id="project-tool-rename" class="project-tree-action-btn" type="button" data-project-action="rename">Rename</button>
-                <button id="project-tool-delete" class="project-tree-action-btn project-tree-action-btn-danger" type="button" data-project-action="delete">Delete</button>
-              </div>
-              <span id="project-tree-root-label" class="project-tree-root-label">project.p</span>
-            </div>
-            <div id="project-tree" class="project-tree-container" role="tree" aria-label="Project files"></div>
-            <div class="project-tree-status" aria-live="polite">
-              <span id="project-tree-tool-status-selected">files: 0</span>
-              <span id="project-tree-tool-status-size">size: 0 B</span>
-              <span id="project-tree-tool-status-usage">used: 0 B / 0 B</span>
-            </div>
-          </div>
+          <div class="window-content project-tree-host" id="project-tree"></div>
         </section>
 
         <section class="desktop-window tool-window window-hidden" id="window-mini-c" style="left:170px; top:95px; width:760px; height:520px;">
@@ -500,22 +470,8 @@ function renderLayout(root) {
       close: root.querySelector("#window-mini-c [data-win-action=\"close\"]")
     },
     project: {
-      mainRootLabel: root.querySelector("#project-tree-main-root-label"),
       mainTree: root.querySelector("#project-tree-main"),
-      mainNewFolder: root.querySelector("#project-main-new-folder"),
-      mainRename: root.querySelector("#project-main-rename"),
-      mainDelete: root.querySelector("#project-main-delete"),
-      mainStatusSelected: root.querySelector("#project-tree-main-status-selected"),
-      mainStatusSize: root.querySelector("#project-tree-main-status-size"),
-      mainStatusUsage: root.querySelector("#project-tree-main-status-usage"),
-      toolRootLabel: root.querySelector("#project-tree-root-label"),
-      toolTree: root.querySelector("#project-tree"),
-      toolNewFolder: root.querySelector("#project-tool-new-folder"),
-      toolRename: root.querySelector("#project-tool-rename"),
-      toolDelete: root.querySelector("#project-tool-delete"),
-      toolStatusSelected: root.querySelector("#project-tree-tool-status-selected"),
-      toolStatusSize: root.querySelector("#project-tree-tool-status-size"),
-      toolStatusUsage: root.querySelector("#project-tree-tool-status-usage")
+      toolTree: root.querySelector("#project-tree")
     },
     registers: {
       body: root.querySelector("#registers-body"),
@@ -5603,7 +5559,7 @@ function injectRuntimeStyles() {
     .dialog-form,
     .dialog-message,
     .message-body,
-    .project-tree,
+    .fm-body,
     .editor-scroll,
     textarea {
       overscroll-behavior: contain;
@@ -6195,320 +6151,13 @@ function injectRuntimeStyles() {
       overflow: hidden;
     }
 
-    .project-tree-pane-main {
+    /* Both project surfaces mount the shared file manager, which brings its
+       own stylesheet; the host only has to provide a sized grid cell. */
+    .project-tree-host {
+      min-height: 0;
       height: 100%;
-    }
-
-    .project-tree-pane {
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto;
-      min-height: 0;
+      overflow: hidden;
       background: var(--surface-sunken);
-    }
-
-    .project-tree-header {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      row-gap: 4px;
-      min-height: 24px;
-      padding: 4px 6px 5px;
-      border-bottom: 1px solid var(--line-soft);
-      background: linear-gradient(180deg, var(--surface-raised), var(--surface-strong));
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .project-tree-actions {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .project-tree-action-btn {
-      border: 1px solid var(--line);
-      border-radius: 2px;
-      background: linear-gradient(180deg, var(--surface-raised), var(--surface-strong));
-      color: var(--text);
-      padding: 1px 7px;
-      font-size: 11px;
-      line-height: 1.5;
-      cursor: pointer;
-    }
-
-    .project-tree-action-btn:hover:enabled {
-      border-color: var(--line-hover);
-      background: linear-gradient(180deg, var(--btn-hi), var(--btn-lo-hover));
-    }
-
-    .project-tree-action-btn:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-
-    .project-tree-action-btn.project-tree-action-btn-danger {
-      color: var(--error-deep);
-    }
-
-    .project-tree-root-label {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      min-height: 16px;
-      font-size: 11px;
-      color: var(--text);
-    }
-
-    .project-tree-container {
-      min-height: 0;
-      overflow: auto;
-      padding: 6px 6px 8px;
-      font-family: "Consolas", "Cascadia Code", "Courier New", monospace;
-      font-size: 12px;
-      color: var(--text);
-    }
-
-    .project-tree-list {
-      list-style: none;
-      margin: 0;
-      padding: 0 0 0 14px;
-    }
-
-    .project-tree-list.root {
-      padding-left: 0;
-    }
-
-    .project-tree-item {
-      margin: 1px 0;
-    }
-
-    .project-tree-row {
-      display: grid;
-      grid-template-columns: 14px auto minmax(0, 1fr);
-      align-items: center;
-      column-gap: 4px;
-      min-height: 18px;
-    }
-
-    .project-tree-check {
-      width: 14px;
-      height: 14px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0;
-      cursor: pointer;
-    }
-
-    .project-tree-check input {
-      width: 12px;
-      height: 12px;
-      margin: 0;
-      accent-color: var(--amber-line);
-      cursor: pointer;
-    }
-
-    .project-tree-check input:disabled {
-      cursor: default;
-      opacity: 0.45;
-    }
-
-    .project-tree-toggle {
-      width: 14px;
-      height: 14px;
-      border: 1px solid transparent;
-      border-radius: 2px;
-      background: transparent;
-      color: var(--text);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      line-height: 1;
-      padding: 0;
-      cursor: pointer;
-    }
-
-    .project-tree-toggle:hover {
-      border-color: var(--line);
-      background: var(--accent-soft-2);
-    }
-
-    .project-tree-toggle.spacer {
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    .project-tree-root,
-    .project-tree-project,
-    .project-tree-folder,
-    .project-tree-file,
-    .project-tree-libs-root,
-    .project-tree-libs-folder,
-    .project-tree-libs-file {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      font-weight: 600;
-      align-items: center;
-      column-gap: 6px;
-      width: 100%;
-      border: 1px solid transparent;
-      border-radius: 2px;
-      padding: 1px 4px;
-      background: transparent;
-      color: var(--text);
-      cursor: pointer;
-      font: inherit;
-      text-align: left;
-      min-height: 18px;
-    }
-
-    .project-tree-root {
-      cursor: default;
-      color: var(--text);
-      border-color: transparent;
-      background: transparent;
-    }
-
-    .project-tree-project,
-    .project-tree-folder,
-    .project-tree-libs-root,
-    .project-tree-libs-folder {
-      color: var(--text);
-    }
-
-    .project-tree-file,
-    .project-tree-libs-file {
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .project-tree-project:hover,
-    .project-tree-folder:hover,
-    .project-tree-file:hover,
-    .project-tree-libs-root:hover,
-    .project-tree-libs-folder:hover,
-    .project-tree-libs-file:hover {
-      border-color: var(--line-strong);
-      background: var(--accent-soft-2);
-    }
-
-    .project-tree-project.active,
-    .project-tree-file.active {
-      border-color: var(--line-hover);
-      background: var(--accent-active);
-      color: var(--text);
-      font-weight: 700;
-    }
-
-    .project-tree-project.selected,
-    .project-tree-folder.selected,
-    .project-tree-file.selected,
-    .project-tree-libs-root.selected,
-    .project-tree-libs-folder.selected,
-    .project-tree-libs-file.selected {
-      border-color: var(--amber-line);
-      background: linear-gradient(180deg, var(--amber-hi) 0%, var(--amber-lo) 100%);
-      color: var(--amber-text);
-    }
-
-    .project-tree-file.active.selected,
-    .project-tree-project.active.selected {
-      border-color: var(--amber-2-line);
-      background: linear-gradient(180deg, var(--amber-2-hi) 0%, var(--amber-2-lo) 100%);
-      color: var(--amber-2-text);
-    }
-
-    .project-tree-project.drop-target,
-    .project-tree-folder.drop-target {
-      border-color: var(--accent);
-      background: var(--accent-active);
-      box-shadow: inset 0 0 0 1px var(--accent-line);
-    }
-
-    .project-tree-file.dragging {
-      opacity: 0.55;
-    }
-
-    .project-tree-libs-root,
-    .project-tree-libs-folder,
-    .project-tree-libs-file {
-      color: var(--text);
-    }
-
-    .project-tree-libs-root.readonly,
-    .project-tree-libs-folder.readonly,
-    .project-tree-libs-file.readonly {
-      color: var(--text-soft);
-    }
-
-    .project-tree-main {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .project-tree-node-label {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .project-tree-sync {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      flex: 0 0 auto;
-      box-shadow: inset 0 0 0 1px var(--inset-ring);
-    }
-
-    .project-tree-sync-green { background: var(--sync-green); }
-    .project-tree-sync-orange { background: var(--sync-orange); }
-    .project-tree-sync-red { background: var(--sync-red); }
-
-    .project-tree-meta {
-      color: var(--text-soft);
-      font-size: 11px;
-      font-weight: 400;
-      white-space: nowrap;
-    }
-
-    .project-tree-file.active .project-tree-meta,
-    .project-tree-project.active .project-tree-meta {
-      color: var(--text);
-    }
-
-    .project-tree-project.selected .project-tree-meta,
-    .project-tree-folder.selected .project-tree-meta,
-    .project-tree-file.selected .project-tree-meta,
-    .project-tree-libs-root.selected .project-tree-meta,
-    .project-tree-libs-folder.selected .project-tree-meta,
-    .project-tree-libs-file.selected .project-tree-meta {
-      color: var(--amber-meta);
-    }
-
-    .project-tree-empty {
-      color: var(--text-soft);
-      padding: 4px 2px;
-      font-style: italic;
-    }
-
-    .project-tree-status {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 5px 8px 6px;
-      border-top: 1px solid var(--line-soft);
-      background: linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-inset) 100%);
-      color: var(--text);
-      font-size: 11px;
-      line-height: 1.4;
-    }
-
-    .project-tree-status span {
-      white-space: nowrap;
     }
 
     #main-panel-editor {

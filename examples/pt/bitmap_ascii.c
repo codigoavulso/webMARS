@@ -1,12 +1,12 @@
 #use <bitmap_ascii>
 #use <bitmap_rect>
 
-// Open Tools > Bitmap Display and connect to MIPS.
-// The program configures Unit 1x1, Display 128x64 and Base 0x10020000.
-void draw_ascii_line(int x, int y, int cols, int rows, int glyphs[], int length, int fg, int bg) {
+// Abra Ferramentas > Bitmap Display e ligue ao MIPS.
+// O programa configura Unidade 1x1, Ecrã 128x64 e Base 0x10020000.
+void draw_ascii_line(int x, int y, int cols, int rows, int glyphs[], int length, int fg, int bg) {   // cada glifo é desenhado pixel a pixel no framebuffer
   int index = 0;
   while (index < length) {
-    bitmap_ascii_put_char(x + index * 6, y, cols, rows, glyphs[index], fg, bg);
+    bitmap_ascii_put_char(x + index * 6, y, cols, rows, glyphs[index], fg, bg);   // 6 pixéis por caractere: a fonte não traz espaçamento próprio
     index = index + 1;
   }
 }
@@ -14,7 +14,7 @@ void draw_ascii_line(int x, int y, int cols, int rows, int glyphs[], int length,
 int main(void) {
   int cols = 128;
   int rows = 64;
-  int bg = 0x00000000;
+  int bg = 0x00000000;   // uma palavra por pixel, 0x00RRGGBB
   int fg = 0x00ffffff;
   bitmap_configure_display(128, 64, 1, 1, 0x10020000);
 

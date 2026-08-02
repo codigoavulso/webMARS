@@ -41,7 +41,8 @@
     "true", "false",
     "NULL", "alloc", "alloc_array",
     "assert", "error", "requires", "ensures", "invariant", "loop_invariant",
-    "return", "if", "else", "while", "for", "break", "continue"
+    "return", "if", "else", "while", "do", "for", "break", "continue", "sizeof",
+    "switch", "case", "default", "enum", "goto"
   ]);
   const MULTI_CHAR_PUNCT = [
     "<<=", ">>=",
@@ -385,6 +386,30 @@
     return SUBSET_LEVELS[normalizeSubsetName(value)] ?? 0;
   }
 
+  // C reads a leading zero as octal. Parsing it as decimal produced a silently
+  // wrong value, so the radix is decided here once and reported to the caller,
+  // which lets the C0 profiles reject a notation their reference does not define.
+  function convertIntegerLiteral(rawValue) {
+    const raw = String(rawValue ?? "").trim();
+    if (!raw) return { ok: false, value: 0, radix: 10, reason: "Empty integer literal." };
+    if (/^0[xX][0-9a-fA-F]+$/.test(raw)) {
+      return { ok: true, value: Number.parseInt(raw.slice(2), 16), radix: 16 };
+    }
+    if (/^0[xX]/.test(raw)) {
+      return { ok: false, value: 0, radix: 16, reason: `Malformed hexadecimal literal '${raw}'.` };
+    }
+    if (/^0[0-9]+$/.test(raw)) {
+      if (/[89]/.test(raw)) {
+        return { ok: false, value: 0, radix: 8, reason: `Invalid digit in octal literal '${raw}'.` };
+      }
+      return { ok: true, value: Number.parseInt(raw.slice(1), 8), radix: 8 };
+    }
+    if (/^[0-9]+$/.test(raw)) {
+      return { ok: true, value: Number.parseInt(raw, 10), radix: 10 };
+    }
+    return { ok: false, value: 0, radix: 10, reason: `Malformed integer literal '${raw}'.` };
+  }
+
   function normalizeTypeName(value) {
     const raw = String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
     if (!raw) return "int";
@@ -493,7 +518,7 @@
   function isDeclarationTypeName(value) {
     const raw = normalizeTypeName(value);
     if (DECLARATION_TYPES.has(raw)) return true;
-    if (raw === "struct") return true;
+    if (raw === "struct" || raw === "enum") return true;
     if (isPointerTypeName(raw)) return true;
     if (isFunctionPointerTypeName(raw)) return true;
     if (isStructTypeName(raw)) return true;
@@ -766,12 +791,17 @@
           continue;
         }
 
-        const useLibraryMatch = trimmed.match(/^#use\s*<([^>]+)>\s*$/);
-        const useFileMatch = useLibraryMatch ? null : trimmed.match(/^#use\s*\"([^\"]+)\"\s*$/);
-        const includeLibraryMatch = (useLibraryMatch || useFileMatch) ? null : trimmed.match(/^#include\s*<([^>]+)>\s*$/);
+        // A directive may carry a trailing comment like any other line; the capture
+        // groups stop at the closing delimiter, so a path containing '//' is safe.
+        const TRAILING_COMMENT = "\\s*(?://.*|/\\*.*)?$";
+        const useLibraryMatch = trimmed.match(new RegExp(`^#use\\s*<([^>]+)>${TRAILING_COMMENT}`));
+        const useFileMatch = useLibraryMatch ? null : trimmed.match(new RegExp(`^#use\\s*"([^"]+)"${TRAILING_COMMENT}`));
+        const includeLibraryMatch = (useLibraryMatch || useFileMatch)
+          ? null
+          : trimmed.match(new RegExp(`^#include\\s*<([^>]+)>${TRAILING_COMMENT}`));
         const includeFileMatch = (useLibraryMatch || useFileMatch || includeLibraryMatch)
           ? null
-          : trimmed.match(/^#include\s*\"([^\"]+)\"\s*$/);
+          : trimmed.match(new RegExp(`^#include\\s*"([^"]+)"${TRAILING_COMMENT}`));
         if (!useLibraryMatch && !useFileMatch && !includeLibraryMatch && !includeFileMatch) {
           warnings.push(createDiagnostic(
             translateText("Ignoring unsupported preprocessor directive '{trimmed}'.", { trimmed }),
@@ -1194,7 +1224,36 @@
         return { ok: true, value: first };
       }
       if (atEnd()) return { ok: false, value: "", reason: "Incomplete escape sequence at end of literal." };
-      return decodeEscape(advance(), options);
+      const escapeChar = advance();
+
+      // Numeric escapes: '\xNN' and the octal '\NNN', both of which C uses to write
+      // a byte that has no printable spelling.
+      const finishNumericEscape = (code, spelling) => {
+        if (!Number.isFinite(code) || code < 0 || code > 255) {
+          return { ok: false, value: "", reason: `Escape sequence '\\${spelling}' is outside the 0..255 byte range.` };
+        }
+        if (code === 0 && options.allowNull === false) {
+          return { ok: false, value: "", reason: "Null escape '\\0' is not allowed in string literals." };
+        }
+        return { ok: true, value: String.fromCharCode(code) };
+      };
+
+      if (escapeChar === "x" || escapeChar === "X") {
+        let digits = "";
+        while (digits.length < 2 && !atEnd() && /[0-9a-fA-F]/.test(peek())) digits += advance();
+        if (!digits) {
+          return { ok: false, value: "", reason: "Hexadecimal escape '\\x' needs at least one digit." };
+        }
+        return finishNumericEscape(Number.parseInt(digits, 16), `x${digits}`);
+      }
+
+      if (/[0-7]/.test(escapeChar)) {
+        let digits = escapeChar;
+        while (digits.length < 3 && !atEnd() && /[0-7]/.test(peek())) digits += advance();
+        return finishNumericEscape(Number.parseInt(digits, 8), digits);
+      }
+
+      return decodeEscape(escapeChar, options);
     };
 
     while (!atEnd()) {
@@ -1352,6 +1411,7 @@
     let position = 0;
     const diagnostics = [];
     const typedefNames = new Set();
+    const enumTypeNames = new Set();
     const functionTypedefNames = new Set();
     const structNames = new Set();
 
@@ -1400,6 +1460,7 @@
       if (token.type === "identifier") {
         return typedefNames.has(String(token.value || "").trim());
       }
+      if (token.type === "keyword" && token.value === "enum") return true;
       if (token.type === "keyword" && token.value === "struct") {
         return peekToken(1)?.type === "identifier";
       }
@@ -1421,7 +1482,11 @@
 
       let typeToken = null;
       let baseTypeName = "";
-      if (check("keyword", "struct")) {
+      if (check("keyword", "enum")) {
+        typeToken = advance();
+        if (check("identifier")) advance();
+        baseTypeName = "int";
+      } else if (check("keyword", "struct")) {
         const structToken = advance();
         const structNameToken = consume("identifier", null, "Expected struct name after 'struct'.");
         const structName = String(structNameToken?.value || "").trim();
@@ -1506,6 +1571,7 @@
 
     function parseTopLevelItem() {
       if (check("keyword", "typedef")) return parseTypedefItem();
+      if (check("keyword", "enum")) return parseEnumItem();
       if (check("keyword", "struct")) {
         const lookaheadName = peekToken(1);
         const lookaheadBody = peekToken(2);
@@ -1543,6 +1609,41 @@
       }
 
       return parseDeclarationFromHeader(typeSpec, nameToken, true, true);
+    }
+
+    const enumConstants = new Map();
+
+    function parseEnumItem() {
+      const enumToken = consume("keyword", "enum", "Expected 'enum'.");
+      let enumName = "";
+      if (check("identifier")) enumName = String(advance().value || "").trim();
+      consume("punct", "{", "Expected '{' to start the enumerator list.");
+      let nextValue = 0;
+      const members = [];
+      while (!atEnd() && !check("punct", "}")) {
+        const nameToken = consume("identifier", null, "Expected enumerator name.");
+        if (!nameToken) break;
+        const memberName = String(nameToken.value || "").trim();
+        if (match("punct", "=")) {
+          const valueToken = consume("number", null, "Expected a constant value after '=' in an enumerator.");
+          if (valueToken) {
+            const converted = convertIntegerLiteral(valueToken.value);
+            if (!converted.ok) diagnostics.push(createDiagnostic(converted.reason, valueToken, "parse"));
+            else nextValue = converted.value | 0;
+          }
+        }
+        if (enumConstants.has(memberName)) {
+          diagnostics.push(createDiagnostic(translateText("Duplicate enumerator '{name}'.", { name: memberName }), nameToken, "parse"));
+        }
+        enumConstants.set(memberName, nextValue | 0);
+        members.push({ name: memberName, value: nextValue | 0 });
+        nextValue = (nextValue | 0) + 1;
+        if (!match("punct", ",")) break;
+      }
+      consume("punct", "}", "Expected '}' to close the enumerator list.");
+      consume("punct", ";", "Expected ';' after an enum declaration.");
+      if (enumName) enumTypeNames.add(enumName);
+      return { type: "enum_declaration", name: enumName, members, line: enumToken.line, column: enumToken.column };
     }
 
     function parseStructItem() {
@@ -1682,7 +1783,10 @@
       while (!atEnd() && !check("punct", "}")) {
         const startPos = position;
         const stmt = parseStatement();
-        if (stmt) statements.push(stmt);
+        // A declaration list is a parser convenience, not a scope: its declarations
+        // belong to this block, one after the other.
+        if (stmt && stmt.type === "declaration_list") statements.push(...stmt.declarations);
+        else if (stmt) statements.push(stmt);
         if (position <= startPos) {
           diagnostics.push(createDiagnostic("Parser stalled inside block; skipping token.", current(), "parse"));
           if (!atEnd()) advance();
@@ -1721,13 +1825,36 @@
       if (match("keyword", "return")) return parseReturn(previous());
       if (match("keyword", "if")) return parseIf(previous());
       if (match("keyword", "while")) return parseWhile(previous());
+      if (match("keyword", "do")) return parseDoWhile(previous());
+      if (match("keyword", "switch")) return parseSwitch(previous());
+      if (match("keyword", "goto")) {
+        const keywordToken = previous();
+        const targetToken = consume("identifier", null, "Expected a label name after 'goto'.");
+        consume("punct", ";", "Expected ';' after a goto statement.");
+        return {
+          type: "goto",
+          label: String(targetToken?.value || ""),
+          line: keywordToken.line,
+          column: keywordToken.column
+        };
+      }
+      if (check("identifier") && peekToken(1)?.type === "punct" && peekToken(1)?.value === ":") {
+        const nameToken = advance();
+        advance();
+        return {
+          type: "label",
+          name: String(nameToken.value || ""),
+          line: nameToken.line,
+          column: nameToken.column
+        };
+      }
       if (match("keyword", "for")) return parseFor(previous());
       if (match("keyword", "break")) return parseBreak(previous());
       if (match("keyword", "continue")) return parseContinue(previous());
       if (match("punct", ";")) {
         return { type: "empty", line: previous().line, column: previous().column };
       }
-      const expr = parseExpression();
+      const expr = parseCommaExpression();
       consume("punct", ";", "Expected ';' after expression.");
       return { type: "expr_stmt", expression: expr, line: expr?.line || current().line, column: expr?.column || current().column };
     }
@@ -1789,12 +1916,27 @@
           }
           lengthValue = 0;
         } else {
+          if (check("identifier") && enumConstants.has(String(current().value || "").trim())) {
+            const enumToken = advance();
+            const enumValue = enumConstants.get(String(enumToken.value || "").trim()) | 0;
+            if (enumValue <= 0) {
+              diagnostics.push(createDiagnostic(translateText("Array '{value}' must have a positive length in dimension {index}.", { value: ownerName || "value", index: dimensionIndex + 1 }), enumToken, "parse"));
+            } else {
+              lengthValue = enumValue;
+            }
+            consume("punct", "]", "Expected ']' after array length.");
+            arrayShape.push(lengthValue);
+            dimensionIndex += 1;
+            if (!match("punct", "[")) break;
+            continue;
+          }
           const lengthToken = consume("number", null, "Expected constant array length inside '[...]'.");
           if (lengthToken && typeof lengthToken.value === "string") {
-            const raw = lengthToken.value.toLowerCase();
-            const parsed = raw.startsWith("0x")
-              ? Number.parseInt(raw.slice(2), 16)
-              : Number.parseInt(raw, 10);
+            const converted = convertIntegerLiteral(lengthToken.value);
+            if (!converted.ok) {
+              diagnostics.push(createDiagnostic(converted.reason, lengthToken, "parse"));
+            }
+            const parsed = converted.ok ? converted.value : Number.NaN;
             if (!Number.isFinite(parsed) || parsed <= 0) {
               diagnostics.push(createDiagnostic(translateText("Array '{value}' must have a positive length in dimension {index}.", { value: ownerName || "value", index: dimensionIndex + 1 }), lengthToken, "parse"));
             } else {
@@ -1892,7 +2034,34 @@
 
     function parseDeclarationFromKeyword(typeSpec, requireSemicolon = true) {
       const nameToken = consume("identifier", null, "Expected variable name after type specifier.");
-      return parseDeclarationFromHeader(typeSpec, nameToken, requireSemicolon, false);
+      // C allows one type specifier to introduce several declarators. The first one
+      // is parsed without the terminator so the list can be continued.
+      const first = parseDeclarationFromHeader(typeSpec, nameToken, false, false);
+      const declarations = [first];
+      while (check("punct", ",")) {
+        advance();
+        // In C the pointer stars belong to the declarator, not to the type: in
+        // 'int* p, q' only p is a pointer, so each declarator counts its own.
+        let pointerDepth = 0;
+        while (match("punct", "*")) pointerDepth += 1;
+        const nextName = consume("identifier", null, "Expected variable name after ',' in declaration.");
+        if (!nextName) break;
+        const base = typeSpec?.baseTypeName || normalizeTypeName(typeSpec?.typeName || "int");
+        const declaratorSpec = {
+          ...typeSpec,
+          pointerDepth,
+          typeName: pointerDepth > 0 ? pointerTypeName(base, pointerDepth) : base
+        };
+        declarations.push(parseDeclarationFromHeader(declaratorSpec, nextName, false, false));
+      }
+      if (requireSemicolon) consume("punct", ";", "Expected ';' after variable declaration.");
+      if (declarations.length === 1) return first;
+      return {
+        type: "declaration_list",
+        declarations,
+        line: first.line,
+        column: first.column
+      };
     }
 
     function parseDeclaration(typeSpec) {
@@ -1927,6 +2096,82 @@
       };
     }
 
+    function parseSwitch(keywordToken) {
+      consume("punct", "(", "Expected '(' after 'switch'.");
+      const discriminant = parseCommaExpression();
+      consume("punct", ")", "Expected ')' after switch discriminant.");
+      consume("punct", "{", "Expected '{' to start the switch body.");
+      const sections = [];
+      let current_section = null;
+      while (!atEnd() && !check("punct", "}")) {
+        if (match("keyword", "case")) {
+          const caseToken = previous();
+          const test = parseExpression();
+          consume("punct", ":", "Expected ':' after a case label.");
+          current_section = { test, isDefault: false, statements: [], line: caseToken.line, column: caseToken.column };
+          sections.push(current_section);
+          continue;
+        }
+        if (match("keyword", "default")) {
+          const defaultToken = previous();
+          consume("punct", ":", "Expected ':' after 'default'.");
+          current_section = { test: null, isDefault: true, statements: [], line: defaultToken.line, column: defaultToken.column };
+          sections.push(current_section);
+          continue;
+        }
+        const startPos = position;
+        const stmt = parseStatement();
+        if (!current_section) {
+          diagnostics.push(createDiagnostic("Statements inside a switch must follow a 'case' or 'default' label.", stmt || current(), "parse"));
+        } else if (stmt && stmt.type === "declaration_list") {
+          current_section.statements.push(...stmt.declarations);
+        } else if (stmt) {
+          current_section.statements.push(stmt);
+        }
+        if (position <= startPos && !atEnd()) advance();
+      }
+      consume("punct", "}", "Expected '}' to close the switch body.");
+      return {
+        type: "switch",
+        discriminant,
+        sections,
+        line: keywordToken?.line || current().line,
+        column: keywordToken?.column || current().column
+      };
+    }
+
+    function parseCommaExpression() {
+      let expr = parseExpression();
+      while (check("punct", ",")) {
+        const operator = advance();
+        const right = parseExpression();
+        expr = {
+          type: "comma",
+          left: expr,
+          right,
+          line: operator.line,
+          column: operator.column
+        };
+      }
+      return expr;
+    }
+
+    function parseDoWhile(keywordToken) {
+      const body = parseStatement();
+      consume("keyword", "while", "Expected 'while' after the body of 'do'.");
+      consume("punct", "(", "Expected '(' after 'while'.");
+      const condition = parseExpression();
+      consume("punct", ")", "Expected ')' after do-while condition.");
+      consume("punct", ";", "Expected ';' after do-while statement.");
+      return {
+        type: "do_while",
+        condition,
+        body,
+        line: keywordToken?.line || current().line,
+        column: keywordToken?.column || current().column
+      };
+    }
+
     function parseWhile(keywordToken) {
       consume("punct", "(", "Expected '(' after 'while'.");
       const condition = parseExpression();
@@ -1954,7 +2199,7 @@
           const typeSpec = parseTypeSpecifier({ allowVoid: false, allowConst: true });
           init = parseForInitDeclaration(typeSpec);
         } else {
-          init = parseExpression();
+          init = parseCommaExpression();
         }
       }
       consume("punct", ";", "Expected ';' after for-init clause.");
@@ -1964,7 +2209,7 @@
       consume("punct", ";", "Expected ';' after for-condition clause.");
 
       let update = null;
-      if (!check("punct", ")")) update = parseExpression();
+      if (!check("punct", ")")) update = parseCommaExpression();
       consume("punct", ")", "Expected ')' after for-update clause.");
 
       const body = parseStatement();
@@ -2173,6 +2418,36 @@
     }
 
     function parseUnary() {
+      if (check("keyword", "sizeof")) {
+        const keywordToken = advance();
+        let operand = null;
+        let typeSpec = null;
+        if (check("punct", "(")) {
+          const save = position;
+          advance();
+          const typeStart = isTypeToken(current(), false)
+            || check("keyword", "struct")
+            || (check("identifier") && typedefNames.has(String(current().value || "").trim()));
+          if (typeStart) {
+            typeSpec = parseTypeSpecifier({ allowVoid: false });
+            consume("punct", ")", "Expected ')' after the type in 'sizeof'.");
+          } else {
+            position = save;
+          }
+        }
+        if (!typeSpec) operand = parseUnary();
+        return {
+          type: "sizeof",
+          typeName: typeSpec ? typeSpec.typeName : null,
+          operand,
+          line: keywordToken.line,
+          column: keywordToken.column
+        };
+      }
+      if (check("punct", "+") && !check("punct", "++")) {
+        advance();
+        return parseUnary();
+      }
       if (match("punct", "++") || match("punct", "--")) {
         const operator = previous();
         const target = parseUnary();
@@ -2318,13 +2593,26 @@
           column: keyword.column || current().column
         };
       }
+      if (check("identifier") && enumConstants.has(String(current().value || "").trim())) {
+        const token = advance();
+        return {
+          type: "literal",
+          value: enumConstants.get(String(token.value || "").trim()) | 0,
+          literalType: "int",
+          literalRadix: 10,
+          line: token.line,
+          column: token.column
+        };
+      }
       if (match("number")) {
         const token = previous();
         const rawValue = String(token.value || "");
-        const literalValue = rawValue.toLowerCase().startsWith("0x")
-          ? Number.parseInt(rawValue.slice(2), 16)
-          : Number.parseInt(rawValue, 10);
-        if (Number.isFinite(literalValue)) {
+        const converted = convertIntegerLiteral(rawValue);
+        const literalValue = converted.value;
+        if (!converted.ok) {
+          diagnostics.push(createDiagnostic(converted.reason, token, "parse"));
+        }
+        if (converted.ok && Number.isFinite(literalValue)) {
           const maxC0Literal = 0x80000000;
           if (literalValue < 0 || literalValue > maxC0Literal) {
             diagnostics.push(createDiagnostic(
@@ -2338,6 +2626,7 @@
           type: "literal",
           value: Number.isFinite(literalValue) ? literalValue : 0,
           literalType: "int",
+          literalRadix: converted.radix,
           line: token.line,
           column: token.column
         };
@@ -2362,7 +2651,8 @@
         return parsePostfixExpression({ type: "identifier", name: nameToken.value, line: nameToken.line, column: nameToken.column });
       }
       if (match("punct", "(")) {
-        const expr = parseExpression();
+        // Parentheses hold a full expression, so the comma operator is allowed here.
+        const expr = parseCommaExpression();
         consume("punct", ")", "Expected ')' after grouped expression.");
         return parsePostfixExpression(expr);
       }
@@ -2385,7 +2675,10 @@
       case "string_literal":
       case "null_literal":
       case "identifier":
+      case "sizeof":
         return 0;
+      case "comma":
+        return Math.max(estimateExprTemps(node.left), estimateExprTemps(node.right));
       case "alloc":
         return 1;
       case "alloc_array":
@@ -2463,15 +2756,32 @@
           estimateStmtTemps(node.elseBranch)
         );
       case "while":
+      case "do_while":
         return Math.max(estimateExprTemps(node.condition), estimateStmtTemps(node.body));
+      case "switch":
+        return (node.sections || []).reduce(
+          (peak, section) => (section.statements || []).reduce(
+            (innerPeak, stmt) => Math.max(innerPeak, estimateStmtTemps(stmt)),
+            peak
+          ),
+          estimateExprTemps(node.discriminant) + 1
+        );
       case "for":
         return Math.max(
-          node.init && node.init.type === "declaration"
+          node.init && (node.init.type === "declaration" || node.init.type === "declaration_list")
             ? estimateStmtTemps(node.init)
             : estimateExprTemps(node.init),
           estimateExprTemps(node.condition),
           estimateExprTemps(node.update),
           estimateStmtTemps(node.body)
+        );
+      case "label":
+      case "goto":
+        return 0;
+      case "declaration_list":
+        return (node.declarations || []).reduce(
+          (peak, declaration) => Math.max(peak, estimateStmtTemps(declaration)),
+          0
         );
       case "expr_stmt":
         return estimateExprTemps(node.expression);
@@ -2485,7 +2795,7 @@
 
   function estimateContractTemps(node) {
     if (!node || typeof node !== "object") return 0;
-    if (node.type === "while" || node.type === "for") {
+    if (node.type === "while" || node.type === "do_while" || node.type === "for") {
       const invariantPeak = (node.invariants || []).reduce((peak, expr) => Math.max(peak, estimateExprTemps(expr)), 0);
       const bodyPeak = estimateContractTemps(node.body);
       return Math.max(invariantPeak, bodyPeak);
@@ -2531,7 +2841,7 @@
         if (stmt.elseBranch) stmt.elseBranch = transformStatement(stmt.elseBranch);
         return stmt;
       }
-      if (stmt.type === "while" || stmt.type === "for") {
+      if (stmt.type === "while" || stmt.type === "do_while" || stmt.type === "for") {
         stmt.body = transformStatement(stmt.body);
         stmt.invariants = Array.isArray(stmt.invariants) ? stmt.invariants : [];
         return stmt;
@@ -2636,8 +2946,18 @@
       if ((target === "string" && source === "char*") || (target === "char*" && source === "string")) {
         return true;
       }
+      // In C a condition yields an int, so the native profile lets a bool result
+      // flow into an int without a cast. C0 keeps the two types apart.
+      if ((target === "int" && source === "bool") || (target === "bool" && source === "int")) {
+        return true;
+      }
       return false;
     };
+
+    // C accepts any scalar where a condition is expected; C0 demands bool.
+    const isConditionType = (typeName) => isBooleanType(typeName)
+      || (nativeSubsetEnabled
+        && (isNumericType(typeName) || isPointerTypeName(resolveAliasType(typeName))));
 
     const isDefinedStructType = (typeName) => {
       const resolved = resolveAliasType(typeName);
@@ -3401,7 +3721,52 @@
           }
           return expr.inferredType;
         }
+        if (expr.type === "comma") {
+          bindExpr(expr.left);
+          expr.inferredType = bindExpr(expr.right);
+          return expr.inferredType;
+        }
+        if (expr.type === "sizeof") {
+          if (!nativeSubsetEnabled) {
+            diagnostics.push(createDiagnostic(
+              "'sizeof' is a C extension over C0 and needs the native profile.",
+              expr,
+              "semantic"
+            ));
+          }
+          let measuredType = expr.typeName;
+          let elementCount = 1;
+          if (!measuredType && expr.operand) {
+            measuredType = bindExpr(expr.operand, { allowArrayReference: true });
+            const shape = normalizeArrayShape(expr.operand.arrayShape, []);
+            if (shape.length) {
+              elementCount = shape.reduce((total, dimension) => (
+                total * (Number.isFinite(dimension) && dimension > 0 ? (dimension | 0) : 1)
+              ), 1);
+            }
+          }
+          const resolvedMeasured = resolveAliasType(measuredType || "int");
+          // A char is one byte; everything else this compiler stores is word sized.
+          const elementBytes = resolvedMeasured === "char"
+            ? 1
+            : Math.max(1, typeWordSize(resolvedMeasured)) * 4;
+          expr.sizeofBytes = Math.max(1, elementBytes * Math.max(1, elementCount));
+          expr.inferredType = "int";
+          return "int";
+        }
         if (expr.type === "literal") {
+          // The C0 reference defines decimal and hexadecimal literals only, so the
+          // native profile is the only one that reads a leading zero as octal.
+          if (expr.literalRadix === 8 && !nativeSubsetEnabled) {
+            diagnostics.push(createDiagnostic(
+              translateText(
+                "Octal literals are a C extension over C0; write {value} in decimal or hexadecimal.",
+                { value: Number(expr.value) | 0 }
+              ),
+              expr,
+              "semantic"
+            ));
+          }
           expr.inferredType = normalizeTypeName(expr.literalType || "int");
           return expr.inferredType;
         }
@@ -3685,7 +4050,11 @@
               diagnostics.push(createDiagnostic(translateText("Unsupported assignment operator '{assignmentOperator}'.", { assignmentOperator }), expr, "semantic"));
             }
             if (["+", "-", "*", "/", "%", "&", "|", "^", "<<", ">>"].includes(reducedOperator)) {
-              if (!isNumericType(targetType) || !isNumericType(valueType)) {
+              // The target must stay numeric; the value may be a bool in the native
+              // profile, where a condition is just an int.
+              const compoundValueOk = isNumericType(valueType)
+                || (nativeSubsetEnabled && isBooleanType(valueType));
+              if (!isNumericType(targetType) || !compoundValueOk) {
                 diagnostics.push(createDiagnostic(
                   translateText("Operator '{assignmentOperator}' requires int/char operands.", { assignmentOperator }),
                   expr,
@@ -3763,8 +4132,16 @@
           const rightPointer = isPointerTypeName(resolvedRightType);
           const leftNumeric = isNumericType(leftType);
           const rightNumeric = isNumericType(rightType);
+          // C promotes bool to int in arithmetic; C0 keeps them apart.
+          const arithmeticOperand = (typeName) => isNumericType(typeName)
+            || (nativeSubsetEnabled && isBooleanType(typeName));
           if (expr.operator === "&&" || expr.operator === "||") {
-            if (!isBooleanType(leftType) || !isBooleanType(rightType)) {
+            // C0 demands bool on both sides. C treats any scalar as a condition,
+            // and the generated code already branches on "differs from zero", so
+            // the native profile accepts ints, chars and pointers as well.
+            const acceptsCondition = (typeName, isPointer) => isBooleanType(typeName)
+              || (nativeSubsetEnabled && (isNumericType(typeName) || isPointer));
+            if (!acceptsCondition(leftType, leftPointer) || !acceptsCondition(rightType, rightPointer)) {
               diagnostics.push(createDiagnostic(translateText("Operator '{operator}' requires bool operands.", { operator: expr.operator }), expr, "semantic"));
             }
             expr.inferredType = "bool";
@@ -3785,14 +4162,14 @@
                 return expr.inferredType;
               }
             }
-            if (!leftNumeric || !rightNumeric) {
+            if (!arithmeticOperand(leftType) || !arithmeticOperand(rightType)) {
               diagnostics.push(createDiagnostic(translateText("Operator '{operator}' requires int/char operands.", { operator: expr.operator }), expr, "semantic"));
             }
             expr.inferredType = "int";
             return "int";
           }
           if (["&", "|", "^", "<<", ">>"].includes(expr.operator)) {
-            if (!isNumericType(leftType) || !isNumericType(rightType)) {
+            if (!arithmeticOperand(leftType) || !arithmeticOperand(rightType)) {
               diagnostics.push(createDiagnostic(translateText("Operator '{operator}' requires int/char operands.", { operator: expr.operator }), expr, "semantic"));
             }
             expr.inferredType = "int";
@@ -4154,6 +4531,12 @@
         return "int";
       }
 
+      // A switch also gives 'break' somewhere to go, while 'continue' still
+      // needs a surrounding loop.
+      let switchDepth = 0;
+      let declaredLabels = new Set();
+      let pendingGotos = [];
+
       function bindStmt(stmt, loopDepth = 0) {
         if (!stmt || typeof stmt !== "object") return;
         if (stmt.type === "block") {
@@ -4316,11 +4699,79 @@
         }
         if (stmt.type === "if") {
           const condType = bindExpr(stmt.condition);
-          if (!isBooleanType(condType)) {
+          if (!isConditionType(condType)) {
             diagnostics.push(createDiagnostic("If condition must be bool expression.", stmt.condition || stmt, "semantic"));
           }
           bindStmt(stmt.thenBranch, loopDepth);
           bindStmt(stmt.elseBranch, loopDepth);
+          return;
+        }
+        if (stmt.type === "label") {
+          if (!nativeSubsetEnabled) {
+            diagnostics.push(createDiagnostic("Labels are a C extension over C0 and need the native profile.", stmt, "semantic"));
+          }
+          if (declaredLabels.has(stmt.name)) {
+            diagnostics.push(createDiagnostic(translateText("Duplicate label '{name}' in this function.", { name: stmt.name }), stmt, "semantic"));
+          }
+          declaredLabels.add(stmt.name);
+          return;
+        }
+        if (stmt.type === "goto") {
+          if (!nativeSubsetEnabled) {
+            diagnostics.push(createDiagnostic("'goto' is a C extension over C0 and needs the native profile.", stmt, "semantic"));
+          }
+          pendingGotos.push(stmt);
+          return;
+        }
+        if (stmt.type === "switch") {
+          switchDepth += 1;
+          if (!nativeSubsetEnabled) {
+            diagnostics.push(createDiagnostic(
+              "'switch' is a C extension over C0 and needs the native profile.",
+              stmt,
+              "semantic"
+            ));
+          }
+          const discriminantType = bindExpr(stmt.discriminant);
+          if (!isNumericType(discriminantType)) {
+            diagnostics.push(createDiagnostic("Switch discriminant must be an int or char expression.", stmt.discriminant || stmt, "semantic"));
+          }
+          const seenValues = new Set();
+          let defaultCount = 0;
+          (stmt.sections || []).forEach((section) => {
+            if (section.isDefault) {
+              defaultCount += 1;
+              if (defaultCount > 1) {
+                diagnostics.push(createDiagnostic("A switch can only have one 'default' label.", section, "semantic"));
+              }
+            } else {
+              bindExpr(section.test);
+              const constantValue = extractStaticInt(section.test);
+              if (!Number.isFinite(constantValue)) {
+                diagnostics.push(createDiagnostic("A case label must be a constant integer expression.", section.test || stmt, "semantic"));
+              } else {
+                if (seenValues.has(constantValue)) {
+                  diagnostics.push(createDiagnostic(translateText("Duplicate case label '{value}' in switch.", { value: constantValue }), section.test || stmt, "semantic"));
+                }
+                seenValues.add(constantValue);
+                section.caseValue = constantValue | 0;
+              }
+            }
+          });
+          pushScope();
+          (stmt.sections || []).forEach((section) => {
+            (section.statements || []).forEach((inner) => bindStmt(inner, loopDepth));
+          });
+          popScope();
+          switchDepth -= 1;
+          return;
+        }
+        if (stmt.type === "do_while") {
+          bindStmt(stmt.body, loopDepth + 1);
+          const doCondType = bindExpr(stmt.condition);
+          if (!isConditionType(doCondType)) {
+            diagnostics.push(createDiagnostic("Do-while condition must be bool expression.", stmt.condition || stmt, "semantic"));
+          }
           return;
         }
         if (stmt.type === "while") {
@@ -4331,7 +4782,7 @@
             }
           });
           const condType = bindExpr(stmt.condition);
-          if (!isBooleanType(condType)) {
+          if (!isConditionType(condType)) {
             diagnostics.push(createDiagnostic("While condition must be bool expression.", stmt.condition || stmt, "semantic"));
           }
           bindStmt(stmt.body, loopDepth + 1);
@@ -4343,8 +4794,13 @@
           }
           pushScope();
           if (stmt.init) {
-            if (stmt.init.type === "declaration") bindStmt(stmt.init, loopDepth + 1);
-            else bindExpr(stmt.init);
+            if (stmt.init.type === "declaration_list") {
+              (stmt.init.declarations || []).forEach((declaration) => bindStmt(declaration, loopDepth + 1));
+            } else if (stmt.init.type === "declaration") {
+              bindStmt(stmt.init, loopDepth + 1);
+            } else {
+              bindExpr(stmt.init);
+            }
           }
           (stmt.invariants || []).forEach((invariantExpr) => {
             const invariantType = bindExpr(invariantExpr);
@@ -4354,7 +4810,7 @@
           });
           if (stmt.condition) {
             const condType = bindExpr(stmt.condition);
-            if (!isBooleanType(condType)) {
+            if (!isConditionType(condType)) {
               diagnostics.push(createDiagnostic("For condition must be bool expression.", stmt.condition || stmt, "semantic"));
             }
           }
@@ -4367,8 +4823,8 @@
           if (activeSubsetLevel < subsetLevel("C0-S2")) {
             diagnostics.push(createDiagnostic(translateText("'break' requires subset C0-S2, current subset is {activeSubset}.", { activeSubset }), stmt, "semantic"));
           }
-          if (loopDepth <= 0) {
-            diagnostics.push(createDiagnostic("'break' can only be used inside loops.", stmt, "semantic"));
+          if (loopDepth <= 0 && switchDepth <= 0) {
+            diagnostics.push(createDiagnostic("'break' can only be used inside loops or a switch.", stmt, "semantic"));
           }
           return;
         }
@@ -4521,8 +4977,18 @@
           collectTrackedScalarSlots(stmt.elseBranch);
           return;
         }
-        if (stmt.type === "while") {
+        if (stmt.type === "while" || stmt.type === "do_while") {
           collectTrackedScalarSlots(stmt.body);
+          return;
+        }
+        if (stmt.type === "switch") {
+          (stmt.sections || []).forEach((section) => {
+            (section.statements || []).forEach((inner) => collectTrackedScalarSlots(inner));
+          });
+          return;
+        }
+        if (stmt.type === "declaration_list") {
+          (stmt.declarations || []).forEach((declaration) => collectTrackedScalarSlots(declaration));
           return;
         }
         if (stmt.type === "for") {
@@ -4685,8 +5151,13 @@
         if (stmt.type === "for") {
           const loopEntryState = cloneInitState(state);
           if (stmt.init) {
-            if (stmt.init.type === "declaration") analyzeStmtInitialization(stmt.init, loopEntryState);
-            else analyzeExprInitialization(stmt.init, loopEntryState);
+            if (stmt.init.type === "declaration_list") {
+              (stmt.init.declarations || []).forEach((declaration) => analyzeStmtInitialization(declaration, loopEntryState));
+            } else if (stmt.init.type === "declaration") {
+              analyzeStmtInitialization(stmt.init, loopEntryState);
+            } else {
+              analyzeExprInitialization(stmt.init, loopEntryState);
+            }
           }
           if (stmt.condition) analyzeExprInitialization(stmt.condition, loopEntryState);
           const bodyState = analyzeStmtInitialization(stmt.body, cloneInitState(loopEntryState));
@@ -4718,7 +5189,13 @@
         return { fallsThrough: true };
       };
 
+      declaredLabels = new Set();
+      pendingGotos = [];
       bindStmt(fn.body, 0);
+      pendingGotos.forEach((jump) => {
+        if (declaredLabels.has(jump.label)) return;
+        diagnostics.push(createDiagnostic(translateText("Unknown label '{name}' in 'goto'.", { name: jump.label }), jump, "semantic"));
+      });
       collectTrackedScalarSlots(fn.body);
       const initialState = new Set();
       (fn.params || []).forEach((param) => {
@@ -5374,6 +5851,11 @@
     return context.tempBaseOffset + (slot * 4);
   }
 
+  function userLabelName(context, name) {
+    const functionName = String(context?.fn?.name || "fn").replace(/[^A-Za-z0-9_]/g, "_");
+    return `user_${functionName}_${String(name).replace(/[^A-Za-z0-9_]/g, "_")}`;
+  }
+
   function emitStatement(node, context) {
     if (!node || typeof node !== "object") return;
     const emitter = context.emitter;
@@ -5491,6 +5973,58 @@
       emitter.emit(`${endLabel}:`);
       return;
     }
+    if (node.type === "label") {
+      emitter.emit(`${userLabelName(context, node.name)}:`);
+      return;
+    }
+    if (node.type === "goto") {
+      emitter.emit(`  b ${userLabelName(context, node.label)}`);
+      emitter.emit("  nop");
+      return;
+    }
+    if (node.type === "switch") {
+      const endLabel = emitter.createLabel("switch_end");
+      const sections = Array.isArray(node.sections) ? node.sections : [];
+      const sectionLabels = sections.map((unused, index) => emitter.createLabel(`switch_section_${index}`));
+      const discriminantReg = emitExpression(node.discriminant, context);
+      const compareReg = allocReg(context, node);
+      sections.forEach((section, index) => {
+        if (section.isDefault) return;
+        emitter.emit(`  li ${compareReg}, ${Number(section.caseValue) | 0}`);
+        emitter.emit(`  beq ${discriminantReg}, ${compareReg}, ${sectionLabels[index]}`);
+        emitter.emit("  nop");
+      });
+      freeReg(context, compareReg);
+      freeReg(context, discriminantReg);
+      const defaultIndex = sections.findIndex((section) => section.isDefault);
+      emitter.emit(`  b ${defaultIndex >= 0 ? sectionLabels[defaultIndex] : endLabel}`);
+      emitter.emit("  nop");
+      const enclosing = context.loopStack[context.loopStack.length - 1] || null;
+      context.loopStack.push({ breakLabel: endLabel, continueLabel: enclosing?.continueLabel ?? null });
+      sections.forEach((section, index) => {
+        emitter.emit(`${sectionLabels[index]}:`);
+        (section.statements || []).forEach((inner) => emitStatement(inner, context));
+      });
+      context.loopStack.pop();
+      emitter.emit(`${endLabel}:`);
+      return;
+    }
+    if (node.type === "do_while") {
+      const bodyLabel = emitter.createLabel("do_body");
+      const continueLabel = emitter.createLabel("do_cond");
+      const endLabel = emitter.createLabel("do_end");
+      emitter.emit(`${bodyLabel}:`);
+      context.loopStack.push({ breakLabel: endLabel, continueLabel });
+      emitStatement(node.body, context);
+      context.loopStack.pop();
+      emitter.emit(`${continueLabel}:`);
+      const doCondReg = emitExpression(node.condition, context);
+      emitter.emit(`  bne ${doCondReg}, $zero, ${bodyLabel}`);
+      emitter.emit("  nop");
+      freeReg(context, doCondReg);
+      emitter.emit(`${endLabel}:`);
+      return;
+    }
     if (node.type === "while") {
       const startLabel = emitter.createLabel("while_start");
       const endLabel = emitter.createLabel("while_end");
@@ -5513,7 +6047,9 @@
       const updateLabel = emitter.createLabel("for_update");
       const endLabel = emitter.createLabel("for_end");
       if (node.init) {
-        if (node.init.type === "declaration") {
+        if (node.init.type === "declaration_list") {
+          (node.init.declarations || []).forEach((declaration) => emitStatement(declaration, context));
+        } else if (node.init.type === "declaration") {
           emitStatement(node.init, context);
         } else {
           const initReg = emitExpression(node.init, context);
@@ -5848,6 +6384,11 @@
       }
     } else if (node.target?.type === "member") {
       baseAddressReg = emitMemberAddress(node.target, context);
+    } else if (node.target?.type === "index") {
+      // An indexed element is an lvalue: take its address so the element index is
+      // kept. Falling through to the value path used to drop it, which made every
+      // 'a[i].field' alias 'a[0].field'.
+      baseAddressReg = emitIndexAddress(node.target, context);
     } else if (node.target?.type === "unary" && node.target.operator === "*") {
       baseAddressReg = emitExpression(node.target.argument, context);
       emitAbortIfNull(baseAddressReg, context, node, "member_ptr_ok");
@@ -5888,6 +6429,17 @@
 
   function emitExpression(node, context) {
     if (!node || typeof node !== "object") return allocReg(context, node);
+    if (node.type === "comma") {
+      // The left operand runs for its side effects; the value is the right one.
+      const discarded = emitExpression(node.left, context);
+      freeReg(context, discarded);
+      return emitExpression(node.right, context);
+    }
+    if (node.type === "sizeof") {
+      const sizeReg = allocReg(context, node);
+      context.emitter.emit(`  li ${sizeReg}, ${Number(node.sizeofBytes) | 0}`);
+      return sizeReg;
+    }
     const emitter = context.emitter;
 
     if (node.type === "literal") {

@@ -29,12 +29,36 @@
       .sv-exec-state.is-armed { color:var(--accent); font-weight:700; }
       .sv-exec-state.is-stopped { color:var(--warn); font-weight:700; }
 
-      .sv-main { display:grid; grid-template-columns:minmax(150px, 190px) minmax(0, 1fr) minmax(0, 274px); grid-template-rows:minmax(0, 1fr); gap:8px; flex:1; min-height:0; }
+      .sv-main { display:grid; grid-template-columns:minmax(186px, 228px) minmax(0, 1fr) minmax(0, 274px); grid-template-rows:minmax(0, 1fr); gap:8px; flex:1; min-height:0; }
       .sv-map-pane, .sv-detail-pane { display:flex; flex-direction:column; gap:4px; min-height:0; min-width:0; }
       .sv-map-pane { border:1px solid var(--line); background:var(--surface); padding:4px; }
-      .sv-map-pane canvas[data-sv="map"] { flex:1; min-height:0; width:100%; display:block; cursor:pointer; touch-action:none; }
-      .sv-map-pane canvas[data-sv="spark"] { height:62px; flex:0 0 62px; width:100%; display:block; }
+      /* The map is the point of this column, so it takes every pixel the readouts
+         below it do not need. Those are sized by content and never scroll away. */
+      /* flex:1 lets the map take the whole column; the floor stops the medium
+         layout, which puts the side cards on a second grid row, from crushing it. */
+      .sv-map-pane canvas[data-sv="map"] { flex:1 1 auto; min-height:190px; width:100%; display:block; cursor:pointer; touch-action:none; }
       .sv-pane-label { font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); }
+
+      /* The readouts sit in the bottom band so the map keeps the whole column:
+         "memory space" is the point of this tool and it earns every pixel. */
+      .sv-readout { flex:0 0 200px; min-width:0; display:flex; flex-direction:column; gap:3px; }
+      /* A <dl> carries a 1em block margin by default, which alone cost this
+         column more height than all five readings put together. */
+      .sv-vitals { margin:0; display:grid; grid-template-columns:1fr auto; gap:1px 6px; font:11px Consolas, "Courier New", monospace; }
+      .sv-vitals dt { color:var(--text-faint); margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .sv-vitals dd { margin:0; text-align:right; color:var(--text); font-weight:700; }
+      .sv-vitals dd.is-warn { color:var(--warn); }
+      /* Two per row: a 32-bit address plus its name does not fit twice on a flex
+         line, and one chip per row turned four markers into four wasted rows. */
+      .sv-marks { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:3px; }
+      .sv-mark {
+        display:flex; align-items:center; gap:3px; padding:1px 4px; cursor:pointer; min-width:0;
+        border:1px solid var(--line); background:var(--surface-raised);
+        font:10px Consolas, "Courier New", monospace; color:var(--text-muted);
+      }
+      .sv-mark:hover { border-color:var(--accent); color:var(--text); }
+      .sv-mark .sv-swatch { width:7px; height:7px; flex:0 0 7px; }
+      .sv-mark b { color:var(--text); font-weight:700; overflow:hidden; text-overflow:ellipsis; }
 
       .sv-detail-pane canvas { flex:1; min-height:0; width:100%; display:block; border:1px solid var(--line); background:var(--surface); outline:none; cursor:crosshair; touch-action:none; }
       .sv-detail-pane canvas:focus { border-color:var(--accent); }
@@ -53,9 +77,25 @@
       .sv-frame-row.is-selected { background:var(--accent-soft); }
       .sv-frame-row .sv-frame-name { font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
       .sv-frame-row .sv-frame-size { color:var(--text-muted); }
+      .sv-slot {
+        display:flex; gap:6px; align-items:baseline; cursor:pointer;
+        padding:1px 4px 1px 14px; font:10px Consolas, "Courier New", monospace; color:var(--text-muted);
+      }
+      .sv-slot:hover { background:var(--surface-inset); color:var(--text); }
+      .sv-slot.is-untouched { opacity:.5; }
+      .sv-slot .sv-slot-at { min-width:52px; color:var(--text-faint); }
+      .sv-slot .sv-slot-reg { min-width:34px; color:var(--text); font-weight:700; }
+      .sv-slot .sv-slot-value { min-width:74px; }
+      .sv-slot .sv-slot-note { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-faint); }
       .sv-empty { color:var(--text-faint); font-style:italic; }
 
-      .sv-log-pane { display:flex; flex-direction:column; gap:4px; flex:0 0 auto; height:172px; min-height:96px; }
+      /* The depth chart used to be trapped in the narrow map column, where it was
+         62px tall and unreadable. Down here it shares the bottom band with the log
+         and the map column keeps the height it gives up. */
+      .sv-bottom { display:flex; gap:8px; flex:0 0 auto; height:186px; min-height:110px; }
+      .sv-spark-pane { display:flex; flex-direction:column; gap:4px; flex:0 0 320px; min-width:0; min-height:0; }
+      .sv-spark-pane canvas { flex:1; min-height:0; width:100%; display:block; }
+      .sv-log-pane { display:flex; flex-direction:column; gap:4px; flex:1 1 auto; min-width:0; min-height:0; }
       .sv-log-head { display:flex; align-items:center; gap:8px; }
       .sv-log-head strong { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-soft); }
       .sv-log-head .sv-warn-count { color:var(--warn); font-weight:700; }
@@ -90,10 +130,13 @@
       .sv-tool.sv-medium .sv-side {
         grid-column:1 / -1;
         flex-direction:row;
-        max-height:132px;
+        max-height:110px;
       }
       .sv-tool.sv-medium .sv-card { flex:1 1 0; min-width:0; }
       .sv-tool.sv-medium .sv-card.sv-frames { max-height:none; }
+      .sv-tool.sv-medium .sv-map-pane canvas[data-sv="map"] { min-height:0; }
+      .sv-tool.sv-medium .sv-readout { display:none; }
+      .sv-tool.sv-medium .sv-bottom { height:120px; }
 
       .sv-tool.sv-small .sv-toolbar { flex-wrap:nowrap; overflow-x:auto; }
       .sv-tool.sv-small .sv-toolbar > * { flex:0 0 auto; }
@@ -102,16 +145,22 @@
         grid-template-rows:78px minmax(120px, 1fr) auto;
         gap:5px;
       }
+      /* Stacked layouts lay the map on its side, where the readouts below it would
+         only steal width from it. The status line still carries the same numbers. */
       .sv-tool.sv-small .sv-map-pane { flex-direction:row; align-items:stretch; }
       .sv-tool.sv-small .sv-map-pane .sv-pane-label { display:none; }
-      .sv-tool.sv-small .sv-map-pane canvas[data-sv="map"] { flex:2 1 0; height:auto; }
-      .sv-tool.sv-small .sv-map-pane canvas[data-sv="spark"] { flex:1 1 0; height:auto; }
+      .sv-tool.sv-small .sv-map-pane canvas[data-sv="map"] { flex:2 1 0; min-height:0; height:auto; }
+      .sv-tool.sv-small .sv-readout { flex:0 0 150px; }
       .sv-tool.sv-small .sv-hint { display:none; }
       .sv-tool.sv-small .sv-side { flex-direction:row; max-height:132px; }
       .sv-tool.sv-small .sv-card { flex:1 1 0; min-width:0; }
       .sv-tool.sv-small .sv-card.sv-frames { max-height:none; }
-      .sv-tool.sv-small .sv-log-pane { height:120px; }
-      .sv-tool.sv-short .sv-log-pane { height:92px; min-height:64px; }
+      .sv-tool.sv-small .sv-bottom { height:120px; }
+      .sv-tool.sv-medium .sv-spark-pane { flex:0 0 232px; }
+      .sv-tool.sv-medium .sv-readout { flex:0 0 168px; }
+      .sv-tool.sv-small .sv-spark-pane { flex:0 0 168px; }
+      .sv-tool.sv-short .sv-bottom { height:92px; min-height:64px; }
+      .sv-tool.sv-short .sv-readout { display:none; }
       .sv-tool.sv-short .sv-side { max-height:96px; }
       .sv-tool.sv-short .sv-hint { display:none; }
 
@@ -119,7 +168,9 @@
          every spare pixel to the zoomable view. */
       .sv-tool.sv-tiny .sv-main { grid-template-rows:54px minmax(96px, 1fr); }
       .sv-tool.sv-tiny .sv-side { display:none; }
-      .sv-tool.sv-tiny .sv-log-pane { height:66px; min-height:52px; }
+      .sv-tool.sv-tiny .sv-bottom { height:66px; min-height:52px; }
+      .sv-tool.sv-tiny .sv-spark-pane { display:none; }
+      .sv-tool.sv-tiny .sv-readout { display:none; }
       .sv-tool.sv-tiny .sv-footer .ctrl { display:none; }
       .sv-tool.sv-tiny .sv-status { display:none; }
 
@@ -140,12 +191,13 @@
       }
       .desktop-stacked .sv-tool .sv-map-pane { flex-direction:row; align-items:stretch; }
       .desktop-stacked .sv-tool .sv-map-pane .sv-pane-label { display:none; }
-      .desktop-stacked .sv-tool .sv-map-pane canvas[data-sv="map"] { flex:2 1 0; height:auto; }
-      .desktop-stacked .sv-tool .sv-map-pane canvas[data-sv="spark"] { flex:1 1 0; height:auto; }
+      .desktop-stacked .sv-tool .sv-map-pane canvas[data-sv="map"] { flex:2 1 0; min-height:0; height:auto; }
+      .desktop-stacked .sv-tool .sv-readout { display:none; }
       .desktop-stacked .sv-tool .sv-side { flex-direction:row; max-height:128px; }
       .desktop-stacked .sv-tool .sv-card { flex:1 1 0; min-width:0; }
       .desktop-stacked .sv-tool .sv-card.sv-frames { max-height:none; }
-      .desktop-stacked .sv-tool .sv-log-pane { height:118px; }
+      .desktop-stacked .sv-tool .sv-bottom { height:118px; }
+      .desktop-stacked .sv-tool .sv-spark-pane { flex:0 0 148px; }
       .desktop-stacked .sv-tool .sv-log-head .tool-btn { min-height:26px; }
       .desktop-stacked .sv-tool .sv-footer { gap:5px; overflow-x:auto; }
       .desktop-stacked .sv-tool .sv-footer .ctrl { display:none; }
@@ -190,6 +242,7 @@
     heap: "#d18f3a",
     free: "#8a94a3",
     stack: "#d2553c",
+    args: "#a8705f",
     ktext: "#7f8a99",
     kdata: "#69788a",
     mmio: "#b44db4"
@@ -336,8 +389,6 @@
             <div class="sv-map-pane">
               <div class="sv-pane-label">Memory space</div>
               <canvas data-sv="map" role="img" aria-label="Map of the address space with the current stack pointer"></canvas>
-              <div class="sv-pane-label">Stack depth over time</div>
-              <canvas data-sv="spark" role="img" aria-label="Stack depth over time"></canvas>
             </div>
             <div class="sv-detail-pane">
               <canvas data-sv="detail" tabindex="0" role="img" aria-label="Memory window: use the arrow keys to scroll and plus or minus to zoom"></canvas>
@@ -355,6 +406,16 @@
               </div>
             </div>
           </div>
+          <div class="sv-bottom">
+          <div class="sv-readout">
+            <div class="sv-pane-label">Vital signs</div>
+            <dl class="sv-vitals" data-sv="vitals"></dl>
+            <div class="sv-marks" data-sv="marks"></div>
+          </div>
+          <div class="sv-spark-pane">
+            <div class="sv-pane-label">Stack depth over time</div>
+            <canvas data-sv="spark" role="img" aria-label="Stack depth over time"></canvas>
+          </div>
           <div class="sv-log-pane">
             <div class="sv-log-head">
               <strong>What the stack is doing</strong>
@@ -368,6 +429,7 @@
               <button class="tool-btn" data-sv="clear-log" type="button">Clear log</button>
             </div>
             <div class="sv-log" data-sv="log"></div>
+          </div>
           </div>
           <div class="sv-footer">
             <div class="ctrl">Tool Control</div>
@@ -399,6 +461,8 @@
       const untilButtons = new Map([...root.querySelectorAll("[data-sv-until]")]
         .map((button) => [button.dataset.svUntil, button]));
       const statusBox = root.querySelector("[data-sv='status']");
+      const vitalsBox = root.querySelector("[data-sv='vitals']");
+      const marksBox = root.querySelector("[data-sv='marks']");
       const hintBox = root.querySelector("[data-sv='hint']");
       const filterButtons = [...root.querySelectorAll("[data-sv-filter]")];
       const decodeBox = root.querySelector("[data-sv='decode']");
@@ -550,21 +614,34 @@
         const heapEnd = Math.max(heapBreak, heapBase + 0x1000);
 
         // The visible stack band follows how deep the program has actually gone.
+        // It has to stop exactly at that address: padding the band downwards drew
+        // half a kilobyte of never-touched memory as stack and pushed the $sp
+        // marker to the middle of the band, which reads as an already-deep stack.
+        // Everything below $sp is free, so the free band runs right up to it.
         const observed = [currentSp(), deepestSp, stackPointer].filter((value) => Number.isFinite(value));
         const deepest = observed.length ? Math.min(...observed.map((value) => value >>> 0)) : stackPointer;
-        const stackStart = Math.max(heapEnd, (deepest - 0x200) & ~0xf) >>> 0;
+        const stackStart = Math.max(heapEnd, deepest) >>> 0;
+        // MARS parks $sp a page below the top of the segment and keeps that page
+        // for program arguments. Folding it into the stack band made the frames a
+        // 1% sliver of a band that was 99% untouched argument space, so it gets
+        // its own thin band and the stack band ends where the stack really starts.
+        const stackTop = Math.max(stackStart + 4, (stackPointer + 4) >>> 0) >>> 0;
+        const argumentsTop = (stackBase + 4) >>> 0;
 
+        // No hand-tuned weights: every band is measured from its own address
+        // range, so two bands of the same size are always the same height.
         return [
-          { id: "reserved", label: "reserved", start: 0, end: textBase, weight: 0.5 },
-          { id: "text", label: ".text", start: textBase, end: externBase, weight: 1.4 },
-          { id: "extern", label: ".extern / $gp", start: externBase, end: dataBase, weight: 0.8 },
-          { id: "data", label: ".data", start: dataBase, end: heapBase, weight: 1.6 },
-          { id: "heap", label: "heap", start: heapBase, end: heapEnd, weight: 1.0 },
-          { id: "free", label: "free space", start: heapEnd, end: stackStart, weight: 0.8 },
-          { id: "stack", label: "stack", start: stackStart, end: (stackBase + 4) >>> 0, weight: 2.4 },
-          { id: "ktext", label: ".ktext", start: kernelTextBase, end: kernelDataBase, weight: 0.7 },
-          { id: "kdata", label: ".kdata", start: kernelDataBase, end: mmioBase, weight: 0.7 },
-          { id: "mmio", label: "MMIO", start: mmioBase, end: Math.min(0x100000000, mmioBase + 0x10000), weight: 0.7 }
+          { id: "reserved", label: "reserved", start: 0, end: textBase },
+          { id: "text", label: ".text", start: textBase, end: externBase },
+          { id: "extern", label: ".extern / $gp", start: externBase, end: dataBase },
+          { id: "data", label: ".data", start: dataBase, end: heapBase },
+          { id: "heap", label: "heap", start: heapBase, end: heapEnd },
+          { id: "free", label: "free space", start: heapEnd, end: stackStart },
+          { id: "stack", label: "stack", start: stackStart, end: stackTop },
+          { id: "args", label: "program arguments", start: stackTop, end: argumentsTop },
+          { id: "ktext", label: ".ktext", start: kernelTextBase, end: kernelDataBase },
+          { id: "kdata", label: ".kdata", start: kernelDataBase, end: mmioBase },
+          { id: "mmio", label: "MMIO", start: mmioBase, end: Math.min(0x100000000, mmioBase + 0x10000) }
         ].filter((segment) => segment.end > segment.start);
       }
 
@@ -579,7 +656,9 @@
         const addr = address >>> 0;
         if (addr > stackBase) return false;
         const segment = segmentAt(addr, segments);
-        return segment?.id === "stack" || segment?.id === "free";
+        // The argument page sits inside the stack segment even though the frames
+        // never reach it, so callers that ask "is this stack memory?" still say yes.
+        return segment?.id === "stack" || segment?.id === "free" || segment?.id === "args";
       }
 
       function labelFor(address) {
@@ -1396,15 +1475,21 @@
       function computeDensity(segments, buckets) {
         const now = performance.now();
         const key = `${buckets}:${segments.map((segment) => segment.id).join(",")}`;
+        // Both exits hand back the whole record: returning just the bucket array
+        // on a cache hit left the caller without the per-segment totals.
         if (densityCache && now - densityStamp < DENSITY_REFRESH_MS && densityCache.key === key) {
-          return densityCache.data;
+          return densityCache;
         }
         const data = segments.map(() => new Float32Array(buckets));
+        // The same scan answers "how much of this segment has the program actually
+        // touched", which the band labels report next to the density strip.
+        const touched = segments.map(() => 0);
+        let truncated = false;
         const words = memoryWords();
         if (words) {
           let scanned = 0;
           for (const address of words.keys()) {
-            if (scanned >= MAX_DENSITY_SCAN) break;
+            if (scanned >= MAX_DENSITY_SCAN) { truncated = true; break; }
             scanned += 1;
             const addr = address >>> 0;
             for (let index = 0; index < segments.length; index += 1) {
@@ -1413,13 +1498,51 @@
               const span = segment.end - segment.start;
               const bucket = Math.min(buckets - 1, Math.floor(((addr - segment.start) / span) * buckets));
               data[index][bucket] += 1;
+              touched[index] += 1;
               break;
             }
           }
         }
-        densityCache = { data, key };
+        densityCache = { key, data, touched, truncated };
         densityStamp = now;
-        return data;
+        return densityCache;
+      }
+
+      // Bytes are what a student counts, but a whole segment is measured in
+      // megabytes, so the share only earns its place once it rounds above zero.
+      function describeOccupancy(words, span) {
+        const bytes = words * 4;
+        if (!bytes) return "";
+        const share = span > 0 ? (bytes / span) * 100 : 0;
+        if (share >= 0.5) return t("{bytes} B · {percent}%", { bytes, percent: Math.round(share) });
+        return t("{bytes} B", { bytes });
+      }
+
+      function formatSpan(bytes) {
+        const value = Math.max(0, Number(bytes) || 0);
+        if (value >= 0x40000000) return t("{value} GB", { value: +(value / 0x40000000).toFixed(2) });
+        if (value >= 0x100000) return t("{value} MB", { value: +(value / 0x100000).toFixed(value >= 0x1000000 ? 0 : 1) });
+        if (value >= 0x400) return t("{value} KB", { value: +(value / 0x400).toFixed(value >= 0x2800 ? 0 : 1) });
+        return t("{bytes} B", { bytes: value });
+      }
+
+      // The address space runs from a 44-byte stack band to a 252 MB text band.
+      // On a linear axis everything but the giants is a sub-pixel line, so the
+      // heights share one logarithmic law instead: equal ratios take equal space,
+      // and each band prints its own size so the scale can be checked by eye.
+      function bandShare(span) {
+        return Math.log2(1 + Math.max(1, span));
+      }
+
+      // Colour carries the second dimension: how much of the band the program has
+      // actually written into, on the same log footing as the heights.
+      function occupancyAlpha(words, span) {
+        if (!words || span <= 0) return 0.07;
+        // .text holds the whole program yet fills a millionth of its 252 MB, so a
+        // pure share would leave it as pale as untouched memory. Carrying data at
+        // all earns a visible floor; the share then drives everything above it.
+        const share = Math.min(1, (words * 4) / span);
+        return 0.2 + 0.38 * Math.min(1, Math.log10(1 + share * 999) / 3);
       }
 
       // A phone-sized strip cannot label ten bands, so it keeps the ones a program
@@ -1433,8 +1556,8 @@
         const segments = height < 120
           ? allSegments.filter((segment) => COMPACT_MAP_SEGMENTS.has(segment.id))
           : allSegments;
-        const totalWeight = segments.reduce((sum, segment) => sum + segment.weight, 0) || 1;
-        const density = computeDensity(segments, 24);
+        const usage = computeDensity(segments, 24);
+        const density = usage.data;
         const sp = currentSp();
         const fp = currentFp();
         const pc = currentPc();
@@ -1454,7 +1577,11 @@
         // Every band has to fit, however short the strip is on a phone: give each a
         // floor, then rescale the whole column back to the available height.
         const minBand = Math.max(5, Math.min(18, Math.floor(height / Math.max(1, ordered.length))));
-        const rawHeights = ordered.map((segment) => Math.max(minBand, (segment.weight / totalWeight) * height));
+        const shareTotal = ordered.reduce((sum, segment) => sum + bandShare(segment.end - segment.start), 0) || 1;
+        const rawHeights = ordered.map((segment) => Math.max(
+          minBand,
+          (bandShare(segment.end - segment.start) / shareTotal) * height
+        ));
         const rawTotal = rawHeights.reduce((sum, value) => sum + value, 0) || 1;
         const bandHeights = rawHeights.map((value) => (value * height) / rawTotal);
 
@@ -1466,8 +1593,34 @@
           const index = segments.indexOf(segment);
           const color = SEGMENT_COLORS[segment.id] || colors.line;
 
-          context.fillStyle = withAlpha(color, 0.14);
+          const span = segment.end - segment.start;
+          const yForAddress = (address) => {
+            const fraction = ((address >>> 0) - segment.start) / span;
+            const clamped = Math.max(0, Math.min(1, fraction));
+            return highTop ? y1 - clamped * (y1 - y0) : y0 + clamped * (y1 - y0);
+          };
+
+          // A band the program never touches stays nearly transparent; one it
+          // fills goes solid. Colour and height then answer different questions:
+          // how big the region is, and how much of it is really in use.
+          const baseAlpha = occupancyAlpha(usage.touched[index] || 0, span);
+          context.fillStyle = withAlpha(color, baseAlpha);
           context.fillRect(0, y0, width, y1 - y0);
+
+          // Inside the stack band, separate what the frames hold right now from the
+          // ground the stack has given back: both are "stack", only one is live.
+          if (segment.id === "stack") {
+            const liveEdge = yForAddress(sp);
+            const peakEdge = Number.isFinite(deepestSp) ? yForAddress(deepestSp) : liveEdge;
+            const liveTop = Math.min(liveEdge, highTop ? y0 : y1);
+            context.fillStyle = withAlpha(color, Math.min(0.62, baseAlpha + 0.26));
+            context.fillRect(0, Math.min(liveTop, liveEdge), width, Math.abs(liveEdge - liveTop));
+            if (Math.abs(peakEdge - liveEdge) >= 1) {
+              context.fillStyle = withAlpha(color, Math.min(0.44, baseAlpha + 0.12));
+              context.fillRect(0, Math.min(peakEdge, liveEdge), width, Math.abs(peakEdge - liveEdge));
+            }
+          }
+
           context.fillStyle = color;
           context.fillRect(0, y0, 4, y1 - y0);
           context.strokeStyle = withAlpha(colors.line, 0.6);
@@ -1495,8 +1648,20 @@
             context.fillText(t(segment.label), 8, y0 + Math.min(10, bandHeight / 2));
           }
           if (bandHeight >= 26) {
+            // The start address and the span together let a reader confirm the
+            // heights: a band twice as tall covers far more than twice the bytes,
+            // because the axis is logarithmic, and the printed size says by how much.
             context.fillStyle = colors.faint;
-            context.fillText(toHex32(segment.start), 8, y0 + 22);
+            context.fillText(`${toHex32(segment.start)}  ·  ${formatSpan(span)}`, 8, y0 + 22);
+          }
+          // How much of this band the program has really written into. Without it
+          // the density strip is the only clue, and it is nearly invisible.
+          if (bandHeight >= 38) {
+            const occupancy = describeOccupancy(usage.touched[index] || 0, span);
+            if (occupancy) {
+              context.fillStyle = withAlpha(color, 0.95);
+              context.fillText(occupancy, 8, y0 + 34);
+            }
           }
 
           mapBands.push({ segment, y0, y1 });
@@ -1504,9 +1669,7 @@
           const markerFor = (address, text, markerColor) => {
             const addr = address >>> 0;
             if (addr < segment.start || addr >= segment.end) return;
-            const span = segment.end - segment.start;
-            const fraction = (addr - segment.start) / span;
-            const y = highTop ? y1 - fraction * (y1 - y0) : y0 + fraction * (y1 - y0);
+            const y = yForAddress(addr);
             context.strokeStyle = markerColor;
             context.lineWidth = 1.5;
             context.beginPath();
@@ -1518,6 +1681,23 @@
             context.fillText(text, width - 26 - context.measureText(text).width - 3, y - 5);
           };
 
+          // The high-water line only says something once the stack has retreated
+          // from its deepest point; before that it sits under $sp and adds noise.
+          if (segment.id === "stack" && Number.isFinite(deepestSp) && (deepestSp >>> 0) < (sp >>> 0)) {
+            const y = yForAddress(deepestSp);
+            context.save();
+            context.setLineDash([3, 3]);
+            context.strokeStyle = withAlpha(SEGMENT_COLORS.stack, 0.9);
+            context.beginPath();
+            context.moveTo(4, y);
+            context.lineTo(width - 28, y);
+            context.stroke();
+            context.restore();
+            const label = t("max");
+            context.fillStyle = withAlpha(SEGMENT_COLORS.stack, 0.9);
+            context.fillText(label, width - 26 - context.measureText(label).width - 3, y + 6);
+          }
+
           markerFor(pc, "pc", colors.accent);
           markerFor(gp, "$gp", SEGMENT_COLORS.extern);
           markerFor(fp, "$fp", SEGMENT_COLORS.text);
@@ -1527,11 +1707,8 @@
           const overlapLow = Math.max(segment.start, viewLow);
           const overlapHigh = Math.min(segment.end, viewHigh);
           if (overlapHigh > overlapLow) {
-            const span = segment.end - segment.start;
-            const lowFraction = (overlapLow - segment.start) / span;
-            const highFraction = (overlapHigh - segment.start) / span;
-            const yA = highTop ? y1 - highFraction * (y1 - y0) : y0 + lowFraction * (y1 - y0);
-            const yB = highTop ? y1 - lowFraction * (y1 - y0) : y0 + highFraction * (y1 - y0);
+            const yA = yForAddress(highTop ? overlapHigh : overlapLow);
+            const yB = yForAddress(highTop ? overlapLow : overlapHigh);
             context.strokeStyle = colors.accent;
             context.lineWidth = 2;
             context.strokeRect(1, Math.min(yA, yB) - 1, width - 3, Math.max(3, Math.abs(yB - yA) + 2));
@@ -1561,14 +1738,27 @@
         const depths = spSamples.map((sample) => Math.max(0, base - (sample.sp >>> 0)));
         const maxDepth = Math.max(16, ...depths);
         const stepX = width / Math.max(1, depths.length - 1);
+        const headroom = 14;
+        const depthY = (depth) => height - 2 - (depth / maxDepth) * (height - headroom);
+
+        // With room to breathe the chart can carry a scale: without one a curve
+        // says the stack moved but never how far.
+        const gridSteps = height >= 96 ? 4 : 2;
+        context.strokeStyle = withAlpha(colors.line, 0.35);
+        context.fillStyle = colors.faint;
+        for (let step = 1; step <= gridSteps; step += 1) {
+          const depth = (maxDepth / gridSteps) * step;
+          const y = Math.round(depthY(depth)) + 0.5;
+          context.beginPath();
+          context.moveTo(1, y);
+          context.lineTo(width - 1, y);
+          context.stroke();
+          if (height >= 96) context.fillText(t("{bytes} B", { bytes: Math.round(depth) }), 4, y - 6);
+        }
 
         context.beginPath();
         context.moveTo(0, height - 1);
-        depths.forEach((depth, index) => {
-          const x = index * stepX;
-          const y = height - 2 - (depth / maxDepth) * (height - 14);
-          context.lineTo(x, y);
-        });
+        depths.forEach((depth, index) => context.lineTo(index * stepX, depthY(depth)));
         context.lineTo(width, height - 1);
         context.closePath();
         context.fillStyle = withAlpha(SEGMENT_COLORS.stack, 0.28);
@@ -1577,16 +1767,29 @@
         context.beginPath();
         depths.forEach((depth, index) => {
           const x = index * stepX;
-          const y = height - 2 - (depth / maxDepth) * (height - 14);
+          const y = depthY(depth);
           if (index === 0) context.moveTo(x, y);
           else context.lineTo(x, y);
         });
         context.strokeStyle = SEGMENT_COLORS.stack;
         context.stroke();
 
-        context.fillStyle = colors.faint;
-        context.fillText(t("max {bytes} B", { bytes: maxDepth }), 5, 8);
-        context.fillText(t("now {bytes} B", { bytes: depths[depths.length - 1] }), width - 62, 8);
+        // The peak is the number a reader is usually hunting for.
+        const peakY = Math.round(depthY(maxDepth)) + 0.5;
+        context.save();
+        context.setLineDash([3, 3]);
+        context.strokeStyle = withAlpha(SEGMENT_COLORS.stack, 0.85);
+        context.beginPath();
+        context.moveTo(1, peakY);
+        context.lineTo(width - 1, peakY);
+        context.stroke();
+        context.restore();
+
+        const summary = `${t("max {bytes} B", { bytes: maxDepth })}   ${t("now {bytes} B", { bytes: depths[depths.length - 1] })}`;
+        context.fillStyle = colors.surface;
+        context.fillRect(4, 2, context.measureText(summary).width + 6, 12);
+        context.fillStyle = colors.muted;
+        context.fillText(summary, 7, 8);
       }
 
       // ------------------------------------------------------------- detail canvas
@@ -1615,7 +1818,8 @@
       function defaultViewAddress() {
         const sp = currentSp();
         const level = ZOOM_LEVELS[zoomIndex];
-        return (sp + level.bytesPerRow * 6) >>> 0;
+        const half = Math.floor(visibleRowCount() / 2) * level.bytesPerRow;
+        return (highTop ? sp + half : Math.max(0, sp - half)) >>> 0;
       }
 
       function centerView(address) {
@@ -2033,6 +2237,45 @@
         ].filter(Boolean).join(" ");
       }
 
+      // The numbers a reader wants while stepping, in one place and always the
+      // same place, so a changing digit is easy to spot out of the corner of an eye.
+      function renderVitals() {
+        const map = memoryMap();
+        const base = (map.stackPointer ?? map.stackBase ?? 0x7fffeffc) >>> 0;
+        const sp = currentSp();
+        const used = Math.max(0, base - sp);
+        const peak = Number.isFinite(deepestSp) ? Math.max(0, base - (deepestSp >>> 0)) : 0;
+        const rows = [
+          { label: t("in use"), value: t("{bytes} B", { bytes: used }) },
+          { label: t("peak depth"), value: t("{bytes} B", { bytes: peak }) },
+          { label: t("open frames"), value: String(frames.length) },
+          { label: t("words written"), value: String(cells.size) },
+          { label: t("warnings"), value: String(warnCount), warn: warnCount > 0 }
+        ];
+        vitalsBox.innerHTML = rows.map((row) => (
+          `<dt>${escapeHtml(row.label)}</dt><dd${row.warn ? ' class="is-warn"' : ""}>${escapeHtml(row.value)}</dd>`
+        )).join("");
+      }
+
+      // The map draws four marker lines and never said what they were. These name
+      // them, show where each points and jump the view there.
+      const MARKER_CHIPS = [
+        { id: "pc", label: "pc", color: () => themeColors().accent, read: () => currentPc() },
+        { id: "gp", label: "$gp", color: () => SEGMENT_COLORS.extern, read: () => readRegister(REG_GP) >>> 0 },
+        { id: "fp", label: "$fp", color: () => SEGMENT_COLORS.text, read: () => currentFp() },
+        { id: "sp", label: "$sp", color: () => SEGMENT_COLORS.stack, read: () => currentSp() }
+      ];
+
+      function renderMarks() {
+        marksBox.innerHTML = MARKER_CHIPS.map((chip) => {
+          const address = chip.read() >>> 0;
+          const title = t("Go to {name} at {address}", { name: chip.label, address: toHex32(address) });
+          return `<button class="sv-mark" type="button" data-sv-mark="${chip.id}" title="${escapeHtml(title)}">
+            <span class="sv-swatch" style="background:${chip.color()}"></span>${escapeHtml(chip.label)} <b>${toHex32(address)}</b>
+          </button>`;
+        }).join("");
+      }
+
       // The region picker doubles as a "you are here" indicator.
       function syncRegionSelect() {
         const level = ZOOM_LEVELS[zoomIndex];
@@ -2051,11 +2294,50 @@
         framesBox.innerHTML = [...regions].reverse().map((region) => {
           const size = Math.max(0, region.high + 4 - region.low);
           const selected = region.frame.id === selectedFrameId ? " is-selected" : "";
+          const slots = describeFrameSlots(region);
           return `<div class="sv-frame-row${selected}" data-frame-id="${region.frame.id}" style="border-left-color:${frameColor(region.frame.id)}">
             <span class="sv-frame-name">#${region.frame.id} ${escapeHtml(region.frame.name)}</span>
             <span class="sv-frame-size">${size}B</span>
-          </div>`;
+          </div>${slots}`;
         }).join("");
+      }
+
+      // A frame used to be a name and a byte count, which says nothing about what
+      // the program actually put there. Each word it owns is listed with the
+      // register that wrote it, its offset from $sp and what the value looks like.
+      function describeFrameSlots(region) {
+        const rows = [];
+        for (let address = region.high; address >= region.low; address -= 4) {
+          const addr = address >>> 0;
+          const cell = cells.get(addr);
+          const value = readWord(addr);
+          const offset = describeSpOffset(addr) || toHex32(addr);
+          const written = cell && cell.frameId === region.frame.id;
+          const source = written && cell.register ? cell.register : null;
+          rows.push(`<div class="sv-slot${written ? "" : " is-untouched"}" data-address="${addr}">
+            <span class="sv-slot-at">${escapeHtml(offset)}</span>
+            <span class="sv-slot-reg">${escapeHtml(source || (written ? t("value") : t("unwritten")))}</span>
+            <span class="sv-slot-value">${toHex32(value)}</span>
+            <span class="sv-slot-note">${escapeHtml(describeSlotMeaning(value, source))}</span>
+          </div>`);
+        }
+        return rows.join("");
+      }
+
+      function describeSlotMeaning(value, register) {
+        const word = value >>> 0;
+        if (register === "$ra") {
+          const label = labelFor(word);
+          return t("return to {target}", { target: label || toHex32(word) });
+        }
+        const label = labelFor(word);
+        if (label) return t("→ {label}", { label });
+        const segment = segmentAt(word);
+        if (segment && segment.id !== "reserved" && segment.id !== "free") {
+          return t("→ {segment}", { segment: t(segment.label) });
+        }
+        if ((value | 0) >= -1024 && (value | 0) <= 1024) return String(value | 0);
+        return "";
       }
 
       const FILTER_KINDS = {
@@ -2097,11 +2379,13 @@
       }
 
       function renderAll() {
-        if (followSp && connected) centerView(currentSp());
+        if (followSp) centerView(currentSp());
         renderMap();
         renderSpark();
         renderDetail();
         renderStatus();
+        renderVitals();
+        renderMarks();
         syncRegionSelect();
         renderInspector();
         renderFrames();
@@ -2326,6 +2610,19 @@
         followCheck.checked = false;
         selectedAddress = address >>> 0;
         centerView(address >>> 0);
+        scheduleRender();
+      });
+
+      marksBox.addEventListener("click", (event) => {
+        const button = event.target.closest?.("[data-sv-mark]");
+        if (!button) return;
+        const chip = MARKER_CHIPS.find((entry) => entry.id === button.dataset.svMark);
+        if (!chip) return;
+        // Jumping to $sp and then following it again would fight the user, so any
+        // jump releases the follow lock exactly like the log and frame rows do.
+        followSp = false;
+        followCheck.checked = false;
+        centerView(chip.read() >>> 0);
         scheduleRender();
       });
 

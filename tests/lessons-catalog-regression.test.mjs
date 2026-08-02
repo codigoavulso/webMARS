@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, access } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createJavaScriptEngine, projectRoot } from "./helpers/engines.mjs";
 
@@ -20,13 +20,25 @@ function runToHalt(engine, maxSteps = 200000) {
   return output;
 }
 
-async function runLesson(fileName) {
-  const source = await readFile(resolve(examplesRoot, fileName), "utf8");
+// Lessons live under a per-language folder; only their commentary is
+// translated, so every localized copy has to print the same result.
+async function resolveLesson(language, fileName) {
+  const localized = resolve(examplesRoot, language, fileName);
+  try {
+    await access(localized);
+    return localized;
+  } catch {
+    throw new Error(`Missing lesson '${fileName}' for language '${language}'.`);
+  }
+}
+
+async function runLesson(language, fileName) {
+  const source = await readFile(await resolveLesson(language, fileName), "utf8");
   const engine = await createJavaScriptEngine({
     settings: { startAtMain: true, maxMemoryBytes: 0x7fffffff }
   });
   const assembled = engine.assemble(source, { sourceName: fileName });
-  assert.equal(assembled.ok, true, `${fileName} did not assemble.`);
+  assert.equal(assembled.ok, true, `${language}/${fileName} did not assemble.`);
   return runToHalt(engine);
 }
 
@@ -115,7 +127,9 @@ test("every lesson halts on its own and prints its result", async () => {
   };
 
   for (const entry of lessons) {
-    const output = await runLesson(entry.path);
-    assert.match(output, expected[entry.path], `${entry.path} printed:\n${output}`);
+    for (const language of entry.languages) {
+      const output = await runLesson(language, entry.path);
+      assert.match(output, expected[entry.path], `${language}/${entry.path} printed:\n${output}`);
+    }
   }
 });

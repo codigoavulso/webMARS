@@ -135,7 +135,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
-- `v0.5.1`: external device interrupts, System Clock and Stack Visualizer tools, faster tool batching, resilient text snapshots, and MARS-OS clock/benchmark commands
+- `v0.5.1`: external device interrupts, System Clock and Stack Visualizer tools, consolidated file/cloud workflows, faster tool batching, resilient text snapshots, and MARS-OS clock/benchmark commands
 - `v0.5.0`: hardened JavaScript runtime, inverse-delta backstep, batched tools, dynamic Bitmap MMIO, expanded examples/documentation, and complete mobile workflows
 - `v0.4.13`: mobile single-panel layout with icon tabs, icon-only mobile toolbar, and fully localized assembler and Mini-C diagnostics
 - `v0.4.12`: dark theme, immediate font-size apply, dead-code cleanup (autosave pipeline, ~15 functions, dead CSS, 113 i18n keys), closeAllFiles wired to menu
