@@ -81,25 +81,31 @@
 
       .tty-ansi-stage {
         display: flex;
+        min-width: 0;
         min-height: 0;
       }
 
-      .tty-ansi-viewport {
+      .tool-window .tty-ansi-viewport {
         flex: 1 1 auto;
+        width: 100%;
+        min-width: 0;
         min-height: 0;
         overflow: auto;
         position: relative;
         border: 1px solid #7f9db9;
         background: linear-gradient(180deg, #0f1622 0%, #080d15 100%);
-        padding: 12px;
+        padding: 0;
         box-sizing: border-box;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: flex-start;
+        overscroll-behavior: contain;
       }
 
       .tty-ansi-canvas {
+        flex: 0 0 auto;
         display: block;
+        margin: 0 auto;
         outline: none;
         box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 12px 28px rgba(0,0,0,0.35);
         background: #000;
@@ -108,13 +114,13 @@
       /* A canvas can receive a physical keyboard but cannot summon a mobile
          virtual keyboard. Keep a genuine editable control inside the viewport
          and move focus to it when the user touches the terminal. */
-      .tty-ansi-keyboard-input {
+      .tool-window .tty-ansi-keyboard-input {
         position: absolute;
-        left: 12px;
-        bottom: 12px;
+        left: 0;
+        top: 0;
         z-index: 1;
-        width: 2px;
-        height: 2px;
+        width: 1px;
+        height: 1px;
         min-height: 0;
         margin: 0;
         padding: 0;
@@ -125,6 +131,7 @@
         background: transparent;
         color: transparent;
         caret-color: transparent;
+        clip-path: inset(50%);
         font-size: 16px;
       }
 
@@ -235,6 +242,41 @@
       /* The terminal takes what the settings no longer need. */
       .desktop-stacked .tty-ansi-main {
         grid-template-rows: auto minmax(140px, 1fr);
+      }
+
+      .desktop-stacked .tool-window .tty-ansi-viewport {
+        padding: 0;
+      }
+
+      /* Preserve the 80x25 aspect ratio on narrow screens. The global mobile
+         tool rules cap element widths, so an explicit automatic height is
+         needed to avoid turning terminal cells into tall rectangles. */
+      .desktop-stacked .tty-ansi-canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100%;
+      }
+
+      /* Android reduces the visual viewport when its keyboard opens. At that
+         point the terminal is the useful control: remove settings and footer
+         chrome so the complete scaled display sits immediately above it. */
+      html.mobile-keyboard-visible .tty-ansi-tool > .tty-ansi-main {
+        grid-template-rows: minmax(0, 1fr);
+      }
+
+      html.mobile-keyboard-visible .tty-ansi-main > .mars-tool-panel:first-child,
+      html.mobile-keyboard-visible .tty-ansi-tool > .mars-tool-footer {
+        display: none;
+      }
+
+      html.mobile-keyboard-visible .tty-ansi-stage,
+      html.mobile-keyboard-visible .tty-ansi-viewport {
+        height: 100%;
+      }
+
+      html.mobile-keyboard-visible .tty-ansi-canvas {
+        margin-top: auto;
+        margin-bottom: 0;
       }
     `;
     document.head.appendChild(style);

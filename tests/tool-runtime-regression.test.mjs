@@ -253,6 +253,12 @@ test("stateful tools use central deltas and expose active runtime consumers", as
   assert.match(ttySource, /root\.classList\.toggle\("tty-ansi-settings-collapsed", settingsCollapsed\);/);
   assert.match(ttySource, /settingsToggle\?\.addEventListener\("click"/);
   assert.match(ttySource, /settingsToggle\.setAttribute\("aria-expanded", settingsCollapsed \? "false" : "true"\);/);
+  assert.match(ttySource, /\.tool-window \.tty-ansi-viewport \{[\s\S]*?padding: 0;/);
+  assert.match(ttySource, /\.desktop-stacked \.tty-ansi-canvas \{[\s\S]*?width: 100% !important;[\s\S]*?height: auto !important;/);
+  assert.match(ttySource, /html\.mobile-keyboard-visible \.tty-ansi-main > \.mars-tool-panel:first-child/);
+  assert.match(ttySource, /html\.mobile-keyboard-visible \.tty-ansi-tool > \.mars-tool-footer/);
+  assert.match(ttySource, /\.tool-window \.tty-ansi-keyboard-input \{[\s\S]*?left: 0;[\s\S]*?top: 0;/);
+  assert.match(ttySource, /html\.mobile-keyboard-visible \.tty-ansi-canvas \{[\s\S]*?margin-top: auto;[\s\S]*?margin-bottom: 0;/);
   assert.match(ttySource, /mouseTrackingMode:\s*0/);
   assert.match(ttySource, /parameter === "1000" \|\| parameter === "1002" \|\| parameter === "1003"/);
   assert.match(ttySource, /parameter === "1006"/);
