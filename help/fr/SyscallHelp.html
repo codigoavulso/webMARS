@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS appels système</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Appels système</h1>
+  <p class="lead">Placez le numéro de service dans <code>$v0</code>, placez les arguments dans les registres indiqués ci-dessous et exécutez <code>syscall</code>. Sauf indication contraire dans une ligne, les registres autres que les résultats documentés sont conservés.</p>
+
+  <h2>Console, mémoire et fichiers</h2>
+  <table class="compact">
+    <tr><th>Service</th><th>Non.</th><th>Arguments</th><th>Résultat / comportement</th></tr>
+    <tr><td>Imprimer un entier</td><td>1</td><td><code>$a0</code> valeur</td><td>Écrit un nombre décimal signé.</td></tr>
+    <tr><td>Imprimer le flotteur</td><td>2</td><td><code>$f12</code> valeur</td><td>Écrit en simple précision.</td></tr>
+    <tr><td>Imprimer en double</td><td>3</td><td><code>$f12/$f13</code> valeur</td><td>Écrit en double précision.</td></tr>
+    <tr><td>Imprimer la chaîne</td><td>4</td><td><code>$a0</code> chaîne d'octets terminée par zéro</td><td>Écrit du texte.</td></tr>
+    <tr><td>Lire un entier</td><td>5</td><td>—</td><td><code>$v0</code>; l'entrée complète doit être un entier valide.</td></tr>
+    <tr><td>Lire le flotteur</td><td>6</td><td>—</td><td><code>$f0</code>; les fichiers indésirables de fin sont rejetés.</td></tr>
+    <tr><td>Lire en double</td><td>7</td><td>—</td><td><code>$f0/$f1</code>; les fichiers indésirables de fin sont rejetés.</td></tr>
+    <tr><td>Lire la chaîne</td><td>8</td><td><code>$a0</code> tampon, <code>$a1</code> longueur maximale</td><td>Suit les règles de longueur et de terminaison de style fgets.</td></tr>
+    <tr><td>sbrk</td><td>9</td><td><code>$a0</code> nombre d'octets non négatif</td><td><code>$v0</code> adresse de tas précédente ; vérifié par rapport à la carte et à la limite de mémoire.</td></tr>
+    <tr><td>Quitter</td><td>10</td><td>—</td><td>Se termine normalement.</td></tr>
+    <tr><td>Caractère d'impression</td><td>11</td><td>octet faible de <code>$a0</code></td><td>Écrit un caractère.</td></tr>
+    <tr><td>Lire le personnage</td><td>12</td><td>—</td><td><code>$v0</code> code de caractère.</td></tr>
+    <tr><td>Ouvrir le fichier</td><td>13</td><td><code>$a0</code> nom, <code>$a1</code> drapeaux</td><td><code>$v0</code> descripteur ou erreur négative. Indicateurs : 0 lecture, 1 écriture/création, 9 ajout/création.</td></tr>
+    <tr><td>Lire le fichier</td><td>14</td><td><code>$a0</code> fd, <code>$a1</code> tampon, <code>$a2</code> compter</td><td><code>$v0</code> octets lus, 0 à EOF ou erreur négative.</td></tr>
+    <tr><td>Écrire un fichier</td><td>15</td><td><code>$a0</code> fd, <code>$a1</code> tampon, <code>$a2</code> compter</td><td><code>$v0</code> octets écrits ou erreur négative.</td></tr>
+    <tr><td>Fermer le fichier</td><td>16</td><td><code>$a0</code> fd</td><td>Ferme un descripteur de fichier virtuel.</td></tr>
+    <tr><td>Quitter avec le code</td><td>17</td><td><code>$a0</code> coder</td><td>Termine et enregistre le code.</td></tr>
+  </table>
+  <p>Les descripteurs 0, 1 et 2 sont stdin, stdout et stderr. Les descripteurs d'utilisateur commencent à 3 et sont sauvegardés par le système de fichiers virtuel du navigateur ; ils n'accordent pas un accès illimité au fichier hôte.</p>
+
+  <h2>Heure, MIDI et formatage des nombres</h2>
+  <table class="compact">
+    <tr><th>Service</th><th>Non.</th><th>Arguments</th><th>Résultat / comportement</th></tr>
+    <tr><td>Heure système</td><td>30</td><td>—</td><td>Faible 32 bits dans <code>$a0</code>, haut 32 bits dans <code>$a1</code>, millisecondes depuis l'époque Unix.</td></tr>
+    <tr><td>MIDI sorti</td><td>31</td><td><code>$a0</code> terrain, <code>$a1</code> durée, <code>$a2</code> instrument, <code>$a3</code> volume</td><td>Démarre de manière asynchrone.</td></tr>
+    <tr><td>Dormir</td><td>32</td><td><code>$a0</code> millisecondes</td><td>Attend en utilisant le timing du navigateur ; Stop annule l'attente.</td></tr>
+    <tr><td>MIDI sortie synchrone</td><td>33</td><td>pareil que 31</td><td>Revient après la durée de la tonalité.</td></tr>
+    <tr><td>Imprimer en hexadécimal</td><td>34</td><td><code>$a0</code></td><td>Huit chiffres hexadécimaux.</td></tr>
+    <tr><td>Imprimer binaire</td><td>35</td><td><code>$a0</code></td><td>Trente-deux chiffres binaires.</td></tr>
+    <tr><td>Imprimer non signé</td><td>36</td><td><code>$a0</code></td><td>Décimal non signé.</td></tr>
+  </table>
+  <p>MIDI utilise le Web Audio API. L'autorisation du navigateur, la politique de lecture automatique et la charge du planificateur peuvent affecter le moment où un son démarre.</p>
+
+  <h2>Flux pseudo-aléatoires</h2>
+  <table class="compact">
+    <tr><th>Service</th><th>Non.</th><th>Arguments</th><th>Résultat</th></tr>
+    <tr><td>Définir la graine</td><td>40</td><td><code>$a0</code> identifiant de flux, <code>$a1</code> graine</td><td>Définit ce flux.</td></tr>
+    <tr><td>Entier aléatoire</td><td>41</td><td><code>$a0</code> identifiant du flux</td><td><code>$a0</code> entier aléatoire de 32 bits.</td></tr>
+    <tr><td>Plage entière aléatoire</td><td>42</td><td><code>$a0</code> identifiant de flux, <code>$a1</code> borne positive</td><td><code>$a0</code> dans [0, lié).</td></tr>
+    <tr><td>Flotteur aléatoire</td><td>43</td><td><code>$a0</code> identifiant du flux</td><td><code>$f0</code> dans [0, 1).</td></tr>
+    <tr><td>Double aléatoire</td><td>44</td><td><code>$a0</code> identifiant du flux</td><td><code>$f0/$f1</code> dans [0, 1).</td></tr>
+  </table>
+  <p>Chaque identifiant entier identifie un flux déterministe indépendant. Les flux sont inclus dans l’état d’exécution exporté et dans les instantanés backstep.</p>
+
+  <h2>Boîtes de dialogue</h2>
+  <table class="compact">
+    <tr><th>Non.</th><th>Service</th><th>Contrat</th></tr>
+    <tr><td>50</td><td>Confirmer la boîte de dialogue</td><td><code>$a0</code> messages ; sélection renvoyée dans <code>$a0</code> (Oui 0, Non 1, Annuler 2).</td></tr>
+    <tr><td>51</td><td>Entier d’entrée</td><td><code>$a0</code> rapide; valeur en <code>$a0</code>, statut dans <code>$a1</code>.</td></tr>
+    <tr><td>52</td><td>Flotteur d'entrée</td><td><code>$a0</code> rapide; valeur en <code>$f0</code>, statut dans <code>$a1</code>.</td></tr>
+    <tr><td>53</td><td>Entrée double</td><td><code>$a0</code> rapide; valeur en <code>$f0/$f1</code>, statut dans <code>$a1</code>.</td></tr>
+    <tr><td>54</td><td>Chaîne d'entrée</td><td><code>$a0</code> rapide, <code>$a1</code> tampon, <code>$a2</code> maximale ; statut dans <code>$a1</code>.</td></tr>
+    <tr><td>55–59</td><td>Boîtes de dialogue de messages</td><td>Afficher les messages simples, entiers, flottants, doubles ou sous forme de chaîne. Service 55 utilisations <code>$a1</code> pour le type de message.</td></tr>
+  </table>
+  <p>L'état de l'entrée suit les conventions MARS : 0 succès, −1 entrée invalide, −2 annulation et −3 entrée vide ; l'entrée de chaîne utilise également −4 lorsqu'elle est tronquée.</p>
+
+  <h2>services de bibliothèque webMARS</h2>
+  <p>Les services 60 à 103 prennent en charge les bibliothèques de compatibilité Mini-C fournies. Préférez les en-têtes de bibliothèque, qui fournissent les types et le protocole de registre corrects, plutôt que d'invoquer directement ces numéros.</p>
+  <table class="compact">
+    <tr><th>Gamme</th><th>Prestations</th></tr>
+    <tr><td>60–64</td><td>flush, eof, readline, printf, format</td></tr>
+    <tr><td>65–69</td><td>file_read, file_closed, file_close, file_eof, file_readline</td></tr>
+    <tr><td>70–73</td><td>args_flag, args_int, args_string, args_parse</td></tr>
+    <tr><td>74–84</td><td>longueur de chaîne, indexation, jointure, sous-chaîne, comparaison, conversions, ponts en minuscules, terminaison et tableau de caractères</td></tr>
+    <tr><td>85–92</td><td>caractères, analyse booléenne/entière, analyse de jetons et aides entier-hexadécimal</td></tr>
+    <tr><td>93–100</td><td>dimensions de l'image, création, clonage, sous-image, chargement, sauvegarde et accès aux données</td></tr>
+    <tr><td>101–103</td><td>Terminaison de chaîne C et conversion de chaîne native/chaîne C</td></tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS 系统调用</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>系统调用</h1>
+  <p class="lead">将服务号码放入 <code>$v0</code>，将参数放入如下所示的寄存器中，然后执行 <code>syscall</code>。除非一行另有说明，否则将保留记录结果以外的寄存器。</p>
+
+  <h2>控制台、内存和文件</h2>
+  <table class="compact">
+    <tr><th>服务</th><th>不。</th><th>论点</th><th>结果/行为</th></tr>
+    <tr><td>打印整数</td><td>1</td><td><code>$a0</code> 值</td><td>写入有符号十进制。</td></tr>
+    <tr><td>打印浮动</td><td>2</td><td><code>$f12</code> 值</td><td>写入单精度。</td></tr>
+    <tr><td>打印双份</td><td>3</td><td><code>$f12/$f13</code> 值</td><td>写入双精度。</td></tr>
+    <tr><td>打印字符串</td><td>4</td><td><code>$a0</code> 以零结尾的字节字符串</td><td>写文字。</td></tr>
+    <tr><td>读取整数</td><td>5</td><td>—</td><td><code>$v0</code>;完整的输入必须是有效的整数。</td></tr>
+    <tr><td>读取浮动</td><td>6</td><td>—</td><td><code>$f0</code>;尾随垃圾被拒绝。</td></tr>
+    <tr><td>读双</td><td>7</td><td>—</td><td><code>$f0/$f1</code>;尾随垃圾被拒绝。</td></tr>
+    <tr><td>读取字符串</td><td>8</td><td><code>$a0</code> 缓冲区, <code>$a1</code> 最大长度</td><td>遵循 fgets 样式的长度和终止符规则。</td></tr>
+    <tr><td>斯布尔克</td><td>9</td><td><code>$a0</code> 非负字节数</td><td><code>$v0</code> 以前的堆地址；检查地图和内存限制。</td></tr>
+    <tr><td>退出</td><td>10</td><td>—</td><td>正常终止。</td></tr>
+    <tr><td>打印字符</td><td>11</td><td>的低字节 <code>$a0</code></td><td>写一个字。</td></tr>
+    <tr><td>读取字符</td><td>12</td><td>—</td><td><code>$v0</code> 字符代码。</td></tr>
+    <tr><td>打开文件</td><td>13</td><td><code>$a0</code> 名字， <code>$a1</code> 旗帜</td><td><code>$v0</code> 描述符或负错误。标志：0 读取，1 写入/创建，9 追加/创建。</td></tr>
+    <tr><td>读取文件</td><td>14</td><td><code>$a0</code> FD, <code>$a1</code> 缓冲区, <code>$a2</code> 计数</td><td><code>$v0</code> 读取的字节数，EOF 处为 0，或负错误。</td></tr>
+    <tr><td>写入文件</td><td>15</td><td><code>$a0</code> FD, <code>$a1</code> 缓冲区, <code>$a2</code> 计数</td><td><code>$v0</code> 写入字节数或负错误。</td></tr>
+    <tr><td>关闭文件</td><td>16</td><td><code>$a0</code> FD</td><td>关闭虚拟文件描述符。</td></tr>
+    <tr><td>使用代码退出</td><td>17</td><td><code>$a0</code> 代码</td><td>终止并记录代码。</td></tr>
+  </table>
+  <p>描述符 0、1 和 2 是 stdin、stdout 和 stderr。用户描述符从 3 开始，由浏览器虚拟文件系统支持；它们不授予不受限制的主机文件访问权限。</p>
+
+  <h2>时间、MIDI 和数字格式</h2>
+  <table class="compact">
+    <tr><th>服务</th><th>不。</th><th>论点</th><th>结果/行为</th></tr>
+    <tr><td>系统时间</td><td>30</td><td>—</td><td>低 32 位 <code>$a0</code>，高32位 <code>$a1</code>，自 Unix 纪元以来的毫秒数。</td></tr>
+    <tr><td>MIDI 输出</td><td>31</td><td><code>$a0</code> 音调， <code>$a1</code> 持续时间， <code>$a2</code> 仪器, <code>$a3</code> 体积</td><td>异步启动。</td></tr>
+    <tr><td>睡眠</td><td>32</td><td><code>$a0</code> 毫秒</td><td>使用浏览器计时等待； Stop 取消等待。</td></tr>
+    <tr><td>MIDI 同步输出</td><td>33</td><td>与31相同</td><td>在提示音持续时间后返回。</td></tr>
+    <tr><td>打印十六进制</td><td>34</td><td><code>$a0</code></td><td>八个十六进制数字。</td></tr>
+    <tr><td>打印二进制文件</td><td>35</td><td><code>$a0</code></td><td>三十二个二进制数字。</td></tr>
+    <tr><td>打印未签名</td><td>36</td><td><code>$a0</code></td><td>无符号十进制。</td></tr>
+  </table>
+  <p>MIDI 使用网络音频 API。浏览器权限、自动播放策略和调度程序负载可能会影响声音何时开始。</p>
+
+  <h2>伪随机流</h2>
+  <table class="compact">
+    <tr><th>服务</th><th>不。</th><th>论点</th><th>结果</th></tr>
+    <tr><td>设定种子</td><td>40</td><td><code>$a0</code> 流 ID， <code>$a1</code> 种子</td><td>设置该流。</td></tr>
+    <tr><td>随机整数</td><td>41</td><td><code>$a0</code> 流ID</td><td><code>$a0</code> 随机 32 位整数。</td></tr>
+    <tr><td>随机整数范围</td><td>42</td><td><code>$a0</code> 流 ID， <code>$a1</code> 正界</td><td><code>$a0</code> 在 [0, 界限) 中。</td></tr>
+    <tr><td>随机浮动</td><td>43</td><td><code>$a0</code> 流ID</td><td><code>$f0</code> 在 [0, 1) 中。</td></tr>
+    <tr><td>随机双</td><td>44</td><td><code>$a0</code> 流ID</td><td><code>$f0/$f1</code> 在 [0, 1) 中。</td></tr>
+  </table>
+  <p>每个整数 id 标识一个独立的确定性流。流包含在导出的运行时状态和后步快照中。</p>
+
+  <h2>对话框</h2>
+  <table class="compact">
+    <tr><th>不。</th><th>服务</th><th>合同</th></tr>
+    <tr><td>50</td><td>确认对话框</td><td><code>$a0</code> 消息；选择返回于 <code>$a0</code> （是 0、否 1、取消 2）。</td></tr>
+    <tr><td>51</td><td>输入整数</td><td><code>$a0</code> 迅速的;值在 <code>$a0</code>，状态在 <code>$a1</code>.</td></tr>
+    <tr><td>52</td><td>输入浮点数</td><td><code>$a0</code> 迅速的;值在 <code>$f0</code>，状态在 <code>$a1</code>.</td></tr>
+    <tr><td>53</td><td>输入双</td><td><code>$a0</code> 迅速的;值在 <code>$f0/$f1</code>，状态在 <code>$a1</code>.</td></tr>
+    <tr><td>54</td><td>输入字符串</td><td><code>$a0</code> 提示， <code>$a1</code> 缓冲区, <code>$a2</code> 最大；状态在 <code>$a1</code>.</td></tr>
+    <tr><td>55–59</td><td>消息对话框</td><td>显示普通、整数、浮点、双精度或字符串消息。服务 55 使用 <code>$a1</code> 对于消息类型。</td></tr>
+  </table>
+  <p>输入状态遵循 MARS 约定：0 成功，-1 无效输入，-2 取消，-3 空输入；字符串输入在截断时也使用 -4。</p>
+
+  <h2>webMARS 图书馆服务</h2>
+  <p>服务 60–103 支持捆绑的 Mini-C 兼容性库。更喜欢库标头，它提供正确的类型和注册协议，而不是直接调用这些数字。</p>
+  <table class="compact">
+    <tr><th>范围</th><th>服务</th></tr>
+    <tr><td>60–64</td><td>刷新、eof、readline、printf、格式</td></tr>
+    <tr><td>65–69</td><td>文件读取、文件关闭、文件关闭、文件结束符、文件读取行</td></tr>
+    <tr><td>70–73</td><td>args_flag、args_int、args_string、args_parse</td></tr>
+    <tr><td>74–84</td><td>字符串长度、索引、连接、子字符串、比较、转换、小写、终止和字符数组桥接</td></tr>
+    <tr><td>85–92</td><td>字符、布尔/整数解析、标记解析和整数到十六进制助手</td></tr>
+    <tr><td>93–100</td><td>图像尺寸、创建、克隆、子图像、加载、保存和数据访问</td></tr>
+    <tr><td>101–103</td><td>C 字符串终止和本机字符串/C 字符串转换</td></tr>
+  </table>
+</body>
+</html>

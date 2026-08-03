@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paramètres webMARS</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Paramètres</h1>
+  <p class="lead">Les paramètres couvrent la présentation des sources, la compatibilité de l'assembleur, la sortie Mini-C, la persistance, l'accès au cloud et les limites d'exécution.</p>
+
+  <h2>Paramètres rapides</h2>
+  <table>
+    <tr><th>Paramètre</th><th>Effet</th></tr>
+    <tr><td>Afficher les étiquettes</td><td>Affiche les étiquettes à côté des adresses dans les vues d'exécution, le cas échéant.</td></tr>
+    <tr><td>Arguments du programme</td><td>Demande des arguments avant une exécution. <code>$a0</code> reçoit argc et <code>$a1</code> reçoit argv ; Mini-C C1-NATIVE expose les mêmes données à <code>main(int argc, char **argv)</code>.</td></tr>
+    <tr><td>Appels système d'entrée contextuelle</td><td>Utilise les boîtes de dialogue de formulaire pour les services d'entrée de console 5, 6, 7, 8 et 12 au lieu du volet Exécuter les E/S.</td></tr>
+    <tr><td>Diviser les messages / Exécuter les E/S</td><td>Affiche les messages de construction et les E/S du programme en même temps.</td></tr>
+    <tr><td>Adresses/valeurs hexadécimales</td><td>Bascule les tables d'exécution entre la présentation hexadécimale et décimale. Cela ne modifie pas les bits stockés.</td></tr>
+  </table>
+
+  <h2>Compatibilité assembleur et exécution</h2>
+  <ul>
+    <li><b>Assembler à l'air libre</b> et <b>Assemblez tous les fichiers</b> automatiser la portée de build sélectionnée.</li>
+    <li><b>Traiter les avertissements comme des erreurs</b> fait échouer l'assemblage des avertissements.</li>
+    <li><b>Commencer par le principal</b> commence au niveau mondial <code>main</code> étiquette lorsqu’elle est présente.</li>
+    <li><b>Instructions étendues (pseudo)</b> active le catalogue de pseudo-instructions affiché dans l'aide.</li>
+    <li><b>Branchement retardé</b> permet un comportement architectural de créneau de retard.</li>
+    <li><b>Code auto-modifiable</b> autorise les écritures dans la mémoire exécutable. Activez-le uniquement pour les programmes qui le nécessitent intentionnellement.</li>
+  </ul>
+
+  <h2>Interface</h2>
+  <p>Sélectionnez le thème de l'interface (Clair ou Foncé), la langue de l'interface utilisateur, la disposition du menu supérieur ou latéral, la taille de la police de l'éditeur, l'espacement des lignes et le comportement de mise en surbrillance. Des interfaces en anglais, espagnol, portugais, chinois mandarin, hindi, arabe, français, bengali, russe et indonésien sont disponibles ; l'aide suit la langue active de l'interface utilisateur. Lors de la première visite, webMARS utilise une langue de navigateur prise en charge ou revient à l'anglais ; une sélection explicite est enregistrée et est prioritaire. Le thème choisi est stocké avec vos préférences et est appliqué à l'ensemble de l'interface, y compris les fenêtres d'outils et d'aide.</p>
+
+  <h2>Mémoire d'exécution &amp;</h2>
+  <table>
+    <tr><th>Préférence</th><th>Gamme / choix</th></tr>
+    <tr><td>Configuration de la mémoire</td><td>Par défaut, données compactes à l'adresse 0 ou texte compact à l'adresse 0.</td></tr>
+    <tr><td>Mémoire maximale</td><td>0,25 à 2 Gio, sous réserve des limites de mémoire pratiques du navigateur.</td></tr>
+    <tr><td>Histoire de recul</td><td>0 à 1 000 000 de pas enregistrés ; par défaut 100.</td></tr>
+    <tr><td>Gestionnaire d'exceptions</td><td>Une adresse MIPS entièrement valide, par défaut <code>0x80000180</code>.</td></tr>
+  </table>
+
+  <h2>Persistance et cloud</h2>
+  <p><b>État du magasin</b> et <b>État de charge</b> gérer un instantané d'exécution local complet. <b>Effacer le stockage local</b> supprime les préférences webMARS, les projets enregistrés, l'état de récupération et les positions des outils après confirmation.</p>
+  <p><b>Serveur Cloud</b> modifie le point de terminaison utilisé par le menu Cloud facultatif. Les informations d'identification et les données du projet sont envoyées uniquement lorsque vous appelez les fonctionnalités cloud.</p>
+
+  <div class="warning">La modification de la carte mémoire ou des options de compatibilité de l'assembleur invalide les hypothèses formulées par un programme déjà assemblé. Remontez après les avoir changés.</div>
+</body>
+</html>

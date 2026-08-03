@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS sejarah</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Sejarah</h1>
+  <p class="lead">webMARS dimulai sebagai port browser dari simulator MARS 4.5 MIPS. Sekarang menggabungkan runtime JavaScript independen, editor, debugger, kompiler Mini-C, alur kerja proyek lokal/cloud, dan alat asli browser.</p>
+
+  <h2>Jalur pengembangan saat ini</h2>
+  <ul>
+    <li><strong>JavaScript-waktu proses saja.</strong> Jalur hybrid/WASM eksperimental telah dihapus setelah pengukuran menunjukkan bahwa jalur tersebut menambah kompleksitas tanpa perbaikan yang berarti untuk beban kerja ini.</li>
+    <li><strong>Kebenaran waktu proses.</strong> Pekerjaan terbaru memperkuat pemesanan doubleword COP1, penyimpanan memori atom, reservasi heap, LL/SC, pengalamatan ketat, tautan cabang tertunda, pembulatan FCSR, kelanjutan pengecualian, dan perilaku Hentikan.</li>
+    <li><strong>Cuplikan status lengkap.</strong> Ekspor/impor dan backstep sekarang memperhitungkan aliran acak, file virtual dan kursor, stdin, argumen program, pegangan gambar, dan titik henti sementara.</li>
+    <li><strong>Observabilitas kinerja.</strong> Aplikasi ini melaporkan waktu Kompilasi, Rakitan, dan Jalankan lokal ditambah perkiraan pemanfaatan JavaScript, sementara eksekusi kecepatan maksimum mengurangi overhead presentasi tanpa membuat alat status runtime kelaparan.</li>
+    <li><strong>Mini-C evolusi.</strong> Subset pengajaran C0 tetap tersedia bersama C1-NATIVE, panggilan o32, string byte, argumen, penunjuk fungsi, proyek multi-file, dan pustaka kompatibilitas.</li>
+    <li><strong>Contohnya sebagai kurikulum.</strong> Contoh Majelis dan C dikatalogkan berdasarkan tujuan, bahasa, dan profil kompiler minimum, dengan varian multibahasa dan proyek multi-file.</li>
+  </ul>
+
+  <h2>Silsilah kompatibilitas</h2>
+  <p>Kosakata instruksi, syscall umum, konsep antarmuka pengguna dan model pengajaran berasal dari aslinya MARS proyek oleh Pete Sanderson dan Kenneth Vollmar. webMARS mempertahankan garis keturunan tersebut sambil mengganti integrasi desktop Java dengan API browser dan mesin eksekusinya sendiri.</p>
+
+  <h2>Catatan versi</h2>
+  <p>Itu <b>webMARS → Catatan Perubahan</b> halaman bantuan berisi catatan proyek versi demi versi yang terperinci. Entri sejarah menggambarkan keadaan pelepasannya; hal tersebut bukanlah janji bahwa subsistem eksperimental akan tetap ada dalam versi saat ini.</p>
+
+  <div class="note">Jika dokumentasi dan entri log perubahan historis berbeda, halaman topik saat ini dan perilaku runtime saat ini akan diutamakan.</div>
+</body>
+</html>

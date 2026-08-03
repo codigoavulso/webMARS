@@ -15,6 +15,41 @@
       "id": "pt",
       "label": "Português",
       "dir": "pt"
+    },
+    {
+      "id": "zh",
+      "label": "简体中文",
+      "dir": "zh"
+    },
+    {
+      "id": "hi",
+      "label": "हिन्दी",
+      "dir": "hi"
+    },
+    {
+      "id": "ar",
+      "label": "العربية",
+      "dir": "ar"
+    },
+    {
+      "id": "fr",
+      "label": "Français",
+      "dir": "fr"
+    },
+    {
+      "id": "bn",
+      "label": "বাংলা",
+      "dir": "bn"
+    },
+    {
+      "id": "ru",
+      "label": "Русский",
+      "dir": "ru"
+    },
+    {
+      "id": "id",
+      "label": "Bahasa Indonesia",
+      "dir": "id"
     }
   ]
 }

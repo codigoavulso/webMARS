@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIPS webMARS 中的异常</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>例外情况</h1>
+  <p class="lead">运行时错误要么将控制权转移到配置的异常处理程序，要么以明确的原因终止运行。已处理的异常可以继续通过 <code>eret</code>.</p>
+
+  <h2>实施的异常代码</h2>
+  <table class="compact">
+    <tr><th>执行代码</th><th>含义</th><th>典型原因</th></tr>
+    <tr><td>4</td><td>加载/获取时的地址错误</td><td>指令地址或负载未对齐；地址在允许的内存映射之外。</td></tr>
+    <tr><td>5</td><td>商店地址错误</td><td>存储目标未对齐或无效。</td></tr>
+    <tr><td>8</td><td>系统调用/运行时服务错误</td><td>输入无效、服务无效、检查堆请求失败或库服务错误。</td></tr>
+    <tr><td>9</td><td>断点</td><td>一个MIPS <code>break</code> 指示。</td></tr>
+    <tr><td>10</td><td>保留指令</td><td>未知或不受支持的编码指令。</td></tr>
+    <tr><td>12</td><td>算术溢出</td><td>检查的算术指令中有符号溢出。</td></tr>
+    <tr><td>13</td><td>陷阱</td><td>陷阱条件评估为真。</td></tr>
+    <tr><td>15</td><td>除以零</td><td>除以零除数。</td></tr>
+  </table>
+
+  <h2>协处理器0状态</h2>
+  <table class="compact">
+    <tr><th>注册</th><th>数量</th><th>使用</th></tr>
+    <tr><td>坏V地址</td><td>8</td><td>虚拟地址出现地址错误。</td></tr>
+    <tr><td>状态</td><td>12</td><td>异常级别和中断控制状态。</td></tr>
+    <tr><td>原因</td><td>13</td><td>异常代码、待处理中断状态和 BD 延迟时隙标志。</td></tr>
+    <tr><td>EPC</td><td>14</td><td>处理程序在更正或前进后返回的地址。</td></tr>
+  </table>
+
+  <h2>处理流程</h2>
+  <ol>
+    <li>运行时根据需要捕获 Cause、EPC 和 BadVAddr 并进入异常级别。</li>
+    <li>如果配置的地址存在可执行处理程序代码 - 通常 <code>0x80000180</code>—PC 转移到那里。</li>
+    <li>处理程序检查 COP0 状态，执行其恢复，在需要时调整 EPC，然后执行 <code>eret</code>.</li>
+    <li>如果不存在处理程序，或者发生无法安全传输的异常，则执行将停止，并且运行结果报告异常。</li>
+  </ol>
+
+  <div class="note"><strong>延迟槽。</strong> 对于分支延迟槽中引发的异常，Cause.BD 被设置，并且 EPC 标识分支指令，而不是延迟槽地址。</div>
+
+  <h2>地址和商店保证</h2>
+  <p>指令目标必须字对齐。检查的多字节存储在提交任何字节之前验证整个目标，因此地址异常不会留下部分写入的字或双字。严格内存模式也适用于部分字操作，例如 <code>LWL</code> 和 <code>LWR</code>.</p>
+</body>
+</html>

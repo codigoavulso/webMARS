@@ -1,0 +1,49 @@
+﻿#use <conio>
+
+struct stats {   //结构体是内存中连续字的块
+  int count;
+  int total;
+};
+
+typedef struct stats* stats_t;   //程序传递地址，而不是整个块
+
+//@requires box != NULL;
+//@requires 0 <= n && n <= \length(values);
+//@ensures \result == box->total;
+int accumulate(stats_t box, int values[], int n) {   //上面的合约由编译器检查，不打印
+  box->count = n;
+  box->total = 0;
+
+  int i = 0;
+  //@loop_invariant 0 <= i && i <= n;
+  //@loop_invariant box->count == n;
+  while (i < n) {
+    box->total += values[i];   //box-> 读取距地址固定偏移处的字段
+    i++;
+  }
+
+  return box->total;
+}
+
+int main(void) {
+  //完整的 C0 核心示例：合约、循环不变式、typedef、struct、alloc、alloc_array 和指针字段更新。
+  int values[4] = {2, 4, 6, 8};
+  int* heap_values = alloc_array(int, 2);
+  heap_values[0] = 10;
+  heap_values[1] = 20;
+  assert(heap_values[1] == 20);
+
+  stats_t box = alloc(struct stats);
+  int total = accumulate(box, values, 4);
+  assert(box->count == 4);
+
+  print("Total: ");
+  printint(total);
+  printchar('\n');
+  print("Count: ");
+  printint(box->count);
+  printchar('\n');
+  return 0;
+}
+
+

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS 工具</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>工具</h1>
+  <p class="lead">从“工具”菜单中打开工具。每个工具都有一个独立的窗口，可以连接到当前的 MIPS 运行时来观察指令、内存或 MMIO 活动。</p>
+
+  <div class="note"><strong>运行前连接。</strong> 即使最大速度执行抑制了编辑器突出显示，连接的工具也会接收完整的运行时快照和跟踪事件。开始不相关的实验时断开或重置工具。</div>
+
+  <h2>架构和性能</h2>
+  <table>
+    <tr><th>工具</th><th>用它来</th></tr>
+    <tr><td>分支历史表模拟器</td><td>比较预测方案并检查分支预测准确性。</td></tr>
+    <tr><td>数据缓存模拟器</td><td>配置缓存并在程序访问数据时测量命中、未命中和局部性。</td></tr>
+    <tr><td>指令计数器</td><td>计算已执行的指令并跟踪当前总数。</td></tr>
+    <tr><td>指令统计</td><td>按指令类别对执行进行分组以了解工作负载构成。</td></tr>
+    <tr><td>内存参考可视化</td><td>可视化空间内存访问模式和热点区域。</td></tr>
+    <tr><td>MIPS X 射线</td><td>探索指令字段、解码和数据路径/控制关系。</td></tr>
+  </table>
+
+  <h2>显示器、终端和设备</h2>
+  <table>
+    <tr><th>工具</th><th>用它来</th></tr>
+    <tr><td>位图显示</td><td>从可配置的内存支持的帧缓冲区渲染像素。</td></tr>
+    <tr><td>位图终端工具</td><td>将基于帧缓冲区的文本终端与键盘输入一起使用。</td></tr>
+    <tr><td>键盘和显示器 MMIO 模拟器</td><td>在标准 MMIO 范围内练习接收器/发送器控制和数据寄存器。</td></tr>
+    <tr><td>TTY 设备 + ANSI 终端</td><td>使用键盘输入、ANSI 渲染和选择加入 xterm 鼠标事件运行终端程序。</td></tr>
+    <tr><td>数字实验室模拟</td><td>驱动七段显示器、键盘输入和相关数字实验室 MMIO。</td></tr>
+    <tr><td>系统时钟和定时器</td><td>驱动一个内存映射定时器，对执行的指令或实际毫秒进行计数，并引发 MARS 定时器中断，以便异常处理程序在每个时钟周期运行。</td></tr>
+    <tr><td>火星机器人</td><td>通过其内存映射接口控制模拟机器人。</td></tr>
+  </table>
+  <div class="note"><strong>MARS-OS TTY 操作系统示例。</strong> 打开多文件示例，连接该工具，编译并运行。它直接启动到 Windows 95 风格的程序管理器；打开 46 个命令 shell 的终端应用程序。开始菜单、窗口和应用程序启动器完全由 MIPS 程序集绘制，并由 xterm SGR 鼠标报告控制。可写的 RAM 磁盘、编辑器、电子表格和 BASIC 解释器仍然可用；编辑器光标和电子表格单元格也接受鼠标点击。</div>
+
+  <h2>学习实用程序</h2>
+  <table>
+    <tr><th>工具</th><th>用它来</th></tr>
+    <tr><td>浮点表示</td><td>转换和检查 IEEE 754 个单精度值、字段和位模式。</td></tr>
+    <tr><td>工具介绍</td><td>了解标准连接、重置和交互生命周期。</td></tr>
+    <tr><td>寻宝游戏</td><td>运行交互式汇编编程挑战。</td></tr>
+    <tr><td>屏幕放大镜</td><td>放大工作区的选定部分以进行演示和访问。</td></tr>
+    <tr><td>堆栈展示器</td><td>逐字跟踪整个地址空间和堆栈：每次调用打开的帧、保存和恢复的寄存器、从段块到单个位的缩放，以及每个 $sp 移动的简单语言日志，并警告经典帧错误。它还通过堆栈感知停止来驱动执行：运行到下一个调用，跳过调用，运行直到当前帧返回，直到 $sp 移动或直到监视的单词更改，并在出现堆栈警告时立即暂停。</td></tr>
+  </table>
+
+  <h2>来自 MIPS 的位图配置</h2>
+  <p>程序可以通过写入相对于活动 MMIO 基础的版本控制块来配置任一位图工具（通常 <code>0xffff0000</code>）。先写所有字段再写 <code>1</code> 到最后的命令；该工具仅在原子提交之后才会更改。</p>
+  <table>
+    <tr><th>偏移量</th><th>价值</th></tr>
+    <tr><td><code>+0x20</code></td><td>签名 <code>0x57424d50</code> (<code>WBMP</code>)</td></tr>
+    <tr><td><code>+0x24</code></td><td>协议版本 <code>1</code></td></tr>
+    <tr><td><code>+0x28</code></td><td>目标： <code>1</code> 显示， <code>2</code> 终端， <code>3</code> 两者</td></tr>
+    <tr><td><code>+0x2c … +0x38</code></td><td>显示宽度、显示高度、单位宽度和单位高度</td></tr>
+    <tr><td><code>+0x3c</code></td><td>帧缓冲区基地址</td></tr>
+    <tr><td><code>+0x40</code></td><td>命令： <code>1</code> 申请， <code>2</code> 清晰的程序配置</td></tr>
+  </table>
+  <p>无效或不完整的块将被忽略。 Backstep、运行时导出和会话恢复保留已提交的配置。这是可选的 webMARS 扩展：MARS 4.5 忽略这些未使用的 MMIO 字，而相同的帧缓冲区代码继续使用手动工具设置。</p>
+
+  <h2>MMIO 安全</h2>
+  <p>MMIO 设备映射到附近 <code>0xffff0000</code>。设备工具和运行时共享这些地址；轮询程序应尊重就绪位，中断驱动程序应安装有效的异常处理程序。重置工具会清除其可视化或设备状态，但不一定会清除已组装的程序。</p>
+</body>
+</html>

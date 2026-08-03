@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS 历史记录</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>历史</h1>
+  <p class="lead">webMARS 最初是 MARS 4.5 MIPS 模拟器的浏览器端口。它现在结合了独立的 JavaScript 运行时、编辑器、调试器、Mini-C 编译器、本地/云项目工作流程和浏览器本机工具。</p>
+
+  <h2>目前发展路线</h2>
+  <ul>
+    <li><strong>JavaScript-仅限运行时。</strong> 测量表明实验性混合/WASM 路径增加了复杂性，但对该工作负载没有带来任何值得的改进，因此被删除。</li>
+    <li><strong>运行时正确性。</strong> 最近的工作强化了双字 COP1 排序、原子内存存储、堆保留、LL/SC、严格寻址、延迟分支链接、FCSR 舍入、异常延续和停止行为。</li>
+    <li><strong>完整的状态快照。</strong> 导出/导入和后退现在考虑随机流、虚拟文件和光标、标准输入、程序参数、图像句柄和断点。</li>
+    <li><strong>性能可观察性。</strong> 该应用程序报告本地编译、汇编和运行计时以及估计的 JavaScript 利用率，而最大速度执行可减少演示开销，而不会导致运行时状态工具匮乏。</li>
+    <li><strong>Mini-C进化。</strong> C0 教学子集与 C1-NATIVE、o32 调用、字节字符串、参数、函数指针、多文件项目和兼容性库一起仍然可用。</li>
+    <li><strong>作为课程的例子。</strong> 汇编和 C 示例按用途、语言和最小编译器配置文件进行分类，并具有多语言变体和多文件项目。</li>
+  </ul>
+
+  <h2>兼容性谱系</h2>
+  <p>指令词汇、常用系统调用、用户界面概念和教学模型均源自原始版本 MARS 皮特·桑德森和肯尼思·沃尔玛的项目。 webMARS 保留了这一血统，同时用浏览器 API 及其自己的执行引擎取代 Java 桌面集成。</p>
+
+  <h2>版本记录</h2>
+  <p>的 <b>webMARS → 变更日志</b> 帮助页面包含详细的逐版本项目记录。历史条目描述了它们的发布状态；它们并不承诺在当前版本中保留实验子系统。</p>
+
+  <div class="note">当文档和历史变更日志条目不同时，当前主题页面和当前运行时行为优先。</div>
+</body>
+</html>

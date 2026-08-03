@@ -2,6 +2,13 @@
   "languages": [
     "en.js",
     "es.js",
-    "pt.js"
+    "pt.js",
+    "zh.js",
+    "hi.js",
+    "ar.js",
+    "fr.js",
+    "bn.js",
+    "ru.js",
+    "id.js"
   ]
 }

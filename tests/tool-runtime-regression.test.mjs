@@ -820,7 +820,7 @@ test("every tool speaks the selected language and refreshes when it changes", as
     getCatalog(code) { return catalogs[code] || null; },
     registerLanguage(code, table) { catalogs[code] = table; }
   };
-  for (const language of ["en", "es", "pt"]) {
+  for (const language of ["en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id"]) {
     const source = await readFile(resolve(projectRoot, "assets", "js", "i18n", `${language}.js`), "utf8");
     vm.runInNewContext(source, { window: { WebMarsI18n: i18n }, globalThis: { WebMarsI18n: i18n } });
   }

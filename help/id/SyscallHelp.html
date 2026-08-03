@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS panggilan sistem</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>panggilan telepon</h1>
+  <p class="lead">Masukkan nomor layanan <code>$v0</code>, tempatkan argumen dalam register yang ditunjukkan di bawah ini, dan jalankan <code>syscall</code>. Kecuali jika baris menyatakan sebaliknya, register selain hasil yang terdokumentasi akan dipertahankan.</p>
+
+  <h2>Konsol, memori, dan file</h2>
+  <table class="compact">
+    <tr><th>Layanan</th><th>Tidak.</th><th>Argumen</th><th>Hasil / perilaku</th></tr>
+    <tr><td>Cetak bilangan bulat</td><td>1</td><td><code>$a0</code> nilai</td><td>Menulis desimal bertanda tangan.</td></tr>
+    <tr><td>Cetak mengapung</td><td>2</td><td><code>$f12</code> nilai</td><td>Menulis presisi tunggal.</td></tr>
+    <tr><td>Cetak ganda</td><td>3</td><td><code>$f12/$f13</code> nilai</td><td>Menulis presisi ganda.</td></tr>
+    <tr><td>Cetak tali</td><td>4</td><td><code>$a0</code> string byte yang diakhiri dengan nol</td><td>Menulis teks.</td></tr>
+    <tr><td>Baca bilangan bulat</td><td>5</td><td>—</td><td><code>$v0</code>; input lengkap harus berupa bilangan bulat yang valid.</td></tr>
+    <tr><td>Baca mengapung</td><td>6</td><td>—</td><td><code>$f0</code>; sampah tambahan ditolak.</td></tr>
+    <tr><td>Baca ganda</td><td>7</td><td>—</td><td><code>$f0/$f1</code>; sampah tambahan ditolak.</td></tr>
+    <tr><td>Baca baris</td><td>8</td><td><code>$a0</code> penyangga, <code>$a1</code> panjang maksimal</td><td>Mengikuti aturan panjang dan terminator gaya fgets.</td></tr>
+    <tr><td>sbrk</td><td>9</td><td><code>$a0</code> jumlah byte non-negatif</td><td><code>$v0</code> alamat tumpukan sebelumnya; diperiksa berdasarkan peta dan batas memori.</td></tr>
+    <tr><td>Keluar</td><td>10</td><td>—</td><td>Berakhir secara normal.</td></tr>
+    <tr><td>Karakter cetak</td><td>11</td><td>byte rendah <code>$a0</code></td><td>Menulis satu karakter.</td></tr>
+    <tr><td>Baca karakter</td><td>12</td><td>—</td><td><code>$v0</code> kode karakter.</td></tr>
+    <tr><td>Buka berkas</td><td>13</td><td><code>$a0</code> nama, <code>$a1</code> bendera</td><td><code>$v0</code> deskriptor atau kesalahan negatif. Tandai: 0 baca, 1 tulis/buat, 9 tambahkan/buat.</td></tr>
+    <tr><td>Baca berkas</td><td>14</td><td><code>$a0</code> fd, <code>$a1</code> penyangga, <code>$a2</code> menghitung</td><td><code>$v0</code> byte dibaca, 0 pada EOF, atau kesalahan negatif.</td></tr>
+    <tr><td>Tulis berkas</td><td>15</td><td><code>$a0</code> fd, <code>$a1</code> penyangga, <code>$a2</code> menghitung</td><td><code>$v0</code> byte tertulis atau kesalahan negatif.</td></tr>
+    <tr><td>Tutup berkas</td><td>16</td><td><code>$a0</code> fd</td><td>Menutup deskriptor file virtual.</td></tr>
+    <tr><td>Keluar dengan kode</td><td>17</td><td><code>$a0</code> kode</td><td>Menghentikan dan mencatat kode.</td></tr>
+  </table>
+  <p>Deskriptor 0, 1 dan 2 adalah stdin, stdout dan stderr. Deskriptor pengguna dimulai dari 3 dan didukung oleh sistem file virtual browser; mereka tidak memberikan akses file host yang tidak dibatasi.</p>
+
+  <h2>Waktu, MIDI dan format angka</h2>
+  <table class="compact">
+    <tr><th>Layanan</th><th>Tidak.</th><th>Argumen</th><th>Hasil / perilaku</th></tr>
+    <tr><td>Waktu sistem</td><td>30</td><td>—</td><td>Rendah 32 bit masuk <code>$a0</code>, tinggi 32 bit <code>$a1</code>, milidetik sejak zaman Unix.</td></tr>
+    <tr><td>MIDI keluar</td><td>31</td><td><code>$a0</code> nada, <code>$a1</code> durasi, <code>$a2</code> instrumen, <code>$a3</code> volume</td><td>Dimulai secara asinkron.</td></tr>
+    <tr><td>Tidur</td><td>32</td><td><code>$a0</code> milidetik</td><td>Menunggu menggunakan waktu browser; Berhenti membatalkan penantian.</td></tr>
+    <tr><td>MIDI keluar sinkron</td><td>33</td><td>sama dengan 31</td><td>Kembali setelah durasi nada.</td></tr>
+    <tr><td>Cetak heksadesimal</td><td>34</td><td><code>$a0</code></td><td>Delapan digit heksadesimal.</td></tr>
+    <tr><td>Cetak biner</td><td>35</td><td><code>$a0</code></td><td>Tiga puluh dua digit biner.</td></tr>
+    <tr><td>Cetak tanpa tanda tangan</td><td>36</td><td><code>$a0</code></td><td>Desimal tak bertanda tangan.</td></tr>
+  </table>
+  <p>MIDI menggunakan Audio Web API. Izin browser, kebijakan putar otomatis, dan pemuatan penjadwal dapat memengaruhi kapan suara dimulai.</p>
+
+  <h2>Aliran acak semu</h2>
+  <table class="compact">
+    <tr><th>Layanan</th><th>Tidak.</th><th>Argumen</th><th>Hasil</th></tr>
+    <tr><td>Tetapkan benih</td><td>40</td><td><code>$a0</code> ID aliran, <code>$a1</code> benih</td><td>Setel aliran itu.</td></tr>
+    <tr><td>bilangan bulat acak</td><td>41</td><td><code>$a0</code> ID aliran</td><td><code>$a0</code> bilangan bulat 32-bit acak.</td></tr>
+    <tr><td>Rentang bilangan bulat acak</td><td>42</td><td><code>$a0</code> ID aliran, <code>$a1</code> terikat positif</td><td><code>$a0</code> di [0, terikat).</td></tr>
+    <tr><td>Pelampung acak</td><td>43</td><td><code>$a0</code> ID aliran</td><td><code>$f0</code> di [0, 1).</td></tr>
+    <tr><td>Ganda acak</td><td>44</td><td><code>$a0</code> ID aliran</td><td><code>$f0/$f1</code> di [0, 1).</td></tr>
+  </table>
+  <p>Setiap id bilangan bulat mengidentifikasi aliran deterministik independen. Aliran disertakan dalam status runtime yang diekspor dan snapshot backstep.</p>
+
+  <h2>Dialog</h2>
+  <table class="compact">
+    <tr><th>Tidak.</th><th>Layanan</th><th>Kontrak</th></tr>
+    <tr><td>50</td><td>Konfirmasikan dialog</td><td><code>$a0</code> pesan; seleksi kembali masuk <code>$a0</code> (Ya 0, Tidak 1, Batal 2).</td></tr>
+    <tr><td>51</td><td>Masukkan bilangan bulat</td><td><code>$a0</code> mengingatkan; nilai dalam <code>$a0</code>, status masuk <code>$a1</code>.</td></tr>
+    <tr><td>52</td><td>Masukan mengapung</td><td><code>$a0</code> mengingatkan; nilai dalam <code>$f0</code>, status masuk <code>$a1</code>.</td></tr>
+    <tr><td>53</td><td>Masukan ganda</td><td><code>$a0</code> mengingatkan; nilai dalam <code>$f0/$f1</code>, status masuk <code>$a1</code>.</td></tr>
+    <tr><td>54</td><td>rangkaian masukan</td><td><code>$a0</code> cepat, <code>$a1</code> penyangga, <code>$a2</code> maksimal; status masuk <code>$a1</code>.</td></tr>
+    <tr><td>55–59</td><td>Dialog pesan</td><td>Tampilkan pesan biasa, bilangan bulat, mengambang, ganda, atau string. Layanan 55 kegunaan <code>$a1</code> untuk jenis pesan.</td></tr>
+  </table>
+  <p>Status masukan mengikuti konvensi MARS: 0 berhasil, −1 masukan tidak valid, −2 batal, dan −3 masukan kosong; input string juga menggunakan −4 saat dipotong.</p>
+
+  <h2>webMARS layanan perpustakaan</h2>
+  <p>Layanan 60–103 mendukung pustaka kompatibilitas Mini-C yang dibundel. Lebih memilih header perpustakaan, yang menyediakan tipe dan protokol register yang benar, daripada memanggil nomor-nomor ini secara langsung.</p>
+  <table class="compact">
+    <tr><th>Jangkauan</th><th>Layanan</th></tr>
+    <tr><td>60–64</td><td>siram, eof, garis baca, printf, format</td></tr>
+    <tr><td>65–69</td><td>file_read, file_closed, file_close, file_eof, file_readline</td></tr>
+    <tr><td>70–73</td><td>args_flag, args_int, args_string, args_parse</td></tr>
+    <tr><td>74–84</td><td>panjang string, pengindeksan, gabung, substring, bandingkan, konversi, huruf kecil, terminasi, dan jembatan char-array</td></tr>
+    <tr><td>85–92</td><td>karakter, penguraian boolean/integer, penguraian token, dan pembantu integer-ke-hex</td></tr>
+    <tr><td>93–100</td><td>dimensi gambar, pembuatan, kloning, subgambar, memuat, menyimpan, dan akses data</td></tr>
+    <tr><td>101–103</td><td>Penghentian string-C dan konversi string-asli/string-C</td></tr>
+  </table>
+</body>
+</html>

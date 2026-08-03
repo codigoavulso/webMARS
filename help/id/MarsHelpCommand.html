@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kompiler Mini-C</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">Kompiler pengajaran bawaan menerjemahkan subset C yang sengaja ditentukan ke rakitan MIPS32 menggunakan konvensi pemanggilan o32. Ini bukan kompiler C ISO untuk tujuan umum.</p>
+
+  <h2>Profil</h2>
+  <table>
+    <tr><th>Profil</th><th>Tujuan</th></tr>
+    <tr><td><code>C0-S0</code> untuk <code>C0-S4</code></td><td>Subset pengajaran kumulatif, berkembang dari ekspresi dan aliran kontrol ke fungsi, array, pointer, struktur, typedefs, kontrak dan perpustakaan.</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>Profil default dan paling mumpuni: beralamat byte <code>char</code>/<code>char *</code>, string asli, <code>argc/argv</code>, penunjuk fungsi dan <code>void *</code>.</td></tr>
+  </table>
+  <p>Jika suatu sumber memerlukan profil yang lebih tinggi, kompilasi akan mengeluarkan profil yang terfokus <code>MC_SUBSET_MISMATCH</code> diagnostik daripada serangkaian kesalahan sekunder.</p>
+
+  <h2>Kompilasi sebuah proyek</h2>
+  <ol class="steps">
+    <li>Pilih profil yang diinginkan dan opsi keluaran <b>Pengaturan → preferensi Mini-C</b>.</li>
+    <li>Buka satu atau lebih <code>.c</code> file dalam proyek yang sama.</li>
+    <li>Pilih <b>Jalankan → Kompilasi C0</b> atau tekan <kbd>F4</kbd>.</li>
+    <li>Tinjau diagnostik dan rakitan MIPS yang dihasilkan. Rakit dan jalankan program yang dihasilkan secara normal.</li>
+  </ol>
+
+  <h2>Konvensi panggilan dan titik masuk</h2>
+  <ul>
+    <li>Argumen yang digunakan <code>$a0</code>–<code>$a3</code>, argumen tambahan menggunakan tumpukan, dan mengembalikan nilai menggunakan <code>$v0</code> (dan <code>$v1</code> jika perlu).</li>
+    <li>Register dan frame tumpukan yang disimpan Callee mengikuti ekspektasi MIPS o32.</li>
+    <li><code>main(void)</code> dan, di C1-NATIVE, <code>main(int argc, char **argv)</code> didukung.</li>
+    <li>Untuk argumen program webMARS, <code>argv[0]</code> adalah token pertama yang diberikan oleh pengguna; tidak ada entri nama otomatis yang dapat dieksekusi.</li>
+  </ul>
+
+  <h2>Header dan perpustakaan yang dibundel</h2>
+  <p>
+    <span class="pill">stdio</span><span class="pill">konio</span><span class="pill">mengajukan</span>
+    <span class="pill">argumen</span><span class="pill">tali</span><span class="pill">string_asli</span>
+    <span class="pill">menguraikan</span><span class="pill">gambar</span><span class="pill">utilitas</span>
+    <span class="pill">acak</span><span class="pill">ctype</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">stddef</span><span class="pill">bitmap_rect</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>Header ini adalah perpustakaan kompatibilitas webMARS yang dibangun di sekitar MIPS syscall dan perangkat. Mereka mengimplementasikan subset yang terdokumentasi, bukan pustaka standar host C lengkap.</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> juga menyediakan <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> dan <code>bitmap_configure_all</code>, memungkinkan program C0 mengirimkan ukuran tampilan, ukuran unit, dan alamat framebuffer ke alat Bitmap.</p>
+
+  <h2>Contoh awal yang bagus</h2>
+  <ul>
+    <li><b>Halo Dunia (C)</b> untuk program lengkap terkecil.</li>
+    <li><b>Mini-C C1 Asli</b> untuk string asli dan perilaku profil saat ini.</li>
+    <li><b>Demo Perpustakaan Argumen</b> untuk <code>argc/argv</code>.</li>
+    <li><b>Statistik Multi-file</b> untuk kompilasi seluruh proyek dan pemanggilan fungsi di seluruh file.</li>
+    <li><b>Dasar-dasar Konsol stdio</b> dan <b>stdio File Pulang Pergi</b> untuk perpustakaan kompatibilitas.</li>
+  </ul>
+
+  <div class="note">Panduan kompiler dalam repositori tetap menjadi referensi bahasa yang normatif dan terperinci. Halaman dalam aplikasi merangkum perilaku yang diperlukan untuk memilih profil dan menjalankan contoh dengan benar.</div>
+</body>
+</html>

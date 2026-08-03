@@ -3,11 +3,12 @@ import test from "node:test";
 import { access, readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const helpBase = resolve(projectRoot, "help");
 const helpSystemPath = resolve(projectRoot, "assets", "js", "app-modules", "15-help-system.js");
-const locales = ["en", "es", "pt"];
+const locales = ["en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id"];
 
 async function exists(path) {
   try {
@@ -42,6 +43,9 @@ test("every localized in-app help page exists and uses current branding", async 
       assert.equal(await exists(path), true, `missing ${locale} help page: ${file}`);
       const html = await readFile(path, "utf8");
       assert.match(html, new RegExp(`<html\\b[^>]*lang="${locale}"`, "i"), `${locale}/${file} must declare ${locale}`);
+      if (locale === "ar") {
+        assert.match(html, /<html\b[^>]*dir="rtl"/i, `ar/${file} must use right-to-left layout`);
+      }
       assert.doesNotMatch(
         html,
         /java\s+-jar\s+mars\.jar|J2SE Java Runtime Environment|Java Swing/i,
@@ -73,7 +77,7 @@ test("all local links and assets in localized help resolve", async () => {
   }
 });
 
-test("Spanish and Portuguese pages preserve the English document structure", async () => {
+test("localized pages preserve the English document structure", async () => {
   const helpSystem = await readFile(helpSystemPath, "utf8");
   const files = currentHelpHtmlFiles(helpSystem).filter((file) => file !== "MIPSInstructionSetSong.html");
   const structuralTags = ["h1", "h2", "h3", "table", "pre"];
@@ -84,7 +88,7 @@ test("Spanish and Portuguese pages preserve the English document structure", asy
       english.match(new RegExp(`<${tag}\\b`, "gi")) || []
     ).length);
 
-    for (const locale of ["es", "pt"]) {
+    for (const locale of locales.filter((language) => language !== "en")) {
       const localized = await readFile(resolve(helpBase, locale, file), "utf8");
       const localizedCounts = structuralTags.map((tag) => (
         localized.match(new RegExp(`<${tag}\\b`, "gi")) || []
@@ -126,7 +130,7 @@ test("localized syscall help covers standard and webMARS library services", asyn
   }
 });
 
-test("Spanish and Portuguese help labels are integrated into the UI catalogs", async () => {
+test("localized help labels are integrated into every UI catalog", async () => {
   const expected = {
     es: ["Ayuda de webMARS", "Espacio de trabajo", "Primeros pasos", "Ejecutar y depurar", "Límites y compatibilidad", "Soporte"],
     pt: ["Ajuda do webMARS", "Área de trabalho", "Começar", "Executar e depurar", "Limites e compatibilidade", "Suporte"]
@@ -139,13 +143,40 @@ test("Spanish and Portuguese help labels are integrated into the UI catalogs", a
     }
   }
 
+  const helpLabels = [
+    "webMARS Help",
+    "Workspace",
+    "Getting Started",
+    "Run & Debug",
+    "Limits & Compatibility",
+    "Support"
+  ];
+  for (const locale of locales.filter((language) => !["en", "es", "pt"].includes(language))) {
+    let catalog = null;
+    const i18n = { registerLanguage(_language, registered) { catalog = registered; } };
+    const source = await readFile(resolve(projectRoot, "assets", "js", "i18n", `${locale}.js`), "utf8");
+    vm.runInNewContext(source, { window: { WebMarsI18n: i18n }, globalThis: { WebMarsI18n: i18n } });
+    for (const label of helpLabels) {
+      assert.ok(catalog?.[label]?.trim(), `${locale} catalog is missing '${label}'`);
+      assert.notEqual(catalog[label], label, `${locale} catalog still uses English for '${label}'`);
+    }
+    assert.match(catalog["webMARS Help"], /webMARS/, `${locale} must preserve the webMARS brand`);
+  }
+
   const manifest = JSON.parse(await readFile(resolve(helpBase, "languages.json"), "utf8"));
   assert.deepEqual(
     manifest.languages.map(({ id, label, dir }) => ({ id, label, dir })),
     [
       { id: "en", label: "English", dir: "en" },
       { id: "es", label: "Español", dir: "es" },
-      { id: "pt", label: "Português", dir: "pt" }
+      { id: "pt", label: "Português", dir: "pt" },
+      { id: "zh", label: "简体中文", dir: "zh" },
+      { id: "hi", label: "हिन्दी", dir: "hi" },
+      { id: "ar", label: "العربية", dir: "ar" },
+      { id: "fr", label: "Français", dir: "fr" },
+      { id: "bn", label: "বাংলা", dir: "bn" },
+      { id: "ru", label: "Русский", dir: "ru" },
+      { id: "id", label: "Bahasa Indonesia", dir: "id" }
     ]
   );
 });

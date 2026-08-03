@@ -6,7 +6,9 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.5.1";
+const expectedReleaseVersion = "0.5.2";
+const languages = ["en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id"];
+const localizedLanguages = languages.filter((language) => language !== "en");
 
 async function exists(path) {
   try {
@@ -61,7 +63,7 @@ function placeholders(value) {
     .sort();
 }
 
-test("0.5.1 version is coherent across runtime and release metadata", async () => {
+test("0.5.2 version is coherent across runtime and release metadata", async () => {
   const packageJson = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
   const packageLock = JSON.parse(await readFile(resolve(projectRoot, "package-lock.json"), "utf8"));
   const appVersion = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");
@@ -75,7 +77,7 @@ test("0.5.1 version is coherent across runtime and release metadata", async () =
   assert.match(readme, new RegExp(`^## Highlights in v${expectedReleaseVersion.replaceAll(".", "\\.")}$`, "m"));
   assert.match(readme, new RegExp(`^- \`v${expectedReleaseVersion.replaceAll(".", "\\.")}\``, "m"));
 
-  for (const language of ["en", "es", "pt"]) {
+  for (const language of languages) {
     const changelog = await readFile(resolve(projectRoot, "help", language, "changelog.html"), "utf8");
     const firstHeading = changelog.match(/<h2>([\s\S]*?)<\/h2>/i)?.[1] || "";
     assert.match(firstHeading, new RegExp(`^${expectedReleaseVersion.replaceAll(".", "\\.")}\\b`), `${language} changelog`);
@@ -112,10 +114,9 @@ test("release shell and localized toolbar labels are complete", async () => {
   );
   const staticMenuLabels = [...menuSource.matchAll(/\blabel:\s*"([^"]+)"/g)]
     .map((match) => match[1]);
-  const catalogs = {
-    es: await loadCatalog("es", english),
-    pt: await loadCatalog("pt", english)
-  };
+  const catalogs = Object.fromEntries(await Promise.all(
+    localizedLanguages.map(async (language) => [language, await loadCatalog(language, english)])
+  ));
   const required = {
     es: {
       Compile: "Compilar",
@@ -132,7 +133,14 @@ test("release shell and localized toolbar labels are complete", async () => {
       "Delayed branching": "Desvios retardados",
       "Self-modifying code": "Código automodificável",
       "Clear localStorage and loaded states...": "Limpar armazenamento local e estados carregados..."
-    }
+    },
+    zh: { Bench: "性能测试", Assemble: "汇编", Go: "继续运行", Step: "单步执行", Backstep: "撤销单步" },
+    hi: { Run: "चलाएँ", Bench: "प्रदर्शन परीक्षण", Assemble: "असेंबल करें", Go: "चलाएँ", Step: "एक चरण", Backstep: "पिछला चरण" },
+    ar: { Bench: "اختبار الأداء", Compile: "ترجمة", Assemble: "تجميع", Go: "تشغيل", Step: "خطوة واحدة", Backstep: "خطوة للخلف" },
+    fr: { View: "Affichage", Run: "Exécuter", Bench: "Performances", Go: "Continuer", Step: "Pas à pas", Backstep: "Revenir d’un pas" },
+    bn: { Bench: "কর্মক্ষমতা পরীক্ষা", Assemble: "অ্যাসেম্বল", Go: "চালান", Step: "এক ধাপ", Backstep: "এক ধাপ পিছনে" },
+    ru: { View: "Вид", Run: "Выполнение", Bench: "Тесты производительности", Go: "Продолжить", Backstep: "Шаг назад" },
+    id: { File: "Berkas", Bench: "Uji kinerja", Assemble: "Rakit", Go: "Jalankan", Backstep: "Langkah mundur" }
   };
 
   for (const label of staticMenuLabels) {
@@ -147,7 +155,7 @@ test("release shell and localized toolbar labels are complete", async () => {
         `${language} changed placeholders for '${key}'`
       );
     }
-    for (const [key, value] of Object.entries(required[language])) {
+    for (const [key, value] of Object.entries(required[language] || {})) {
       assert.equal(catalog[key], value, `${language} must translate '${key}'`);
     }
   }
@@ -156,7 +164,7 @@ test("release shell and localized toolbar labels are complete", async () => {
 test("no i18n catalog declares the same key twice", async () => {
   // A repeated key is silently dropped by the object literal, so a translation
   // can be edited in the file and still never reach the UI.
-  for (const language of ["en", "es", "pt"]) {
+  for (const language of languages) {
     const source = await readFile(resolve(projectRoot, "assets", "js", "i18n", `${language}.js`), "utf8");
     const seen = new Set();
     const duplicated = [];
@@ -169,9 +177,26 @@ test("no i18n catalog declares the same key twice", async () => {
   }
 });
 
+test("generated localizations contain no internal translation markers", async () => {
+  const textExtensions = new Set([".asm", ".c", ".css", ".h", ".html", ".js", ".json", ".s", ".txt"]);
+  for (const language of localizedLanguages) {
+    const roots = [
+      resolve(projectRoot, "assets", "js", "i18n", `${language}.js`),
+      ...await walk(resolve(projectRoot, "examples", language)),
+      ...await walk(resolve(projectRoot, "help", language))
+    ];
+    for (const path of roots) {
+      const extension = path.slice(path.lastIndexOf(".")).toLowerCase();
+      if (!textExtensions.has(extension)) continue;
+      const source = await readFile(path, "utf8");
+      assert.doesNotMatch(source, /WM(?:TOKEN|SEP)\d*|\[\[\[/i, `${language} contains a leaked translation marker in ${relative(projectRoot, path)}`);
+    }
+  }
+});
+
 test("assembler directive diagnostics are translated, not left in English", async () => {
-  // Spanish and Portuguese seed themselves from the English catalog, so a
-  // missing translation is present as a key and silently shows English text.
+  // A missing translation can silently show English text even when catalog
+  // parity is otherwise complete.
   // These are the messages a student hits first when a directive is malformed.
   const directiveDiagnostics = [
     "\"{directive}\" directive is invalid or not implemented in MARS",
@@ -187,7 +212,7 @@ test("assembler directive diagnostics are translated, not left in English", asyn
   ];
 
   const english = await loadCatalog("en");
-  for (const language of ["es", "pt"]) {
+  for (const language of localizedLanguages) {
     const catalog = await loadCatalog(language, english);
     for (const key of directiveDiagnostics) {
       assert.ok(Object.hasOwn(english, key), `English catalog is missing '${key}'`);
@@ -206,7 +231,7 @@ test("localized MIPS reference catalogs do not fall back to English", async () =
   );
   const sections = ["basicInstructions", "extendedInstructions", "directives"];
 
-  for (const language of ["es", "pt"]) {
+  for (const language of localizedLanguages) {
     const localized = JSON.parse(
       await readFile(resolve(projectRoot, "help", language, "help-reference.json"), "utf8")
     );
@@ -234,7 +259,7 @@ test("the document language follows the selected interface language", async () =
   const source = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "00-i18n.js"), "utf8");
   const values = new Map([["webmars-language-v1", "pt"]]);
   const sandbox = {
-    document: { documentElement: { lang: "en" } },
+    document: { documentElement: { lang: "en", dir: "ltr" } },
     localStorage: {
       getItem(key) {
         return values.get(String(key)) ?? null;
@@ -252,6 +277,36 @@ test("the document language follows the selected interface language", async () =
   assert.equal(sandbox.document.documentElement.lang, "pt");
   assert.equal(sandbox.WebMarsI18n.setLanguage("es"), true);
   assert.equal(sandbox.document.documentElement.lang, "es");
+  assert.equal(sandbox.document.documentElement.dir, "ltr");
+  assert.equal(sandbox.WebMarsI18n.setLanguage("ar"), true);
+  assert.equal(sandbox.document.documentElement.lang, "ar");
+  assert.equal(sandbox.document.documentElement.dir, "rtl");
+});
+
+test("the first visit follows a supported browser language and otherwise uses English", async () => {
+  const source = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "00-i18n.js"), "utf8");
+  const boot = (browserLanguages, storedLanguage = null) => {
+    const values = new Map(storedLanguage ? [["webmars-language-v1", storedLanguage]] : []);
+    const sandbox = {
+      document: { documentElement: { lang: "en", dir: "ltr" } },
+      navigator: { languages: browserLanguages, language: browserLanguages[0] || "" },
+      localStorage: {
+        getItem(key) { return values.get(String(key)) ?? null; },
+        setItem(key, value) { values.set(String(key), String(value)); }
+      },
+      CustomEvent: class CustomEvent {},
+      dispatchEvent() {}
+    };
+    sandbox.window = sandbox;
+    vm.runInNewContext(source, sandbox, { filename: "00-i18n.js" });
+    return sandbox;
+  };
+
+  assert.equal(boot(["fr-CA", "en-US"]).WebMarsI18n.getLanguage(), "fr");
+  assert.equal(boot(["de-DE", "ar-EG"]).WebMarsI18n.getLanguage(), "ar");
+  assert.equal(boot(["zh-Hant-HK"]).WebMarsI18n.getLanguage(), "zh");
+  assert.equal(boot(["de-DE", "ja-JP"]).WebMarsI18n.getLanguage(), "en");
+  assert.equal(boot(["fr-FR"], "pt-PT").WebMarsI18n.getLanguage(), "pt");
 });
 
 test("cloud authentication is restored automatically after a page reload", async () => {

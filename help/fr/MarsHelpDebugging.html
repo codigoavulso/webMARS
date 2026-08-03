@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exécuter et déboguer</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Exécutez le débogage &amp;</h1>
+  <p class="lead">Le menu Exécuter contrôle un moteur JavaScript MIPS partagé par les registres, les vues mémoire, le débogueur et les outils connectés.</p>
+
+  <h2>Contrôles d'exécution</h2>
+  <table>
+    <tr><th>Contrôle</th><th>Signification</th></tr>
+    <tr><td>Allez</td><td>S'exécute jusqu'à la fin normale, un point d'arrêt, un appel système en attente d'une entrée, une exception non gérée, une limite, une pause ou un arrêt.</td></tr>
+    <tr><td>Pause</td><td>Suspend une exécution active tout en préservant la machine afin qu'elle puisse continuer.</td></tr>
+    <tr><td>Arrêter</td><td>Termine l'exécution et annule le travail asynchrone en attente, tel qu'un long appel système Sleep. Un programme arrêté ne reprend pas.</td></tr>
+    <tr><td>Étape</td><td>Exécute une instruction. Après un arrêt au point d'arrêt, le Go ou le Step suivant franchit ce point d'arrêt une fois, il ne s'arrête donc pas immédiatement à la même adresse.</td></tr>
+    <tr><td>Recul</td><td>Restaure l'instantané d'exécution enregistré précédent, jusqu'à la profondeur d'historique configurée.</td></tr>
+    <tr><td>Réinitialiser</td><td>Renvoie le programme assemblé à son état machine initial.</td></tr>
+  </table>
+
+  <h2>Points d'arrêt et suivi des sources</h2>
+  <p>Basculez un point d'arrêt dans la gouttière de l'éditeur à côté d'une ligne source exécutable. Les points d'arrêt sont stockés dans l'état d'exécution et survivent à l'aller-retour normal d'exportation/importation. Les pseudo-instructions peuvent se développer en plusieurs instructions de base ; le pas à pas suit les instructions machine générées tandis que la mise en évidence de la source reste associée à la ligne d'origine.</p>
+
+  <h2>Bande de vitesse et de performance</h2>
+  <p>Le contrôle de la vitesse de course va des taux de pas interactifs à la vitesse maximale. À vitesse maximale, webMARS réduit le travail coûteux de mise en surbrillance de l'éditeur et de défilement automatique, mais les outils continuent de recevoir des instantanés d'exécution complets et des informations de trace.</p>
+  <p>La bande de référence compacte indique le timing récent de compilation, d'assemblage et d'exécution ainsi qu'un pourcentage d'utilisation estimé de JavaScript CPU. Les mesures sont locales et volatiles : elles sont destinées à comparer les charges de travail et les changements d'algorithmes, et non à mesurer les processus du système d'exploitation.</p>
+
+  <h2>Branches retardées et exceptions</h2>
+  <p>Lorsque le branchement retardé est activé, l'instruction qui suit un branchement ou un saut est l'instruction de créneau de retard et le magasin d'instructions de liaison. <code>PC + 8</code>. Les exceptions déclenchées dans un créneau de retard définissent le bit BD de cause COP0 et enregistrent l'adresse de branchement dans EPC.</p>
+  <p>Si un gestionnaire d'exceptions valide existe à l'adresse du gestionnaire configuré, l'exécution y est transférée et peut revenir avec <code>eret</code>. Sinon, l'exécution s'arrête avec une raison et un diagnostic explicites.</p>
+
+  <div class="note"><strong>Portée en arrière.</strong> Les instantanés incluent les registres, la mémoire, les points d'arrêt, les flux aléatoires, les positions des fichiers, les entrées en attente, les arguments du programme et les poignées d'image du périphérique. Les historiques volumineux consomment de la mémoire, alors adaptez la limite à l'exercice.</div>
+</body>
+</html>

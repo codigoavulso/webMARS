@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C संकलक</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">अंतर्निहित शिक्षण कंपाइलर ओ32 कॉलिंग कन्वेंशन का उपयोग करके जानबूझकर परिभाषित सी सबसेट को MIPS32 असेंबली में अनुवादित करता है। यह एक सामान्य प्रयोजन वाला ISO C कंपाइलर नहीं है।</p>
+
+  <h2>प्रोफाइल</h2>
+  <table>
+    <tr><th>प्रोफाइल</th><th>प्रयोजन</th></tr>
+    <tr><td><code>C0-S0</code> को <code>C0-S4</code></td><td>संचयी शिक्षण उपसमुच्चय, अभिव्यक्ति और नियंत्रण प्रवाह से कार्यों, सरणियों, संकेतकों, संरचनाओं, टाइपडिफ़्स, अनुबंधों और पुस्तकालयों तक प्रगति।</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>डिफ़ॉल्ट, सबसे सक्षम प्रोफ़ाइल: बाइट-एड्रेस्ड <code>char</code>/<code>char *</code>, देशी तार, <code>argc/argv</code>, फ़ंक्शन पॉइंटर्स और <code>void *</code>.</td></tr>
+  </table>
+  <p>यदि किसी स्रोत को उच्च प्रोफ़ाइल की आवश्यकता होती है, तो संकलन एक केंद्रित का उत्सर्जन करता है <code>MC_SUBSET_MISMATCH</code> द्वितीयक त्रुटियों के समूह के बजाय निदान।</p>
+
+  <h2>एक प्रोजेक्ट संकलित करें</h2>
+  <ol class="steps">
+    <li>इसमें वांछित प्रोफ़ाइल और आउटपुट विकल्प चुनें <b>सेटिंग्स → Mini-C प्राथमिकताएँ</b>.</li>
+    <li>एक या अधिक खोलें <code>.c</code> एक ही प्रोजेक्ट में फ़ाइलें।</li>
+    <li>चयन करें <b>चलाएँ → C0 संकलित करें</b> या दबाएँ <kbd>F4</kbd>.</li>
+    <li>निदान की समीक्षा करें और MIPS असेंबली तैयार करें। जनरेट किए गए प्रोग्राम को सामान्य रूप से असेंबल करें और चलाएं।</li>
+  </ol>
+
+  <h2>कॉलिंग कन्वेंशन और प्रवेश बिंदु</h2>
+  <ul>
+    <li>तर्क प्रयोग <code>$a0</code>–<code>$a3</code>, अतिरिक्त तर्क स्टैक का उपयोग करते हैं, और वापसी मान का उपयोग करते हैं <code>$v0</code> (और <code>$v1</code> जहां उपयुक्त हो)।</li>
+    <li>कैली द्वारा सहेजे गए रजिस्टर और स्टैक फ़्रेम MIPS o32 अपेक्षाओं का पालन करते हैं।</li>
+    <li><code>main(void)</code> और, C1-NATIVE में, <code>main(int argc, char **argv)</code> समर्थित हैं.</li>
+    <li>webMARS प्रोग्राम तर्कों के लिए, <code>argv[0]</code> उपयोगकर्ता द्वारा आपूर्ति किया गया पहला टोकन है; कोई स्वचालित निष्पादन योग्य-नाम प्रविष्टि नहीं है.</li>
+  </ul>
+
+  <h2>बंडल हेडर और लाइब्रेरीज़</h2>
+  <p>
+    <span class="pill">stdio</span><span class="pill">कोनियो</span><span class="pill">फ़ाइल</span>
+    <span class="pill">तर्क</span><span class="pill">स्ट्रिंग</span><span class="pill">स्ट्रिंग_नेटिव</span>
+    <span class="pill">पार्स करना</span><span class="pill">img</span><span class="pill">उपयोग</span>
+    <span class="pill">रैंड</span><span class="pill">ctype</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">stddef</span><span class="pill">बिटमैप_रेक्ट</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">ट्टी</span>
+  </p>
+  <p>ये हेडर webMARS संगतता लाइब्रेरी हैं जो MIPS सिस्कॉल और डिवाइस के आसपास बनाई गई हैं। वे अपने प्रलेखित उपसमुच्चय को लागू करते हैं, न कि पूर्ण होस्ट सी मानक लाइब्रेरी को।</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> भी प्रदान करता है <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> और <code>bitmap_configure_all</code>, C0 प्रोग्राम को अपने डिस्प्ले आकार, यूनिट आकार और फ़्रेमबफ़र पते को बिटमैप टूल पर भेजने की अनुमति देता है।</p>
+
+  <h2>अच्छे आरंभिक उदाहरण</h2>
+  <ul>
+    <li><b>हेलो वर्ल्ड (सी)</b> सबसे छोटे संपूर्ण कार्यक्रम के लिए.</li>
+    <li><b>Mini-C C1 मूल निवासी</b> देशी स्ट्रिंग्स और वर्तमान प्रोफ़ाइल व्यवहार के लिए।</li>
+    <li><b>तर्क लाइब्रेरी डेमो</b> के लिए <code>argc/argv</code>.</li>
+    <li><b>बहु-फ़ाइल सांख्यिकी</b> प्रोजेक्ट-व्यापी संकलन और फ़ाइलों में फ़ंक्शन कॉल के लिए।</li>
+    <li><b>stdio कंसोल मूल बातें</b> और <b>stdio फ़ाइल राउंडट्रिप</b> अनुकूलता पुस्तकालयों के लिए.</li>
+  </ul>
+
+  <div class="note">रिपॉजिटरी में कंपाइलर मैनुअल मानक, विस्तृत भाषा संदर्भ बना हुआ है। इन-ऐप पेज प्रोफ़ाइल चुनने और उदाहरणों को सही ढंग से चलाने के लिए आवश्यक व्यवहारों का सारांश देता है।</div>
+</body>
+</html>

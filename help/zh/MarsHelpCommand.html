@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C 编译器</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">内置教学编译器使用 o32 调用约定将故意定义的 C 子集转换为 MIPS32 程序集。它不是通用的 ISO C 编译器。</p>
+
+  <h2>型材</h2>
+  <table>
+    <tr><th>公司简介</th><th>目的</th></tr>
+    <tr><td><code>C0-S0</code> 到 <code>C0-S4</code></td><td>累积教学子集，从表达式和控制流进展到函数、数组、指针、结构、typedef、契约和库。</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>默认的、功能最强大的配置文件：字节寻址 <code>char</code>/<code>char *</code>, 原生字符串, <code>argc/argv</code>、函数指针和 <code>void *</code>.</td></tr>
+  </table>
+  <p>如果源需要更高的配置文件，编译会发出一个集中的 <code>MC_SUBSET_MISMATCH</code> 诊断而不是一连串的次要错误。</p>
+
+  <h2>编译一个项目</h2>
+  <ol class="steps">
+    <li>在中选择所需的配置文件和输出选项 <b>设置 → Mini-C 首选项</b>.</li>
+    <li>打开一个或多个 <code>.c</code> 同一项目中的文件。</li>
+    <li>选择 <b>运行→编译C0</b> 或按 <kbd>F4</kbd>.</li>
+    <li>查看诊断并生成 MIPS 程序集。正常编译并运行生成的程序。</li>
+  </ol>
+
+  <h2>调用约定和入口点</h2>
+  <ul>
+    <li>参数使用 <code>$a0</code>–<code>$a3</code>，附加参数使用堆栈，返回值使用 <code>$v0</code> （和 <code>$v1</code> 在适当的情况下）。</li>
+    <li>被调用者保存的寄存器和堆栈帧遵循 MIPS o32 期望。</li>
+    <li><code>main(void)</code> 并且，在 C1-NATIVE 中， <code>main(int argc, char **argv)</code> 都支持。</li>
+    <li>对于 webMARS 程序参数， <code>argv[0]</code> 是用户提供的第一个令牌；没有自动的可执行文件名称条目。</li>
+  </ul>
+
+  <h2>捆绑的标头和库</h2>
+  <p>
+    <span class="pill">标准输入输出</span><span class="pill">科尼奥</span><span class="pill">文件</span>
+    <span class="pill">参数</span><span class="pill">字符串</span><span class="pill">字符串本地</span>
+    <span class="pill">解析</span><span class="pill">图像</span><span class="pill">实用程序</span>
+    <span class="pill">兰特</span><span class="pill">类型</span><span class="pill">标准库</span>
+    <span class="pill">标准布尔</span><span class="pill">标准定义</span><span class="pill">位图矩形</span>
+    <span class="pill">位图_ascii</span><span class="pill">终端</span>
+  </p>
+  <p>这些标头是 webMARS 围绕兼容性库构建 MIPS 系统调用和设备。他们实现了记录的子集，而不是完整的主机 C 标准库。</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> 还提供 <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> 和 <code>bitmap_configure_all</code>，允许 C0 程序将其显示大小、单元大小和帧缓冲区地址发送到位图工具。</p>
+
+  <h2>良好的起始示例</h2>
+  <ul>
+    <li><b>你好世界（C）</b> 为最小的完整程序。</li>
+    <li><b>Mini-C C1 本机</b> 用于本机字符串和当前配置文件行为。</li>
+    <li><b>参数库演示</b> 为了 <code>argc/argv</code>.</li>
+    <li><b>多文件统计</b> 用于项目范围的编译和跨文件的函数调用。</li>
+    <li><b>stdio 控制台基础知识</b> 和 <b>stdio 文件往返</b> 对于兼容性库。</li>
+  </ul>
+
+  <div class="note">存储库中的编译器手册仍然是规范的、详细的语言参考。应用程序内页面总结了选择配置文件并正确运行示例所需的行为。</div>
+</body>
+</html>

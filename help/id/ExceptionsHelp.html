@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIPS pengecualian di webMARS</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Pengecualian</h1>
+  <p class="lead">Kesalahan waktu proses mentransfer kontrol ke pengendali pengecualian yang dikonfigurasi atau menghentikan proses dengan alasan yang jelas. Pengecualian yang ditangani dapat terus berlanjut <code>eret</code>.</p>
+
+  <h2>Kode pengecualian yang diterapkan</h2>
+  <table class="compact">
+    <tr><th>Kode Kecuali</th><th>Artinya</th><th>Penyebab khas</th></tr>
+    <tr><td>4</td><td>Mengatasi kesalahan saat memuat/mengambil</td><td>Alamat atau muatan instruksi tidak selaras; alamat di luar peta memori yang diizinkan.</td></tr>
+    <tr><td>5</td><td>Kesalahan alamat di toko</td><td>Tujuan toko tidak selaras atau tidak valid.</td></tr>
+    <tr><td>8</td><td>Kesalahan layanan syscall/runtime</td><td>Masukan tidak valid, layanan tidak valid, permintaan tumpukan gagal diperiksa, atau kesalahan layanan perpustakaan.</td></tr>
+    <tr><td>9</td><td>Titik putus</td><td>Sebuah MIPS <code>break</code> instruksi.</td></tr>
+    <tr><td>10</td><td>Instruksi yang dipesan</td><td>Instruksi yang dikodekan tidak dikenal atau tidak didukung.</td></tr>
+    <tr><td>12</td><td>Luapan aritmatika</td><td>Overflow yang ditandatangani dalam instruksi aritmatika yang diperiksa.</td></tr>
+    <tr><td>13</td><td>Perangkap</td><td>Kondisi jebakan bernilai benar.</td></tr>
+    <tr><td>15</td><td>Bagilah dengan nol</td><td>Pembagian dengan pembagi nol.</td></tr>
+  </table>
+
+  <h2>Koprosesor 0 status</h2>
+  <table class="compact">
+    <tr><th>Daftar</th><th>Nomor</th><th>Gunakan</th></tr>
+    <tr><td>Addr Buruk</td><td>8</td><td>Kesalahan alamat virtual karena kesalahan alamat.</td></tr>
+    <tr><td>Status</td><td>12</td><td>Tingkat pengecualian dan status kontrol interupsi.</td></tr>
+    <tr><td>Sebab</td><td>13</td><td>Kode pengecualian, status interupsi tertunda, dan tanda slot penundaan BD.</td></tr>
+    <tr><td>EPC</td><td>14</td><td>Alamat asal pawang kembali setelah mengoreksi atau memajukannya.</td></tr>
+  </table>
+
+  <h2>Aliran pengendali</h2>
+  <ol>
+    <li>Runtime menangkap Penyebab, EPC dan BadVAddr sebagaimana mestinya dan memasuki tingkat pengecualian.</li>
+    <li>Jika kode pengendali yang dapat dieksekusi ada di alamat yang dikonfigurasi—biasanya <code>0x80000180</code>—PC mentransfer ke sana.</li>
+    <li>Handler memeriksa status COP0, melakukan pemulihannya, menyesuaikan EPC bila diperlukan, dan mengeksekusi <code>eret</code>.</li>
+    <li>Jika tidak ada pengendali yang ada, atau terjadi pengecualian yang tidak dapat ditransfer dengan aman, eksekusi dihentikan dan hasil Jalankan melaporkan pengecualian tersebut.</li>
+  </ol>
+
+  <div class="note"><strong>Slot penundaan.</strong> Untuk pengecualian yang muncul di slot penundaan cabang, Cause.BD diatur dan EPC mengidentifikasi instruksi cabang, bukan alamat slot penundaan.</div>
+
+  <h2>Garansi alamat dan toko</h2>
+  <p>Target instruksi harus selaras dengan kata-kata. Penyimpanan multi-byte yang diperiksa memvalidasi seluruh tujuan sebelum melakukan byte apa pun, sehingga pengecualian alamat tidak dapat meninggalkan kata atau kata ganda yang ditulis sebagian. Mode memori yang ketat juga berlaku untuk operasi sebagian kata seperti <code>LWL</code> dan <code>LWR</code>.</p>
+</body>
+</html>

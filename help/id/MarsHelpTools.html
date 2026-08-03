@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS alat</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Alat</h1>
+  <p class="lead">Buka alat dari menu Alat. Setiap alat memiliki jendela independen dan dapat terhubung ke runtime MIPS saat ini untuk mengamati instruksi, memori, atau aktivitas MMIO.</p>
+
+  <div class="note"><strong>Hubungkan sebelum dijalankan.</strong> Alat yang terhubung menerima snapshot runtime lengkap dan peristiwa pelacakan bahkan ketika eksekusi kecepatan maksimum menekan penyorotan editor. Putuskan sambungan atau setel ulang alat saat memulai eksperimen yang tidak terkait.</div>
+
+  <h2>Arsitektur dan kinerja</h2>
+  <table>
+    <tr><th>Alat</th><th>Gunakan untuk</th></tr>
+    <tr><td>Simulator Tabel Sejarah Cabang</td><td>Bandingkan skema prediksi dan periksa akurasi prediksi cabang.</td></tr>
+    <tr><td>Simulator Tembolok Data</td><td>Konfigurasikan cache dan ukur hit, miss, dan lokalitas saat program mengakses data.</td></tr>
+    <tr><td>Penghitung Instruksi</td><td>Hitung instruksi yang dijalankan dan ikuti total saat ini.</td></tr>
+    <tr><td>Statistik Instruksi</td><td>Eksekusi kelompok berdasarkan kategori instruksi untuk memahami komposisi beban kerja.</td></tr>
+    <tr><td>Visualisasi Referensi Memori</td><td>Visualisasikan pola akses memori spasial dan wilayah panas.</td></tr>
+    <tr><td>MIPS Sinar-X</td><td>Jelajahi bidang instruksi, decoding, dan hubungan jalur data/kontrol.</td></tr>
+  </table>
+
+  <h2>Layar, terminal, dan perangkat</h2>
+  <table>
+    <tr><th>Alat</th><th>Gunakan untuk</th></tr>
+    <tr><td>Tampilan Bitmap</td><td>Render piksel dari framebuffer yang didukung memori yang dapat dikonfigurasi.</td></tr>
+    <tr><td>Alat Terminal Bitmap</td><td>Gunakan terminal teks berbasis framebuffer bersama dengan input keyboard.</td></tr>
+    <tr><td>Keyboard dan Tampilan MMIO Simulator</td><td>Menjalankan kontrol penerima/pemancar dan register data dalam rentang standar MMIO.</td></tr>
+    <tr><td>TTY Perangkat + ANSI Terminal</td><td>Jalankan program terminal dengan input keyboard, rendering ANSI dan ikut serta dalam acara mouse xterm.</td></tr>
+    <tr><td>Sim Lab Digital</td><td>Drive tampilan tujuh segmen, input keypad, dan lab digital terkait MMIO.</td></tr>
+    <tr><td>Jam dan Timer Sistem</td><td>Drive pengatur waktu yang dipetakan memori yang menghitung instruksi yang dieksekusi atau milidetik sebenarnya, dan naikkan interupsi pengatur waktu MARS sehingga penangan pengecualian berjalan pada setiap centang.</td></tr>
+    <tr><td>Bot Mars</td><td>Kontrol robot yang disimulasikan melalui antarmuka yang dipetakan memorinya.</td></tr>
+  </table>
+  <div class="note"><strong>MARS-OS TTY Contoh Sistem Operasi.</strong> Buka contoh multi-file, sambungkan alat ini, rakit dan jalankan. Ia melakukan booting langsung ke Program Manager bergaya Windows 95; buka aplikasi Terminal untuk shell 46 perintah. Menu Start, jendela dan peluncur aplikasi seluruhnya digambar oleh MIPS perakitan dan dikontrol dengan xterm SGR laporan tikus. Yang dapat ditulisi RAM disk, editor, spreadsheet dan BASIC penerjemah tetap tersedia; kursor editor dan sel spreadsheet juga menerima klik mouse.</div>
+
+  <h2>Utilitas pembelajaran</h2>
+  <table>
+    <tr><th>Alat</th><th>Gunakan untuk</th></tr>
+    <tr><td>Representasi Titik Mengambang</td><td>Konversi dan periksa IEEE 754 nilai presisi tunggal, bidang, dan pola bit.</td></tr>
+    <tr><td>Pengantar Alat</td><td>Pelajari siklus hidup koneksi, reset, dan interaksi standar.</td></tr>
+    <tr><td>Perburuan Pemulung</td><td>Jalankan tantangan pemrograman perakitan interaktif.</td></tr>
+    <tr><td>Kaca Pembesar Layar</td><td>Perbesar bagian ruang kerja yang dipilih untuk demonstrasi dan aksesibilitas.</td></tr>
+    <tr><td>Visualisasi Tumpukan</td><td>Ikuti seluruh ruang alamat dan tumpukan kata demi kata: bingkai dibuka oleh setiap panggilan, register disimpan dan dipulihkan, zoom dari blok segmen ke bit tunggal, dan log bahasa sederhana dari setiap gerakan $sp dengan peringatan untuk kesalahan bingkai klasik. Hal ini juga mendorong eksekusi dengan pemberhentian yang sadar akan tumpukan: jalankan ke panggilan berikutnya, lewati panggilan, jalankan hingga frame saat ini kembali, hingga $sp bergerak atau hingga kata yang diawasi berubah, dan jeda segera setelah peringatan tumpukan muncul.</td></tr>
+  </table>
+
+  <h2>Konfigurasi bitmap dari MIPS</h2>
+  <p>Sebuah program dapat mengkonfigurasi salah satu alat Bitmap dengan menulis blok kontrol berversi ini relatif terhadap basis MMIO yang aktif (biasanya <code>0xffff0000</code>). Tulis semua bidang terlebih dahulu dan tulis <code>1</code> untuk perintah terakhir; alat hanya berubah setelah penerapan atom tersebut.</p>
+  <table>
+    <tr><th>Mengimbangi</th><th>Nilai</th></tr>
+    <tr><td><code>+0x20</code></td><td>Tanda tangan <code>0x57424d50</code> (<code>WBMP</code>)</td></tr>
+    <tr><td><code>+0x24</code></td><td>Versi protokol <code>1</code></td></tr>
+    <tr><td><code>+0x28</code></td><td>Sasaran: <code>1</code> Tampilan, <code>2</code> Terminal, <code>3</code> keduanya</td></tr>
+    <tr><td><code>+0x2c … +0x38</code></td><td>Lebar tampilan, tinggi tampilan, lebar unit, dan tinggi unit</td></tr>
+    <tr><td><code>+0x3c</code></td><td>Alamat dasar Framebuffer</td></tr>
+    <tr><td><code>+0x40</code></td><td>Perintah: <code>1</code> terapkan, <code>2</code> konfigurasi program yang jelas</td></tr>
+  </table>
+  <p>Blok yang tidak valid atau tidak lengkap akan diabaikan. Langkah mundur, ekspor runtime, dan pemulihan sesi mempertahankan konfigurasi yang dikomit. Ini adalah ekstensi opsional webMARS: MARS 4.5 mengabaikan kata-kata MMIO yang tidak digunakan ini, sementara kode framebuffer yang sama terus bekerja dengan pengaturan alat manual.</p>
+
+  <h2>MMIO keamanan</h2>
+  <p>MMIO perangkat dipetakan dekat <code>0xffff0000</code>. Alat perangkat dan runtime berbagi alamat tersebut; program polling harus menerima bit yang sudah siap, dan program yang digerakkan oleh interupsi harus menginstal penangan pengecualian yang valid. Menyetel ulang alat akan menghapus visualisasi atau status perangkatnya, belum tentu program yang telah dirakit.</p>
+</body>
+</html>

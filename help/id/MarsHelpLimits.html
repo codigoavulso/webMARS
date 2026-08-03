@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Batasan dan kompatibilitas</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Membatasi kompatibilitas &amp;</h1>
+  <p class="lead">webMARS bertujuan untuk kompatibilitas sumber MARS 4.5 yang praktis saat dijalankan sepenuhnya di browser modern. Aturan keamanan browser, penyimpanan, dan audio masih berlaku.</p>
+
+  <h2>Batas waktu proses</h2>
+  <table>
+    <tr><th>Daerah</th><th>Batasan atau perilaku</th></tr>
+    <tr><td>Memori</td><td>0,25–2 GiB yang dapat dipilih pengguna, dengan arsitektur langit-langit keras di bawahnya <code>0x80000000</code>. Alokasi yang jarang berarti ruang alamat yang tidak tersentuh tidak dikomit byte demi byte.</td></tr>
+    <tr><td>tumpukan</td><td><code>sbrk</code> memvalidasi reservasi lengkap yang belum ditandatangani sebelum mengubah penunjuk heap. Permintaan tidak dapat menggabungkan atau melewati batas atas memori yang dikonfigurasi.</td></tr>
+    <tr><td>String waktu proses</td><td>String yang diakhiri dengan null dapat berisi hingga 1 MiB. Terminator yang hilang atau string yang lebih panjang menimbulkan kesalahan syscall yang eksplisit alih-alih mengembalikan teks yang terpotong.</td></tr>
+    <tr><td>Mundur</td><td>0–1.000.000 delta terbalik. Riwayat dibatasi oleh anggaran yang dikonfigurasi dan selalu mempertahankan 100 langkah selesai terbaru saat langkah mundur diaktifkan.</td></tr>
+    <tr><td>Penyimpanan file peramban</td><td>Data proyek/sesi tunduk pada kuota browser; aplikasi membatasi payload penyimpanan browser pengguna hingga 1 MiB jika berlaku dan kembali ke payload pemulihan yang lebih kecil jika diperlukan.</td></tr>
+    <tr><td>Jalankan waktu</td><td>Waktu tidur, MIDI dan UI dijadwalkan oleh browser dan tidak akurat dalam siklus.</td></tr>
+    <tr><td>Distribusi</td><td>webMARS 0.5.2 adalah aplikasi web statis, bukan PWA yang dapat diinstal/offline. Ini harus disajikan melalui HTTP oleh server lokal yang disertakan atau host statis lainnya.</td></tr>
+  </table>
+
+  <h2>Peta memori</h2>
+  <table class="compact">
+    <tr><th>Wilayah</th><th>Basis bawaan</th></tr>
+    <tr><td>Teks pengguna</td><td><code>0x00400000</code></td></tr>
+    <tr><td>Data statis</td><td><code>0x10010000</code></td></tr>
+    <tr><td>tumpukan</td><td><code>0x10040000</code></td></tr>
+    <tr><td>Penunjuk tumpukan awal</td><td><code>0x7ffffffc</code></td></tr>
+    <tr><td>Penangan pengecualian kernel</td><td><code>0x80000180</code></td></tr>
+    <tr><td>MMIO</td><td><code>0xffff0000</code></td></tr>
+  </table>
+  <p>Preset Data Ringkas dan Teks Ringkas memindahkan segmen pengajaran yang sesuai ke alamat nol. Pasang kembali setelah mengganti peta.</p>
+
+  <h2>MIPS perilaku</h2>
+  <ul>
+    <li>Ingatan bersifat little-endian. Operasi kata dan kata ganda menggunakan pengurutan register/memori MIPS.</li>
+    <li>Pengambilan instruksi yang tidak selaras dan alamat pemuatan/penyimpanan yang tidak valid meningkatkan pengecualian alamat.</li>
+    <li>Toko memvalidasi tujuan lengkap sebelum menulis, sehingga toko yang gagal tidak meninggalkan sebagian nilai.</li>
+    <li><code>LL</code>/<code>SC</code> gunakan reservasi yang tidak valid oleh toko yang bentrok.</li>
+    <li>COP1 konversi menghormati FCSR mode pembulatan; masukan floating-point menolak teks non-numerik di belakangnya.</li>
+    <li>Dengan kompatibilitas MARS yang ketat, operasi memori—termasuk pemuatan sebagian kata—harus tetap berada dalam segmen yang diizinkan.</li>
+  </ul>
+
+  <h2>Batasan portabilitas yang diketahui</h2>
+  <ul>
+    <li>Sistem file virtual browser bukanlah sistem file tidak dibatasi oleh sistem operasi host.</li>
+    <li>Izin audio web dan kebijakan putar otomatis dapat memengaruhi panggilan sistem MIDI.</li>
+    <li>Pemblokir popup dan kebijakan pengunduhan dapat memengaruhi file yang diekspor.</li>
+    <li>Mini-C hanya menerima profil terdokumentasinya; kode yang mengandalkan ISO C penuh, libc host, atau perilaku tidak terdefinisi tidak dapat dibawa-bawa.</li>
+    <li>Ekstensi historis MARS yang bergantung pada kelas Java atau plug-in desktop tidak tersedia.</li>
+  </ul>
+</body>
+</html>

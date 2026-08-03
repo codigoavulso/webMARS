@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>限制和兼容性</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>限制 &amp; 兼容性</h1>
+  <p class="lead">webMARS 旨在实现实际的 MARS 4.5 源兼容性，同时完全在现代浏览器中运行。浏览器安全、存储和音频规则仍然适用。</p>
+
+  <h2>运行时间限制</h2>
+  <table>
+    <tr><th>面积</th><th>限制或行为</th></tr>
+    <tr><td>内存</td><td>用户可选择 0.25–2 GiB，下方有建筑硬天花板 <code>0x80000000</code>。稀疏分配意味着未触及的地址空间不会逐字节提交。</td></tr>
+    <tr><td>堆</td><td><code>sbrk</code> 在更改堆指针之前验证完整的未签名保留。请求无法包装或绕过配置的内存上限。</td></tr>
+    <tr><td>运行时字符串</td><td>以 Null 结尾的字符串最多可包含 1 MiB。缺少终止符或较长的字符串会引发显式系统调用错误，而不是返回截断的文本。</td></tr>
+    <tr><td>后退一步</td><td>0–1,000,000 个逆增量。历史记录受配置的预算限制，同时在启用后退时始终保留最新的 100 个完整步骤。</td></tr>
+    <tr><td>浏览器文件存储</td><td>项目/会话数据受浏览器配额限制；该应用程序将用户浏览器存储有效负载限制为 1 MiB（如果适用），并在需要时回退到较小的恢复有效负载。</td></tr>
+    <tr><td>跑步计时</td><td>睡觉， MIDI 和 UI 计时由浏览器安排，并且不是周期准确的。</td></tr>
+    <tr><td>分布</td><td>webMARS 0.5.2 是一个静态 Web 应用程序，而不是可安装/离线的 PWA。它必须由包含的本地服务器或另一个静态主机通过 HTTP 提供服务。</td></tr>
+  </table>
+
+  <h2>内存映射</h2>
+  <table class="compact">
+    <tr><th>地区</th><th>默认基地</th></tr>
+    <tr><td>用户文本</td><td><code>0x00400000</code></td></tr>
+    <tr><td>静态数据</td><td><code>0x10010000</code></td></tr>
+    <tr><td>堆</td><td><code>0x10040000</code></td></tr>
+    <tr><td>初始堆栈指针</td><td><code>0x7ffffffc</code></td></tr>
+    <tr><td>内核异常处理程序</td><td><code>0x80000180</code></td></tr>
+    <tr><td>MMIO</td><td><code>0xffff0000</code></td></tr>
+  </table>
+  <p>压缩数据和压缩文本预设将相应的示教段移动到地址零。更换地图后重新组装。</p>
+
+  <h2>MIPS 行为</h2>
+  <ul>
+    <li>内存是小端的。字和双字操作使用 MIPS 寄存器/内存排序。</li>
+    <li>未对齐的指令提取和无效的加载/存储地址会引发地址异常。</li>
+    <li>存储在写入之前验证完整的目标，因此失败的存储不会留下部分值。</li>
+    <li><code>LL</code>/<code>SC</code> 使用冲突存储无效的保留。</li>
+    <li>COP1 转换遵循 FCSR 舍入模式；浮点输入拒绝尾随非数字文本。</li>
+    <li>凭借严格的 MARS 兼容性，内存操作（包括部分字加载）必须保留在允许的段内。</li>
+  </ul>
+
+  <h2>已知的可移植性边界</h2>
+  <ul>
+    <li>浏览器虚拟文件系统不是主机操作系统的不受限制的文件系统。</li>
+    <li>Web 音频权限和自动播放策略可能会影响 MIDI 系统调用。</li>
+    <li>弹出窗口阻止程序和下载策略可能会影响导出的文件。</li>
+    <li>Mini-C 仅接受其记录的配置文件；依赖于完整 ISO C 的代码，主机 libc 或未定义的行为不可移植到它。</li>
+    <li>依赖于 Java 类或桌面插件的历史 MARS 扩展不可用。</li>
+  </ul>
+</body>
+</html>

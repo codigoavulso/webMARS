@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIPS exceptions dans webMARS</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Exceptions</h1>
+  <p class="lead">Une erreur d'exécution transfère le contrôle au gestionnaire d'exceptions configuré ou met fin à l'exécution avec une raison explicite. Les exceptions traitées peuvent continuer jusqu'à <code>eret</code>.</p>
+
+  <h2>Codes d'exception implémentés</h2>
+  <table class="compact">
+    <tr><th>CodeExc</th><th>Signification</th><th>Causes typiques</th></tr>
+    <tr><td>4</td><td>Erreur d'adresse lors du chargement/récupération</td><td>Adresse ou charge d'instruction mal alignée ; adresse en dehors de la carte mémoire autorisée.</td></tr>
+    <tr><td>5</td><td>Erreur d'adresse en magasin</td><td>Destination du magasin mal alignée ou non valide.</td></tr>
+    <tr><td>8</td><td>Erreur du service d'appel système/d'exécution</td><td>Entrée non valide, service non valide, échec de la demande de tas vérifié ou erreur de service de bibliothèque.</td></tr>
+    <tr><td>9</td><td>Point d'arrêt</td><td>Un MIPS <code>break</code> instruction.</td></tr>
+    <tr><td>10</td><td>Instruction réservée</td><td>Instruction codée inconnue ou non prise en charge.</td></tr>
+    <tr><td>12</td><td>Débordement arithmétique</td><td>Débordement signé dans les instructions arithmétiques vérifiées.</td></tr>
+    <tr><td>13</td><td>Piège</td><td>Une condition d’interruption est évaluée comme vraie.</td></tr>
+    <tr><td>15</td><td>Diviser par zéro</td><td>Division avec un diviseur zéro.</td></tr>
+  </table>
+
+  <h2>Etat du coprocesseur 0</h2>
+  <table class="compact">
+    <tr><th>S'inscrire</th><th>Numéro</th><th>Utiliser</th></tr>
+    <tr><td>Mauvaise adresse VA</td><td>8</td><td>Adresse virtuelle défaillante pour les erreurs d'adresse.</td></tr>
+    <tr><td>Statut</td><td>12</td><td>Niveau d’exception et état de contrôle d’interruption.</td></tr>
+    <tr><td>Parce que</td><td>13</td><td>Code d'exception, état d'interruption en attente et indicateur d'emplacement de retard BD.</td></tr>
+    <tr><td>EPC</td><td>14</td><td>Adresse à partir de laquelle le gestionnaire revient après l'avoir corrigé ou avancé.</td></tr>
+  </table>
+
+  <h2>Flux du gestionnaire</h2>
+  <ol>
+    <li>Le runtime capture Cause, EPC et BadVAddr selon le cas et entre dans le niveau d'exception.</li>
+    <li>Si le code du gestionnaire exécutable existe à l'adresse configurée, normalement <code>0x80000180</code>-le PC y transfère.</li>
+    <li>Le gestionnaire inspecte l'état COP0, effectue sa récupération, ajuste EPC si nécessaire et exécute <code>eret</code>.</li>
+    <li>Si aucun gestionnaire n'est présent ou si une exception se produit qui ne peut pas être transférée en toute sécurité, l'exécution s'arrête et le résultat Run signale l'exception.</li>
+  </ol>
+
+  <div class="note"><strong>Créneaux de retard.</strong> Pour une exception déclenchée dans un créneau de retard de branchement, Cause.BD est défini et EPC identifie l'instruction de branchement, et non l'adresse du créneau de retard.</div>
+
+  <h2>Garanties d'adresse et de magasin</h2>
+  <p>Les cibles d’instruction doivent être alignées sur les mots. Les magasins multi-octets vérifiés valident la destination entière avant de valider un octet, de sorte qu'une exception d'adresse ne peut pas laisser un mot partiellement écrit ou un double mot. Le mode mémoire stricte s'applique également aux opérations sur mots partiels telles que <code>LWL</code> et <code>LWR</code>.</p>
+</body>
+</html>

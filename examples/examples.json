@@ -1,9 +1,16 @@
-﻿{
+{
     "defaultLanguage": "en",
     "languages": [
         "en",
+        "es",
         "pt",
-        "es"
+        "zh",
+        "hi",
+        "ar",
+        "fr",
+        "bn",
+        "ru",
+        "id"
     ],
     "examples": [
         {
@@ -12,8 +19,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -22,8 +36,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -32,8 +53,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -42,8 +70,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -52,8 +87,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -62,8 +104,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -72,8 +121,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -82,8 +138,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -92,8 +155,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -102,8 +172,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -112,8 +189,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -122,8 +206,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -132,8 +223,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -142,8 +240,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -152,8 +257,15 @@
             "category": "Lessons",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -162,8 +274,15 @@
             "category": "Fundamentals",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -172,8 +291,15 @@
             "category": "Fundamentals",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -182,8 +308,15 @@
             "category": "Fundamentals",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -192,8 +325,15 @@
             "category": "Fundamentals",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -202,8 +342,15 @@
             "category": "Fundamentals",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -224,8 +371,15 @@
             ],
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -234,8 +388,15 @@
             "category": "Algorithms",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -244,8 +405,15 @@
             "category": "Algorithms",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -254,8 +422,15 @@
             "category": "Algorithms",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -264,8 +439,15 @@
             "category": "Algorithms",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -274,8 +456,15 @@
             "category": "Algorithms",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -284,8 +473,15 @@
             "category": "Algorithms",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -294,8 +490,15 @@
             "category": "Algorithms",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -305,8 +508,15 @@
             "minSubset": "C0-S1",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -316,8 +526,15 @@
             "minSubset": "C0-S4",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -327,8 +544,15 @@
             "minSubset": "C0-S4",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -338,8 +562,15 @@
             "minSubset": "C0-S4",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -349,8 +580,15 @@
             "minSubset": "C0-S4",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -360,8 +598,15 @@
             "minSubset": "C0-S0",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -383,8 +628,15 @@
             ],
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -394,8 +646,15 @@
             "minSubset": "C0-S2",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -405,8 +664,15 @@
             "minSubset": "C0-S2",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -416,8 +682,15 @@
             "minSubset": "C0-S4",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -427,8 +700,15 @@
             "minSubset": "C0-S4",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -438,8 +718,15 @@
             "minSubset": "C0-S4",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -449,8 +736,15 @@
             "minSubset": "C1-NATIVE",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -459,8 +753,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -469,8 +770,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -480,8 +788,15 @@
             "minSubset": "C0-S4",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -491,8 +806,15 @@
             "minSubset": "C0-S4",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -501,8 +823,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -512,8 +841,15 @@
             "minSubset": "C0-S1",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -523,8 +859,15 @@
             "minSubset": "C0-S1",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -533,8 +876,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -543,8 +893,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -553,8 +910,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -563,8 +927,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -573,8 +944,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -583,8 +961,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -593,8 +978,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -603,8 +995,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -613,8 +1012,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ]
         },
         {
@@ -623,8 +1029,15 @@
             "category": "Devices and system",
             "languages": [
                 "en",
+                "es",
                 "pt",
-                "es"
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id"
             ],
             "files": [
                 {

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C مترجم</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">يقوم المترجم التعليمي المدمج بترجمة مجموعة فرعية من لغة C محددة عمدًا إلى تجميع MIPS32 باستخدام اصطلاح الاتصال o32. إنه ليس مترجم C للأغراض العامة ISO.</p>
+
+  <h2>الملفات الشخصية</h2>
+  <table>
+    <tr><th>الملف الشخصي</th><th>الغرض</th></tr>
+    <tr><td><code>C0-S0</code> ل <code>C0-S4</code></td><td>مجموعات فرعية من التدريس التراكمي، تتقدم من التعبيرات وتدفق التحكم إلى الوظائف والمصفوفات والمؤشرات والهياكل والكتابات والعقود والمكتبات.</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>ملف التعريف الافتراضي الأكثر قدرة: بايت-عنوان <code>char</code>/<code>char *</code>، سلاسل أصلية، <code>argc/argv</code>والمؤشرات الوظيفية و <code>void *</code>.</td></tr>
+  </table>
+  <p>إذا كان المصدر يتطلب ملف تعريف أعلى، فإن التجميع يصدر ملفًا مركزًا <code>MC_SUBSET_MISMATCH</code> التشخيص بدلاً من سلسلة من الأخطاء الثانوية.</p>
+
+  <h2>تجميع المشروع</h2>
+  <ol class="steps">
+    <li>حدد ملف التعريف المطلوب وخيارات الإخراج فيه <b>الإعدادات → Mini-C التفضيلات</b>.</li>
+    <li>افتح واحدًا أو أكثر <code>.c</code> الملفات في نفس المشروع.</li>
+    <li>اختر <b>تشغيل → ترجمة C0</b> أو اضغط <kbd>F4</kbd>.</li>
+    <li>قم بمراجعة التشخيص وتجميع MIPS الذي تم إنشاؤه. تجميع وتشغيل البرنامج الذي تم إنشاؤه بشكل طبيعي.</li>
+  </ol>
+
+  <h2>اتفاقية الاتصال ونقطة الدخول</h2>
+  <ul>
+    <li>استخدام الحجج <code>$a0</code>–<code>$a3</code>، تستخدم الوسائط الإضافية المكدس، وتستخدم قيم الإرجاع <code>$v0</code> (و <code>$v1</code> عند الاقتضاء).</li>
+    <li>تتبع السجلات المحفوظة وإطارات المكدس توقعات MIPS o32.</li>
+    <li><code>main(void)</code> وفي C1-NATIVE، <code>main(int argc, char **argv)</code> يتم دعمها.</li>
+    <li>بالنسبة لوسيطات البرنامج webMARS، <code>argv[0]</code> هو الرمز المميز الأول الذي يقدمه المستخدم؛ لا يوجد إدخال تلقائي للاسم القابل للتنفيذ.</li>
+  </ul>
+
+  <h2>الرؤوس والمكتبات المجمعة</h2>
+  <p>
+    <span class="pill">com.stdio</span><span class="pill">com.conio</span><span class="pill">ملف</span>
+    <span class="pill">الحجج</span><span class="pill">سلسلة</span><span class="pill">string_native</span>
+    <span class="pill">تحليل</span><span class="pill">img</span><span class="pill">util</span>
+    <span class="pill">راند</span><span class="pill">com.ctype</span><span class="pill">com.stdlib</span>
+    <span class="pill">com.stdbool</span><span class="pill">com.stddef</span><span class="pill">bitmap_rect</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>هذه الرؤوس هي مكتبات توافق webMARS المبنية حول مكالمات النظام والأجهزة MIPS. إنهم يطبقون مجموعتهم الفرعية الموثقة، وليس مكتبة C القياسية للمضيف الكامل.</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> كما يوفر <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> و <code>bitmap_configure_all</code>، مما يسمح لبرنامج C0 بإرسال حجم العرض وحجم الوحدة وعنوان المخزن المؤقت للإطارات إلى أدوات الصور النقطية.</p>
+
+  <h2>أمثلة جيدة للبدء</h2>
+  <ul>
+    <li><b>مرحبا بالعالم (ج)</b> لأصغر برنامج كامل.</li>
+    <li><b>Mini-C C1 أصلي</b> للسلاسل الأصلية وسلوك الملف الشخصي الحالي.</li>
+    <li><b>عرض مكتبة الحجج</b> ل <code>argc/argv</code>.</li>
+    <li><b>إحصائيات الملفات المتعددة</b> للتجميع على مستوى المشروع واستدعاءات الوظائف عبر الملفات.</li>
+    <li><b>أساسيات وحدة التحكم stdio</b> و <b>ملف stdio ذهابا وإيابا</b> لمكتبات التوافق.</li>
+  </ul>
+
+  <div class="note">يظل دليل المترجم الموجود في المستودع هو المرجع اللغوي المعياري المفصل. تلخص الصفحة داخل التطبيق السلوكيات اللازمة لاختيار ملف تعريف وتشغيل الأمثلة بشكل صحيح.</div>
+</body>
+</html>

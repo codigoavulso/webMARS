@@ -6701,7 +6701,14 @@ const THEME_OPTION_LABELS = {
 const LANGUAGE_ENDONYMS = {
   en: "English",
   es: "Español",
-  pt: "Português"
+  pt: "Português",
+  zh: "简体中文",
+  hi: "हिन्दी",
+  ar: "العربية",
+  fr: "Français",
+  bn: "বাংলা",
+  ru: "Русский",
+  id: "Bahasa Indonesia"
 };
 
 function describeLanguageOption(language) {

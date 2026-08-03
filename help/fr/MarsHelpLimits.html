@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limites et compatibilité</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Limite la compatibilité &amp;</h1>
+  <p class="lead">webMARS vise une compatibilité pratique avec les sources MARS 4.5 tout en fonctionnant entièrement dans un navigateur moderne. Les règles de sécurité, de stockage et audio du navigateur s'appliquent toujours.</p>
+
+  <h2>Limites d'exécution</h2>
+  <table>
+    <tr><th>Zone</th><th>Limite ou comportement</th></tr>
+    <tr><td>Mémoire</td><td>0,25 à 2 Gio sélectionnables par l'utilisateur, avec un plafond architectural dur en dessous <code>0x80000000</code>. L'allocation clairsemée signifie que l'espace d'adressage intact n'est pas validé octet par octet.</td></tr>
+    <tr><td>Tas</td><td><code>sbrk</code> valide la réservation complète non signée avant de modifier le pointeur de tas. Les requêtes ne peuvent pas envelopper ou contourner le plafond de mémoire configuré.</td></tr>
+    <tr><td>Chaînes d'exécution</td><td>Les chaînes terminées par un caractère nul peuvent contenir jusqu'à 1 Mio. Un terminateur manquant ou une chaîne plus longue génère une erreur d'appel système explicite au lieu de renvoyer un texte tronqué.</td></tr>
+    <tr><td>Recul</td><td>0 à 1 000 000 deltas inverses. L'historique est limité par le budget configuré tout en conservant toujours les 100 dernières étapes complètes lorsque le retour en arrière est activé.</td></tr>
+    <tr><td>Stockage des fichiers du navigateur</td><td>Les données de projet/session sont soumises au quota du navigateur ; l'application limite les charges utiles de stockage du navigateur de l'utilisateur à 1 Mio, le cas échéant, et revient à des charges utiles de récupération plus petites si nécessaire.</td></tr>
+    <tr><td>Calendrier d'exécution</td><td>La mise en veille, le MIDI et la synchronisation de l'interface utilisateur sont planifiés par le navigateur et ne sont pas précis en fonction du cycle.</td></tr>
+    <tr><td>Distribution</td><td>webMARS 0.5.2 est une application Web statique, et non un PWA. Il doit être servi sur HTTP par le serveur local inclus ou un autre hôte statique.</td></tr>
+  </table>
+
+  <h2>Cartes mémoire</h2>
+  <table class="compact">
+    <tr><th>Région</th><th>Base par défaut</th></tr>
+    <tr><td>Texte utilisateur</td><td><code>0x00400000</code></td></tr>
+    <tr><td>Données statiques</td><td><code>0x10010000</code></td></tr>
+    <tr><td>Tas</td><td><code>0x10040000</code></td></tr>
+    <tr><td>Pointeur de pile initial</td><td><code>0x7ffffffc</code></td></tr>
+    <tr><td>Gestionnaire d'exceptions du noyau</td><td><code>0x80000180</code></td></tr>
+    <tr><td>MMIO</td><td><code>0xffff0000</code></td></tr>
+  </table>
+  <p>Les préréglages Compact Data et Compact Text déplacent les segments d’apprentissage correspondants vers l’adresse zéro. Remontez après avoir changé les cartes.</p>
+
+  <h2>Comportement de MIPS</h2>
+  <ul>
+    <li>La mémoire est du type petit-boutiste. Les opérations de mots et de mots doubles utilisent l'ordre registre/mémoire MIPS .</li>
+    <li>Les récupérations d'instructions mal alignées et les adresses de chargement/stockage non valides génèrent des exceptions d'adresse.</li>
+    <li>Les magasins valident la destination complète avant d'écrire, de sorte qu'un magasin défaillant ne laisse pas de valeur partielle derrière lui.</li>
+    <li><code>LL</code>/<code>SC</code> utiliser une réservation que les magasins en conflit invalident.</li>
+    <li>Les conversions COP1 respectent les modes d'arrondi FCSR ; L'entrée à virgule flottante rejette le texte non numérique de fin.</li>
+    <li>Avec une compatibilité stricte MARS, les opérations de mémoire, y compris les chargements de mots partiels, doivent rester à l'intérieur des segments autorisés.</li>
+  </ul>
+
+  <h2>Limites de portabilité connues</h2>
+  <ul>
+    <li>Le système de fichiers virtuel du navigateur n'est pas le système de fichiers illimité du système d'exploitation hôte.</li>
+    <li>L'autorisation audio Web et la stratégie de lecture automatique peuvent affecter les appels système MIDI.</li>
+    <li>Les bloqueurs de fenêtres contextuelles et la politique de téléchargement peuvent affecter les fichiers exportés.</li>
+    <li>Mini-C accepte uniquement ses profils documentés ; le code reposant sur le ISO C complet, une libc hôte ou un comportement non défini n'y est pas portable.</li>
+    <li>Les extensions MARS historiques qui dépendent des classes Java ou des plug-ins de bureau ne sont pas disponibles.</li>
+  </ul>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS log perubahan</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>log perubahan</h1>
+  <p class="lead">Rilis 0.5.2 memperluas webMARS menjadi sepuluh bahasa, menambahkan pilihan bahasa browser otomatis dan memperkenalkan desktop OS MARS yang digerakkan oleh mouse.</p>
+
+  <h2>0.5.2 &mdash; sepuluh bahasa, pemilihan otomatis, MARS-OS desktop</h2>
+  <ul>
+    <li>Memperluas antarmuka lengkap, contoh katalog, dokumentasi dan bantuan dari bahasa Inggris, Spanyol dan Portugis ke sepuluh bahasa, menambahkan bahasa Mandarin, Hindi, Arab, Perancis, Bengali, Rusia dan Indonesia.</li>
+    <li>Menambahkan deteksi bahasa browser kunjungan pertama dengan normalisasi kode regional dan penggantian bahasa Inggris, sekaligus mempertahankan preferensi tersimpan yang eksplisit.</li>
+    <li>Menambahkan tata letak Arab dari kanan ke kiri sambil menjaga kode sumber, keluaran waktu proses, dan notasi teknis dari kiri ke kanan.</li>
+    <li>Mengolah ulang MARS-OS menjadi desktop yang digerakkan oleh mouse yang terbuka langsung di Manajer Program dan menjalankan perintah shell di dalam aplikasi Terminal.</li>
+    <li>Peningkatan throughput TTY, ukuran seluler yang mendukung keyboard Android, dan jarak vertikal desktop.</li>
+    <li>Menambahkan pembuatan lokalisasi yang dapat direproduksi, terminologi teknis yang dilindungi, dan cakupan regresi sepuluh bahasa penuh.</li>
+  </ul>
+
+  <h2>0.5.1 &mdash; interupsi perangkat, alat runtime, MARS-jam OS</h2>
+  <ul>
+    <li>Menerapkan interupsi eksternal simultan untuk pengatur waktu, keyboard, layar, dan keypad heksadesimal Lab Digital, dengan penyamaran sisi CPU dan pengiriman status tertunda.</li>
+    <li>Menambahkan alat Jam Sistem dan Stack Visualizer, termasuk delta renggang terpusat yang kompatibel dengan langkah mundur yang tepat.</li>
+    <li>Mengurangi overhead alat yang terhubung melalui kumpulan instruksi yang didekodekan, rendering yang digabungkan, dan riwayat peristiwa runtime yang dibatasi.</li>
+    <li>Menambahkan contoh interupsi pengatur waktu yang dilokalkan dan memperluas MARS-OS dengan berfungsi <code>clock</code> dan waktu nyata <code>bench</code> perintah.</li>
+    <li>Mencegah snapshot runtime ringkas menghapus sementara segmen teks yang dikumpulkan di UI eksekusi.</li>
+    <li>Menggabungkan pengelola file dan kontrak cloud dengan penyimpanan aman konflik, penggantian nama/penghapusan jarak jauh, identitas proyek yang tidak peka huruf besar-kecil, dan status sinkronisasi batch.</li>
+  </ul>
+
+  <h2>0.5.0 &mdash; runtime matang, delta backstep, alur kerja seluler</h2>
+  <ul>
+    <li>Memperbaiki perilaku runtime berdampak tinggi di seluruh batas memori, penyimpanan atom, COP1 penggandaan dan pembulatan, cabang tertunda, pengecualian, reservasi dan breakpoint LL/SC.</li>
+    <li>Mengganti snapshot penuh per instruksi dengan delta terbalik yang dibatasi sambil mempertahankan jendela backstep yang tepat dan status alat yang disinkronkan.</li>
+    <li>Mengurangi overhead eksekusi melalui kumpulan peristiwa runtime yang ringkas, rendering alat yang digabungkan, dan sinkronisasi UI yang lebih ringan.</li>
+    <li>Menambahkan konfigurasi Bitmap dinamis MMIO dan memperbarui contoh dan pustaka Bitmap untuk menggunakannya namun tetap kompatibel dengan MARS 4.5.</li>
+    <li>Memperluas contoh TTY dengan shell MIPS praktis dan meningkatkan katalog pelajaran Majelis dan Mini-C dalam ketiga bahasa.</li>
+    <li>Alat, dialog, Cloud, dan Pengaturan terintegrasi ke dalam sistem jendela seluler, termasuk ukuran sesuai keyboard Android, keyboard virtual semantik, dan pengguliran yang terdapat.</li>
+    <li>Menambahkan runtime komprehensif, alat, contoh, dokumentasi, UI seluler, dan cakupan regresi rilis.</li>
+  </ul>
+
+  <h2>0.4.13 &mdash; tata letak panel tunggal seluler, diagnostik lokal</h2>
+  <ul>
+    <li>Seluler menampilkan panel layar penuh satu per satu, dipilih dari bilah tab ikon baru yang mencantumkan Utama, Pesan/Jalankan I/O, Register, dan alat apa pun yang terbuka.</li>
+    <li>Menyematkan area pandang seluler sehingga laman tidak lagi bergulir, menghilangkan konflik gulir bersarang antara dokumen dan badan jendela.</li>
+    <li>Toolbar seluler hanya berupa ikon di dua baris ringkas, menjaga kontrol eksekusi dan pemilih kecepatan lari tetap di layar; tindakan file disembunyikan di sana dan tetap berada di menu File dan Edit.</li>
+    <li>Sembunyikan tombol perkecil dan maksimalkan di ponsel, di mana satu panel memenuhi layar dan bilah tab melakukan peralihan.</li>
+    <li>Melokalkan setiap assembler dan diagnostik Mini-C, mengubah 114 literal templat menjadi placeholder bernama dan menambahkan 277 kunci dalam tiga bahasa.</li>
+    <li>Menambahkan uji rilis yang gagal ketika pesan yang dapat diterjemahkan tidak memiliki entri katalog.</li>
+    <li>Tata letak desktop, posisi jendela, dan ukuran kontrol tidak berubah.</li>
+  </ul>
+
+  <h2>0.4.12 &mdash; tema gelap, perbaikan ukuran font, pembersihan kode mati</h2>
+  <ul>
+    <li>Menambahkan tema gelap keikutsertaan yang dapat dipilih melalui <code>Settings &gt; Interface...</code>, diterapkan ke editor, jendela alat, dan halaman bantuan.</li>
+    <li>Memperbaiki ukuran font editor dan tinggi garis yang diterapkan segera setelah mengubahnya di preferensi Antarmuka tanpa memerlukan pemuatan ulang halaman.</li>
+    <li>Kabel itu <em>Tutup Semua File</em> tindakan ke dalam <code>File &gt; Close &gt; All files</code>.</li>
+    <li>Menghapus pipeline penyimpanan otomatis sesi mesin (~400 baris) yang berada di belakang tanda eksperimental yang tidak pernah disetel dalam rilis apa pun.</li>
+    <li>Menghapus ~15 fungsi mati di lima modul, ekspor registri yang tidak digunakan, pemilih CSS mati, dan 113 kunci i18n yang tidak digunakan.</li>
+    <li>Mengecualikan file bantuan tingkat root yang tidak dapat dijangkau dari paket rilis.</li>
+  </ul>
+
+  <h2>0.4.11 &mdash; pemulihan login cloud yang persisten</h2>
+  <ul>
+    <li>Memeriksa server cloud yang dikonfigurasi secara diam-diam selama startup aplikasi dan memulihkan pengguna terotentikasi yang ada.</li>
+    <li>Metadata proyek cloud yang diperbarui setelah pemulihan sesi berhasil tanpa memblokir ruang kerja lokal.</li>
+    <li>Mendokumentasikan masa pakai maksimum cookie autentikasi selama satu tahun dan penghapusan langsung saat logout.</li>
+    <li>Menambahkan cakupan regresi untuk permintaan kredensial dan pemulihan startup otomatis.</li>
+  </ul>
+
+  <h2>0.4.10 — riwayat alat yang dikumpulkan dan pembaruan UI yang lebih ringan</h2>
+  <ul>
+    <li>Delta alat yang dipertahankan hanya untuk instruksi yang masih tercakup dalam jendela langkah mundur 100 langkah yang tepat pada mesin.</li>
+    <li>Jaga agar setiap peristiwa runtime tersedia untuk model alat sambil mengelompokkan pembaruan visual dan menghindari alokasi riwayat yang usang.</li>
+    <li>Mengurangi pekerjaan per-instruksi DOM di BHT dan salinan status redundan di simulator cache.</li>
+    <li>Menghentikan rendering Mars Bot yang menganggur dan menghapus snapshot runtime penuh yang berlebihan dari sinkronisasi UI.</li>
+    <li>Memperbaiki artefak pengecatan ulang pemisah judul jendela khusus Firefox.</li>
+    <li>Mengurangi polling terminal yang menganggur di lab Monty Hall tanpa mengurangi respons input atau langkah mundur.</li>
+  </ul>
+
+  <h2>0.4.9 — paritas waktu proses dan langkah mundur yang dapat diandalkan</h2>
+  <ul>
+    <li>Simpan 100 langkah mundur terbaru sambil membatasi memori jurnal yang jarang.</li>
+    <li>Memperbaiki perilaku Keyboard/Tampilan sinkron, TTY dan peristiwa alat di browser yang berjalan lama.</li>
+    <li>Memperbarui lab Monty Hall dan contoh interaktif untuk bekerja sama dengan input browser tanpa sibuk melakukan polling.</li>
+    <li>Mencocokkan syscall acak 40–44 dengan urutan unggulan dan aturan pengambilan sampel <code>java.util.Random</code> digunakan oleh MARS.</li>
+    <li>Impor status waktu proses yang diperketat, penghitung instruksi yang panjang, rentang assembler, dan validasi arahan numerik.</li>
+    <li>Menyelesaikan cakupan backstep untuk metadata gambar dan memperbaiki buffer InputDialogString dengan panjang nol.</li>
+    <li>Cakupan regresi yang diperluas di seluruh runtime, contoh yang dilokalkan, dan alat yang terhubung.</li>
+  </ul>
+
+  <h2>0.4.8 - langkah belakang delta dan perangkat sinkron</h2>
+  <ul>
+    <li>Mengganti snapshot backstep penuh per instruksi dengan delta terbalik yang dibatasi.</li>
+    <li>Perangkat sinkron MMIO yang terpisah, kumpulan peristiwa runtime yang ringkas, dan snapshot alat berkala.</li>
+    <li>Keyboard/Tampilan yang diperbaiki dan kausalitas input/output TTY, langkah mundur, dan overhead alat tersembunyi.</li>
+    <li>Memperbaiki rendering batch dalam cache, instruksi, referensi memori, dan alat bitmap.</li>
+    <li>Memindahkan framebuffer contoh Mini-C dari global compiler dan menyinkronkan Tampilan Bitmap dengan memori langsung.</li>
+    <li>Menjadikan strip benchmark lokal opsional di Preferensi Antarmuka dan disembunyikan secara default.</li>
+  </ul>
+
+  <h2>0.4.7 — JavaScript pengerasan runtime dan dokumentasi lengkap</h2>
+  <ul>
+    <li>Menstandarkan waktu proses pada mesin JavaScript murni dan menghapus backend eksperimental WASM/hibrida.</li>
+    <li>Menambahkan waktu Kompilasi, Rakitan, dan Jalankan ditambah perkiraan pemanfaatan JavaScript ke strip benchmark dalam aplikasi.</li>
+    <li>Menyediakan snapshot runtime penuh untuk perangkat yang terhubung sekaligus mengurangi pekerjaan editor pada kecepatan pengoperasian maksimum.</li>
+    <li>Memperbaiki pengurutan kata ganda COP1, pembulatan konversi berbasis FCSR dan menyelesaikan validasi input numerik.</li>
+    <li>Batas heap yang diperkeras, penyimpanan atom, penyelarasan instruksi, pemuatan parsial yang ketat, dan reservasi LL/SC.</li>
+    <li>Memperbaiki alamat tautan cabang tertunda, status pengecualian slot penundaan, dan paritas antara mesin langsung Go dan eksekusi berbasis browser.</li>
+    <li>Made Stop mematikan mesin dan membatalkan Sleep yang tertunda, sementara Pause tetap dapat dilanjutkan.</li>
+    <li>Snapshot runtime yang diperluas untuk mempertahankan breakpoint, aliran acak, file/kursor virtual, stdin, argumen program, dan pegangan gambar.</li>
+    <li>Memperluas dan merasionalisasi katalog contoh bahasa Inggris, Spanyol dan Portugis, termasuk C1-NATIVE dan proyek multi-file C.</li>
+    <li>Memperbarui semua bantuan dalam aplikasi berbahasa Inggris, Spanyol, dan Portugis agar sesuai dengan aplikasi browser saat ini, waktu proses, kompiler Mini-C, alat, penyimpanan, dan perilaku privasi.</li>
+    <li>Menambahkan pemeriksaan kesiapan rilis untuk konsistensi versi, manifes, file sementara, dan kontrak UI yang dilokalkan.</li>
+  </ul>
+
+  <h2>0.4.6 — ruang kerja browser yang dapat direproduksi</h2>
+  <ul>
+    <li>Menetapkan perintah instal, sajikan, bangun, uji, dan validasi yang dapat direproduksi.</li>
+    <li>Menambahkan cakupan regresi luas untuk perilaku assembler/runtime, integrasi browser, alat, dan contoh.</li>
+    <li>Memperkenalkan memori runtime yang dapat dikonfigurasi dan batas backstep dengan persistensi status yang lebih kuat.</li>
+    <li>Profil Mini-C yang diperluas, perilaku o32, perpustakaan, contoh, dan cakupan antarmuka multibahasa.</li>
+  </ul>
+
+  <h2>Pencapaian webMARS sebelumnya</h2>
+  <ul>
+    <li>Mem-porting editor gaya MARS, assembler, dan alur kerja runtime ke browser.</li>
+    <li>Menambahkan proyek lokal, pemulihan sesi, sinkronisasi cloud opsional, dan file virtual browser.</li>
+    <li>Alat pendidikan inti dan perangkat MMIO yang di-porting dan diadaptasi.</li>
+    <li>Menambahkan kompiler pengajaran Mini-C dan profil subset yang semakin kaya.</li>
+  </ul>
+
+  <h2>Catatan sejarah</h2>
+  <p>Beberapa rilis sebelumnya bereksperimen dengan akselerasi WebAssembly dan pemilihan backend. Entri tersebut menjelaskan rilisnya secara akurat, tetapi subsistem tersebut sudah tidak ada lagi. Waktu proses saat ini hanya JavaScript saja.</p>
+</body>
+</html>

@@ -1,0 +1,2274 @@
+{
+  "generatedAt": "2026-07-25T00:00:00.000Z",
+  "source": {
+    "basicInstructions": "../../assets/js/reference/instructions.generated.js",
+    "extendedInstructions": "../../assets/js/reference/pseudo-ops.generated.js",
+    "directives": "../../assets/js/app-modules/00-core.js"
+  },
+  "basicInstructions": [
+    {
+      "example": "abs.d $f2,$f4",
+      "description": "Valeur absolue à virgule flottante double précision : définir $f2 sur la valeur absolue de $f4, double précision"
+    },
+    {
+      "example": "abs.s $f0,$f1",
+      "description": "Valeur absolue à virgule flottante simple précision : définir $f0 sur la valeur absolue de $f1, simple précision"
+    },
+    {
+      "example": "add $t1,$t2,$t3",
+      "description": "Ajout avec débordement : définissez $t1 sur ($t2 plus $t3)"
+    },
+    {
+      "example": "add.d $f2,$f4,$f6",
+      "description": "Addition à virgule flottante double précision : définissez $f2 sur la valeur à virgule flottante double précision de $f4 plus $f6"
+    },
+    {
+      "example": "add.s $f0,$f1,$f3",
+      "description": "Addition à virgule flottante simple précision : définissez $f0 sur la valeur à virgule flottante simple précision de $f1 plus $f3"
+    },
+    {
+      "example": "addi $t1,$t2,-100",
+      "description": "Ajout immédiat avec débordement : définissez $t1 sur ($t2 plus signé 16 bits immédiat)"
+    },
+    {
+      "example": "addiu $t1,$t2,-100",
+      "description": "Ajout immédiat non signé sans débordement : définir $t1 sur ($t2 plus signé 16 bits immédiat), pas de débordement"
+    },
+    {
+      "example": "addu $t1,$t2,$t3",
+      "description": "Ajout non signé sans débordement : définir $t1 sur ($t2 plus $t3), pas de débordement"
+    },
+    {
+      "example": "and $t1,$t2,$t3",
+      "description": "Bitwise AND : définissez $t1 sur bitwise AND de $t2 et $t3"
+    },
+    {
+      "example": "andi $t1,$t2,100",
+      "description": "Bitwise AND immédiat : définissez $t1 sur bitwise AND de $t2 et immédiat 16 bits étendu à zéro"
+    },
+    {
+      "example": "bc1f 1,label",
+      "description": "Branchement si l'indicateur de condition FP spécifié est faux (BC1F, pas BCLF) : si l'indicateur de condition du coprocesseur 1 spécifié par immédiat est faux (zéro), alors branchez vers l'instruction à l'adresse de l'étiquette"
+    },
+    {
+      "example": "bc1f label",
+      "description": "Branchement si l'indicateur de condition FP 0 est faux (BC1F, pas BCLF) : Si l'indicateur de condition 0 du coprocesseur 1 est faux (zéro), alors branchez vers l'instruction à l'adresse de l'étiquette."
+    },
+    {
+      "example": "bc1t 1,label",
+      "description": "Branche si l'indicateur de condition FP spécifié est vrai (BC1T, pas BCLT) : si l'indicateur de condition du coprocesseur 1 spécifié par immédiat est vrai (un), alors branchez vers l'instruction à l'adresse de l'étiquette"
+    },
+    {
+      "example": "bc1t label",
+      "description": "Branchez si l'indicateur de condition FP 0 est vrai (BC1T, pas BCLT) : Si l'indicateur de condition 0 du coprocesseur 1 est vrai (un), alors branchez à l'instruction à l'adresse de l'étiquette."
+    },
+    {
+      "example": "beq $t1,$t2,label",
+      "description": "Branchement si égal : Branchement vers l'instruction à l'adresse de l'étiquette si $t1 et $t2 sont égaux"
+    },
+    {
+      "example": "bgez $t1,label",
+      "description": "Branchement si supérieur ou égal à zéro : Branchement vers l'instruction à l'adresse de l'étiquette si $t1 est supérieur ou égal à zéro"
+    },
+    {
+      "example": "bgezal $t1,label",
+      "description": "Branchez si supérieur ou égal à zéro et liez : Si $t1 est supérieur ou égal à zéro, alors définissez $ra sur le compteur de programme et branchez-vous à l'instruction à l'adresse de l'étiquette."
+    },
+    {
+      "example": "bgtz $t1,label",
+      "description": "Branchement si supérieur à zéro : Branchement à l'instruction à l'adresse de l'étiquette si $t1 est supérieur à zéro"
+    },
+    {
+      "example": "blez $t1,label",
+      "description": "Branchement si inférieur ou égal à zéro : Branchement à l'instruction à l'adresse de l'étiquette si $t1 est inférieur ou égal à zéro"
+    },
+    {
+      "example": "bltz $t1,label",
+      "description": "Branchement si inférieur à zéro : Branchement à l'instruction à l'adresse de l'étiquette si $t1 est inférieur à zéro"
+    },
+    {
+      "example": "bltzal $t1,label",
+      "description": "Branchement si inférieur à zéro et lien : Si $t1 est inférieur ou égal à zéro, alors définissez $ra sur le compteur de programme et branchez-vous à l'instruction à l'adresse de l'étiquette."
+    },
+    {
+      "example": "bne $t1,$t2,label",
+      "description": "Branchement si différent : Branchement vers l'instruction à l'adresse de l'étiquette si $t1 et $t2 ne sont pas égaux"
+    },
+    {
+      "example": "break",
+      "description": "Interrompre l'exécution : Terminer l'exécution du programme avec exception"
+    },
+    {
+      "example": "break 100",
+      "description": "Interrompre l'exécution avec le code : Terminer l'exécution du programme avec le code d'exception spécifié"
+    },
+    {
+      "example": "c.eq.d $f2,$f4",
+      "description": "Comparez la double précision égale : si $f2 est égal à $f4 (double précision), définissez l'indicateur de condition du coprocesseur 1 sur 0, sinon définissez-le sur faux."
+    },
+    {
+      "example": "c.eq.d 1,$f2,$f4",
+      "description": "Comparez la double précision égale : si $f2 est égal à $f4 (double précision), définissez l'indicateur de condition du coprocesseur 1 spécifié par immédiat sur vrai, sinon définissez-le sur faux."
+    },
+    {
+      "example": "c.eq.s $f0,$f1",
+      "description": "Comparez la simple précision égale : si $f0 est égal à $f1, définissez l'indicateur de condition du coprocesseur 1 sur 0, sinon définissez-le sur faux."
+    },
+    {
+      "example": "c.eq.s 1,$f0,$f1",
+      "description": "Comparez la simple précision égale : si $f0 est égal à $f1, définissez l'indicateur de condition du coprocesseur 1 spécifié par immédiat sur true, sinon définissez-le sur false."
+    },
+    {
+      "example": "c.le.d $f2,$f4",
+      "description": "Comparez une double précision inférieure ou égale : si $f2 est inférieur ou égal à $f4 (double précision), définissez l'indicateur de condition du coprocesseur 1 sur 0, sinon définissez-le sur faux."
+    },
+    {
+      "example": "c.le.d 1,$f2,$f4",
+      "description": "Comparez une double précision inférieure ou égale : si $f2 est inférieur ou égal à $f4 (double précision), définissez l'indicateur de condition du coprocesseur 1 spécifié par true immédiat, sinon définissez-le sur false."
+    },
+    {
+      "example": "c.le.s $f0,$f1",
+      "description": "Comparez une simple précision inférieure ou égale : si $f0 est inférieur ou égal à $f1, définissez l'indicateur de condition du coprocesseur 1 sur 0, sinon définissez-le sur faux."
+    },
+    {
+      "example": "c.le.s 1,$f0,$f1",
+      "description": "Comparez une simple précision inférieure ou égale : si $f0 est inférieur ou égal à $f1, définissez l'indicateur de condition du coprocesseur 1 spécifié par immédiat sur vrai, sinon définissez-le sur faux."
+    },
+    {
+      "example": "c.lt.d $f2,$f4",
+      "description": "Comparez moins que la double précision : si $f2 est inférieur à $f4 (double précision), définissez l'indicateur de condition du coprocesseur 1 sur 0, sinon définissez-le sur faux."
+    },
+    {
+      "example": "c.lt.d 1,$f2,$f4",
+      "description": "Comparez moins que la double précision : si $f2 est inférieur à $f4 (double précision), définissez l'indicateur de condition du coprocesseur 1 spécifié par immédiat sur vrai, sinon définissez-le sur faux."
+    },
+    {
+      "example": "c.lt.s $f0,$f1",
+      "description": "Comparez moins que la simple précision : si $f0 est inférieur à $f1, définissez l'indicateur de condition du coprocesseur 1 sur 0, sinon définissez-le sur faux."
+    },
+    {
+      "example": "c.lt.s 1,$f0,$f1",
+      "description": "Comparez moins qu'une simple précision : si $f0 est inférieur à $f1, définissez l'indicateur de condition du coprocesseur 1 spécifié par immédiat sur true, sinon définissez-le sur false."
+    },
+    {
+      "example": "ceil.w.d $f1,$f2",
+      "description": "Plafond double précision sur mot : définissez $f1 sur un plafond entier de 32 bits de flottant double précision dans $f2"
+    },
+    {
+      "example": "ceil.w.s $f0,$f1",
+      "description": "Plafond simple précision sur mot : définissez $f0 sur le plafond entier de 32 bits du flottant simple précision dans $f1"
+    },
+    {
+      "example": "clo $t1,$t2",
+      "description": "Nombre de bits en tête : définissez $t1 sur le nombre de bits en tête dans $t2 en commençant à la position du bit le plus significatif."
+    },
+    {
+      "example": "clz $t1,$t2",
+      "description": "Compter le nombre de zéros non significatifs : définissez $t1 sur le nombre de bits zéro non significatifs dans $t2 en commençant à la position du bit le plus significatif."
+    },
+    {
+      "example": "cvt.d.s $f2,$f1",
+      "description": "Convertir de simple précision en double précision : définissez $f2 sur l'équivalent double précision de la valeur simple précision dans $f1"
+    },
+    {
+      "example": "cvt.d.w $f2,$f1",
+      "description": "Convertir du mot en double précision : définissez $f2 sur l'équivalent en double précision d'une valeur entière de 32 bits dans $f1"
+    },
+    {
+      "example": "cvt.s.d $f1,$f2",
+      "description": "Convertir de la double précision en simple précision : définissez $f1 sur l'équivalent simple précision de la valeur double précision dans $f2"
+    },
+    {
+      "example": "cvt.s.w $f0,$f1",
+      "description": "Convertir du mot en simple précision : définissez $f0 sur l'équivalent en simple précision d'une valeur entière de 32 bits dans $f2"
+    },
+    {
+      "example": "cvt.w.d $f1,$f2",
+      "description": "Convertir de la double précision en mot : définissez $f1 sur l'équivalent entier 32 bits de la valeur double précision dans $f2"
+    },
+    {
+      "example": "cvt.w.s $f0,$f1",
+      "description": "Convertir de simple précision en mot : définissez $f0 sur l'équivalent entier 32 bits de la valeur simple précision dans $f1"
+    },
+    {
+      "example": "div $t1,$t2",
+      "description": "Division avec débordement : Divisez $t1 par $t2 puis mettez LO au quotient et HI au reste (utilisez mfhi pour accéder à HI, mflo pour accéder à LO)"
+    },
+    {
+      "example": "div.d $f2,$f4,$f6",
+      "description": "Division en virgule flottante double précision : définissez $f2 sur la valeur à virgule flottante double précision de $f4 divisée par $f6"
+    },
+    {
+      "example": "div.s $f0,$f1,$f3",
+      "description": "Division en virgule flottante simple précision : définissez $f0 sur la valeur à virgule flottante simple précision de $f1 divisée par $f3"
+    },
+    {
+      "example": "divu $t1,$t2",
+      "description": "Division non signée sans débordement : Divisez les $t1 non signés par $t2 puis définissez LO sur quotient et HI sur reste (utilisez mfhi pour accéder à HI, mflo pour accéder à LO)"
+    },
+    {
+      "example": "eret",
+      "description": "Retour d'exception : définissez le compteur de programme sur la valeur du registre du coprocesseur 0 EPC, définissez le bit 1 du registre d'état du coprocesseur (niveau d'exception) sur zéro."
+    },
+    {
+      "example": "floor.w.d $f1,$f2",
+      "description": "Plancher double précision sur mot : définissez $f1 sur un plancher entier de 32 bits de flottant double précision dans $f2"
+    },
+    {
+      "example": "floor.w.s $f0,$f1",
+      "description": "Plancher simple précision sur mot : définissez $f0 sur un plancher entier de 32 bits de flottant simple précision dans $f1"
+    },
+    {
+      "example": "j target",
+      "description": "Sauter sans condition : Sauter à l'instruction à l'adresse cible"
+    },
+    {
+      "example": "jal target",
+      "description": "Saut et lien : définissez $ra sur le compteur de programme (adresse de retour), puis passez à l'instruction à l'adresse cible."
+    },
+    {
+      "example": "jalr $t1",
+      "description": "Registre de saut et de liaison : définissez $ra sur le compteur de programme (adresse de retour), puis passez à l'instruction dont l'adresse est dans $t1"
+    },
+    {
+      "example": "jalr $t1,$t2",
+      "description": "Registre de saut et de liaison : définissez $t1 sur le compteur de programme (adresse de retour), puis passez à l'instruction dont l'adresse est dans $t2"
+    },
+    {
+      "example": "jr $t1",
+      "description": "Saut du registre sans condition : saute à l'instruction dont l'adresse est dans $t1"
+    },
+    {
+      "example": "lb $t1,-100($t2)",
+      "description": "Charger l'octet : définissez $t1 sur la valeur de 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,-100($t2)",
+      "description": "Charger l'octet non signé : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ldc1 $f2,-100($t2)",
+      "description": "Charger le coprocesseur de mot double 1 (FPU)) : définir $f2 sur une valeur de 64 bits à partir de l'adresse de mot double de la mémoire effective"
+    },
+    {
+      "example": "lh $t1,-100($t2)",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,-100($t2)",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "ll $t1,-100($t2)",
+      "description": "Charger lié : Charger un mot et établir une réservation pour un Store Conditional (sc) ultérieur"
+    },
+    {
+      "example": "lui $t1,100",
+      "description": "Charger immédiatement supérieur : définissez les 16 bits de poids fort de $t1 sur 16 bits immédiats et les 16 bits de poids faible sur 0."
+    },
+    {
+      "example": "lw $t1,-100($t2)",
+      "description": "Charger le mot : définir $t1 sur le contenu de l'adresse du mot mémoire effectif"
+    },
+    {
+      "example": "lwc1 $f1,-100($t2)",
+      "description": "Charger le mot dans le coprocesseur 1 (FPU) : définir $f1 sur une valeur de 32 bits à partir de l'adresse du mot mémoire effective"
+    },
+    {
+      "example": "lwl $t1,-100($t2)",
+      "description": "Charger le mot à gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot"
+    },
+    {
+      "example": "lwr $t1,-100($t2)",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot"
+    },
+    {
+      "example": "madd $t1,$t2",
+      "description": "Multiplier l'ajout : Multipliez $t1 par $t2 puis incrémentez HI de 32 bits de poids fort du produit, incrémentez LO de 32 bits de poids faible du produit (utilisez mfhi pour accéder à HI, mflo pour accéder à LO)"
+    },
+    {
+      "example": "maddu $t1,$t2",
+      "description": "Multiplier ajouter un signe non signé : Multiplier $t1 par $t2 puis incrémenter HI de 32 bits de poids fort du produit, incrémenter LO de 32 bits de poids faible du produit, non signé (utiliser mfhi pour accéder à HI, mflo pour accéder à LO)"
+    },
+    {
+      "example": "mfc0 $t1,$8",
+      "description": "Passer du coprocesseur 0 : définissez $t1 sur la valeur stockée dans le registre du coprocesseur 0 $8"
+    },
+    {
+      "example": "mfc1 $t1,$f1",
+      "description": "Déplacer depuis le coprocesseur 1 (FPU) : définissez $t1 sur la valeur dans le registre du coprocesseur 1 $f1"
+    },
+    {
+      "example": "cfc1 $t1,$31",
+      "description": "Passer du contrôle du coprocesseur 1 : définissez $t1 sur le contrôle FCSR et la valeur d'état."
+    },
+    {
+      "example": "mfhi $t1",
+      "description": "Déplacer du registre HI : définissez $t1 sur le contenu de HI (voir opérations de multiplication et de division)"
+    },
+    {
+      "example": "mflo $t1",
+      "description": "Déplacer du registre LO : définissez $t1 sur le contenu de LO (voir opérations de multiplication et de division)"
+    },
+    {
+      "example": "mov.d $f2,$f4",
+      "description": "Déplacer la double précision à virgule flottante : définir la double précision $f2 sur la valeur de double précision dans $f4"
+    },
+    {
+      "example": "mov.s $f0,$f1",
+      "description": "Déplacer la simple précision à virgule flottante : définir la simple précision $f0 sur la valeur simple précision dans $f1"
+    },
+    {
+      "example": "movf $t1,$t2",
+      "description": "Déplacer si l'indicateur de condition FP 0 est faux : définir $t1 sur $t2 si FPU (coprocesseur 1) l'indicateur de condition 0 est faux (zéro)"
+    },
+    {
+      "example": "movf $t1,$t2,1",
+      "description": "Déplacer si l'indicateur de condition FP spécifié est faux : définir $t1 sur $t2 si FPU (coprocesseur 1) l'indicateur de condition spécifié par l'immédiat est faux (zéro)"
+    },
+    {
+      "example": "movf.d $f2,$f4",
+      "description": "Déplacer la double précision à virgule flottante : si l'indicateur de condition 0 est faux, définissez la double précision $f2 sur la valeur double précision dans $f4"
+    },
+    {
+      "example": "movf.d $f2,$f4,1",
+      "description": "Déplacer la double précision à virgule flottante : si l'indicateur de condition spécifié par immédiat est faux, définissez la double précision $f2 sur la valeur double précision dans $f4"
+    },
+    {
+      "example": "movf.s $f0,$f1",
+      "description": "Déplacer la simple précision à virgule flottante : si l'indicateur de condition 0 est faux, définissez la simple précision $f0 sur la valeur simple précision dans $f1"
+    },
+    {
+      "example": "movf.s $f0,$f1,1",
+      "description": "Déplacer la simple précision à virgule flottante : si l'indicateur de condition spécifié par immédiat est faux, définissez la simple précision $f0 sur la valeur simple précision dans $f1e"
+    },
+    {
+      "example": "movn $t1,$t2,$t3",
+      "description": "Déplacement conditionnel différent de zéro : définissez $t1 sur $t2 si $t3 n'est pas nul."
+    },
+    {
+      "example": "movn.d $f2,$f4,$t3",
+      "description": "Déplacer la double précision à virgule flottante : Si $t3 n'est pas nul, définissez la double précision $f2 sur la valeur double précision dans $f4"
+    },
+    {
+      "example": "movn.s $f0,$f1,$t3",
+      "description": "Déplacer la simple précision à virgule flottante : si $t3 n'est pas nul, définissez la simple précision $f0 sur la valeur simple précision dans $f1"
+    },
+    {
+      "example": "movt $t1,$t2",
+      "description": "Déplacer si l'indicateur de condition FP 0 est vrai : définir $t1 sur $t2 si FPU (coprocesseur 1) l'indicateur de condition 0 est vrai (un)"
+    },
+    {
+      "example": "movt $t1,$t2,1",
+      "description": "Déplacer si l'indicateur de condition FP spécifié est vrai : définissez $t1 sur $t2 si FPU (coprocesseur 1) l'indicateur de condition spécifié par l'immédiat est vrai (un)"
+    },
+    {
+      "example": "movt.d $f2,$f4",
+      "description": "Déplacer la double précision à virgule flottante : si l'indicateur de condition 0 est vrai, définissez la double précision $f2 sur la valeur double précision dans $f4"
+    },
+    {
+      "example": "movt.d $f2,$f4,1",
+      "description": "Déplacer la double précision à virgule flottante : si l'indicateur de condition spécifié par immédiat est vrai, définissez la double précision $f2 sur la valeur double précision dans $f4e"
+    },
+    {
+      "example": "movt.s $f0,$f1",
+      "description": "Déplacer la simple précision à virgule flottante : si l'indicateur de condition 0 est vrai, définissez la simple précision $f0 sur la valeur simple précision dans $f1e"
+    },
+    {
+      "example": "movt.s $f0,$f1,1",
+      "description": "Déplacer la simple précision à virgule flottante : si l'indicateur de condition spécifié par immédiat est vrai, définissez la simple précision $f0 sur la valeur simple précision dans $f1e"
+    },
+    {
+      "example": "movz $t1,$t2,$t3",
+      "description": "Déplacer le zéro conditionnel : définir $t1 sur $t2 si $t3 est nul"
+    },
+    {
+      "example": "movz.d $f2,$f4,$t3",
+      "description": "Déplacer la double précision à virgule flottante : Si $t3 est nul, définissez la double précision $f2 sur la valeur double précision dans $f4"
+    },
+    {
+      "example": "movz.s $f0,$f1,$t3",
+      "description": "Déplacer la simple précision à virgule flottante : Si $t3 est nul, définissez la simple précision $f0 sur la valeur simple précision dans $f1"
+    },
+    {
+      "example": "msub $t1,$t2",
+      "description": "Multiplier soustraire : Multiplier $t1 par $t2 puis décrémenter HI par 32 bits de poids fort du produit, décrémenter LO par 32 bits de poids faible du produit (utilisez mfhi pour accéder à HI, mflo pour accéder à LO)"
+    },
+    {
+      "example": "msubu $t1,$t2",
+      "description": "Multiplier soustraire non signé : Multiplier $t1 par $t2 puis décrémenter HI par 32 bits de poids fort du produit, décémenter LO par 32 bits de poids faible du produit, non signé (utiliser mfhi pour accéder à HI, mflo pour accéder à LO)"
+    },
+    {
+      "example": "mtc0 $t1,$8",
+      "description": "Déplacer vers le coprocesseur 0 : définir le registre du coprocesseur 0 $8 sur la valeur stockée dans $t1"
+    },
+    {
+      "example": "mtc1 $t1,$f1",
+      "description": "Déplacer vers le coprocesseur 1 (FPU) : définissez le registre du coprocesseur 1 $f1 sur la valeur dans $t1"
+    },
+    {
+      "example": "ctc1 $t1,$31",
+      "description": "Passer au contrôle Coprocesseur 1 : définir FCSR, y compris son mode d'arrondi, sur la valeur dans $t1"
+    },
+    {
+      "example": "mthi $t1",
+      "description": "Déplacer vers le registre HI : définissez HI sur le contenu de $t1 (voir les opérations de multiplication et de division)"
+    },
+    {
+      "example": "mtlo $t1",
+      "description": "Déplacer vers le registre LO : définissez LO sur le contenu de $t1 (voir opérations de multiplication et de division)"
+    },
+    {
+      "example": "mul $t1,$t2,$t3",
+      "description": "Multiplication sans débordement : définissez HI sur 32 bits de poids fort, LO et $t1 sur 32 bits de poids faible du produit de $t2 et $t3 (utilisez mfhi pour accéder à HI, mflo pour accéder à LO)"
+    },
+    {
+      "example": "mul.d $f2,$f4,$f6",
+      "description": "Multiplication à virgule flottante double précision : définissez $f2 sur une valeur à virgule flottante double précision de $f4 fois $f6"
+    },
+    {
+      "example": "mul.s $f0,$f1,$f3",
+      "description": "Multiplication à virgule flottante simple précision : définissez $f0 sur une valeur à virgule flottante simple précision de $f1 fois $f3"
+    },
+    {
+      "example": "mult $t1,$t2",
+      "description": "Multiplication : définissez hi sur 32 bits de poids fort, lo sur 32 bits de poids faible du produit de $t1 et $t2 (utilisez mfhi pour accéder à hi, mflo pour accéder à lo)"
+    },
+    {
+      "example": "multu $t1,$t2",
+      "description": "Multiplication non signée : définissez HI sur 32 bits de poids fort, LO sur 32 bits de poids faible du produit de $t1 et $t2 non signés (utilisez mfhi pour accéder à HI, mflo pour accéder à LO)"
+    },
+    {
+      "example": "neg.d $f2,$f4",
+      "description": "La virgule flottante annule la double précision : définissez la double précision $f2 sur la négation de la valeur de double précision dans $f4"
+    },
+    {
+      "example": "neg.s $f0,$f1",
+      "description": "La virgule flottante annule la simple précision : définissez la simple précision $f0 sur la négation de la valeur de simple précision dans $f1"
+    },
+    {
+      "example": "nop",
+      "description": "Opération nulle : le code machine est composé uniquement de zéros"
+    },
+    {
+      "example": "nor $t1,$t2,$t3",
+      "description": "Bitwise NOR : définissez $t1 sur bitwise NOR de $t2 et $t3"
+    },
+    {
+      "example": "or $t1,$t2,$t3",
+      "description": "OU au niveau du bit : définissez $t1 sur le OU au niveau du bit de $t2 et $t3"
+    },
+    {
+      "example": "ori $t1,$t2,100",
+      "description": "OU immédiat au niveau du bit : définissez $t1 sur un OU au niveau du bit de $t2 et immédiat sur 16 bits étendu à zéro."
+    },
+    {
+      "example": "round.w.d $f1,$f2",
+      "description": "Arrondir la double précision au mot : définissez $f1 sur un tour entier de 32 bits de flottant double précision dans $f2"
+    },
+    {
+      "example": "round.w.s $f0,$f1",
+      "description": "Arrondir la simple précision au mot : définissez $f0 sur un tour entier de 32 bits de flottant simple précision dans $f1"
+    },
+    {
+      "example": "sb $t1,-100($t2)",
+      "description": "Store byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sc $t1,-100($t2)",
+      "description": "Stockage conditionnel : stockez $t1 uniquement si la réservation Load Linked correspondante est toujours valide, puis définissez $t1 sur 1 en cas de succès ou 0 en cas d'échec."
+    },
+    {
+      "example": "sdc1 $f2,-100($t2)",
+      "description": "Stocker le double mot du coprocesseur 1 (FPU)) : stocker la valeur de 64 bits dans $f2 dans l'adresse de double mot de la mémoire effective"
+    },
+    {
+      "example": "sh $t1,-100($t2)",
+      "description": "Stocker le demi-mot : stocke les 16 bits de poids faible de $t1 dans l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sll $t1,$t2,10",
+      "description": "Décalage logique vers la gauche : définissez $t1 sur le résultat du décalage de $t2 vers la gauche par le nombre de bits spécifié par immédiat"
+    },
+    {
+      "example": "sllv $t1,$t2,$t3",
+      "description": "Variable logique de décalage vers la gauche : définissez $t1 sur le résultat du décalage de $t2 vers la gauche par le nombre de bits spécifié par la valeur dans les 5 bits de poids faible de $t3"
+    },
+    {
+      "example": "slt $t1,$t2,$t3",
+      "description": "Définir moins que : Si $t2 est inférieur à $t3, alors définissez $t1 sur 1, sinon définissez $t1 sur 0."
+    },
+    {
+      "example": "slti $t1,$t2,-100",
+      "description": "Définir moins qu'immédiat : si $t2 est inférieur à 16 bits immédiat avec extension de signe, alors définissez $t1 sur 1, sinon définissez $t1 sur 0."
+    },
+    {
+      "example": "sltiu $t1,$t2,-100",
+      "description": "Définir moins que immédiat non signé : Si $t2 est inférieur à 16 bits immédiat avec extension de signe en utilisant une comparaison non signée, alors définissez $t1 sur 1, sinon définissez $t1 sur 0"
+    },
+    {
+      "example": "sltu $t1,$t2,$t3",
+      "description": "Définir moins que non signé : si $t2 est inférieur à $t3 en utilisant une comparaison non signée, alors définissez $t1 sur 1, sinon définissez $t1 sur 0"
+    },
+    {
+      "example": "sqrt.d $f2,$f4",
+      "description": "Racine carrée double précision : définissez $f2 sur la racine carrée à virgule flottante double précision de $f4"
+    },
+    {
+      "example": "sqrt.s $f0,$f1",
+      "description": "Racine carrée simple précision : définissez $f0 sur la racine carrée à virgule flottante simple précision de $f1"
+    },
+    {
+      "example": "sra $t1,$t2,10",
+      "description": "Arithmétique de décalage vers la droite : définissez $t1 sur le résultat du décalage par extension de signe $t2 vers la droite par le nombre de bits spécifié par immédiat"
+    },
+    {
+      "example": "srav $t1,$t2,$t3",
+      "description": "Variable arithmétique de décalage vers la droite : définissez $t1 sur le résultat du décalage par extension de signe $t2 vers la droite par le nombre de bits spécifié par la valeur dans les 5 bits de poids faible de $t3"
+    },
+    {
+      "example": "srl $t1,$t2,10",
+      "description": "Décalage logique vers la droite : définissez $t1 sur le résultat du décalage de $t2 vers la droite par le nombre de bits spécifié par immédiat"
+    },
+    {
+      "example": "srlv $t1,$t2,$t3",
+      "description": "Variable logique de décalage vers la droite : définissez $t1 sur le résultat du décalage de $t2 vers la droite par le nombre de bits spécifié par la valeur dans les 5 bits de poids faible de $t3"
+    },
+    {
+      "example": "sub $t1,$t2,$t3",
+      "description": "Soustraction avec débordement : définissez $t1 sur ($t2 moins $t3)"
+    },
+    {
+      "example": "sub.d $f2,$f4,$f6",
+      "description": "Soustraction à virgule flottante double précision : définissez $f2 sur la valeur à virgule flottante double précision de $f4 moins $f6"
+    },
+    {
+      "example": "sub.s $f0,$f1,$f3",
+      "description": "Soustraction à virgule flottante simple précision : définissez $f0 sur la valeur à virgule flottante simple précision de $f1 moins $f3"
+    },
+    {
+      "example": "subu $t1,$t2,$t3",
+      "description": "Soustraction non signée sans débordement : définissez $t1 sur ($t2 moins $t3), pas de débordement"
+    },
+    {
+      "example": "sw $t1,-100($t2)",
+      "description": "Mot de stockage : stocke le contenu de $t1 dans l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "swc1 $f1,-100($t2)",
+      "description": "Stocker le mot du coprocesseur 1 (FPU) : stocker la valeur de 32 bits dans $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "swl $t1,-100($t2)",
+      "description": "Stocker le mot restant : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swr $t1,-100($t2)",
+      "description": "Stocker le mot droit : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "syscall",
+      "description": "Émettez un appel système : exécutez l'appel système spécifié par la valeur dans $v0"
+    },
+    {
+      "example": "teq $t1,$t2",
+      "description": "Piège si égal : Piège si $t1 est égal à $t2"
+    },
+    {
+      "example": "teqi $t1,-100",
+      "description": "Trap si égal à immédiat : Trap si $t1 est égal à 16 bits immédiat avec signe étendu"
+    },
+    {
+      "example": "tge $t1,$t2",
+      "description": "Piège si supérieur ou égal : Piège si $t1 est supérieur ou égal à $t2"
+    },
+    {
+      "example": "tgei $t1,-100",
+      "description": "Trap si supérieur ou égal à immédiat : Trap si $t1 supérieur ou égal à 16 bits immédiat avec signe étendu"
+    },
+    {
+      "example": "tgeiu $t1,-100",
+      "description": "Trap si supérieur ou égal à immédiat non signé : Trap si $t1 supérieur ou égal à comparaison immédiate non signée de 16 bits avec signe étendu"
+    },
+    {
+      "example": "tgeu $t1,$t2",
+      "description": "Piège si supérieur ou égal non signé : Piège si $t1 est supérieur ou égal à $t2 en utilisant une comparaison non signée"
+    },
+    {
+      "example": "tlt $t1,$t2",
+      "description": "Piège si inférieur à : Piège si $t1 inférieur à $t2"
+    },
+    {
+      "example": "tlti $t1,-100",
+      "description": "Déroutement si inférieur à immédiat : Déroutement si $t1 inférieur à 16 bits immédiat avec extension de signe"
+    },
+    {
+      "example": "tltiu $t1,-100",
+      "description": "Déroutement si inférieur à un signe immédiat : Déroutement si $t1 inférieur à une comparaison immédiate et non signée de 16 bits avec extension de signe"
+    },
+    {
+      "example": "tltu $t1,$t2",
+      "description": "Trap si inférieur à unsigned : Trap si $t1 inférieur à $t2, comparaison non signée"
+    },
+    {
+      "example": "tne $t1,$t2",
+      "description": "Piège si différent : Piège si $t1 n'est pas égal à $t2"
+    },
+    {
+      "example": "tnei $t1,-100",
+      "description": "Déroutement si différent de immédiat : Déroutement si $t1 n'est pas égal à 16 bits immédiat avec signe étendu"
+    },
+    {
+      "example": "trunc.w.d $f1,$f2",
+      "description": "Tronquer la double précision en mot : définissez $f1 sur une troncature entière de 32 bits du flottant double précision dans $f2"
+    },
+    {
+      "example": "trunc.w.s $f0,$f1",
+      "description": "Tronquer la simple précision en mot : définissez $f0 sur une troncature entière de 32 bits du flottant simple précision dans $f1"
+    },
+    {
+      "example": "xor $t1,$t2,$t3",
+      "description": "Bitwise XOR (OU exclusif) : définissez $t1 sur bitwise XOR de $t2 et $t3"
+    },
+    {
+      "example": "xori $t1,$t2,100",
+      "description": "Bitwise XOR immédiat : définissez $t1 sur bitwise XOR de $t2 et immédiat 16 bits étendu à zéro"
+    }
+  ],
+  "extendedInstructions": [
+    {
+      "example": "abs $t1,$t2",
+      "description": "Valeur absolue : définissez $t1 sur la valeur absolue de $t2 (algorithme de Hacker's Delight)"
+    },
+    {
+      "example": "add $t1,$t2,-100",
+      "description": "ADDition : définissez $t1 sur ($t2 plus 16 bits immédiats)"
+    },
+    {
+      "example": "add $t1,$t2,100000",
+      "description": "ADDition : définissez $t1 sur ($t2 plus 32 bits immédiats)"
+    },
+    {
+      "example": "addi $t1,$t2,100000",
+      "description": "ADDition Immediate : définissez $t1 sur ($t2 plus 32 bits immédiats)"
+    },
+    {
+      "example": "addiu $t1,$t2,100000",
+      "description": "ADDition Immediate Unsigned : définissez $t1 sur ($t2 plus 32 bits immédiat), pas de débordement"
+    },
+    {
+      "example": "addu $t1,$t2,100000",
+      "description": "ADDition Unsigned : définissez $t1 sur ($t2 plus 32 bits immédiat), pas de débordement"
+    },
+    {
+      "example": "and $t1,$t2,100",
+      "description": "AND : définissez $t1 sur ($t2 au niveau du bit-AND 16 bits non signé immédiat)"
+    },
+    {
+      "example": "and $t1,100",
+      "description": "AND : définissez $t1 sur ($t1 au niveau du bit-AND 16 bits non signé immédiat)"
+    },
+    {
+      "example": "andi $t1,$t2,100000",
+      "description": "AND Immédiat : définissez $t1 sur ($t2 au niveau du bit-AND 32 bits immédiat)"
+    },
+    {
+      "example": "andi $t1,100",
+      "description": "AND Immédiat : définissez $t1 sur ($t1 au niveau du bit-AND 16 bits immédiat non signé)"
+    },
+    {
+      "example": "andi $t1,100000",
+      "description": "AND Immédiat : définissez $t1 sur ($t1 au niveau du bit-AND 32 bits immédiat)"
+    },
+    {
+      "example": "b label",
+      "description": "Branche : branchement vers l'instruction sur l'étiquette sans condition"
+    },
+    {
+      "example": "beq $t1,-100,label",
+      "description": "Branche si EQual : branchement vers l'instruction à l'étiquette si $t1 est égal à 16 bits immédiat"
+    },
+    {
+      "example": "beq $t1,100000,label",
+      "description": "Branche si EQual : Branche vers l'instruction à l'étiquette si $t1 est égal à 32 bits immédiat"
+    },
+    {
+      "example": "beqz $t1,label",
+      "description": "Branche si EQual Zero : Branche vers l'instruction à l'étiquette si $t1 est égal à zéro"
+    },
+    {
+      "example": "bge $t1,-100,label",
+      "description": "Branchement si supérieur ou égal : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur ou égal à 16 bits immédiats"
+    },
+    {
+      "example": "bge $t1,$t2,label",
+      "description": "Branchement si supérieur ou égal : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur ou égal à $t2"
+    },
+    {
+      "example": "bge $t1,100000,label",
+      "description": "Branchement si supérieur ou égal : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur ou égal à 32 bits immédiat"
+    },
+    {
+      "example": "bgeu $t1,-100,label",
+      "description": "Branchement si supérieur ou égal non signé : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur ou égal à 16 bits immédiat (comparaison non signée)"
+    },
+    {
+      "example": "bgeu $t1,$t2,label",
+      "description": "Branchement si supérieur ou égal non signé : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur ou égal à $t2 (comparaison non signée)"
+    },
+    {
+      "example": "bgeu $t1,100000,label",
+      "description": "Branchement si supérieur ou égal non signé : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur ou égal à 32 bits immédiat (comparaison non signée)"
+    },
+    {
+      "example": "bgt $t1,-100,label",
+      "description": "Branchement si supérieur à : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur à 16 bits immédiat"
+    },
+    {
+      "example": "bgt $t1,$t2,label",
+      "description": "Branchement si supérieur à : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur à $t2"
+    },
+    {
+      "example": "bgt $t1,100000,label",
+      "description": "Branchement si supérieur à : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur à 32 bits immédiat"
+    },
+    {
+      "example": "bgtu $t1,-100,label",
+      "description": "Branchement si supérieur à non signé : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur à 16 bits immédiat (comparaison non signée)"
+    },
+    {
+      "example": "bgtu $t1,$t2,label",
+      "description": "Branchement si supérieur à non signé : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur à $t2 (comparaison non signée)"
+    },
+    {
+      "example": "bgtu $t1,100000,label",
+      "description": "Branchement si supérieur à non signé : branchement à l'instruction au niveau de l'étiquette si $t1 est supérieur à 16 bits immédiat (comparaison non signée)"
+    },
+    {
+      "example": "ble $t1,-100,label",
+      "description": "Branchement si inférieur ou égal : branchement à l'instruction au niveau de l'étiquette si $t1 est inférieur ou égal à 16 bits immédiats"
+    },
+    {
+      "example": "ble $t1,$t2,label",
+      "description": "Branchement si inférieur ou égal : branchement à l'instruction sur l'étiquette si $t1 est inférieur ou égal à $t2"
+    },
+    {
+      "example": "ble $t1,100000,label",
+      "description": "Branchement si inférieur ou égal : branchement à l'instruction au niveau de l'étiquette si $t1 est inférieur ou égal à 32 bits immédiat"
+    },
+    {
+      "example": "bleu $t1,-100,label",
+      "description": "Branchement si inférieur ou égal à unsigned : branchement à l'instruction au niveau de l'étiquette si $t1 est inférieur ou égal à 16 bits immédiat (comparaison non signée)"
+    },
+    {
+      "example": "bleu $t1,$t2,label",
+      "description": "Branchement si inférieur ou égal à unsigned : branchement à l'instruction au niveau de l'étiquette si $t1 est inférieur ou égal à $t2 (comparaison non signée)"
+    },
+    {
+      "example": "bleu $t1,100000,label",
+      "description": "Branchement si inférieur ou égal à unsigned : branchement à l'instruction au niveau de l'étiquette si $t1 est inférieur ou égal à 32 bits immédiat (comparaison non signée)"
+    },
+    {
+      "example": "blt $t1,-100,label",
+      "description": "Branchement si inférieur à : branchement à l'instruction au niveau de l'étiquette si $t1 est inférieur à 16 bits immédiat"
+    },
+    {
+      "example": "blt $t1,$t2,label",
+      "description": "Branchement si inférieur à : branchement à l'instruction au niveau de l'étiquette si $t1 est inférieur à $t2"
+    },
+    {
+      "example": "blt $t1,100000,label",
+      "description": "Branchement si inférieur à : branchement à l'instruction au niveau de l'étiquette si $t1 est inférieur à 32 bits immédiat"
+    },
+    {
+      "example": "bltu $t1,-100,label",
+      "description": "Branche si Less Than Unsigned : Branche vers l'instruction au niveau de l'étiquette si $t1 est inférieur à 16 bits immédiat"
+    },
+    {
+      "example": "bltu $t1,$t2,label",
+      "description": "Brancher si Less Than Unsigned : Brancher à l'instruction sur l'étiquette si $t1 est inférieur à $t2"
+    },
+    {
+      "example": "bltu $t1,100000,label",
+      "description": "Branche si Less Than Unsigned : Branche vers l'instruction au niveau de l'étiquette si $t1 est inférieur à 32 bits immédiat"
+    },
+    {
+      "example": "bne $t1,-100,label",
+      "description": "Branch if Not Equal : branche vers l'instruction au niveau de l'étiquette si $t1 n'est pas égal à 16 bits immédiat"
+    },
+    {
+      "example": "bne $t1,100000,label",
+      "description": "Branchement si différent : branchement à l'instruction au niveau de l'étiquette si $t1 n'est pas égal à 32 bits immédiat"
+    },
+    {
+      "example": "bnez $t1,label",
+      "description": "Branchement si différent de zéro : branchement à l'instruction à l'étiquette si $t1 n'est pas égal à zéro"
+    },
+    {
+      "example": "div $t1,$t2,-100",
+      "description": "DIVision : définissez $t1 sur ($t2 divisé par une division entière immédiate de 16 bits)"
+    },
+    {
+      "example": "div $t1,$t2,$t3",
+      "description": "DIVision : définissez $t1 sur ($t2 divisé par $t3, division entière)"
+    },
+    {
+      "example": "div $t1,$t2,100000",
+      "description": "DIVision : définissez $t1 sur ($t2 divisé par une division entière immédiate de 32 bits)"
+    },
+    {
+      "example": "divu $t1,$t2,-100",
+      "description": "DIVision Unsigned : définissez $t1 sur ($t2 divisé par une division entière immédiate non signée de 16 bits)"
+    },
+    {
+      "example": "divu $t1,$t2,$t3",
+      "description": "DIVision Unsigned : définissez $t1 sur ($t2 divisé par $t3, division entière non signée)"
+    },
+    {
+      "example": "divu $t1,$t2,100000",
+      "description": "DIVision Unsigned : définissez $t1 sur ($t2 divisé par une division entière immédiate non signée de 32 bits)"
+    },
+    {
+      "example": "l.d $f2,-100",
+      "description": "Charger la virgule flottante Double précision : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "l.d $f2,($t2)",
+      "description": "Charger la virgule flottante Double précision : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "l.d $f2,100000",
+      "description": "Charger la virgule flottante Double précision : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "l.d $f2,100000($t2)",
+      "description": "Charger la virgule flottante Double précision : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "l.d $f2,label",
+      "description": "Charger la virgule flottante Double précision : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "l.d $f2,label($t2)",
+      "description": "Charger la virgule flottante Double précision : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "l.d $f2,label+100000",
+      "description": "Charger la virgule flottante Double précision : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "l.d $f2,label+100000($t2)",
+      "description": "Charger la virgule flottante Double précision : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "l.s $f1,-100",
+      "description": "Charger la virgule flottante Simple précision : définir $f1 sur une valeur de 32 bits à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "l.s $f1,($t2)",
+      "description": "Charger la virgule flottante Simple précision : définir $f1 sur une valeur de 32 bits à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "l.s $f1,100000",
+      "description": "Charger la virgule flottante Simple précision : définir $f1 sur une valeur de 32 bits à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "l.s $f1,100000($t2)",
+      "description": "Charger la virgule flottante Simple précision : définir $f1 sur une valeur de 32 bits à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "l.s $f1,label",
+      "description": "Charger la virgule flottante Simple précision : définir $f1 sur une valeur de 32 bits à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "l.s $f1,label($t2)",
+      "description": "Charger la virgule flottante Simple précision : définir $f1 sur une valeur de 32 bits à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "l.s $f1,label+100000",
+      "description": "Charger la virgule flottante Simple précision : définir $f1 sur une valeur de 32 bits à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "l.s $f1,label+100000($t2)",
+      "description": "Charger la virgule flottante Simple précision : définir $f1 sur une valeur de 32 bits à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "la $t1,-100",
+      "description": "Charger l'adresse : définissez $t1 sur 16 bits immédiats (signe étendu)"
+    },
+    {
+      "example": "la $t1,($t2)",
+      "description": "Charger l'adresse : définissez $t1 sur le contenu de $t2"
+    },
+    {
+      "example": "la $t1,100",
+      "description": "Adresse de chargement : définissez $t1 sur 16 bits immédiats (étendus à zéro)"
+    },
+    {
+      "example": "la $t1,100($t2)",
+      "description": "Charger l'adresse : définissez $t1 sur la somme (de $t2 et 16 bits immédiats)"
+    },
+    {
+      "example": "la $t1,100000",
+      "description": "Adresse de chargement : définissez $t1 sur 32 bits immédiats"
+    },
+    {
+      "example": "la $t1,100000($t2)",
+      "description": "Charger l'adresse : définissez $t1 sur la somme (de $t2 et 32 bits immédiats)"
+    },
+    {
+      "example": "la $t1,label",
+      "description": "Charger l'adresse : définissez $t1 sur l'adresse de l'étiquette."
+    },
+    {
+      "example": "la $t1,label($t2)",
+      "description": "Charger l'adresse : définissez $t1 sur la somme (de $t2 et de l'adresse de l'étiquette)"
+    },
+    {
+      "example": "la $t1,label+100000",
+      "description": "Load Address : définissez $t1 sur la somme (de l'adresse de l'étiquette et 32 bits immédiats)"
+    },
+    {
+      "example": "la $t1,label+100000($t2)",
+      "description": "Charger l'adresse : définissez $t1 sur la somme (de l'adresse de l'étiquette, 32 bits immédiats et de $t2)"
+    },
+    {
+      "example": "lb $t1,-100",
+      "description": "Load Byte : définissez $t1 sur la valeur 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lb $t1,($t2)",
+      "description": "Load Byte : définissez $t1 sur la valeur 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lb $t1,100",
+      "description": "Load Byte : définissez $t1 sur la valeur 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lb $t1,100($t2)",
+      "description": "Load Byte : définissez $t1 sur la valeur 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lb $t1,100000",
+      "description": "Load Byte : définissez $t1 sur la valeur 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lb $t1,100000($t2)",
+      "description": "Load Byte : définissez $t1 sur la valeur 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lb $t1,label",
+      "description": "Load Byte : définissez $t1 sur la valeur 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lb $t1,label($t2)",
+      "description": "Load Byte : définissez $t1 sur la valeur 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lb $t1,label+100000",
+      "description": "Load Byte : définissez $t1 sur la valeur 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lb $t1,label+100000($t2)",
+      "description": "Load Byte : définissez $t1 sur la valeur 8 bits étendue par signe à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,-100",
+      "description": "Load Byte Unsigned : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,($t2)",
+      "description": "Load Byte Unsigned : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,100",
+      "description": "Load Byte Unsigned : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,100($t2)",
+      "description": "Load Byte Unsigned : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,100000",
+      "description": "Load Byte Unsigned : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,100000($t2)",
+      "description": "Load Byte Unsigned : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,label",
+      "description": "Load Byte Unsigned : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,label($t2)",
+      "description": "Load Byte Unsigned : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,label+100000",
+      "description": "Load Byte Unsigned : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "lbu $t1,label+100000($t2)",
+      "description": "Load Byte Unsigned : définissez $t1 sur une valeur de 8 bits étendue à zéro à partir de l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ld $t1,-100($t2)",
+      "description": "Charger un double mot : définissez $t1 et le registre suivant sur 64 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ld $t1,($t2)",
+      "description": "Charger un double mot : définissez $t1 et le registre suivant sur les 64 bits en commençant à l'adresse effective du mot mémoire."
+    },
+    {
+      "example": "ld $t1,100000",
+      "description": "Charger un double mot : définissez $t1 et le registre suivant sur les 64 bits en commençant à l'adresse effective du mot mémoire."
+    },
+    {
+      "example": "ld $t1,100000($t2)",
+      "description": "Charger un double mot : définissez $t1 et le registre suivant sur les 64 bits en commençant à l'adresse effective du mot mémoire."
+    },
+    {
+      "example": "ld $t1,label",
+      "description": "Charger un double mot : définissez $t1 et le registre suivant sur les 64 bits en commençant à l'adresse effective du mot mémoire."
+    },
+    {
+      "example": "ld $t1,label($t2)",
+      "description": "Charger un double mot : définissez $t1 et le registre suivant sur les 64 bits en commençant à l'adresse effective du mot mémoire."
+    },
+    {
+      "example": "ld $t1,label+100000",
+      "description": "Charger un double mot : définissez $t1 et le registre suivant sur les 64 bits en commençant à l'adresse effective du mot mémoire."
+    },
+    {
+      "example": "ld $t1,label+100000($t2)",
+      "description": "Charger un double mot : définissez $t1 et le registre suivant sur les 64 bits en commençant à l'adresse effective du mot mémoire."
+    },
+    {
+      "example": "ldc1 $f2,-100",
+      "description": "Charger le coprocesseur de double mot 1 : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "ldc1 $f2,($t2)",
+      "description": "Charger le coprocesseur de double mot 1 : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "ldc1 $f2,100000",
+      "description": "Charger le coprocesseur de double mot 1 : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "ldc1 $f2,100000($t2)",
+      "description": "Charger le coprocesseur de double mot 1 : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "ldc1 $f2,label",
+      "description": "Charger le coprocesseur de double mot 1 : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "ldc1 $f2,label($t2)",
+      "description": "Charger le coprocesseur de double mot 1 : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "ldc1 $f2,label+100000",
+      "description": "Charger le coprocesseur de double mot 1 : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "ldc1 $f2,label+100000($t2)",
+      "description": "Charger le coprocesseur de double mot 1 : définir la paire de registres $f2 et $f3 sur une valeur de 64 bits à l'adresse de double mot de mémoire effective"
+    },
+    {
+      "example": "lh $t1,-100",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lh $t1,($t2)",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lh $t1,100",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lh $t1,100($t2)",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lh $t1,100000",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lh $t1,100000($t2)",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lh $t1,label",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lh $t1,label($t2)",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lh $t1,label+100000",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lh $t1,label+100000($t2)",
+      "description": "Charger un demi-mot : définissez $t1 sur la valeur 16 bits étendue par signe à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,-100",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,($t2)",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,100",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,100($t2)",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,100000",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,100000($t2)",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,label",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,label($t2)",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,label+100000",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "lhu $t1,label+100000($t2)",
+      "description": "Charger un demi-mot non signé : définissez $t1 sur une valeur de 16 bits étendue à zéro à partir de l'adresse du demi-mot de la mémoire effective"
+    },
+    {
+      "example": "li $t1,-100",
+      "description": "Chargement immédiat : définissez $t1 sur 16 bits immédiats (signe étendu)"
+    },
+    {
+      "example": "li $t1,100",
+      "description": "Chargement immédiat : définissez $t1 sur 16 bits immédiats non signés (étendus à zéro)"
+    },
+    {
+      "example": "li $t1,100000",
+      "description": "Chargement immédiat : définissez $t1 sur 32 bits immédiat"
+    },
+    {
+      "example": "ll $t1,-100",
+      "description": "Load Linked : Charge un mot et établit une réservation pour un Store Conditional (sc) ultérieur."
+    },
+    {
+      "example": "ll $t1,($t2)",
+      "description": "Load Linked : Charge un mot et établit une réservation pour un Store Conditional (sc) ultérieur."
+    },
+    {
+      "example": "ll $t1,100",
+      "description": "Load Linked : Charge un mot et établit une réservation pour un Store Conditional (sc) ultérieur."
+    },
+    {
+      "example": "ll $t1,100($t2)",
+      "description": "Load Linked : Charge un mot et établit une réservation pour un Store Conditional (sc) ultérieur."
+    },
+    {
+      "example": "ll $t1,100000",
+      "description": "Load Linked : Charge un mot et établit une réservation pour un Store Conditional (sc) ultérieur."
+    },
+    {
+      "example": "ll $t1,100000($t2)",
+      "description": "Load Linked : Charge un mot et établit une réservation pour un Store Conditional (sc) ultérieur."
+    },
+    {
+      "example": "ll $t1,label",
+      "description": "Load Linked : Charge un mot et établit une réservation pour un Store Conditional (sc) ultérieur."
+    },
+    {
+      "example": "ll $t1,label($t2)",
+      "description": "Load Linked : Charge un mot et établit une réservation pour un Store Conditional (sc) ultérieur."
+    },
+    {
+      "example": "ll $t1,label+100000",
+      "description": "Load Linked : Charge un mot et établit une réservation pour un Store Conditional (sc) ultérieur."
+    },
+    {
+      "example": "ll $t1,label+100000($t2)",
+      "description": "Load Linked : Charge un mot et établit une réservation pour un Store Conditional (sc) ultérieur."
+    },
+    {
+      "example": "lw $t1,-100",
+      "description": "Load Word : définissez $t1 sur le contenu de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lw $t1,($t2)",
+      "description": "Load Word : définissez $t1 sur le contenu de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lw $t1,100",
+      "description": "Load Word : définissez $t1 sur le contenu de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lw $t1,100($t2)",
+      "description": "Load Word : définissez $t1 sur le contenu de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lw $t1,100000",
+      "description": "Load Word : définissez $t1 sur le contenu de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lw $t1,100000($t2)",
+      "description": "Load Word : définissez $t1 sur le contenu de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lw $t1,label",
+      "description": "Load Word : définissez $t1 sur le contenu du mot mémoire à l'adresse de l'étiquette"
+    },
+    {
+      "example": "lw $t1,label($t2)",
+      "description": "Load Word : définissez $t1 sur le contenu de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lw $t1,label+100000",
+      "description": "Load Word : définissez $t1 sur le contenu de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lw $t1,label+100000($t2)",
+      "description": "Load Word : définissez $t1 sur le contenu de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lwc1 $f1,-100",
+      "description": "Charger le coprocesseur de mot 1 : définir $f1 sur une valeur de 32 bits à partir de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lwc1 $f1,($t2)",
+      "description": "Charger le coprocesseur de mot 1 : définir $f1 sur une valeur de 32 bits à partir de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lwc1 $f1,100000",
+      "description": "Charger le coprocesseur de mot 1 : définir $f1 sur une valeur de 32 bits à partir de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lwc1 $f1,100000($t2)",
+      "description": "Charger le coprocesseur de mot 1 : définir $f1 sur une valeur de 32 bits à partir de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lwc1 $f1,label",
+      "description": "Charger le coprocesseur de mot 1 : définir $f1 sur une valeur de 32 bits à partir de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lwc1 $f1,label($t2)",
+      "description": "Charger le coprocesseur de mot 1 : définir $f1 sur une valeur de 32 bits à partir de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lwc1 $f1,label+100000",
+      "description": "Charger le coprocesseur de mot 1 : définir $f1 sur une valeur de 32 bits à partir de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lwc1 $f1,label+100000($t2)",
+      "description": "Charger le coprocesseur de mot 1 : définir $f1 sur une valeur de 32 bits à partir de l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "lwl $t1,-100",
+      "description": "Charger le mot gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "lwl $t1,($t2)",
+      "description": "Charger le mot gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "lwl $t1,100",
+      "description": "Charger le mot gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "lwl $t1,100($t2)",
+      "description": "Charger le mot gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "lwl $t1,100000",
+      "description": "Charger le mot gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "lwl $t1,100000($t2)",
+      "description": "Charger le mot gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "lwl $t1,label",
+      "description": "Charger le mot gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "lwl $t1,label($t2)",
+      "description": "Charger le mot gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "lwl $t1,label+100000",
+      "description": "Charger le mot gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "lwl $t1,label+100000($t2)",
+      "description": "Charger le mot gauche : charger de 1 à 4 octets justifiés à gauche dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "lwr $t1,-100",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot."
+    },
+    {
+      "example": "lwr $t1,($t2)",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot."
+    },
+    {
+      "example": "lwr $t1,100",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot."
+    },
+    {
+      "example": "lwr $t1,100($t2)",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot."
+    },
+    {
+      "example": "lwr $t1,100000",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot."
+    },
+    {
+      "example": "lwr $t1,100000($t2)",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot."
+    },
+    {
+      "example": "lwr $t1,label",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot."
+    },
+    {
+      "example": "lwr $t1,label($t2)",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot."
+    },
+    {
+      "example": "lwr $t1,label+100000",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot."
+    },
+    {
+      "example": "lwr $t1,label+100000($t2)",
+      "description": "Charger le mot à droite : charger de 1 à 4 octets justifiés à droite dans $t1, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids fort de son mot."
+    },
+    {
+      "example": "mfc1.d $t1,$f2",
+      "description": "Déplacer du coprocesseur 1 double : définissez $t1 sur le contenu de $f2, définissez le registre supérieur suivant de $t1 sur le contenu du registre supérieur suivant de $f2"
+    },
+    {
+      "example": "move $t1,$t2",
+      "description": "MOVE : Définissez $t1 sur le contenu de $t2"
+    },
+    {
+      "example": "mtc1.d $t1,$f2",
+      "description": "Déplacer vers le coprocesseur 1 double : définissez $f2 sur le contenu de $t1, définissez le registre supérieur suivant de $f2 sur le contenu du registre supérieur suivant de $t1"
+    },
+    {
+      "example": "mul $t1,$t2,-100",
+      "description": "MULtiplication : définissez HI sur 32 bits de poids fort, LO et $t1 sur 32 bits de poids faible du produit de $t2 et 16 bits signés immédiatement (utilisez mfhi pour accéder à HI, mflo pour accéder à LO)"
+    },
+    {
+      "example": "mul $t1,$t2,100000",
+      "description": "MULtiplication : définissez HI sur 32 bits de poids fort, LO et $t1 sur 32 bits de poids faible du produit de $t2 et 32 bits immédiats (utilisez mfhi pour accéder à HI, mflo pour accéder à LO)"
+    },
+    {
+      "example": "mulo $t1,$t2,-100",
+      "description": "MULtiplication avec débordement : définissez $t1 sur 32 bits de poids faible du produit de $t2 et signez immédiatement 16 bits"
+    },
+    {
+      "example": "mulo $t1,$t2,$t3",
+      "description": "MULtiplication avec débordement : définissez $t1 sur 32 bits de poids faible du produit de $t2 et $t3"
+    },
+    {
+      "example": "mulo $t1,$t2,100000",
+      "description": "MULtiplication avec débordement : définissez $t1 sur 32 bits de poids faible du produit de $t2 et 32 bits immédiats"
+    },
+    {
+      "example": "mulou $t1,$t2,-100",
+      "description": "MULtiplication avec débordement non signé : définissez $t1 sur 32 bits de poids faible du produit de $t2 et signez immédiatement 16 bits"
+    },
+    {
+      "example": "mulou $t1,$t2,$t3",
+      "description": "MULtiplication avec débordement non signé : définissez $t1 sur 32 bits de poids faible du produit de $t2 et $t3"
+    },
+    {
+      "example": "mulou $t1,$t2,100000",
+      "description": "MULtiplication avec débordement non signé : définissez $t1 sur 32 bits de poids faible du produit de $t2 et 32 bits immédiats"
+    },
+    {
+      "example": "mulu $t1,$t2,-100",
+      "description": "MULtiplication non signée : définissez HI sur 32 bits de poids fort, LO et $t1 sur 32 bits de poids faible de ($t2 multiplié par une multiplication immédiate non signée de 16 bits)"
+    },
+    {
+      "example": "mulu $t1,$t2,$t3",
+      "description": "MULtiplication non signé : définissez HI sur 32 bits de poids fort, LO et $t1 sur 32 bits de poids faible de ($t2 multiplié par $t3, multiplication non signée)"
+    },
+    {
+      "example": "mulu $t1,$t2,100000",
+      "description": "MULtiplication non signée : définissez HI sur 32 bits de poids fort, LO et $t1 sur 32 bits de poids faible de ($t2 multiplié par une multiplication immédiate non signée de 32 bits)"
+    },
+    {
+      "example": "neg $t1,$t2",
+      "description": "NEGate : définissez $t1 sur la négation de $t2"
+    },
+    {
+      "example": "negu $t1,$t2",
+      "description": "NEGate Unsigned : définissez $t1 sur la négation de $t2, pas de débordement"
+    },
+    {
+      "example": "not $t1,$t2",
+      "description": "Au niveau du bit NOT (inversion de bits)"
+    },
+    {
+      "example": "or $t1,$t2,100",
+      "description": "OU : définissez $t1 sur ($t2 bit à bit OU 16 bits non signé immédiat)"
+    },
+    {
+      "example": "or $t1,100",
+      "description": "OU : définissez $t1 sur ($t1 bit à bit OU 16 bits non signé immédiat)"
+    },
+    {
+      "example": "ori $t1,$t2,100000",
+      "description": "OU Immédiat : définissez $t1 sur ($t2 bit à bit-OU 32 bits immédiat)"
+    },
+    {
+      "example": "ori $t1,100",
+      "description": "OU Immédiat : définissez $t1 sur ($t1 bit à bit OU 16 bits non signé immédiat)"
+    },
+    {
+      "example": "ori $t1,100000",
+      "description": "OU Immédiat : définissez $t1 sur ($t1 bit à bit-OU 32 bits immédiat)"
+    },
+    {
+      "example": "rem $t1,$t2,-100",
+      "description": "REMainder : définissez $t1 sur (reste de $t2 divisé par 16 bits immédiats)"
+    },
+    {
+      "example": "rem $t1,$t2,$t3",
+      "description": "REMainder : définissez $t1 sur (reste de $t2 divisé par $t3)"
+    },
+    {
+      "example": "rem $t1,$t2,100000",
+      "description": "REMainder : définissez $t1 sur (reste de $t2 divisé par 32 bits immédiats)"
+    },
+    {
+      "example": "remu $t1,$t2,-100",
+      "description": "REMainder : définissez $t1 sur (reste de $t2 divisé par une division immédiate et non signée de 16 bits)"
+    },
+    {
+      "example": "remu $t1,$t2,$t3",
+      "description": "REMainder : définissez $t1 sur (reste de $t2 divisé par $t3, division non signée)"
+    },
+    {
+      "example": "remu $t1,$t2,100000",
+      "description": "REMainder : définissez $t1 sur (reste de $t2 divisé par une division immédiate non signée de 32 bits)"
+    },
+    {
+      "example": "rol $t1,$t2,$t3",
+      "description": "Rotation à gauche : définissez $t1 sur ($t2 tourné vers la gauche selon le nombre de positions de bits spécifié dans $t3)"
+    },
+    {
+      "example": "rol $t1,$t2,10",
+      "description": "Rotation à gauche : définissez $t1 sur ($t2 tourné vers la gauche selon le nombre de positions de bits spécifié en 5 bits immédiats)"
+    },
+    {
+      "example": "ror $t1,$t2,$t3",
+      "description": "Rotation à droite : définissez $t1 sur ($t2 tourné vers la droite selon le nombre de positions de bits spécifié dans $t3)"
+    },
+    {
+      "example": "ror $t1,$t2,10",
+      "description": "Rotation à droite : définissez $t1 sur ($t2 tourné vers la droite selon le nombre de positions de bits spécifié en 5 bits immédiats)"
+    },
+    {
+      "example": "s.d $f2,-100",
+      "description": "Stocker la virgule flottante Double précision : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de double mot de la mémoire effective"
+    },
+    {
+      "example": "s.d $f2,($t2)",
+      "description": "Stocker la virgule flottante Double précision : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de double mot de la mémoire effective"
+    },
+    {
+      "example": "s.d $f2,100000",
+      "description": "Stocker la virgule flottante Double précision : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de double mot de la mémoire effective"
+    },
+    {
+      "example": "s.d $f2,100000($t2)",
+      "description": "Stocker la virgule flottante Double précision : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de double mot de la mémoire effective"
+    },
+    {
+      "example": "s.d $f2,label",
+      "description": "Stocker la virgule flottante Double précision : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de double mot de la mémoire effective"
+    },
+    {
+      "example": "s.d $f2,label($t2)",
+      "description": "Stocker la virgule flottante Double précision : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de double mot de la mémoire effective"
+    },
+    {
+      "example": "s.d $f2,label+100000",
+      "description": "Stocker la virgule flottante Double précision : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de double mot de la mémoire effective"
+    },
+    {
+      "example": "s.d $f2,label+100000($t2)",
+      "description": "Stocker la virgule flottante Double précision : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de double mot de la mémoire effective"
+    },
+    {
+      "example": "s.s $f1,-100",
+      "description": "Stocker la virgule flottante Simple précision : stocker la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "s.s $f1,($t2)",
+      "description": "Stocker la virgule flottante Simple précision : stocker la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "s.s $f1,100000",
+      "description": "Stocker la virgule flottante Simple précision : stocker la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "s.s $f1,100000($t2)",
+      "description": "Stocker la virgule flottante Simple précision : stocker la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "s.s $f1,label",
+      "description": "Stocker la virgule flottante Simple précision : stocker la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "s.s $f1,label($t2)",
+      "description": "Stocker la virgule flottante Simple précision : stocker la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "s.s $f1,label+100000",
+      "description": "Stocker la virgule flottante Simple précision : stocker la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "s.s $f1,label+100000($t2)",
+      "description": "Stocker la virgule flottante Simple précision : stocker la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "sb $t1,-100",
+      "description": "Store Byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sb $t1,($t2)",
+      "description": "Store Byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sb $t1,100",
+      "description": "Store Byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sb $t1,100($t2)",
+      "description": "Store Byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sb $t1,100000",
+      "description": "Store Byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sb $t1,100000($t2)",
+      "description": "Store Byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sb $t1,label",
+      "description": "Store Byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sb $t1,label($t2)",
+      "description": "Store Byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sb $t1,label+100000",
+      "description": "Store Byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sb $t1,label+100000($t2)",
+      "description": "Store Byte : stocke les 8 bits de poids faible de $t1 dans l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sc $t1,-100",
+      "description": "Store Conditional : stockez uniquement si la réservation Load Linked correspondante reste valide, puis signalez le succès ou l'échec dans le registre source."
+    },
+    {
+      "example": "sc $t1,($t2)",
+      "description": "Store Conditional : stockez uniquement si la réservation Load Linked correspondante reste valide, puis signalez le succès ou l'échec dans le registre source."
+    },
+    {
+      "example": "sc $t1,100",
+      "description": "Store Conditional : stockez uniquement si la réservation Load Linked correspondante reste valide, puis signalez le succès ou l'échec dans le registre source."
+    },
+    {
+      "example": "sc $t1,100($t2)",
+      "description": "Store Conditional : stockez uniquement si la réservation Load Linked correspondante reste valide, puis signalez le succès ou l'échec dans le registre source."
+    },
+    {
+      "example": "sc $t1,100000",
+      "description": "Store Conditional : stockez uniquement si la réservation Load Linked correspondante reste valide, puis signalez le succès ou l'échec dans le registre source."
+    },
+    {
+      "example": "sc $t1,100000($t2)",
+      "description": "Store Conditional : stockez uniquement si la réservation Load Linked correspondante reste valide, puis signalez le succès ou l'échec dans le registre source."
+    },
+    {
+      "example": "sc $t1,label",
+      "description": "Store Conditional : stockez uniquement si la réservation Load Linked correspondante reste valide, puis signalez le succès ou l'échec dans le registre source."
+    },
+    {
+      "example": "sc $t1,label($t2)",
+      "description": "Store Conditional : stockez uniquement si la réservation Load Linked correspondante reste valide, puis signalez le succès ou l'échec dans le registre source."
+    },
+    {
+      "example": "sc $t1,label+100000",
+      "description": "Store Conditional : stockez uniquement si la réservation Load Linked correspondante reste valide, puis signalez le succès ou l'échec dans le registre source."
+    },
+    {
+      "example": "sc $t1,label+100000($t2)",
+      "description": "Store Conditional : stockez uniquement si la réservation Load Linked correspondante reste valide, puis signalez le succès ou l'échec dans le registre source."
+    },
+    {
+      "example": "sd $t1,-100($t2)",
+      "description": "Store Doubleword : stocke le contenu de $t1 et le registre suivant sur les 64 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "sd $t1,($t2)",
+      "description": "Store Doubleword : stocke le contenu de $t1 et le registre suivant sur les 64 bits en commençant à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "sd $t1,100000",
+      "description": "Store Doubleword : stocke le contenu de $t1 et le registre suivant sur les 64 bits en commençant à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "sd $t1,100000($t2)",
+      "description": "Store Doubleword : stocke le contenu de $t1 et le registre suivant sur les 64 bits en commençant à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "sd $t1,label",
+      "description": "Store Doubleword : stocke le contenu de $t1 et le registre suivant sur les 64 bits en commençant à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "sd $t1,label($t2)",
+      "description": "Store Doubleword : stocke le contenu de $t1 et le registre suivant sur les 64 bits en commençant à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "sd $t1,label+100000",
+      "description": "Store Doubleword : stocke le contenu de $t1 et le registre suivant sur les 64 bits en commençant à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "sd $t1,label+100000($t2)",
+      "description": "Store Doubleword : stocke le contenu de $t1 et le registre suivant sur les 64 bits en commençant à l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "sdc1 $f2,-100",
+      "description": "Stocker le coprocesseur de mot double 1 : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de mot double de la mémoire effective"
+    },
+    {
+      "example": "sdc1 $f2,($t2)",
+      "description": "Stocker le coprocesseur de mot double 1 : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de mot double de la mémoire effective"
+    },
+    {
+      "example": "sdc1 $f2,100000",
+      "description": "Stocker le coprocesseur de mot double 1 : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de mot double de la mémoire effective"
+    },
+    {
+      "example": "sdc1 $f2,100000($t2)",
+      "description": "Stocker le coprocesseur de mot double 1 : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de mot double de la mémoire effective"
+    },
+    {
+      "example": "sdc1 $f2,label",
+      "description": "Stocker le coprocesseur de mot double 1 : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de mot double de la mémoire effective"
+    },
+    {
+      "example": "sdc1 $f2,label($t2)",
+      "description": "Stocker le coprocesseur de mot double 1 : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de mot double de la mémoire effective"
+    },
+    {
+      "example": "sdc1 $f2,label+100000",
+      "description": "Stocker le coprocesseur de mot double 1 : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de mot double de la mémoire effective"
+    },
+    {
+      "example": "sdc1 $f2,label+100000($t2)",
+      "description": "Stocker le coprocesseur de mot double 1 : stocker 64 bits de la paire de registres $f2 et $f3 dans l'adresse de mot double de la mémoire effective"
+    },
+    {
+      "example": "seq $t1,$t2,-100",
+      "description": "Définissez EQual : si $t2 est égal à 16 bits immédiat, définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "seq $t1,$t2,$t3",
+      "description": "Définir EQual : si $t2 est égal à $t3 puis définir $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "seq $t1,$t2,100000",
+      "description": "Définissez EQual : si $t2 est égal à 32 bits immédiat, définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "sge $t1,$t2,-100",
+      "description": "Définir supérieur ou égal : si $t2 supérieur ou égal à 16 bits immédiat, définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "sge $t1,$t2,$t3",
+      "description": "Définir supérieur ou égal : si $t2 supérieur ou égal à $t3 alors définir $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sge $t1,$t2,100000",
+      "description": "Définir supérieur ou égal : si $t2 supérieur ou égal à 32 bits immédiat, définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,-100",
+      "description": "Définir supérieur ou égal non signé : si $t2 supérieur ou égal à 16 bits immédiat (comparaison non signée), alors définissez $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,$t3",
+      "description": "Définir supérieur ou égal non signé : si $t2 supérieur ou égal à $t3 (comparaison non signée), alors définissez $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,100000",
+      "description": "Définir supérieur ou égal non signé : si $t2 supérieur ou égal à 32 bits immédiat (comparaison non signée), alors définissez $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sgt $t1,$t2,-100",
+      "description": "Définir supérieur à : si $t2 supérieur à 16 bits immédiat, définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "sgt $t1,$t2,$t3",
+      "description": "Définir supérieur à : si $t2 supérieur à $t3 alors définissez $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sgt $t1,$t2,100000",
+      "description": "Définir supérieur à : si $t2 supérieur à 32 bits immédiat, définissez $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,-100",
+      "description": "Définir supérieur à non signé : si $t2 supérieur à 16 bits immédiat (comparaison non signée), définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,$t3",
+      "description": "Définir supérieur à non signé : si $t2 supérieur à $t3 (comparaison non signée), alors définissez $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,100000",
+      "description": "Définir supérieur à non signé : si $t2 supérieur à 32 bits immédiat (comparaison non signée), définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "sh $t1,-100",
+      "description": "Store Halfword : stocke les 16 bits de poids faible de $t1 dans l'adresse de demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sh $t1,($t2)",
+      "description": "Store Halfword : stocke les 16 bits de poids faible de $t1 dans l'adresse de demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sh $t1,100",
+      "description": "Store Halfword : stocke les 16 bits de poids faible de $t1 dans l'adresse de demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sh $t1,100($t2)",
+      "description": "Store Halfword : stocke les 16 bits de poids faible de $t1 dans l'adresse de demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sh $t1,100000",
+      "description": "Store Halfword : stocke les 16 bits de poids faible de $t1 dans l'adresse de demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sh $t1,100000($t2)",
+      "description": "Store Halfword : stocke les 16 bits de poids faible de $t1 dans l'adresse de demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sh $t1,label",
+      "description": "Store Halfword : stocke les 16 bits de poids faible de $t1 dans l'adresse de demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sh $t1,label($t2)",
+      "description": "Store Halfword : stocke les 16 bits de poids faible de $t1 dans l'adresse de demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sh $t1,label+100000",
+      "description": "Store Halfword : stocke les 16 bits de poids faible de $t1 dans l'adresse de demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sh $t1,label+100000($t2)",
+      "description": "Store Halfword : stocke les 16 bits de poids faible de $t1 dans l'adresse de demi-mot de la mémoire effective"
+    },
+    {
+      "example": "sle $t1,$t2,-100",
+      "description": "Définir inférieur ou égal : si $t2 inférieur ou égal à 16 bits immédiat, définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "sle $t1,$t2,$t3",
+      "description": "Définir inférieur ou égal : si $t2 inférieur ou égal à $t3 alors définir $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sle $t1,$t2,100000",
+      "description": "Définir inférieur ou égal : si $t2 inférieur ou égal à 32 bits immédiat, définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "sleu $t1,$t2,-100",
+      "description": "Définir moins ou égal non signé : si $t2 inférieur ou égal à 16 bits immédiat (comparaison non signée), alors définir $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sleu $t1,$t2,$t3",
+      "description": "Définir inférieur ou égal non signé : si $t2 inférieur ou égal à $t3 (comparaison non signée), alors définissez $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sleu $t1,$t2,100000",
+      "description": "Définir moins ou égal non signé : si $t2 inférieur ou égal à 32 bits immédiat (comparaison non signée), alors définir $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sne $t1,$t2,-100",
+      "description": "Set Not Equal : si $t2 n'est pas égal à 16 bits immédiat, définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "sne $t1,$t2,$t3",
+      "description": "Set Not Equal : si $t2 n'est pas égal à $t3 alors définissez $t1 sur 1 sinon 0"
+    },
+    {
+      "example": "sne $t1,$t2,100000",
+      "description": "Set Not Equal : si $t2 n'est pas égal à 32 bits immédiat, définissez $t1 sur 1, sinon 0"
+    },
+    {
+      "example": "sub $t1,$t2,-100",
+      "description": "SUBtraction : définissez $t1 sur ($t2 moins 16 bits immédiats)"
+    },
+    {
+      "example": "sub $t1,$t2,100000",
+      "description": "SUBtraction : définissez $t1 sur ($t2 moins 32 bits immédiats)"
+    },
+    {
+      "example": "subi $t1,$t2,-100",
+      "description": "SUBtraction Immediate : définissez $t1 sur ($t2 moins 16 bits immédiats)"
+    },
+    {
+      "example": "subi $t1,$t2,100000",
+      "description": "SUBtraction Immediate : définissez $t1 sur ($t2 moins 32 bits immédiats)"
+    },
+    {
+      "example": "subiu $t1,$t2,100000",
+      "description": "SUBtraction Immediate Unsigned : définissez $t1 sur ($t2 moins 32 bits immédiat), pas de débordement"
+    },
+    {
+      "example": "subu $t1,$t2,100000",
+      "description": "SUBtraction Unsigned : définissez $t1 sur ($t2 moins 32 bits immédiat), pas de débordement"
+    },
+    {
+      "example": "sw $t1,-100",
+      "description": "Store Word : stocke le contenu de $t1 dans l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "sw $t1,($t2)",
+      "description": "Store Word : stocke le contenu de $t1 dans l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "sw $t1,100",
+      "description": "Store Word : stocke le contenu de $t1 dans l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "sw $t1,100($t2)",
+      "description": "Store Word : stocke le contenu de $t1 dans l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "sw $t1,100000",
+      "description": "Store Word : stocke le contenu de $t1 dans l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "sw $t1,100000($t2)",
+      "description": "Store Word : stocke le contenu de $t1 dans l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "sw $t1,label",
+      "description": "Store Word : stocke le contenu de $t1 dans le mot mémoire à l'adresse de l'étiquette."
+    },
+    {
+      "example": "sw $t1,label($t2)",
+      "description": "Store Word : stocke le contenu de $t1 dans l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "sw $t1,label+100000",
+      "description": "Store Word : stocke le contenu de $t1 dans l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "sw $t1,label+100000($t2)",
+      "description": "Store Word : stocke le contenu de $t1 dans l'adresse de mot de mémoire effective"
+    },
+    {
+      "example": "swc1 $f1,-100",
+      "description": "Store Word Coprocessor 1 : stocke la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "swc1 $f1,($t2)",
+      "description": "Store Word Coprocessor 1 : stocke la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "swc1 $f1,100000",
+      "description": "Store Word Coprocessor 1 : stocke la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "swc1 $f1,100000($t2)",
+      "description": "Store Word Coprocessor 1 : stocke la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "swc1 $f1,label",
+      "description": "Store Word Coprocessor 1 : stocke la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "swc1 $f1,label($t2)",
+      "description": "Store Word Coprocessor 1 : stocke la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "swc1 $f1,label+100000",
+      "description": "Store Word Coprocessor 1 : stocke la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "swc1 $f1,label+100000($t2)",
+      "description": "Store Word Coprocessor 1 : stocke la valeur 32 bits de $f1 dans l'adresse de mot mémoire effective"
+    },
+    {
+      "example": "swl $t1,-100",
+      "description": "Store Word Left : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swl $t1,($t2)",
+      "description": "Store Word Left : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swl $t1,100",
+      "description": "Store Word Left : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swl $t1,100($t2)",
+      "description": "Store Word Left : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swl $t1,100000",
+      "description": "Store Word Left : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swl $t1,100000($t2)",
+      "description": "Store Word Left : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swl $t1,label",
+      "description": "Store Word Left : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swl $t1,label($t2)",
+      "description": "Store Word Left : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swl $t1,label+100000",
+      "description": "Store Word Left : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swl $t1,label+100000($t2)",
+      "description": "Store Word Left : stocke 1 à 4 octets de poids fort de $t1 en mémoire, en commençant par l'adresse d'octet de mémoire effective et en continuant jusqu'à l'octet de poids faible de son mot."
+    },
+    {
+      "example": "swr $t1,-100",
+      "description": "Store Word Right : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet de mémoire effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "swr $t1,($t2)",
+      "description": "Store Word Right : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet de mémoire effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "swr $t1,100",
+      "description": "Store Word Right : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet de mémoire effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "swr $t1,100($t2)",
+      "description": "Store Word Right : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet de mémoire effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "swr $t1,100000",
+      "description": "Store Word Right : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet de mémoire effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "swr $t1,100000($t2)",
+      "description": "Store Word Right : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet de mémoire effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "swr $t1,label",
+      "description": "Store Word Right : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet de mémoire effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "swr $t1,label($t2)",
+      "description": "Store Word Right : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet de mémoire effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "swr $t1,label+100000",
+      "description": "Store Word Right : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet de mémoire effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "swr $t1,label+100000($t2)",
+      "description": "Store Word Right : stocke 1 à 4 octets de poids faible de $t1 en mémoire, en commençant par l'octet de poids fort du mot contenant l'adresse d'octet de mémoire effective et en continuant jusqu'à cette adresse d'octet."
+    },
+    {
+      "example": "ulh $t1,-100($t2)",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, avec signe étendu, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulh $t1,($t2)",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, avec signe étendu, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulh $t1,100000",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, avec signe étendu, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulh $t1,100000($t2)",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, avec signe étendu, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulh $t1,label",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, avec signe étendu, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulh $t1,label($t2)",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, avec signe étendu, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulh $t1,label+100000",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, avec signe étendu, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulh $t1,label+100000($t2)",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, avec signe étendu, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulhu $t1,-100($t2)",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, étendus à zéro, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulhu $t1,($t2)",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, étendus à zéro, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulhu $t1,100000",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, étendus à zéro, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulhu $t1,100000($t2)",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, étendus à zéro, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulhu $t1,label",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, étendus à zéro, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulhu $t1,label($t2)",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, étendus à zéro, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulhu $t1,label+100000",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, étendus à zéro, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulhu $t1,label+100000($t2)",
+      "description": "Demi-mot de chargement non aligné : définissez $t1 sur 16 bits, étendus à zéro, en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulw $t1,-100($t2)",
+      "description": "Mot de chargement non aligné : définissez $t1 sur 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulw $t1,($t2)",
+      "description": "Mot de chargement non aligné : définissez $t1 sur 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulw $t1,100000",
+      "description": "Mot de chargement non aligné : définissez $t1 sur 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulw $t1,100000($t2)",
+      "description": "Mot de chargement non aligné : définissez $t1 sur 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulw $t1,label",
+      "description": "Mot de chargement non aligné : définissez $t1 sur 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulw $t1,label($t2)",
+      "description": "Mot de chargement non aligné : définissez $t1 sur 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulw $t1,label+100000",
+      "description": "Mot de chargement non aligné : définissez $t1 sur 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ulw $t1,label+100000($t2)",
+      "description": "Mot de chargement non aligné : définissez $t1 sur 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "ush $t1,-100($t2)",
+      "description": "Demi-mot de stockage non aligné : stocke le contenu du demi-mot de poids faible $t1 dans les 16 bits en commençant à l'adresse d'octet de mémoire effective."
+    },
+    {
+      "example": "ush $t1,($t2)",
+      "description": "Demi-mot de stockage non aligné : stocke le contenu du demi-mot de poids faible $t1 dans les 16 bits en commençant à l'adresse d'octet de mémoire effective."
+    },
+    {
+      "example": "ush $t1,100000",
+      "description": "Demi-mot de stockage non aligné : stocke le contenu du demi-mot de poids faible $t1 dans les 16 bits en commençant à l'adresse d'octet de mémoire effective."
+    },
+    {
+      "example": "ush $t1,100000($t2)",
+      "description": "Demi-mot de stockage non aligné : stocke le contenu du demi-mot de poids faible $t1 dans les 16 bits en commençant à l'adresse d'octet de mémoire effective."
+    },
+    {
+      "example": "ush $t1,label",
+      "description": "Demi-mot de stockage non aligné : stocke le contenu du demi-mot de poids faible $t1 dans les 16 bits en commençant à l'adresse d'octet de mémoire effective."
+    },
+    {
+      "example": "ush $t1,label($t2)",
+      "description": "Demi-mot de stockage non aligné : stocke le contenu du demi-mot de poids faible $t1 dans les 16 bits en commençant à l'adresse d'octet de mémoire effective."
+    },
+    {
+      "example": "ush $t1,label+100000",
+      "description": "Demi-mot de stockage non aligné : stocke le contenu du demi-mot de poids faible $t1 dans les 16 bits en commençant à l'adresse d'octet de mémoire effective."
+    },
+    {
+      "example": "ush $t1,label+100000($t2)",
+      "description": "Demi-mot de stockage non aligné : stocke le contenu du demi-mot de poids faible $t1 dans les 16 bits en commençant à l'adresse d'octet de mémoire effective."
+    },
+    {
+      "example": "usw $t1,-100($t2)",
+      "description": "Mot de stockage non aligné : stocke le contenu de $t1 dans les 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "usw $t1,($t2)",
+      "description": "Mot de stockage non aligné : stocke le contenu de $t1 dans les 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "usw $t1,100000",
+      "description": "Mot de stockage non aligné : stocke le contenu de $t1 dans les 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "usw $t1,100000($t2)",
+      "description": "Mot de stockage non aligné : stocke le contenu de $t1 dans les 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "usw $t1,label",
+      "description": "Mot de stockage non aligné : stocke le contenu de $t1 dans les 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "usw $t1,label($t2)",
+      "description": "Mot de stockage non aligné : stocke le contenu de $t1 dans les 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "usw $t1,label+100000",
+      "description": "Mot de stockage non aligné : stocke le contenu de $t1 dans les 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "usw $t1,label+100000($t2)",
+      "description": "Mot de stockage non aligné : stocke le contenu de $t1 dans les 32 bits en commençant à l'adresse d'octet de mémoire effective"
+    },
+    {
+      "example": "xor $t1,$t2,100",
+      "description": "XOR : définissez $t1 sur ($t2 bitwise-exclusive-OR 16 bits non signé immédiat)"
+    },
+    {
+      "example": "xor $t1,100",
+      "description": "XOR : définissez $t1 sur ($t1 bitwise-exclusive-OR 16 bits non signé immédiat)"
+    },
+    {
+      "example": "xori $t1,$t2,100000",
+      "description": "XOR Immédiat : définissez $t1 sur ($t2 bitwise-exclusive-OR 32 bits immédiat)"
+    },
+    {
+      "example": "xori $t1,100",
+      "description": "XOR Immédiat : définissez $t1 sur ($t1 bitwise-exclusive-OR 16 bits non signé immédiat)"
+    },
+    {
+      "example": "xori $t1,100000",
+      "description": "XOR Immédiat : définissez $t1 sur ($t1 bitwise-exclusive-OR 32 bits immédiat)"
+    }
+  ],
+  "directives": [
+    {
+      "name": ".align",
+      "description": "Aligner l'élément de données suivant sur la limite d'octet spécifiée (0=octet, 1=moitié, 2=mot, 3=double)"
+    },
+    {
+      "name": ".ascii",
+      "description": "Stockez la chaîne dans le segment de données mais n'ajoutez pas de terminateur nul"
+    },
+    {
+      "name": ".asciiz",
+      "description": "Stockez la chaîne dans le segment de données et ajoutez un terminateur nul"
+    },
+    {
+      "name": ".byte",
+      "description": "Stockez la ou les valeurs répertoriées sous forme d'octets de 8 bits"
+    },
+    {
+      "name": ".data",
+      "description": "Éléments suivants stockés dans le segment de données à la prochaine adresse disponible"
+    },
+    {
+      "name": ".double",
+      "description": "Stocker la ou les valeurs répertoriées sous forme de virgule flottante double précision"
+    },
+    {
+      "name": ".end_macro",
+      "description": "Terminez la définition de la macro.  Voir .macro"
+    },
+    {
+      "name": ".eqv",
+      "description": "Remplacez le deuxième opérande par le premier. Le premier opérande est un symbole, le deuxième opérande est une expression (comme #define)"
+    },
+    {
+      "name": ".extern",
+      "description": "Déclarez l'étiquette répertoriée et la longueur d'octet comme étant un champ de données global"
+    },
+    {
+      "name": ".float",
+      "description": "Stocker la ou les valeurs répertoriées sous forme de virgule flottante simple précision"
+    },
+    {
+      "name": ".globl",
+      "description": "Déclarez les étiquettes répertoriées comme globales pour permettre le référencement à partir d'autres fichiers."
+    },
+    {
+      "name": ".half",
+      "description": "Stockez la ou les valeurs répertoriées sous forme de demi-mots de 16 bits sur la limite du demi-mot"
+    },
+    {
+      "name": ".include",
+      "description": "Insérez le contenu du fichier spécifié.  Mettez le nom du fichier entre guillemets."
+    },
+    {
+      "name": ".kdata",
+      "description": "Éléments suivants stockés dans le segment de données du noyau à la prochaine adresse disponible"
+    },
+    {
+      "name": ".ktext",
+      "description": "Éléments suivants (instructions) stockés dans le segment de texte du noyau à la prochaine adresse disponible"
+    },
+    {
+      "name": ".macro",
+      "description": "Commencez la définition de la macro.  Voir .end_macro"
+    },
+    {
+      "name": ".set",
+      "description": "Définissez les variables de l'assembleur.  Actuellement ignoré mais inclus pour la compatibilité SPIM"
+    },
+    {
+      "name": ".space",
+      "description": "Réservez le prochain nombre d'octets spécifié dans le segment de données"
+    },
+    {
+      "name": ".text",
+      "description": "Éléments suivants (instructions) stockés dans le segment de texte à la prochaine adresse disponible"
+    },
+    {
+      "name": ".word",
+      "description": "Stockez la ou les valeurs répertoriées sous forme de mots de 32 bits sur la limite du mot."
+    }
+  ]
+}

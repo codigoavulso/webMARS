@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Macros assembleur</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Macros assembleur</h1>
+  <p class="lead">Les macros effectuent une substitution au niveau de la source avant l'assemblage normal. Ils nécessitent une prise en charge étendue de l'assembleur pour être activés.</p>
+
+  <h2>Définition et utilisation</h2>
+  <pre>.macro print_int (%value)
+    move $a0, %value
+    li   $v0, 1
+    syscall
+.end_macro
+
+li $t0, 42
+print_int ($t0)</pre>
+  <p>Les parenthèses autour des paramètres et des arguments d'appel sont facultatives. Les paramètres sont des jetons séparés par des virgules et sont remplacés uniquement en tant qu'identifiants, et non à l'intérieur de chaînes littérales.</p>
+
+  <h2>Règles mises en œuvre par webMARS</h2>
+  <ul>
+    <li>Une macro est identifiée par son nom et son arité, de sorte que le même nom peut avoir des définitions avec des nombres de paramètres différents.</li>
+    <li>La définition doit apparaître avant son invocation. Une référence directe est signalée comme une erreur.</li>
+    <li>Les définitions de macros imbriquées ne sont pas autorisées.</li>
+    <li>Une définition se termine par une ligne contenant uniquement <code>.end_macro</code>.</li>
+    <li>Les définitions en double portant le même nom et la même arité génèrent un avertissement et le doublon est ignoré.</li>
+    <li>Les étiquettes à l’intérieur d’une extension sont rendues uniques pour chaque invocation afin d’éviter les collisions entre les extensions.</li>
+    <li>L'expansion est récursive, mais les récursions non valides et les appels mal formés sont diagnostiqués au lieu de générer du code silencieusement.</li>
+  </ul>
+
+  <h2>Constantes et inclusions</h2>
+  <p><code>.eqv</code> fournit une substitution d'identifiant pour les constantes nommées. <code>.include</code> fait partie de l'ensemble de directives assembleur étendu et résout la source du projet là où le projet de navigateur actuel la fournit. Préférez les noms relatifs au projet et conservez les sources incluses dans le même projet.</p>
+
+  <h2>Macros versus pseudo-instructions</h2>
+  <p>Une pseudo-instruction est sélectionnée dans la référence d'instruction de webMARS et se développe en fonction des modèles d'opérandes. Une macro est définie par le programme et peut contenir une séquence arbitraire d'instructions source. Les deux sont développés avant l'exécution et peuvent mapper une ligne source à plusieurs instructions de base.</p>
+
+  <div class="warning">Les arguments de macro sont des substitutions de jetons et non des valeurs saisies. Une expansion syntaxiquement valide peut toujours produire une erreur de type ou de plage assembleur sur le site d'appel.</div>
+</body>
+</html>

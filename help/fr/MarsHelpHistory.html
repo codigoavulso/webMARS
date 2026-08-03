@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS historique</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Histoire</h1>
+  <p class="lead">webMARS a commencé comme un port de navigateur du simulateur MARS 4.5 MIPS. Il combine désormais un runtime JavaScript indépendant, un éditeur, un débogueur, un compilateur Mini-C, des workflows de projet locaux/cloud et des outils natifs du navigateur.</p>
+
+  <h2>Ligne de développement actuelle</h2>
+  <ul>
+    <li><strong>Exécution JavaScript uniquement.</strong> Le chemin expérimental hybride/WASM a été supprimé après que les mesures ont montré qu'il ajoutait de la complexité sans apporter d'amélioration intéressante pour cette charge de travail.</li>
+    <li><strong>Exactitude de l'exécution.</strong> Des travaux récents ont renforcé l'ordre des mots doubles COP1, les magasins de mémoire atomique, les réservations de tas, LL/SC, l'adressage strict, les liens de branchement retardés, l'arrondi FCSR, la continuation des exceptions et le comportement d'arrêt.</li>
+    <li><strong>Instantanés d’état complets.</strong> L'exportation/importation et le retour en arrière prennent désormais en compte les flux aléatoires, les fichiers et curseurs virtuels, le stdin, les arguments du programme, les descripteurs d'image et les points d'arrêt.</li>
+    <li><strong>Observabilité des performances.</strong> L'application signale les délais locaux de compilation, d'assemblage et d'exécution ainsi que l'utilisation estimée de JavaScript, tandis que l'exécution à vitesse maximale réduit la surcharge de présentation sans priver les outils de l'état d'exécution.</li>
+    <li><strong>Mini-C évolution.</strong> Les sous-ensembles d'enseignement C0 restent disponibles aux côtés des C1-NATIVE, des appels o32, des chaînes d'octets, des arguments, des pointeurs de fonction, des projets multi-fichiers et des bibliothèques de compatibilité.</li>
+    <li><strong>Exemples comme programme d'études.</strong> Les exemples Assembly et C sont catalogués par objectif, langage et profil de compilateur minimum, avec des variantes multilingues et des projets multi-fichiers.</li>
+  </ul>
+
+  <h2>Lignée de compatibilité</h2>
+  <p>Le vocabulaire d'instruction, les appels système courants, les concepts d'interface utilisateur et le modèle d'enseignement dérivent de l'original. MARS projet de Pete Sanderson et Kenneth Vollmar. webMARS préserve cette lignée tout en remplaçant l'intégration du bureau Java par des API de navigateur et son propre moteur d'exécution.</p>
+
+  <h2>Enregistrement de version</h2>
+  <p>Le <b>webMARS → Journal des modifications</b> La page d'aide contient l'enregistrement détaillé du projet version par version. Les entrées historiques décrivent l'état de leur sortie ; ce ne sont pas des promesses qu'un sous-système expérimental restera dans la version actuelle.</p>
+
+  <div class="note">Lorsque la documentation et une entrée historique du journal des modifications diffèrent, les pages de sujet actuelles et le comportement d'exécution actuel sont prioritaires.</div>
+</body>
+</html>

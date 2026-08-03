@@ -1,0 +1,2274 @@
+{
+  "generatedAt": "2026-07-25T00:00:00.000Z",
+  "source": {
+    "basicInstructions": "../../assets/js/reference/instructions.generated.js",
+    "extendedInstructions": "../../assets/js/reference/pseudo-ops.generated.js",
+    "directives": "../../assets/js/app-modules/00-core.js"
+  },
+  "basicInstructions": [
+    {
+      "example": "abs.d $f2,$f4",
+      "description": "Nilai absolut titik mengambang presisi ganda : Setel $f2 ke nilai absolut $f4, presisi ganda"
+    },
+    {
+      "example": "abs.s $f0,$f1",
+      "description": "Nilai absolut titik mengambang presisi tunggal : Setel $f0 ke nilai absolut $f1, presisi tunggal"
+    },
+    {
+      "example": "add $t1,$t2,$t3",
+      "description": "Penambahan dengan overflow : setel $t1 menjadi ($t2 plus $t3)"
+    },
+    {
+      "example": "add.d $f2,$f4,$f6",
+      "description": "Presisi ganda penambahan titik mengambang : Atur $f2 ke nilai titik mengambang presisi ganda dari $f4 ditambah $f6"
+    },
+    {
+      "example": "add.s $f0,$f1,$f3",
+      "description": "Presisi tunggal penambahan floating point : Setel $f0 ke nilai floating point presisi tunggal $f1 ditambah $f3"
+    },
+    {
+      "example": "addi $t1,$t2,-100",
+      "description": "Penambahan segera dengan overflow : setel $t1 ke ($t2 plus langsung 16-bit yang ditandatangani)"
+    },
+    {
+      "example": "addiu $t1,$t2,-100",
+      "description": "Penambahan segera unsigned tanpa overflow : setel $t1 ke ($t2 plus 16-bit langsung yang ditandatangani), tanpa overflow"
+    },
+    {
+      "example": "addu $t1,$t2,$t3",
+      "description": "Penambahan unsigned tanpa overflow : setel $t1 ke ($t2 plus $t3), tanpa overflow"
+    },
+    {
+      "example": "and $t1,$t2,$t3",
+      "description": "Bitwise AND : Atur $t1 menjadi bitwise AND dari $t2 dan $t3"
+    },
+    {
+      "example": "andi $t1,$t2,100",
+      "description": "Bitwise AND langsung : Setel $t1 ke bitwise AND dari $t2 dan langsung 16-bit tanpa perpanjangan"
+    },
+    {
+      "example": "bc1f 1,label",
+      "description": "Cabang jika bendera kondisi FP yang ditentukan salah (BC1F, bukan BCLF): Jika bendera kondisi Coprocessor 1 yang ditentukan oleh segera adalah salah (nol) maka cabangkan ke pernyataan di alamat label"
+    },
+    {
+      "example": "bc1f label",
+      "description": "Cabang jika tanda kondisi FP 0 salah (BC1F, bukan BCLF) : Jika tanda kondisi Koprosesor 1 0 salah (nol) maka cabangkan ke pernyataan di alamat label"
+    },
+    {
+      "example": "bc1t 1,label",
+      "description": "Bercabang jika flag kondisi FP yang ditentukan benar (BC1T, bukan BCLT): Jika flag kondisi Coprocessor 1 yang ditentukan oleh segera adalah benar (satu) maka bercabang ke pernyataan di alamat label"
+    },
+    {
+      "example": "bc1t label",
+      "description": "Cabang jika tanda kondisi FP 0 benar (BC1T, bukan BCLT) : Jika tanda kondisi Koprosesor 1 0 benar (satu) maka cabangkan ke pernyataan di alamat label"
+    },
+    {
+      "example": "beq $t1,$t2,label",
+      "description": "Cabang jika sama : Cabang ke pernyataan di alamat label jika $t1 dan $t2 sama"
+    },
+    {
+      "example": "bgez $t1,label",
+      "description": "Cabang jika lebih besar dari atau sama dengan nol : Cabang ke pernyataan di alamat label jika $t1 lebih besar dari atau sama dengan nol"
+    },
+    {
+      "example": "bgezal $t1,label",
+      "description": "Cabang jika lebih besar atau sama dengan nol dan link : Jika $t1 lebih besar atau sama dengan nol, maka atur $ra ke Program Counter dan pernyataan cabang ke alamat label"
+    },
+    {
+      "example": "bgtz $t1,label",
+      "description": "Cabang jika lebih besar dari nol : Cabang ke pernyataan di alamat label jika $t1 lebih besar dari nol"
+    },
+    {
+      "example": "blez $t1,label",
+      "description": "Cabang jika kurang dari atau sama dengan nol : Cabang ke pernyataan di alamat label jika $t1 kurang dari atau sama dengan nol"
+    },
+    {
+      "example": "bltz $t1,label",
+      "description": "Cabang jika kurang dari nol : Cabang ke pernyataan di alamat label jika $t1 kurang dari nol"
+    },
+    {
+      "example": "bltzal $t1,label",
+      "description": "Cabang jika kurang dari nol dan tautan : Jika $t1 kurang dari atau sama dengan nol, maka atur $ra ke Program Counter dan pernyataan cabang ke di alamat label"
+    },
+    {
+      "example": "bne $t1,$t2,label",
+      "description": "Cabang jika tidak sama : Cabang ke pernyataan di alamat label jika $t1 dan $t2 tidak sama"
+    },
+    {
+      "example": "break",
+      "description": "Break execution : Hentikan eksekusi program dengan pengecualian"
+    },
+    {
+      "example": "break 100",
+      "description": "Hancurkan eksekusi dengan kode : Hentikan eksekusi program dengan kode pengecualian yang ditentukan"
+    },
+    {
+      "example": "c.eq.d $f2,$f4",
+      "description": "Bandingkan presisi ganda yang sama : Jika $f2 sama dengan $f4 (presisi ganda), setel tanda kondisi Coprocessor 1 ke 0 benar, jika tidak, setel ke salah"
+    },
+    {
+      "example": "c.eq.d 1,$f2,$f4",
+      "description": "Bandingkan presisi ganda yang sama : Jika $f2 sama dengan $f4 (presisi ganda), setel tanda kondisi Coprocessor 1 yang ditentukan oleh segera ke true jika tidak, setel ke false"
+    },
+    {
+      "example": "c.eq.s $f0,$f1",
+      "description": "Bandingkan presisi tunggal yang sama : Jika $f0 sama dengan $f1, setel tanda kondisi Coprocessor 1 ke 0 benar, jika tidak, setel ke salah"
+    },
+    {
+      "example": "c.eq.s 1,$f0,$f1",
+      "description": "Bandingkan presisi tunggal yang sama : Jika $f0 sama dengan $f1, setel tanda kondisi Coprocessor 1 yang ditentukan oleh segera ke true jika tidak, setel ke false"
+    },
+    {
+      "example": "c.le.d $f2,$f4",
+      "description": "Bandingkan presisi ganda yang kurang atau sama : Jika $f2 kurang dari atau sama dengan $f4 (presisi ganda), setel tanda kondisi Coprocessor 1 ke 0 benar, jika tidak, setel ke salah"
+    },
+    {
+      "example": "c.le.d 1,$f2,$f4",
+      "description": "Bandingkan presisi ganda yang kurang atau sama : Jika $f2 kurang dari atau sama dengan $f4 (presisi ganda), setel tanda kondisi Coprocessor 1 yang ditentukan oleh true segera, jika tidak, setel ke false"
+    },
+    {
+      "example": "c.le.s $f0,$f1",
+      "description": "Bandingkan presisi tunggal yang kurang atau sama : Jika $f0 kurang dari atau sama dengan $f1, setel tanda kondisi Coprocessor 1 ke 0 benar, jika tidak, setel ke salah"
+    },
+    {
+      "example": "c.le.s 1,$f0,$f1",
+      "description": "Bandingkan presisi tunggal yang kurang atau sama : Jika $f0 kurang dari atau sama dengan $f1, setel tanda kondisi Coprocessor 1 yang ditentukan oleh segera ke true jika tidak, setel ke false"
+    },
+    {
+      "example": "c.lt.d $f2,$f4",
+      "description": "Bandingkan kurang dari presisi ganda : Jika $f2 kurang dari $f4 (presisi ganda), setel tanda kondisi Coprocessor 1 ke 0 benar, jika tidak, setel ke salah"
+    },
+    {
+      "example": "c.lt.d 1,$f2,$f4",
+      "description": "Bandingkan kurang dari presisi ganda : Jika $f2 kurang dari $f4 (presisi ganda), setel tanda kondisi Coprocessor 1 yang ditentukan oleh segera ke true jika tidak, setel ke false"
+    },
+    {
+      "example": "c.lt.s $f0,$f1",
+      "description": "Bandingkan kurang dari presisi tunggal : Jika $f0 kurang dari $f1, setel tanda kondisi Coprocessor 1 ke 0 benar, jika tidak, setel ke salah"
+    },
+    {
+      "example": "c.lt.s 1,$f0,$f1",
+      "description": "Bandingkan kurang dari presisi tunggal : Jika $f0 kurang dari $f1, setel tanda kondisi Coprocessor 1 yang ditentukan oleh segera ke true jika tidak, setel ke false"
+    },
+    {
+      "example": "ceil.w.d $f1,$f2",
+      "description": "Plafon presisi ganda ke kata : Setel $f1 ke plafon bilangan bulat 32-bit dari float presisi ganda di $f2"
+    },
+    {
+      "example": "ceil.w.s $f0,$f1",
+      "description": "Plafon presisi tunggal ke kata : Setel $f0 ke plafon bilangan bulat 32-bit dari float presisi tunggal di $f1"
+    },
+    {
+      "example": "clo $t1,$t2",
+      "description": "Hitung jumlah bit terdepan : Atur $t1 ke hitungan satu bit terdepan dalam $t2 yang dimulai dari posisi bit paling signifikan"
+    },
+    {
+      "example": "clz $t1,$t2",
+      "description": "Hitung jumlah angka nol di depan : Atur $t1 ke jumlah bit nol di depan di $t2 dimulai dari posisi bit paling signifikan"
+    },
+    {
+      "example": "cvt.d.s $f2,$f1",
+      "description": "Konversi dari presisi tunggal ke presisi ganda : Atur $f2 menjadi presisi ganda yang setara dengan nilai presisi tunggal di $f1"
+    },
+    {
+      "example": "cvt.d.w $f2,$f1",
+      "description": "Mengonversi dari kata menjadi presisi ganda : Atur $f2 menjadi presisi ganda yang setara dengan nilai integer 32-bit di $f1"
+    },
+    {
+      "example": "cvt.s.d $f1,$f2",
+      "description": "Konversi dari presisi ganda ke presisi tunggal : Setel $f1 ke presisi tunggal yang setara dengan nilai presisi ganda di $f2"
+    },
+    {
+      "example": "cvt.s.w $f0,$f1",
+      "description": "Konversi dari kata ke presisi tunggal : Setel $f0 ke presisi tunggal yang setara dengan nilai integer 32-bit di $f2"
+    },
+    {
+      "example": "cvt.w.d $f1,$f2",
+      "description": "Konversi dari presisi ganda ke kata : Setel $f1 ke bilangan bulat 32-bit yang setara dengan nilai presisi ganda di $f2"
+    },
+    {
+      "example": "cvt.w.s $f0,$f1",
+      "description": "Konversi dari presisi tunggal ke kata : Setel $f0 ke bilangan bulat 32-bit yang setara dengan nilai presisi tunggal di $f1"
+    },
+    {
+      "example": "div $t1,$t2",
+      "description": "Pembagian dengan overflow : Bagilah $t1 dengan $t2 lalu atur LO menjadi hasil bagi dan HI menjadi sisa (gunakan mfhi untuk mengakses HI, mflo untuk mengakses LO)"
+    },
+    {
+      "example": "div.d $f2,$f4,$f6",
+      "description": "Presisi ganda pembagian titik mengambang : Tetapkan $f2 menjadi nilai titik mengambang presisi ganda dari $f4 dibagi dengan $f6"
+    },
+    {
+      "example": "div.s $f0,$f1,$f3",
+      "description": "Presisi tunggal pembagian titik mengambang : Tetapkan $f0 ke nilai titik mengambang presisi tunggal $f1 dibagi dengan $f3"
+    },
+    {
+      "example": "divu $t1,$t2",
+      "description": "Divisi unsigned tanpa overflow : Bagilah unsigned $t1 dengan $t2 lalu atur LO menjadi hasil bagi dan HI menjadi sisa (gunakan mfhi untuk mengakses HI, mflo untuk mengakses LO)"
+    },
+    {
+      "example": "eret",
+      "description": "Pengembalian pengecualian : Atur Penghitung Program ke Coprocessor 0 EPC nilai register, atur Coprocessor Status register bit 1 (level pengecualian) ke nol"
+    },
+    {
+      "example": "floor.w.d $f1,$f2",
+      "description": "Lantai presisi ganda ke kata : Setel $f1 ke bilangan bulat 32-bit lantai float presisi ganda di $f2"
+    },
+    {
+      "example": "floor.w.s $f0,$f1",
+      "description": "Lantai presisi tunggal ke kata : Setel $f0 ke bilangan bulat 32-bit lantai float presisi tunggal di $f1"
+    },
+    {
+      "example": "j target",
+      "description": "Lompat tanpa syarat : Lompat ke pernyataan di alamat target"
+    },
+    {
+      "example": "jal target",
+      "description": "Lompat dan tautkan : Atur $ra ke Program Counter (alamat pengirim) lalu lompat ke pernyataan di alamat target"
+    },
+    {
+      "example": "jalr $t1",
+      "description": "Lompat dan tautkan register : Atur $ra ke Program Counter (alamat pengirim) lalu lompat ke pernyataan yang beralamat di $t1"
+    },
+    {
+      "example": "jalr $t1,$t2",
+      "description": "Lompat dan tautkan register : Atur $t1 ke Program Counter (alamat pengirim) lalu lompat ke pernyataan yang beralamat di $t2"
+    },
+    {
+      "example": "jr $t1",
+      "description": "Langsung mendaftar tanpa syarat : Langsung ke pernyataan yang beralamat di $t1"
+    },
+    {
+      "example": "lb $t1,-100($t2)",
+      "description": "Muat byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,-100($t2)",
+      "description": "Muat byte yang tidak ditandatangani : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "ldc1 $f2,-100($t2)",
+      "description": "Load double word Coprocessor 1 (FPU) : Setel $f2 ke nilai 64-bit dari alamat doubleword memori efektif"
+    },
+    {
+      "example": "lh $t1,-100($t2)",
+      "description": "Muat setengah kata : Setel $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat setengah kata memori efektif"
+    },
+    {
+      "example": "lhu $t1,-100($t2)",
+      "description": "Muat setengah kata yang tidak ditandatangani : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat setengah kata memori efektif"
+    },
+    {
+      "example": "ll $t1,-100($t2)",
+      "description": "Muat tertaut : Muat kata dan buat reservasi untuk Store Conditional berikutnya (sc)"
+    },
+    {
+      "example": "lui $t1,100",
+      "description": "Muat langsung atas : Tetapkan 16 bit orde tinggi $t1 menjadi 16 bit langsung dan 16 bit orde rendah menjadi 0"
+    },
+    {
+      "example": "lw $t1,-100($t2)",
+      "description": "Load word : Atur $t1 ke isi alamat kata memori efektif"
+    },
+    {
+      "example": "lwc1 $f1,-100($t2)",
+      "description": "Muat kata ke dalam Koprosesor 1 (FPU): Setel $f1 ke nilai 32-bit dari alamat kata memori efektif"
+    },
+    {
+      "example": "lwl $t1,-100($t2)",
+      "description": "Muat kata yang tersisa : Muat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,-100($t2)",
+      "description": "Muat kata dengan benar : Muat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "madd $t1,$t2",
+      "description": "Kalikan tambah : Kalikan $t1 dengan $t2 lalu tambah HI dengan produk orde tinggi 32 bit, tambah LO dengan produk orde rendah 32 bit (gunakan mfhi untuk mengakses HI, mflo untuk mengakses LO)"
+    },
+    {
+      "example": "maddu $t1,$t2",
+      "description": "Kalikan tambahkan unsigned : Kalikan $t1 dengan $t2 lalu tambah HI dengan produk orde tinggi 32 bit, tambah LO dengan produk orde rendah 32 bit, unsigned (gunakan mfhi untuk mengakses HI, mflo untuk mengakses LO)"
+    },
+    {
+      "example": "mfc0 $t1,$8",
+      "description": "Pindah dari Coprocessor 0 : Setel $t1 ke nilai yang disimpan dalam register Coprocessor 0 $8"
+    },
+    {
+      "example": "mfc1 $t1,$f1",
+      "description": "Pindah dari Coprocessor 1 (FPU) : Setel $t1 ke nilai dalam register Coprocessor 1 $f1"
+    },
+    {
+      "example": "cfc1 $t1,$31",
+      "description": "Pindah dari kontrol Coprocessor 1 : Atur $t1 ke kontrol FCSR dan nilai status"
+    },
+    {
+      "example": "mfhi $t1",
+      "description": "Pindah dari register HI : Setel $t1 ke isi HI (lihat operasi perkalian dan pembagian)"
+    },
+    {
+      "example": "mflo $t1",
+      "description": "Pindah dari register LO : Setel $t1 ke isi LO (lihat operasi perkalian dan pembagian)"
+    },
+    {
+      "example": "mov.d $f2,$f4",
+      "description": "Pindahkan presisi ganda floating point : Atur presisi ganda $f2 menjadi nilai presisi ganda di $f4"
+    },
+    {
+      "example": "mov.s $f0,$f1",
+      "description": "Pindahkan presisi tunggal titik mengambang : Atur presisi tunggal $f0 ke nilai presisi tunggal di $f1"
+    },
+    {
+      "example": "movf $t1,$t2",
+      "description": "Pindahkan jika tanda kondisi FP 0 salah : Setel $t1 ke $t2 jika tanda kondisi FPU (Koprosesor 1) 0 salah (nol)"
+    },
+    {
+      "example": "movf $t1,$t2,1",
+      "description": "Pindahkan jika bendera kondisi FP yang ditentukan salah : Setel $t1 ke $t2 jika bendera kondisi FPU (Koprosesor 1) yang ditentukan oleh perintah langsung adalah salah (nol)"
+    },
+    {
+      "example": "movf.d $f2,$f4",
+      "description": "Pindahkan presisi ganda titik mengambang : Jika tanda kondisi 0 salah, atur presisi ganda $f2 menjadi nilai presisi ganda di $f4"
+    },
+    {
+      "example": "movf.d $f2,$f4,1",
+      "description": "Pindahkan presisi ganda titik mengambang : Jika tanda kondisi yang ditentukan oleh segera adalah salah, atur presisi ganda $f2 menjadi nilai presisi ganda di $f4"
+    },
+    {
+      "example": "movf.s $f0,$f1",
+      "description": "Pindahkan presisi tunggal floating point : Jika tanda kondisi 0 salah, atur presisi tunggal $f0 ke nilai presisi tunggal di $f1"
+    },
+    {
+      "example": "movf.s $f0,$f1,1",
+      "description": "Pindahkan presisi tunggal floating point : Jika tanda kondisi yang ditentukan oleh segera adalah salah, setel presisi tunggal $f0 ke nilai presisi tunggal di $f1e"
+    },
+    {
+      "example": "movn $t1,$t2,$t3",
+      "description": "Pindahkan kondisional bukan nol : Setel $t1 ke $t2 jika $t3 bukan nol"
+    },
+    {
+      "example": "movn.d $f2,$f4,$t3",
+      "description": "Pindahkan presisi ganda floating point : Jika $t3 bukan nol, atur presisi ganda $f2 menjadi nilai presisi ganda di $f4"
+    },
+    {
+      "example": "movn.s $f0,$f1,$t3",
+      "description": "Pindahkan presisi tunggal floating point : Jika $t3 bukan nol, atur presisi tunggal $f0 ke nilai presisi tunggal di $f1"
+    },
+    {
+      "example": "movt $t1,$t2",
+      "description": "Pindahkan jika tanda kondisi FP 0 benar : Setel $t1 ke $t2 jika tanda kondisi FPU (Koprosesor 1) 0 benar (satu)"
+    },
+    {
+      "example": "movt $t1,$t2,1",
+      "description": "Pindahkan jika tanda kondisi FP yang ditentukan benar : Setel $t1 ke $t2 jika tanda kondisi FPU (Koprosesor 1) yang ditentukan oleh langsung adalah benar (satu)"
+    },
+    {
+      "example": "movt.d $f2,$f4",
+      "description": "Pindahkan presisi ganda titik mengambang : Jika tanda kondisi 0 benar, atur presisi ganda $f2 menjadi nilai presisi ganda di $f4"
+    },
+    {
+      "example": "movt.d $f2,$f4,1",
+      "description": "Pindahkan presisi ganda floating point : Jika tanda kondisi yang ditentukan oleh segera adalah benar, atur presisi ganda $f2 menjadi nilai presisi ganda di $f4e"
+    },
+    {
+      "example": "movt.s $f0,$f1",
+      "description": "Pindahkan presisi tunggal floating point : Jika tanda kondisi 0 benar, atur presisi tunggal $f0 ke nilai presisi tunggal di $f1e"
+    },
+    {
+      "example": "movt.s $f0,$f1,1",
+      "description": "Pindahkan presisi tunggal titik mengambang : Jika tanda kondisi yang ditentukan oleh segera adalah benar, setel presisi tunggal $f0 ke nilai presisi tunggal di $f1e"
+    },
+    {
+      "example": "movz $t1,$t2,$t3",
+      "description": "Pindahkan kondisional nol : Setel $t1 ke $t2 jika $t3 adalah nol"
+    },
+    {
+      "example": "movz.d $f2,$f4,$t3",
+      "description": "Pindahkan presisi ganda floating point : Jika $t3 adalah nol, atur presisi ganda $f2 menjadi nilai presisi ganda di $f4"
+    },
+    {
+      "example": "movz.s $f0,$f1,$t3",
+      "description": "Memindahkan presisi tunggal floating point : Jika $t3 adalah nol, atur presisi tunggal $f0 ke nilai presisi tunggal di $f1"
+    },
+    {
+      "example": "msub $t1,$t2",
+      "description": "Perkalian pengurangan : Kalikan $t1 dengan $t2 lalu kurangi HI dengan produk orde tinggi 32 bit, kurangi LO dengan produk orde rendah 32 bit (gunakan mfhi untuk mengakses HI, mflo untuk mengakses LO)"
+    },
+    {
+      "example": "msubu $t1,$t2",
+      "description": "Kalikan kurangi unsigned : Kalikan $t1 dengan $t2 lalu kurangi HI dengan produk 32 bit orde tinggi, kurangi LO dengan produk 32 bit orde rendah, unsigned (gunakan mfhi untuk mengakses HI, mflo untuk mengakses LO)"
+    },
+    {
+      "example": "mtc0 $t1,$8",
+      "description": "Pindah ke Coprocessor 0 : Setel register Coprocessor 0 $8 ke nilai yang disimpan di $t1"
+    },
+    {
+      "example": "mtc1 $t1,$f1",
+      "description": "Pindah ke Coprocessor 1 (FPU) : Setel register Coprocessor 1 $f1 ke nilai dalam $t1"
+    },
+    {
+      "example": "ctc1 $t1,$31",
+      "description": "Pindah ke kontrol Coprocessor 1 : Atur FCSR, termasuk mode pembulatannya, ke nilai dalam $t1"
+    },
+    {
+      "example": "mthi $t1",
+      "description": "Pindah ke register HI : Atur HI ke isi $t1 (lihat operasi perkalian dan pembagian)"
+    },
+    {
+      "example": "mtlo $t1",
+      "description": "Pindah ke register LO : Atur LO ke isi $t1 (lihat operasi perkalian dan pembagian)"
+    },
+    {
+      "example": "mul $t1,$t2,$t3",
+      "description": "Perkalian tanpa overflow : Atur HI ke 32 bit orde tinggi, LO dan $t1 ke 32 bit orde rendah dari produk $t2 dan $t3 (gunakan mfhi untuk mengakses HI, mflo untuk mengakses LO)"
+    },
+    {
+      "example": "mul.d $f2,$f4,$f6",
+      "description": "Presisi ganda perkalian titik mengambang : Setel $f2 ke nilai titik mengambang presisi ganda $f4 kali $f6"
+    },
+    {
+      "example": "mul.s $f0,$f1,$f3",
+      "description": "Presisi tunggal perkalian titik mengambang : Setel $f0 ke nilai titik mengambang presisi tunggal $f1 kali $f3"
+    },
+    {
+      "example": "mult $t1,$t2",
+      "description": "Perkalian : Atur hi ke 32 bit orde tinggi, lo ke 32 bit orde rendah dari hasil kali $t1 dan $t2 (gunakan mfhi untuk mengakses hi, mflo untuk mengakses lo)"
+    },
+    {
+      "example": "multu $t1,$t2",
+      "description": "Perkalian unsigned : Atur HI ke 32 bit orde tinggi, LO ke 32 bit orde rendah dari produk unsigned $t1 dan $t2 (gunakan mfhi untuk mengakses HI, mflo untuk mengakses LO)"
+    },
+    {
+      "example": "neg.d $f2,$f4",
+      "description": "Titik mengambang meniadakan presisi ganda : Tetapkan presisi ganda $f2 ke negasi nilai presisi ganda di $f4"
+    },
+    {
+      "example": "neg.s $f0,$f1",
+      "description": "Titik mengambang meniadakan presisi tunggal : Tetapkan presisi tunggal $f0 ke negasi nilai presisi tunggal di $f1"
+    },
+    {
+      "example": "nop",
+      "description": "Operasi nol : kode mesin semuanya nol"
+    },
+    {
+      "example": "nor $t1,$t2,$t3",
+      "description": "Bitwise NOR : Atur $t1 menjadi bitwise NOR dari $t2 dan $t3"
+    },
+    {
+      "example": "or $t1,$t2,$t3",
+      "description": "Bitwise OR : Atur $t1 menjadi bitwise OR dari $t2 dan $t3"
+    },
+    {
+      "example": "ori $t1,$t2,100",
+      "description": "Bitwise OR segera : Setel $t1 ke bitwise OR dari $t2 dan langsung 16-bit tanpa perpanjangan"
+    },
+    {
+      "example": "round.w.d $f1,$f2",
+      "description": "Bulatkan presisi ganda ke kata : Setel $f1 ke putaran bilangan bulat 32-bit dari float presisi ganda di $f2"
+    },
+    {
+      "example": "round.w.s $f0,$f1",
+      "description": "Bulatkan presisi tunggal ke kata : Setel $f0 ke putaran bilangan bulat 32-bit dari float presisi tunggal di $f1"
+    },
+    {
+      "example": "sb $t1,-100($t2)",
+      "description": "Simpan byte : Simpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sc $t1,-100($t2)",
+      "description": "Kondisi penyimpanan : Simpan $t1 hanya jika reservasi Load Linked yang cocok masih valid, lalu setel $t1 ke 1 jika berhasil atau 0 jika gagal"
+    },
+    {
+      "example": "sdc1 $f2,-100($t2)",
+      "description": "Simpan kata ganda dari Coprocessor 1 (FPU) : Simpan nilai 64 bit di $f2 ke alamat kata ganda memori efektif"
+    },
+    {
+      "example": "sh $t1,-100($t2)",
+      "description": "Simpan setengah kata : Simpan 16 bit orde rendah $t1 ke dalam alamat setengah kata memori efektif"
+    },
+    {
+      "example": "sll $t1,$t2,10",
+      "description": "Logika geser ke kiri : Atur $t1 ke hasil pergeseran $t2 ke kiri berdasarkan jumlah bit yang ditentukan secara langsung"
+    },
+    {
+      "example": "sllv $t1,$t2,$t3",
+      "description": "Variabel logika shift left : Atur $t1 ke hasil pergeseran $t2 ke kiri berdasarkan jumlah bit yang ditentukan berdasarkan nilai dalam 5 bit orde rendah dari $t3"
+    },
+    {
+      "example": "slt $t1,$t2,$t3",
+      "description": "Atur kurang dari : Jika $t2 lebih kecil dari $t3, maka setel $t1 ke 1 jika tidak, setel $t1 ke 0"
+    },
+    {
+      "example": "slti $t1,$t2,-100",
+      "description": "Setel kurang dari segera : Jika $t2 kurang dari tanda-perpanjangan 16-bit langsung, maka setel $t1 ke 1 jika tidak, setel $t1 ke 0"
+    },
+    {
+      "example": "sltiu $t1,$t2,-100",
+      "description": "Setel kurang dari segera unsigned : Jika $t2 kurang dari tanda-diperpanjang 16-bit langsung menggunakan perbandingan unsigned, maka setel $t1 ke 1 jika tidak setel $t1 ke 0"
+    },
+    {
+      "example": "sltu $t1,$t2,$t3",
+      "description": "Set less than unsigned : Jika $t2 lebih kecil dari $t3 menggunakan perbandingan unsigned, maka setel $t1 ke 1 jika tidak, setel $t1 ke 0"
+    },
+    {
+      "example": "sqrt.d $f2,$f4",
+      "description": "Presisi ganda akar kuadrat : Atur $f2 menjadi akar kuadrat titik mengambang presisi ganda dari $f4"
+    },
+    {
+      "example": "sqrt.s $f0,$f1",
+      "description": "Presisi tunggal akar kuadrat : Setel $f0 ke akar kuadrat titik mengambang presisi tunggal dari $f1"
+    },
+    {
+      "example": "sra $t1,$t2,10",
+      "description": "Aritmatika geser ke kanan : Setel $t1 ke hasil pergeseran tanda diperpanjang $t2 ke kanan berdasarkan jumlah bit yang ditentukan secara langsung"
+    },
+    {
+      "example": "srav $t1,$t2,$t3",
+      "description": "Variabel aritmatika geser ke kanan : Setel $t1 ke hasil pergeseran tanda diperpanjang $t2 ke kanan berdasarkan jumlah bit yang ditentukan oleh nilai dalam 5 bit orde rendah dari $t3"
+    },
+    {
+      "example": "srl $t1,$t2,10",
+      "description": "Logika geser kanan : Atur $t1 ke hasil pergeseran $t2 ke kanan berdasarkan jumlah bit yang ditentukan secara langsung"
+    },
+    {
+      "example": "srlv $t1,$t2,$t3",
+      "description": "Variabel logis geser ke kanan : Atur $t1 ke hasil pergeseran $t2 ke kanan berdasarkan jumlah bit yang ditentukan berdasarkan nilai dalam 5 bit orde rendah dari $t3"
+    },
+    {
+      "example": "sub $t1,$t2,$t3",
+      "description": "Pengurangan dengan overflow : setel $t1 menjadi ($t2 dikurangi $t3)"
+    },
+    {
+      "example": "sub.d $f2,$f4,$f6",
+      "description": "Presisi ganda pengurangan titik mengambang : Atur $f2 ke nilai titik mengambang presisi ganda dari $f4 dikurangi $f6"
+    },
+    {
+      "example": "sub.s $f0,$f1,$f3",
+      "description": "Presisi tunggal pengurangan titik mengambang : Setel $f0 ke nilai titik mengambang presisi tunggal $f1 dikurangi $f3"
+    },
+    {
+      "example": "subu $t1,$t2,$t3",
+      "description": "Pengurangan unsigned tanpa overflow : atur $t1 menjadi ($t2 dikurangi $t3), tanpa overflow"
+    },
+    {
+      "example": "sw $t1,-100($t2)",
+      "description": "Simpan kata : Menyimpan isi $t1 ke dalam alamat kata memori efektif"
+    },
+    {
+      "example": "swc1 $f1,-100($t2)",
+      "description": "Simpan kata dari Coprocesor 1 (FPU): Menyimpan nilai 32 bit di $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "swl $t1,-100($t2)",
+      "description": "Simpan kata di kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swr $t1,-100($t2)",
+      "description": "Simpan kata di kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "syscall",
+      "description": "Mengeluarkan panggilan sistem : Jalankan panggilan sistem yang ditentukan berdasarkan nilai di $v0"
+    },
+    {
+      "example": "teq $t1,$t2",
+      "description": "Perangkap jika sama : Perangkap jika $t1 sama dengan $t2"
+    },
+    {
+      "example": "teqi $t1,-100",
+      "description": "Perangkap jika sama dengan langsung : Perangkap jika $t1 sama dengan perpanjangan tanda langsung 16 bit"
+    },
+    {
+      "example": "tge $t1,$t2",
+      "description": "Perangkap jika lebih besar atau sama : Perangkap jika $t1 lebih besar atau sama dengan $t2"
+    },
+    {
+      "example": "tgei $t1,-100",
+      "description": "Perangkap jika lebih besar atau sama dengan langsung : Perangkap jika $t1 lebih besar atau sama dengan tanda-diperpanjang 16 bit segera"
+    },
+    {
+      "example": "tgeiu $t1,-100",
+      "description": "Perangkap jika lebih besar atau sama dengan langsung unsigned : Perangkap jika $t1 lebih besar dari atau sama dengan tanda-diperpanjang 16 bit langsung, perbandingan unsigned"
+    },
+    {
+      "example": "tgeu $t1,$t2",
+      "description": "Perangkap jika lebih besar atau sama dengan unsigned : Perangkap jika $t1 lebih besar atau sama dengan $t2 menggunakan perbandingan unsigned"
+    },
+    {
+      "example": "tlt $t1,$t2",
+      "description": "Perangkap jika kurang dari: Perangkap jika $t1 kurang dari $t2"
+    },
+    {
+      "example": "tlti $t1,-100",
+      "description": "Perangkap jika kurang dari segera : Perangkap jika $t1 kurang dari tanda-diperpanjang 16-bit segera"
+    },
+    {
+      "example": "tltiu $t1,-100",
+      "description": "Perangkap jika kurang dari segera unsigned : Perangkap jika $t1 kurang dari tanda-diperpanjang 16-bit langsung, perbandingan unsigned"
+    },
+    {
+      "example": "tltu $t1,$t2",
+      "description": "Trap if less than unsigned : Trap if $t1 kurang dari $t2, perbandingan unsigned"
+    },
+    {
+      "example": "tne $t1,$t2",
+      "description": "Jebakan jika tidak sama : Jebakan jika $t1 tidak sama dengan $t2"
+    },
+    {
+      "example": "tnei $t1,-100",
+      "description": "Perangkap jika tidak sama dengan langsung : Perangkap jika $t1 tidak sama dengan perpanjangan tanda langsung 16 bit"
+    },
+    {
+      "example": "trunc.w.d $f1,$f2",
+      "description": "Pangkas presisi ganda ke kata : Setel $f1 ke pemotongan bilangan bulat 32-bit dari float presisi ganda di $f2"
+    },
+    {
+      "example": "trunc.w.s $f0,$f1",
+      "description": "Pangkas presisi tunggal menjadi kata : Setel $f0 ke pemotongan bilangan bulat 32-bit dari float presisi tunggal di $f1"
+    },
+    {
+      "example": "xor $t1,$t2,$t3",
+      "description": "Sedikit demi sedikit XOR (eksklusif ATAU): Set $t1 menjadi bitwise XOR dari $t2 dan $t3"
+    },
+    {
+      "example": "xori $t1,$t2,100",
+      "description": "Bitwise XOR langsung : Setel $t1 ke bitwise XOR dari $t2 dan langsung 16-bit tanpa perpanjangan"
+    }
+  ],
+  "extendedInstructions": [
+    {
+      "example": "abs $t1,$t2",
+      "description": "Nilai absolut : Setel $t1 ke nilai absolut $t2 (algoritma dari Hacker's Delight)"
+    },
+    {
+      "example": "add $t1,$t2,-100",
+      "description": "Tambahan : set $t1 ke ($t2 ditambah 16-bit langsung)"
+    },
+    {
+      "example": "add $t1,$t2,100000",
+      "description": "Tambahan : set $t1 ke ($t2 ditambah 32-bit langsung)"
+    },
+    {
+      "example": "addi $t1,$t2,100000",
+      "description": "ADDition Immediate : atur $t1 menjadi ($t2 ditambah 32-bit langsung)"
+    },
+    {
+      "example": "addiu $t1,$t2,100000",
+      "description": "ADDition Immediate Unsigned: setel $t1 ke ($t2 plus 32-bit langsung), tanpa overflow"
+    },
+    {
+      "example": "addu $t1,$t2,100000",
+      "description": "ADDition Unsigned : setel $t1 ke ($t2 ditambah 32-bit langsung), tanpa overflow"
+    },
+    {
+      "example": "and $t1,$t2,100",
+      "description": "AND : setel $t1 ke ($t2 bitwise-AND 16-bit langsung yang tidak ditandatangani)"
+    },
+    {
+      "example": "and $t1,100",
+      "description": "AND : setel $t1 ke ($t1 bitwise-AND 16-bit langsung yang tidak ditandatangani)"
+    },
+    {
+      "example": "andi $t1,$t2,100000",
+      "description": "AND Segera : setel $t1 ke ($t2 bitwise-AND 32-bit langsung)"
+    },
+    {
+      "example": "andi $t1,100",
+      "description": "AND Segera : setel $t1 ke ($t1 bitwise-AND 16-bit langsung yang tidak ditandatangani)"
+    },
+    {
+      "example": "andi $t1,100000",
+      "description": "AND Segera : setel $t1 ke ($t1 bitwise-AND 32-bit langsung)"
+    },
+    {
+      "example": "b label",
+      "description": "Cabang : Cabang ke pernyataan pada label tanpa syarat"
+    },
+    {
+      "example": "beq $t1,-100,label",
+      "description": "Branch if EQual : Pernyataan cabang ke label jika $t1 sama dengan 16-bit langsung"
+    },
+    {
+      "example": "beq $t1,100000,label",
+      "description": "Branch if EQual : Pernyataan cabang ke label jika $t1 sama dengan 32-bit langsung"
+    },
+    {
+      "example": "beqz $t1,label",
+      "description": "Branch if EQual Zero : Cabang ke pernyataan pada label jika $t1 sama dengan nol"
+    },
+    {
+      "example": "bge $t1,-100,label",
+      "description": "Cabang jika Lebih Besar atau Sama : Cabang ke pernyataan pada label jika $t1 lebih besar atau sama dengan 16-bit langsung"
+    },
+    {
+      "example": "bge $t1,$t2,label",
+      "description": "Cabang jika Lebih Besar atau Sama : Cabang ke pernyataan pada label jika $t1 lebih besar atau sama dengan $t2"
+    },
+    {
+      "example": "bge $t1,100000,label",
+      "description": "Cabang jika Lebih Besar atau Sama : Cabang ke pernyataan pada label jika $t1 lebih besar atau sama dengan 32-bit langsung"
+    },
+    {
+      "example": "bgeu $t1,-100,label",
+      "description": "Branch if Greater or Equal Unsigned : Cabang ke pernyataan pada label jika $t1 lebih besar atau sama dengan 16-bit langsung (perbandingan unsigned)"
+    },
+    {
+      "example": "bgeu $t1,$t2,label",
+      "description": "Branch if Greater or Equal Unsigned : Cabang ke pernyataan pada label jika $t1 lebih besar atau sama dengan $t2 (unsigned Compare)"
+    },
+    {
+      "example": "bgeu $t1,100000,label",
+      "description": "Branch if Greater or Equal Unsigned : Cabang ke pernyataan pada label jika $t1 lebih besar atau sama dengan 32-bit langsung (perbandingan unsigned)"
+    },
+    {
+      "example": "bgt $t1,-100,label",
+      "description": "Cabang jika Lebih Besar Dari : Cabang ke pernyataan pada label jika $t1 lebih besar dari 16-bit langsung"
+    },
+    {
+      "example": "bgt $t1,$t2,label",
+      "description": "Cabang jika Lebih Besar Dari : Cabang ke pernyataan pada label jika $t1 lebih besar dari $t2"
+    },
+    {
+      "example": "bgt $t1,100000,label",
+      "description": "Cabang jika Lebih Besar Dari : Cabang ke pernyataan pada label jika $t1 lebih besar dari 32-bit langsung"
+    },
+    {
+      "example": "bgtu $t1,-100,label",
+      "description": "Cabang jika Lebih Besar Dari Tidak Ditandatangani: Cabang ke pernyataan pada label jika $t1 lebih besar dari 16-bit langsung (perbandingan tidak ditandatangani)"
+    },
+    {
+      "example": "bgtu $t1,$t2,label",
+      "description": "Cabang jika Lebih Besar Dari Unsigned: Cabang ke pernyataan pada label jika $t1 lebih besar dari $t2 (perbandingan unsigned)"
+    },
+    {
+      "example": "bgtu $t1,100000,label",
+      "description": "Cabang jika Lebih Besar Dari Tidak Ditandatangani: Cabang ke pernyataan pada label jika $t1 lebih besar dari 16-bit langsung (perbandingan tidak ditandatangani)"
+    },
+    {
+      "example": "ble $t1,-100,label",
+      "description": "Cabang jika Kurang atau Sama : Cabang ke pernyataan pada label jika $t1 kurang dari atau sama dengan 16-bit langsung"
+    },
+    {
+      "example": "ble $t1,$t2,label",
+      "description": "Cabang jika Kurang atau Sama : Cabang ke pernyataan pada label jika $t1 kurang dari atau sama dengan $t2"
+    },
+    {
+      "example": "ble $t1,100000,label",
+      "description": "Cabang jika Kurang atau Sama : Cabang ke pernyataan pada label jika $t1 kurang dari atau sama dengan 32-bit langsung"
+    },
+    {
+      "example": "bleu $t1,-100,label",
+      "description": "Branch if Less or Equal Unsigned : Cabang ke pernyataan pada label jika $t1 kurang dari atau sama dengan 16-bit langsung (perbandingan unsigned)"
+    },
+    {
+      "example": "bleu $t1,$t2,label",
+      "description": "Branch if Less or Equal Unsigned : Cabang ke pernyataan pada label jika $t1 kurang dari atau sama dengan $t2 (unsigned Compare)"
+    },
+    {
+      "example": "bleu $t1,100000,label",
+      "description": "Branch if Less or Equal Unsigned : Cabang ke pernyataan pada label jika $t1 kurang dari atau sama dengan 32-bit langsung (perbandingan unsigned)"
+    },
+    {
+      "example": "blt $t1,-100,label",
+      "description": "Cabang jika Kurang Dari : Cabang ke pernyataan pada label jika $t1 kurang dari 16-bit langsung"
+    },
+    {
+      "example": "blt $t1,$t2,label",
+      "description": "Cabang jika Kurang Dari : Cabang ke pernyataan pada label jika $t1 kurang dari $t2"
+    },
+    {
+      "example": "blt $t1,100000,label",
+      "description": "Cabang jika Kurang Dari : Cabang ke pernyataan pada label jika $t1 kurang dari 32-bit langsung"
+    },
+    {
+      "example": "bltu $t1,-100,label",
+      "description": "Cabang jika Kurang dari Tidak Ditandatangani : Cabang ke pernyataan pada label jika $t1 kurang dari 16-bit langsung"
+    },
+    {
+      "example": "bltu $t1,$t2,label",
+      "description": "Cabang jika Kurang Dari Tidak Ditandatangani : Cabang ke pernyataan pada label jika $t1 kurang dari $t2"
+    },
+    {
+      "example": "bltu $t1,100000,label",
+      "description": "Cabang jika Kurang dari Tidak Ditandatangani : Cabang ke pernyataan pada label jika $t1 kurang dari 32-bit langsung"
+    },
+    {
+      "example": "bne $t1,-100,label",
+      "description": "Cabang jika Tidak Sama : Cabang ke pernyataan pada label jika $t1 tidak sama dengan 16-bit langsung"
+    },
+    {
+      "example": "bne $t1,100000,label",
+      "description": "Cabang jika Tidak Sama : Cabang ke pernyataan pada label jika $t1 tidak sama dengan 32-bit langsung"
+    },
+    {
+      "example": "bnez $t1,label",
+      "description": "Cabang jika Tidak Sama dengan Nol : Cabang ke pernyataan pada label jika $t1 tidak sama dengan nol"
+    },
+    {
+      "example": "div $t1,$t2,-100",
+      "description": "DIVision : Setel $t1 menjadi ($t2 dibagi dengan pembagian bilangan bulat langsung 16-bit)"
+    },
+    {
+      "example": "div $t1,$t2,$t3",
+      "description": "DIVision : Atur $t1 menjadi ($t2 dibagi dengan $t3, pembagian bilangan bulat)"
+    },
+    {
+      "example": "div $t1,$t2,100000",
+      "description": "DIVision : Setel $t1 menjadi ($t2 dibagi dengan pembagian integer langsung 32-bit)"
+    },
+    {
+      "example": "divu $t1,$t2,-100",
+      "description": "DIVision Unsigned : Setel $t1 menjadi ($t2 dibagi dengan pembagian integer langsung 16-bit yang tidak ditandatangani)"
+    },
+    {
+      "example": "divu $t1,$t2,$t3",
+      "description": "DIVision Unsigned : Atur $t1 menjadi ($t2 dibagi dengan $t3, pembagian integer yang tidak ditandatangani)"
+    },
+    {
+      "example": "divu $t1,$t2,100000",
+      "description": "DIVision Unsigned : Setel $t1 menjadi ($t2 dibagi dengan pembagian integer langsung 32-bit yang tidak ditandatangani)"
+    },
+    {
+      "example": "l.d $f2,-100",
+      "description": "Muat floating point Presisi ganda : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "l.d $f2,($t2)",
+      "description": "Muat floating point Presisi ganda : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "l.d $f2,100000",
+      "description": "Muat floating point Presisi ganda : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "l.d $f2,100000($t2)",
+      "description": "Muat floating point Presisi ganda : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "l.d $f2,label",
+      "description": "Muat floating point Presisi ganda : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "l.d $f2,label($t2)",
+      "description": "Muat floating point Presisi ganda : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "l.d $f2,label+100000",
+      "description": "Muat floating point Presisi ganda : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "l.d $f2,label+100000($t2)",
+      "description": "Muat floating point Presisi ganda : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "l.s $f1,-100",
+      "description": "Muat floating point Presisi tunggal : Setel $f1 ke nilai 32-bit pada alamat kata memori efektif"
+    },
+    {
+      "example": "l.s $f1,($t2)",
+      "description": "Muat floating point Presisi tunggal : Setel $f1 ke nilai 32-bit pada alamat kata memori efektif"
+    },
+    {
+      "example": "l.s $f1,100000",
+      "description": "Muat floating point Presisi tunggal : Setel $f1 ke nilai 32-bit pada alamat kata memori efektif"
+    },
+    {
+      "example": "l.s $f1,100000($t2)",
+      "description": "Muat floating point Presisi tunggal : Setel $f1 ke nilai 32-bit pada alamat kata memori efektif"
+    },
+    {
+      "example": "l.s $f1,label",
+      "description": "Muat floating point Presisi tunggal : Setel $f1 ke nilai 32-bit pada alamat kata memori efektif"
+    },
+    {
+      "example": "l.s $f1,label($t2)",
+      "description": "Muat floating point Presisi tunggal : Setel $f1 ke nilai 32-bit pada alamat kata memori efektif"
+    },
+    {
+      "example": "l.s $f1,label+100000",
+      "description": "Muat floating point Presisi tunggal : Setel $f1 ke nilai 32-bit pada alamat kata memori efektif"
+    },
+    {
+      "example": "l.s $f1,label+100000($t2)",
+      "description": "Muat floating point Presisi tunggal : Setel $f1 ke nilai 32-bit pada alamat kata memori efektif"
+    },
+    {
+      "example": "la $t1,-100",
+      "description": "Load Address : Setel $t1 menjadi 16-bit langsung (diperpanjang tanda)"
+    },
+    {
+      "example": "la $t1,($t2)",
+      "description": "Load Address : Atur $t1 ke isi $t2"
+    },
+    {
+      "example": "la $t1,100",
+      "description": "Load Address : Setel $t1 ke 16-bit langsung (zero-extracted)"
+    },
+    {
+      "example": "la $t1,100($t2)",
+      "description": "Load Address : Atur $t1 menjadi penjumlahan (dari $t2 dan 16-bit langsung)"
+    },
+    {
+      "example": "la $t1,100000",
+      "description": "Load Address : Setel $t1 ke 32-bit langsung"
+    },
+    {
+      "example": "la $t1,100000($t2)",
+      "description": "Load Address : Atur $t1 menjadi penjumlahan (dari $t2 dan 32-bit langsung)"
+    },
+    {
+      "example": "la $t1,label",
+      "description": "Load Address : Setel $t1 ke alamat label"
+    },
+    {
+      "example": "la $t1,label($t2)",
+      "description": "Load Address : Atur $t1 menjadi penjumlahan (dari $t2 dan alamat label)"
+    },
+    {
+      "example": "la $t1,label+100000",
+      "description": "Load Address : Setel $t1 ke jumlah (alamat label dan 32-bit langsung)"
+    },
+    {
+      "example": "la $t1,label+100000($t2)",
+      "description": "Load Address : Atur $t1 menjadi penjumlahan (alamat label, 32-bit langsung, dan $t2)"
+    },
+    {
+      "example": "lb $t1,-100",
+      "description": "Load Byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lb $t1,($t2)",
+      "description": "Load Byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lb $t1,100",
+      "description": "Load Byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lb $t1,100($t2)",
+      "description": "Load Byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lb $t1,100000",
+      "description": "Load Byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lb $t1,100000($t2)",
+      "description": "Load Byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lb $t1,label",
+      "description": "Load Byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lb $t1,label($t2)",
+      "description": "Load Byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lb $t1,label+100000",
+      "description": "Load Byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lb $t1,label+100000($t2)",
+      "description": "Load Byte : Setel $t1 untuk menandatangani nilai 8-bit yang diperluas dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,-100",
+      "description": "Load Byte Unsigned : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,($t2)",
+      "description": "Load Byte Unsigned : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,100",
+      "description": "Load Byte Unsigned : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,100($t2)",
+      "description": "Load Byte Unsigned : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,100000",
+      "description": "Load Byte Unsigned : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,100000($t2)",
+      "description": "Load Byte Unsigned : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,label",
+      "description": "Load Byte Unsigned : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,label($t2)",
+      "description": "Load Byte Unsigned : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,label+100000",
+      "description": "Load Byte Unsigned : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "lbu $t1,label+100000($t2)",
+      "description": "Load Byte Unsigned : Setel $t1 ke nilai 8-bit yang diperpanjang nol dari alamat byte memori efektif"
+    },
+    {
+      "example": "ld $t1,-100($t2)",
+      "description": "Load Doubleword : Setel $t1 dan register berikutnya ke 64 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ld $t1,($t2)",
+      "description": "Load Doubleword : Atur $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "ld $t1,100000",
+      "description": "Load Doubleword : Atur $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "ld $t1,100000($t2)",
+      "description": "Load Doubleword : Atur $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "ld $t1,label",
+      "description": "Load Doubleword : Atur $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "ld $t1,label($t2)",
+      "description": "Load Doubleword : Atur $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "ld $t1,label+100000",
+      "description": "Load Doubleword : Atur $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "ld $t1,label+100000($t2)",
+      "description": "Load Doubleword : Atur $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "ldc1 $f2,-100",
+      "description": "Muat Doubleword Coprocessor 1 : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "ldc1 $f2,($t2)",
+      "description": "Muat Doubleword Coprocessor 1 : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "ldc1 $f2,100000",
+      "description": "Muat Doubleword Coprocessor 1 : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "ldc1 $f2,100000($t2)",
+      "description": "Muat Doubleword Coprocessor 1 : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "ldc1 $f2,label",
+      "description": "Muat Doubleword Coprocessor 1 : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "ldc1 $f2,label($t2)",
+      "description": "Muat Doubleword Coprocessor 1 : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "ldc1 $f2,label+100000",
+      "description": "Muat Doubleword Coprocessor 1 : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "ldc1 $f2,label+100000($t2)",
+      "description": "Muat Doubleword Coprocessor 1 : Setel pasangan register $f2 dan $f3 ke nilai 64-bit pada alamat doubleword memori efektif"
+    },
+    {
+      "example": "lh $t1,-100",
+      "description": "Load Halfword : Atur $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lh $t1,($t2)",
+      "description": "Load Halfword : Atur $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lh $t1,100",
+      "description": "Load Halfword : Atur $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lh $t1,100($t2)",
+      "description": "Load Halfword : Atur $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lh $t1,100000",
+      "description": "Load Halfword : Atur $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lh $t1,100000($t2)",
+      "description": "Load Halfword : Atur $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lh $t1,label",
+      "description": "Load Halfword : Atur $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lh $t1,label($t2)",
+      "description": "Load Halfword : Atur $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lh $t1,label+100000",
+      "description": "Load Halfword : Atur $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lh $t1,label+100000($t2)",
+      "description": "Load Halfword : Atur $t1 untuk menandatangani nilai 16-bit yang diperluas dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lhu $t1,-100",
+      "description": "Load Halfword Unsigned : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lhu $t1,($t2)",
+      "description": "Load Halfword Unsigned : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lhu $t1,100",
+      "description": "Load Halfword Unsigned : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lhu $t1,100($t2)",
+      "description": "Load Halfword Unsigned : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lhu $t1,100000",
+      "description": "Load Halfword Unsigned : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lhu $t1,100000($t2)",
+      "description": "Load Halfword Unsigned : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lhu $t1,label",
+      "description": "Load Halfword Unsigned : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lhu $t1,label($t2)",
+      "description": "Load Halfword Unsigned : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lhu $t1,label+100000",
+      "description": "Load Halfword Unsigned : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat halfword memori efektif"
+    },
+    {
+      "example": "lhu $t1,label+100000($t2)",
+      "description": "Load Halfword Unsigned : Setel $t1 ke nilai 16-bit yang diperluas nol dari alamat halfword memori efektif"
+    },
+    {
+      "example": "li $t1,-100",
+      "description": "Muat Segera : Setel $t1 ke 16-bit langsung (diperpanjang tanda)"
+    },
+    {
+      "example": "li $t1,100",
+      "description": "Muat Segera : Setel $t1 ke 16-bit langsung yang tidak ditandatangani (perpanjangan nol)"
+    },
+    {
+      "example": "li $t1,100000",
+      "description": "Muat Segera : Setel $t1 ke 32-bit langsung"
+    },
+    {
+      "example": "ll $t1,-100",
+      "description": "Load Linked : Memuat sebuah kata dan membuat reservasi untuk Store Conditional (sc) berikutnya."
+    },
+    {
+      "example": "ll $t1,($t2)",
+      "description": "Load Linked : Memuat sebuah kata dan membuat reservasi untuk Store Conditional (sc) berikutnya."
+    },
+    {
+      "example": "ll $t1,100",
+      "description": "Load Linked : Memuat sebuah kata dan membuat reservasi untuk Store Conditional (sc) berikutnya."
+    },
+    {
+      "example": "ll $t1,100($t2)",
+      "description": "Load Linked : Memuat sebuah kata dan membuat reservasi untuk Store Conditional (sc) berikutnya."
+    },
+    {
+      "example": "ll $t1,100000",
+      "description": "Load Linked : Memuat sebuah kata dan membuat reservasi untuk Store Conditional (sc) berikutnya."
+    },
+    {
+      "example": "ll $t1,100000($t2)",
+      "description": "Load Linked : Memuat sebuah kata dan membuat reservasi untuk Store Conditional (sc) berikutnya."
+    },
+    {
+      "example": "ll $t1,label",
+      "description": "Load Linked : Memuat sebuah kata dan membuat reservasi untuk Store Conditional (sc) berikutnya."
+    },
+    {
+      "example": "ll $t1,label($t2)",
+      "description": "Load Linked : Memuat sebuah kata dan membuat reservasi untuk Store Conditional (sc) berikutnya."
+    },
+    {
+      "example": "ll $t1,label+100000",
+      "description": "Load Linked : Memuat sebuah kata dan membuat reservasi untuk Store Conditional (sc) berikutnya."
+    },
+    {
+      "example": "ll $t1,label+100000($t2)",
+      "description": "Load Linked : Memuat sebuah kata dan membuat reservasi untuk Store Conditional (sc) berikutnya."
+    },
+    {
+      "example": "lw $t1,-100",
+      "description": "Load Word : Atur $t1 ke isi alamat kata memori efektif"
+    },
+    {
+      "example": "lw $t1,($t2)",
+      "description": "Load Word : Atur $t1 ke isi alamat kata memori efektif"
+    },
+    {
+      "example": "lw $t1,100",
+      "description": "Load Word : Atur $t1 ke isi alamat kata memori efektif"
+    },
+    {
+      "example": "lw $t1,100($t2)",
+      "description": "Load Word : Atur $t1 ke isi alamat kata memori efektif"
+    },
+    {
+      "example": "lw $t1,100000",
+      "description": "Load Word : Atur $t1 ke isi alamat kata memori efektif"
+    },
+    {
+      "example": "lw $t1,100000($t2)",
+      "description": "Load Word : Atur $t1 ke isi alamat kata memori efektif"
+    },
+    {
+      "example": "lw $t1,label",
+      "description": "Load Word : Atur $t1 ke isi kata memori di alamat label"
+    },
+    {
+      "example": "lw $t1,label($t2)",
+      "description": "Load Word : Atur $t1 ke isi alamat kata memori efektif"
+    },
+    {
+      "example": "lw $t1,label+100000",
+      "description": "Load Word : Atur $t1 ke isi alamat kata memori efektif"
+    },
+    {
+      "example": "lw $t1,label+100000($t2)",
+      "description": "Load Word : Atur $t1 ke isi alamat kata memori efektif"
+    },
+    {
+      "example": "lwc1 $f1,-100",
+      "description": "Muat Word Coprocessor 1 : Setel $f1 ke nilai 32-bit dari alamat kata memori efektif"
+    },
+    {
+      "example": "lwc1 $f1,($t2)",
+      "description": "Muat Word Coprocessor 1 : Setel $f1 ke nilai 32-bit dari alamat kata memori efektif"
+    },
+    {
+      "example": "lwc1 $f1,100000",
+      "description": "Muat Word Coprocessor 1 : Setel $f1 ke nilai 32-bit dari alamat kata memori efektif"
+    },
+    {
+      "example": "lwc1 $f1,100000($t2)",
+      "description": "Muat Word Coprocessor 1 : Setel $f1 ke nilai 32-bit dari alamat kata memori efektif"
+    },
+    {
+      "example": "lwc1 $f1,label",
+      "description": "Muat Word Coprocessor 1 : Setel $f1 ke nilai 32-bit dari alamat kata memori efektif"
+    },
+    {
+      "example": "lwc1 $f1,label($t2)",
+      "description": "Muat Word Coprocessor 1 : Setel $f1 ke nilai 32-bit dari alamat kata memori efektif"
+    },
+    {
+      "example": "lwc1 $f1,label+100000",
+      "description": "Muat Word Coprocessor 1 : Setel $f1 ke nilai 32-bit dari alamat kata memori efektif"
+    },
+    {
+      "example": "lwc1 $f1,label+100000($t2)",
+      "description": "Muat Word Coprocessor 1 : Setel $f1 ke nilai 32-bit dari alamat kata memori efektif"
+    },
+    {
+      "example": "lwl $t1,-100",
+      "description": "Load Word Left : Memuat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwl $t1,($t2)",
+      "description": "Load Word Left : Memuat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwl $t1,100",
+      "description": "Load Word Left : Memuat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwl $t1,100($t2)",
+      "description": "Load Word Left : Memuat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwl $t1,100000",
+      "description": "Load Word Left : Memuat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwl $t1,100000($t2)",
+      "description": "Load Word Left : Memuat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwl $t1,label",
+      "description": "Load Word Left : Memuat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwl $t1,label($t2)",
+      "description": "Load Word Left : Memuat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwl $t1,label+100000",
+      "description": "Load Word Left : Memuat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwl $t1,label+100000($t2)",
+      "description": "Load Word Left : Memuat dari 1 hingga 4 byte rata kiri ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,-100",
+      "description": "Load Word Right : Memuat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,($t2)",
+      "description": "Load Word Right : Memuat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,100",
+      "description": "Load Word Right : Memuat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,100($t2)",
+      "description": "Load Word Right : Memuat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,100000",
+      "description": "Load Word Right : Memuat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,100000($t2)",
+      "description": "Load Word Right : Memuat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,label",
+      "description": "Load Word Right : Memuat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,label($t2)",
+      "description": "Load Word Right : Memuat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,label+100000",
+      "description": "Load Word Right : Memuat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "lwr $t1,label+100000($t2)",
+      "description": "Load Word Right : Memuat dari 1 hingga 4 byte rata kanan ke dalam $t1, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat tinggi dari kata-katanya"
+    },
+    {
+      "example": "mfc1.d $t1,$f2",
+      "description": "Move From Coprocessor 1 Double : Setel $t1 ke isi $f2, atur register berikutnya yang lebih tinggi dari $t1 ke isi register yang lebih tinggi berikutnya dari $f2"
+    },
+    {
+      "example": "move $t1,$t2",
+      "description": "MOVE : Setel $t1 ke konten $t2"
+    },
+    {
+      "example": "mtc1.d $t1,$f2",
+      "description": "Move To Coprocessor 1 Double : Setel $f2 ke isi $t1, atur register berikutnya yang lebih tinggi dari $f2 ke isi register yang lebih tinggi berikutnya dari $t1"
+    },
+    {
+      "example": "mul $t1,$t2,-100",
+      "description": "MULtiplikasi : Atur HI ke 32 bit orde tinggi, LO dan $t1 ke 32 bit orde rendah dari produk $t2 dan 16-bit yang ditandatangani langsung (gunakan mfhi untuk mengakses HI, mflo untuk mengakses LO)"
+    },
+    {
+      "example": "mul $t1,$t2,100000",
+      "description": "MULtiplikasi : Atur HI ke 32 bit orde tinggi, LO dan $t1 ke 32 bit orde rendah dari produk $t2 dan langsung 32-bit (gunakan mfhi untuk mengakses HI, mflo untuk mengakses LO)"
+    },
+    {
+      "example": "mulo $t1,$t2,-100",
+      "description": "MULtiplikasi dengan Overflow : Setel $t1 ke produk 32 bit orde rendah $t2 dan langsung ditandatangani 16-bit"
+    },
+    {
+      "example": "mulo $t1,$t2,$t3",
+      "description": "MULtiplikasi dengan Overflow : Atur $t1 ke 32 bit orde rendah dari produk $t2 dan $t3"
+    },
+    {
+      "example": "mulo $t1,$t2,100000",
+      "description": "MULtiplikasi dengan Overflow : Setel $t1 ke produk 32 bit orde rendah $t2 dan langsung 32-bit"
+    },
+    {
+      "example": "mulou $t1,$t2,-100",
+      "description": "MULtiplikasi dengan Overflow Unsigned : Setel $t1 ke produk 32 bit orde rendah $t2 dan langsung ditandatangani 16-bit"
+    },
+    {
+      "example": "mulou $t1,$t2,$t3",
+      "description": "MULtiplikasi dengan Overflow Unsigned : Atur $t1 ke 32 bit orde rendah dari produk $t2 dan $t3"
+    },
+    {
+      "example": "mulou $t1,$t2,100000",
+      "description": "MULtiplikasi dengan Overflow Unsigned : Atur $t1 ke produk 32 bit orde rendah $t2 dan 32-bit langsung"
+    },
+    {
+      "example": "mulu $t1,$t2,-100",
+      "description": "MULtiplication Unsigned : Atur HI ke 32 bit orde tinggi, LO dan $t1 ke 32 bit orde rendah ($t2 dikalikan dengan 16-bit langsung, perkalian tidak ditandatangani)"
+    },
+    {
+      "example": "mulu $t1,$t2,$t3",
+      "description": "MULtiplication Unsigned : Atur HI ke orde tinggi 32 bit, LO dan $t1 ke orde rendah 32 bit ($t2 dikalikan dengan $t3, perkalian unsigned)"
+    },
+    {
+      "example": "mulu $t1,$t2,100000",
+      "description": "MULtiplication Unsigned : Atur HI ke 32 bit orde tinggi, LO dan $t1 ke 32 bit orde rendah ($t2 dikalikan dengan 32-bit langsung, perkalian tidak ditandatangani)"
+    },
+    {
+      "example": "neg $t1,$t2",
+      "description": "NEGate : Setel $t1 ke negasi dari $t2"
+    },
+    {
+      "example": "negu $t1,$t2",
+      "description": "NEGate Unsigned : Setel $t1 ke negasi $t2, tanpa overflow"
+    },
+    {
+      "example": "not $t1,$t2",
+      "description": "Bitwise NOT (inversi bit)"
+    },
+    {
+      "example": "or $t1,$t2,100",
+      "description": "OR : atur $t1 ke ($t2 bitwise-OR 16-bit unsigned langsung)"
+    },
+    {
+      "example": "or $t1,100",
+      "description": "OR : atur $t1 ke ($t1 bitwise-OR 16-bit unsigned langsung)"
+    },
+    {
+      "example": "ori $t1,$t2,100000",
+      "description": "OR Segera : atur $t1 ke ($t2 bitwise-OR 32-bit langsung)"
+    },
+    {
+      "example": "ori $t1,100",
+      "description": "ATAU Segera : set $t1 ke ($t1 bitwise-ATAU 16-bit langsung tidak ditandatangani)"
+    },
+    {
+      "example": "ori $t1,100000",
+      "description": "OR Segera : atur $t1 ke ($t1 bitwise-OR 32-bit langsung)"
+    },
+    {
+      "example": "rem $t1,$t2,-100",
+      "description": "Sisa : Tetapkan $t1 ke (sisa $t2 dibagi dengan 16-bit langsung)"
+    },
+    {
+      "example": "rem $t1,$t2,$t3",
+      "description": "Sisa : Tetapkan $t1 ke (sisa $t2 dibagi dengan $t3)"
+    },
+    {
+      "example": "rem $t1,$t2,100000",
+      "description": "Sisa : Tetapkan $t1 ke (sisa $t2 dibagi dengan 32-bit langsung)"
+    },
+    {
+      "example": "remu $t1,$t2,-100",
+      "description": "Sisa : Tetapkan $t1 ke (sisa $t2 dibagi dengan divisi langsung 16-bit yang tidak ditandatangani)"
+    },
+    {
+      "example": "remu $t1,$t2,$t3",
+      "description": "Sisa : Tetapkan $t1 ke (sisa $t2 dibagi dengan $t3, divisi yang tidak ditandatangani)"
+    },
+    {
+      "example": "remu $t1,$t2,100000",
+      "description": "Sisa : Tetapkan $t1 ke (sisa $t2 dibagi dengan divisi langsung 32-bit yang tidak ditandatangani)"
+    },
+    {
+      "example": "rol $t1,$t2,$t3",
+      "description": "Putar ke Kiri : Atur $t1 ke ($t2 diputar ke kiri berdasarkan jumlah posisi bit yang ditentukan di $t3)"
+    },
+    {
+      "example": "rol $t1,$t2,10",
+      "description": "Putar ke Kiri : Atur $t1 ke ($t2 diputar ke kiri berdasarkan jumlah posisi bit yang ditentukan dalam 5-bit langsung)"
+    },
+    {
+      "example": "ror $t1,$t2,$t3",
+      "description": "Putar ke Kanan : Atur $t1 ke ($t2 diputar ke kanan berdasarkan jumlah posisi bit yang ditentukan di $t3)"
+    },
+    {
+      "example": "ror $t1,$t2,10",
+      "description": "Putar ke Kanan : Atur $t1 ke ($t2 diputar ke kanan berdasarkan jumlah posisi bit yang ditentukan dalam 5-bit langsung)"
+    },
+    {
+      "example": "s.d $f2,-100",
+      "description": "Menyimpan floating point Presisi ganda : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "s.d $f2,($t2)",
+      "description": "Menyimpan floating point Presisi ganda : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "s.d $f2,100000",
+      "description": "Menyimpan floating point Presisi ganda : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "s.d $f2,100000($t2)",
+      "description": "Menyimpan floating point Presisi ganda : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "s.d $f2,label",
+      "description": "Menyimpan floating point Presisi ganda : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "s.d $f2,label($t2)",
+      "description": "Menyimpan floating point Presisi ganda : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "s.d $f2,label+100000",
+      "description": "Menyimpan floating point Presisi ganda : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "s.d $f2,label+100000($t2)",
+      "description": "Menyimpan floating point Presisi ganda : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "s.s $f1,-100",
+      "description": "Simpan floating point Presisi tunggal : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "s.s $f1,($t2)",
+      "description": "Simpan floating point Presisi tunggal : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "s.s $f1,100000",
+      "description": "Simpan floating point Presisi tunggal : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "s.s $f1,100000($t2)",
+      "description": "Simpan floating point Presisi tunggal : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "s.s $f1,label",
+      "description": "Simpan floating point Presisi tunggal : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "s.s $f1,label($t2)",
+      "description": "Simpan floating point Presisi tunggal : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "s.s $f1,label+100000",
+      "description": "Simpan floating point Presisi tunggal : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "s.s $f1,label+100000($t2)",
+      "description": "Simpan floating point Presisi tunggal : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "sb $t1,-100",
+      "description": "Store Byte : Menyimpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sb $t1,($t2)",
+      "description": "Store Byte : Menyimpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sb $t1,100",
+      "description": "Store Byte : Menyimpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sb $t1,100($t2)",
+      "description": "Store Byte : Menyimpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sb $t1,100000",
+      "description": "Store Byte : Menyimpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sb $t1,100000($t2)",
+      "description": "Store Byte : Menyimpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sb $t1,label",
+      "description": "Store Byte : Menyimpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sb $t1,label($t2)",
+      "description": "Store Byte : Menyimpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sb $t1,label+100000",
+      "description": "Store Byte : Menyimpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sb $t1,label+100000($t2)",
+      "description": "Store Byte : Menyimpan 8 bit orde rendah $t1 ke dalam alamat byte memori efektif"
+    },
+    {
+      "example": "sc $t1,-100",
+      "description": "Store Conditional : Simpan hanya jika pencocokan reservasi Load Linked tetap valid, kemudian laporkan keberhasilan atau kegagalan dalam register sumber."
+    },
+    {
+      "example": "sc $t1,($t2)",
+      "description": "Store Conditional : Simpan hanya jika pencocokan reservasi Load Linked tetap valid, kemudian laporkan keberhasilan atau kegagalan dalam register sumber."
+    },
+    {
+      "example": "sc $t1,100",
+      "description": "Store Conditional : Simpan hanya jika pencocokan reservasi Load Linked tetap valid, kemudian laporkan keberhasilan atau kegagalan dalam register sumber."
+    },
+    {
+      "example": "sc $t1,100($t2)",
+      "description": "Store Conditional : Simpan hanya jika pencocokan reservasi Load Linked tetap valid, kemudian laporkan keberhasilan atau kegagalan dalam register sumber."
+    },
+    {
+      "example": "sc $t1,100000",
+      "description": "Store Conditional : Simpan hanya jika pencocokan reservasi Load Linked tetap valid, kemudian laporkan keberhasilan atau kegagalan dalam register sumber."
+    },
+    {
+      "example": "sc $t1,100000($t2)",
+      "description": "Store Conditional : Simpan hanya jika pencocokan reservasi Load Linked tetap valid, kemudian laporkan keberhasilan atau kegagalan dalam register sumber."
+    },
+    {
+      "example": "sc $t1,label",
+      "description": "Store Conditional : Simpan hanya jika pencocokan reservasi Load Linked tetap valid, kemudian laporkan keberhasilan atau kegagalan dalam register sumber."
+    },
+    {
+      "example": "sc $t1,label($t2)",
+      "description": "Store Conditional : Simpan hanya jika pencocokan reservasi Load Linked tetap valid, kemudian laporkan keberhasilan atau kegagalan dalam register sumber."
+    },
+    {
+      "example": "sc $t1,label+100000",
+      "description": "Store Conditional : Simpan hanya jika pencocokan reservasi Load Linked tetap valid, kemudian laporkan keberhasilan atau kegagalan dalam register sumber."
+    },
+    {
+      "example": "sc $t1,label+100000($t2)",
+      "description": "Store Conditional : Simpan hanya jika pencocokan reservasi Load Linked tetap valid, kemudian laporkan keberhasilan atau kegagalan dalam register sumber."
+    },
+    {
+      "example": "sd $t1,-100($t2)",
+      "description": "Store Doubleword : Menyimpan konten $t1 dan register berikutnya ke 64 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "sd $t1,($t2)",
+      "description": "Store Doubleword : Menyimpan konten $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "sd $t1,100000",
+      "description": "Store Doubleword : Menyimpan konten $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "sd $t1,100000($t2)",
+      "description": "Store Doubleword : Menyimpan konten $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "sd $t1,label",
+      "description": "Store Doubleword : Menyimpan konten $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "sd $t1,label($t2)",
+      "description": "Store Doubleword : Menyimpan konten $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "sd $t1,label+100000",
+      "description": "Store Doubleword : Menyimpan konten $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "sd $t1,label+100000($t2)",
+      "description": "Store Doubleword : Menyimpan konten $t1 dan register berikutnya ke 64 bit dimulai dari alamat kata memori efektif"
+    },
+    {
+      "example": "sdc1 $f2,-100",
+      "description": "Simpan Doubleword Coprocessor 1 : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "sdc1 $f2,($t2)",
+      "description": "Simpan Doubleword Coprocessor 1 : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "sdc1 $f2,100000",
+      "description": "Simpan Doubleword Coprocessor 1 : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "sdc1 $f2,100000($t2)",
+      "description": "Simpan Doubleword Coprocessor 1 : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "sdc1 $f2,label",
+      "description": "Simpan Doubleword Coprocessor 1 : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "sdc1 $f2,label($t2)",
+      "description": "Simpan Doubleword Coprocessor 1 : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "sdc1 $f2,label+100000",
+      "description": "Simpan Doubleword Coprocessor 1 : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "sdc1 $f2,label+100000($t2)",
+      "description": "Simpan Doubleword Coprocessor 1 : Menyimpan 64 bit dari pasangan register $f2 dan $f3 ke alamat doubleword memori efektif"
+    },
+    {
+      "example": "seq $t1,$t2,-100",
+      "description": "Set EQual : jika $t2 sama dengan 16-bit langsung maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "seq $t1,$t2,$t3",
+      "description": "Set EQual : jika $t2 sama dengan $t3 maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "seq $t1,$t2,100000",
+      "description": "Set EQual : jika $t2 sama dengan 32-bit langsung maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sge $t1,$t2,-100",
+      "description": "Setel Lebih Besar atau Sama : jika $t2 lebih besar atau sama dengan 16-bit langsung maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sge $t1,$t2,$t3",
+      "description": "Setel Lebih Besar atau Sama : jika $t2 lebih besar atau sama dengan $t3 maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sge $t1,$t2,100000",
+      "description": "Setel Lebih Besar atau Sama : jika $t2 lebih besar atau sama dengan 32-bit langsung maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,-100",
+      "description": "Tetapkan Lebih Besar atau Sama dengan Unsigned : jika $t2 lebih besar atau sama dengan 16-bit langsung (perbandingan unsigned) lalu atur $t1 menjadi 1 else 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,$t3",
+      "description": "Setel Lebih Besar atau Sama Unsigned : jika $t2 lebih besar atau sama dengan $t3 (unsigned bandingkan) maka setel $t1 menjadi 1 else 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,100000",
+      "description": "Setel Lebih Besar atau Sama dengan Unsigned : jika $t2 lebih besar atau sama dengan 32-bit langsung (unsigned bandingkan) maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sgt $t1,$t2,-100",
+      "description": "Setel Lebih Besar Dari : jika $t2 lebih besar dari 16-bit langsung maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sgt $t1,$t2,$t3",
+      "description": "Setel Lebih Besar Dari : jika $t2 lebih besar dari $t3 maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sgt $t1,$t2,100000",
+      "description": "Setel Lebih Besar Dari : jika $t2 lebih besar dari 32-bit langsung maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,-100",
+      "description": "Setel Lebih Besar Dari Unsigned : jika $t2 lebih besar dari 16-bit langsung (perbandingan unsigned) maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,$t3",
+      "description": "Setel Lebih Besar Dari Unsigned : jika $t2 lebih besar dari $t3 (unsigned bandingkan) maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,100000",
+      "description": "Setel Lebih Besar Dari Unsigned : jika $t2 lebih besar dari 32-bit langsung (perbandingan unsigned) maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sh $t1,-100",
+      "description": "Store Halfword : Menyimpan 16 bit orde rendah $t1 ke dalam alamat halfword memori efektif"
+    },
+    {
+      "example": "sh $t1,($t2)",
+      "description": "Store Halfword : Menyimpan 16 bit orde rendah $t1 ke dalam alamat halfword memori efektif"
+    },
+    {
+      "example": "sh $t1,100",
+      "description": "Store Halfword : Menyimpan 16 bit orde rendah $t1 ke dalam alamat halfword memori efektif"
+    },
+    {
+      "example": "sh $t1,100($t2)",
+      "description": "Store Halfword : Menyimpan 16 bit orde rendah $t1 ke dalam alamat halfword memori efektif"
+    },
+    {
+      "example": "sh $t1,100000",
+      "description": "Store Halfword : Menyimpan 16 bit orde rendah $t1 ke dalam alamat halfword memori efektif"
+    },
+    {
+      "example": "sh $t1,100000($t2)",
+      "description": "Store Halfword : Menyimpan 16 bit orde rendah $t1 ke dalam alamat halfword memori efektif"
+    },
+    {
+      "example": "sh $t1,label",
+      "description": "Store Halfword : Menyimpan 16 bit orde rendah $t1 ke dalam alamat halfword memori efektif"
+    },
+    {
+      "example": "sh $t1,label($t2)",
+      "description": "Store Halfword : Menyimpan 16 bit orde rendah $t1 ke dalam alamat halfword memori efektif"
+    },
+    {
+      "example": "sh $t1,label+100000",
+      "description": "Store Halfword : Menyimpan 16 bit orde rendah $t1 ke dalam alamat halfword memori efektif"
+    },
+    {
+      "example": "sh $t1,label+100000($t2)",
+      "description": "Store Halfword : Menyimpan 16 bit orde rendah $t1 ke dalam alamat halfword memori efektif"
+    },
+    {
+      "example": "sle $t1,$t2,-100",
+      "description": "Atur Kurang atau Sama : jika $t2 kurang atau sama dengan 16-bit langsung maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sle $t1,$t2,$t3",
+      "description": "Setel Kurang atau Sama : jika $t2 kurang atau sama dengan $t3 maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sle $t1,$t2,100000",
+      "description": "Tetapkan Kurang atau Sama : jika $t2 kurang atau sama dengan 32-bit langsung maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sleu $t1,$t2,-100",
+      "description": "Setel Kurang atau Sama dengan Unsigned: jika $t2 kurang atau sama dengan 16-bit langsung (unsigned bandingkan) maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sleu $t1,$t2,$t3",
+      "description": "Setel Kurang atau Sama Unsigned: jika $t2 kurang atau sama dengan $t3 (unsigned bandingkan) lalu setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sleu $t1,$t2,100000",
+      "description": "Setel Kurang atau Sama dengan Unsigned: jika $t2 kurang atau sama dengan 32-bit langsung (unsigned bandingkan) maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sne $t1,$t2,-100",
+      "description": "Set Not Equal : jika $t2 tidak sama dengan 16-bit langsung maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sne $t1,$t2,$t3",
+      "description": "Set Not Equal : jika $t2 tidak sama dengan $t3 maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sne $t1,$t2,100000",
+      "description": "Set Not Equal : jika $t2 tidak sama dengan 32-bit langsung maka setel $t1 ke 1 else 0"
+    },
+    {
+      "example": "sub $t1,$t2,-100",
+      "description": "SUBtraksi : atur $t1 menjadi ($t2 dikurangi 16-bit langsung)"
+    },
+    {
+      "example": "sub $t1,$t2,100000",
+      "description": "SUBtraksi : setel $t1 ke ($t2 dikurangi 32-bit langsung)"
+    },
+    {
+      "example": "subi $t1,$t2,-100",
+      "description": "SUBtraksi Segera : atur $t1 menjadi ($t2 dikurangi 16-bit langsung)"
+    },
+    {
+      "example": "subi $t1,$t2,100000",
+      "description": "SUBtraksi Segera : atur $t1 menjadi ($t2 dikurangi 32-bit langsung)"
+    },
+    {
+      "example": "subiu $t1,$t2,100000",
+      "description": "SUBtraction Immediate Unsigned : setel $t1 ke ($t2 dikurangi 32-bit langsung), tanpa overflow"
+    },
+    {
+      "example": "subu $t1,$t2,100000",
+      "description": "SUBtraction Unsigned : setel $t1 ke ($t2 dikurangi 32-bit langsung), tanpa overflow"
+    },
+    {
+      "example": "sw $t1,-100",
+      "description": "Store Word : Menyimpan konten $t1 ke dalam alamat kata memori efektif"
+    },
+    {
+      "example": "sw $t1,($t2)",
+      "description": "Store Word : Menyimpan konten $t1 ke dalam alamat kata memori efektif"
+    },
+    {
+      "example": "sw $t1,100",
+      "description": "Store Word : Menyimpan konten $t1 ke dalam alamat kata memori efektif"
+    },
+    {
+      "example": "sw $t1,100($t2)",
+      "description": "Store Word : Menyimpan konten $t1 ke dalam alamat kata memori efektif"
+    },
+    {
+      "example": "sw $t1,100000",
+      "description": "Store Word : Menyimpan konten $t1 ke dalam alamat kata memori efektif"
+    },
+    {
+      "example": "sw $t1,100000($t2)",
+      "description": "Store Word : Menyimpan konten $t1 ke dalam alamat kata memori efektif"
+    },
+    {
+      "example": "sw $t1,label",
+      "description": "Store Word : Menyimpan konten $t1 ke dalam memory word di alamat label"
+    },
+    {
+      "example": "sw $t1,label($t2)",
+      "description": "Store Word : Menyimpan konten $t1 ke dalam alamat kata memori efektif"
+    },
+    {
+      "example": "sw $t1,label+100000",
+      "description": "Store Word : Menyimpan konten $t1 ke dalam alamat kata memori efektif"
+    },
+    {
+      "example": "sw $t1,label+100000($t2)",
+      "description": "Store Word : Menyimpan konten $t1 ke dalam alamat kata memori efektif"
+    },
+    {
+      "example": "swc1 $f1,-100",
+      "description": "Store Word Coprocessor 1 : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "swc1 $f1,($t2)",
+      "description": "Store Word Coprocessor 1 : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "swc1 $f1,100000",
+      "description": "Store Word Coprocessor 1 : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "swc1 $f1,100000($t2)",
+      "description": "Store Word Coprocessor 1 : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "swc1 $f1,label",
+      "description": "Store Word Coprocessor 1 : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "swc1 $f1,label($t2)",
+      "description": "Store Word Coprocessor 1 : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "swc1 $f1,label+100000",
+      "description": "Store Word Coprocessor 1 : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "swc1 $f1,label+100000($t2)",
+      "description": "Store Word Coprocessor 1 : Menyimpan nilai 32-bit dari $f1 ke alamat kata memori efektif"
+    },
+    {
+      "example": "swl $t1,-100",
+      "description": "Simpan Kata Kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swl $t1,($t2)",
+      "description": "Simpan Kata Kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swl $t1,100",
+      "description": "Simpan Kata Kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swl $t1,100($t2)",
+      "description": "Simpan Kata Kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swl $t1,100000",
+      "description": "Simpan Kata Kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swl $t1,100000($t2)",
+      "description": "Simpan Kata Kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swl $t1,label",
+      "description": "Simpan Kata Kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swl $t1,label($t2)",
+      "description": "Simpan Kata Kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swl $t1,label+100000",
+      "description": "Simpan Kata Kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swl $t1,label+100000($t2)",
+      "description": "Simpan Kata Kiri : Menyimpan 1 hingga 4 byte $t1 tingkat tinggi ke dalam memori, dimulai dengan alamat byte memori efektif dan berlanjut hingga byte tingkat rendah dari kata-katanya"
+    },
+    {
+      "example": "swr $t1,-100",
+      "description": "Simpan Kata di Kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte memori efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "swr $t1,($t2)",
+      "description": "Simpan Kata di Kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte memori efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "swr $t1,100",
+      "description": "Simpan Kata di Kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte memori efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "swr $t1,100($t2)",
+      "description": "Simpan Kata di Kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte memori efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "swr $t1,100000",
+      "description": "Simpan Kata di Kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte memori efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "swr $t1,100000($t2)",
+      "description": "Simpan Kata di Kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte memori efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "swr $t1,label",
+      "description": "Simpan Kata di Kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte memori efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "swr $t1,label($t2)",
+      "description": "Simpan Kata di Kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte memori efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "swr $t1,label+100000",
+      "description": "Simpan Kata di Kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte memori efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "swr $t1,label+100000($t2)",
+      "description": "Simpan Kata di Kanan : Menyimpan 1 hingga 4 byte $t1 tingkat rendah ke dalam memori, dimulai dengan byte kata tingkat tinggi yang berisi alamat byte memori efektif dan berlanjut hingga alamat byte tersebut"
+    },
+    {
+      "example": "ulh $t1,-100($t2)",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, tanda diperpanjang, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulh $t1,($t2)",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, tanda diperpanjang, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulh $t1,100000",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, tanda diperpanjang, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulh $t1,100000($t2)",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, tanda diperpanjang, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulh $t1,label",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, tanda diperpanjang, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulh $t1,label($t2)",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, tanda diperpanjang, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulh $t1,label+100000",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, tanda diperpanjang, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulh $t1,label+100000($t2)",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, tanda diperpanjang, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulhu $t1,-100($t2)",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, perpanjangan nol, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulhu $t1,($t2)",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, perpanjangan nol, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulhu $t1,100000",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, perpanjangan nol, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulhu $t1,100000($t2)",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, perpanjangan nol, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulhu $t1,label",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, perpanjangan nol, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulhu $t1,label($t2)",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, perpanjangan nol, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulhu $t1,label+100000",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, perpanjangan nol, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulhu $t1,label+100000($t2)",
+      "description": "Unaligned Load Halfword : Setel $t1 ke 16 bit, perpanjangan nol, dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulw $t1,-100($t2)",
+      "description": "Unaligned Load Word : Setel $t1 ke 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulw $t1,($t2)",
+      "description": "Unaligned Load Word : Setel $t1 ke 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulw $t1,100000",
+      "description": "Unaligned Load Word : Setel $t1 ke 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulw $t1,100000($t2)",
+      "description": "Unaligned Load Word : Setel $t1 ke 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulw $t1,label",
+      "description": "Unaligned Load Word : Setel $t1 ke 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulw $t1,label($t2)",
+      "description": "Unaligned Load Word : Setel $t1 ke 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulw $t1,label+100000",
+      "description": "Unaligned Load Word : Setel $t1 ke 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ulw $t1,label+100000($t2)",
+      "description": "Unaligned Load Word : Setel $t1 ke 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ush $t1,-100($t2)",
+      "description": "Unaligned Store Halfword: Menyimpan konten halfword tingkat rendah $t1 ke dalam 16 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ush $t1,($t2)",
+      "description": "Unaligned Store Halfword: Menyimpan konten halfword tingkat rendah $t1 ke dalam 16 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ush $t1,100000",
+      "description": "Unaligned Store Halfword: Menyimpan konten halfword tingkat rendah $t1 ke dalam 16 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ush $t1,100000($t2)",
+      "description": "Unaligned Store Halfword: Menyimpan konten halfword tingkat rendah $t1 ke dalam 16 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ush $t1,label",
+      "description": "Unaligned Store Halfword: Menyimpan konten halfword tingkat rendah $t1 ke dalam 16 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ush $t1,label($t2)",
+      "description": "Unaligned Store Halfword: Menyimpan konten halfword tingkat rendah $t1 ke dalam 16 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ush $t1,label+100000",
+      "description": "Unaligned Store Halfword: Menyimpan konten halfword tingkat rendah $t1 ke dalam 16 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "ush $t1,label+100000($t2)",
+      "description": "Unaligned Store Halfword: Menyimpan konten halfword tingkat rendah $t1 ke dalam 16 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "usw $t1,-100($t2)",
+      "description": "Unaligned Store Word : Menyimpan konten $t1 ke dalam 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "usw $t1,($t2)",
+      "description": "Unaligned Store Word : Menyimpan konten $t1 ke dalam 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "usw $t1,100000",
+      "description": "Unaligned Store Word : Menyimpan konten $t1 ke dalam 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "usw $t1,100000($t2)",
+      "description": "Unaligned Store Word : Menyimpan konten $t1 ke dalam 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "usw $t1,label",
+      "description": "Unaligned Store Word : Menyimpan konten $t1 ke dalam 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "usw $t1,label($t2)",
+      "description": "Unaligned Store Word : Menyimpan konten $t1 ke dalam 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "usw $t1,label+100000",
+      "description": "Unaligned Store Word : Menyimpan konten $t1 ke dalam 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "usw $t1,label+100000($t2)",
+      "description": "Unaligned Store Word : Menyimpan konten $t1 ke dalam 32 bit dimulai dari alamat byte memori efektif"
+    },
+    {
+      "example": "xor $t1,$t2,100",
+      "description": "XOR : setel $t1 ke ($t2 bitwise-exclusive-OR 16-bit unsigned langsung)"
+    },
+    {
+      "example": "xor $t1,100",
+      "description": "XOR : setel $t1 ke ($t1 bitwise-exclusive-OR 16-bit unsigned langsung)"
+    },
+    {
+      "example": "xori $t1,$t2,100000",
+      "description": "XOR Segera: set $t1 ke ($t2 bitwise-eksklusif-ATAU 32-bit langsung)"
+    },
+    {
+      "example": "xori $t1,100",
+      "description": "XOR Segera: set $t1 ke ($t1 bitwise-eksklusif-ATAU 16-bit langsung tidak ditandatangani)"
+    },
+    {
+      "example": "xori $t1,100000",
+      "description": "XOR Segera: set $t1 ke ($t1 bitwise-eksklusif-ATAU 32-bit langsung)"
+    }
+  ],
+  "directives": [
+    {
+      "name": ".align",
+      "description": "Sejajarkan item data berikutnya pada batas byte yang ditentukan (0=byte, 1=setengah, 2=kata, 3=ganda)"
+    },
+    {
+      "name": ".ascii",
+      "description": "Simpan string di segmen Data tetapi jangan tambahkan terminator nol"
+    },
+    {
+      "name": ".asciiz",
+      "description": "Simpan string di segmen Data dan tambahkan terminator nol"
+    },
+    {
+      "name": ".byte",
+      "description": "Simpan nilai yang terdaftar sebagai 8 bit byte"
+    },
+    {
+      "name": ".data",
+      "description": "Item selanjutnya disimpan di Segmen data di alamat berikutnya yang tersedia"
+    },
+    {
+      "name": ".double",
+      "description": "Simpan nilai yang tercantum sebagai titik mengambang presisi ganda"
+    },
+    {
+      "name": ".end_macro",
+      "description": "Akhiri definisi makro.  Lihat .makro"
+    },
+    {
+      "name": ".eqv",
+      "description": "Gantikan operan kedua dengan operan pertama. Operan pertama adalah simbol, operan kedua adalah ekspresi (seperti #define)"
+    },
+    {
+      "name": ".extern",
+      "description": "Deklarasikan label yang terdaftar dan panjang byte menjadi bidang data global"
+    },
+    {
+      "name": ".float",
+      "description": "Simpan nilai yang tercantum sebagai floating point presisi tunggal"
+    },
+    {
+      "name": ".globl",
+      "description": "Deklarasikan label yang terdaftar sebagai global untuk mengaktifkan referensi dari file lain"
+    },
+    {
+      "name": ".half",
+      "description": "Simpan nilai yang terdaftar sebagai setengah kata 16 bit pada batas setengah kata"
+    },
+    {
+      "name": ".include",
+      "description": "Masukkan konten file yang ditentukan.  Masukkan nama file dalam tanda kutip."
+    },
+    {
+      "name": ".kdata",
+      "description": "Item selanjutnya disimpan dalam segmen Data Kernel di alamat berikutnya yang tersedia"
+    },
+    {
+      "name": ".ktext",
+      "description": "Item selanjutnya (instruksi) disimpan dalam segmen Teks Kernel di alamat berikutnya yang tersedia"
+    },
+    {
+      "name": ".macro",
+      "description": "Mulailah definisi makro.  Lihat .end_macro"
+    },
+    {
+      "name": ".set",
+      "description": "Tetapkan variabel assembler.  Saat ini diabaikan tetapi disertakan untuk kompatibilitas SPIM"
+    },
+    {
+      "name": ".space",
+      "description": "Cadangan jumlah byte berikutnya yang ditentukan di segmen Data"
+    },
+    {
+      "name": ".text",
+      "description": "Item selanjutnya (instruksi) disimpan dalam segmen Teks di alamat berikutnya yang tersedia"
+    },
+    {
+      "name": ".word",
+      "description": "Simpan nilai yang terdaftar sebagai kata 32 bit pada batas kata"
+    }
+  ]
+}

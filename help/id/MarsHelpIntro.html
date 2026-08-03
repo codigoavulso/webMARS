@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memulai dengan webMARS</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Memulai</h1>
+  <p class="lead">webMARS adalah MIPS32 assembler, simulator, debugger, kompiler Mini-C dan ruang kerja pengajaran berbasis browser. Runtime diimplementasikan seluruhnya di JavaScript; tidak diperlukan instalasi Java, executable asli, atau backend WASM.</p>
+
+  <ol class="steps">
+    <li><strong>Buka atau buat file sumber.</strong> Gunakan <b>File → Contoh</b> untuk titik awal yang dipandu, <b>Proyek Baru</b> untuk proyek kosong, atau <b>Buka dari Disk</b> untuk file lokal.</li>
+    <li><strong>Bangun itu.</strong> File perakitan digunakan <b>Jalankan → Merakit</b> (<kbd>F3</kbd>). penggunaan file C <b>Jalankan → Kompilasi C0</b> (<kbd>F4</kbd>), lalu rakit rakitan yang dihasilkan.</li>
+    <li><strong>Jalankan itu.</strong> Pilih <b>Pergi</b> (<kbd>F5</kbd>) atau memajukan satu instruksi dalam satu waktu dengan <b>Langkah</b> (<kbd>F7</kbd>).</li>
+    <li><strong>Periksa hasilnya.</strong> Register, Koprosesor 1, memori, pesan, Jalankan I/O, dan alat yang terhubung diperbarui saat program berjalan.</li>
+  </ol>
+
+  <h2>Apa yang disertakan</h2>
+  <div class="cards">
+    <section class="card"><h3>MIPS32 waktu proses</h3><p>Eksekusi integer, cabang, memori, pengecualian, LL/SC dan COP1, termasuk opsi kode percabangan tertunda dan modifikasi mandiri.</p></section>
+    <section class="card"><h3>Kompiler Mini-C</h3><p>Subset pengajaran C0 dan profil C1-NATIVE, menargetkan konvensi panggilan MIPS o32.</p></section>
+    <section class="card"><h3>debug</h3><p>Kontrol breakpoint, loncatan, mundur, reset, jeda/hentikan, dan kecepatan eksekusi yang dapat dikonfigurasi.</p></section>
+    <section class="card"><h3>Perangkat dan alat</h3><p>Perangkat MMIO, simulator cache dan cabang, tampilan visual, statistik, terminal ANSI dan banyak lagi.</p></section>
+  </div>
+
+  <h2>Direkomendasikan untuk dijalankan pertama kali</h2>
+  <p>Buka <b>File → Contoh</b>, pilih bahasa Inggris <b>Belajar</b> Misalnya, baca deskripsinya, lalu buka. Contoh perakitan dapat dirakit dan dijalankan secara langsung. Contoh C mendeklarasikan subset kompiler minimumnya dan mungkin berisi beberapa file proyek.</p>
+
+  <div class="note"><strong>File Anda tetap berada di browser Anda secara default.</strong> Proyek lokal dan data pemulihan tidak diunggah kecuali Anda menggunakan menu Cloud secara eksplisit. Download pekerjaan penting secara berkala karena penyimpanan browser dapat dibersihkan oleh browser atau oleh <b>Pengaturan → Hapus Penyimpanan lokal</b>.</div>
+
+  <h2>Pintasan yang berguna</h2>
+  <table class="compact">
+    <tr><th>Tindakan</th><th>Jalan pintas</th></tr>
+    <tr><td>Bantuan</td><td><kbd>F1</kbd></td></tr>
+    <tr><td>Merakit</td><td><kbd>F3</kbd></td></tr>
+    <tr><td>Kompilasi Mini-C</td><td><kbd>F4</kbd></td></tr>
+    <tr><td>Jalankan / Pergi</td><td><kbd>F5</kbd></td></tr>
+    <tr><td>Langkah</td><td><kbd>F7</kbd></td></tr>
+  </table>
+</body>
+</html>

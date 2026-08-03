@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>开始使用 webMARS</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>开始使用</h1>
+  <p class="lead">webMARS 是一个基于浏览器的 MIPS32 汇编器、模拟器、调试器、Mini-C 编译器和教学工作区。运行时完全在 JavaScript 中实现；无需安装 Java、本机可执行文件或 WASM 后端。</p>
+
+  <ol class="steps">
+    <li><strong>打开或创建源文件。</strong> 使用 <b>文件 → 示例</b> 作为指导起点， <b>新项目</b> 对于空白项目，或者 <b>从磁盘打开</b> 对于本地文件。</li>
+    <li><strong>建造它。</strong> 汇编文件使用 <b>运行 → 组装</b> (<kbd>F3</kbd>）。 C文件使用 <b>运行→编译C0</b> (<kbd>F4</kbd>），然后组装生成的程序集。</li>
+    <li><strong>执行它。</strong> 选择 <b>去</b> (<kbd>F5</kbd>）或一次推进一项指令 <b>步骤</b> (<kbd>F7</kbd>).</li>
+    <li><strong>检查结果。</strong> 寄存器、协处理器 1、内存、消息、运行 I/O 和连接的工具随着程序运行而更新。</li>
+  </ol>
+
+  <h2>包含什么</h2>
+  <div class="cards">
+    <section class="card"><h3>MIPS32 运行时</h3><p>整数、分支、内存、异常、LL/SC 和 COP1 执行，包括延迟分支和自修改代码选项。</p></section>
+    <section class="card"><h3>Mini-C 编译器</h3><p>C0 教学子集和 C1-NATIVE 配置文件，针对 MIPS o32 调用约定。</p></section>
+    <section class="card"><h3>调试器</h3><p>断点、步进、后退、重置、暂停/停止控制和可配置的执行速度。</p></section>
+    <section class="card"><h3>设备和工具</h3><p>MMIO 设备、缓存和分支模拟器、可视化显示、统计、ANSI 终端等等。</p></section>
+  </div>
+
+  <h2>推荐首次运行</h2>
+  <p>打开 <b>文件 → 示例</b>, 选择英语 <b>学习</b> 例如，阅读其说明并打开它。汇编示例可以直接汇编并运行。 C 示例声明其最小编译器子集，并且可能包含多个项目文件。</p>
+
+  <div class="note"><strong>默认情况下，您的文件保留在浏览器中。</strong> 除非您明确使用云菜单，否则不会上传本地项目和恢复数据。定期下载重要的工作，因为浏览器存储可以由浏览器或 <b>设置 → 清除本地存储</b>.</div>
+
+  <h2>有用的快捷键</h2>
+  <table class="compact">
+    <tr><th>行动</th><th>快捷方式</th></tr>
+    <tr><td>帮助</td><td><kbd>F1</kbd></td></tr>
+    <tr><td>组装</td><td><kbd>F3</kbd></td></tr>
+    <tr><td>编译Mini-C</td><td><kbd>F4</kbd></td></tr>
+    <tr><td>跑/走</td><td><kbd>F5</kbd></td></tr>
+    <tr><td>步骤</td><td><kbd>F7</kbd></td></tr>
+  </table>
+</body>
+</html>

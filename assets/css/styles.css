@@ -511,6 +511,15 @@ select {
   line-height: 1.4;
 }
 
+html[dir="rtl"] #source-editor,
+html[dir="rtl"] #mars-messages,
+html[dir="rtl"] #run-messages,
+html[dir="rtl"] #mini-c-log,
+html[dir="rtl"] #mini-c-asm {
+  direction: ltr;
+  text-align: left;
+}
+
 .status-bar {
   display: flex;
   justify-content: space-between;

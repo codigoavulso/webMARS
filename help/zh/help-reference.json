@@ -1,0 +1,2274 @@
+{
+  "generatedAt": "2026-07-25T00:00:00.000Z",
+  "source": {
+    "basicInstructions": "../../assets/js/reference/instructions.generated.js",
+    "extendedInstructions": "../../assets/js/reference/pseudo-ops.generated.js",
+    "directives": "../../assets/js/app-modules/00-core.js"
+  },
+  "basicInstructions": [
+    {
+      "example": "abs.d $f2,$f4",
+      "description": "浮点绝对值双精度：将 $f2 设置为 $f4 的绝对值，双精度"
+    },
+    {
+      "example": "abs.s $f0,$f1",
+      "description": "浮点绝对值单精度：将 $f0 设置为 $f1 的绝对值，单精度"
+    },
+    {
+      "example": "add $t1,$t2,$t3",
+      "description": "溢出加法：将 $t1 设置为 ($t2 加 $t3)"
+    },
+    {
+      "example": "add.d $f2,$f4,$f6",
+      "description": "浮点加法双精度 : 将 $f2 设置为 $f4 的双精度浮点值加上 $f6"
+    },
+    {
+      "example": "add.s $f0,$f1,$f3",
+      "description": "浮点加法单精度 : 将 $f0 设置为 $f1 的单精度浮点值加上 $f3"
+    },
+    {
+      "example": "addi $t1,$t2,-100",
+      "description": "溢出立即数加法：将 $t1 设置为 ($t2 加有符号 16 位立即数)"
+    },
+    {
+      "example": "addiu $t1,$t2,-100",
+      "description": "无符号加法立即数无溢出：将 $t1 设置为（$t2 加有符号 16 位立即数），无溢出"
+    },
+    {
+      "example": "addu $t1,$t2,$t3",
+      "description": "无符号加法无溢出：将 $t1 设置为 ($t2 加 $t3)，无溢出"
+    },
+    {
+      "example": "and $t1,$t2,$t3",
+      "description": "按位 AND ：设置 $t1 按位 AND 的 $t2 和 $t3"
+    },
+    {
+      "example": "andi $t1,$t2,100",
+      "description": "按位 AND 立即：设置 $t1 按位 AND 的 $t2 和零扩展 16 位立即数"
+    },
+    {
+      "example": "bc1f 1,label",
+      "description": "如果指定 FP 条件标志为 false，则分支（BC1F，而不是 BCLF）：如果由立即数指定的协处理器 1 条件标志为 false（零），则分支到标签地址处的语句"
+    },
+    {
+      "example": "bc1f label",
+      "description": "如果 FP 条件标志 0 false 则分支（BC1F，而不是 BCLF）：如果协处理器 1 条件标志 0 为假（零），则分支到标签地址处的语句"
+    },
+    {
+      "example": "bc1t 1,label",
+      "description": "如果指定 FP 条件标志为 true，则分支 (BC1T，而不是 BCLT) ：如果由立即数指定的协处理器 1 条件标志为 true（一），则分支到标签地址处的语句"
+    },
+    {
+      "example": "bc1t label",
+      "description": "如果 FP 条件标志 0 为 true，则分支（BC1T，而不是 BCLT）：如果协处理器 1 条件标志 0 为 true（一），则分支到标签地址处的语句"
+    },
+    {
+      "example": "beq $t1,$t2,label",
+      "description": "如果相等则转移：如果 $t1 和 $t2 相等，则转移到标签地址处的语句"
+    },
+    {
+      "example": "bgez $t1,label",
+      "description": "如果大于或等于零则转移：如果 $t1 大于或等于零，则转移到标签地址处的语句"
+    },
+    {
+      "example": "bgezal $t1,label",
+      "description": "如果大于或等于零则转移并链接：如果 $t1 大于或等于零，则将 $ra 设置为程序计数器并转移到标签地址处的语句"
+    },
+    {
+      "example": "bgtz $t1,label",
+      "description": "如果大于零则转移：如果 $t1 大于零，则转移到标签地址处的语句"
+    },
+    {
+      "example": "blez $t1,label",
+      "description": "如果小于或等于零则转移：如果 $t1 小于或等于零，则转移到标签地址处的语句"
+    },
+    {
+      "example": "bltz $t1,label",
+      "description": "如果小于零则转移：如果 $t1 小于零，则转移到标签地址处的语句"
+    },
+    {
+      "example": "bltzal $t1,label",
+      "description": "如果小于零则转移并链接：如果 $t1 小于或等于零，则将 $ra 设置为程序计数器并转移到标签地址处的语句"
+    },
+    {
+      "example": "bne $t1,$t2,label",
+      "description": "如果不等于则转移：如果 $t1 和 $t2 不相等，则转移到标签地址处的语句"
+    },
+    {
+      "example": "break",
+      "description": "中断执行：异常终止程序执行"
+    },
+    {
+      "example": "break 100",
+      "description": "Breakexecutionwithcode：用指定的异常代码终止程序执行"
+    },
+    {
+      "example": "c.eq.d $f2,$f4",
+      "description": "比较相等的双精度：如果 $f2 等于 $f4（双精度），则将协处理器 1 条件标志设置为 true，否则将其设置为 false"
+    },
+    {
+      "example": "c.eq.d 1,$f2,$f4",
+      "description": "比较相等的双精度：如果 $f2 等于 $f4（双精度），则将立即数指定的协处理器 1 条件标志设置为 true，否则将其设置为 false"
+    },
+    {
+      "example": "c.eq.s $f0,$f1",
+      "description": "比较相等的单精度：如果 $f0 等于 $f1，则将协处理器 1 条件标志设置为 true，否则将其设置为 false"
+    },
+    {
+      "example": "c.eq.s 1,$f0,$f1",
+      "description": "比较相等的单精度：如果 $f0 等于 $f1，则将立即数指定的协处理器 1 条件标志设置为 true，否则将其设置为 false"
+    },
+    {
+      "example": "c.le.d $f2,$f4",
+      "description": "比较小于或等于双精度：如果 $f2 小于或等于 $f4（双精度），则将协处理器 1 条件标志设置为 0 true，否则将其设置为 false"
+    },
+    {
+      "example": "c.le.d 1,$f2,$f4",
+      "description": "比较小于或等于双精度：如果 $f2 小于或等于 $f4（双精度），则设置由立即 true 指定的协处理器 1 条件标志，否则将其设置为 false"
+    },
+    {
+      "example": "c.le.s $f0,$f1",
+      "description": "比较小于或等于单精度：如果 $f0 小于或等于 $f1，则将协处理器 1 条件标志设置为 true，否则将其设置为 false"
+    },
+    {
+      "example": "c.le.s 1,$f0,$f1",
+      "description": "比较小于或等于单精度：如果 $f0 小于或等于 $f1，则将立即数指定的协处理器 1 条件标志设置为 true，否则将其设置为 false"
+    },
+    {
+      "example": "c.lt.d $f2,$f4",
+      "description": "比较小于双精度：如果 $f2 小于 $f4（双精度），则将协处理器 1 条件标志设置为 true，否则将其设置为 false"
+    },
+    {
+      "example": "c.lt.d 1,$f2,$f4",
+      "description": "比较小于双精度：如果 $f2 小于 $f4（双精度），则将立即数指定的协处理器 1 条件标志设置为 true，否则将其设置为 false"
+    },
+    {
+      "example": "c.lt.s $f0,$f1",
+      "description": "比较小于单精度：如果 $f0 小于 $f1，则将协处理器 1 条件标志 0 设置为 true，否则将其设置为 false"
+    },
+    {
+      "example": "c.lt.s 1,$f0,$f1",
+      "description": "比较小于单精度：如果 $f0 小于 $f1，则将立即数指定的协处理器 1 条件标志设置为 true，否则将其设置为 false"
+    },
+    {
+      "example": "ceil.w.d $f1,$f2",
+      "description": "双精度上限到字：将 $f1 设置为 $f2 中双精度浮点数的 32 位整数上限"
+    },
+    {
+      "example": "ceil.w.s $f0,$f1",
+      "description": "单精度到字的上限：将 $f0 设置为 $f1 中单精度浮点数的 32 位整数上限"
+    },
+    {
+      "example": "clo $t1,$t2",
+      "description": "计数前导 1 位的数量：将 $t1 设置为 $t2 中从最高有效位位置开始的前导 1 位的计数"
+    },
+    {
+      "example": "clz $t1,$t2",
+      "description": "计算前导零的数量：将 $t1 设置为 $t2 中从最高有效位开始的前导零位的计数"
+    },
+    {
+      "example": "cvt.d.s $f2,$f1",
+      "description": "从单精度转换为双精度：将 $f2 设置为与 $f1 中的单精度值等效的双精度"
+    },
+    {
+      "example": "cvt.d.w $f2,$f1",
+      "description": "从字转换为双精度：将 $f2 设置为相当于 $f1 中 32 位整数值的双精度"
+    },
+    {
+      "example": "cvt.s.d $f1,$f2",
+      "description": "从双精度转换为单精度：将 $f1 设置为与 $f2 中的双精度值等效的单精度"
+    },
+    {
+      "example": "cvt.s.w $f0,$f1",
+      "description": "从字转换为单精度：将 $f0 设置为相当于 $f2 中 32 位整数值的单精度"
+    },
+    {
+      "example": "cvt.w.d $f1,$f2",
+      "description": "从双精度转换为字：将 $f1 设置为与 $f2 中的双精度值等效的 32 位整数"
+    },
+    {
+      "example": "cvt.w.s $f0,$f1",
+      "description": "从单精度转换为字：将 $f0 设置为与 $f1 中的单精度值等效的 32 位整数"
+    },
+    {
+      "example": "div $t1,$t2",
+      "description": "溢出除法：将 $t1 除以 $t2，然后将 LO 设为商，将 HI 设为余数（使用 mfhi 访问 HI，mflo 访问 LO）"
+    },
+    {
+      "example": "div.d $f2,$f4,$f6",
+      "description": "浮点除法双精度 : 将 $f2 设置为 $f4 除以 $f6 的双精度浮点值"
+    },
+    {
+      "example": "div.s $f0,$f1,$f3",
+      "description": "浮点除法单精度 : 将 $f0 设置为 $f1 的单精度浮点值除以 $f3"
+    },
+    {
+      "example": "divu $t1,$t2",
+      "description": "无符号除法无溢出：将无符号 $t1 除以 $t2，然后将 LO 设为商，将 HI 设为余数（使用 mfhi 访问 HI，mflo 访问 LO）"
+    },
+    {
+      "example": "eret",
+      "description": "异常返回：将程序计数器设置为协处理器 0 EPC 寄存器值，将协处理器状态寄存器位 1（异常级别）设置为零"
+    },
+    {
+      "example": "floor.w.d $f1,$f2",
+      "description": "双精度下限到字：将 $f1 设置为 $f2 中双精度浮点的 32 位整数下限"
+    },
+    {
+      "example": "floor.w.s $f0,$f1",
+      "description": "将单精度下限到字：将 $f0 设置为 $f1 中单精度浮点的 32 位整数下限"
+    },
+    {
+      "example": "j target",
+      "description": "无条件跳转：跳转到目标地址处的语句"
+    },
+    {
+      "example": "jal target",
+      "description": "跳转和链接：将$ra设置为程序计数器（返回地址），然后跳转到目标地址处的语句"
+    },
+    {
+      "example": "jalr $t1",
+      "description": "跳转和链接寄存器：将$ra设置为程序计数器（返回地址），然后跳转到地址在$t1中的语句"
+    },
+    {
+      "example": "jalr $t1,$t2",
+      "description": "跳转和链接寄存器：将$t1设置为程序计数器（返回地址），然后跳转到地址在$t2中的语句"
+    },
+    {
+      "example": "jr $t1",
+      "description": "无条件跳转寄存器：跳转到地址为$t1的语句"
+    },
+    {
+      "example": "lb $t1,-100($t2)",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,-100($t2)",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "ldc1 $f2,-100($t2)",
+      "description": "加载双字协处理器 1 (FPU)) ：将 $f2 设置为来自有效内存双字地址的 64 位值"
+    },
+    {
+      "example": "lh $t1,-100($t2)",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,-100($t2)",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "ll $t1,-100($t2)",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留"
+    },
+    {
+      "example": "lui $t1,100",
+      "description": "加载高立即数：将$t1的高16位设置为16位立即数，低16位设置为0"
+    },
+    {
+      "example": "lw $t1,-100($t2)",
+      "description": "加载字 : 将 $t1 设置为有效存储器字地址的内容"
+    },
+    {
+      "example": "lwc1 $f1,-100($t2)",
+      "description": "将字加载到协处理器 1 (FPU) ：将 $f1 设置为来自有效内存字地址的 32 位值"
+    },
+    {
+      "example": "lwl $t1,-100($t2)",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwr $t1,-100($t2)",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "madd $t1,$t2",
+      "description": "乘加：将 $t1 乘以 $t2，然后将 HI 增加乘积的高位 32 位，将 LO 增加乘积的低位 32 位（使用 mfhi 访问 HI，mflo 访问 LO）"
+    },
+    {
+      "example": "maddu $t1,$t2",
+      "description": "乘加无符号：将 $t1 乘以 $t2，然后将 HI 增加乘积的高位 32 位，将 LO 增加乘积的低位 32 位，无符号（使用 mfhi 访问 HI，mflo 访问 LO）"
+    },
+    {
+      "example": "mfc0 $t1,$8",
+      "description": "从协处理器 0 移动：将 $t1 设置为存储在协处理器 0 寄存器 $8 中的值"
+    },
+    {
+      "example": "mfc1 $t1,$f1",
+      "description": "从协处理器 1 移动 (FPU) ：将 $t1 设置为协处理器 1 寄存器 $f1 中的值"
+    },
+    {
+      "example": "cfc1 $t1,$31",
+      "description": "从协处理器 1 控制转移：将 $t1 设置为 FCSR 控制和状态值"
+    },
+    {
+      "example": "mfhi $t1",
+      "description": "从 HI 寄存器移动：将 $t1 设置为 HI 的内容（请参阅乘法和除法运算）"
+    },
+    {
+      "example": "mflo $t1",
+      "description": "从 LO 寄存器移动：将 $t1 设置为 LO 的内容（请参阅乘法和除法运算）"
+    },
+    {
+      "example": "mov.d $f2,$f4",
+      "description": "移动浮点双精度：将双精度 $f2 设置为 $f4 中的双精度值"
+    },
+    {
+      "example": "mov.s $f0,$f1",
+      "description": "移动浮点单精度 : 将单精度 $f0 设置为 $f1 中的单精度值"
+    },
+    {
+      "example": "movf $t1,$t2",
+      "description": "如果 FP 条件标志 0 false 则移动：设置 $t1 到 $t2 如果 FPU （协处理器 1）条件标志 0 为假（零）"
+    },
+    {
+      "example": "movf $t1,$t2,1",
+      "description": "如果指定 FP 条件标志则移动 false ：设置 $t1 到 $t2 如果 FPU （协处理器 1）立即数指定的条件标志为假（零）"
+    },
+    {
+      "example": "movf.d $f2,$f4",
+      "description": "移动浮点双精度：如果条件标志 0 为假，则将双精度 $f2 设置为 $f4 中的双精度值"
+    },
+    {
+      "example": "movf.d $f2,$f4,1",
+      "description": "移动浮点双精度：如果立即数指定的条件标志为 false，则将双精度 $f2 设置为 $f4 中的双精度值"
+    },
+    {
+      "example": "movf.s $f0,$f1",
+      "description": "移动浮点单精度：如果条件标志 0 为 false，则将单精度 $f0 设置为 $f1 中的单精度值"
+    },
+    {
+      "example": "movf.s $f0,$f1,1",
+      "description": "移动浮点单精度：如果立即数指定的条件标志为 false，则将单精度 $f0 设置为 $f1e 中的单精度值"
+    },
+    {
+      "example": "movn $t1,$t2,$t3",
+      "description": "移动条件不为零：设置 $t1 到 $t2 如果 $t3 不为零"
+    },
+    {
+      "example": "movn.d $f2,$f4,$t3",
+      "description": "移动浮点双精度：如果 $t3 不为零，则将双精度 $f2 设置为 $f4 中的双精度值"
+    },
+    {
+      "example": "movn.s $f0,$f1,$t3",
+      "description": "移动浮点单精度：如果 $t3 不为零，则将单精度 $f0 设置为 $f1 中的单精度值"
+    },
+    {
+      "example": "movt $t1,$t2",
+      "description": "如果 FP 条件标志 0 true 则移动：设置 $t1 到 $t2 如果 FPU (协处理器1)条件标志0为真(一)"
+    },
+    {
+      "example": "movt $t1,$t2,1",
+      "description": "如果指定 FP 条件标志为 true，则移动：设置 $t1 到 $t2 如果 FPU (协处理器1)立即数指定的条件标志为真(一)"
+    },
+    {
+      "example": "movt.d $f2,$f4",
+      "description": "移动浮点双精度：如果条件标志 0 为 true，则将双精度 $f2 设置为 $f4 中的双精度值"
+    },
+    {
+      "example": "movt.d $f2,$f4,1",
+      "description": "移动浮点双精度：如果立即数指定的条件标志为 true，则将双精度 $f2 设置为 $f4e 中的双精度值"
+    },
+    {
+      "example": "movt.s $f0,$f1",
+      "description": "移动浮点单精度：如果条件标志 0 为真，则将单精度 $f0 设置为 $f1e 中的单精度值"
+    },
+    {
+      "example": "movt.s $f0,$f1,1",
+      "description": "移动浮点单精度：如果立即数指定的条件标志为 true，则将单精度 $f0 设置为 $f1e 中的单精度值"
+    },
+    {
+      "example": "movz $t1,$t2,$t3",
+      "description": "移动条件零：设置 $t1 到 $t2 如果 $t3 为零"
+    },
+    {
+      "example": "movz.d $f2,$f4,$t3",
+      "description": "移动浮点双精度：如果 $t3 为零，则将双精度 $f2 设置为 $f4 中的双精度值"
+    },
+    {
+      "example": "movz.s $f0,$f1,$t3",
+      "description": "移动浮点单精度：如果 $t3 为零，则将单精度 $f0 设置为 $f1 中的单精度值"
+    },
+    {
+      "example": "msub $t1,$t2",
+      "description": "乘减：将$t1乘以$t2，然后HI减去乘积的高位32位，LO减去乘积的低位32位（使用mfhi访问HI，mflo访问LO）"
+    },
+    {
+      "example": "msubu $t1,$t2",
+      "description": "乘减无符号：将$t1乘以$t2，然后将HI递减乘积的高位32位，将LO递减乘积的低位32位，无符号（使用mfhi访问HI，mflo访问LO）"
+    },
+    {
+      "example": "mtc0 $t1,$8",
+      "description": "移至协处理器 0：将协处理器 0 寄存器 $8 设置为 $t1 中存储的值"
+    },
+    {
+      "example": "mtc1 $t1,$f1",
+      "description": "移至协处理器 1 (FPU) ：将协处理器 1 寄存器 $f1 设置为 $t1 中的值"
+    },
+    {
+      "example": "ctc1 $t1,$31",
+      "description": "移至协处理器 1 控制：将 FCSR（包括其舍入模式）设置为 $t1 中的值"
+    },
+    {
+      "example": "mthi $t1",
+      "description": "移至 HI 寄存器：将 HI 设置为 $t1 的内容（请参阅乘法和除法运算）"
+    },
+    {
+      "example": "mtlo $t1",
+      "description": "移至 LO 寄存器：将 LO 设置为 $t1 的内容（请参阅乘法和除法运算）"
+    },
+    {
+      "example": "mul $t1,$t2,$t3",
+      "description": "无溢出的乘法：将 HI 设置为高位 32 位，将 LO 和 $t1 设置为 $t2 和 $t3 乘积的低位 32 位（使用 mfhi 访问 HI，mflo 访问 LO）"
+    },
+    {
+      "example": "mul.d $f2,$f4,$f6",
+      "description": "浮点乘法双精度 : 将 $f2 设置为 $f4 乘以 $f6 的双精度浮点值"
+    },
+    {
+      "example": "mul.s $f0,$f1,$f3",
+      "description": "浮点乘法单精度 : 将 $f0 设置为 $f1 乘以 $f3 的单精度浮点值"
+    },
+    {
+      "example": "mult $t1,$t2",
+      "description": "乘法：将 $t1 和 $t2 乘积的高位设置为 hi，将低位设置为低 32 位（使用 mfhi 访问 hi，mflo 访问 lo）"
+    },
+    {
+      "example": "multu $t1,$t2",
+      "description": "无符号乘法：将无符号$t1和$t2的乘积的HI设置为高位32位，LO设置为低位32位（使用mfhi访问HI，mflo访问LO）"
+    },
+    {
+      "example": "neg.d $f2,$f4",
+      "description": "浮点求反双精度：将双精度 $f2 设置为 $f4 中双精度值的求反"
+    },
+    {
+      "example": "neg.s $f0,$f1",
+      "description": "浮点求反单精度 : 将单精度 $f0 设置为 $f1 中单精度值的求反"
+    },
+    {
+      "example": "nop",
+      "description": "空操作：机器码全为零"
+    },
+    {
+      "example": "nor $t1,$t2,$t3",
+      "description": "按位 NOR ：设置 $t1 按位 NOR 的 $t2 和 $t3"
+    },
+    {
+      "example": "or $t1,$t2,$t3",
+      "description": "按位或 : 将 $t1 设置为 $t2 和 $t3 的按位或"
+    },
+    {
+      "example": "ori $t1,$t2,100",
+      "description": "按位或立即数 : 将 $t1 设置为 $t2 和零扩展 16 位立即数的按位或"
+    },
+    {
+      "example": "round.w.d $f1,$f2",
+      "description": "将双精度舍入到字：将 $f1 设置为 $f2 中双精度浮点数的 32 位整数舍入"
+    },
+    {
+      "example": "round.w.s $f0,$f1",
+      "description": "将单精度舍入为字：将 $f0 设置为 $f1 中单精度浮点数的 32 位整数舍入"
+    },
+    {
+      "example": "sb $t1,-100($t2)",
+      "description": "存储字节：将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sc $t1,-100($t2)",
+      "description": "存储条件：仅当匹配的加载链接预留仍然有效时才存储 $t1，然后将 $t1 设置为 1（成功时）或 0（失败时）"
+    },
+    {
+      "example": "sdc1 $f2,-100($t2)",
+      "description": "Store double word from Coprocessor 1 (FPU)) : 将 $f2 中的 64 位值存储到有效内存双字地址"
+    },
+    {
+      "example": "sh $t1,-100($t2)",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sll $t1,$t2,10",
+      "description": "逻辑左移 : 将 $t1 左移立即数指定的位数的结果设置为 $t2"
+    },
+    {
+      "example": "sllv $t1,$t2,$t3",
+      "description": "左移逻辑变量 : 将 $t1 左移 $t2 的结果设置为 $t3 的低 5 位中的值指定的位数"
+    },
+    {
+      "example": "slt $t1,$t2,$t3",
+      "description": "设置小于：如果 $t2 小于 $t3，则将 $t1 设置为 1，否则将 $t1 设置为 0"
+    },
+    {
+      "example": "slti $t1,$t2,-100",
+      "description": "设置小于立即数：如果 $t2 小于符号扩展 16 位立即数，则将 $t1 设置为 1，否则将 $t1 设置为 0"
+    },
+    {
+      "example": "sltiu $t1,$t2,-100",
+      "description": "设置小于立即无符号：如果使用无符号比较 $t2 小于符号扩展 16 位立即数，则将 $t1 设置为 1，否则将 $t1 设置为 0"
+    },
+    {
+      "example": "sltu $t1,$t2,$t3",
+      "description": "设置小于无符号：如果使用无符号比较 $t2 小于 $t3，则将 $t1 设置为 1，否则将 $t1 设置为 0"
+    },
+    {
+      "example": "sqrt.d $f2,$f4",
+      "description": "双精度平方根 : 将 $f2 设置为 $f4 的双精度浮点平方根"
+    },
+    {
+      "example": "sqrt.s $f0,$f1",
+      "description": "单精度平方根 : 将 $f0 设置为 $f1 的单精度浮点平方根"
+    },
+    {
+      "example": "sra $t1,$t2,10",
+      "description": "右移算术：设置 $t1 符号扩展移位的结果 $t2 立即数指定的位数"
+    },
+    {
+      "example": "srav $t1,$t2,$t3",
+      "description": "算术变量右移：设置 $t1 符号扩展移位的结果 $t2 右乘由低 5 位中的值指定的位数 $t3"
+    },
+    {
+      "example": "srl $t1,$t2,10",
+      "description": "逻辑右移 : 将 $t1 右移立即数指定的位数的结果设置为 $t2"
+    },
+    {
+      "example": "srlv $t1,$t2,$t3",
+      "description": "右移逻辑变量 : 将 $t1 右移 $t2 的结果设置为 $t3 的低 5 位中的值指定的位数"
+    },
+    {
+      "example": "sub $t1,$t2,$t3",
+      "description": "溢出减法：将 $t1 设置为 ($t2 减去 $t3)"
+    },
+    {
+      "example": "sub.d $f2,$f4,$f6",
+      "description": "浮点减法双精度：将 $f2 设置为 $f4 的双精度浮点值减去 $f6"
+    },
+    {
+      "example": "sub.s $f0,$f1,$f3",
+      "description": "浮点减法单精度：将 $f0 设置为 $f1 的单精度浮点值减去 $f3"
+    },
+    {
+      "example": "subu $t1,$t2,$t3",
+      "description": "无符号减法无溢出：将 $t1 设置为 ($t2 减去 $t3)，无溢出"
+    },
+    {
+      "example": "sw $t1,-100($t2)",
+      "description": "存储字：将$t1的内容存储到有效存储器字地址中"
+    },
+    {
+      "example": "swc1 $f1,-100($t2)",
+      "description": "协处理器 1 中的存储字 (FPU) : 将 $f1 中的 32 位值存储到有效存储器字地址"
+    },
+    {
+      "example": "swl $t1,-100($t2)",
+      "description": "Store word left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效字节地址开始，一直到该字的低位字节"
+    },
+    {
+      "example": "swr $t1,-100($t2)",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "syscall",
+      "description": "发出系统调用：执行$v0中的值指定的系统调用"
+    },
+    {
+      "example": "teq $t1,$t2",
+      "description": "如果相等则陷阱：如果 $t1 等于 $t2，则陷阱"
+    },
+    {
+      "example": "teqi $t1,-100",
+      "description": "如果等于立即数则陷阱：如果 $t1 等于符号扩展的 16 位立即数则陷阱"
+    },
+    {
+      "example": "tge $t1,$t2",
+      "description": "如果大于或等于则陷阱：如果 $t1 大于或等于 $t2，则陷阱"
+    },
+    {
+      "example": "tgei $t1,-100",
+      "description": "如果大于或等于立即数，则陷阱：如果 $t1 大于或等于符号扩展 16 位立即数，则陷阱"
+    },
+    {
+      "example": "tgeiu $t1,-100",
+      "description": "如果大于或等于立即数无符号，则陷阱：如果 $t1 大于或等于符号扩展 16 位立即数、无符号比较，则陷阱"
+    },
+    {
+      "example": "tgeu $t1,$t2",
+      "description": "如果大于或等于 unsigned 则陷阱：如果使用无符号比较 $t1 大于或等于 $t2，则陷阱"
+    },
+    {
+      "example": "tlt $t1,$t2",
+      "description": "如果小于则陷阱：如果 $t1 小于 $t2，则陷阱"
+    },
+    {
+      "example": "tlti $t1,-100",
+      "description": "如果小于立即数则陷阱：如果 $t1 小于符号扩展 16 位立即数则陷阱"
+    },
+    {
+      "example": "tltiu $t1,-100",
+      "description": "如果小于立即数无符号，则陷阱：如果 $t1 小于符号扩展 16 位立即数、无符号比较，则陷阱"
+    },
+    {
+      "example": "tltu $t1,$t2",
+      "description": "Trap if less than unsigned : 如果 $t1 小于 $t2，则陷阱，无符号比较"
+    },
+    {
+      "example": "tne $t1,$t2",
+      "description": "如果不等于则陷阱：如果 $t1 不等于 $t2，则陷阱"
+    },
+    {
+      "example": "tnei $t1,-100",
+      "description": "如果不等于立即数，则陷阱：如果 $t1 不等于符号扩展的 16 位立即数，则陷阱"
+    },
+    {
+      "example": "trunc.w.d $f1,$f2",
+      "description": "将双精度截断为字：将 $f1 设置为 $f2 中双精度浮点数的 32 位整数截断"
+    },
+    {
+      "example": "trunc.w.s $f0,$f1",
+      "description": "将单精度截断为字：将 $f0 设置为 $f1 中单精度浮点数的 32 位整数截断"
+    },
+    {
+      "example": "xor $t1,$t2,$t3",
+      "description": "按位 XOR （异或）：设置 $t1 按位 XOR 的 $t2 和 $t3"
+    },
+    {
+      "example": "xori $t1,$t2,100",
+      "description": "按位 XOR 立即：设置 $t1 按位 XOR 的 $t2 和零扩展 16 位立即数"
+    }
+  ],
+  "extendedInstructions": [
+    {
+      "example": "abs $t1,$t2",
+      "description": "ABSolute value ：将 $t1 设置为 $t2 的绝对值（来自 Hacker's Delight 的算法）"
+    },
+    {
+      "example": "add $t1,$t2,-100",
+      "description": "ADDition ：将 $t1 设置为 ($t2 加 16 位立即数)"
+    },
+    {
+      "example": "add $t1,$t2,100000",
+      "description": "ADDition ：将 $t1 设置为 ($t2 加 32 位立即数)"
+    },
+    {
+      "example": "addi $t1,$t2,100000",
+      "description": "ADDition 立即数 : 将 $t1 设置为 ($t2 加 32 位立即数)"
+    },
+    {
+      "example": "addiu $t1,$t2,100000",
+      "description": "ADDition 立即数无符号：将 $t1 设置为（$t2 加 32 位立即数），无溢出"
+    },
+    {
+      "example": "addu $t1,$t2,100000",
+      "description": "ADDition Unsigned ：将 $t1 设置为（$t2 加 32 位立即数），无溢出"
+    },
+    {
+      "example": "and $t1,$t2,100",
+      "description": "AND ：将 $t1 设置为 ($t2 按位-AND 16 位无符号立即数)"
+    },
+    {
+      "example": "and $t1,100",
+      "description": "AND ：将 $t1 设置为 ($t1 按位-AND 16 位无符号立即数)"
+    },
+    {
+      "example": "andi $t1,$t2,100000",
+      "description": "AND 立即数：将 $t1 设置为 ($t2 按位-AND 32 位立即数)"
+    },
+    {
+      "example": "andi $t1,100",
+      "description": "AND 立即数：将 $t1 设置为 ($t1 按位-AND 16 位无符号立即数)"
+    },
+    {
+      "example": "andi $t1,100000",
+      "description": "AND 立即数：将 $t1 设置为 ($t1 按位-AND 32 位立即数)"
+    },
+    {
+      "example": "b label",
+      "description": "分支：无条件分支到标签处的语句"
+    },
+    {
+      "example": "beq $t1,-100,label",
+      "description": "如果 EQual 则分支：如果 $t1 等于 16 位立即数，则分支到标签处的语句"
+    },
+    {
+      "example": "beq $t1,100000,label",
+      "description": "如果 EQual 则分支：如果 $t1 等于 32 位立即数，则分支到标签处的语句"
+    },
+    {
+      "example": "beqz $t1,label",
+      "description": "如果等于零则转移：如果 $t1 等于零，则转移到标签处的语句"
+    },
+    {
+      "example": "bge $t1,-100,label",
+      "description": "如果大于或等于则转移：如果 $t1 大于或等于 16 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "bge $t1,$t2,label",
+      "description": "如果大于或等于则转移：如果 $t1 大于或等于 $t2，则转移到标签处的语句"
+    },
+    {
+      "example": "bge $t1,100000,label",
+      "description": "如果大于或等于则转移：如果 $t1 大于或等于 32 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "bgeu $t1,-100,label",
+      "description": "如果大于或等于无符号则转移：如果 $t1 大于或等于 16 位立即数，则转移到标签处的语句（无符号比较）"
+    },
+    {
+      "example": "bgeu $t1,$t2,label",
+      "description": "如果大于或等于无符号则转移：如果 $t1 大于或等于 $t2，则转移到标签处的语句（无符号比较）"
+    },
+    {
+      "example": "bgeu $t1,100000,label",
+      "description": "如果大于或等于无符号则转移：如果 $t1 大于或等于 32 位立即数，则转移到标签处的语句（无符号比较）"
+    },
+    {
+      "example": "bgt $t1,-100,label",
+      "description": "如果大于则转移：如果 $t1 大于 16 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "bgt $t1,$t2,label",
+      "description": "如果大于则转移：如果 $t1 大于 $t2，则转移到标签处的语句"
+    },
+    {
+      "example": "bgt $t1,100000,label",
+      "description": "如果大于则转移：如果 $t1 大于 32 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "bgtu $t1,-100,label",
+      "description": "如果大于无符号则转移：如果 $t1 大于 16 位立即数，则转移到标签处的语句（无符号比较）"
+    },
+    {
+      "example": "bgtu $t1,$t2,label",
+      "description": "如果大于无符号则转移：如果 $t1 大于 $t2，则转移到标签处的语句（无符号比较）"
+    },
+    {
+      "example": "bgtu $t1,100000,label",
+      "description": "如果大于无符号则转移：如果 $t1 大于 16 位立即数，则转移到标签处的语句（无符号比较）"
+    },
+    {
+      "example": "ble $t1,-100,label",
+      "description": "如果小于或等于则转移：如果 $t1 小于或等于 16 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "ble $t1,$t2,label",
+      "description": "如果小于或等于则转移：如果 $t1 小于或等于 $t2，则转移到标签处的语句"
+    },
+    {
+      "example": "ble $t1,100000,label",
+      "description": "如果小于或等于则转移：如果 $t1 小于或等于 32 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "bleu $t1,-100,label",
+      "description": "如果小于或等于无符号则转移：如果 $t1 小于或等于 16 位立即数，则转移到标签处的语句（无符号比较）"
+    },
+    {
+      "example": "bleu $t1,$t2,label",
+      "description": "如果小于或等于无符号则转移：如果 $t1 小于或等于 $t2，则转移到标签处的语句（无符号比较）"
+    },
+    {
+      "example": "bleu $t1,100000,label",
+      "description": "如果小于或等于无符号则转移：如果 $t1 小于或等于 32 位立即数，则转移到标签处的语句（无符号比较）"
+    },
+    {
+      "example": "blt $t1,-100,label",
+      "description": "如果小于则转移：如果 $t1 小于 16 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "blt $t1,$t2,label",
+      "description": "如果小于则转移：如果 $t1 小于 $t2，则转移到标签处的语句"
+    },
+    {
+      "example": "blt $t1,100000,label",
+      "description": "如果小于则转移：如果 $t1 小于 32 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "bltu $t1,-100,label",
+      "description": "如果小于无符号则转移：如果 $t1 小于 16 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "bltu $t1,$t2,label",
+      "description": "如果小于无符号则转移：如果 $t1 小于 $t2，则转移到标签处的语句"
+    },
+    {
+      "example": "bltu $t1,100000,label",
+      "description": "如果小于无符号则转移：如果 $t1 小于 32 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "bne $t1,-100,label",
+      "description": "如果不等于则转移：如果 $t1 不等于 16 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "bne $t1,100000,label",
+      "description": "如果不等于则转移：如果 $t1 不等于 32 位立即数，则转移到标签处的语句"
+    },
+    {
+      "example": "bnez $t1,label",
+      "description": "如果不等于零则转移：如果 $t1 不等于零，则转移到标签处的语句"
+    },
+    {
+      "example": "div $t1,$t2,-100",
+      "description": "DIVision ：将 $t1 设置为（$t2 除以 16 位立即数，整数除法）"
+    },
+    {
+      "example": "div $t1,$t2,$t3",
+      "description": "DIVision ：将 $t1 设置为（$t2 除以 $t3，整数除法）"
+    },
+    {
+      "example": "div $t1,$t2,100000",
+      "description": "DIVision ：将 $t1 设置为（$t2 除以 32 位立即数，整数除法）"
+    },
+    {
+      "example": "divu $t1,$t2,-100",
+      "description": "DIVision Unsigned ：将 $t1 设置为（$t2 除以 16 位立即数、无符号整数除法）"
+    },
+    {
+      "example": "divu $t1,$t2,$t3",
+      "description": "DIVision Unsigned ：将 $t1 设置为（$t2 除以 $t3，无符号整数除法）"
+    },
+    {
+      "example": "divu $t1,$t2,100000",
+      "description": "DIVision Unsigned ：将 $t1 设置为（$t2 除以 32 位立即数、无符号整数除法）"
+    },
+    {
+      "example": "l.d $f2,-100",
+      "description": "加载浮点双精度：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "l.d $f2,($t2)",
+      "description": "加载浮点双精度：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "l.d $f2,100000",
+      "description": "加载浮点双精度：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "l.d $f2,100000($t2)",
+      "description": "加载浮点双精度：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "l.d $f2,label",
+      "description": "加载浮点双精度：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "l.d $f2,label($t2)",
+      "description": "加载浮点双精度：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "l.d $f2,label+100000",
+      "description": "加载浮点双精度：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "l.d $f2,label+100000($t2)",
+      "description": "加载浮点双精度：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "l.s $f1,-100",
+      "description": "加载浮点单精度：将 $f1 设置为有效内存字地址处的 32 位值"
+    },
+    {
+      "example": "l.s $f1,($t2)",
+      "description": "加载浮点单精度：将 $f1 设置为有效内存字地址处的 32 位值"
+    },
+    {
+      "example": "l.s $f1,100000",
+      "description": "加载浮点单精度：将 $f1 设置为有效内存字地址处的 32 位值"
+    },
+    {
+      "example": "l.s $f1,100000($t2)",
+      "description": "加载浮点单精度：将 $f1 设置为有效内存字地址处的 32 位值"
+    },
+    {
+      "example": "l.s $f1,label",
+      "description": "加载浮点单精度：将 $f1 设置为有效内存字地址处的 32 位值"
+    },
+    {
+      "example": "l.s $f1,label($t2)",
+      "description": "加载浮点单精度：将 $f1 设置为有效内存字地址处的 32 位值"
+    },
+    {
+      "example": "l.s $f1,label+100000",
+      "description": "加载浮点单精度：将 $f1 设置为有效内存字地址处的 32 位值"
+    },
+    {
+      "example": "l.s $f1,label+100000($t2)",
+      "description": "加载浮点单精度：将 $f1 设置为有效内存字地址处的 32 位值"
+    },
+    {
+      "example": "la $t1,-100",
+      "description": "加载地址：将 $t1 设置为 16 位立即数（符号扩展）"
+    },
+    {
+      "example": "la $t1,($t2)",
+      "description": "加载地址：将 $t1 设置为 $t2 的内容"
+    },
+    {
+      "example": "la $t1,100",
+      "description": "加载地址：将 $t1 设置为 16 位立即数（零扩展）"
+    },
+    {
+      "example": "la $t1,100($t2)",
+      "description": "加载地址：将 $t1 设置为（$t2 和 16 位立即数的和）"
+    },
+    {
+      "example": "la $t1,100000",
+      "description": "加载地址：将 $t1 设置为 32 位立即数"
+    },
+    {
+      "example": "la $t1,100000($t2)",
+      "description": "加载地址：将 $t1 设置为（$t2 和 32 位立即数的和）"
+    },
+    {
+      "example": "la $t1,label",
+      "description": "加载地址 : 将 $t1 设置为标签地址"
+    },
+    {
+      "example": "la $t1,label($t2)",
+      "description": "加载地址：将 $t1 设置为（$t2 和标签地址的总和）"
+    },
+    {
+      "example": "la $t1,label+100000",
+      "description": "加载地址：将 $t1 设置为（标签地址和 32 位立即数的和）"
+    },
+    {
+      "example": "la $t1,label+100000($t2)",
+      "description": "加载地址：将 $t1 设置为（标签地址、32 位立即数和 $t2 的总和）"
+    },
+    {
+      "example": "lb $t1,-100",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lb $t1,($t2)",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lb $t1,100",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lb $t1,100($t2)",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lb $t1,100000",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lb $t1,100000($t2)",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lb $t1,label",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lb $t1,label($t2)",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lb $t1,label+100000",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lb $t1,label+100000($t2)",
+      "description": "加载字节：将 $t1 设置为来自有效内存字节地址的符号扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,-100",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,($t2)",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,100",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,100($t2)",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,100000",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,100000($t2)",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,label",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,label($t2)",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,label+100000",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "lbu $t1,label+100000($t2)",
+      "description": "加载字节无符号：将 $t1 设置为来自有效内存字节地址的零扩展 8 位值"
+    },
+    {
+      "example": "ld $t1,-100($t2)",
+      "description": "加载双字：将 $t1 和下一个寄存器设置为从有效内存字节地址开始的 64 位"
+    },
+    {
+      "example": "ld $t1,($t2)",
+      "description": "加载双字：将 $t1 和下一个寄存器设置为从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "ld $t1,100000",
+      "description": "加载双字：将 $t1 和下一个寄存器设置为从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "ld $t1,100000($t2)",
+      "description": "加载双字：将 $t1 和下一个寄存器设置为从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "ld $t1,label",
+      "description": "加载双字：将 $t1 和下一个寄存器设置为从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "ld $t1,label($t2)",
+      "description": "加载双字：将 $t1 和下一个寄存器设置为从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "ld $t1,label+100000",
+      "description": "加载双字：将 $t1 和下一个寄存器设置为从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "ld $t1,label+100000($t2)",
+      "description": "加载双字：将 $t1 和下一个寄存器设置为从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "ldc1 $f2,-100",
+      "description": "加载双字协处理器 1：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "ldc1 $f2,($t2)",
+      "description": "加载双字协处理器 1：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "ldc1 $f2,100000",
+      "description": "加载双字协处理器 1：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "ldc1 $f2,100000($t2)",
+      "description": "加载双字协处理器 1：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "ldc1 $f2,label",
+      "description": "加载双字协处理器 1：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "ldc1 $f2,label($t2)",
+      "description": "加载双字协处理器 1：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "ldc1 $f2,label+100000",
+      "description": "加载双字协处理器 1：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "ldc1 $f2,label+100000($t2)",
+      "description": "加载双字协处理器 1：将 $f2 和 $f3 寄存器对设置为有效内存双字地址处的 64 位值"
+    },
+    {
+      "example": "lh $t1,-100",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lh $t1,($t2)",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lh $t1,100",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lh $t1,100($t2)",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lh $t1,100000",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lh $t1,100000($t2)",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lh $t1,label",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lh $t1,label($t2)",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lh $t1,label+100000",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lh $t1,label+100000($t2)",
+      "description": "加载半字：将 $t1 设置为来自有效内存半字地址的符号扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,-100",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,($t2)",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,100",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,100($t2)",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,100000",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,100000($t2)",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,label",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,label($t2)",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,label+100000",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "lhu $t1,label+100000($t2)",
+      "description": "加载半字无符号：将 $t1 设置为来自有效内存半字地址的零扩展 16 位值"
+    },
+    {
+      "example": "li $t1,-100",
+      "description": "加载立即数：将 $t1 设置为 16 位立即数（符号扩展）"
+    },
+    {
+      "example": "li $t1,100",
+      "description": "加载立即数：将 $t1 设置为无符号 16 位立即数（零扩展）"
+    },
+    {
+      "example": "li $t1,100000",
+      "description": "加载立即数：将 $t1 设置为 32 位立即数"
+    },
+    {
+      "example": "ll $t1,-100",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留。"
+    },
+    {
+      "example": "ll $t1,($t2)",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留。"
+    },
+    {
+      "example": "ll $t1,100",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留。"
+    },
+    {
+      "example": "ll $t1,100($t2)",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留。"
+    },
+    {
+      "example": "ll $t1,100000",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留。"
+    },
+    {
+      "example": "ll $t1,100000($t2)",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留。"
+    },
+    {
+      "example": "ll $t1,label",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留。"
+    },
+    {
+      "example": "ll $t1,label($t2)",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留。"
+    },
+    {
+      "example": "ll $t1,label+100000",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留。"
+    },
+    {
+      "example": "ll $t1,label+100000($t2)",
+      "description": "加载链接：加载一个单词并为后续条件存储 (sc) 建立保留。"
+    },
+    {
+      "example": "lw $t1,-100",
+      "description": "加载字 : 将 $t1 设置为有效内存字地址的内容"
+    },
+    {
+      "example": "lw $t1,($t2)",
+      "description": "加载字 : 将 $t1 设置为有效内存字地址的内容"
+    },
+    {
+      "example": "lw $t1,100",
+      "description": "加载字 : 将 $t1 设置为有效内存字地址的内容"
+    },
+    {
+      "example": "lw $t1,100($t2)",
+      "description": "加载字 : 将 $t1 设置为有效内存字地址的内容"
+    },
+    {
+      "example": "lw $t1,100000",
+      "description": "加载字 : 将 $t1 设置为有效内存字地址的内容"
+    },
+    {
+      "example": "lw $t1,100000($t2)",
+      "description": "加载字 : 将 $t1 设置为有效内存字地址的内容"
+    },
+    {
+      "example": "lw $t1,label",
+      "description": "加载字：将 $t1 设置为标签地址处内存字的内容"
+    },
+    {
+      "example": "lw $t1,label($t2)",
+      "description": "加载字 : 将 $t1 设置为有效内存字地址的内容"
+    },
+    {
+      "example": "lw $t1,label+100000",
+      "description": "加载字 : 将 $t1 设置为有效内存字地址的内容"
+    },
+    {
+      "example": "lw $t1,label+100000($t2)",
+      "description": "加载字 : 将 $t1 设置为有效内存字地址的内容"
+    },
+    {
+      "example": "lwc1 $f1,-100",
+      "description": "加载字协处理器 1：将 $f1 设置为来自有效内存字地址的 32 位值"
+    },
+    {
+      "example": "lwc1 $f1,($t2)",
+      "description": "加载字协处理器 1：将 $f1 设置为来自有效内存字地址的 32 位值"
+    },
+    {
+      "example": "lwc1 $f1,100000",
+      "description": "加载字协处理器 1：将 $f1 设置为来自有效内存字地址的 32 位值"
+    },
+    {
+      "example": "lwc1 $f1,100000($t2)",
+      "description": "加载字协处理器 1：将 $f1 设置为来自有效内存字地址的 32 位值"
+    },
+    {
+      "example": "lwc1 $f1,label",
+      "description": "加载字协处理器 1：将 $f1 设置为来自有效内存字地址的 32 位值"
+    },
+    {
+      "example": "lwc1 $f1,label($t2)",
+      "description": "加载字协处理器 1：将 $f1 设置为来自有效内存字地址的 32 位值"
+    },
+    {
+      "example": "lwc1 $f1,label+100000",
+      "description": "加载字协处理器 1：将 $f1 设置为来自有效内存字地址的 32 位值"
+    },
+    {
+      "example": "lwc1 $f1,label+100000($t2)",
+      "description": "加载字协处理器 1：将 $f1 设置为来自有效内存字地址的 32 位值"
+    },
+    {
+      "example": "lwl $t1,-100",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwl $t1,($t2)",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwl $t1,100",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwl $t1,100($t2)",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwl $t1,100000",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwl $t1,100000($t2)",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwl $t1,label",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwl $t1,label($t2)",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwl $t1,label+100000",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwl $t1,label+100000($t2)",
+      "description": "加载字左：将 1 到 4 个字节左对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "lwr $t1,-100",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "lwr $t1,($t2)",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "lwr $t1,100",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "lwr $t1,100($t2)",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "lwr $t1,100000",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "lwr $t1,100000($t2)",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "lwr $t1,label",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "lwr $t1,label($t2)",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "lwr $t1,label+100000",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "lwr $t1,label+100000($t2)",
+      "description": "加载字右：将 1 到 4 个字节右对齐加载到 $t1 中，从有效内存字节地址开始，一直到其字的高位字节"
+    },
+    {
+      "example": "mfc1.d $t1,$f2",
+      "description": "从协处理器 1 Double 传送：将 $t1 设置为 $f2 的内容，将 $t1 中的下一个较高寄存器设置为 $f2 中的下一个较高寄存器的内容"
+    },
+    {
+      "example": "move $t1,$t2",
+      "description": "MOVE : 将 $t1 设置为 $t2 的内容"
+    },
+    {
+      "example": "mtc1.d $t1,$f2",
+      "description": "移至协处理器 1 Double ：将 $f2 设置为 $t1 的内容，将 $f2 中的下一个较高寄存器设置为 $t1 中的下一个较高寄存器的内容"
+    },
+    {
+      "example": "mul $t1,$t2,-100",
+      "description": "乘法 : 将 HI 设置为高位 32 位，LO 并将 $t1 设置为 $t2 与 16 位有符号立即数乘积的低位 32 位（使用 mfhi 访问 HI，mflo 访问 LO）"
+    },
+    {
+      "example": "mul $t1,$t2,100000",
+      "description": "乘法：将 HI 设置为高位 32 位，LO 并将 $t1 设置为 $t2 与 32 位立即数乘积的低位 32 位（使用 mfhi 访问 HI，mflo 访问 LO）"
+    },
+    {
+      "example": "mulo $t1,$t2,-100",
+      "description": "带溢出的乘法：将 $t1 设置为 $t2 与有符号 16 位立即数的乘积的低 32 位"
+    },
+    {
+      "example": "mulo $t1,$t2,$t3",
+      "description": "带溢出的乘法：将 $t1 设置为 $t2 和 $t3 乘积的低 32 位"
+    },
+    {
+      "example": "mulo $t1,$t2,100000",
+      "description": "带溢出的乘法：将 $t1 设置为 $t2 和 32 位立即数乘积的低 32 位"
+    },
+    {
+      "example": "mulou $t1,$t2,-100",
+      "description": "带溢出无符号的乘法：将 $t1 设置为 $t2 与有符号 16 位立即数的乘积的低 32 位"
+    },
+    {
+      "example": "mulou $t1,$t2,$t3",
+      "description": "无符号溢出的乘法：将 $t1 设置为 $t2 和 $t3 乘积的低 32 位"
+    },
+    {
+      "example": "mulou $t1,$t2,100000",
+      "description": "无符号溢出的乘法：将 $t1 设置为 $t2 和 32 位立即数乘积的低 32 位"
+    },
+    {
+      "example": "mulu $t1,$t2,-100",
+      "description": "MULtiplication Unsigned : 将 HI 设置为高位 32 位，将 LO 和 $t1 设置为低位 32 位（$t2 乘以 16 位立即数，无符号乘法）"
+    },
+    {
+      "example": "mulu $t1,$t2,$t3",
+      "description": "MULtiplication Unsigned : 将 HI 设置为高位 32 位，将 LO 和 $t1 设置为低位 32 位（$t2 乘以 $t3，无符号乘法）"
+    },
+    {
+      "example": "mulu $t1,$t2,100000",
+      "description": "MULtiplication Unsigned : 将 HI 设置为高位 32 位，将 LO 和 $t1 设置为低位 32 位（$t2 乘以 32 位立即数，无符号乘法）"
+    },
+    {
+      "example": "neg $t1,$t2",
+      "description": "NEGate ：将 $t1 设置为 $t2 的否定"
+    },
+    {
+      "example": "negu $t1,$t2",
+      "description": "NEGate Unsigned : 将 $t1 设置为 $t2 的否定，无溢出"
+    },
+    {
+      "example": "not $t1,$t2",
+      "description": "按位 NOT（位反转）"
+    },
+    {
+      "example": "or $t1,$t2,100",
+      "description": "OR ：将 $t1 设置为 ($t2 按位或 16 位无符号立即数)"
+    },
+    {
+      "example": "or $t1,100",
+      "description": "OR ：将 $t1 设置为 ($t1 按位或 16 位无符号立即数)"
+    },
+    {
+      "example": "ori $t1,$t2,100000",
+      "description": "OR 立即数：将 $t1 设置为 ($t2 按位或 32 位立即数)"
+    },
+    {
+      "example": "ori $t1,100",
+      "description": "OR 立即数：将 $t1 设置为 ($t1 按位或 16 位无符号立即数)"
+    },
+    {
+      "example": "ori $t1,100000",
+      "description": "OR 立即数：将 $t1 设置为 ($t1 按位或 32 位立即数)"
+    },
+    {
+      "example": "rem $t1,$t2,-100",
+      "description": "REMainder ：将 $t1 设置为（$t2 除以 16 位立即数的余数）"
+    },
+    {
+      "example": "rem $t1,$t2,$t3",
+      "description": "REMainder ：将 $t1 设置为（$t2 除以 $t3 的余数）"
+    },
+    {
+      "example": "rem $t1,$t2,100000",
+      "description": "REMainder ：将 $t1 设置为（$t2 除以 32 位立即数的余数）"
+    },
+    {
+      "example": "remu $t1,$t2,-100",
+      "description": "REMainder ：将 $t1 设置为（$t2 除以 16 位立即数、无符号除法的余数）"
+    },
+    {
+      "example": "remu $t1,$t2,$t3",
+      "description": "REMainder ：将 $t1 设置为（$t2 除以 $t3 的余数，无符号除法）"
+    },
+    {
+      "example": "remu $t1,$t2,100000",
+      "description": "REMainder ：将 $t1 设置为（$t2 除以 32 位立即数、无符号除法的余数）"
+    },
+    {
+      "example": "rol $t1,$t2,$t3",
+      "description": "ROtate Left ：将 $t1 设置为（$t2 向左旋转 $t3 中指定的位数）"
+    },
+    {
+      "example": "rol $t1,$t2,10",
+      "description": "ROtate Left ：将 $t1 设置为（$t2 向左循环 5 位立即数中指定的位数）"
+    },
+    {
+      "example": "ror $t1,$t2,$t3",
+      "description": "ROtate Right ：将 $t1 设置为（$t2 向右旋转 $t3 中指定的位数）"
+    },
+    {
+      "example": "ror $t1,$t2,10",
+      "description": "ROtate Right ：将 $t1 设置为（$t2 向右循环 5 位立即数中指定的位数）"
+    },
+    {
+      "example": "s.d $f2,-100",
+      "description": "存储浮点双精度：将 $f2 和 $f3 寄存器对中的 64 位存储到有效内存双字地址"
+    },
+    {
+      "example": "s.d $f2,($t2)",
+      "description": "存储浮点双精度：将 $f2 和 $f3 寄存器对中的 64 位存储到有效内存双字地址"
+    },
+    {
+      "example": "s.d $f2,100000",
+      "description": "存储浮点双精度：将 $f2 和 $f3 寄存器对中的 64 位存储到有效内存双字地址"
+    },
+    {
+      "example": "s.d $f2,100000($t2)",
+      "description": "存储浮点双精度：将 $f2 和 $f3 寄存器对中的 64 位存储到有效内存双字地址"
+    },
+    {
+      "example": "s.d $f2,label",
+      "description": "存储浮点双精度：将 $f2 和 $f3 寄存器对中的 64 位存储到有效内存双字地址"
+    },
+    {
+      "example": "s.d $f2,label($t2)",
+      "description": "存储浮点双精度：将 $f2 和 $f3 寄存器对中的 64 位存储到有效内存双字地址"
+    },
+    {
+      "example": "s.d $f2,label+100000",
+      "description": "存储浮点双精度：将 $f2 和 $f3 寄存器对中的 64 位存储到有效内存双字地址"
+    },
+    {
+      "example": "s.d $f2,label+100000($t2)",
+      "description": "存储浮点双精度：将 $f2 和 $f3 寄存器对中的 64 位存储到有效内存双字地址"
+    },
+    {
+      "example": "s.s $f1,-100",
+      "description": "存储浮点单精度：将 $f1 中的 32 位值存储到有效内存字地址"
+    },
+    {
+      "example": "s.s $f1,($t2)",
+      "description": "存储浮点单精度：将 $f1 中的 32 位值存储到有效内存字地址"
+    },
+    {
+      "example": "s.s $f1,100000",
+      "description": "存储浮点单精度：将 $f1 中的 32 位值存储到有效内存字地址"
+    },
+    {
+      "example": "s.s $f1,100000($t2)",
+      "description": "存储浮点单精度：将 $f1 中的 32 位值存储到有效内存字地址"
+    },
+    {
+      "example": "s.s $f1,label",
+      "description": "存储浮点单精度：将 $f1 中的 32 位值存储到有效内存字地址"
+    },
+    {
+      "example": "s.s $f1,label($t2)",
+      "description": "存储浮点单精度：将 $f1 中的 32 位值存储到有效内存字地址"
+    },
+    {
+      "example": "s.s $f1,label+100000",
+      "description": "存储浮点单精度：将 $f1 中的 32 位值存储到有效内存字地址"
+    },
+    {
+      "example": "s.s $f1,label+100000($t2)",
+      "description": "存储浮点单精度：将 $f1 中的 32 位值存储到有效内存字地址"
+    },
+    {
+      "example": "sb $t1,-100",
+      "description": "Store Byte : 将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sb $t1,($t2)",
+      "description": "Store Byte : 将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sb $t1,100",
+      "description": "Store Byte : 将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sb $t1,100($t2)",
+      "description": "Store Byte : 将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sb $t1,100000",
+      "description": "Store Byte : 将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sb $t1,100000($t2)",
+      "description": "Store Byte : 将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sb $t1,label",
+      "description": "Store Byte : 将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sb $t1,label($t2)",
+      "description": "Store Byte : 将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sb $t1,label+100000",
+      "description": "Store Byte : 将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sb $t1,label+100000($t2)",
+      "description": "Store Byte : 将$t1的低8位存储到有效内存字节地址"
+    },
+    {
+      "example": "sc $t1,-100",
+      "description": "条件存储：仅当匹配的加载链接保留保持有效时才存储，然后在源寄存器中报告成功或失败。"
+    },
+    {
+      "example": "sc $t1,($t2)",
+      "description": "条件存储：仅当匹配的加载链接保留保持有效时才存储，然后在源寄存器中报告成功或失败。"
+    },
+    {
+      "example": "sc $t1,100",
+      "description": "条件存储：仅当匹配的加载链接保留保持有效时才存储，然后在源寄存器中报告成功或失败。"
+    },
+    {
+      "example": "sc $t1,100($t2)",
+      "description": "条件存储：仅当匹配的加载链接保留保持有效时才存储，然后在源寄存器中报告成功或失败。"
+    },
+    {
+      "example": "sc $t1,100000",
+      "description": "条件存储：仅当匹配的加载链接保留保持有效时才存储，然后在源寄存器中报告成功或失败。"
+    },
+    {
+      "example": "sc $t1,100000($t2)",
+      "description": "条件存储：仅当匹配的加载链接保留保持有效时才存储，然后在源寄存器中报告成功或失败。"
+    },
+    {
+      "example": "sc $t1,label",
+      "description": "条件存储：仅当匹配的加载链接保留保持有效时才存储，然后在源寄存器中报告成功或失败。"
+    },
+    {
+      "example": "sc $t1,label($t2)",
+      "description": "条件存储：仅当匹配的加载链接保留保持有效时才存储，然后在源寄存器中报告成功或失败。"
+    },
+    {
+      "example": "sc $t1,label+100000",
+      "description": "条件存储：仅当匹配的加载链接保留保持有效时才存储，然后在源寄存器中报告成功或失败。"
+    },
+    {
+      "example": "sc $t1,label+100000($t2)",
+      "description": "条件存储：仅当匹配的加载链接保留保持有效时才存储，然后在源寄存器中报告成功或失败。"
+    },
+    {
+      "example": "sd $t1,-100($t2)",
+      "description": "存储双字 : 将 $t1 和下一个寄存器的内容存储到从有效内存字节地址开始的 64 位"
+    },
+    {
+      "example": "sd $t1,($t2)",
+      "description": "存储双字 : 将 $t1 和下一个寄存器的内容存储到从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "sd $t1,100000",
+      "description": "存储双字 : 将 $t1 和下一个寄存器的内容存储到从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "sd $t1,100000($t2)",
+      "description": "存储双字 : 将 $t1 和下一个寄存器的内容存储到从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "sd $t1,label",
+      "description": "存储双字 : 将 $t1 和下一个寄存器的内容存储到从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "sd $t1,label($t2)",
+      "description": "存储双字 : 将 $t1 和下一个寄存器的内容存储到从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "sd $t1,label+100000",
+      "description": "存储双字 : 将 $t1 和下一个寄存器的内容存储到从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "sd $t1,label+100000($t2)",
+      "description": "存储双字 : 将 $t1 和下一个寄存器的内容存储到从有效内存字地址开始的 64 位"
+    },
+    {
+      "example": "sdc1 $f2,-100",
+      "description": "存储双字协处理器 1：将 $f2 和 $f3 寄存器对中的 64 位存储到有效存储器双字地址"
+    },
+    {
+      "example": "sdc1 $f2,($t2)",
+      "description": "存储双字协处理器 1：将 $f2 和 $f3 寄存器对中的 64 位存储到有效存储器双字地址"
+    },
+    {
+      "example": "sdc1 $f2,100000",
+      "description": "存储双字协处理器 1：将 $f2 和 $f3 寄存器对中的 64 位存储到有效存储器双字地址"
+    },
+    {
+      "example": "sdc1 $f2,100000($t2)",
+      "description": "存储双字协处理器 1：将 $f2 和 $f3 寄存器对中的 64 位存储到有效存储器双字地址"
+    },
+    {
+      "example": "sdc1 $f2,label",
+      "description": "存储双字协处理器 1：将 $f2 和 $f3 寄存器对中的 64 位存储到有效存储器双字地址"
+    },
+    {
+      "example": "sdc1 $f2,label($t2)",
+      "description": "存储双字协处理器 1：将 $f2 和 $f3 寄存器对中的 64 位存储到有效存储器双字地址"
+    },
+    {
+      "example": "sdc1 $f2,label+100000",
+      "description": "存储双字协处理器 1：将 $f2 和 $f3 寄存器对中的 64 位存储到有效存储器双字地址"
+    },
+    {
+      "example": "sdc1 $f2,label+100000($t2)",
+      "description": "存储双字协处理器 1：将 $f2 和 $f3 寄存器对中的 64 位存储到有效存储器双字地址"
+    },
+    {
+      "example": "seq $t1,$t2,-100",
+      "description": "设置等于：如果 $t2 等于 16 位立即数，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "seq $t1,$t2,$t3",
+      "description": "设置等于：如果 $t2 等于 $t3，则将 $t1 设置为 1，否则为 0"
+    },
+    {
+      "example": "seq $t1,$t2,100000",
+      "description": "设置等于：如果 $t2 等于 32 位立即数，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sge $t1,$t2,-100",
+      "description": "设置大于或等于：如果 $t2 大于或等于 16 位立即数，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sge $t1,$t2,$t3",
+      "description": "设置大于或等于：如果 $t2 大于或等于 $t3，则将 $t1 设置为 1，否则为 0"
+    },
+    {
+      "example": "sge $t1,$t2,100000",
+      "description": "设置大于或等于：如果 $t2 大于或等于 32 位立即数，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,-100",
+      "description": "设置大于或等于无符号：如果 $t2 大于或等于 16 位立即数（无符号比较），则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,$t3",
+      "description": "设置大于或等于无符号：如果 $t2 大于或等于 $t3（无符号比较），则将 $t1 设置为 1，否则为 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,100000",
+      "description": "设置大于或等于无符号：如果 $t2 大于或等于 32 位立即数（无符号比较），则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sgt $t1,$t2,-100",
+      "description": "设置大于：如果 $t2 大于 16 位立即数，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sgt $t1,$t2,$t3",
+      "description": "设置大于：如果 $t2 大于 $t3，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sgt $t1,$t2,100000",
+      "description": "设置大于：如果 $t2 大于 32 位立即数，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,-100",
+      "description": "设置大于无符号：如果 $t2 大于 16 位立即数（无符号比较），则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,$t3",
+      "description": "设置大于无符号：如果 $t2 大于 $t3（无符号比较），则将 $t1 设置为 1，否则为 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,100000",
+      "description": "设置大于无符号：如果 $t2 大于 32 位立即数（无符号比较），则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sh $t1,-100",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sh $t1,($t2)",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sh $t1,100",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sh $t1,100($t2)",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sh $t1,100000",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sh $t1,100000($t2)",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sh $t1,label",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sh $t1,label($t2)",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sh $t1,label+100000",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sh $t1,label+100000($t2)",
+      "description": "存储半字：将$t1的低16位存储到有效内存半字地址中"
+    },
+    {
+      "example": "sle $t1,$t2,-100",
+      "description": "设置小于或等于：如果 $t2 小于或等于 16 位立即数，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sle $t1,$t2,$t3",
+      "description": "设置小于或等于：如果 $t2 小于或等于 $t3，则将 $t1 设置为 1，否则为 0"
+    },
+    {
+      "example": "sle $t1,$t2,100000",
+      "description": "设置小于或等于：如果 $t2 小于或等于 32 位立即数，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sleu $t1,$t2,-100",
+      "description": "设置小于或等于无符号：如果 $t2 小于或等于 16 位立即数（无符号比较），则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sleu $t1,$t2,$t3",
+      "description": "设置小于或等于无符号：如果 $t2 小于或等于 $t3（无符号比较），则将 $t1 设置为 1，否则为 0"
+    },
+    {
+      "example": "sleu $t1,$t2,100000",
+      "description": "设置小于或等于无符号：如果 $t2 小于或等于 32 位立即数（无符号比较），则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sne $t1,$t2,-100",
+      "description": "设置不等于：如果 $t2 不等于 16 位立即数，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sne $t1,$t2,$t3",
+      "description": "设置不等于：如果 $t2 不等于 $t3，则将 $t1 设置为 1，否则为 0"
+    },
+    {
+      "example": "sne $t1,$t2,100000",
+      "description": "设置不等于：如果 $t2 不等于 32 位立即数，则将 $t1 设置为 1，否则设置为 0"
+    },
+    {
+      "example": "sub $t1,$t2,-100",
+      "description": "减法：将 $t1 设置为 ($t2 减去 16 位立即数)"
+    },
+    {
+      "example": "sub $t1,$t2,100000",
+      "description": "减法：将 $t1 设置为 ($t2 减去 32 位立即数)"
+    },
+    {
+      "example": "subi $t1,$t2,-100",
+      "description": "减法立即数：将 $t1 设置为 ($t2 减去 16 位立即数)"
+    },
+    {
+      "example": "subi $t1,$t2,100000",
+      "description": "减法立即数：将 $t1 设置为 ($t2 减去 32 位立即数)"
+    },
+    {
+      "example": "subiu $t1,$t2,100000",
+      "description": "减法立即数无符号：将 $t1 设置为 ($t2 减去 32 位立即数)，无溢出"
+    },
+    {
+      "example": "subu $t1,$t2,100000",
+      "description": "减法无符号：将 $t1 设置为（$t2 减去 32 位立即数），无溢出"
+    },
+    {
+      "example": "sw $t1,-100",
+      "description": "存储字 : 将 $t1 内容存储到有效内存字地址"
+    },
+    {
+      "example": "sw $t1,($t2)",
+      "description": "存储字 : 将 $t1 内容存储到有效内存字地址"
+    },
+    {
+      "example": "sw $t1,100",
+      "description": "存储字 : 将 $t1 内容存储到有效内存字地址"
+    },
+    {
+      "example": "sw $t1,100($t2)",
+      "description": "存储字 : 将 $t1 内容存储到有效内存字地址"
+    },
+    {
+      "example": "sw $t1,100000",
+      "description": "存储字 : 将 $t1 内容存储到有效内存字地址"
+    },
+    {
+      "example": "sw $t1,100000($t2)",
+      "description": "存储字 : 将 $t1 内容存储到有效内存字地址"
+    },
+    {
+      "example": "sw $t1,label",
+      "description": "Store Word : 将 $t1 内容存储到标签地址处的内存字中"
+    },
+    {
+      "example": "sw $t1,label($t2)",
+      "description": "存储字 : 将 $t1 内容存储到有效内存字地址"
+    },
+    {
+      "example": "sw $t1,label+100000",
+      "description": "存储字 : 将 $t1 内容存储到有效内存字地址"
+    },
+    {
+      "example": "sw $t1,label+100000($t2)",
+      "description": "存储字 : 将 $t1 内容存储到有效内存字地址"
+    },
+    {
+      "example": "swc1 $f1,-100",
+      "description": "存储字协处理器 1：将 $f1 中的 32 位值存储到有效存储器字地址"
+    },
+    {
+      "example": "swc1 $f1,($t2)",
+      "description": "存储字协处理器 1：将 $f1 中的 32 位值存储到有效存储器字地址"
+    },
+    {
+      "example": "swc1 $f1,100000",
+      "description": "存储字协处理器 1：将 $f1 中的 32 位值存储到有效存储器字地址"
+    },
+    {
+      "example": "swc1 $f1,100000($t2)",
+      "description": "存储字协处理器 1：将 $f1 中的 32 位值存储到有效存储器字地址"
+    },
+    {
+      "example": "swc1 $f1,label",
+      "description": "存储字协处理器 1：将 $f1 中的 32 位值存储到有效存储器字地址"
+    },
+    {
+      "example": "swc1 $f1,label($t2)",
+      "description": "存储字协处理器 1：将 $f1 中的 32 位值存储到有效存储器字地址"
+    },
+    {
+      "example": "swc1 $f1,label+100000",
+      "description": "存储字协处理器 1：将 $f1 中的 32 位值存储到有效存储器字地址"
+    },
+    {
+      "example": "swc1 $f1,label+100000($t2)",
+      "description": "存储字协处理器 1：将 $f1 中的 32 位值存储到有效存储器字地址"
+    },
+    {
+      "example": "swl $t1,-100",
+      "description": "Store Word Left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "swl $t1,($t2)",
+      "description": "Store Word Left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "swl $t1,100",
+      "description": "Store Word Left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "swl $t1,100($t2)",
+      "description": "Store Word Left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "swl $t1,100000",
+      "description": "Store Word Left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "swl $t1,100000($t2)",
+      "description": "Store Word Left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "swl $t1,label",
+      "description": "Store Word Left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "swl $t1,label($t2)",
+      "description": "Store Word Left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "swl $t1,label+100000",
+      "description": "Store Word Left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "swl $t1,label+100000($t2)",
+      "description": "Store Word Left ：将 $t1 的高位 1 至 4 个字节存储到内存中，从有效内存字节地址开始，一直到其字的低位字节"
+    },
+    {
+      "example": "swr $t1,-100",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效内存字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "swr $t1,($t2)",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效内存字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "swr $t1,100",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效内存字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "swr $t1,100($t2)",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效内存字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "swr $t1,100000",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效内存字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "swr $t1,100000($t2)",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效内存字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "swr $t1,label",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效内存字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "swr $t1,label($t2)",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效内存字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "swr $t1,label+100000",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效内存字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "swr $t1,label+100000($t2)",
+      "description": "存储字右：将 $t1 的低位 1 至 4 个字节存储到内存中，从包含有效内存字节地址的字的高位字节开始，一直到该字节地址"
+    },
+    {
+      "example": "ulh $t1,-100($t2)",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，符号扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulh $t1,($t2)",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，符号扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulh $t1,100000",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，符号扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulh $t1,100000($t2)",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，符号扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulh $t1,label",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，符号扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulh $t1,label($t2)",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，符号扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulh $t1,label+100000",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，符号扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulh $t1,label+100000($t2)",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，符号扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulhu $t1,-100($t2)",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，零扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulhu $t1,($t2)",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，零扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulhu $t1,100000",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，零扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulhu $t1,100000($t2)",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，零扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulhu $t1,label",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，零扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulhu $t1,label($t2)",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，零扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulhu $t1,label+100000",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，零扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulhu $t1,label+100000($t2)",
+      "description": "未对齐加载半字：将 $t1 设置为 16 位，零扩展，从有效内存字节地址开始"
+    },
+    {
+      "example": "ulw $t1,-100($t2)",
+      "description": "未对齐加载字：将 $t1 设置为从有效内存字节地址开始的 32 位"
+    },
+    {
+      "example": "ulw $t1,($t2)",
+      "description": "未对齐加载字：将 $t1 设置为从有效内存字节地址开始的 32 位"
+    },
+    {
+      "example": "ulw $t1,100000",
+      "description": "未对齐加载字：将 $t1 设置为从有效内存字节地址开始的 32 位"
+    },
+    {
+      "example": "ulw $t1,100000($t2)",
+      "description": "未对齐加载字：将 $t1 设置为从有效内存字节地址开始的 32 位"
+    },
+    {
+      "example": "ulw $t1,label",
+      "description": "未对齐加载字：将 $t1 设置为从有效内存字节地址开始的 32 位"
+    },
+    {
+      "example": "ulw $t1,label($t2)",
+      "description": "未对齐加载字：将 $t1 设置为从有效内存字节地址开始的 32 位"
+    },
+    {
+      "example": "ulw $t1,label+100000",
+      "description": "未对齐加载字：将 $t1 设置为从有效内存字节地址开始的 32 位"
+    },
+    {
+      "example": "ulw $t1,label+100000($t2)",
+      "description": "未对齐加载字：将 $t1 设置为从有效内存字节地址开始的 32 位"
+    },
+    {
+      "example": "ush $t1,-100($t2)",
+      "description": "未对齐存储半字：将低位半字 $t1 内容存储到从有效内存字节地址开始的 16 位中"
+    },
+    {
+      "example": "ush $t1,($t2)",
+      "description": "未对齐存储半字：将低位半字 $t1 内容存储到从有效内存字节地址开始的 16 位中"
+    },
+    {
+      "example": "ush $t1,100000",
+      "description": "未对齐存储半字：将低位半字 $t1 内容存储到从有效内存字节地址开始的 16 位中"
+    },
+    {
+      "example": "ush $t1,100000($t2)",
+      "description": "未对齐存储半字：将低位半字 $t1 内容存储到从有效内存字节地址开始的 16 位中"
+    },
+    {
+      "example": "ush $t1,label",
+      "description": "未对齐存储半字：将低位半字 $t1 内容存储到从有效内存字节地址开始的 16 位中"
+    },
+    {
+      "example": "ush $t1,label($t2)",
+      "description": "未对齐存储半字：将低位半字 $t1 内容存储到从有效内存字节地址开始的 16 位中"
+    },
+    {
+      "example": "ush $t1,label+100000",
+      "description": "未对齐存储半字：将低位半字 $t1 内容存储到从有效内存字节地址开始的 16 位中"
+    },
+    {
+      "example": "ush $t1,label+100000($t2)",
+      "description": "未对齐存储半字：将低位半字 $t1 内容存储到从有效内存字节地址开始的 16 位中"
+    },
+    {
+      "example": "usw $t1,-100($t2)",
+      "description": "未对齐存储字：将 $t1 内容存储到从有效内存字节地址开始的 32 位中"
+    },
+    {
+      "example": "usw $t1,($t2)",
+      "description": "未对齐存储字：将 $t1 内容存储到从有效内存字节地址开始的 32 位中"
+    },
+    {
+      "example": "usw $t1,100000",
+      "description": "未对齐存储字：将 $t1 内容存储到从有效内存字节地址开始的 32 位中"
+    },
+    {
+      "example": "usw $t1,100000($t2)",
+      "description": "未对齐存储字：将 $t1 内容存储到从有效内存字节地址开始的 32 位中"
+    },
+    {
+      "example": "usw $t1,label",
+      "description": "未对齐存储字：将 $t1 内容存储到从有效内存字节地址开始的 32 位中"
+    },
+    {
+      "example": "usw $t1,label($t2)",
+      "description": "未对齐存储字：将 $t1 内容存储到从有效内存字节地址开始的 32 位中"
+    },
+    {
+      "example": "usw $t1,label+100000",
+      "description": "未对齐存储字：将 $t1 内容存储到从有效内存字节地址开始的 32 位中"
+    },
+    {
+      "example": "usw $t1,label+100000($t2)",
+      "description": "未对齐存储字：将 $t1 内容存储到从有效内存字节地址开始的 32 位中"
+    },
+    {
+      "example": "xor $t1,$t2,100",
+      "description": "XOR ：将 $t1 设置为 ($t2 按位异或 16 位无符号立即数)"
+    },
+    {
+      "example": "xor $t1,100",
+      "description": "XOR ：将 $t1 设置为 ($t1 按位异或 16 位无符号立即数)"
+    },
+    {
+      "example": "xori $t1,$t2,100000",
+      "description": "XOR 立即数：将 $t1 设置为 ($t2 按位异或 32 位立即数)"
+    },
+    {
+      "example": "xori $t1,100",
+      "description": "XOR 立即数：将 $t1 设置为 ($t1 按位异或 16 位无符号立即数)"
+    },
+    {
+      "example": "xori $t1,100000",
+      "description": "XOR 立即数：将 $t1 设置为 ($t1 按位异或 32 位立即数)"
+    }
+  ],
+  "directives": [
+    {
+      "name": ".align",
+      "description": "在指定字节边界上对齐下一个数据项（0=字节、1=半、2=字、3=双精度）"
+    },
+    {
+      "name": ".ascii",
+      "description": "将字符串存储在数据段中，但不添加空终止符"
+    },
+    {
+      "name": ".asciiz",
+      "description": "将字符串存储在Data段中并添加空终止符"
+    },
+    {
+      "name": ".byte",
+      "description": "将列出的值存储为 8 位字节"
+    },
+    {
+      "name": ".data",
+      "description": "后续项目存储在下一个可用地址的数据段中"
+    },
+    {
+      "name": ".double",
+      "description": "将列出的值存储为双精度浮点"
+    },
+    {
+      "name": ".end_macro",
+      "description": "结束宏定义。  参见.宏"
+    },
+    {
+      "name": ".eqv",
+      "description": "用第二个操作数替换第一个操作数。第一个操作数是符号，第二个操作数是表达式（如#define）"
+    },
+    {
+      "name": ".extern",
+      "description": "将列出的标签和字节长度声明为全局数据字段"
+    },
+    {
+      "name": ".float",
+      "description": "将列出的值存储为单精度浮点"
+    },
+    {
+      "name": ".globl",
+      "description": "将列出的标签声明为全局标签以启用从其他文件的引用"
+    },
+    {
+      "name": ".half",
+      "description": "将列出的值存储为半字边界上的 16 位半字"
+    },
+    {
+      "name": ".include",
+      "description": "插入指定文件的内容。  将文件名放在引号中。"
+    },
+    {
+      "name": ".kdata",
+      "description": "后续项目存储在下一个可用地址的内核数据段中"
+    },
+    {
+      "name": ".ktext",
+      "description": "后续项目（指令）存储在下一个可用地址的内核文本段中"
+    },
+    {
+      "name": ".macro",
+      "description": "开始宏定义。  请参阅.end_macro"
+    },
+    {
+      "name": ".set",
+      "description": "设置汇编器变量。  目前被忽略，但为了 SPIM 兼容性而包含在内"
+    },
+    {
+      "name": ".space",
+      "description": "保留数据段中下一个指定数量的字节"
+    },
+    {
+      "name": ".text",
+      "description": "后续项目（指令）存储在下一个可用地址的文本段中"
+    },
+    {
+      "name": ".word",
+      "description": "将列出的值存储为字边界上的 32 位字"
+    }
+  ]
+}

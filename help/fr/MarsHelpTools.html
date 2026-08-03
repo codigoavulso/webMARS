@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Outils webMARS</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Outils</h1>
+  <p class="lead">Ouvrez les outils dans le menu Outils. Chaque outil dispose d'une fenêtre indépendante et peut se connecter au runtime MIPS actuel pour observer les instructions, la mémoire ou l'activité MMIO.</p>
+
+  <div class="note"><strong>Connectez-vous avant de courir.</strong> Un outil connecté reçoit des instantanés d'exécution complets et des événements de trace même lorsque l'exécution à vitesse maximale supprime la mise en surbrillance de l'éditeur. Déconnectez ou réinitialisez l'outil lorsque vous démarrez une expérience sans rapport.</div>
+
+  <h2>Architecture et performances</h2>
+  <table>
+    <tr><th>Outil</th><th>Utilisez-le pour</th></tr>
+    <tr><td>Simulateur de table d'historique de branche</td><td>Comparez les schémas de prédiction et inspectez la précision des prédictions de branche.</td></tr>
+    <tr><td>Simulateur de cache de données</td><td>Configurez un cache et mesurez les succès, les échecs et la localité pendant qu'un programme accède aux données.</td></tr>
+    <tr><td>Compteur d'instructions</td><td>Comptez les instructions exécutées et suivez le total actuel.</td></tr>
+    <tr><td>Statistiques d'instructions</td><td>Regroupez l’exécution par catégorie d’instructions pour comprendre la composition de la charge de travail.</td></tr>
+    <tr><td>Visualisation de référence de mémoire</td><td>Visualisez les modèles d’accès à la mémoire spatiale et les régions chaudes.</td></tr>
+    <tr><td>MIPS Rayons X</td><td>Explorez les champs d’instruction, le décodage et les relations chemin de données/contrôle.</td></tr>
+  </table>
+
+  <h2>Écrans, terminaux et appareils</h2>
+  <table>
+    <tr><th>Outil</th><th>Utilisez-le pour</th></tr>
+    <tr><td>Affichage bitmap</td><td>Rendu des pixels à partir d'un framebuffer configurable sauvegardé en mémoire.</td></tr>
+    <tr><td>Outil de terminal bitmap</td><td>Utilisez un terminal de texte basé sur un framebuffer avec la saisie au clavier.</td></tr>
+    <tr><td>Clavier et écran MMIO Simulateur</td><td>Exercez le contrôle du récepteur/émetteur et les registres de données dans la gamme standard MMIO.</td></tr>
+    <tr><td>TTY Périphérique + ANSI Terminal</td><td>Exécutez des programmes de terminal avec saisie au clavier, rendu ANSI et événements de souris xterm opt-in.</td></tr>
+    <tr><td>Simulation de laboratoire numérique</td><td>Pilotez les affichages à sept segments, l'entrée du clavier et le laboratoire numérique associé MMIO.</td></tr>
+    <tr><td>Horloge et minuterie système</td><td>Pilotez un minuteur mappé en mémoire qui compte les instructions exécutées ou les millisecondes réelles, et déclenchez l'interruption du minuteur MARS afin qu'un gestionnaire d'exceptions s'exécute à chaque tick.</td></tr>
+    <tr><td>Bot Mars</td><td>Contrôlez le robot simulé via son interface mappée en mémoire.</td></tr>
+  </table>
+  <div class="note"><strong>MARS-OS TTY Exemple de système d'exploitation.</strong> Ouvrez l'exemple multi-fichiers, connectez cet outil, assemblez et exécutez. Il démarre directement dans son gestionnaire de programmes de style Windows 95 ; ouvrez l'application Terminal pour le shell à 46 commandes. Le menu Démarrer, les fenêtres et les lanceurs d'applications sont entièrement dessinés par l'assembleur MIPS et contrôlés avec les rapports de souris xterm SGR. Le disque inscriptible RAM, l'éditeur, la feuille de calcul et l'interpréteur BASIC restent disponibles ; le curseur de l'éditeur et les cellules de la feuille de calcul acceptent également les clics de souris.</div>
+
+  <h2>Utilitaires d'apprentissage</h2>
+  <table>
+    <tr><th>Outil</th><th>Utilisez-le pour</th></tr>
+    <tr><td>Représentation en virgule flottante</td><td>Convertissez et inspectez IEEE 754 valeurs, champs et modèles binaires simple précision.</td></tr>
+    <tr><td>Introduction aux outils</td><td>Découvrez le cycle de vie standard de connexion, de réinitialisation et d’interaction.</td></tr>
+    <tr><td>Chasse au trésor</td><td>Exécutez le défi de programmation en assembleur interactif.</td></tr>
+    <tr><td>Loupe d'écran</td><td>Agrandissez une partie sélectionnée de l’espace de travail pour les démonstrations et l’accessibilité.</td></tr>
+    <tr><td>Visualiseur de pile</td><td>Suivez tout l'espace d'adressage et la pile mot par mot : les trames ouvertes par chaque appel, les registres enregistrés et restaurés, un zoom des blocs de segments jusqu'aux bits individuels et un journal en langage clair de chaque mouvement $sp avec des avertissements pour les erreurs de trame classiques. Il pilote également l'exécution avec des arrêts tenant compte de la pile : exécuter jusqu'à l'appel suivant, passer un appel, exécuter jusqu'au retour de l'image actuelle, jusqu'à ce que $sp se déplace ou jusqu'à ce qu'un mot surveillé change, et faire une pause dès qu'un avertissement de pile apparaît.</td></tr>
+  </table>
+
+  <h2>Configuration bitmap à partir de MIPS</h2>
+  <p>Un programme peut configurer l'un ou l'autre des outils Bitmap en écrivant ce bloc de contrôle versionné par rapport à la base MMIO active (normalement <code>0xffff0000</code>). Écrivez d'abord tous les champs et écrivez <code>1</code> au commandement en dernier ; l'outil ne change qu'après cette validation atomique.</p>
+  <table>
+    <tr><th>Décalage</th><th>Valeur</th></tr>
+    <tr><td><code>+0x20</code></td><td>Signature <code>0x57424d50</code> (<code>WBMP</code>)</td></tr>
+    <tr><td><code>+0x24</code></td><td>Version du protocole <code>1</code></td></tr>
+    <tr><td><code>+0x28</code></td><td>Cible : <code>1</code> Affichage, <code>2</code> Borne, <code>3</code> les deux</td></tr>
+    <tr><td><code>+0x2c … +0x38</code></td><td>Largeur d'affichage, hauteur d'affichage, largeur d'unité et hauteur d'unité</td></tr>
+    <tr><td><code>+0x3c</code></td><td>Adresse de base du framebuffer</td></tr>
+    <tr><td><code>+0x40</code></td><td>Commande : <code>1</code> postuler, <code>2</code> configuration claire du programme</td></tr>
+  </table>
+  <p>Les blocs invalides ou incomplets sont ignorés. Le retour en arrière, l'exportation d'exécution et la restauration de session préservent la configuration validée. Il s'agit d'une extension facultative webMARS : MARS 4.5 ignore ces mots MMIO inutilisés, tandis que le même code framebuffer continue de fonctionner avec les paramètres manuels des outils.</p>
+
+  <h2>MMIO sécurité</h2>
+  <p>Les appareils MMIO sont mappés à proximité <code>0xffff0000</code>. Les outils de l'appareil et le runtime partagent ces adresses ; les programmes d'interrogation doivent honorer les bits prêts et les programmes pilotés par interruption doivent installer un gestionnaire d'exceptions valide. La réinitialisation d'un outil efface sa visualisation ou l'état de son appareil, pas nécessairement le programme assemblé.</p>
+</body>
+</html>

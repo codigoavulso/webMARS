@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Premiers pas avec webMARS</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Commencer</h1>
+  <p class="lead">webMARS est basé sur un navigateur MIPS32 assembleur, simulateur, débogueur, Mini-C compilateur et espace de travail d’enseignement. Le runtime est entièrement implémenté dans JavaScript; aucune installation Java, exécutable natif ou WASM le back-end est requis.</p>
+
+  <ol class="steps">
+    <li><strong>Ouvrez ou créez un fichier source.</strong> Utiliser <b>Fichier → Exemples</b> pour un point de départ guidé, <b>Nouveau projet</b> pour un projet vierge, ou <b>Ouvrir à partir du disque</b> pour les fichiers locaux.</li>
+    <li><strong>Construisez-le.</strong> Utilisation des fichiers d'assemblage <b>Exécuter → Assembler</b> (<kbd>F3</kbd>). Utilisation des fichiers C <b>Exécuter → Compiler C0</b> (<kbd>F4</kbd>), puis assemblez l'assembly généré.</li>
+    <li><strong>Exécutez-le.</strong> Sélectionnez <b>Allez</b> (<kbd>F5</kbd>) ou avancez une instruction à la fois avec <b>Étape</b> (<kbd>F7</kbd>).</li>
+    <li><strong>Inspectez le résultat.</strong> Les registres, le coprocesseur 1, la mémoire, les messages, les E/S d'exécution et les outils connectés sont mis à jour au fur et à mesure de l'exécution du programme.</li>
+  </ol>
+
+  <h2>Ce qui est inclus</h2>
+  <div class="cards">
+    <section class="card"><h3>Exécution MIPS32</h3><p>Exécution d’entier, de branchement, de mémoire, d’exception, LL/SC et COP1, y compris les options de branchement retardé et de code auto-modifiable.</p></section>
+    <section class="card"><h3>Compilateur Mini-C</h3><p>Sous-ensembles d'enseignement C0 et profil C1-NATIVE, ciblant la convention d'appel MIPS o32.</p></section>
+    <section class="card"><h3>Débogueur</h3><p>Points d'arrêt, pas à pas, recul, réinitialisation, contrôles de pause/arrêt et vitesse d'exécution configurable.</p></section>
+    <section class="card"><h3>Appareils et outils</h3><p>Appareils MMIO, simulateurs de cache et de branche, affichages visuels, statistiques, terminal ANSI et bien plus encore.</p></section>
+  </div>
+
+  <h2>Première exécution recommandée</h2>
+  <p>Ouvert <b>Fichier → Exemples</b>, choisissez un anglais <b>Apprendre</b> Par exemple, lisez sa description et ouvrez-le. Des exemples d'assemblage peuvent être assemblés et exécutés directement. Les exemples C déclarent leur sous-ensemble minimum de compilateur et peuvent contenir plusieurs fichiers de projet.</p>
+
+  <div class="note"><strong>Vos fichiers restent dans votre navigateur par défaut.</strong> Les projets locaux et les données de récupération ne sont pas téléchargés sauf si vous utilisez explicitement le menu Cloud. Téléchargez périodiquement des travaux importants car le stockage du navigateur peut être effacé par le navigateur ou par <b>Paramètres → Effacer le stockage local</b>.</div>
+
+  <h2>Raccourcis utiles</h2>
+  <table class="compact">
+    <tr><th>Action</th><th>Raccourci</th></tr>
+    <tr><td>Aide</td><td><kbd>F1</kbd></td></tr>
+    <tr><td>Assembler</td><td><kbd>F3</kbd></td></tr>
+    <tr><td>Compiler Mini-C</td><td><kbd>F4</kbd></td></tr>
+    <tr><td>Courir/Partir</td><td><kbd>F5</kbd></td></tr>
+    <tr><td>Étape</td><td><kbd>F7</kbd></td></tr>
+  </table>
+</body>
+</html>

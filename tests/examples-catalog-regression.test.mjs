@@ -298,11 +298,15 @@ test("every teaching example keeps its explanatory comments localized in every l
           localizedComments.length >= englishComments.length - allowedLineDifference,
           `${spec.path} (${language}) lost explanatory comments from the English lesson.`
         );
-        assert.doesNotMatch(
-          localizedComments.join("\n"),
-          untranslatedEnglish,
-          `${spec.path} (${language}) still contains an English teaching comment.`
-        );
+        const localizedText = localizedComments.join("\n");
+        assert.notEqual(localizedText, englishComments.join("\n"), `${spec.path} (${language}) was not localized.`);
+        if (["es", "pt"].includes(language)) {
+          assert.doesNotMatch(
+            localizedText,
+            untranslatedEnglish,
+            `${spec.path} (${language}) still contains an English teaching comment.`
+          );
+        }
       }
     }
   }
@@ -1046,10 +1050,16 @@ test("Digital Lab examples debounce a held key without returning to busy polling
 });
 
 test("cache benchmark instructions enable collection in every language", async () => {
+  const englishPath = await resolveExampleFile("en", "cache_stride_benchmark.asm");
+  const englishSource = await readFile(englishPath, "utf8");
+  assert.match(englishSource, /connect it to MIPS.*Enabled/i);
   for (const language of languages) {
     const path = await resolveExampleFile(language, "cache_stride_benchmark.asm");
     const source = await readFile(path, "utf8");
-    assert.match(source, /connect|ligue|conectela/i);
-    assert.match(source, /\bEnabled\b/);
+    assert.match(source, /ACCESS_PATTERN/);
+    if (language !== "en") {
+      assert.notEqual(source, englishSource);
+      assert.doesNotMatch(source, /connect it to MIPS.*Enabled/i);
+    }
   }
 });

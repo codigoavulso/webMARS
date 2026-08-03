@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>汇编器宏</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>汇编器宏</h1>
+  <p class="lead">宏在正常汇编之前执行源代码级替换。它们需要启用扩展汇编程序支持。</p>
+
+  <h2>定义和使用</h2>
+  <pre>.macro print_int (%value)
+    move $a0, %value
+    li   $v0, 1
+    syscall
+.end_macro
+
+li $t0, 42
+print_int ($t0)</pre>
+  <p>参数和调用参数周围的括号是可选的。参数是逗号分隔的标记，仅作为标识符替换，而不是在字符串文字内替换。</p>
+
+  <h2>由 webMARS 实施的规则</h2>
+  <ul>
+    <li>宏由其名称和数量来标识，因此相同的名称可能具有不同参数计数的定义。</li>
+    <li>定义必须出现在其调用之前。前向引用被报告为错误。</li>
+    <li>不允许嵌套宏定义。</li>
+    <li>定义以仅包含以下内容的行结尾 <code>.end_macro</code>.</li>
+    <li>具有相同名称和数量的重复定义会产生警告，并且重复的定义将被忽略。</li>
+    <li>扩展内的标签对于每次调用都是唯一的，以防止扩展之间发生冲突。</li>
+    <li>扩展是递归的，但是会诊断无效的递归和格式错误的调用，而不是默默地生成代码。</li>
+  </ul>
+
+  <h2>常量和包含</h2>
+  <p><code>.eqv</code> 提供命名常量的标识符替换。 <code>.include</code> 是扩展汇编器指令集的一部分，并解析当前浏览器项目提供的项目源。首选项目相关名称并将包含的源保留在同一项目中。</p>
+
+  <h2>宏与伪指令</h2>
+  <p>伪指令是从 webMARS 的指令引用中选择的，并根据操作数模式进行扩展。宏由程序定义，可以包含任意序列的源语句。两者都在执行前展开，并且可以将一个源代码行映射到多个基本指令。</p>
+
+  <div class="warning">宏参数是标记替换，而不是键入的值。语法上有效的扩展仍然可能在调用站点产生汇编器类型或范围错误。</div>
+</body>
+</html>

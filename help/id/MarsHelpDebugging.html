@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jalankan dan debug</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Jalankan debug &amp;</h1>
+  <p class="lead">Menu Jalankan mengontrol satu mesin JavaScript MIPS yang digunakan bersama oleh register, tampilan memori, debugger, dan alat yang terhubung.</p>
+
+  <h2>Kontrol eksekusi</h2>
+  <table>
+    <tr><th>Kontrol</th><th>Artinya</th></tr>
+    <tr><td>Pergi</td><td>Berjalan hingga penyelesaian normal, breakpoint, syscall menunggu masukan, pengecualian yang tidak tertangani, batas, Jeda atau Berhenti.</td></tr>
+    <tr><td>Jeda</td><td>Menunda proses yang aktif sambil mempertahankan mesin agar dapat dilanjutkan.</td></tr>
+    <tr><td>Berhenti</td><td>Menghentikan eksekusi dan membatalkan pekerjaan asinkron yang tertunda seperti syscall Sleep yang panjang. Program yang dihentikan tidak dilanjutkan.</td></tr>
+    <tr><td>Langkah</td><td>Menjalankan satu instruksi. Setelah breakpoint berhenti, Go atau Step berikutnya melintasi breakpoint tersebut satu kali, sehingga tidak langsung berhenti di alamat yang sama lagi.</td></tr>
+    <tr><td>Mundur</td><td>Mengembalikan snapshot runtime yang direkam sebelumnya, hingga kedalaman riwayat yang dikonfigurasi.</td></tr>
+    <tr><td>Setel ulang</td><td>Mengembalikan program yang telah dirakit ke kondisi mesin awalnya.</td></tr>
+  </table>
+
+  <h2>Breakpoint dan pelacakan sumber</h2>
+  <p>Alihkan breakpoint di selokan editor di samping baris sumber yang dapat dieksekusi. Breakpoint disimpan dalam keadaan runtime dan bertahan selama perjalanan ekspor/impor normal. Instruksi semu dapat diperluas menjadi beberapa instruksi dasar; melangkah mengikuti instruksi mesin yang dihasilkan sementara penyorotan sumber tetap terkait dengan garis asal.</p>
+
+  <h2>Strip kecepatan dan kinerja</h2>
+  <p>Kontrol kecepatan lari berkisar dari tingkat loncatan interaktif hingga kecepatan maksimum. Pada kecepatan maksimum webMARS mengurangi penyorotan editor yang mahal dan pekerjaan gulir otomatis, namun alat tetap menerima snapshot runtime lengkap dan informasi pelacakan.</p>
+  <p>Strip benchmark ringkas melaporkan waktu Kompilasi, Rakitan, dan Pengoperasian terkini bersama dengan perkiraan persentase pemanfaatan JavaScript CPU. Pengukuran bersifat lokal dan mudah berubah: dimaksudkan untuk membandingkan beban kerja dan perubahan algoritme, bukan sebagai pengukur proses sistem operasi.</p>
+
+  <h2>Cabang tertunda dan pengecualian</h2>
+  <p>Ketika percabangan tertunda diaktifkan, instruksi yang mengikuti cabang atau lompatan adalah instruksi slot penundaan dan penyimpanan instruksi tautan <code>PC + 8</code>. Pengecualian yang muncul di slot penundaan mengatur COP0 menyebabkan bit BD dan mencatat alamat cabang di EPC.</p>
+  <p>Jika penangan pengecualian yang valid ada di alamat penangan yang dikonfigurasi, eksekusi akan ditransfer ke alamat tersebut dan dapat kembali bersamanya <code>eret</code>. Jika tidak, proses akan berhenti dengan alasan yang jelas dan diagnostik.</p>
+
+  <div class="note"><strong>Lingkup belakang.</strong> Snapshot mencakup register, memori, breakpoint, aliran acak, posisi file, input tertunda, argumen program, dan pegangan gambar perangkat. Sejarah yang besar menghabiskan memori, jadi sesuaikan batas latihannya.</div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-# webMARS v0.5.1
+# webMARS v0.5.2
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,14 +22,14 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.5.1
+## Highlights in v0.5.2
 
-- Added exact external interrupt delivery for timer, keyboard, display and hexadecimal-keypad devices, including simultaneous pending lines.
-- Added System Clock and Stack Visualizer tools with synchronized, backsteppable runtime state.
-- Added a localized timer-interrupt example and extended MARS-OS with functional `clock` and real-time `bench` commands.
-- Reduced tool overhead through decoded instruction batches and sparse central delta history while retaining the exact backstep window.
-- Hardened compact snapshot/UI recovery so assembled text rows cannot disappear during execution updates.
-- Expanded regression coverage for interrupt delivery, tools, localized examples and MARS-OS behavior.
+- Expanded the complete UI, example catalogue, documentation and help from three to ten languages.
+- Added first-visit browser-language detection with English fallback while preserving explicit user preferences.
+- Added right-to-left Arabic layout while keeping source code, runtime output and technical notation left-to-right.
+- Reworked MARS-OS into a mouse-driven desktop with Program Manager, movable windows and its shell inside the Terminal app.
+- Improved TTY throughput and Android keyboard-aware mobile sizing while removing the desktop vertical gap.
+- Added reproducible localization generation, technical terminology protection and ten-language parity checks.
 
 ## Main Capabilities
 
@@ -40,7 +40,7 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - MARS-style tools such as Bitmap Display, Cache Simulator, Digital Lab Sim, Keyboard/Display MMIO, and more.
 - Light and dark interface themes, selected in `Settings > Interface...` and applied to the editor,
   tool windows and help pages.
-- Localized UI/help resources for `en`, `pt`, and `es`.
+- Localized UI, examples, documentation and help for English, Spanish, Portuguese, Mandarin Chinese, Hindi, Arabic, French, Bengali, Russian and Indonesian.
 - Browser storage for source files with virtual folders and quota management.
 - Project/editor/runtime workflow with persistent preferences and recoverable session state.
 
@@ -135,6 +135,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.5.2`: ten-language UI/help/examples, automatic browser-language selection, Arabic RTL, mouse-driven MARS-OS desktop, and faster responsive TTY
 - `v0.5.1`: external device interrupts, System Clock and Stack Visualizer tools, consolidated file/cloud workflows, faster tool batching, resilient text snapshots, and MARS-OS clock/benchmark commands
 - `v0.5.0`: hardened JavaScript runtime, inverse-delta backstep, batched tools, dynamic Bitmap MMIO, expanded examples/documentation, and complete mobile workflows
 - `v0.4.13`: mobile single-panel layout with icon tabs, icon-only mobile toolbar, and fully localized assembler and Mini-C diagnostics

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS pengaturan</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Pengaturan</h1>
+  <p class="lead">Pengaturan mencakup presentasi sumber, kompatibilitas assembler, output Mini-C, persistensi, akses cloud, dan batas waktu proses.</p>
+
+  <h2>Pengaturan cepat</h2>
+  <table>
+    <tr><th>Pengaturan</th><th>Efek</th></tr>
+    <tr><td>Tampilkan label</td><td>Menampilkan label di samping alamat dalam tampilan runtime jika tersedia.</td></tr>
+    <tr><td>Argumen program</td><td>Meminta argumen sebelum lari. <code>$a0</code> menerima argc dan <code>$a1</code> menerima argumen; Mini-C C1-NATIVE mengekspos data yang sama ke <code>main(int argc, char **argv)</code>.</td></tr>
+    <tr><td>Sistem masukan popup</td><td>Menggunakan dialog formulir untuk layanan input konsol 5, 6, 7, 8 dan 12 alih-alih panel Jalankan I/O.</td></tr>
+    <tr><td>Pisahkan Pesan / Jalankan I/O</td><td>Menampilkan pesan build dan I/O program secara bersamaan.</td></tr>
+    <tr><td>Alamat / nilai hex</td><td>Mengalihkan tabel runtime antara presentasi heksadesimal dan desimal. Itu tidak mengubah bit yang disimpan.</td></tr>
+  </table>
+
+  <h2>Kompatibilitas assembler dan eksekusi</h2>
+  <ul>
+    <li><b>Berkumpul di tempat terbuka</b> dan <b>Kumpulkan semua file</b> mengotomatiskan cakupan build yang dipilih.</li>
+    <li><b>Perlakukan peringatan sebagai kesalahan</b> membuat peringatan gagal dirakit.</li>
+    <li><b>Mulai dari utama</b> dimulai pada tingkat global <code>main</code> beri label jika ada.</li>
+    <li><b>Instruksi yang diperluas (semu).</b> mengaktifkan katalog instruksi semu yang ditampilkan di Bantuan.</li>
+    <li><b>Percabangan tertunda</b> memungkinkan perilaku slot penundaan arsitektural.</li>
+    <li><b>Kode yang dapat dimodifikasi sendiri</b> mengizinkan penulisan ke memori yang dapat dieksekusi. Aktifkan hanya untuk program yang sengaja memerlukannya.</li>
+  </ul>
+
+  <h2>Antarmuka</h2>
+  <p>Pilih tema antarmuka (Terang atau Gelap), bahasa UI, tata letak menu atas atau samping, ukuran font editor, spasi baris, dan perilaku penyorotan. Tersedia antarmuka Inggris, Spanyol, Portugis, Mandarin, Hindi, Arab, Prancis, Bengali, Rusia, dan Indonesia; bantuan mengikuti bahasa UI aktif. Pada kunjungan pertama, webMARS menggunakan bahasa browser yang didukung atau kembali ke bahasa Inggris; pilihan eksplisit disimpan dan diprioritaskan. Tema yang dipilih disimpan dengan preferensi Anda dan diterapkan ke seluruh antarmuka, termasuk alat dan jendela bantuan.</p>
+
+  <h2>Memori waktu proses &amp;</h2>
+  <table>
+    <tr><th>Preferensi</th><th>Rentang / pilihan</th></tr>
+    <tr><td>Konfigurasi memori</td><td>Default, Data Ringkas di Alamat 0, atau Teks Ringkas di Alamat 0.</td></tr>
+    <tr><td>Memori maksimum</td><td>0,25–2 GiB, tergantung pada batasan memori praktis browser.</td></tr>
+    <tr><td>Sejarah mundur</td><td>0–1.000.000 langkah tercatat; bawaan 100.</td></tr>
+    <tr><td>Penangan pengecualian</td><td>Alamat MIPS yang sepenuhnya valid, default <code>0x80000180</code>.</td></tr>
+  </table>
+
+  <h2>Kegigihan dan awan</h2>
+  <p><b>Status toko</b> dan <b>Status beban</b> mengelola snapshot runtime lokal yang lengkap. <b>Hapus Penyimpanan lokal</b> menghapus preferensi webMARS, proyek yang disimpan, status pemulihan, dan posisi alat setelah konfirmasi.</p>
+  <p><b>Server Awan</b> mengubah titik akhir yang digunakan oleh menu Cloud opsional. Kredensial dan data proyek hanya dikirim saat Anda memanggil fitur cloud.</p>
+
+  <div class="warning">Mengubah peta memori atau opsi kompatibilitas assembler membatalkan asumsi yang dibuat oleh program yang sudah dirakit. Pasang kembali setelah mengubahnya.</div>
+</body>
+</html>

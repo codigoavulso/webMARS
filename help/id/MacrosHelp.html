@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Makro perakit</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Makro perakit</h1>
+  <p class="lead">Makro melakukan substitusi tingkat sumber sebelum perakitan normal. Mereka memerlukan dukungan assembler yang diperluas untuk diaktifkan.</p>
+
+  <h2>Definisi dan kegunaan</h2>
+  <pre>.macro print_int (%value)
+    move $a0, %value
+    li   $v0, 1
+    syscall
+.end_macro
+
+li $t0, 42
+print_int ($t0)</pre>
+  <p>Tanda kurung di sekitar parameter dan argumen pemanggilan bersifat opsional. Parameter adalah token yang dipisahkan koma dan diganti hanya sebagai pengidentifikasi, bukan di dalam literal string.</p>
+
+  <h2>Aturan diterapkan oleh webMARS</h2>
+  <ul>
+    <li>Makro diidentifikasi berdasarkan nama dan aritasnya, sehingga nama yang sama mungkin memiliki definisi dengan jumlah parameter berbeda.</li>
+    <li>Definisi tersebut harus muncul sebelum pemanggilannya. Referensi maju dilaporkan sebagai kesalahan.</li>
+    <li>Definisi makro bertumpuk tidak diperbolehkan.</li>
+    <li>Definisi diakhiri dengan baris yang hanya berisi <code>.end_macro</code>.</li>
+    <li>Definisi duplikat dengan nama dan arity yang sama menghasilkan peringatan dan duplikat tersebut diabaikan.</li>
+    <li>Label di dalam perluasan dibuat unik untuk setiap pemanggilan guna mencegah benturan antar perluasan.</li>
+    <li>Ekspansi bersifat rekursif, tetapi rekursi yang tidak valid dan pemanggilan yang salah didiagnosis alih-alih menghasilkan kode secara diam-diam.</li>
+  </ul>
+
+  <h2>Konstanta dan termasuk</h2>
+  <p><code>.eqv</code> substitusi pengidentifikasi persediaan untuk konstanta bernama. <code>.include</code> adalah bagian dari kumpulan arahan assembler yang diperluas dan menyelesaikan sumber proyek tempat proyek browser saat ini menyediakannya. Lebih suka nama proyek yang relatif dan tetap menyertakan sumber dalam proyek yang sama.</p>
+
+  <h2>Makro versus instruksi semu</h2>
+  <p>Instruksi semu dipilih dari referensi instruksi webMARS dan diperluas sesuai dengan pola operan. Makro ditentukan oleh program dan dapat berisi rangkaian pernyataan sumber yang berubah-ubah. Keduanya diperluas sebelum eksekusi dan dapat memetakan satu baris sumber ke beberapa instruksi dasar.</p>
+
+  <div class="warning">Argumen makro adalah substitusi token, bukan nilai yang diketik. Ekspansi yang valid secara sintaksis masih dapat menghasilkan jenis assembler atau kesalahan rentang di situs pemanggilan.</div>
+</body>
+</html>

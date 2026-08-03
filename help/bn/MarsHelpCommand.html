@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C কম্পাইলার</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">বিল্ট-ইন টিচিং কম্পাইলার o32 কলিং কনভেনশন ব্যবহার করে একটি ইচ্ছাকৃতভাবে সংজ্ঞায়িত সি উপসেটকে MIPS32 সমাবেশে অনুবাদ করে। এটি একটি সাধারণ-উদ্দেশ্য ISO C কম্পাইলার নয়।</p>
+
+  <h2>প্রোফাইল</h2>
+  <table>
+    <tr><th>প্রোফাইল</th><th>উদ্দেশ্য</th></tr>
+    <tr><td><code>C0-S0</code> থেকে <code>C0-S4</code></td><td>ক্রমবর্ধমান শিক্ষণ উপসেট, এক্সপ্রেশন এবং নিয়ন্ত্রণ প্রবাহ থেকে ফাংশন, অ্যারে, পয়েন্টার, কাঠামো, টাইপডেফ, চুক্তি এবং লাইব্রেরিতে অগ্রগতি।</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>ডিফল্ট, সবচেয়ে সক্ষম প্রোফাইল: বাইট-অ্যাড্রেসড <code>char</code>/<code>char *</code>, নেটিভ স্ট্রিং, <code>argc/argv</code>, ফাংশন পয়েন্টার এবং <code>void *</code>.</td></tr>
+  </table>
+  <p>যদি একটি উত্স একটি উচ্চতর প্রোফাইলের প্রয়োজন হয়, সংকলন একটি ফোকাস নির্গত <code>MC_SUBSET_MISMATCH</code> মাধ্যমিক ত্রুটির ক্যাসকেডের পরিবর্তে ডায়গনিস্টিক।</p>
+
+  <h2>একটি প্রকল্প কম্পাইল করুন</h2>
+  <ol class="steps">
+    <li>পছন্দসই প্রোফাইল এবং আউটপুট বিকল্প নির্বাচন করুন <b>সেটিংস → Mini-C পছন্দসমূহ</b>.</li>
+    <li>এক বা একাধিক খুলুন <code>.c</code> একই প্রকল্পে ফাইল।</li>
+    <li>নির্বাচন করুন <b>চালান → কম্পাইল C0</b> বা টিপুন <kbd>F4</kbd>.</li>
+    <li>ডায়গনিস্টিক পর্যালোচনা এবং উত্পন্ন MIPS সমাবেশ জেনারেট করা প্রোগ্রামটিকে সাধারণভাবে একত্রিত করুন এবং চালান।</li>
+  </ol>
+
+  <h2>কনভেনশন এবং এন্ট্রি পয়েন্ট কলিং</h2>
+  <ul>
+    <li>যুক্তি ব্যবহার <code>$a0</code>–<code>$a3</code>, অতিরিক্ত আর্গুমেন্ট স্ট্যাক ব্যবহার করে এবং রিটার্ন মান ব্যবহার করে <code>$v0</code> (এবং <code>$v1</code> যেখানে উপযুক্ত)।</li>
+    <li>Callee-সংরক্ষিত রেজিস্টার এবং স্ট্যাক ফ্রেম MIPS o32 প্রত্যাশা অনুসরণ করে।</li>
+    <li><code>main(void)</code> এবং, C1-NATIVE এ, <code>main(int argc, char **argv)</code> সমর্থিত হয়</li>
+    <li>webMARS প্রোগ্রাম আর্গুমেন্টের জন্য, <code>argv[0]</code> ব্যবহারকারীর দ্বারা সরবরাহ করা প্রথম টোকেন; কোন স্বয়ংক্রিয় এক্সিকিউটেবল-নাম এন্ট্রি নেই।</li>
+  </ul>
+
+  <h2>বান্ডিল হেডার এবং লাইব্রেরি</h2>
+  <p>
+    <span class="pill">stdio</span><span class="pill">conio</span><span class="pill">ফাইল</span>
+    <span class="pill">args</span><span class="pill">স্ট্রিং</span><span class="pill">স্ট্রিং_নেটিভ</span>
+    <span class="pill">পার্স</span><span class="pill">img</span><span class="pill">ব্যবহার</span>
+    <span class="pill">রান্ড</span><span class="pill">টাইপ</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">stddef</span><span class="pill">bitmap_rect</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>এই হেডারগুলি হল webMARS কম্প্যাটিবিলিটি লাইব্রেরি যা MIPS syscalls এবং ডিভাইসগুলির চারপাশে তৈরি। তারা তাদের নথিভুক্ত উপসেট বাস্তবায়ন করে, সম্পূর্ণ হোস্ট সি স্ট্যান্ডার্ড লাইব্রেরি নয়।</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> এছাড়াও প্রদান করে <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> এবং <code>bitmap_configure_all</code>, একটি C0 প্রোগ্রামকে তার প্রদর্শনের আকার, ইউনিটের আকার এবং ফ্রেমবাফার ঠিকানা বিটম্যাপ সরঞ্জামগুলিতে পাঠাতে অনুমতি দেয়।</p>
+
+  <h2>ভাল শুরু উদাহরণ</h2>
+  <ul>
+    <li><b>হ্যালো ওয়ার্ল্ড (সি)</b> ক্ষুদ্রতম সম্পূর্ণ প্রোগ্রামের জন্য।</li>
+    <li><b>Mini-C C1 নেটিভ</b> নেটিভ স্ট্রিং এবং বর্তমান প্রোফাইল আচরণের জন্য।</li>
+    <li><b>আর্গুমেন্ট লাইব্রেরি ডেমো</b> জন্য <code>argc/argv</code>.</li>
+    <li><b>মাল্টি-ফাইল পরিসংখ্যান</b> ফাইল জুড়ে প্রকল্প-ব্যাপী সংকলন এবং ফাংশন কলের জন্য।</li>
+    <li><b>stdio কনসোল বেসিক</b> এবং <b>stdio ফাইল রাউন্ডট্রিপ</b> সামঞ্জস্যপূর্ণ লাইব্রেরির জন্য।</li>
+  </ul>
+
+  <div class="note">সংগ্রহস্থলের কম্পাইলার ম্যানুয়ালটি আদর্শ, বিশদ ভাষার রেফারেন্স হিসাবে রয়ে গেছে। অ্যাপ-মধ্যস্থ পৃষ্ঠাটি একটি প্রোফাইল চয়ন করতে এবং সঠিকভাবে উদাহরণগুলি চালানোর জন্য প্রয়োজনীয় আচরণগুলির সংক্ষিপ্ত বিবরণ দেয়৷</div>
+</body>
+</html>

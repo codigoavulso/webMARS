@@ -1,10 +1,33 @@
 (() => {
   const globalScope = typeof window !== "undefined" ? window : globalThis;
   const STORAGE_KEY = "webmars-language-v1";
+  const SUPPORTED_LANGUAGES = new Set(["en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id"]);
   const listeners = new Set();
 
   function normalizeLanguage(language) {
     return String(language || "").trim();
+  }
+
+  function matchSupportedLanguage(language) {
+    const normalized = normalizeLanguage(language).toLowerCase().replaceAll("_", "-");
+    if (!normalized) return "";
+    const exact = normalized === "in" ? "id" : normalized;
+    if (SUPPORTED_LANGUAGES.has(exact)) return exact;
+    const base = exact.split("-")[0];
+    const aliasedBase = base === "in" ? "id" : base;
+    return SUPPORTED_LANGUAGES.has(aliasedBase) ? aliasedBase : "";
+  }
+
+  function detectBrowserLanguage() {
+    const browserLanguages = Array.isArray(globalScope.navigator?.languages)
+      ? globalScope.navigator.languages
+      : [];
+    const candidates = [...browserLanguages, globalScope.navigator?.language];
+    for (const candidate of candidates) {
+      const supported = matchSupportedLanguage(candidate);
+      if (supported) return supported;
+    }
+    return "en";
   }
 
   function formatMessage(template, variables = {}) {
@@ -25,14 +48,16 @@
   function applyDocumentLanguage() {
     const documentElement = globalScope.document?.documentElement;
     if (!documentElement) return;
-    documentElement.lang = state.currentLanguage || state.fallbackLanguage || "en";
+    const language = state.currentLanguage || state.fallbackLanguage || "en";
+    documentElement.lang = language;
+    documentElement.dir = language.toLowerCase().split("-")[0] === "ar" ? "rtl" : "ltr";
   }
 
   try {
-    const storedLanguage = globalScope.localStorage?.getItem(STORAGE_KEY);
-    if (storedLanguage) state.currentLanguage = storedLanguage;
+    const storedLanguage = matchSupportedLanguage(globalScope.localStorage?.getItem(STORAGE_KEY));
+    state.currentLanguage = storedLanguage || detectBrowserLanguage();
   } catch {
-    // Ignore storage access issues and keep the default language.
+    state.currentLanguage = detectBrowserLanguage();
   }
 
   function emitChange() {

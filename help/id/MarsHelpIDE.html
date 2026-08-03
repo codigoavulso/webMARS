@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ruang kerja dan file</title>
+  <link rel="stylesheet" href="webmars-help.css">
+</head>
+<body>
+  <h1>File ruang kerja &amp;</h1>
+  <p class="lead">Sebuah proyek adalah unit yang webMARS simpan, kompilasi, dan rakit. Ini mungkin berisi satu atau lebih <code>.asm</code>/<code>.s</code> file perakitan dan Mini-C <code>.c</code> file.</p>
+
+  <h2>Menu berkas</h2>
+  <table>
+    <tr><th>Perintah</th><th>Perilaku saat ini</th></tr>
+    <tr><td>Proyek Baru</td><td>Membuat proyek kosong. Setelah proyek terbuka, tambahkan file sumber C atau perakitan dari submenu Baru.</td></tr>
+    <tr><td>Buka dari Disk</td><td>Mengimpor file yang dipilih melalui browser. Pilihan multi-file didukung.</td></tr>
+    <tr><td>Buka dari Penyimpanan Browser</td><td>Memulihkan proyek yang disimpan di salah satu slot proyek lokal.</td></tr>
+    <tr><td>Simpan File Aktif / Simpan Proyek</td><td>Menyimpan sumber aktif atau proyek lengkap ke dalam penyimpanan browser.</td></tr>
+    <tr><td>Unduh / Unduh Sebagai</td><td>Mengekspor konten aktif melalui sistem pengunduhan browser.</td></tr>
+    <tr><td>Contoh</td><td>Membuka katalog contoh yang dikurasi dan dapat dicari, dikelompokkan berdasarkan bahasa dan tujuan pembelajaran.</td></tr>
+    <tr><td>Buang Jalankan I/O</td><td>Mengunduh transkrip input/output program saat ini untuk diagnosis atau penilaian.</td></tr>
+  </table>
+
+  <h2>Editor dan navigasi proyek</h2>
+  <ul>
+    <li>Gunakan tab sumber untuk mengganti file aktif. Menutup file tidak menutup keseluruhan proyek.</li>
+    <li>Kesalahan perakitan dan diagnostik Mini-C mengidentifikasi file sumber dan baris kapan pun tersedia.</li>
+    <li>Penyorotan label, penyorotan sintaksis, ukuran font, dan spasi baris dikontrol <b>Pengaturan → Antarmuka</b>.</li>
+    <li>Rakitan Mini-C yang dihasilkan dapat terbuka secara otomatis di jendelanya sendiri ketika preferensi tersebut diaktifkan.</li>
+  </ul>
+
+  <h2>Membangun model</h2>
+  <p><b>Merakit</b> membangun sumber perakitan yang dipilih menjadi gambar program. <b>Kompilasi C0</b> menerjemahkan proyek C ke perakitan MIPS; perakitan yang dihasilkan kemudian dirakit sebelum dieksekusi. Proyek multi-file C ditautkan sebagai satu unit terjemahan oleh kompiler pengajaran.</p>
+
+  <h2>Pemulihan lokal dan proyek cloud</h2>
+  <p>webMARS menyimpan data pemulihan di penyimpanan browser sehingga memuat ulang dapat memulihkan sesi kerja. Lima slot proyek lokal eksplisit terpisah dari sesi pemulihan tersebut.</p>
+  <p>Itu <b>Awan</b> menu adalah opsional. Login, buka/simpan proyek, sinkronisasi dan penyegaran berkomunikasi dengan server cloud yang dikonfigurasi. Penggunaan cloud tidak pernah diperlukan untuk pengeditan, kompilasi, atau pengoperasian lokal.</p>
+
+  <div class="warning"><strong>Penyimpanan browser bukanlah cadangan permanen.</strong> Penjelajahan pribadi, tekanan kuota, pembersihan browser, atau perintah Hapus Penyimpanan Lokal dapat menghapusnya. Unduh pekerjaan yang harus disimpan.</div>
+</body>
+</html>
