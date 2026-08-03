@@ -5345,7 +5345,7 @@ function createMessagesPane(refs, limit) {
 }
 const STORAGE_KEY = "mars45-web-preferences";
 const DEFAULT_PREFERENCES = {
-  language: "en",
+  language: (typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n)?.getLanguage?.() || "en",
   theme: "light",
   menuPosition: "top",
   showBenchmarkPanel: false,

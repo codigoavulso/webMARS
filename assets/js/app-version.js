@@ -1,7 +1,7 @@
 (() => {
   const globalScope = typeof window !== "undefined" ? window : globalThis;
   const APP_NAME = "webMARS";
-  const APP_VERSION = "0.5.2";
+  const APP_VERSION = "0.5.3";
   const VERSION_TOKEN = "__WEBMARS_APP_VERSION__";
 
   function replaceVersionToken(value) {

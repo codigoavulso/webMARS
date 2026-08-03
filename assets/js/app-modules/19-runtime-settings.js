@@ -62,7 +62,8 @@
   function applyLanguagePreference(language) {
     const i18n = getI18nApi();
     if (!i18n || typeof i18n.setLanguage !== "function") return;
-    i18n.setLanguage(language || "en");
+    const currentLanguage = typeof i18n.getLanguage === "function" ? i18n.getLanguage() : "";
+    i18n.setLanguage(language || currentLanguage || "en");
   }
 
   function getAvailableLanguages() {

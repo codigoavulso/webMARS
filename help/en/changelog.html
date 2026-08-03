@@ -8,7 +8,14 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.5.2 expands webMARS to ten languages, adds automatic browser-language selection and introduces the mouse-driven MARS-OS desktop.</p>
+  <p class="lead">Release 0.5.3 fixes automatic browser-language selection for fresh sessions and private windows.</p>
+
+  <h2>0.5.3 &mdash; browser-language bootstrap fix</h2>
+  <ul>
+    <li>Preserved the language detected from the browser when the application creates its default UI preferences for the first time.</li>
+    <li>Kept explicit saved language preferences ahead of automatic detection and retained English as the fallback for unsupported languages.</li>
+    <li>Added regression coverage for regional browser languages and the full fresh-session preference bootstrap.</li>
+  </ul>
 
   <h2>0.5.2 &mdash; ten languages, automatic selection, MARS-OS desktop</h2>
   <ul>

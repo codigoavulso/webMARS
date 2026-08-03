@@ -64,7 +64,7 @@ const {
   applyThemePreference
 } = runtimeSettingsModule;
 
-applyLanguagePreference(preferences.language || "en");
+applyLanguagePreference(preferences.language);
 applyThemePreference(preferences.theme);
 
 runtimeSettings.startAtMain = preferences.startAtMain;
@@ -6240,7 +6240,7 @@ function applyPreferences(nextPreferences) {
   const previousCloudApiBase = cloudApiBase;
   store.setState({ preferences: nextPreferences });
   savePreferences(nextPreferences);
-  applyLanguagePreference(nextPreferences.language || "en");
+  applyLanguagePreference(nextPreferences.language);
   runtimeSettings.startAtMain = nextPreferences.startAtMain;
   runtimeSettings.delayedBranching = nextPreferences.delayedBranching;
   runtimeSettings.warningsAreErrors = nextPreferences.warningsAreErrors;

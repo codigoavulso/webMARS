@@ -8,7 +8,14 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">A versão 0.5.2 expande o webMARS para dez idiomas, adiciona seleção automática pelo idioma do browser e introduz o desktop MARS-OS controlado por rato.</p>
+  <p class="lead">A versão 0.5.3 corrige a seleção automática do idioma do browser em sessões novas e janelas privadas.</p>
+
+  <h2>0.5.3 &mdash; correção do idioma durante o arranque</h2>
+  <ul>
+    <li>Preservado o idioma detetado no browser quando a aplicação cria pela primeira vez as preferências da interface.</li>
+    <li>Mantidas as preferências guardadas acima da deteção automática e o Inglês como fallback para idiomas não suportados.</li>
+    <li>Adicionados testes para idiomas regionais e para todo o arranque de preferências de uma sessão nova.</li>
+  </ul>
 
   <h2>0.5.2 &mdash; dez idiomas, seleção automática, desktop MARS-OS</h2>
   <ul>

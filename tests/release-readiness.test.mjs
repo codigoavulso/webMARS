@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.5.2";
+const expectedReleaseVersion = "0.5.3";
 const languages = ["en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id"];
 const localizedLanguages = languages.filter((language) => language !== "en");
 
@@ -63,7 +63,7 @@ function placeholders(value) {
     .sort();
 }
 
-test("0.5.2 version is coherent across runtime and release metadata", async () => {
+test("0.5.3 version is coherent across runtime and release metadata", async () => {
   const packageJson = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
   const packageLock = JSON.parse(await readFile(resolve(projectRoot, "package-lock.json"), "utf8"));
   const appVersion = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");
@@ -307,6 +307,17 @@ test("the first visit follows a supported browser language and otherwise uses En
   assert.equal(boot(["zh-Hant-HK"]).WebMarsI18n.getLanguage(), "zh");
   assert.equal(boot(["de-DE", "ja-JP"]).WebMarsI18n.getLanguage(), "en");
   assert.equal(boot(["fr-FR"], "pt-PT").WebMarsI18n.getLanguage(), "pt");
+});
+
+test("fresh UI preferences preserve the language detected during bootstrap", async () => {
+  const uiSource = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "10-ui.js"), "utf8");
+  const settingsSource = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "19-runtime-settings.js"), "utf8");
+  const runtimeSource = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "20-app-runtime.js"), "utf8");
+
+  assert.match(uiSource, /language:\s*\(typeof window[\s\S]*?WebMarsI18n[\s\S]*?getLanguage\?\.\(\)\s*\|\|\s*"en"/);
+  assert.match(settingsSource, /i18n\.setLanguage\(language\s*\|\|\s*currentLanguage\s*\|\|\s*"en"\)/);
+  assert.match(runtimeSource, /applyLanguagePreference\(preferences\.language\);/);
+  assert.doesNotMatch(runtimeSource, /applyLanguagePreference\(preferences\.language\s*\|\|\s*"en"\)/);
 });
 
 test("cloud authentication is restored automatically after a page reload", async () => {

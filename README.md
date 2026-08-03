@@ -1,4 +1,4 @@
-# webMARS v0.5.2
+# webMARS v0.5.3
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,14 +22,11 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.5.2
+## Highlights in v0.5.3
 
-- Expanded the complete UI, example catalogue, documentation and help from three to ten languages.
-- Added first-visit browser-language detection with English fallback while preserving explicit user preferences.
-- Added right-to-left Arabic layout while keeping source code, runtime output and technical notation left-to-right.
-- Reworked MARS-OS into a mouse-driven desktop with Program Manager, movable windows and its shell inside the Terminal app.
-- Improved TTY throughput and Android keyboard-aware mobile sizing while removing the desktop vertical gap.
-- Added reproducible localization generation, technical terminology protection and ten-language parity checks.
+- Fixed first-visit language selection so fresh UI preferences preserve the language detected from the browser.
+- Kept explicit saved language preferences ahead of browser detection and retained English as the unsupported-language fallback.
+- Added regression coverage for the complete bootstrap path that previously reset Portuguese and other detected languages to English.
 
 ## Main Capabilities
 
@@ -41,6 +38,7 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - Light and dark interface themes, selected in `Settings > Interface...` and applied to the editor,
   tool windows and help pages.
 - Localized UI, examples, documentation and help for English, Spanish, Portuguese, Mandarin Chinese, Hindi, Arabic, French, Bengali, Russian and Indonesian.
+- On a fresh session, the interface follows the first supported language reported by `navigator.languages` (for example, `pt-PT` selects Portuguese); unsupported languages fall back to English, and an explicit saved choice always takes priority.
 - Browser storage for source files with virtual folders and quota management.
 - Project/editor/runtime workflow with persistent preferences and recoverable session state.
 
@@ -135,6 +133,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.5.3`: browser-language bootstrap fix for fresh sessions and private windows
 - `v0.5.2`: ten-language UI/help/examples, automatic browser-language selection, Arabic RTL, mouse-driven MARS-OS desktop, and faster responsive TTY
 - `v0.5.1`: external device interrupts, System Clock and Stack Visualizer tools, consolidated file/cloud workflows, faster tool batching, resilient text snapshots, and MARS-OS clock/benchmark commands
 - `v0.5.0`: hardened JavaScript runtime, inverse-delta backstep, batched tools, dynamic Bitmap MMIO, expanded examples/documentation, and complete mobile workflows

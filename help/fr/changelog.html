@@ -8,7 +8,14 @@
 </head>
 <body>
   <h1>Journal des modifications</h1>
-  <p class="lead">La version 0.5.2 étend webMARS à dix langues, ajoute la sélection automatique de la langue du navigateur et introduit le bureau MARS-OS piloté par la souris.</p>
+  <p class="lead">La version 0.5.3 corrige la sélection automatique de la langue du navigateur pour les nouvelles sessions et les fenêtres privées.</p>
+
+  <h2>0.5.3 &mdash; correctif d'amorçage du langage du navigateur</h2>
+  <ul>
+    <li>Préservation de la langue détectée dans le navigateur lorsque l'application crée pour la première fois ses préférences d'interface utilisateur par défaut.</li>
+    <li>Conservé les préférences linguistiques enregistrées explicitement avant la détection automatique et conservé l'anglais comme solution de repli pour les langues non prises en charge.</li>
+    <li>Ajout d'une couverture de régression pour les langues régionales du navigateur et du bootstrap complet des préférences de nouvelle session.</li>
+  </ul>
 
   <h2>0.5.2 &mdash; dix langues, sélection automatique, MARS-OS bureau</h2>
   <ul>
