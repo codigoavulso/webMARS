@@ -40,6 +40,7 @@ digit_buf:      .space 16
 history_buf:    .space 1024
 history_count:  .word 0
 key_pending:    .word -1
+key_skip_lf:    .word 0
 mouse_button:   .word 0
 mouse_column:   .word 0
 mouse_row:      .word 0
@@ -58,8 +59,12 @@ esc_dim:        .byte 27, 91, 50, 109, 0
 esc_inverse:    .byte 27, 91, 55, 109, 0
 esc_semicolon:  .asciiz ";"
 esc_upper_h:    .asciiz "H"
-esc_mouse_on:   .byte 27,91,63,49,48,48,48,104,27,91,63,49,48,48,54,104,0
-esc_mouse_off:  .byte 27,91,63,49,48,48,48,108,27,91,63,49,48,48,54,108,0
+# The desktop requests all motion so menus can highlight on hover. Full-screen
+# applications only need clicks; keeping mode 1000 active lets the editor and
+# spreadsheet use the mouse without flooding the shell with motion reports.
+esc_mouse_on:     .byte 27,91,63,49,48,48,48,108,27,91,63,49,48,48,50,108,27,91,63,49,48,48,51,104,27,91,63,49,48,48,54,104,0
+esc_mouse_clicks: .byte 27,91,63,49,48,48,51,108,27,91,63,49,48,48,48,104,27,91,63,49,48,48,54,104,0
+esc_mouse_off:    .byte 27,91,63,49,48,48,48,108,27,91,63,49,48,48,50,108,27,91,63,49,48,48,51,108,27,91,63,49,48,48,54,108,0
 # The colour is chosen by number inside the escape sequence.
 ansi_bold_cyan: .byte 27, 91, 49, 59, 57, 54, 109, 0
 ansi_green:     .byte 27, 91, 57, 50, 109, 0
@@ -316,14 +321,43 @@ tty_getkey:
   nop
   li    $t0, -1
   sw    $t0, key_pending
-  b     tty_getkey_done
+  # Pushback bytes still pass through CR/LF and Escape normalization.
+  b     tty_getkey_normalize
   nop
 tty_getkey_read:
   jal   tty_getc
   nop
   andi  $v0, $v0, 0xff
+
+tty_getkey_normalize:
+  # Most terminal widgets send Enter as CR LF. Return one logical Enter and
+  # discard only the LF immediately following a CR, while still accepting a
+  # standalone LF from other devices.
+  lw    $t0, key_skip_lf
+  beq   $t0, $zero, tty_getkey_check_cr
+  nop
+  sw    $zero, key_skip_lf
+  li    $t0, 10
+  beq   $v0, $t0, tty_getkey_read
+  nop
+tty_getkey_check_cr:
+  li    $t0, 13
+  bne   $v0, $t0, tty_getkey_check_escape
+  nop
+  li    $t1, 1
+  sw    $t1, key_skip_lf
+  b     tty_getkey_done
+  nop
+tty_getkey_check_escape:
   li    $t0, 27
   bne   $v0, $t0, tty_getkey_done
+  nop
+
+  # A physical Escape key is a single byte. Do not block forever waiting for
+  # a CSI follower; arrow and mouse reports already have their next byte in RX.
+  lw    $t0, 0($s0)
+  andi  $t0, $t0, 1
+  beq   $t0, $zero, tty_getkey_escape
   nop
   jal   tty_getc
   nop

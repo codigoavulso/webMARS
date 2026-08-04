@@ -6692,6 +6692,7 @@ function parseBooleanPreferenceToken(value, fallback = false) {
 }
 
 const THEME_OPTION_LABELS = {
+  system: "System",
   light: "Light",
   dark: "Dark"
 };

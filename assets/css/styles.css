@@ -1,7 +1,8 @@
 /*
  * webMARS theme tokens.
  *
- * The light theme is the original webMARS appearance and stays the default.
+ * The light palette is the attribute-free base; the default System preference
+ * selects it or the dark palette from the browser color scheme.
  * The dark theme is opt-in: the runtime sets `data-theme="dark"` on <html>
  * from the `theme` interface preference. Every color used by the interface
  * must resolve through one of the tokens below so both themes stay in sync.

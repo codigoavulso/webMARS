@@ -248,8 +248,11 @@ test("stateful tools use central deltas and expose active runtime consumers", as
   assert.match(ttySource, /keyboardInput\?\.addEventListener\("compositionend"/);
   assert.match(ttySource, /event\.inputType !== "deleteContentBackward"/);
   assert.match(ttySource, /data-tty="settings-toggle"/);
-  assert.match(ttySource, /\.desktop-stacked \.tty-ansi-settings-toggle \{/);
-  assert.match(ttySource, /\.desktop-stacked \.tty-ansi-settings-collapsed \.tty-ansi-top \{/);
+  // The settings toggle sits in the always-visible display options bar in both
+  // layouts, and collapsing hides the whole settings panel.
+  assert.match(ttySource, /class="tool-btn mars-tool-display-settings-toggle"/);
+  assert.match(ttySource, /\.tty-ansi-settings-collapsed \.tty-ansi-main > \.mars-tool-panel:first-child \{[\s\S]*?display: none;/);
+  assert.match(ttySource, /\.tty-ansi-settings-collapsed \.tty-ansi-main \{[\s\S]*?grid-template-rows: minmax\(0, 1fr\);/);
   assert.match(ttySource, /root\.classList\.toggle\("tty-ansi-settings-collapsed", settingsCollapsed\);/);
   assert.match(ttySource, /settingsToggle\?\.addEventListener\("click"/);
   assert.match(ttySource, /settingsToggle\.setAttribute\("aria-expanded", settingsCollapsed \? "false" : "true"\);/);
@@ -262,7 +265,7 @@ test("stateful tools use central deltas and expose active runtime consumers", as
   assert.match(ttySource, /mouseTrackingMode:\s*0/);
   assert.match(ttySource, /parameter === "1000" \|\| parameter === "1002" \|\| parameter === "1003"/);
   assert.match(ttySource, /parameter === "1006"/);
-  assert.match(ttySource, /function sendMouseEvent\(event, kind, wheelDelta = 0\)/);
+  assert.match(ttySource, /function sendMouseEvent\(event, kind, wheelDelta = 0, overrides = \{\}\)/);
   assert.match(ttySource, /`\\u001b\[<\$\{code\};\$\{cell\.col\};\$\{cell\.row\}\$\{suffix\}`/);
   assert.match(ttySource, /canvas\.addEventListener\("pointerup"/);
   assert.match(ttySource, /canvas\.addEventListener\("pointermove"/);
@@ -1078,4 +1081,268 @@ test("stack visualizer initially centers the memory window on $sp", async () => 
     const middle = (context.top + direction * 5 * 4) >>> 0;
     assert.equal(middle, 0x7fffeffc, `the ${highTop ? "high-top" : "low-top"} view must center on $sp`);
   }
+});
+
+test("fitting a window to a virtual display removes scrollbars without leaving slack", async () => {
+  const source = await readFile(managerPath, "utf8");
+  const helperSource = sourceBetween(source, "function computeDisplayFitSize", "\nfunction createToolManager");
+  const context = vm.createContext({});
+  vm.runInContext(helperSource, context);
+  const compute = context.computeDisplayFitSize;
+
+  const base = {
+    windowWidth: 800,
+    windowHeight: 600,
+    displayWidth: 640,
+    displayHeight: 400,
+    viewportWidth: 640,
+    viewportHeight: 400,
+    contentScrollWidth: 780,
+    contentClientWidth: 780,
+    contentScrollHeight: 580,
+    contentClientHeight: 580,
+    minWidth: 200,
+    minHeight: 120,
+    maxWidth: 1600,
+    maxHeight: 1000
+  };
+
+  const settled = compute(base);
+  assert.equal(settled.width, 800, "a viewport already matching the display must not move");
+  assert.equal(settled.height, 600);
+
+  // A viewport wider and shorter than the display: shed the empty band on one
+  // axis while growing out of the scrollbar on the other.
+  const mismatched = compute({ ...base, viewportWidth: 760, viewportHeight: 300 });
+  assert.equal(mismatched.width, 800 - 120);
+  assert.equal(mismatched.height, 600 + 100);
+
+  // Fractions of a pixel are what keep a scrollbar alive, so they round up.
+  const fractional = compute({ ...base, viewportHeight: 399.9 });
+  assert.equal(fractional.height, 601);
+
+  // Settings and footer spilling out of the window set a floor under the fit.
+  const crowded = compute({
+    ...base,
+    displayWidth: 128,
+    viewportWidth: 640,
+    contentScrollWidth: 780,
+    contentClientWidth: 600
+  });
+  assert.equal(crowded.width, 980, "chrome that already overflows must not be squeezed further");
+  assert.equal(crowded.floorWidth, 980, "the floor travels to the next pass so it is not shrunk away again");
+
+  // A display taller than the desktop keeps its vertical scrollbar, so the
+  // width has to carry it instead of paying with a horizontal scrollbar.
+  const oversized = compute({
+    ...base,
+    displayHeight: 2000,
+    viewportHeight: 400,
+    scrollbarWidth: 15,
+    maxHeight: 700
+  });
+  assert.equal(oversized.height, 700);
+  assert.equal(oversized.width, 815);
+  assert.equal(oversized.clamped, true);
+});
+
+test("the display fit is desktop-only, undone by hand and routed through the window manager", async () => {
+  const source = await readFile(managerPath, "utf8");
+  const uiSource = await readFile(uiPath, "utf8");
+
+  // Stacked panels span the screen, so there is no window geometry to fit.
+  assert.match(source, /desktop\?\.classList\?\.contains\("desktop-stacked"\) !== true/);
+  assert.match(uiSource, /\.desktop-stacked \.tool-window \.mars-tool-display-fit \{\s*display: none;/);
+
+  // Sizing goes through the manager so the result is clamped to the desktop and
+  // remembered like any other window geometry.
+  assert.match(uiSource, /function resizeWindow\(windowId, size = \{\}\) \{[\s\S]*?setWindowMetrics\(entry, metrics, true\);/);
+  assert.match(uiSource, /^\s{4}resizeWindow,$/m);
+  assert.match(source, /windowManager\.resizeWindow\(root\.id, target\)/);
+
+  // Dragging a resize handle is an explicit override of the automatic size.
+  assert.match(source, /classList\.contains\("window-resize-handle"\)[\s\S]*?setEnabled\(false\)/);
+
+  for (const toolPath of [
+    "tools/tty-ansi-terminal.js",
+    "tools/bitmap-display.js",
+    "tools/bitmap-terminal-tool.js"
+  ]) {
+    const toolSource = await readFile(resolve(projectRoot, toolPath), "utf8");
+    assert.match(toolSource, /ctx\.createDisplayFitController\(\{/, `${toolPath} must offer the fit`);
+    assert.match(toolSource, /class="mars-tool-display-fit"/, `${toolPath} must expose the fit checkbox`);
+    assert.match(toolSource, /fit-window" type="checkbox" checked/, `${toolPath} must enable fit by default`);
+    assert.match(toolSource, /Fit window to display/, `${toolPath} must label the fit checkbox`);
+    assert.match(toolSource, /mars-tool-display-settings-toggle/, `${toolPath} must offer the settings toggle`);
+    assert.match(toolSource, /let settingsCollapsed = true;/, `${toolPath} must hide settings by default`);
+    assert.match(toolSource, /displayFit\.setEnabled\(true\);/, `${toolPath} must start fitted`);
+    assert.match(toolSource, /displayFit\.setEnabled\(/, `${toolPath} must wire the checkbox`);
+    assert.match(toolSource, /displayFit\.request\(\)/, `${toolPath} must refit when the display changes`);
+  }
+});
+
+test("TTY terminal defers right-margin wrap and preserves VT display state", async () => {
+  const source = await readFile(resolve(projectRoot, "tools/tty-ansi-terminal.js"), "utf8");
+  const createCellSource = sourceBetween(source, "  function createCell()", "\n\n  // Pointer motion is lossy");
+  const terminalCoreSource = sourceBetween(source, "      function cloneCell(", "\n      function updateMetrics()");
+  const context = vm.createContext({});
+
+  vm.runInContext(`
+    const TERMINAL_GEOMETRY = { columns: 80, rows: 25 };
+    const DEC_SPECIAL_GRAPHICS = Object.freeze({});
+    const CP437_BOX_DRAWING = Object.freeze({});
+    const encodingSelect = { value: "ansi" };
+    const mouseMotionCoalescer = { reset() {} };
+    const activeMousePointers = new Map();
+    const history = { ensure() { return null; } };
+    let terminalState = null;
+    let savedCursor = { row: 0, col: 0 };
+    let activeHistoryStep = null;
+    let suppressHistory = true;
+    let dirtyAll = false;
+    let dirty = new Set();
+    let inputQueue = [];
+    let observerReadCount = 0;
+    let observerWriteCount = 0;
+    let snapshotReadCount = 0;
+    let snapshotWriteCount = 0;
+    let polledTxCount = 0;
+    let crlfTranslationEnabled = false;
+    function getSnapshotStep() { return 0; }
+    function captureMmioState() { return {}; }
+    function scheduleRender() {}
+    ${createCellSource}
+    ${terminalCoreSource}
+    resetTerminalState();
+    globalThis.feed = (text) => {
+      String(text).split("").forEach((character) => processTerminalByte(character.charCodeAt(0)));
+    };
+    globalThis.resetTerminal = () => resetTerminalState();
+    globalThis.readTerminal = () => cloneTerminalState(terminalState);
+  `, context);
+
+  context.feed("A".repeat(80 * 25));
+  let state = context.readTerminal();
+  assert.equal(state.cells.every((cell) => cell.ch === "A"), true, "the 80x25 frame must remain intact");
+  assert.equal(state.cursorRow, 24);
+  assert.equal(state.cursorCol, 79);
+  assert.equal(state.wrapPending, true, "the bottom-right cell sets deferred wrap instead of scrolling");
+
+  context.feed("\x1b[1;1H");
+  state = context.readTerminal();
+  assert.equal(state.cursorRow, 0);
+  assert.equal(state.cursorCol, 0);
+  assert.equal(state.wrapPending, false, "explicit cursor motion cancels deferred wrap");
+
+  context.resetTerminal();
+  context.feed("A".repeat(80 * 25));
+  context.feed("B");
+  state = context.readTerminal();
+  assert.equal(state.cells[24 * 80].ch, "B", "the next printable character performs the pending scroll and wrap");
+  assert.equal(state.cells[(25 * 80) - 1].ch, " ");
+  assert.equal(state.cursorRow, 24);
+  assert.equal(state.cursorCol, 1);
+  assert.equal(state.wrapPending, false);
+
+  context.resetTerminal();
+  context.feed("A".repeat(80));
+  context.feed("\r");
+  state = context.readTerminal();
+  assert.equal(state.wrapPending, false, "a carriage return cancels deferred wrap");
+  assert.equal(state.cursorCol, 0);
+
+  for (const [control, expectedRow, expectedColumn, label] of [
+    ["\n", 1, 79, "line feed"],
+    ["\b", 0, 78, "backspace"],
+    ["\t", 0, 79, "tab"]
+  ]) {
+    context.resetTerminal();
+    context.feed("A".repeat(80));
+    context.feed(control);
+    state = context.readTerminal();
+    assert.equal(state.wrapPending, false, `${label} cancels deferred wrap`);
+    assert.equal(state.cursorRow, expectedRow);
+    assert.equal(state.cursorCol, expectedColumn);
+  }
+
+  context.feed("\x1b[5;7H\x1b[2J");
+  state = context.readTerminal();
+  assert.equal(state.cursorRow, 4, "ED 2 must not home the cursor");
+  assert.equal(state.cursorCol, 6, "ED 2 must preserve the cursor column");
+  assert.equal(state.cells.every((cell) => cell.ch === " "), true);
+
+  context.feed("\x1b[?25l\x1b[2mX");
+  state = context.readTerminal();
+  assert.equal(state.cursorVisible, false);
+  assert.equal(state.cells[(4 * 80) + 6].dim, true, "SGR 2 is stored on the rendered cell");
+  assert.equal(state.currentDim, true);
+
+  context.feed("\x1b[22mY\x1b[?25h");
+  state = context.readTerminal();
+  assert.equal(state.cells[(4 * 80) + 7].dim, false, "SGR 22 clears both bold and dim intensity");
+  assert.equal(state.currentDim, false);
+  assert.equal(state.cursorVisible, true);
+});
+
+test("TTY mouse motion coalesces to the latest report without delaying barriers", async () => {
+  const source = await readFile(resolve(projectRoot, "tools/tty-ansi-terminal.js"), "utf8");
+  const coalescerSource = sourceBetween(
+    source,
+    "  function createLatestMouseMotionCoalescer(",
+    "\n\n  host.register"
+  );
+  const context = vm.createContext({});
+  vm.runInContext(`${coalescerSource}\nglobalThis.createCoalescer = createLatestMouseMotionCoalescer;`, context);
+
+  let ready = false;
+  let nextFrame = 1;
+  const callbacks = new Map();
+  const emitted = [];
+  const coalescer = context.createCoalescer({
+    schedule(callback) {
+      const id = nextFrame;
+      nextFrame += 1;
+      callbacks.set(id, callback);
+      return id;
+    },
+    cancel(id) {
+      callbacks.delete(id);
+    },
+    canFlush: () => ready,
+    emit(bytes) {
+      emitted.push([...bytes]);
+    }
+  });
+  const runFrames = () => {
+    const queued = [...callbacks.values()];
+    callbacks.clear();
+    queued.forEach((callback) => callback());
+  };
+
+  coalescer.enqueue([1], "cell-1");
+  coalescer.enqueue([2], "cell-2");
+  runFrames();
+  assert.equal(emitted.length, 0, "motion waits while previous receiver bytes are queued");
+  assert.equal(coalescer.pendingByteCount(), 1, "only the newest position remains pending");
+
+  coalescer.enqueue([3], "cell-3");
+  assert.equal(coalescer.flush(true), true, "a press/release/keyboard barrier can force the pending motion first");
+  assert.deepEqual(emitted, [[3]]);
+  assert.equal(callbacks.size, 0, "forcing a barrier cancels the scheduled frame");
+  assert.equal(coalescer.enqueue([3], "cell-3"), false, "identical positions are deduplicated");
+
+  coalescer.clearDedupe();
+  ready = true;
+  assert.equal(coalescer.enqueue([4], "cell-3"), true);
+  runFrames();
+  assert.deepEqual(emitted, [[3], [4]]);
+
+  assert.match(source, /\.tty-ansi-canvas \{[\s\S]*?touch-action: none;/);
+  assert.match(source, /canvas\.addEventListener\("pointercancel"/);
+  assert.match(source, /canvas\.addEventListener\("lostpointercapture"/);
+  const queueSource = sourceBetween(source, "      function queueInputBytes(", "\n\n      function echoInputBytes(");
+  assert.ok(
+    queueSource.indexOf("mouseMotionCoalescer.flush(true)") < queueSource.indexOf("appendInputBytes(bytes)"),
+    "a non-motion event must flush the latest position before appending its own bytes"
+  );
 });

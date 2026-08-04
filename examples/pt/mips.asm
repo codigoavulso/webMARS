@@ -1,6 +1,6 @@
 # MARS-OS 1.0 - ambiente operativo TTY interativo e completo
 # Abra Ferramentas > TTY Device + ANSI Terminal, ligue a MIPS,
-# monte este projeto e escreva "desktop" para a interface de rato ou "help".
+# monte e execute; abre o ambiente grafico. O Terminal apresenta a shell.
 #
 # Este ficheiro contem apenas o texto localizado. O kernel vive nos
 # modulos neutros incluidos no fim:
@@ -226,30 +226,96 @@ sheet_menu: .asciiz " ESC   s gravar   q sair   x gravar e sair   c limpar celul
 sheet_closed: .asciiz "sheet: fechada "
 msg_sheet_usage: .asciiz "uso: sheet FICHEIRO   a folha e criada se nao existir\r\n"
 
-# ---- ambiente grafico por rato ----
+# ---- ambiente de trabalho com janelas ----
+# Titulos da barra de menus e entradas. O ambiente calcula a disposicao a
+# partir destas strings, por isso uma traducao mais longa so alarga o menu.
 desktop_start: .asciiz "[ Iniciar ]"
-desktop_task: .asciiz "Gestor de Programas MARS-OS"
-desktop_icon_terminal: .asciiz "[>_]"
-desktop_icon_editor: .asciiz "[A]"
-desktop_icon_sheet: .asciiz "[#]"
-desktop_icon_basic: .asciiz "[B]"
-desktop_icon_about: .asciiz "[?]"
-desktop_label_terminal: .asciiz "Terminal"
-desktop_label_editor: .asciiz "Editor"
-desktop_label_sheet: .asciiz "Folha"
-desktop_label_basic: .asciiz "BASIC"
-desktop_label_about: .asciiz "Acerca"
-desktop_hint: .asciiz "Clique num icone ou Iniciar. Teclas: T terminal, E editor, W folha, B BASIC, Q sair."
-desktop_menu_header: .asciiz "| MARS-OS 95             |"
-desktop_menu_terminal: .asciiz "| Terminal               |"
-desktop_menu_editor: .asciiz "| Editor de texto        |"
-desktop_menu_sheet: .asciiz "| Folha de calculo       |"
-desktop_menu_basic: .asciiz "| BASIC                  |"
-desktop_menu_about: .asciiz "| Acerca                 |"
-desktop_menu_exit: .asciiz "| Reiniciar ambiente     |"
-desktop_welcome: .asciiz "Bem-vindo ao ambiente MARS-OS controlado por rato."
-desktop_welcome_detail: .asciiz "O gestor de janelas e as apps correm integralmente em Assembly MIPS."
-desktop_help_text: .asciiz "\r\nambiente grafico\r\n  O MARS-OS arranca no Gestor de Programas; abra Terminal para comandos\r\n  exit | desktop          fecha o Terminal e regressa ao ambiente de trabalho\r\n                         clique em Iniciar, icones, janelas e celulas da folha\r\n"
+mb_system:   .asciiz "Sistema"
+mb_programs: .asciiz "Programas"
+mb_windows:  .asciiz "Janelas"
+mb_help:     .asciiz "Ajuda"
+mi_about:      .asciiz "Acerca do MARS-OS"
+mi_sysinfo:    .asciiz "Informacao do sistema"
+mi_memory:     .asciiz "Relatorio de memoria"
+mi_disk:       .asciiz "Utilizacao do disco"
+mi_restart:    .asciiz "Reiniciar ambiente"
+mi_shutdown:   .asciiz "Encerrar"
+mi_terminal:   .asciiz "Terminal"
+mi_editor:     .asciiz "Editor de texto"
+mi_sheet:      .asciiz "Folha de calculo"
+mi_basic:      .asciiz "BASIC"
+mi_utils:      .asciiz "Utilitarios"
+mi_files:      .asciiz "Gestor de ficheiros"
+mi_commands:   .asciiz "Lista de comandos"
+mi_edit_notes: .asciiz "Abrir notas.txt"
+mi_edit_new:   .asciiz "Novo documento"
+mi_sheet_open: .asciiz "Abrir orcamento.sht"
+mi_sheet_new:  .asciiz "Nova folha"
+mi_basic_demo: .asciiz "Abrir demo.bas"
+mi_basic_new:  .asciiz "Sessao vazia"
+mi_ascii:      .asciiz "Tabela ASCII"
+mi_life:       .asciiz "Jogo da Vida"
+mi_guess:      .asciiz "Adivinhar o numero"
+mi_date:       .asciiz "Relogio e calendario"
+mi_bench:      .asciiz "Benchmark"
+mi_banner:     .asciiz "Letras grandes"
+mi_primes:     .asciiz "Numeros primos"
+mi_fib:        .asciiz "Fibonacci"
+mi_programs:   .asciiz "Gestor de Programas"
+mi_cascade:    .asciiz "Em cascata"
+mi_tile:       .asciiz "Lado a lado"
+mi_close:      .asciiz "Fechar janela"
+mi_close_all:  .asciiz "Fechar todas"
+mi_keys:       .asciiz "Teclado e rato"
+
+# Titulos das janelas, indexados pelo tipo de janela.
+wt_programs: .asciiz "Gestor de Programas"
+wt_about:    .asciiz "Acerca"
+wt_files:    .asciiz "Gestor de Ficheiros"
+wt_commands: .asciiz "Comandos"
+wt_system:   .asciiz "Sistema"
+wt_help:     .asciiz "Ajuda"
+
+files_header:    .asciiz "NOME                 TAM."
+commands_header: .asciiz "CLIQUE PARA EXECUTAR"
+taskbar_hint:    .asciiz "arraste o titulo | # redimensiona"
+press_any_key:   .asciiz "-- prima uma tecla para voltar ao ambiente --"
+
+sys_line_kernel:  .asciiz "kernel   MARS-OS 1.2"
+sys_line_cpu:     .asciiz "cpu      MIPS32 little-endian"
+sys_line_console: .asciiz "consola  TTY ANSI em 0xFFFF0000"
+sys_label_commands: .asciiz "comandos da shell"
+sys_label_files:    .asciiz "ficheiros no disco"
+sys_label_bytes:    .asciiz "bytes ocupados"
+sys_label_windows:  .asciiz "janelas abertas"
+
+about_l1: .asciiz "Ambiente de trabalho do MARS-OS"
+about_l2: .asciiz ""
+about_l3: .asciiz "O gestor de janelas, o compositor e todas as"
+about_l4: .asciiz "aplicacoes correm em Assembly MIPS."
+about_l5: .asciiz "As janelas sao desenhadas num buffer de 80x25"
+about_l6: .asciiz "celulas e so as linhas alteradas vao ao terminal."
+about_l7: .asciiz ""
+about_l8: .asciiz "Arraste a barra de titulo; # redimensiona."
+.align 2
+about_lines: .word about_l1, about_l2, about_l3, about_l4
+             .word about_l5, about_l6, about_l7, about_l8, 0
+
+help_l1: .asciiz "Rato"
+help_l2: .asciiz "  barra menus  clique no titulo e depois na entrada"
+help_l3: .asciiz "  janelas      clique para focar, arraste o titulo"
+help_l4: .asciiz "  redimensionar  arraste o # no canto inferior direito"
+help_l5: .asciiz "  fechar       clique em [X]; a barra inferior alterna"
+help_l6: .asciiz "  listas       clique numa linha, a roda desloca"
+help_l7: .asciiz "Teclado"
+help_l8: .asciiz "  T E W B      terminal, editor, folha, BASIC"
+help_l9: .asciiz "  F C I A H P  ficheiros, comandos, sistema, acerca, ajuda"
+help_l10: .asciiz "  S Tab X Q    Iniciar, janela seguinte, fechar, reiniciar"
+.align 2
+help_lines: .word help_l1, help_l2, help_l3, help_l4, help_l5
+            .word help_l6, help_l7, help_l8, help_l9, help_l10, 0
+
+desktop_help_text: .asciiz "\r\nambiente de trabalho\r\n  o MARS-OS arranca no ambiente com janelas; o Terminal e um dos programas\r\n  S abre Iniciar; exit | desktop fecha o Terminal e volta ao ambiente\r\n  menus, janelas arrastaveis e redimensionaveis, mosaico dentro do ecra\r\n"
 
 # ---- imagem do disco no arranque ----
 # Cada bloco usa mudancas de linha simples: o disco RAM guarda texto puro

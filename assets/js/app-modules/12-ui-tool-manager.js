@@ -211,6 +211,63 @@ function createToolDeltaHistory(options = {}) {
   };
 }
 
+// A virtual display (a TTY character grid, a framebuffer) has a fixed pixel
+// size, so exactly one window geometry shows all of it with no scrollbars and
+// no leftover space around it. The window grows or shrinks by whatever the
+// display viewport is missing or wasting, except that chrome already spilling
+// out of the window (settings, footer) raises a floor the fit will not go
+// under. Kept as pure arithmetic to stay testable outside a browser.
+function computeDisplayFitSize(metrics = {}) {
+  const readNumber = (value, fallback = 0) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const windowWidth = readNumber(metrics.windowWidth);
+  const windowHeight = readNumber(metrics.windowHeight);
+  // Rounding up never asks for less room than the display needs, so a fraction
+  // of a pixel of overflow cannot survive as a scrollbar.
+  const displayDeltaWidth = Math.ceil(readNumber(metrics.displayWidth) - readNumber(metrics.viewportWidth));
+  const displayDeltaHeight = Math.ceil(readNumber(metrics.displayHeight) - readNumber(metrics.viewportHeight));
+  const chromeDeltaWidth = Math.max(0, Math.ceil(readNumber(metrics.contentScrollWidth) - readNumber(metrics.contentClientWidth)));
+  const chromeDeltaHeight = Math.max(0, Math.ceil(readNumber(metrics.contentScrollHeight) - readNumber(metrics.contentClientHeight)));
+
+  // Chrome that fits says nothing about how much smaller it could be, so it
+  // only constrains the fit once it actually overflows.
+  const chromeFloorWidth = chromeDeltaWidth > 0 ? windowWidth + chromeDeltaWidth : 0;
+  const chromeFloorHeight = chromeDeltaHeight > 0 ? windowHeight + chromeDeltaHeight : 0;
+  const minWidth = Math.max(0, readNumber(metrics.minWidth, 0), chromeFloorWidth);
+  const minHeight = Math.max(0, readNumber(metrics.minHeight, 0), chromeFloorHeight);
+  const maxWidth = Math.max(minWidth, readNumber(metrics.maxWidth, Infinity));
+  const maxHeight = Math.max(minHeight, readNumber(metrics.maxHeight, Infinity));
+
+  // A display too tall for the desktop keeps its vertical scrollbar whatever
+  // the window does, so the width has to leave room for it instead of paying
+  // for it with a horizontal scrollbar as well.
+  const heightFitsDisplay = windowHeight + displayDeltaHeight <= maxHeight + 1;
+  const widthFitsDisplay = windowWidth + displayDeltaWidth <= maxWidth + 1;
+  const requestedWidth = windowWidth + displayDeltaWidth
+    + (heightFitsDisplay ? 0 : Math.max(0, readNumber(metrics.scrollbarWidth)));
+  const requestedHeight = windowHeight + displayDeltaHeight
+    + (widthFitsDisplay ? 0 : Math.max(0, readNumber(metrics.scrollbarHeight)));
+  const width = Math.round(Math.min(Math.max(requestedWidth, minWidth), maxWidth));
+  const height = Math.round(Math.min(Math.max(requestedHeight, minHeight), maxHeight));
+
+  return {
+    width,
+    height,
+    // The size the chrome and the window minimums refuse to go under. A caller
+    // measuring again carries this forward: the room the settings needed at one
+    // size is still needed at the next one, and forgetting it makes the fit
+    // shrink into an overflow it has already seen.
+    floorWidth: minWidth,
+    floorHeight: minHeight,
+    // True when a limit, not the display, decided the size: the window is as
+    // close to the display as it can get on that axis.
+    clamped: Math.abs(width - requestedWidth) > 1 || Math.abs(height - requestedHeight) > 1
+  };
+}
+
 function createToolManager(engine, messagesPane, windowManager, desktop) {
   function dispatchToolLoaderEvent(name, detail) {
     try {
@@ -407,6 +464,163 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
     };
   }
 
+  // Matches the floor the desktop window stylesheet enforces, so a small
+  // display can still shrink its window past the minimums the shell seeds for
+  // hand resizing.
+  const DISPLAY_FIT_MIN_WIDTH_PX = 200;
+  const DISPLAY_FIT_MIN_HEIGHT_PX = 120;
+  // One pass settles a window with room to spare. A second is needed when the
+  // first reveals a floor the chrome imposes, because the other axis was then
+  // measured against a layout the window no longer has. The rest is a guard for
+  // layouts that never land exactly on a pixel.
+  const DISPLAY_FIT_MAX_PASSES = 6;
+
+  function createDisplayFitController(options = {}) {
+    const root = options.root instanceof HTMLElement ? options.root : null;
+    const viewport = options.viewport instanceof HTMLElement ? options.viewport : null;
+    const display = options.display instanceof HTMLElement ? options.display : null;
+    const notifyChange = typeof options.onChange === "function" ? options.onChange : () => {};
+    let enabled = false;
+    let frame = null;
+    let savedMinWidth = null;
+    let savedMinHeight = null;
+
+    function isDesktopLayout() {
+      return desktop?.classList?.contains("desktop-stacked") !== true;
+    }
+
+    function isFittable() {
+      if (!root || !viewport || !display || !enabled || !isDesktopLayout()) return false;
+      if (typeof windowManager?.resizeWindow !== "function") return false;
+      if (root.classList.contains("window-hidden")) return false;
+      if (root.classList.contains("window-minimized")) return false;
+      return !root.classList.contains("window-maximized");
+    }
+
+    function applyFitMinimums() {
+      if (!root) return;
+      root.style.minWidth = `${DISPLAY_FIT_MIN_WIDTH_PX}px`;
+      root.style.minHeight = `${DISPLAY_FIT_MIN_HEIGHT_PX}px`;
+    }
+
+    function measure() {
+      const content = root.querySelector(".window-content");
+      const viewportStyle = window.getComputedStyle(viewport);
+      const rootStyle = window.getComputedStyle(root);
+      const bounds = root.getBoundingClientRect();
+      const desktopBounds = desktop.getBoundingClientRect();
+      const paddingWidth = (parseFloat(viewportStyle.paddingLeft) || 0) + (parseFloat(viewportStyle.paddingRight) || 0);
+      const paddingHeight = (parseFloat(viewportStyle.paddingTop) || 0) + (parseFloat(viewportStyle.paddingBottom) || 0);
+      const borderWidth = (parseFloat(viewportStyle.borderLeftWidth) || 0) + (parseFloat(viewportStyle.borderRightWidth) || 0);
+      const borderHeight = (parseFloat(viewportStyle.borderTopWidth) || 0) + (parseFloat(viewportStyle.borderBottomWidth) || 0);
+      const viewportRect = viewport.getBoundingClientRect();
+      const displayRect = display.getBoundingClientRect();
+      // The room the display gets once no scrollbar is in the way. Measured
+      // from the fractional rectangle because clientWidth/clientHeight round to
+      // whole pixels, and a tenth of a pixel of overflow is enough to keep a
+      // scrollbar the fit was trying to remove.
+      const availableWidth = Math.max(0, viewportRect.width - borderWidth - paddingWidth);
+      const availableHeight = Math.max(0, viewportRect.height - borderHeight - paddingHeight);
+      return {
+        windowWidth: bounds.width,
+        windowHeight: bounds.height,
+        displayWidth: displayRect.width,
+        displayHeight: displayRect.height,
+        viewportWidth: availableWidth,
+        viewportHeight: availableHeight,
+        // Whatever a scrollbar currently takes out of that box, for the case
+        // where the display is too large to lose it.
+        scrollbarWidth: Math.max(0, availableWidth - (viewport.clientWidth - paddingWidth)),
+        scrollbarHeight: Math.max(0, availableHeight - (viewport.clientHeight - paddingHeight)),
+        contentScrollWidth: content instanceof HTMLElement ? content.scrollWidth : 0,
+        contentClientWidth: content instanceof HTMLElement ? content.clientWidth : 0,
+        contentScrollHeight: content instanceof HTMLElement ? content.scrollHeight : 0,
+        contentClientHeight: content instanceof HTMLElement ? content.clientHeight : 0,
+        minWidth: parseFloat(rootStyle.minWidth) || 0,
+        minHeight: parseFloat(rootStyle.minHeight) || 0,
+        // A display larger than the desktop cannot be shown whole; the window
+        // stops at the desktop instead of chasing a size it can never get.
+        maxWidth: desktopBounds.width,
+        maxHeight: desktopBounds.height
+      };
+    }
+
+    function fitNow() {
+      frame = null;
+      if (!isFittable()) return;
+      // Switching back from the stacked layout restores the minimums the shell
+      // seeded for hand resizing, so they are re-relaxed on every fit rather
+      // than only when the option is switched on.
+      applyFitMinimums();
+      const attempted = new Set();
+      let floorWidth = 0;
+      let floorHeight = 0;
+      for (let pass = 0; pass < DISPLAY_FIT_MAX_PASSES; pass += 1) {
+        const metrics = measure();
+        metrics.minWidth = Math.max(metrics.minWidth, floorWidth);
+        metrics.minHeight = Math.max(metrics.minHeight, floorHeight);
+        const target = computeDisplayFitSize(metrics);
+        floorWidth = Math.max(floorWidth, target.floorWidth);
+        floorHeight = Math.max(floorHeight, target.floorHeight);
+        if (Math.abs(target.width - metrics.windowWidth) <= 1
+          && Math.abs(target.height - metrics.windowHeight) <= 1) return;
+        const key = `${target.width}x${target.height}`;
+        // Two sizes can chase each other when a scrollbar appears at one and
+        // vanishes at the other; the first repeat means this is as close as
+        // the layout gets.
+        if (attempted.has(key)) return;
+        attempted.add(key);
+        // A pass that lands on a limit still leaves the other axis to settle,
+        // so the loop keeps going and stops on its own when nothing moves.
+        if (!windowManager.resizeWindow(root.id, target)) return;
+      }
+    }
+
+    function request() {
+      if (frame !== null || !isFittable()) return;
+      frame = window.requestAnimationFrame(fitNow);
+    }
+
+    function setEnabled(next) {
+      const value = next === true;
+      if (value === enabled) return;
+      enabled = value;
+      if (root) {
+        if (enabled) {
+          savedMinWidth = root.style.minWidth;
+          savedMinHeight = root.style.minHeight;
+          applyFitMinimums();
+        } else {
+          root.style.minWidth = savedMinWidth || "";
+          root.style.minHeight = savedMinHeight || "";
+          savedMinWidth = null;
+          savedMinHeight = null;
+        }
+      }
+      notifyChange(enabled);
+      request();
+    }
+
+    // Dragging a resize handle is a deliberate override of the automatic size,
+    // so the option turns itself off instead of snapping the window back.
+    root?.addEventListener("pointerdown", (event) => {
+      if (!enabled) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && target.classList.contains("window-resize-handle")) {
+        setEnabled(false);
+      }
+    }, true);
+
+    // Leaving and re-entering the desktop layout rebuilds the window geometry.
+    window.addEventListener("resize", () => request());
+
+    return {
+      isEnabled: () => enabled,
+      setEnabled,
+      request
+    };
+  }
+
   function createPlaceholderTool(label, id) {
     const shell = createToolWindowShell(id, label, 620, 330, `
       <div class="tool-placeholder">
@@ -563,6 +777,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
           createToolWindowShell,
           createPlaceholderTool,
           createToolDeltaHistory,
+          createDisplayFitController,
           runtimeControls: runtimeControlBridge,
           nextPlacement
         });

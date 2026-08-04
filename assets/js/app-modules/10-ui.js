@@ -2702,6 +2702,26 @@ function createWindowManager(refs) {
     if (!isStackedMode()) scheduleDesktopLayoutSave(120);
   }
 
+  // Tools that host a fixed-size virtual display size their own window. Routing
+  // that through the same clamp a hand resize uses keeps the window inside the
+  // desktop and remembers the result as its preferred desktop bounds.
+  function resizeWindow(windowId, size = {}) {
+    const entry = windows.get(resolveWindowId(windowId));
+    if (!entry || entry.maximized || entry.minimized || isHiddenEntry(entry)) return null;
+    if (isStackedMode() && isStackedFlowEntry(entry)) return null;
+    const current = readWindowMetrics(entry);
+    const requestedWidth = Number(size.width);
+    const requestedHeight = Number(size.height);
+    const metrics = clampMetrics(entry, {
+      left: current.left,
+      top: current.top,
+      width: Number.isFinite(requestedWidth) ? requestedWidth : current.width,
+      height: Number.isFinite(requestedHeight) ? requestedHeight : current.height
+    });
+    setWindowMetrics(entry, metrics, true);
+    return metrics;
+  }
+
   function shouldPersistSessionWindow(entry) {
     if (!entry || entry.kind !== "tool") return false;
     if (entry.element.classList.contains("dialog-window")) return false;
@@ -3189,6 +3209,7 @@ function createWindowManager(refs) {
     show,
     reveal,
     hide,
+    resizeWindow,
     toggleMinimize,
     toggleMaximize,
     exportSessionWindowState,
@@ -5346,7 +5367,7 @@ function createMessagesPane(refs, limit) {
 const STORAGE_KEY = "mars45-web-preferences";
 const DEFAULT_PREFERENCES = {
   language: (typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n)?.getLanguage?.() || "en",
-  theme: "light",
+  theme: "system",
   menuPosition: "top",
   showBenchmarkPanel: false,
   showLabelsWindow: true,
@@ -6010,6 +6031,41 @@ function injectRuntimeStyles() {
       align-items: center;
       gap: 8px;
       margin-left: auto;
+    }
+
+    /* Window-level options for tools that host a virtual display. They sit
+       outside the settings panel so the control that hides the settings stays
+       reachable once the settings are hidden. */
+    .tool-window .mars-tool-display-options {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      min-width: 0;
+    }
+
+    .tool-window .mars-tool-display-fit {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--flat-text);
+      user-select: none;
+    }
+
+    .tool-window .mars-tool-display-fit input {
+      margin: 0;
+    }
+
+    .tool-window .mars-tool-display-settings-toggle {
+      margin-left: auto;
+      min-height: 20px;
+      padding: 1px 8px;
+      white-space: nowrap;
+    }
+
+    /* A stacked panel spans the whole screen, so there is no window to fit. */
+    .desktop-stacked .tool-window .mars-tool-display-fit {
+      display: none;
     }
 
     .tool-window .mars-tool-split-vertical {

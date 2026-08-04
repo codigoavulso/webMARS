@@ -1,4 +1,4 @@
-# webMARS v0.5.3
+# webMARS v0.5.4
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,11 +22,13 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.5.3
+## Highlights in v0.5.4
 
-- Fixed first-visit language selection so fresh UI preferences preserve the language detected from the browser.
-- Kept explicit saved language preferences ahead of browser detection and retained English as the unsupported-language fallback.
-- Added regression coverage for the complete bootstrap path that previously reset Portuguese and other detected languages to English.
+- Reworked MARS-OS into a mouse-driven Windows 95-style desktop with a Start menu, application launcher, movable/resizable windows, terminal shell, editor, spreadsheet and BASIC app.
+- Improved the TTY ANSI terminal, mouse reports, responsive mobile behavior and display-window fitting.
+- Enabled automatic display fitting and collapsed settings by default in TTY ANSI, Bitmap Display and Bitmap Terminal on desktop and mobile layouts.
+- Added a System theme that follows the browser's light/dark preference automatically while preserving explicit Light and Dark overrides.
+- Expanded localization, documentation and regression coverage across all ten supported languages.
 
 ## Main Capabilities
 
@@ -35,8 +37,8 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - Breakpoints, run-speed control, popup/input syscalls, and runtime state restore.
 - Registers, COP0, COP1, text segment, data segment, symbol/label table, and Mars Messages/Run I/O panes.
 - MARS-style tools such as Bitmap Display, Cache Simulator, Digital Lab Sim, Keyboard/Display MMIO, and more.
-- Light and dark interface themes, selected in `Settings > Interface...` and applied to the editor,
-  tool windows and help pages.
+- System, light and dark interface themes, selected in `Settings > Interface...` and applied to the editor,
+  tool windows and help pages. System follows the browser color scheme and is the default.
 - Localized UI, examples, documentation and help for English, Spanish, Portuguese, Mandarin Chinese, Hindi, Arabic, French, Bengali, Russian and Indonesian.
 - On a fresh session, the interface follows the first supported language reported by `navigator.languages` (for example, `pt-PT` selects Portuguese); unsupported languages fall back to English, and an explicit saved choice always takes priority.
 - Browser storage for source files with virtual folders and quota management.
@@ -133,6 +135,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.5.4`: MARS-OS desktop/window overhaul, improved TTY, automatic virtual-display fitting, collapsed display settings, and browser-aware system theme
 - `v0.5.3`: browser-language bootstrap fix for fresh sessions and private windows
 - `v0.5.2`: ten-language UI/help/examples, automatic browser-language selection, Arabic RTL, mouse-driven MARS-OS desktop, and faster responsive TTY
 - `v0.5.1`: external device interrupts, System Clock and Stack Visualizer tools, consolidated file/cloud workflows, faster tool batching, resilient text snapshots, and MARS-OS clock/benchmark commands

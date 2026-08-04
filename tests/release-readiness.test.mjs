@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.5.3";
+const expectedReleaseVersion = "0.5.4";
 const languages = ["en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id"];
 const localizedLanguages = languages.filter((language) => language !== "en");
 
@@ -63,7 +63,7 @@ function placeholders(value) {
     .sort();
 }
 
-test("0.5.3 version is coherent across runtime and release metadata", async () => {
+test("0.5.4 version is coherent across runtime and release metadata", async () => {
   const packageJson = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
   const packageLock = JSON.parse(await readFile(resolve(projectRoot, "package-lock.json"), "utf8"));
   const appVersion = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");
@@ -379,7 +379,7 @@ test("release packaging and CI use the supported public commands", async () => {
   assert.match(packageScript, /\bvalidateZipArchive\b/);
 });
 
-test("the dark theme is an opt-in preference resolved through shared tokens", async () => {
+test("the theme follows the browser by default and resolves through shared tokens", async () => {
   const [styles, index, ui, runtimeSettingsSource, appRuntime, helpCss] = await Promise.all([
     readFile(resolve(projectRoot, "assets", "css", "styles.css"), "utf8"),
     readFile(resolve(projectRoot, "index.html"), "utf8"),
@@ -389,10 +389,10 @@ test("the dark theme is an opt-in preference resolved through shared tokens", as
     readFile(resolve(projectRoot, "help", "en", "webmars-help.css"), "utf8")
   ]);
 
-  // The light theme stays the default and keeps its own token block.
+  // Light remains the attribute-free token block while system is the default preference.
   assert.match(styles, /^:root \{\n\s+color-scheme: light;/m);
   assert.match(styles, /:root\[data-theme="dark"\] \{\n\s+color-scheme: dark;/);
-  assert.match(ui, /^\s+theme: "light",$/m);
+  assert.match(ui, /^\s+theme: "system",$/m);
   assert.match(helpCss, /:root\[data-theme="dark"\]/);
 
   // Every token declared for the light theme must have a dark counterpart.
@@ -412,6 +412,10 @@ test("the dark theme is an opt-in preference resolved through shared tokens", as
     "the theme bootstrap must run before the splash markup"
   );
   assert.match(index, /localStorage\.getItem\("mars45-web-preferences"\)/);
+  assert.match(index, /prefers-color-scheme: dark/);
+  assert.match(runtimeSettingsSource, /const THEMES = \["system", "light", "dark"\];/);
+  assert.match(runtimeSettingsSource, /function resolveThemePreference\(theme\)/);
+  assert.match(runtimeSettingsSource, /systemThemeMedia\.addEventListener\("change", handleChange\)/);
   assert.match(runtimeSettingsSource, /function applyThemePreference\(theme\)/);
   assert.match(runtimeSettingsSource, /webmars:theme-changed/);
   assert.match(appRuntime, /function applyUiPreferences\(nextPreferences\) \{\n\s+applyThemePreference\(nextPreferences\.theme\);/);

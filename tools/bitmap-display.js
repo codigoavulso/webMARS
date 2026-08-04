@@ -84,6 +84,16 @@
         padding-top: 10px;
       }
 
+      /* Hiding the settings leaves the framebuffer alone in the window, so the
+         display panel has to take the row the settings used to hold. */
+      .bitmap-settings-collapsed .bitmap-main {
+        grid-template-rows: minmax(0, 1fr);
+      }
+
+      .bitmap-settings-collapsed .bitmap-main > .mars-tool-panel:first-child {
+        display: none;
+      }
+
       @media (max-width: 900px) {
         .bitmap-controls-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -219,6 +229,18 @@
       const shell = ctx.createToolWindowShell("bitmap-display", "Bitmap Display, Version 1.0", 800, 700, `
         <div class="mars-tool-shell bitmap-tool">
           <h2 class="mars-tool-heading">Bitmap Display</h2>
+          <div class="mars-tool-display-options">
+            <label class="mars-tool-display-fit">
+              <input data-bitmap="fit-window" type="checkbox" checked>
+              <span>Fit window to display</span>
+            </label>
+            <button
+              class="tool-btn mars-tool-display-settings-toggle"
+              data-bitmap="settings-toggle"
+              type="button"
+              aria-expanded="false"
+            >Show settings</button>
+          </div>
           <div class="bitmap-main">
             <section class="mars-tool-panel">
               <div class="mars-tool-panel-title">Display Settings</div>
@@ -275,6 +297,9 @@
       const displayHeightSelect = root.querySelector("[data-bitmap='display-height']");
       const baseAddressSelect = root.querySelector("[data-bitmap='base-address']");
       const canvas = root.querySelector("[data-bitmap='canvas']");
+      const canvasWrap = root.querySelector(".bitmap-canvas-wrap");
+      const settingsToggle = root.querySelector("[data-bitmap='settings-toggle']");
+      const fitWindowToggle = root.querySelector("[data-bitmap='fit-window']");
       const connectButton = root.querySelector("[data-bitmap='connect']");
       const resetButton = root.querySelector("[data-bitmap='reset']");
       const helpButton = root.querySelector("[data-bitmap='help']");
@@ -284,6 +309,18 @@
       const sourceCanvas = document.createElement("canvas");
       const sourceContext = sourceCanvas.getContext("2d", { alpha: false });
 
+      // The framebuffer has an exact pixel size, so the window can be sized to
+      // show all of it and nothing else.
+      const displayFit = ctx.createDisplayFitController({
+        root,
+        viewport: canvasWrap,
+        display: canvas,
+        onChange(enabled) {
+          if (fitWindowToggle instanceof HTMLInputElement) fitWindowToggle.checked = enabled;
+        }
+      });
+
+      let settingsCollapsed = true;
       let connected = false;
       let framePending = false;
       let latestSnapshot = null;
@@ -347,6 +384,7 @@
         sourceCanvas.height = rows;
         ensureSourceImageData();
         fullRedrawNeeded = true;
+        displayFit.request();
       }
 
       function clearDisplay() {
@@ -608,10 +646,32 @@
         }, LAYOUT_SYNC_DEBOUNCE_MS);
       }
 
+      function updateSettingsVisibility() {
+        root.classList.toggle("bitmap-settings-collapsed", settingsCollapsed);
+        if (settingsToggle instanceof HTMLButtonElement) {
+          settingsToggle.textContent = settingsCollapsed ? t("Show settings") : t("Hide settings");
+          settingsToggle.setAttribute("aria-expanded", settingsCollapsed ? "false" : "true");
+        }
+        displayFit.request();
+      }
+
       function refreshUiText() {
         shell.refreshTranslations?.();
+        if (fitWindowToggle instanceof HTMLInputElement) fitWindowToggle.checked = displayFit.isEnabled();
+        updateSettingsVisibility();
         updateConnectButtonLabel();
       }
+
+      settingsToggle?.addEventListener("click", () => {
+        settingsCollapsed = !settingsCollapsed;
+        updateSettingsVisibility();
+      });
+
+      fitWindowToggle?.addEventListener("change", () => {
+        displayFit.setEnabled(fitWindowToggle.checked === true);
+      });
+
+      displayFit.setEnabled(true);
 
       [unitWidthSelect, unitHeightSelect, displayWidthSelect, displayHeightSelect, baseAddressSelect].forEach((control) => {
         control.addEventListener("change", () => syncConfigAndRender(false));
@@ -681,6 +741,7 @@
           shell.open();
           syncBitmapMmioConfig(true);
           applyLayoutDefaultResolution(false);
+          displayFit.request();
           if (connected) {
             fullRedrawNeeded = true;
             pendingWriteAddress = null;

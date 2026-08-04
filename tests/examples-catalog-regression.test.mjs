@@ -204,7 +204,7 @@ function attachTtyHarness(engine, inputText = "") {
   };
 }
 
-function runMarsOs(engine, maxSteps = 1_000_000) {
+function runMarsOs(engine, maxSteps = 1_000_000, options = {}) {
   // engine.go() rebuilds a full snapshot on every instruction, which turns the
   // longer MARS-OS sessions into minutes of work. Stepping without snapshots
   // keeps these tests to a couple of seconds each.
@@ -216,7 +216,10 @@ function runMarsOs(engine, maxSteps = 1_000_000) {
     if (result.done === true || result.haltReason) break;
   }
   const snapshot = engine.getSnapshot({ includeProgram: false, includeBreakpoints: false });
-  assert.equal(snapshot.halted, true, `MARS-OS did not halt within ${maxSteps} instructions.`);
+  // The desktop never halts on its own: it idles in the cooperative TTY wait.
+  if (options.allowIdle !== true) {
+    assert.equal(snapshot.halted, true, `MARS-OS did not halt within ${maxSteps} instructions.`);
+  }
   return steps;
 }
 
@@ -359,13 +362,14 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
   const engine = await assembleMarsOs("en");
   const tty = attachTtyHarness(
     engine,
-    "tcalc 0x20 + 22\rcat motd\rcolor yellow\rclock\rsysinfo\rhistory\rshutdown\r"
+    "tcalc 0x20 + 22\r\ncat motd\r\ncolor yellow\r\nclock\r\nsysinfo\r\nhistory\r\nshutdown\r\n"
   );
-  const steps = runMarsOs(engine, 200_000);
+  // Booting paints one desktop frame before the shortcut opens Terminal.
+  const steps = runMarsOs(engine, 900_000);
   tty.detach();
 
   assert.equal(tty.remainingInput, 0);
-  assert.ok(steps < 120_000, "The shell session used unexpectedly many instructions.");
+  assert.ok(steps < 700_000, "The shell session used unexpectedly many instructions.");
   assert.match(tty.output, /MARS-OS 1\.0/);
   assert.match(tty.output, /RAM disk mounted: 5 files, \d+ bytes/);
   assert.match(tty.output, /result: 54 \(0x00000036\)/);
@@ -381,6 +385,11 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
   assert.match(tty.output, /1  calc 0x20 \+ 22/);
   assert.match(tty.output, /6  history/);
   assert.match(tty.output, /System halted/);
+  assert.equal(
+    (tty.output.match(/guest@webmars:\/\$ /g) || []).length,
+    7,
+    "CR LF must be consumed as one logical Enter, without duplicate prompts."
+  );
 
   const libSource = await readFile(resolve(examplesRoot, "mips_os_lib.asm"), "utf8");
   assert.match(libSource, /tty_getc_wait:[\s\S]*?li\s+\$a0,\s*4[\s\S]*?syscall/);
@@ -399,28 +408,213 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
   }
 });
 
-test("MARS-OS boots to Program Manager and runs the shell inside Terminal", async () => {
+// The desktop composes into a cell buffer before it writes anything, so the
+// assertions read that buffer rather than trying to unpick the ANSI stream.
+function readScreen(engine) {
+  const snapshot = engine.getSnapshot({ includeTextRows: false });
+  const at = (name) => (snapshot.labels.find((label) => label.label === name) || {}).address >>> 0;
+  const chars = at("scr_char");
+  const rows = [];
+  for (let row = 0; row < 25; row += 1) {
+    let line = "";
+    for (let column = 0; column < 80; column += 1) {
+      const byte = engine.getByte(chars + row * 80 + column) & 0xff;
+      line += byte >= 32 && byte < 127 ? String.fromCharCode(byte) : " ";
+    }
+    rows.push(line);
+  }
+  return rows;
+}
+
+function windowTable(engine) {
+  const snapshot = engine.getSnapshot({ includeTextRows: false });
+  const at = (name) => (snapshot.labels.find((label) => label.label === name) || {}).address >>> 0;
+  const word = (name, index) => engine.readWord((at(name) + index * 4) >>> 0) | 0;
+  return Array.from({ length: 6 }, (_, index) => ({
+    kind: word("win_kind", index),
+    row: word("win_row", index),
+    column: word("win_col", index),
+    width: word("win_w", index),
+    height: word("win_h", index)
+  }));
+}
+
+// SGR reports: press, release, and drag motion while the button is held.
+const press = (column, row) => `\x1b[<0;${column};${row}M`;
+const release = (column, row) => `\x1b[<0;${column};${row}m`;
+const dragTo = (column, row) => `\x1b[<32;${column};${row}M`;
+const clickAt = (column, row) => press(column, row) + release(column, row);
+
+test("MARS-OS desktop composites overlapping windows without corrupting them", async () => {
   const engine = await assembleMarsOs("en");
-  const click = (column, row) => `\x1b[<0;${column};${row}M`;
+  const tty = attachTtyHarness(engine, "");
+  runMarsOs(engine, 1_500_000, { allowIdle: true });
+  const screen = readScreen(engine);
+  tty.detach();
+
+  assert.match(screen[0], /System\s+Programs\s+Windows\s+Help/);
+  // Program Manager sits behind About; both frames stay intact.
+  assert.match(screen[2], /\+ Program Manager\s+\[X\]\+/);
+  assert.match(screen[8], /\+ About\s+\[X\]\+/);
+  assert.match(screen.join("\n"), /MARS-OS windowed desktop/);
+  // The launcher icons and their labels line up under the frame.
+  assert.match(screen[5], /Terminal\s+Text editor\s+Spreadsheet/);
+  assert.match(screen[24], /^\[ Start \]\s+Program\s+About/);
+});
+
+test("MARS-OS desktop opens pull down menus and one level of submenus", async () => {
+  const engine = await assembleMarsOs("en");
   const tty = attachTtyHarness(
     engine,
-    click(3, 25)       // Start
-      + click(5, 23)   // About
-      + click(72, 9)   // close About
-      + click(3, 25)   // Start
-      + click(5, 19)   // Terminal
-      + "exit\r"      // Return to Program Manager
-      + "tshutdown\r" // Keyboard shortcut reopens Terminal
+    clickAt(12, 1)      // Programs
+      + clickAt(14, 7)  // Utilities, which owns a submenu
   );
-  runMarsOs(engine, 2_000_000);
+  runMarsOs(engine, 2_500_000, { allowIdle: true });
+  const screen = readScreen(engine);
   tty.detach();
 
   assert.equal(tty.remainingInput, 0);
-  assert.match(tty.output, /\x1b\[\?1000h\x1b\[\?1006h/);
-  assert.match(tty.output, /MARS-OS Program Manager/);
-  assert.match(tty.output, /Welcome to the mouse driven MARS-OS desktop/);
-  assert.ok((tty.output.match(/MARS-OS Program Manager/g) ?? []).length >= 2);
-  assert.match(tty.output, /\x1b\[\?1000l\x1b\[\?1006l/);
+  assert.match(screen[2], /\| Terminal/);
+  // Entries that open a submenu are marked, and the submenu sits beside them.
+  assert.match(screen[6], /\| Utilities\s+> \+-+\+/);
+  assert.match(screen[7], /\| ASCII table/);
+  assert.match(screen[8], /\| Game of Life/);
+});
+
+test("MARS-OS Start menu opens above the taskbar and reaches every application group", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(
+    engine,
+    clickAt(5, 25)       // Start
+      + clickAt(5, 21)   // Utilities, which owns the longest submenu
+  );
+  runMarsOs(engine, 2_500_000, { allowIdle: true });
+  const screen = readScreen(engine);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.match(screen[24], /^\[ Start \]/);
+  assert.match(screen.join("\n"), /\| Terminal/);
+  assert.match(screen.join("\n"), /\| Text editor/);
+  assert.match(screen.join("\n"), /\| Spreadsheet/);
+  assert.match(screen.join("\n"), /\| BASIC/);
+  assert.match(screen.join("\n"), /\| ASCII table/);
+  assert.match(screen.join("\n"), /\| Fibonacci/);
+});
+
+test("MARS-OS desktop windows can be dragged and resized with the mouse", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(
+    engine,
+    // Grab the About title bar and drop it lower and further left.
+    press(30, 9) + dragTo(22, 14) + release(22, 14)
+      // Then pull the bottom right grip inwards.
+      + press(67, 23) + dragTo(40, 20) + release(40, 20)
+      // Finally try to throw the resized window beyond the lower-right edge.
+      + press(20, 14) + dragTo(80, 24) + release(80, 24)
+  );
+  runMarsOs(engine, 3_000_000, { allowIdle: true });
+  const windows = windowTable(engine);
+  const screen = readScreen(engine);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  const about = windows.find((entry) => entry.kind === 2);
+  assert.ok(about, "The About window must still be open.");
+  assert.deepEqual(
+    { row: about.row, column: about.column },
+    { row: 18, column: 54 },
+    "Dragging keeps the grab offset but clamps the complete window to the desktop."
+  );
+  assert.deepEqual(
+    { width: about.width, height: about.height },
+    { width: 27, height: 7 },
+    "The corner grip resizes the window."
+  );
+  // The frame reaches, but never crosses, the final usable row and column.
+  assert.match(screen[17], /\+ About\s+\[X\]\+$/);
+  assert.equal(screen[23].at(-1), "#");
+});
+
+test("MARS-OS desktop closes windows and tiles what is left", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(
+    engine,
+    clickAt(73, 9)       // the [X] of About
+      + "c"             // open the command browser
+      + clickAt(24, 1)  // Windows menu
+      + clickAt(26, 7)  // Tile
+  );
+  runMarsOs(engine, 3_000_000, { allowIdle: true });
+  const windows = windowTable(engine).filter((entry) => entry.kind !== 0);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.equal(windows.some((entry) => entry.kind === 2), false, "About was closed.");
+  assert.equal(windows.length, 2);
+  for (const entry of windows) assert.equal(entry.row, 2, "Tiling aligns the tops.");
+  assert.notEqual(windows[0].column, windows[1].column, "Tiling spreads the columns.");
+});
+
+test("MARS-OS tiles six windows into a bounded 3 by 2 grid", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(
+    engine,
+    "fcih"               // open Files, Commands, System, and Help
+      + clickAt(24, 1)   // Windows menu
+      + clickAt(26, 7)   // Tile
+  );
+  runMarsOs(engine, 4_500_000, { allowIdle: true });
+  const windows = windowTable(engine).filter((entry) => entry.kind !== 0);
+  const screen = readScreen(engine);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.equal(windows.length, 6);
+  for (const entry of windows) {
+    assert.ok(entry.row >= 2 && entry.column >= 1, "Every tiled window starts inside the desktop.");
+    assert.ok(entry.row + entry.height - 1 <= 24, "Every tiled window ends above the taskbar.");
+    assert.ok(entry.column + entry.width - 1 <= 80, "Every tiled window ends inside column 80.");
+  }
+  const geometry = windows
+    .map(({ row, column, width, height }) => `${row},${column},${width},${height}`)
+    .sort();
+  assert.deepEqual(geometry, [
+    "13,1,26,12",
+    "13,27,26,12",
+    "13,53,28,12",
+    "2,1,26,11",
+    "2,27,26,11",
+    "2,53,28,11"
+  ]);
+  assert.match(screen[24], /^\[ Start \]\s+Program\s+About\s+File Man\s+Commands\s+System\s+Help/);
+});
+
+test("MARS-OS desktop launches applications and repaints on return", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(
+    engine,
+    clickAt(12, 1)        // Programs
+      + clickAt(14, 8)    // File manager
+      + clickAt(20, 10)   // demo.bas, which belongs to BASIC
+      + "RUN\rBYE\r"      // run the program, then leave the interpreter
+      + clickAt(12, 1)
+      + clickAt(14, 3)    // Terminal
+      + "shutdown\r"
+  );
+  runMarsOs(engine, 6_000_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  // All-motion reporting powers menu hover; full-screen apps fall back to click tracking.
+  assert.match(tty.output, /\x1b\[\?1003h\x1b\[\?1006h/);
+  // The file manager lists the real RAM disk.
+  assert.match(tty.output, /demo\.bas/);
+  // Clicking a .bas row opens it in BASIC rather than the text editor.
+  assert.match(tty.output, /loaded 10 lines/);
+  assert.match(tty.output, /N {7}N\*N {5}TOTAL\r\n1 {7}1 {7}1/);
+  assert.match(tty.output, /TOTAL IS LARGE/);
+  assert.match(tty.output, /\x1b\[\?1003l\x1b\[\?1000h\x1b\[\?1006h/);
   assert.match(tty.output, /System halted/);
 });
 

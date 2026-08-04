@@ -3,8 +3,10 @@
   const registry = root.WebMarsModules || (root.WebMarsModules = {});
   if (registry.runtimeSettings) return;
 
-  const THEMES = ["light", "dark"];
-  const DEFAULT_THEME = "light";
+  const THEMES = ["system", "light", "dark"];
+  const DEFAULT_THEME = "system";
+  let activeThemePreference = DEFAULT_THEME;
+  let systemThemeMedia = null;
 
   const MIN_MEMORY_GB = 0.25;
   const MAX_MEMORY_GB = 2;
@@ -84,16 +86,41 @@
     return THEMES.includes(normalizedFallback) ? normalizedFallback : DEFAULT_THEME;
   }
 
-  // The light theme is the document default, so it carries no attribute. The
-  // same rule is inlined in index.html to pick the theme before first paint.
+  function resolveThemePreference(theme) {
+    const preference = sanitizeTheme(theme);
+    if (preference !== "system") return preference;
+    return typeof root.matchMedia === "function" && root.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  }
+
+  function watchSystemTheme() {
+    if (systemThemeMedia || typeof root.matchMedia !== "function") return;
+    systemThemeMedia = root.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      if (activeThemePreference === "system") applyThemePreference("system");
+    };
+    if (typeof systemThemeMedia.addEventListener === "function") {
+      systemThemeMedia.addEventListener("change", handleChange);
+    } else if (typeof systemThemeMedia.addListener === "function") {
+      systemThemeMedia.addListener(handleChange);
+    }
+  }
+
+  // Light remains the attribute-free token palette. The system preference is
+  // resolved against the browser color scheme here and before first paint in
+  // index.html, while explicit light/dark choices keep overriding the browser.
   function applyThemePreference(theme) {
-    const resolved = sanitizeTheme(theme);
+    const preference = sanitizeTheme(theme);
+    activeThemePreference = preference;
+    watchSystemTheme();
+    const resolved = resolveThemePreference(preference);
     const documentRef = typeof document !== "undefined" ? document : null;
     const rootElement = documentRef ? documentRef.documentElement : null;
     if (!rootElement) return resolved;
 
     const previous = rootElement.getAttribute("data-theme");
-    if (resolved === DEFAULT_THEME) {
+    if (resolved === "light") {
       rootElement.removeAttribute("data-theme");
     } else {
       rootElement.setAttribute("data-theme", resolved);
@@ -102,7 +129,9 @@
     // Documents hosted in help frames cannot inherit the tokens, so they
     // follow this event instead.
     if (previous !== rootElement.getAttribute("data-theme") && typeof root.dispatchEvent === "function") {
-      root.dispatchEvent(new CustomEvent("webmars:theme-changed", { detail: { theme: resolved } }));
+      root.dispatchEvent(new CustomEvent("webmars:theme-changed", {
+        detail: { theme: resolved, preference }
+      }));
     }
     return resolved;
   }
@@ -125,6 +154,7 @@
     getAvailableLanguages,
     getAvailableThemes,
     sanitizeTheme,
+    resolveThemePreference,
     applyThemePreference
   });
 })(typeof window !== "undefined" ? window : globalThis);

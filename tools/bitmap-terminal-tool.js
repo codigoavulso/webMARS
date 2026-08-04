@@ -34,6 +34,16 @@
       .bt-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
       .bt-footer .tool-btn { min-width:130px; }
 
+      /* Hiding the settings keeps the keyboard block, which is an input to the
+         running program rather than a setting, and gives the framebuffer the
+         width the select column used to hold. */
+      .bt-settings-collapsed .bt-main {
+        grid-template-columns:minmax(0, 1fr);
+        grid-template-rows:auto minmax(0, 1fr);
+      }
+
+      .bt-settings-collapsed .bt-controls > label { display:none; }
+
       /* Settings stay compact above the framebuffer on phones, leaving the
          remaining height to the screen instead of squeezing it sideways. */
       .desktop-stacked .bt-tool { gap:6px; padding:6px; }
@@ -132,6 +142,18 @@
       const shell = ctx.createToolWindowShell("bitmap-terminal-tool", "Bitmap Terminal Tool, Version 0.1", 1080, 780, `
         <div class="bt-tool">
           <h2 class="bt-title">Bitmap Terminal (Framebuffer + Keyboard)</h2>
+          <div class="mars-tool-display-options">
+            <label class="mars-tool-display-fit">
+              <input data-bt="fit-window" type="checkbox" checked>
+              <span>Fit window to display</span>
+            </label>
+            <button
+              class="tool-btn mars-tool-display-settings-toggle"
+              data-bt="settings-toggle"
+              type="button"
+              aria-expanded="false"
+            >Show settings</button>
+          </div>
           <div class="bt-main">
             <div class="bt-controls">
               <label>Unit Width in Pixels
@@ -177,6 +199,9 @@
       const mmioLabel = root.querySelector("[data-bt='mmio']");
       const kbInput = root.querySelector("[data-bt='kb-input']");
       const canvas = root.querySelector("[data-bt='canvas']");
+      const canvasWrap = root.querySelector(".bt-canvas-wrap");
+      const settingsToggle = root.querySelector("[data-bt='settings-toggle']");
+      const fitWindowToggle = root.querySelector("[data-bt='fit-window']");
       const connectButton = root.querySelector("[data-bt='connect']");
       const resetButton = root.querySelector("[data-bt='reset']");
       const closeButton = root.querySelector("[data-bt='close']");
@@ -185,6 +210,18 @@
       const sourceCanvas = document.createElement("canvas");
       const sourceContext = sourceCanvas.getContext("2d", { alpha: false });
 
+      // The framebuffer has an exact pixel size, so the window can be sized to
+      // show all of it and nothing else.
+      const displayFit = ctx.createDisplayFitController({
+        root,
+        viewport: canvasWrap,
+        display: canvas,
+        onChange(enabled) {
+          if (fitWindowToggle instanceof HTMLInputElement) fitWindowToggle.checked = enabled;
+        }
+      });
+
+      let settingsCollapsed = true;
       let connected = false;
       let latestSnapshot = null;
       let config = { ...DEFAULT_CONFIG };
@@ -326,6 +363,7 @@
         sourceCanvas.height = rows;
         ensureImage();
         fullRedrawNeeded = true;
+        displayFit.request();
       }
 
       function clearDisplay() {
@@ -476,11 +514,33 @@
         }
       });
 
+      function updateSettingsVisibility() {
+        root.classList.toggle("bt-settings-collapsed", settingsCollapsed);
+        if (settingsToggle instanceof HTMLButtonElement) {
+          settingsToggle.textContent = settingsCollapsed ? t("Show settings") : t("Hide settings");
+          settingsToggle.setAttribute("aria-expanded", settingsCollapsed ? "false" : "true");
+        }
+        displayFit.request();
+      }
+
       // The connect label is rewritten at runtime, so the shell's static-tree
       // pass cannot keep it in the current language on its own.
       function refreshToolText() {
         connectButton.textContent = connected ? t("Disconnect from MIPS") : t("Connect to MIPS");
+        if (fitWindowToggle instanceof HTMLInputElement) fitWindowToggle.checked = displayFit.isEnabled();
+        updateSettingsVisibility();
       }
+
+      settingsToggle?.addEventListener("click", () => {
+        settingsCollapsed = !settingsCollapsed;
+        updateSettingsVisibility();
+      });
+
+      fitWindowToggle?.addEventListener("change", () => {
+        displayFit.setEnabled(fitWindowToggle.checked === true);
+      });
+
+      displayFit.setEnabled(true);
 
       connectButton.addEventListener("click", () => {
         connected = !connected;
@@ -534,6 +594,7 @@
           shell.open();
           updateMmioLabel();
           syncBitmapMmioConfig(true);
+          displayFit.request();
           if (connected) {
             attachMmioObserver();
             scheduleRender();

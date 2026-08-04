@@ -10,12 +10,16 @@
 *.json text eol=lf
 *.md text eol=lf
 *.mjs text eol=lf
+*.py text eol=lf
 *.ps1 text eol=lf
 *.s text eol=lf
+*.sh text eol=lf
+*.conf text eol=lf
 *.svg text eol=lf
 *.txt text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
+ops/raspberry-pi/logrotate-webmars text eol=lf
 *.bat text eol=crlf
 
 *.gif binary

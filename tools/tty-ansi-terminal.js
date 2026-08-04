@@ -24,19 +24,14 @@
         gap: 8px;
       }
 
-      .tty-ansi-settings-title {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
+      /* Hiding the settings leaves the terminal alone in the window, so the
+         stage has to take the row the settings panel used to hold. */
+      .tty-ansi-settings-collapsed .tty-ansi-main {
+        grid-template-rows: minmax(0, 1fr);
       }
 
-      .tty-ansi-settings-toggle {
+      .tty-ansi-settings-collapsed .tty-ansi-main > .mars-tool-panel:first-child {
         display: none;
-        min-height: 20px;
-        padding: 1px 7px;
-        font: inherit;
-        white-space: nowrap;
       }
 
       .tty-ansi-controls {
@@ -107,6 +102,7 @@
         display: block;
         margin: 0 auto;
         outline: none;
+        touch-action: none;
         box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 12px 28px rgba(0,0,0,0.35);
         background: #000;
       }
@@ -202,16 +198,6 @@
         gap: 4px 8px;
       }
 
-      .desktop-stacked .tty-ansi-settings-toggle {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .desktop-stacked .tty-ansi-settings-collapsed .tty-ansi-top {
-        display: none;
-      }
-
       .desktop-stacked .tty-ansi-toggle {
         padding-top: 0;
         min-height: 24px;
@@ -265,6 +251,7 @@
       }
 
       html.mobile-keyboard-visible .tty-ansi-main > .mars-tool-panel:first-child,
+      html.mobile-keyboard-visible .tty-ansi-tool > .mars-tool-display-options,
       html.mobile-keyboard-visible .tty-ansi-tool > .mars-tool-footer {
         display: none;
       }
@@ -367,7 +354,72 @@
       fg: 7,
       bg: 0,
       bold: false,
+      dim: false,
       inverse: false
+    };
+  }
+
+  // Pointer motion is lossy by nature: only the newest position matters until
+  // the guest has room for another report. Presses, releases, wheel reports and
+  // keyboard bytes flush this pending value first, which preserves their exact
+  // ordering without allowing 1003 motion to grow an unbounded byte backlog.
+  function createLatestMouseMotionCoalescer(options = {}) {
+    const schedule = typeof options.schedule === "function" ? options.schedule : (callback) => callback();
+    const cancel = typeof options.cancel === "function" ? options.cancel : () => {};
+    const canFlush = typeof options.canFlush === "function" ? options.canFlush : () => true;
+    const emit = typeof options.emit === "function" ? options.emit : () => {};
+    let pending = null;
+    let frame = null;
+    let lastKey = "";
+
+    function flush(force = false) {
+      if (!pending || (!force && !canFlush())) return false;
+      if (frame !== null) {
+        cancel(frame);
+        frame = null;
+      }
+      const next = pending;
+      pending = null;
+      lastKey = next.key;
+      emit(next.bytes);
+      return true;
+    }
+
+    function scheduleFlush() {
+      if (frame !== null) return;
+      const scheduling = {};
+      frame = scheduling;
+      const handle = schedule(() => {
+        frame = null;
+        flush(false);
+      });
+      // A test/fallback scheduler may invoke the callback synchronously. Do not
+      // overwrite the null it left behind with its return value.
+      if (frame === scheduling) frame = handle ?? scheduling;
+    }
+
+    return {
+      enqueue(bytes, key) {
+        const normalizedKey = String(key || "");
+        if (pending?.key === normalizedKey || (!pending && lastKey === normalizedKey)) return false;
+        pending = {
+          bytes: Array.from(bytes || [], (value) => value & 0xff),
+          key: normalizedKey
+        };
+        scheduleFlush();
+        return true;
+      },
+      flush,
+      reset() {
+        if (frame !== null) cancel(frame);
+        frame = null;
+        pending = null;
+        lastKey = "";
+      },
+      clearDedupe() {
+        lastKey = "";
+      },
+      pendingByteCount: () => pending?.bytes?.length || 0
     };
   }
 
@@ -378,17 +430,21 @@
       const shell = ctx.createToolWindowShell("tty-ansi-terminal", "TTY Device + ANSI Terminal, Version 1.0", 980, 720, `
         <div class="mars-tool-shell tty-ansi-tool">
           <h2 class="mars-tool-heading">TTY Device + ANSI Terminal</h2>
+          <div class="mars-tool-display-options">
+            <label class="mars-tool-display-fit">
+              <input data-tty="fit-window" type="checkbox" checked>
+              <span>Fit window to display</span>
+            </label>
+            <button
+              class="tool-btn mars-tool-display-settings-toggle"
+              data-tty="settings-toggle"
+              type="button"
+              aria-expanded="false"
+            >Show settings</button>
+          </div>
           <div class="tty-ansi-main">
             <section class="mars-tool-panel">
-              <div class="mars-tool-panel-title tty-ansi-settings-title">
-                <span>Terminal Settings</span>
-                <button
-                  class="tool-btn tty-ansi-settings-toggle"
-                  data-tty="settings-toggle"
-                  type="button"
-                  aria-expanded="true"
-                >Hide settings</button>
-              </div>
+              <div class="mars-tool-panel-title">Terminal Settings</div>
               <div class="mars-tool-panel-body">
                 <div class="tty-ansi-top">
                   <div class="tty-ansi-controls">
@@ -466,6 +522,8 @@
       const localEchoToggle = root.querySelector("[data-tty='localecho']");
       const crlfToggle = root.querySelector("[data-tty='crlf']");
       const settingsToggle = root.querySelector("[data-tty='settings-toggle']");
+      const fitWindowToggle = root.querySelector("[data-tty='fit-window']");
+      const viewport = root.querySelector(".tty-ansi-viewport");
       const statusNode = root.querySelector("[data-tty='status']");
       const hintNode = root.querySelector("[data-tty='hint']");
       const baseNode = root.querySelector("[data-tty='base']");
@@ -475,6 +533,17 @@
       const closeButton = root.querySelector("[data-tty='close']");
 
       const gfx = canvas.getContext("2d", { alpha: false });
+
+      // The terminal is a fixed 80x25 grid of fixed-size cells, so the window
+      // can be sized to show all of it and nothing else.
+      const displayFit = ctx.createDisplayFitController({
+        root,
+        viewport,
+        display: canvas,
+        onChange(enabled) {
+          if (fitWindowToggle instanceof HTMLInputElement) fitWindowToggle.checked = enabled;
+        }
+      });
 
       let connected = false;
       let lastSnapshot = null;
@@ -490,6 +559,7 @@
       let dirty = new Set();
       let cursorOverlayIndex = -1;
       let inputQueue = [];
+      const activeMousePointers = new Map();
       let savedCursor = { row: 0, col: 0 };
       let terminalState = null;
       let detachMemoryObserver = () => {};
@@ -501,13 +571,21 @@
       let polledTxCount = 0;
       let localEchoEnabled = false;
       let crlfTranslationEnabled = true;
-      let settingsCollapsed = false;
+      let settingsCollapsed = true;
       let activeHistoryStep = null;
       let suppressHistory = false;
       let suppressDeviceObservers = false;
+      const mouseMotionCoalescer = createLatestMouseMotionCoalescer({
+        schedule: (callback) => window.requestAnimationFrame(callback),
+        cancel: (frame) => window.cancelAnimationFrame(frame),
+        canFlush: () => inputQueue.length === 0,
+        emit: (bytes) => appendInputBytes(bytes)
+      });
       const history = ctx.createToolDeltaHistory({
         applyInverse(delta) {
           if (!delta) return;
+          mouseMotionCoalescer.reset();
+          activeMousePointers.clear();
           suppressHistory = true;
           try {
             inputQueue = Array.isArray(delta.inputQueue) ? delta.inputQueue.map((value) => value & 0xff) : [];
@@ -642,6 +720,7 @@
           fg: (cell?.fg | 0) || 0,
           bg: (cell?.bg | 0) || 0,
           bold: !!cell?.bold,
+          dim: !!cell?.dim,
           inverse: !!cell?.inverse
         };
       }
@@ -659,7 +738,10 @@
           currentFg: state.currentFg | 0,
           currentBg: state.currentBg | 0,
           currentBold: !!state.currentBold,
+          currentDim: !!state.currentDim,
           currentInverse: !!state.currentInverse,
+          wrapPending: !!state.wrapPending,
+          cursorVisible: state.cursorVisible !== false,
           parserState: String(state.parserState || "normal"),
           csiBuffer: String(state.csiBuffer || ""),
           charsetMode: String(state.charsetMode || "ascii"),
@@ -680,7 +762,10 @@
           currentFg: terminalState.currentFg | 0,
           currentBg: terminalState.currentBg | 0,
           currentBold: !!terminalState.currentBold,
+          currentDim: !!terminalState.currentDim,
           currentInverse: !!terminalState.currentInverse,
+          wrapPending: !!terminalState.wrapPending,
+          cursorVisible: terminalState.cursorVisible !== false,
           parserState: String(terminalState.parserState || "normal"),
           csiBuffer: String(terminalState.csiBuffer || ""),
           charsetMode: String(terminalState.charsetMode || "ascii"),
@@ -739,6 +824,8 @@
 
       function resetTerminalState() {
         if (terminalState && !suppressHistory) recordFullTerminalBefore();
+        mouseMotionCoalescer.reset();
+        activeMousePointers.clear();
         const cellCount = TERMINAL_GEOMETRY.columns * TERMINAL_GEOMETRY.rows;
         terminalState = {
           rows: TERMINAL_GEOMETRY.rows,
@@ -751,7 +838,10 @@
           currentFg: 7,
           currentBg: 0,
           currentBold: false,
+          currentDim: false,
           currentInverse: false,
+          wrapPending: false,
+          cursorVisible: true,
           parserState: "normal",
           csiBuffer: "",
           charsetMode: "ascii",
@@ -783,12 +873,14 @@
           fg: terminalState.currentFg,
           bg: terminalState.currentBg,
           bold: terminalState.currentBold,
+          dim: terminalState.currentDim,
           inverse: terminalState.currentInverse
         };
         cell.ch = ch;
         cell.fg = next.fg;
         cell.bg = next.bg;
         cell.bold = !!next.bold;
+        cell.dim = !!next.dim;
         cell.inverse = !!next.inverse;
         markCellDirty(row, col);
       }
@@ -805,6 +897,7 @@
             target.fg = source.fg;
             target.bg = source.bg;
             target.bold = source.bold;
+            target.dim = source.dim;
             target.inverse = source.inverse;
           }
         }
@@ -816,6 +909,7 @@
           cell.fg = terminalState.currentFg;
           cell.bg = terminalState.currentBg;
           cell.bold = false;
+          cell.dim = false;
           cell.inverse = false;
         }
         dirtyAll = true;
@@ -824,6 +918,7 @@
 
       function lineFeed() {
         if (!terminalState) return;
+        terminalState.wrapPending = false;
         terminalState.cursorRow += 1;
         if (terminalState.cursorRow >= terminalState.rows) {
           terminalState.cursorRow = terminalState.rows - 1;
@@ -833,11 +928,13 @@
 
       function carriageReturn() {
         if (!terminalState) return;
+        terminalState.wrapPending = false;
         terminalState.cursorCol = 0;
       }
 
       function backspaceDestructive() {
         if (!terminalState) return;
+        terminalState.wrapPending = false;
         if (terminalState.cursorCol > 0) {
           terminalState.cursorCol -= 1;
         } else if (terminalState.cursorRow > 0) {
@@ -856,22 +953,26 @@
           fg: terminalState.currentFg,
           bg: terminalState.currentBg,
           bold: terminalState.currentBold,
+          dim: terminalState.currentDim,
           inverse: terminalState.currentInverse
         });
       }
 
       function putGlyph(glyph) {
         if (!terminalState) return;
-        writeCell(terminalState.cursorRow, terminalState.cursorCol, glyph);
-        terminalState.cursorCol += 1;
-        if (terminalState.cursorCol >= terminalState.columns) {
+        if (terminalState.wrapPending) {
+          terminalState.wrapPending = false;
           terminalState.cursorCol = 0;
           lineFeed();
         }
+        writeCell(terminalState.cursorRow, terminalState.cursorCol, glyph);
+        if (terminalState.cursorCol >= terminalState.columns - 1) terminalState.wrapPending = true;
+        else terminalState.cursorCol += 1;
       }
 
       function clearLine(mode = 0) {
         if (!terminalState) return;
+        terminalState.wrapPending = false;
         let start = 0;
         let end = terminalState.columns - 1;
         if (mode === 0) start = terminalState.cursorCol;
@@ -881,6 +982,7 @@
             fg: terminalState.currentFg,
             bg: terminalState.currentBg,
             bold: false,
+            dim: false,
             inverse: false
           });
         }
@@ -888,6 +990,7 @@
 
       function clearScreen(mode = 0) {
         if (!terminalState) return;
+        terminalState.wrapPending = false;
         if (mode === 2) {
           for (let row = 0; row < terminalState.rows; row += 1) {
             for (let col = 0; col < terminalState.columns; col += 1) {
@@ -895,12 +998,11 @@
                 fg: terminalState.currentFg,
                 bg: terminalState.currentBg,
                 bold: false,
+                dim: false,
                 inverse: false
               });
             }
           }
-          terminalState.cursorRow = 0;
-          terminalState.cursorCol = 0;
           return;
         }
         if (mode === 1) {
@@ -911,6 +1013,7 @@
                 fg: terminalState.currentFg,
                 bg: terminalState.currentBg,
                 bold: false,
+                dim: false,
                 inverse: false
               });
             }
@@ -924,6 +1027,7 @@
               fg: terminalState.currentFg,
               bg: terminalState.currentBg,
               bold: false,
+              dim: false,
               inverse: false
             });
           }
@@ -931,6 +1035,7 @@
       }
 
       function clampCursor() {
+        terminalState.wrapPending = false;
         terminalState.cursorRow = Math.max(0, Math.min(terminalState.rows - 1, terminalState.cursorRow | 0));
         terminalState.cursorCol = Math.max(0, Math.min(terminalState.columns - 1, terminalState.cursorCol | 0));
       }
@@ -944,6 +1049,7 @@
             terminalState.currentFg = 7;
             terminalState.currentBg = 0;
             terminalState.currentBold = false;
+            terminalState.currentDim = false;
             terminalState.currentInverse = false;
             return;
           }
@@ -951,8 +1057,13 @@
             terminalState.currentBold = true;
             return;
           }
+          if (code === 2) {
+            terminalState.currentDim = true;
+            return;
+          }
           if (code === 22) {
             terminalState.currentBold = false;
+            terminalState.currentDim = false;
             return;
           }
           if (code === 7) {
@@ -1039,16 +1150,19 @@
             break;
           case "h":
           case "l":
-            if (privateMode && params[0] === "25") {
-              // cursor visibility hint ignored for now
-            }
             if (privateMode) {
               const enabled = finalChar === "h";
               params.forEach((parameter) => {
-                if (parameter === "1000" || parameter === "1002" || parameter === "1003") {
+                if (parameter === "25") {
+                  terminalState.cursorVisible = enabled;
+                } else if (parameter === "1000" || parameter === "1002" || parameter === "1003") {
                   terminalState.mouseTrackingMode = enabled ? Number.parseInt(parameter, 10) : 0;
+                  mouseMotionCoalescer.reset();
+                  activeMousePointers.clear();
                 } else if (parameter === "1006") {
                   terminalState.mouseSgrMode = enabled;
+                  mouseMotionCoalescer.reset();
+                  activeMousePointers.clear();
                 }
               });
             }
@@ -1143,6 +1257,7 @@
           return;
         }
         if (byte === 9) {
+          terminalState.wrapPending = false;
           const nextTab = Math.min(terminalState.columns - 1, ((Math.floor(terminalState.cursorCol / 8) + 1) * 8));
           terminalState.cursorCol = nextTab;
           scheduleRender();
@@ -1173,6 +1288,7 @@
         gfx.textAlign = "left";
         dirtyAll = true;
         scheduleRender();
+        displayFit.request();
       }
 
       function effectiveCellColors(cell) {
@@ -1200,12 +1316,14 @@
         gfx.fillRect(x, y, cellWidth, cellHeight);
         if (cell.ch && cell.ch !== " ") {
           gfx.fillStyle = fg;
+          gfx.globalAlpha = cell.dim ? 0.55 : 1;
           gfx.fillText(cell.ch, x + 1, y + baseline);
+          gfx.globalAlpha = 1;
         }
       }
 
       function drawCursor() {
-        if (!focusVisible || !connected || !terminalState) return;
+        if (!focusVisible || !connected || !terminalState || terminalState.cursorVisible === false) return;
         cursorOverlayIndex = idx(terminalState.cursorRow, terminalState.cursorCol);
         const x = terminalState.cursorCol * cellWidth;
         const y = terminalState.cursorRow * cellHeight;
@@ -1244,11 +1362,20 @@
         renderFrame = window.requestAnimationFrame(renderNow);
       }
 
-      function queueInputBytes(bytes) {
+      function appendInputBytes(bytes) {
+        if (!bytes?.length) return;
         ensureHistoryDelta(getSnapshotStep());
         bytes.forEach((value) => inputQueue.push(value & 0xff));
         feedReceiverFromQueue();
         scheduleStatusUpdate();
+      }
+
+      function queueInputBytes(bytes) {
+        // A non-motion event is an ordering barrier. Flush the newest pending
+        // position before it, even when older bytes are still queued.
+        mouseMotionCoalescer.flush(true);
+        mouseMotionCoalescer.clearDedupe();
+        appendInputBytes(bytes);
       }
 
       function echoInputBytes(bytes) {
@@ -1257,7 +1384,9 @@
       }
 
       function feedReceiverFromQueue() {
-        if (!connected || !inputQueue.length) return;
+        if (!connected) return;
+        if (!inputQueue.length) mouseMotionCoalescer.flush(false);
+        if (!inputQueue.length) return;
         const { RECEIVER_CONTROL, RECEIVER_DATA } = addresses();
         if (isReadyBitSet(RECEIVER_CONTROL)) return;
         ensureHistoryDelta();
@@ -1286,7 +1415,8 @@
             });
           }
         }
-        if (inputQueue.length > 0 && !isReadyBitSet(RECEIVER_CONTROL)) {
+        if ((inputQueue.length > 0 || mouseMotionCoalescer.pendingByteCount() > 0)
+          && !isReadyBitSet(RECEIVER_CONTROL)) {
           feedReceiverFromQueue();
         }
       }
@@ -1362,9 +1492,11 @@
 
       function updateSettingsVisibility() {
         root.classList.toggle("tty-ansi-settings-collapsed", settingsCollapsed);
-        if (!(settingsToggle instanceof HTMLButtonElement)) return;
-        settingsToggle.textContent = settingsCollapsed ? t("Show settings") : t("Hide settings");
-        settingsToggle.setAttribute("aria-expanded", settingsCollapsed ? "false" : "true");
+        if (settingsToggle instanceof HTMLButtonElement) {
+          settingsToggle.textContent = settingsCollapsed ? t("Show settings") : t("Hide settings");
+          settingsToggle.setAttribute("aria-expanded", settingsCollapsed ? "false" : "true");
+        }
+        displayFit.request();
       }
 
       function updateStatus() {
@@ -1376,7 +1508,7 @@
         const { RECEIVER_DATA, TRANSMITTER_DATA } = addresses();
         const items = [
           [t("Cursor"), `${terminalState.cursorCol + 1}, ${terminalState.cursorRow + 1}`],
-          [t("Input queue"), `${inputQueue.length}`],
+          [t("Input queue"), `${inputQueue.length + mouseMotionCoalescer.pendingByteCount()}`],
           [t("Local echo"), localEchoEnabled ? t("on") : t("off")],
           [t("CRLF"), crlfTranslationEnabled ? t("on") : t("off")],
           [t("RX"), toHex32(RECEIVER_DATA)],
@@ -1409,6 +1541,7 @@
         if (baseNode) baseNode.value = toHex32(mmioBase());
         if (localEchoToggle) localEchoToggle.checked = localEchoEnabled;
         if (crlfToggle) crlfToggle.checked = crlfTranslationEnabled;
+        if (fitWindowToggle instanceof HTMLInputElement) fitWindowToggle.checked = displayFit.isEnabled();
         updateSettingsVisibility();
         updateConnectButtonLabel();
         updateStatus();
@@ -1427,7 +1560,10 @@
           terminalState.currentFg = 7;
           terminalState.currentBg = 0;
           terminalState.currentBold = false;
+          terminalState.currentDim = false;
           terminalState.currentInverse = false;
+          terminalState.wrapPending = false;
+          terminalState.cursorVisible = true;
           terminalState.parserState = "normal";
           terminalState.csiBuffer = "";
           terminalState.charsetMode = "ascii";
@@ -1608,25 +1744,44 @@
         return code;
       }
 
-      function sendMouseEvent(event, kind, wheelDelta = 0) {
+      function sendMouseEvent(event, kind, wheelDelta = 0, overrides = {}) {
         if (!connected || !terminalState || terminalState.mouseTrackingMode === 0 || !terminalState.mouseSgrMode) return false;
-        const cell = pointerCell(event);
+        const cell = overrides.cell || pointerCell(event);
         if (!cell) return false;
         const motion = kind === "move";
         if (motion) {
           if (terminalState.mouseTrackingMode === 1000) return false;
           if (terminalState.mouseTrackingMode === 1002 && event.buttons === 0) return false;
         }
-        const code = mouseButtonCode(event, motion, wheelDelta);
+        const code = Number.isFinite(overrides.code)
+          ? (overrides.code | 0)
+          : mouseButtonCode(event, motion, wheelDelta);
         const suffix = kind === "up" ? "m" : "M";
         const sequence = `\u001b[<${code};${cell.col};${cell.row}${suffix}`;
-        queueInputBytes(Array.from(sequence, (character) => character.charCodeAt(0) & 0xff));
-        return true;
+        const bytes = Array.from(sequence, (character) => character.charCodeAt(0) & 0xff);
+        if (motion) {
+          mouseMotionCoalescer.enqueue(bytes, `${code};${cell.col};${cell.row}`);
+        } else {
+          queueInputBytes(bytes);
+        }
+        return { cell, code };
+      }
+
+      function releaseCancelledPointer(event) {
+        const active = activeMousePointers.get(event.pointerId);
+        if (!active) return false;
+        activeMousePointers.delete(event.pointerId);
+        return !!sendMouseEvent(event, "up", 0, {
+          cell: active.cell,
+          code: active.code
+        });
       }
 
       canvas.addEventListener("pointerdown", (event) => {
         focusTerminalInput();
-        if (sendMouseEvent(event, "down")) {
+        const report = sendMouseEvent(event, "down");
+        if (report) {
+          activeMousePointers.set(event.pointerId, report);
           try {
             canvas.setPointerCapture(event.pointerId);
           } catch {
@@ -1636,10 +1791,26 @@
         if (connected) event.preventDefault();
       });
       canvas.addEventListener("pointerup", (event) => {
-        if (sendMouseEvent(event, "up")) event.preventDefault();
+        const active = activeMousePointers.get(event.pointerId);
+        const report = sendMouseEvent(event, "up", 0, {
+          code: active?.code
+        });
+        activeMousePointers.delete(event.pointerId);
+        if (report) event.preventDefault();
       });
       canvas.addEventListener("pointermove", (event) => {
-        if (sendMouseEvent(event, "move")) event.preventDefault();
+        const report = sendMouseEvent(event, "move");
+        if (report) {
+          const active = activeMousePointers.get(event.pointerId);
+          if (active) active.cell = report.cell;
+          event.preventDefault();
+        }
+      });
+      canvas.addEventListener("pointercancel", (event) => {
+        if (releaseCancelledPointer(event) && event.cancelable) event.preventDefault();
+      });
+      canvas.addEventListener("lostpointercapture", (event) => {
+        releaseCancelledPointer(event);
       });
       canvas.addEventListener("contextmenu", (event) => {
         if (connected && terminalState?.mouseTrackingMode) event.preventDefault();
@@ -1667,6 +1838,11 @@
         dirtyAll = true;
         scheduleRender();
       });
+      fitWindowToggle?.addEventListener("change", () => {
+        displayFit.setEnabled(fitWindowToggle.checked === true);
+      });
+
+      displayFit.setEnabled(true);
 
       connectButton.addEventListener("click", () => {
         connected = !connected;
@@ -1684,6 +1860,8 @@
             address: toHex32(mmioBase())
           })}\n`);
         } else {
+          mouseMotionCoalescer.reset();
+          activeMousePointers.clear();
           detachMmioObserver();
           stopSyncTimer();
           ctx.messagesPane.postMars(`${t("[tool] TTY ANSI Terminal disconnected.")}\n`);
@@ -1701,6 +1879,8 @@
       });
 
       closeButton.addEventListener("click", () => {
+        mouseMotionCoalescer.reset();
+        activeMousePointers.clear();
         detachMmioObserver();
         stopSyncTimer();
         if (statusFrame !== null) {
@@ -1731,8 +1911,11 @@
           canvas.focus();
           dirtyAll = true;
           scheduleRender();
+          displayFit.request();
         },
         close() {
+          mouseMotionCoalescer.reset();
+          activeMousePointers.clear();
           detachMmioObserver();
           stopSyncTimer();
           if (statusFrame !== null) {
@@ -1757,6 +1940,8 @@
             return;
           }
           if (nextStep < previousStep) {
+            mouseMotionCoalescer.reset();
+            activeMousePointers.clear();
             history.rewind(nextStep);
             history.sync(snapshot);
             updateStatus();
@@ -1772,6 +1957,8 @@
         },
         onBackstep(event) {
           if (!connected || !event) return;
+          mouseMotionCoalescer.reset();
+          activeMousePointers.clear();
           history.rewind(event.stepAfter | 0);
           updateStatus();
         }

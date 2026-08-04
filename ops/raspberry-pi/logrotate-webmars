@@ -1,0 +1,17 @@
+/var/log/nginx/webmars/*.json /var/log/nginx/webmars/*.log {
+	daily
+	rotate 365
+	maxage 370
+	dateext
+	dateformat -%Y%m%d
+	dateyesterday
+	missingok
+	notifempty
+	compress
+	delaycompress
+	create 0640 www-data adm
+	sharedscripts
+	postrotate
+		invoke-rc.d nginx rotate >/dev/null 2>&1
+	endscript
+}
