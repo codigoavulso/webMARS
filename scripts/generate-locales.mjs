@@ -12,7 +12,17 @@ const locales = [
   { id: "fr", translate: "fr", label: "Français", rtl: false },
   { id: "bn", translate: "bn", label: "বাংলা", rtl: false },
   { id: "ru", translate: "ru", label: "Русский", rtl: false },
-  { id: "id", translate: "id", label: "Bahasa Indonesia", rtl: false }
+  { id: "id", translate: "id", label: "Bahasa Indonesia", rtl: false },
+  { id: "de", translate: "de", label: "Deutsch", rtl: false },
+  { id: "ja", translate: "ja", label: "日本語", rtl: false },
+  { id: "ko", translate: "ko", label: "한국어", rtl: false },
+  { id: "tr", translate: "tr", label: "Türkçe", rtl: false },
+  { id: "vi", translate: "vi", label: "Tiếng Việt", rtl: false },
+  { id: "ur", translate: "ur", label: "اردو", rtl: true },
+  { id: "it", translate: "it", label: "Italiano", rtl: false },
+  { id: "pl", translate: "pl", label: "Polski", rtl: false },
+  { id: "fa", translate: "fa", label: "فارسی", rtl: true },
+  { id: "th", translate: "th", label: "ไทย", rtl: false }
 ];
 
 const uiOverrides = {
@@ -22,7 +32,17 @@ const uiOverrides = {
   fr: { View: "Affichage", Run: "Exécuter", Bench: "Performances", Go: "Continuer", Step: "Pas à pas", Backstep: "Revenir d’un pas" },
   bn: { Bench: "কর্মক্ষমতা পরীক্ষা", Assemble: "অ্যাসেম্বল", Go: "চালান", Step: "এক ধাপ", Backstep: "এক ধাপ পিছনে" },
   ru: { View: "Вид", Run: "Выполнение", Bench: "Тесты производительности", Go: "Продолжить", Backstep: "Шаг назад" },
-  id: { File: "Berkas", Bench: "Uji kinerja", Assemble: "Rakit", Go: "Jalankan", Backstep: "Langkah mundur" }
+  id: { File: "Berkas", Bench: "Uji kinerja", Assemble: "Rakit", Go: "Jalankan", Backstep: "Langkah mundur" },
+  de: { File: "Datei", Run: "Ausführen", Bench: "Leistungstest", Assemble: "Assemblieren", Go: "Fortsetzen", Step: "Einzelschritt", Backstep: "Schritt zurück" },
+  ja: { Run: "実行", Bench: "ベンチマーク", Assemble: "アセンブル", Go: "続行", Step: "ステップ実行", Backstep: "ステップ戻し" },
+  ko: { Run: "실행", Bench: "벤치마크", Assemble: "어셈블", Go: "계속 실행", Step: "한 단계 실행", Backstep: "한 단계 뒤로" },
+  tr: { Run: "Çalıştır", Bench: "Başarım testi", Assemble: "Assemble et", Go: "Sürdür", Step: "Tek adım", Backstep: "Bir adım geri" },
+  vi: { Run: "Chạy", Bench: "Đo hiệu năng", Assemble: "Dịch hợp ngữ", Go: "Tiếp tục chạy", Step: "Chạy từng bước", Backstep: "Lùi một bước" },
+  ur: { File: "فائل", Run: "چلائیں", Bench: "کارکردگی جانچ", Assemble: "اسمبل کریں", Go: "جاری رکھیں", Step: "ایک قدم", Backstep: "ایک قدم پیچھے" },
+  it: { Run: "Esegui", Bench: "Prestazioni", Assemble: "Assembla", Go: "Continua", Step: "Passo singolo", Backstep: "Passo indietro" },
+  pl: { Run: "Uruchom", Bench: "Test wydajności", Assemble: "Asembluj", Go: "Kontynuuj", Step: "Krok", Backstep: "Krok wstecz" },
+  fa: { File: "پرونده", Run: "اجرا", Bench: "آزمون کارایی", Assemble: "اسمبل", Go: "ادامه", Step: "یک گام", Backstep: "یک گام به عقب" },
+  th: { Run: "รัน", Bench: "ทดสอบประสิทธิภาพ", Assemble: "แอสเซมเบิล", Go: "ทำงานต่อ", Step: "ทีละขั้น", Backstep: "ย้อนกลับหนึ่งขั้น" }
 };
 
 const technicalTokenSource = /\b(?:webMARS|MARS|MIPS32?|Mini-C|JavaScript|WASM|COP1|TTY|MMIO|ANSI|C0-S[0-4]|C1-NATIVE|[A-Z][A-Z0-9_]{2,})\b|\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9]+|0x[0-9A-Fa-f]+|https?:\/\/[^\s<]+|mailto:[^\s<]+|&(?:[A-Za-z]+|#\d+|#x[0-9A-Fa-f]+);|`[^`\r\n]+`/.source;
@@ -37,6 +57,23 @@ try {
 }
 
 const delay = (milliseconds) => new Promise((done) => setTimeout(done, milliseconds));
+
+// Windows virus scanners, editors and file watchers hold brief locks on files
+// the generator has just written, which surfaces as a transient open failure.
+// Retrying a few times keeps a full run from dying thousands of files in.
+const transientWriteCodes = new Set(["UNKNOWN", "EBUSY", "EPERM", "EACCES"]);
+
+async function writeFileWithRetry(path, data, encoding) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await writeFile(path, data, encoding);
+      return;
+    } catch (error) {
+      if (attempt >= 6 || !transientWriteCodes.has(error?.code)) throw error;
+      await delay(200 * (2 ** attempt));
+    }
+  }
+}
 
 function shouldTranslate(text) {
   const value = String(text || "").trim();
@@ -162,7 +199,7 @@ async function translateMany(values, target) {
       output[item.index] = value;
       cache[item.key] = value;
     });
-    await writeFile(cachePath, `${JSON.stringify(cache)}\n`, "utf8");
+    await writeFileWithRetry(cachePath, `${JSON.stringify(cache)}\n`, "utf8");
     process.stdout.write(`  ${target}: ${cursor}/${pending.length}\r`);
   }
   if (pending.length) process.stdout.write("\n");
@@ -226,7 +263,7 @@ async function generateUiCatalog(locale, englishCatalog) {
   Object.assign(localized, uiOverrides[locale.id] || {});
   const json = JSON.stringify(localized, null, 2).replace(/^\{/u, "  {").replace(/\n\}$/u, "\n  }");
   const source = `(() => {\n  const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;\n  if (!i18n || typeof i18n.registerLanguage !== "function") return;\n\n  i18n.registerLanguage(${JSON.stringify(locale.id)},${json.slice(2)});\n})();\n`;
-  await writeFile(resolve(projectRoot, `assets/js/i18n/${locale.id}.js`), source, "utf8");
+  await writeFileWithRetry(resolve(projectRoot, `assets/js/i18n/${locale.id}.js`), source, "utf8");
 }
 
 function tokenizeHtml(html) {
@@ -265,6 +302,15 @@ async function translateHtml(html, locale) {
   return output;
 }
 
+const STYLESHEET_NAME = "webmars-help.css";
+
+function useSharedStylesheet(html) {
+  return html.replace(
+    new RegExp(`href="${STYLESHEET_NAME.replace(".", "\\.")}"`, "g"),
+    `href="../en/${STYLESHEET_NAME}"`
+  );
+}
+
 async function generateHelp(locale) {
   const englishRoot = resolve(projectRoot, "help/en");
   const targetRoot = resolve(projectRoot, `help/${locale.id}`);
@@ -274,12 +320,18 @@ async function generateHelp(locale) {
     const sourcePath = resolve(englishRoot, entry.name);
     const targetPath = resolve(targetRoot, entry.name);
     if (entry.name === "help-reference.json") continue;
+    // The stylesheet is identical in every locale, so one copy serves them all
+    // and the translated pages point back at it. Copies drift: a redesign has
+    // to reach twenty directories, and any missed one silently keeps the old
+    // look. es and pt already shared it before the generator existed.
+    if (entry.name === STYLESHEET_NAME) continue;
     if (extname(entry.name).toLowerCase() !== ".html" || entry.name === "MIPSInstructionSetSong.html") {
-      await writeFile(targetPath, await readFile(sourcePath));
+      await writeFileWithRetry(targetPath, await readFile(sourcePath));
       continue;
     }
     const html = await readFile(sourcePath, "utf8");
-    await writeFile(targetPath, await translateHtml(html, locale), "utf8");
+    const localized = await translateHtml(html, locale);
+    await writeFileWithRetry(targetPath, useSharedStylesheet(localized), "utf8");
   }
 
   const referencePath = resolve(englishRoot, "help-reference.json");
@@ -293,7 +345,25 @@ async function generateHelp(locale) {
   entries.forEach((entry, index) => {
     entry.description = translated[index];
   });
-  await writeFile(resolve(targetRoot, "help-reference.json"), `${JSON.stringify(reference, null, 2)}\n`, "utf8");
+  await writeFileWithRetry(resolve(targetRoot, "help-reference.json"), `${JSON.stringify(reference, null, 2)}\n`, "utf8");
+}
+
+// A '#' inside a string literal is data, not a comment: MARS-OS draws one as
+// the resize handle and names it in its own hint strings. Scanning past quoted
+// spans keeps the translator from eating the closing quote.
+function assemblyCommentStart(line) {
+  let quote = "";
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (quote) {
+      if (character === "\\") index += 1;
+      else if (character === quote) quote = "";
+      continue;
+    }
+    if (character === '"' || character === "'") quote = character;
+    else if (character === "#") return index;
+  }
+  return -1;
 }
 
 function commentSegments(source, extension) {
@@ -301,7 +371,7 @@ function commentSegments(source, extension) {
   if ([".asm", ".s"].includes(extension)) {
     let offset = 0;
     for (const line of source.split(/(?<=\n)/)) {
-      const marker = line.indexOf("#");
+      const marker = assemblyCommentStart(line);
       if (marker >= 0) {
         const raw = line.slice(marker + 1).replace(/[\r\n]+$/, "");
         if (shouldTranslate(raw)) segments.push({ start: offset + marker + 1, end: offset + marker + 1 + raw.length, text: raw });
@@ -366,7 +436,7 @@ async function generateExamples(locale) {
     const extension = extname(sourcePath).toLowerCase();
     await mkdir(dirname(targetPath), { recursive: true });
     const source = await readFile(sourcePath, "utf8");
-    await writeFile(targetPath, await translateExampleSource(source, extension, locale), "utf8");
+    await writeFileWithRetry(targetPath, await translateExampleSource(source, extension, locale), "utf8");
   }
 }
 
@@ -377,12 +447,12 @@ async function updateLanguageManifests() {
     { id: "pt", label: "Português", dir: "pt" },
     ...locales.map(({ id, label }) => ({ id, label, dir: id }))
   ];
-  await writeFile(
+  await writeFileWithRetry(
     resolve(projectRoot, "assets/js/i18n/languages.json"),
     `${JSON.stringify({ languages: allLocales.map(({ id }) => `${id}.js`) }, null, 2)}\n`,
     "utf8"
   );
-  await writeFile(
+  await writeFileWithRetry(
     resolve(projectRoot, "help/languages.json"),
     `${JSON.stringify({ defaultLanguage: "en", languages: allLocales }, null, 2)}\n`,
     "utf8"
@@ -393,7 +463,7 @@ async function updateLanguageManifests() {
   for (const example of manifest.examples || []) {
     if (Array.isArray(example.languages)) example.languages = [...manifest.languages];
   }
-  await writeFile(examplesPath, `${JSON.stringify(manifest, null, 4)}\n`, "utf8");
+  await writeFileWithRetry(examplesPath, `${JSON.stringify(manifest, null, 4)}\n`, "utf8");
 }
 
 const englishCatalog = await readEnglishCatalog();

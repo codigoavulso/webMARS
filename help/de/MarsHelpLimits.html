@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grenzen und Kompatibilität</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Beschränkt die Kompatibilität mit &amp;.</h1>
+  <p class="lead">webMARS zielt auf praktische MARS 4.5-Quellkompatibilität ab, während es vollständig in einem modernen Browser läuft. Es gelten weiterhin die Sicherheits-, Speicher- und Audioregeln für den Browser.</p>
+
+  <h2>Laufzeitbegrenzungen</h2>
+  <table>
+    <tr><th>Bereich</th><th>Grenze oder Verhalten</th></tr>
+    <tr><td>Erinnerung</td><td>Vom Benutzer wählbare 0,25–2 GiB, mit einer architektonischen harten Decke darunter <code>0x80000000</code>. Eine spärliche Zuweisung bedeutet, dass der unberührte Adressraum nicht Byte für Byte festgeschrieben wird.</td></tr>
+    <tr><td>Haufen</td><td><code>sbrk</code> validiert die vollständige unsignierte Reservierung, bevor der Heap-Zeiger geändert wird. Anforderungen können die konfigurierte Speicherobergrenze nicht umbrechen oder umgehen.</td></tr>
+    <tr><td>Laufzeitzeichenfolgen</td><td>Mit Null abgeschlossene Zeichenfolgen können bis zu 1 MiB enthalten. Ein fehlendes Abschlusszeichen oder eine längere Zeichenfolge löst einen expliziten Systemaufruffehler aus, anstatt abgeschnittenen Text zurückzugeben.</td></tr>
+    <tr><td>Rückschritt</td><td>0–1.000.000 inverse Deltas. Der Verlauf ist durch das konfigurierte Budget begrenzt und behält bei aktiviertem Backstep immer die letzten 100 abgeschlossenen Schritte bei.</td></tr>
+    <tr><td>Speicherung von Browserdateien</td><td>Projekt-/Sitzungsdaten unterliegen der Browser-Quote; Die App begrenzt die Browser-Speichernutzlasten des Benutzers gegebenenfalls auf 1 MiB und greift bei Bedarf auf kleinere Wiederherstellungsnutzlasten zurück.</td></tr>
+    <tr><td>Laufzeitmessung</td><td>Ruhezustand, MIDI und UI-Timing werden vom Browser geplant und sind nicht zyklusgenau.</td></tr>
+    <tr><td>Verteilung</td><td>webMARS 0.5.5 ist eine statische Webanwendung, keine installierbare/offline PWA. Es muss über HTTP vom enthaltenen lokalen Server oder einem anderen statischen Host bereitgestellt werden.</td></tr>
+  </table>
+
+  <h2>Speicherkarten</h2>
+  <table class="compact">
+    <tr><th>Region</th><th>Standardbasis</th></tr>
+    <tr><td>Benutzertext</td><td><code>0x00400000</code></td></tr>
+    <tr><td>Statische Daten</td><td><code>0x10010000</code></td></tr>
+    <tr><td>Haufen</td><td><code>0x10040000</code></td></tr>
+    <tr><td>Anfänglicher Stapelzeiger</td><td><code>0x7ffffffc</code></td></tr>
+    <tr><td>Kernel-Ausnahmehandler</td><td><code>0x80000180</code></td></tr>
+    <tr><td>MMIO</td><td><code>0xffff0000</code></td></tr>
+  </table>
+  <p>Die Voreinstellungen „Kompakte Daten“ und „Kompakter Text“ verschieben die entsprechenden Lehrsegmente auf die Adresse Null. Nach Kartenwechsel wieder zusammenbauen.</p>
+
+  <h2>MIPS Verhalten</h2>
+  <ul>
+    <li>Speicher ist Little-Endian. Wort- und Doppelwortoperationen verwenden die Register-/Speicherreihenfolge MIPS.</li>
+    <li>Falsch ausgerichtete Befehlsabrufe und ungültige Lade-/Speicheradressen führen zu Adressausnahmen.</li>
+    <li>Speicher validieren das vollständige Ziel vor dem Schreiben, sodass ein fehlerhafter Speicher keinen Teilwert zurücklässt.</li>
+    <li><code>LL</code>/<code>SC</code> Verwenden Sie eine Reservierung, die in Konflikt stehende Geschäfte ungültig macht.</li>
+    <li>COP1-Konvertierungen berücksichtigen FCSR Rundungsmodi; Die Gleitkomma-Eingabe lehnt nachgestellten nicht-numerischen Text ab.</li>
+    <li>Bei strikter MARS-Kompatibilität müssen Speicheroperationen – einschließlich Teilwortladungen – innerhalb zulässiger Segmente bleiben.</li>
+  </ul>
+
+  <h2>Bekannte Portabilitätsgrenzen</h2>
+  <ul>
+    <li>Das virtuelle Dateisystem des Browsers ist nicht das uneingeschränkte Dateisystem des Host-Betriebssystems.</li>
+    <li>Web-Audio-Berechtigungen und Autoplay-Richtlinien können sich auf Systemaufrufe von MIDI auswirken.</li>
+    <li>Popup-Blocker und Download-Richtlinien können sich auf exportierte Dateien auswirken.</li>
+    <li>Mini-C akzeptiert nur seine dokumentierten Profile; Code, der auf vollständigem ISO C, einer Host-Libc oder undefiniertem Verhalten basiert, ist nicht darauf portierbar.</li>
+    <li>Historische MARS-Erweiterungen, die von Java-Klassen oder Desktop-Plug-Ins abhängen, sind nicht verfügbar.</li>
+  </ul>
+</body>
+</html>

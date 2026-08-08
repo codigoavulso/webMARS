@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Uruchom i debuguj</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Uruchom debugowanie &amp;.</h1>
+  <p class="lead">Menu Run steruje jednym silnikiem JavaScript MIPS współdzielonym przez rejestry, widoki pamięci, debugger i podłączone narzędzia.</p>
+
+  <h2>Kontrola wykonania</h2>
+  <table>
+    <tr><th>Kontrola</th><th>Znaczenie</th></tr>
+    <tr><td>Idź</td><td>Działa do normalnego zakończenia, punktu przerwania, wywołania systemowego oczekującego na dane wejściowe, nieobsłużonego wyjątku, limitu, wstrzymania lub zatrzymania.</td></tr>
+    <tr><td>Pauza</td><td>Zawiesza aktywny przebieg, zachowując maszynę, aby mogła kontynuować.</td></tr>
+    <tr><td>Zatrzymaj się</td><td>Kończy wykonywanie i anuluje oczekującą pracę asynchroniczną, taką jak długie wywołanie systemowe uśpienia. Zatrzymany program nie jest wznawiany.</td></tr>
+    <tr><td>Krok</td><td>Wykonuje jedną instrukcję. Po zatrzymaniu w punkcie przerwania następne przejście lub krok przekracza ten punkt przerwania tylko raz, więc nie zatrzymuje się natychmiast ponownie pod tym samym adresem.</td></tr>
+    <tr><td>Krok wstecz</td><td>Przywraca poprzednio zarejestrowaną migawkę środowiska wykonawczego do skonfigurowanej głębokości historii.</td></tr>
+    <tr><td>Zresetuj</td><td>Zwraca złożony program do początkowego stanu maszyny.</td></tr>
+  </table>
+
+  <h2>Punkty przerwania i śledzenie źródła</h2>
+  <p>Przełącz punkt przerwania w rynnie edytora obok wykonywalnej linii źródłowej. Punkty przerwania są przechowywane w stanie wykonawczym i przetrwają normalną podróż w obie strony eksportu/importu. Pseudoinstrukcje mogą rozwinąć się w kilka podstawowych instrukcji; krokowanie następuje po wygenerowanych instrukcjach maszynowych, podczas gdy podświetlanie źródła pozostaje powiązane z linią początkową.</p>
+
+  <h2>Pasek szybkości i wydajności</h2>
+  <p>Sterowanie prędkością pracy obejmuje zakres od interaktywnych prędkości krokowych do prędkości maksymalnej. Przy maksymalnej szybkości webMARS zmniejsza kosztowne podświetlanie edytora i pracę automatycznego przewijania, ale narzędzia w dalszym ciągu otrzymują pełne migawki czasu wykonania i informacje o śledzeniu.</p>
+  <p>Kompaktowy pasek testowy raportuje czas ostatniej kompilacji, montażu i uruchomienia wraz z szacunkowym JavaScript CPU procentem wykorzystania. Pomiary mają charakter lokalny i niestabilny: służą do porównywania obciążeń i zmian algorytmów, a nie jako miernik procesów systemu operacyjnego.</p>
+
+  <h2>Opóźnione gałęzie i wyjątki</h2>
+  <p>Gdy włączone jest opóźnione rozgałęzianie, instrukcja następująca po rozgałęzieniu lub skoku jest instrukcją szczeliny opóźnienia i przechowuje instrukcje łącza <code>PC + 8</code>. Wyjątki zgłoszone w szczelinie opóźnienia ustawiają COP0 bit przyczyny BD i zapisują adres gałęzi w EPC.</p>
+  <p>Jeśli pod skonfigurowanym adresem procedury obsługi istnieje prawidłowa procedura obsługi wyjątków, wykonanie zostaje do niej przeniesione i może powrócić z <code>eret</code>. W przeciwnym razie przebieg zostanie zatrzymany z wyraźnego powodu i diagnostyki.</p>
+
+  <div class="note"><strong>Zakres cofania.</strong> Migawki obejmują rejestry, pamięć, punkty przerwania, strumienie losowe, pozycje plików, oczekujące dane wejściowe, argumenty programu i uchwyty obrazu urządzenia. Duże historie zużywają pamięć, więc dostosuj limit do ćwiczenia.</div>
+</body>
+</html>

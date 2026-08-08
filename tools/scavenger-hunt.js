@@ -72,7 +72,7 @@
     id: "scavenger-hunt",
     label: "ScavengerHunt",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("scavenger-hunt", "This is the ScavengerHunt", 980, 880, `
+      const shell = ctx.createToolWindowShell("scavenger-hunt", "This is the ScavengerHunt", 880, 680, `
         <div class="shunt-tool">
           <div class="shunt-canvas-wrap"><canvas class="shunt-canvas" data-sh="canvas" width="${GRAPHIC_WIDTH}" height="${GRAPHIC_HEIGHT}"></canvas></div>
           <div class="shunt-info" data-sh="info"></div>

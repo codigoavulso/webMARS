@@ -9,6 +9,16 @@
     "fr.js",
     "bn.js",
     "ru.js",
-    "id.js"
+    "id.js",
+    "de.js",
+    "ja.js",
+    "ko.js",
+    "tr.js",
+    "vi.js",
+    "ur.js",
+    "it.js",
+    "pl.js",
+    "fa.js",
+    "th.js"
   ]
 }

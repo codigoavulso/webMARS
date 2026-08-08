@@ -174,7 +174,7 @@
 
   function buildBaseOptions(selected) {
     return BASE_OPTIONS
-      .map(({ value, label }) => `<option value="${value}"${value === selected ? " selected" : ""}>${label}</option>`)
+      .map(({ value, label }) => `<option value="${value}"${value === selected ? " selected" : ""}>${t(label)}</option>`)
       .join("");
   }
 
@@ -720,9 +720,10 @@
       });
 
       helpButton.addEventListener("click", () => {
-        const language = window.WebMarsI18n?.getLanguage?.() || "en";
-        const supportedLanguage = ["en", "es", "pt"].includes(language) ? language : "en";
-        window.open(`./help/${supportedLanguage}/MarsHelpTools.html`, "_blank", "noopener,noreferrer");
+        // The viewer resolves the active help language itself, which is why no
+        // language is named here: the old list covered only en/es/pt and sent
+        // the other seventeen to the English page, in a detached browser tab.
+        ctx.openHelpDocument?.("MarsHelpTools.html", t("Tools"));
       });
 
       closeButton.addEventListener("click", () => {

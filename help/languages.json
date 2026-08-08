@@ -50,6 +50,56 @@
       "id": "id",
       "label": "Bahasa Indonesia",
       "dir": "id"
+    },
+    {
+      "id": "de",
+      "label": "Deutsch",
+      "dir": "de"
+    },
+    {
+      "id": "ja",
+      "label": "日本語",
+      "dir": "ja"
+    },
+    {
+      "id": "ko",
+      "label": "한국어",
+      "dir": "ko"
+    },
+    {
+      "id": "tr",
+      "label": "Türkçe",
+      "dir": "tr"
+    },
+    {
+      "id": "vi",
+      "label": "Tiếng Việt",
+      "dir": "vi"
+    },
+    {
+      "id": "ur",
+      "label": "اردو",
+      "dir": "ur"
+    },
+    {
+      "id": "it",
+      "label": "Italiano",
+      "dir": "it"
+    },
+    {
+      "id": "pl",
+      "label": "Polski",
+      "dir": "pl"
+    },
+    {
+      "id": "fa",
+      "label": "فارسی",
+      "dir": "fa"
+    },
+    {
+      "id": "th",
+      "label": "ไทย",
+      "dir": "th"
     }
   ]
 }

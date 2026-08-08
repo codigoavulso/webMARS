@@ -7343,7 +7343,7 @@ class MarsEngine {
         if (result.wait || result.pending) {
           const pendingMessage = typeof result.message === "string" && result.message.trim().length
             ? result.message
-            : "Waiting for input...";
+            : translateText("Waiting for input.");
           return { waitForInput: true, message: pendingMessage };
         }
         if (result.cancelled === true) {

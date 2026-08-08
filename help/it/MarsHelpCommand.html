@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C compilatore</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">Il compilatore didattico integrato traduce un sottoinsieme C deliberatamente definito nell'assembly MIPS32 utilizzando la convenzione di chiamata o32. Non è un compilatore C ISO per scopi generici.</p>
+
+  <h2>Profili</h2>
+  <table>
+    <tr><th>Profilo</th><th>Scopo</th></tr>
+    <tr><td><code>C0-S0</code> a <code>C0-S4</code></td><td>Sottoinsiemi di insegnamento cumulativo, passando dalle espressioni e dal flusso di controllo a funzioni, array, puntatori, strutture, typedef, contratti e librerie.</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>Il profilo predefinito e più capace: indirizzato a byte <code>char</code>/<code>char *</code>, stringhe native, <code>argc/argv</code>, puntatori a funzioni e <code>void *</code>.</td></tr>
+  </table>
+  <p>Se una fonte richiede un profilo più elevato, la compilazione ne emette uno focalizzato <code>MC_SUBSET_MISMATCH</code> diagnostico piuttosto che una cascata di errori secondari.</p>
+
+  <h2>Compilare un progetto</h2>
+  <ol class="steps">
+    <li>Seleziona il profilo desiderato e le opzioni di output in <b>Impostazioni → Preferenze Mini-C.</b>.</li>
+    <li>Aprirne uno o più <code>.c</code> file nello stesso progetto.</li>
+    <li>Seleziona <b>Esegui → Compila C0</b> oppure premere <kbd>F4</kbd>.</li>
+    <li>Esaminare la diagnostica e generare l'assembly MIPS. Assemblare ed eseguire normalmente il programma generato.</li>
+  </ol>
+
+  <h2>Convenzione di chiamata e punto di ingresso</h2>
+  <ul>
+    <li>Utilizzo degli argomenti <code>$a0</code>–<code>$a3</code>, gli argomenti aggiuntivi utilizzano lo stack e i valori restituiti utilizzano <code>$v0</code> (e <code>$v1</code> ove opportuno).</li>
+    <li>I registri salvati dal chiamato e gli stack frame seguono le aspettative di MIPS o32.</li>
+    <li><code>main(void)</code> e, in C1-NATIVE, <code>main(int argc, char **argv)</code> sono supportati.</li>
+    <li>Per gli argomenti del programma webMARS, <code>argv[0]</code> è il primo token fornito dall'utente; non è prevista l'immissione automatica del nome dell'eseguibile.</li>
+  </ul>
+
+  <h2>Intestazioni e librerie raggruppate</h2>
+  <p>
+    <span class="pill">stdio</span><span class="pill">conio</span><span class="pill">file</span>
+    <span class="pill">arg</span><span class="pill">stringa</span><span class="pill">string_nativo</span>
+    <span class="pill">analizzare</span><span class="pill">imm</span><span class="pill">util</span>
+    <span class="pill">Rand</span><span class="pill">ctype</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">stddef</span><span class="pill">bitmap_rect</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>Queste intestazioni sono librerie di compatibilità webMARS costruite attorno alle chiamate di sistema e ai dispositivi MIPS. Implementano il loro sottoinsieme documentato, non l'intera libreria standard C dell'host.</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> fornisce anche <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> e <code>bitmap_configure_all</code>, consentendo a un programma C0 di inviare la dimensione del display, la dimensione dell'unità e l'indirizzo del framebuffer agli strumenti Bitmap.</p>
+
+  <h2>Buoni esempi iniziali</h2>
+  <ul>
+    <li><b>Ciao mondo (C)</b> per il programma completo più piccolo.</li>
+    <li><b>Mini-C C1 nativo</b> per le stringhe native e il comportamento del profilo corrente.</li>
+    <li><b>Demo della libreria degli argomenti</b> per <code>argc/argv</code>.</li>
+    <li><b>Statistiche multifile</b> per la compilazione a livello di progetto e le chiamate di funzioni tra file.</li>
+    <li><b>Nozioni di base sulla console stdio</b> e <b>Andata e ritorno del file stdio</b> per le librerie di compatibilità.</li>
+  </ul>
+
+  <div class="note">Il manuale del compilatore nel repository rimane il riferimento normativo e dettagliato del linguaggio. La pagina in-app riassume i comportamenti necessari per scegliere un profilo ed eseguire correttamente gli esempi.</div>
+</body>
+</html>

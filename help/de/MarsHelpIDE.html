@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arbeitsbereich und Dateien</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Workspace-Dateien &amp;.</h1>
+  <p class="lead">Ein Projekt ist die Einheit, die webMARS speichert, kompiliert und zusammenstellt. Es kann einen oder mehrere enthalten <code>.asm</code>/<code>.s</code> Assembly-Dateien und Mini-C <code>.c</code> Dateien.</p>
+
+  <h2>Dateimenü</h2>
+  <table>
+    <tr><th>Befehl</th><th>Aktuelles Verhalten</th></tr>
+    <tr><td>Neues Projekt</td><td>Erstellt ein leeres Projekt. Sobald ein Projekt geöffnet ist, fügen Sie C- oder Assembly-Quelldateien aus dem Untermenü „Neu“ hinzu.</td></tr>
+    <tr><td>Von der Festplatte öffnen</td><td>Importiert über den Browser ausgewählte Dateien. Die Auswahl mehrerer Dateien wird unterstützt.</td></tr>
+    <tr><td>Aus dem Browserspeicher öffnen</td><td>Stellt ein Projekt wieder her, das in einem der lokalen Projektslots gespeichert ist.</td></tr>
+    <tr><td>Aktive Datei speichern / Projekt speichern</td><td>Speichert die aktive Quelle oder das komplette Projekt im Browserspeicher.</td></tr>
+    <tr><td>Herunterladen / Herunterladen als</td><td>Exportiert den aktiven Inhalt über das Browser-Download-System.</td></tr>
+    <tr><td>Beispiele</td><td>Öffnet den kuratierten, durchsuchbaren Beispielkatalog, gruppiert nach Sprache und Lernziel.</td></tr>
+    <tr><td>Dump Run I/O</td><td>Lädt das aktuelle Eingabe-/Ausgabeprotokoll des Programms zur Diagnose oder Bewertung herunter.</td></tr>
+  </table>
+
+  <h2>Editor und Projektnavigation</h2>
+  <ul>
+    <li>Verwenden Sie die Registerkarten „Quelle“, um die aktive Datei zu wechseln. Durch das Schließen einer Datei wird nicht das gesamte Projekt geschlossen.</li>
+    <li>Assembly-Fehler und Mini-C-Diagnosen identifizieren die Quelldatei und -zeile, sofern verfügbar.</li>
+    <li>Beschriftungshervorhebung, Syntaxhervorhebung, Schriftgröße und Zeilenabstand werden in gesteuert <b>Einstellungen → Schnittstelle</b>.</li>
+    <li>Die generierte Mini-C-Assembly kann automatisch in einem eigenen Fenster geöffnet werden, wenn diese Einstellung aktiviert ist.</li>
+  </ul>
+
+  <h2>Modell bauen</h2>
+  <p><b>Zusammenbauen</b> Baut die ausgewählten Assembly-Quellen in ein Programm-Image ein. <b>Kompilieren Sie C0</b> übersetzt das C-Projekt in die Assembly MIPS; Die generierte Baugruppe wird dann vor der Ausführung assembliert. C-Projekte mit mehreren Dateien werden vom Lehrcompiler als eine Übersetzungseinheit verknüpft.</p>
+
+  <h2>Lokale Wiederherstellung und Cloud-Projekte</h2>
+  <p>webMARS verwaltet Wiederherstellungsdaten im Browserspeicher, sodass ein Neuladen die Arbeitssitzung wiederherstellen kann. Die fünf expliziten lokalen Projektslots sind von dieser Wiederherstellungssitzung getrennt.</p>
+  <p>Die <b>Wolke</b> Das Menü ist optional. Anmeldung, Öffnen/Speichern des Projekts, Synchronisierung und Aktualisierung kommunizieren mit dem konfigurierten Cloud-Server. Für die lokale Bearbeitung, Kompilierung oder Ausführung ist niemals eine Cloud-Nutzung erforderlich.</p>
+
+  <div class="warning"><strong>Der Browserspeicher ist kein permanentes Backup.</strong> Privates Surfen, Quotendruck, Browserbereinigung oder der Befehl „LocalStorage löschen“ können es entfernen. Laden Sie Arbeiten herunter, die aufbewahrt werden müssen.</div>
+</body>
+</html>

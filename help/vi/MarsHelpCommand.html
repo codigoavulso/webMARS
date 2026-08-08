@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trình biên dịch Mini-C</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">Trình biên dịch giảng dạy tích hợp sẽ dịch một tập hợp con C được xác định có chủ ý sang tập hợp MIPS32 bằng cách sử dụng quy ước gọi o32. Nó không phải là trình biên dịch C ISO có mục đích chung.</p>
+
+  <h2>Hồ sơ</h2>
+  <table>
+    <tr><th>Hồ sơ</th><th>Mục đích</th></tr>
+    <tr><td><code>C0-S0</code> để <code>C0-S4</code></td><td>Các tập hợp con giảng dạy tích lũy, tiến triển từ biểu thức và luồng điều khiển đến các hàm, mảng, con trỏ, cấu trúc, typedef, hợp đồng và thư viện.</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>Cấu hình mặc định, có khả năng nhất: địa chỉ byte <code>char</code>/<code>char *</code>, chuỗi gốc, <code>argc/argv</code>, con trỏ hàm và <code>void *</code>.</td></tr>
+  </table>
+  <p>Nếu một nguồn yêu cầu cấu hình cao hơn, quá trình biên dịch sẽ phát ra một cấu hình tập trung <code>MC_SUBSET_MISMATCH</code> chẩn đoán hơn là một loạt các lỗi thứ cấp.</p>
+
+  <h2>Biên soạn một dự án</h2>
+  <ol class="steps">
+    <li>Chọn cấu hình mong muốn và các tùy chọn đầu ra trong <b>Cài đặt → tùy chọn Mini-C</b>.</li>
+    <li>Mở một hoặc nhiều <code>.c</code> các tập tin trong cùng một dự án.</li>
+    <li>chọn <b>Chạy → Biên dịch C0</b> hoặc nhấn <kbd>F4</kbd>.</li>
+    <li>Xem lại chẩn đoán và tạo tập hợp MIPS. Lắp ráp và chạy chương trình được tạo bình thường.</li>
+  </ol>
+
+  <h2>Quy ước cuộc gọi và điểm vào</h2>
+  <ul>
+    <li>Sử dụng đối số <code>$a0</code>–<code>$a3</code>, các đối số bổ sung sẽ sử dụng ngăn xếp và các giá trị trả về sẽ sử dụng <code>$v0</code> (và <code>$v1</code> khi thích hợp).</li>
+    <li>Các thanh ghi và khung ngăn xếp được lưu bằng callee tuân theo MIPS o32 kỳ vọng.</li>
+    <li><code>main(void)</code> và, trong C1-NATIVE, <code>main(int argc, char **argv)</code> được hỗ trợ.</li>
+    <li>Đối với các đối số chương trình webMARS, <code>argv[0]</code> là mã thông báo đầu tiên do người dùng cung cấp; không có mục nhập tên thực thi tự động.</li>
+  </ul>
+
+  <h2>Các tiêu đề và thư viện đi kèm</h2>
+  <p>
+    <span class="pill">phòng thu âm</span><span class="pill">conio</span><span class="pill">tập tin</span>
+    <span class="pill">lập luận</span><span class="pill">chuỗi</span><span class="pill">chuỗi_bản địa</span>
+    <span class="pill">phân tích cú pháp</span><span class="pill">hình ảnh</span><span class="pill">sử dụng</span>
+    <span class="pill">rand</span><span class="pill">ctype</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">stddef</span><span class="pill">bitmap_orth</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>Các tiêu đề này là các thư viện tương thích webMARS được xây dựng xung quanh các thiết bị và hệ thống tòa nhà MIPS. Họ triển khai tập hợp con tài liệu của mình chứ không phải thư viện chuẩn máy chủ C đầy đủ.</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> cũng cung cấp <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> và <code>bitmap_configure_all</code>, cho phép chương trình C0 gửi kích thước hiển thị, kích thước đơn vị và địa chỉ bộ đệm khung tới các công cụ Bitmap.</p>
+
+  <h2>Những ví dụ khởi đầu tốt</h2>
+  <ul>
+    <li><b>Xin chào thế giới (C)</b> cho chương trình hoàn chỉnh nhỏ nhất.</li>
+    <li><b>Mini-C C1 Bản địa</b> cho các chuỗi gốc và hành vi cấu hình hiện tại.</li>
+    <li><b>Demo thư viện đối số</b> cho <code>argc/argv</code>.</li>
+    <li><b>Thống kê nhiều tệp</b> để biên dịch toàn dự án và gọi hàm trên các tệp.</li>
+    <li><b>Thông tin cơ bản về bảng điều khiển stdio</b> và <b>Chuyến đi khứ hồi tập tin stdio</b> cho các thư viện tương thích.</li>
+  </ul>
+
+  <div class="note">Hướng dẫn biên dịch trong kho vẫn là tài liệu tham khảo ngôn ngữ chi tiết, quy chuẩn. Trang trong ứng dụng tóm tắt các hành vi cần thiết để chọn cấu hình và chạy ví dụ một cách chính xác.</div>
+</body>
+</html>

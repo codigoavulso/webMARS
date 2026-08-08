@@ -109,7 +109,7 @@
     id: "memory-reference-visualization",
     label: "Memory Reference Visualization",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("memory-reference-visualization", "Memory Reference Visualization, Version 1.0", 980, 860, `
+      const shell = ctx.createToolWindowShell("memory-reference-visualization", "Memory Reference Visualization, Version 1.0", 880, 660, `
         <div class="mv-tool">
           <h2 class="mv-title">Visualizing memory reference patterns</h2>
           <div class="mv-main">

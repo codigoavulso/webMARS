@@ -1,6 +1,6 @@
 #MARS-OS 1.0 - একটি সম্পূর্ণ ইন্টারেক্টিভ TTY অপারেটিং পরিবেশ
 #টুল খুলুন > TTY ডিভাইস + ANSI টার্মিনাল, MIPS এর সাথে সংযোগ করুন,
-#এই প্রকল্পটি একত্রিত করুন এবং মাউস UI বা "হেল্প" এর জন্য "ডেস্কটপ" টাইপ করুন।
+#জড়ো করা এবং চালানো; এটি মাউস ডেস্কটপ খোলে। শেলের জন্য টার্মিনাল চালু করুন।
 #
 #এই ফাইলটি শুধুমাত্র স্থানীয় টেক্সট ধারণ করে। কার্নেল নিজেই বাস করে
 #নীচের অংশে অন্তর্ভুক্ত ভাষা নিরপেক্ষ মডিউল:
@@ -223,8 +223,9 @@ sheet_menu: .asciiz " ESC   s save   q quit   x save and exit   c clear cell   r
 sheet_closed: .asciiz "sheet: closed "
 msg_sheet_usage: .asciiz "usage: sheet FILE   the sheet is created when it does not exist\r\n"
 
-#---- মাউস ডেস্কটপ ----
-# English ASCII fallback: the terminal font is byte-oriented.
+#---- জানালাযুক্ত ডেস্কটপ ----
+#মেনু বার শিরোনাম এবং মেনু এন্ট্রি. ডেস্কটপ থেকে মেনুগুলি পাড়ায়
+#এই স্ট্রিংগুলি, তাই একটি দীর্ঘ অনুবাদ শুধুমাত্র মেনুকে আরও প্রশস্ত করে তোলে।
 desktop_start: .asciiz "[ Start ]"
 mb_system:   .asciiz "System"
 mb_programs: .asciiz "Programs"
@@ -264,7 +265,7 @@ mi_close:      .asciiz "Close window"
 mi_close_all:  .asciiz "Close all"
 mi_keys:       .asciiz "Keyboard and mouse"
 
-# Window titles are indexed by the desktop window kind.
+#উইন্ডো শিরোনাম, উইন্ডো ধরনের দ্বারা সূচীকৃত।
 wt_programs: .asciiz "Program Manager"
 wt_about:    .asciiz "About"
 wt_files:    .asciiz "File Manager"

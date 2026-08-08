@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS cronologia</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Storia</h1>
+  <p class="lead">webMARS è iniziato come port browser del simulatore MARS 4.5 MIPS. Ora combina un runtime JavaScript indipendente, un editor, un debugger, un compilatore Mini-C, flussi di lavoro di progetto locali/cloud e strumenti nativi del browser.</p>
+
+  <h2>Linea di sviluppo attuale</h2>
+  <ul>
+    <li><strong>JavaScript-solo runtime.</strong> Il percorso ibrido sperimentale/WASM è stato rimosso dopo che la misurazione ha dimostrato che aggiungeva complessità senza un miglioramento utile per questo carico di lavoro.</li>
+    <li><strong>Correttezza di esecuzione.</strong> Ordinamento COP1 a doppia parola rafforzato dal lavoro recente, archivi di memoria atomica, prenotazioni heap, LL/SC, indirizzamento rigoroso, collegamenti con rami ritardati, arrotondamento FCSR, continuazione delle eccezioni e comportamento di arresto.</li>
+    <li><strong>Istantanee complete dello stato.</strong> L'esportazione/importazione e il backstep ora tengono conto di flussi casuali, file e cursori virtuali, stdin, argomenti di programma, handle di immagine e punti di interruzione.</li>
+    <li><strong>Osservabilità delle prestazioni.</strong> L'app riporta i tempi di compilazione, assemblaggio ed esecuzione locali oltre all'utilizzo stimato di JavaScript, mentre l'esecuzione alla massima velocità riduce il sovraccarico della presentazione senza privare gli strumenti dello stato di runtime.</li>
+    <li><strong>Mini-C evoluzione.</strong> I sottoinsiemi di insegnamento C0 rimangono disponibili insieme a C1-NATIVE, chiamate o32, stringhe di byte, argomenti, puntatori a funzioni, progetti multi-file e librerie di compatibilità.</li>
+    <li><strong>Esempi come curriculum.</strong> Gli esempi di assembly e C sono catalogati per scopo, linguaggio e profilo minimo del compilatore, con varianti multilingue e progetti multi-file.</li>
+  </ul>
+
+  <h2>Linea di compatibilità</h2>
+  <p>Il vocabolario delle istruzioni, le chiamate di sistema comuni, i concetti dell'interfaccia utente e il modello di insegnamento derivano dall'originale MARS progetto di Pete Sanderson e Kenneth Vollmar. webMARS preserva quella discendenza sostituendo l'integrazione desktop Java con le API del browser e il proprio motore di esecuzione.</p>
+
+  <h2>Registro della versione</h2>
+  <p>Il <b>webMARS → Registro modifiche</b> la pagina della guida contiene il record dettagliato del progetto versione per versione. Le voci storiche descrivono lo stato del loro rilascio; non sono promesse che un sottosistema sperimentale rimanga nella build attuale.</p>
+
+  <div class="note">Quando la documentazione e una voce del log delle modifiche cronologico differiscono, le pagine dell'argomento corrente e il comportamento di runtime corrente hanno la precedenza.</div>
+</body>
+</html>

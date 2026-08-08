@@ -1,0 +1,2274 @@
+{
+  "generatedAt": "2026-07-25T00:00:00.000Z",
+  "source": {
+    "basicInstructions": "../../assets/js/reference/instructions.generated.js",
+    "extendedInstructions": "../../assets/js/reference/pseudo-ops.generated.js",
+    "directives": "../../assets/js/app-modules/00-core.js"
+  },
+  "basicInstructions": [
+    {
+      "example": "abs.d $f2,$f4",
+      "description": "Độ chính xác kép của giá trị tuyệt đối của dấu phẩy động : Đặt $f2 thành giá trị tuyệt đối của $f4, độ chính xác kép"
+    },
+    {
+      "example": "abs.s $f0,$f1",
+      "description": "Độ chính xác đơn của giá trị tuyệt đối của dấu phẩy động: Đặt $f0 thành giá trị tuyệt đối của $f1, độ chính xác đơn"
+    },
+    {
+      "example": "add $t1,$t2,$t3",
+      "description": "Bổ sung với tràn: đặt $t1 thành ($t2 plus $t3)"
+    },
+    {
+      "example": "add.d $f2,$f4,$f6",
+      "description": "Độ chính xác kép của phép cộng dấu phẩy động : Đặt $f2 thành giá trị dấu phẩy động có độ chính xác kép của $f4 cộng với $f6"
+    },
+    {
+      "example": "add.s $f0,$f1,$f3",
+      "description": "Độ chính xác đơn của phép cộng dấu phẩy động : Đặt $f0 thành giá trị dấu phẩy động có độ chính xác đơn của $f1 cộng với $f3"
+    },
+    {
+      "example": "addi $t1,$t2,-100",
+      "description": "Bổ sung ngay lập tức khi bị tràn: đặt $t1 thành ($t2 cộng với 16-bit đã ký ngay lập tức)"
+    },
+    {
+      "example": "addiu $t1,$t2,-100",
+      "description": "Bổ sung ngay lập tức không dấu mà không tràn: đặt $t1 thành ($t2 cộng với 16 bit đã ký ngay lập tức), không tràn"
+    },
+    {
+      "example": "addu $t1,$t2,$t3",
+      "description": "Phần bổ sung không dấu mà không tràn: đặt $t1 thành ($t2 plus $t3), không tràn"
+    },
+    {
+      "example": "and $t1,$t2,$t3",
+      "description": "Bitwise AND : Đặt $t1 thành bitwise AND của $t2 và $t3"
+    },
+    {
+      "example": "andi $t1,$t2,100",
+      "description": "Bitwise AND ngay lập tức : Đặt $t1 thành bitwise AND của $t2 và 16-bit ngay lập tức mở rộng bằng 0"
+    },
+    {
+      "example": "bc1f 1,label",
+      "description": "Nhánh nếu cờ điều kiện FP được chỉ định là sai (BC1F, không phải BCLF): Nếu cờ điều kiện của Bộ đồng xử lý 1 được chỉ định bởi ngay lập tức là sai (không) thì phân nhánh tới câu lệnh tại địa chỉ của nhãn"
+    },
+    {
+      "example": "bc1f label",
+      "description": "Phân nhánh nếu cờ điều kiện FP 0 sai (BC1F, không phải BCLF): Nếu cờ điều kiện FP 0 là sai (không) thì phân nhánh thành câu lệnh tại địa chỉ của nhãn"
+    },
+    {
+      "example": "bc1t 1,label",
+      "description": "Nhánh nếu cờ điều kiện FP được chỉ định là đúng (BC1T, không phải BCLT): Nếu cờ điều kiện của Bộ đồng xử lý 1 được chỉ định bởi ngay lập tức là đúng (một) thì phân nhánh tới câu lệnh tại địa chỉ của nhãn"
+    },
+    {
+      "example": "bc1t label",
+      "description": "Phân nhánh nếu cờ điều kiện FP 0 đúng (BC1T, không phải BCLT): Nếu cờ điều kiện 0 của Bộ đồng xử lý 1 là đúng (một) thì phân nhánh thành câu lệnh tại địa chỉ của nhãn"
+    },
+    {
+      "example": "beq $t1,$t2,label",
+      "description": "Nhánh nếu bằng : Nhánh tới câu lệnh tại địa chỉ của nhãn nếu $t1 và $t2 bằng nhau"
+    },
+    {
+      "example": "bgez $t1,label",
+      "description": "Phân nhánh nếu lớn hơn hoặc bằng 0 : Phân nhánh tới câu lệnh tại địa chỉ của nhãn nếu $t1 lớn hơn hoặc bằng 0"
+    },
+    {
+      "example": "bgezal $t1,label",
+      "description": "Phân nhánh nếu lớn hơn hoặc bằng 0 và liên kết : Nếu $t1 lớn hơn hoặc bằng 0, thì đặt $ra thành Bộ đếm chương trình và phân nhánh thành câu lệnh tại địa chỉ của nhãn"
+    },
+    {
+      "example": "bgtz $t1,label",
+      "description": "Phân nhánh nếu lớn hơn 0 : Phân nhánh tới câu lệnh tại địa chỉ của nhãn nếu $t1 lớn hơn 0"
+    },
+    {
+      "example": "blez $t1,label",
+      "description": "Phân nhánh nếu nhỏ hơn hoặc bằng 0 : Phân nhánh tới câu lệnh tại địa chỉ của nhãn nếu $t1 nhỏ hơn hoặc bằng 0"
+    },
+    {
+      "example": "bltz $t1,label",
+      "description": "Phân nhánh nếu nhỏ hơn 0 : Phân nhánh tới câu lệnh tại địa chỉ của nhãn nếu $t1 nhỏ hơn 0"
+    },
+    {
+      "example": "bltzal $t1,label",
+      "description": "Phân nhánh nếu nhỏ hơn 0 và liên kết: Nếu $t1 nhỏ hơn hoặc bằng 0, thì đặt $ra cho Bộ đếm chương trình và phân nhánh thành câu lệnh tại địa chỉ của nhãn"
+    },
+    {
+      "example": "bne $t1,$t2,label",
+      "description": "Nhánh nếu không bằng : Phân nhánh tới câu lệnh tại địa chỉ của nhãn nếu $t1 và $t2 không bằng nhau"
+    },
+    {
+      "example": "break",
+      "description": "Thực hiện ngắt: Chấm dứt thực hiện chương trình với ngoại lệ"
+    },
+    {
+      "example": "break 100",
+      "description": "Ngắt thực thi bằng mã : Chấm dứt thực thi chương trình với mã ngoại lệ được chỉ định"
+    },
+    {
+      "example": "c.eq.d $f2,$f4",
+      "description": "So sánh độ chính xác kép bằng nhau: Nếu $f2 bằng $f4 (độ chính xác kép), hãy đặt cờ điều kiện của Bộ đồng xử lý 1 0 đúng, nếu không thì đặt nó sai"
+    },
+    {
+      "example": "c.eq.d 1,$f2,$f4",
+      "description": "So sánh độ chính xác kép bằng nhau: Nếu $f2 bằng $f4 (độ chính xác kép), hãy đặt cờ điều kiện của Bộ đồng xử lý 1 được chỉ định bởi ngay lập tức thành true, nếu không thì đặt cờ đó thành sai"
+    },
+    {
+      "example": "c.eq.s $f0,$f1",
+      "description": "So sánh độ chính xác đơn bằng nhau: Nếu $f0 bằng $f1, hãy đặt cờ điều kiện của Bộ đồng xử lý 1 0 đúng, nếu không thì đặt cờ sai"
+    },
+    {
+      "example": "c.eq.s 1,$f0,$f1",
+      "description": "So sánh độ chính xác đơn bằng nhau: Nếu $f0 bằng $f1, hãy đặt cờ điều kiện của Bộ đồng xử lý 1 được chỉ định bởi ngay lập tức thành true, nếu không thì đặt cờ đó thành sai"
+    },
+    {
+      "example": "c.le.d $f2,$f4",
+      "description": "So sánh độ chính xác kép nhỏ hơn hoặc bằng: Nếu $f2 nhỏ hơn hoặc bằng $f4 (độ chính xác kép), hãy đặt cờ điều kiện của Bộ xử lý 1 0 đúng, nếu không thì đặt cờ sai"
+    },
+    {
+      "example": "c.le.d 1,$f2,$f4",
+      "description": "So sánh độ chính xác kép nhỏ hơn hoặc bằng: Nếu $f2 nhỏ hơn hoặc bằng $f4 (độ chính xác kép), hãy đặt cờ điều kiện của Bộ xử lý 1 được chỉ định ngay lập tức, nếu không thì đặt cờ đó thành sai"
+    },
+    {
+      "example": "c.le.s $f0,$f1",
+      "description": "So sánh độ chính xác đơn nhỏ hơn hoặc bằng: Nếu $f0 nhỏ hơn hoặc bằng $f1, hãy đặt cờ điều kiện của Bộ xử lý 1 là 0 đúng, nếu không thì đặt cờ này thành sai"
+    },
+    {
+      "example": "c.le.s 1,$f0,$f1",
+      "description": "So sánh độ chính xác đơn nhỏ hơn hoặc bằng: Nếu $f0 nhỏ hơn hoặc bằng $f1, hãy đặt cờ điều kiện của Bộ xử lý 1 được chỉ định ngay lập tức thành true, nếu không thì đặt cờ đó thành sai"
+    },
+    {
+      "example": "c.lt.d $f2,$f4",
+      "description": "So sánh độ chính xác nhỏ hơn gấp đôi: Nếu $f2 nhỏ hơn $f4 (độ chính xác kép), hãy đặt cờ điều kiện của Bộ đồng xử lý 1 0 đúng nếu không đặt cờ sai"
+    },
+    {
+      "example": "c.lt.d 1,$f2,$f4",
+      "description": "So sánh độ chính xác nhỏ hơn gấp đôi: Nếu $f2 nhỏ hơn $f4 (độ chính xác kép), hãy đặt cờ điều kiện của Bộ đồng xử lý 1 được chỉ định bởi ngay lập tức thành true, nếu không thì đặt nó thành sai"
+    },
+    {
+      "example": "c.lt.s $f0,$f1",
+      "description": "So sánh độ chính xác nhỏ hơn một: Nếu $f0 nhỏ hơn $f1, hãy đặt cờ điều kiện của Bộ đồng xử lý 1 0 đúng nếu không đặt cờ thành sai"
+    },
+    {
+      "example": "c.lt.s 1,$f0,$f1",
+      "description": "So sánh độ chính xác nhỏ hơn một: Nếu $f0 nhỏ hơn $f1, hãy đặt cờ điều kiện của Bộ đồng xử lý 1 được chỉ định ngay lập tức thành true, nếu không thì đặt cờ đó thành sai"
+    },
+    {
+      "example": "ceil.w.d $f1,$f2",
+      "description": "Độ chính xác gấp đôi trần cho từ : Đặt $f1 thành trần số nguyên 32 bit của phao có độ chính xác kép trong $f2"
+    },
+    {
+      "example": "ceil.w.s $f0,$f1",
+      "description": "Độ chính xác đơn trần cho từ : Đặt $f0 thành trần số nguyên 32 bit của phao có độ chính xác đơn trong $f1"
+    },
+    {
+      "example": "clo $t1,$t2",
+      "description": "Đếm số bit dẫn đầu: Đặt $t1 thành số lượng bit dẫn đầu trong $t2 bắt đầu ở vị trí bit quan trọng nhất"
+    },
+    {
+      "example": "clz $t1,$t2",
+      "description": "Đếm số lượng số 0 đứng đầu: Đặt $t1 thành số lượng bit 0 đứng đầu trong $t2 bắt đầu từ vị trí bit quan trọng nhất"
+    },
+    {
+      "example": "cvt.d.s $f2,$f1",
+      "description": "Chuyển đổi từ độ chính xác đơn sang độ chính xác kép : Đặt $f2 thành độ chính xác kép tương đương với giá trị độ chính xác đơn trong $f1"
+    },
+    {
+      "example": "cvt.d.w $f2,$f1",
+      "description": "Chuyển đổi từ độ chính xác từ sang độ chính xác kép : Đặt $f2 thành độ chính xác gấp đôi tương đương với giá trị số nguyên 32 bit trong $f1"
+    },
+    {
+      "example": "cvt.s.d $f1,$f2",
+      "description": "Chuyển đổi từ độ chính xác kép sang độ chính xác đơn : Đặt $f1 thành độ chính xác đơn tương đương với giá trị độ chính xác kép trong $f2"
+    },
+    {
+      "example": "cvt.s.w $f0,$f1",
+      "description": "Chuyển đổi từ Word sang độ chính xác đơn: Đặt $f0 thành độ chính xác đơn tương đương với giá trị số nguyên 32 bit trong $f2"
+    },
+    {
+      "example": "cvt.w.d $f1,$f2",
+      "description": "Chuyển đổi từ độ chính xác kép thành từ: Đặt $f1 thành số nguyên 32 bit tương đương với giá trị độ chính xác kép trong $f2"
+    },
+    {
+      "example": "cvt.w.s $f0,$f1",
+      "description": "Chuyển đổi từ độ chính xác đơn thành từ: Đặt $f0 thành số nguyên 32 bit tương đương với giá trị chính xác đơn trong $f1"
+    },
+    {
+      "example": "div $t1,$t2",
+      "description": "Chia khi tràn : Chia $t1 cho $t2 sau đó đặt LO thành thương và HI thành số dư (dùng mfhi để truy cập HI, mflo để truy cập LO)"
+    },
+    {
+      "example": "div.d $f2,$f4,$f6",
+      "description": "Độ chính xác kép của phép chia dấu phẩy động : Đặt $f2 thành giá trị dấu phẩy động có độ chính xác kép của $f4 chia cho $f6"
+    },
+    {
+      "example": "div.s $f0,$f1,$f3",
+      "description": "Độ chính xác đơn của phép chia dấu phẩy động : Đặt $f0 thành giá trị dấu phẩy động có độ chính xác đơn của $f1 chia cho $f3"
+    },
+    {
+      "example": "divu $t1,$t2",
+      "description": "Phép chia không dấu mà không tràn : Chia $t1 không dấu cho $t2 sau đó đặt LO thành thương và HI thành số dư (dùng mfhi để truy cập HI, mflo để truy cập LO)"
+    },
+    {
+      "example": "eret",
+      "description": "Trả về ngoại lệ: Đặt bộ đếm chương trình thành giá trị thanh ghi Bộ đồng xử lý 0 EPC, đặt bit thanh ghi Trạng thái bộ đồng xử lý 1 (mức ngoại lệ) về 0"
+    },
+    {
+      "example": "floor.w.d $f1,$f2",
+      "description": "Độ chính xác gấp đôi tầng cho từ : Đặt $f1 thành tầng số nguyên 32 bit của float có độ chính xác kép trong $f2"
+    },
+    {
+      "example": "floor.w.s $f0,$f1",
+      "description": "Độ chính xác đơn tầng cho từ : Đặt $f0 thành tầng số nguyên 32 bit của float có độ chính xác đơn trong $f1"
+    },
+    {
+      "example": "j target",
+      "description": "Nhảy vô điều kiện: Nhảy tới câu lệnh tại địa chỉ đích"
+    },
+    {
+      "example": "jal target",
+      "description": "Nhảy và liên kết: Đặt $ra thành Bộ đếm chương trình (địa chỉ trả về) sau đó chuyển sang câu lệnh tại địa chỉ đích"
+    },
+    {
+      "example": "jalr $t1",
+      "description": "Thanh ghi nhảy và liên kết: Đặt $ra thành Bộ đếm chương trình (địa chỉ trả về) sau đó chuyển sang câu lệnh có địa chỉ trong $t1"
+    },
+    {
+      "example": "jalr $t1,$t2",
+      "description": "Thanh ghi nhảy và liên kết: Đặt $t1 thành Bộ đếm chương trình (địa chỉ trả về) sau đó chuyển sang câu lệnh có địa chỉ trong $t2"
+    },
+    {
+      "example": "jr $t1",
+      "description": "Đăng ký nhảy vô điều kiện : Nhảy tới câu lệnh có địa chỉ trong $t1"
+    },
+    {
+      "example": "lb $t1,-100($t2)",
+      "description": "Tải byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,-100($t2)",
+      "description": "Tải byte không dấu: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ldc1 $f2,-100($t2)",
+      "description": "Tải Bộ xử lý từ kép 1 (FPU)) : Đặt $f2 thành giá trị 64-bit từ địa chỉ từ kép bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,-100($t2)",
+      "description": "Tải nửa từ: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,-100($t2)",
+      "description": "Tải nửa từ không dấu: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "ll $t1,-100($t2)",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Cửa hàng có điều kiện (sc) tiếp theo"
+    },
+    {
+      "example": "lui $t1,100",
+      "description": "Tải ngay trên: Đặt 16 bit thứ tự cao của $t1 thành 16 bit ngay lập tức và thứ tự thấp 16 bit thành 0"
+    },
+    {
+      "example": "lw $t1,-100($t2)",
+      "description": "Tải từ: Đặt $t1 thành nội dung của địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwc1 $f1,-100($t2)",
+      "description": "Tải từ vào Bộ đồng xử lý 1 (FPU) : Đặt $f1 thành giá trị 32 bit từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwl $t1,-100($t2)",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwr $t1,-100($t2)",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "madd $t1,$t2",
+      "description": "Nhân cộng : Nhân $t1 với $t2 sau đó tăng HI với 32 bit sản phẩm bậc cao, tăng LO với 32 bit sản phẩm bậc thấp (dùng mfhi để truy cập HI, mflo để truy cập LO)"
+    },
+    {
+      "example": "maddu $t1,$t2",
+      "description": "Nhân thêm không dấu: Nhân $t1 với $t2 rồi tăng HI với 32 bit bậc cao của sản phẩm, tăng LO với 32 bit bậc thấp của sản phẩm, không dấu (dùng mfhi để truy cập HI, mflo để truy cập LO)"
+    },
+    {
+      "example": "mfc0 $t1,$8",
+      "description": "Di chuyển từ Bộ xử lý 0 : Đặt $t1 thành giá trị được lưu trong thanh ghi Bộ xử lý 0 $8"
+    },
+    {
+      "example": "mfc1 $t1,$f1",
+      "description": "Di chuyển từ Bộ đồng xử lý 1 (FPU) : Đặt $t1 thành giá trị trong thanh ghi Bộ đồng xử lý 1 $f1"
+    },
+    {
+      "example": "cfc1 $t1,$31",
+      "description": "Di chuyển từ điều khiển Bộ đồng xử lý 1 : Đặt $t1 thành giá trị trạng thái và điều khiển FCSR"
+    },
+    {
+      "example": "mfhi $t1",
+      "description": "Di chuyển từ thanh ghi HI: Đặt $t1 thành nội dung của HI (xem các thao tác nhân chia)"
+    },
+    {
+      "example": "mflo $t1",
+      "description": "Di chuyển từ thanh ghi LO: Đặt $t1 thành nội dung của LO (xem các thao tác nhân và chia)"
+    },
+    {
+      "example": "mov.d $f2,$f4",
+      "description": "Di chuyển độ chính xác kép của dấu phẩy động : Đặt độ chính xác kép $f2 thành giá trị chính xác gấp đôi trong $f4"
+    },
+    {
+      "example": "mov.s $f0,$f1",
+      "description": "Di chuyển độ chính xác đơn dấu phẩy động : Đặt độ chính xác đơn $f0 thành giá trị chính xác đơn trong $f1"
+    },
+    {
+      "example": "movf $t1,$t2",
+      "description": "Di chuyển nếu cờ điều kiện FP 0 sai : Đặt $t1 thành $t2 nếu FPU (Bộ đồng xử lý 1) cờ điều kiện 0 là sai (không)"
+    },
+    {
+      "example": "movf $t1,$t2,1",
+      "description": "Di chuyển nếu cờ điều kiện FP được chỉ định là sai: Đặt $t1 thành $t2 nếu FPU (Bộ đồng xử lý 1) cờ điều kiện được chỉ định ngay lập tức là sai (không)"
+    },
+    {
+      "example": "movf.d $f2,$f4",
+      "description": "Di chuyển độ chính xác kép của dấu phẩy động: Nếu cờ điều kiện 0 sai, hãy đặt độ chính xác kép $f2 thành giá trị chính xác gấp đôi trong $f4"
+    },
+    {
+      "example": "movf.d $f2,$f4,1",
+      "description": "Di chuyển độ chính xác kép của dấu phẩy động : Nếu cờ điều kiện được chỉ định bởi ngay lập tức là sai, hãy đặt độ chính xác kép $f2 thành giá trị chính xác gấp đôi trong $f4"
+    },
+    {
+      "example": "movf.s $f0,$f1",
+      "description": "Di chuyển độ chính xác đơn của dấu phẩy động: Nếu cờ điều kiện 0 là sai, hãy đặt độ chính xác đơn $f0 thành giá trị chính xác duy nhất trong $f1"
+    },
+    {
+      "example": "movf.s $f0,$f1,1",
+      "description": "Di chuyển độ chính xác đơn của dấu phẩy động : Nếu cờ điều kiện được chỉ định ngay lập tức là sai, hãy đặt độ chính xác đơn $f0 thành giá trị chính xác duy nhất trong $f1e"
+    },
+    {
+      "example": "movn $t1,$t2,$t3",
+      "description": "Di chuyển điều kiện khác 0: Đặt $t1 thành $t2 nếu $t3 khác 0"
+    },
+    {
+      "example": "movn.d $f2,$f4,$t3",
+      "description": "Di chuyển độ chính xác kép của dấu phẩy động: Nếu $t3 không bằng 0, hãy đặt độ chính xác kép $f2 thành giá trị chính xác gấp đôi trong $f4"
+    },
+    {
+      "example": "movn.s $f0,$f1,$t3",
+      "description": "Di chuyển độ chính xác đơn của dấu phẩy động: Nếu $t3 không bằng 0, hãy đặt độ chính xác đơn $f0 thành giá trị chính xác duy nhất trong $f1"
+    },
+    {
+      "example": "movt $t1,$t2",
+      "description": "Di chuyển nếu cờ điều kiện FP 0 đúng : Đặt $t1 thành $t2 nếu FPU (Bộ đồng xử lý 1) cờ điều kiện 0 là đúng (một)"
+    },
+    {
+      "example": "movt $t1,$t2,1",
+      "description": "Di chuyển nếu cờ điều kiện FP được chỉ định là đúng: Đặt $t1 thành $t2 if FPU Cờ điều kiện (Bộ đồng xử lý 1) được chỉ định ngay lập tức là đúng (một)"
+    },
+    {
+      "example": "movt.d $f2,$f4",
+      "description": "Di chuyển độ chính xác kép của dấu phẩy động: Nếu cờ điều kiện 0 đúng, đặt độ chính xác kép $f2 thành giá trị chính xác gấp đôi trong $f4"
+    },
+    {
+      "example": "movt.d $f2,$f4,1",
+      "description": "Di chuyển độ chính xác kép của dấu phẩy động : Nếu cờ điều kiện được chỉ định bởi ngay lập tức là đúng, hãy đặt độ chính xác kép $f2 thành giá trị chính xác gấp đôi trong $f4e"
+    },
+    {
+      "example": "movt.s $f0,$f1",
+      "description": "Di chuyển độ chính xác đơn của dấu phẩy động: Nếu cờ điều kiện 0 là đúng, đặt độ chính xác đơn $f0 thành giá trị chính xác duy nhất trong $f1e"
+    },
+    {
+      "example": "movt.s $f0,$f1,1",
+      "description": "Di chuyển độ chính xác đơn của dấu phẩy động : Nếu cờ điều kiện được chỉ định bởi ngay lập tức là đúng, hãy đặt độ chính xác đơn $f0 thành giá trị chính xác duy nhất trong $f1e"
+    },
+    {
+      "example": "movz $t1,$t2,$t3",
+      "description": "Di chuyển số 0 có điều kiện: Đặt $t1 thành $t2 nếu $t3 bằng 0"
+    },
+    {
+      "example": "movz.d $f2,$f4,$t3",
+      "description": "Di chuyển độ chính xác kép của dấu phẩy động: Nếu $t3 bằng 0, hãy đặt độ chính xác kép $f2 thành giá trị chính xác gấp đôi trong $f4"
+    },
+    {
+      "example": "movz.s $f0,$f1,$t3",
+      "description": "Di chuyển độ chính xác đơn của dấu phẩy động: Nếu $t3 bằng 0, hãy đặt độ chính xác đơn $f0 thành giá trị chính xác duy nhất trong $f1"
+    },
+    {
+      "example": "msub $t1,$t2",
+      "description": "Nhân trừ: Nhân $t1 với $t2 sau đó giảm HI bằng 32 bit sản phẩm bậc cao, giảm LO bằng 32 bit sản phẩm bậc thấp (dùng mfhi để truy cập HI, mflo để truy cập LO)"
+    },
+    {
+      "example": "msubu $t1,$t2",
+      "description": "Nhân trừ không dấu: Nhân $t1 với $t2 rồi giảm HI theo 32 bit sản phẩm bậc cao, giảm LO với 32 bit sản phẩm bậc thấp, không dấu (dùng mfhi để truy cập HI, mflo để truy cập LO)"
+    },
+    {
+      "example": "mtc0 $t1,$8",
+      "description": "Di chuyển đến Bộ xử lý 0 : Đặt thanh ghi Bộ xử lý 0 $8 thành giá trị được lưu trong $t1"
+    },
+    {
+      "example": "mtc1 $t1,$f1",
+      "description": "Di chuyển đến Bộ đồng xử lý 1 (FPU) : Đặt thanh ghi Bộ đồng xử lý 1 $f1 thành giá trị trong $t1"
+    },
+    {
+      "example": "ctc1 $t1,$31",
+      "description": "Di chuyển đến điều khiển Bộ đồng xử lý 1: Đặt FCSR, bao gồm cả chế độ làm tròn của nó, thành giá trị trong $t1"
+    },
+    {
+      "example": "mthi $t1",
+      "description": "Di chuyển tới thanh ghi HI: Đặt HI thành nội dung của $t1 (xem phép nhân và chia)"
+    },
+    {
+      "example": "mtlo $t1",
+      "description": "Di chuyển đến thanh ghi LO : Đặt LO thành nội dung của $t1 (xem các thao tác nhân và chia)"
+    },
+    {
+      "example": "mul $t1,$t2,$t3",
+      "description": "Phép nhân không tràn: Đặt HI thành 32 bit bậc cao, LO và $t1 thành 32 bit bậc thấp của tích của $t2 và $t3 (dùng mfhi để truy cập HI, mflo để truy cập LO)"
+    },
+    {
+      "example": "mul.d $f2,$f4,$f6",
+      "description": "Độ chính xác kép của phép nhân dấu phẩy động : Đặt $f2 thành giá trị dấu phẩy động có độ chính xác kép của $f4 lần $f6"
+    },
+    {
+      "example": "mul.s $f0,$f1,$f3",
+      "description": "Độ chính xác đơn của phép nhân dấu phẩy động : Đặt $f0 thành giá trị dấu phẩy động có độ chính xác đơn của $f1 lần $f3"
+    },
+    {
+      "example": "mult $t1,$t2",
+      "description": "Phép nhân: Đặt hi thành 32 bit bậc cao, lo thành 32 bit bậc thấp của tích của $t1 và $t2 (dùng mfhi để truy cập hi, mflo để truy cập lo)"
+    },
+    {
+      "example": "multu $t1,$t2",
+      "description": "Phép nhân không dấu: Đặt HI thành 32 bit bậc cao, LO thành 32 bit bậc thấp của tích của không dấu $t1 và $t2 (dùng mfhi để truy cập HI, mflo để truy cập LO)"
+    },
+    {
+      "example": "neg.d $f2,$f4",
+      "description": "Dấu phẩy động phủ định độ chính xác kép : Đặt độ chính xác kép $f2 thành phủ định giá trị độ chính xác kép trong $f4"
+    },
+    {
+      "example": "neg.s $f0,$f1",
+      "description": "Dấu phẩy động phủ định độ chính xác đơn : Đặt độ chính xác đơn $f0 thành phủ định giá trị độ chính xác đơn trong $f1"
+    },
+    {
+      "example": "nop",
+      "description": "Hoạt động null: mã máy đều là số 0"
+    },
+    {
+      "example": "nor $t1,$t2,$t3",
+      "description": "Bitwise NOR : Đặt $t1 thành bitwise NOR của $t2 và $t3"
+    },
+    {
+      "example": "or $t1,$t2,$t3",
+      "description": "Bitwise OR : Đặt $t1 thành bitwise OR của $t2 và $t3"
+    },
+    {
+      "example": "ori $t1,$t2,100",
+      "description": "Bitwise OR ngay lập tức : Đặt $t1 thành bitwise OR của $t2 và ngay lập tức 16 bit mở rộng bằng 0"
+    },
+    {
+      "example": "round.w.d $f1,$f2",
+      "description": "Làm tròn độ chính xác kép thành từ : Đặt $f1 thành vòng số nguyên 32 bit của float có độ chính xác kép trong $f2"
+    },
+    {
+      "example": "round.w.s $f0,$f1",
+      "description": "Làm tròn độ chính xác đơn thành từ: Đặt $f0 thành vòng số nguyên 32 bit của float có độ chính xác đơn trong $f1"
+    },
+    {
+      "example": "sb $t1,-100($t2)",
+      "description": "Lưu trữ byte: Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sc $t1,-100($t2)",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ $t1 nếu dự trữ Load Linked phù hợp vẫn hợp lệ, sau đó đặt $t1 thành 1 nếu thành công hoặc 0 nếu thất bại"
+    },
+    {
+      "example": "sdc1 $f2,-100($t2)",
+      "description": "Lưu trữ từ kép từ Bộ đồng xử lý 1 (FPU)) : Lưu trữ giá trị 64 bit trong $f2 vào địa chỉ từ kép bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sh $t1,-100($t2)",
+      "description": "Lưu trữ nửa từ : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sll $t1,$t2,10",
+      "description": "Dịch chuyển logic sang trái : Đặt $t1 thành kết quả của việc dịch chuyển $t2 sang trái theo số bit được chỉ định ngay lập tức"
+    },
+    {
+      "example": "sllv $t1,$t2,$t3",
+      "description": "Dịch chuyển biến logic sang trái : Đặt $t1 thành kết quả của việc dịch chuyển $t2 sang trái theo số bit được chỉ định bởi giá trị ở 5 bit thứ tự thấp của $t3"
+    },
+    {
+      "example": "slt $t1,$t2,$t3",
+      "description": "Đặt nhỏ hơn : Nếu $t2 nhỏ hơn $t3 thì đặt $t1 thành 1 nếu không đặt $t1 thành 0"
+    },
+    {
+      "example": "slti $t1,$t2,-100",
+      "description": "Đặt nhỏ hơn ngay lập tức: Nếu $t2 nhỏ hơn 16 bit ngay lập tức được mở rộng bằng dấu, thì đặt $t1 thành 1 nếu không đặt $t1 thành 0"
+    },
+    {
+      "example": "sltiu $t1,$t2,-100",
+      "description": "Đặt nhỏ hơn mức không dấu ngay lập tức : Nếu $t2 nhỏ hơn 16 bit được mở rộng bằng dấu ngay lập tức bằng cách sử dụng so sánh không dấu, thì đặt $t1 thành 1 nếu không thì đặt $t1 thành 0"
+    },
+    {
+      "example": "sltu $t1,$t2,$t3",
+      "description": "Đặt nhỏ hơn không dấu: Nếu $t2 nhỏ hơn $t3 bằng cách sử dụng so sánh không dấu, thì đặt $t1 thành 1 nếu không đặt $t1 thành 0"
+    },
+    {
+      "example": "sqrt.d $f2,$f4",
+      "description": "Độ chính xác kép của căn bậc hai : Đặt $f2 thành căn bậc hai dấu phẩy động có độ chính xác kép của $f4"
+    },
+    {
+      "example": "sqrt.s $f0,$f1",
+      "description": "Độ chính xác đơn căn bậc hai : Đặt $f0 thành căn bậc hai dấu phẩy động có độ chính xác đơn của $f1"
+    },
+    {
+      "example": "sra $t1,$t2,10",
+      "description": "Dịch chuyển sang phải số học: Đặt $t1 thành kết quả của dịch chuyển mở rộng dấu $t2 sang phải theo số bit được chỉ định bởi ngay lập tức"
+    },
+    {
+      "example": "srav $t1,$t2,$t3",
+      "description": "Dịch chuyển biến số học sang phải : Đặt $t1 thành kết quả của dịch chuyển mở rộng dấu $t2 sang phải theo số bit được chỉ định bởi giá trị ở thứ tự thấp 5 bit của $t3"
+    },
+    {
+      "example": "srl $t1,$t2,10",
+      "description": "Dịch chuyển sang phải logic : Đặt $t1 thành kết quả của việc dịch chuyển $t2 sang phải theo số bit được chỉ định ngay lập tức"
+    },
+    {
+      "example": "srlv $t1,$t2,$t3",
+      "description": "Dịch chuyển biến logic sang phải : Đặt $t1 thành kết quả của việc dịch chuyển $t2 sang phải theo số bit được chỉ định bởi giá trị ở 5 bit thứ tự thấp của $t3"
+    },
+    {
+      "example": "sub $t1,$t2,$t3",
+      "description": "Phép trừ tràn : đặt $t1 thành ($t2 trừ $t3)"
+    },
+    {
+      "example": "sub.d $f2,$f4,$f6",
+      "description": "Độ chính xác kép của phép trừ dấu phẩy động : Đặt $f2 thành giá trị dấu phẩy động có độ chính xác kép của $f4 trừ $f6"
+    },
+    {
+      "example": "sub.s $f0,$f1,$f3",
+      "description": "Độ chính xác đơn của phép trừ dấu phẩy động : Đặt $f0 thành giá trị dấu phẩy động có độ chính xác đơn của $f1 trừ $f3"
+    },
+    {
+      "example": "subu $t1,$t2,$t3",
+      "description": "Phép trừ không dấu mà không tràn : đặt $t1 thành ($t2 trừ $t3), không tràn"
+    },
+    {
+      "example": "sw $t1,-100($t2)",
+      "description": "Lưu trữ từ: Lưu trữ nội dung của $t1 vào địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "swc1 $f1,-100($t2)",
+      "description": "Lưu trữ từ từ Coprocesor 1 (FPU): Lưu trữ giá trị 32 bit trong $f1 vào địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "swl $t1,-100($t2)",
+      "description": "Lưu trữ từ bên trái : Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swr $t1,-100($t2)",
+      "description": "Lưu trữ từ đúng : Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte hiệu quả và tiếp tục đi qua địa chỉ byte đó"
+    },
+    {
+      "example": "syscall",
+      "description": "Thực hiện cuộc gọi hệ thống: Thực hiện cuộc gọi hệ thống được chỉ định bởi giá trị trong $v0"
+    },
+    {
+      "example": "teq $t1,$t2",
+      "description": "Bẫy nếu bằng : Bẫy nếu $t1 bằng $t2"
+    },
+    {
+      "example": "teqi $t1,-100",
+      "description": "Bẫy nếu bằng ngay lập tức : Bẫy nếu $t1 bằng với 16 bit mở rộng dấu ngay lập tức"
+    },
+    {
+      "example": "tge $t1,$t2",
+      "description": "Bẫy nếu lớn hơn hoặc bằng : Bẫy nếu $t1 lớn hơn hoặc bằng $t2"
+    },
+    {
+      "example": "tgei $t1,-100",
+      "description": "Bẫy nếu lớn hơn hoặc bằng ngay lập tức : Bẫy nếu $t1 lớn hơn hoặc bằng 16 bit mở rộng dấu ngay lập tức"
+    },
+    {
+      "example": "tgeiu $t1,-100",
+      "description": "Bẫy nếu lớn hơn hoặc bằng so sánh ngay lập tức không dấu : Bẫy nếu $t1 lớn hơn hoặc bằng so sánh ngay lập tức, không dấu 16 bit mở rộng dấu"
+    },
+    {
+      "example": "tgeu $t1,$t2",
+      "description": "Bẫy nếu lớn hơn hoặc bằng không dấu : Bẫy nếu $t1 lớn hơn hoặc bằng $t2 sử dụng so sánh không dấu"
+    },
+    {
+      "example": "tlt $t1,$t2",
+      "description": "Bẫy nếu nhỏ hơn: Bẫy nếu $t1 nhỏ hơn $t2"
+    },
+    {
+      "example": "tlti $t1,-100",
+      "description": "Bẫy nếu ít hơn ngay lập tức : Bẫy nếu $t1 nhỏ hơn 16-bit mở rộng dấu ngay lập tức"
+    },
+    {
+      "example": "tltiu $t1,-100",
+      "description": "Bẫy nếu nhỏ hơn mức không dấu ngay lập tức : Bẫy nếu $t1 nhỏ hơn so sánh 16-bit ngay lập tức, không dấu được mở rộng bằng dấu"
+    },
+    {
+      "example": "tltu $t1,$t2",
+      "description": "Bẫy nếu nhỏ hơn không dấu : Bẫy nếu $t1 nhỏ hơn $t2, so sánh không dấu"
+    },
+    {
+      "example": "tne $t1,$t2",
+      "description": "Bẫy nếu không bằng : Bẫy nếu $t1 không bằng $t2"
+    },
+    {
+      "example": "tnei $t1,-100",
+      "description": "Bẫy nếu không bằng ngay lập tức : Bẫy nếu $t1 không bằng 16 bit mở rộng dấu ngay lập tức"
+    },
+    {
+      "example": "trunc.w.d $f1,$f2",
+      "description": "Cắt ngắn độ chính xác kép thành từ: Đặt $f1 thành cắt ngắn số nguyên 32 bit của float có độ chính xác kép trong $f2"
+    },
+    {
+      "example": "trunc.w.s $f0,$f1",
+      "description": "Cắt bớt độ chính xác đơn thành từ: Đặt $f0 thành cắt ngắn số nguyên 32 bit của float có độ chính xác đơn trong $f1"
+    },
+    {
+      "example": "xor $t1,$t2,$t3",
+      "description": "Bitwise XOR (độc quyền HOẶC): Đặt $t1 thành bitwise XOR của $t2 và $t3"
+    },
+    {
+      "example": "xori $t1,$t2,100",
+      "description": "Bitwise XOR ngay lập tức : Đặt $t1 thành bitwise XOR của $t2 và 16-bit ngay lập tức mở rộng bằng 0"
+    }
+  ],
+  "extendedInstructions": [
+    {
+      "example": "abs $t1,$t2",
+      "description": "Giá trị tuyệt đối: Đặt $t1 thành giá trị tuyệt đối của $t2 (thuật toán từ Hacker's Delight)"
+    },
+    {
+      "example": "add $t1,$t2,-100",
+      "description": "BỔ SUNG: đặt $t1 đến ($t2 cộng 16-bit ngay lập tức)"
+    },
+    {
+      "example": "add $t1,$t2,100000",
+      "description": "BỔ SUNG: đặt $t1 đến ($t2 cộng với 32-bit ngay lập tức)"
+    },
+    {
+      "example": "addi $t1,$t2,100000",
+      "description": "BỔ SUNG Ngay lập tức: đặt $t1 đến ($t2 cộng với 32-bit ngay lập tức)"
+    },
+    {
+      "example": "addiu $t1,$t2,100000",
+      "description": "BỔ SUNG Ngay lập tức Chưa được ký: đã đặt $t1 đến ($t2 cộng thêm 32-bit ngay lập tức), không tràn"
+    },
+    {
+      "example": "addu $t1,$t2,100000",
+      "description": "THÊM Chưa được ký: đặt $t1 thành ($t2 cộng với 32 bit ngay lập tức), không tràn"
+    },
+    {
+      "example": "and $t1,$t2,100",
+      "description": "AND : đặt $t1 thành ($t2 bitwise-AND 16-bit không dấu ngay lập tức)"
+    },
+    {
+      "example": "and $t1,100",
+      "description": "AND : đặt $t1 thành ($t1 bitwise-AND 16-bit không dấu ngay lập tức)"
+    },
+    {
+      "example": "andi $t1,$t2,100000",
+      "description": "AND Ngay lập tức : đặt $t1 thành ($t2 bitwise-AND 32-bit ngay lập tức)"
+    },
+    {
+      "example": "andi $t1,100",
+      "description": "AND Ngay lập tức : đặt $t1 thành ($t1 bitwise-AND 16-bit không dấu ngay lập tức)"
+    },
+    {
+      "example": "andi $t1,100000",
+      "description": "AND Ngay lập tức : đặt $t1 thành ($t1 bitwise-AND 32-bit ngay lập tức)"
+    },
+    {
+      "example": "b label",
+      "description": "Chi nhánh : Chi nhánh đến tuyên bố tại nhãn vô điều kiện"
+    },
+    {
+      "example": "beq $t1,-100,label",
+      "description": "Nhánh nếu bằng : Nhánh tới câu lệnh tại nhãn nếu $t1 bằng 16-bit ngay lập tức"
+    },
+    {
+      "example": "beq $t1,100000,label",
+      "description": "Nhánh nếu bằng : Nhánh tới câu lệnh tại nhãn nếu $t1 bằng 32-bit ngay lập tức"
+    },
+    {
+      "example": "beqz $t1,label",
+      "description": "Nhánh nếu bằng 0 : Phân nhánh tới câu lệnh tại nhãn nếu $t1 bằng 0"
+    },
+    {
+      "example": "bge $t1,-100,label",
+      "description": "Nhánh nếu lớn hơn hoặc bằng : Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn hoặc bằng 16-bit ngay lập tức"
+    },
+    {
+      "example": "bge $t1,$t2,label",
+      "description": "Nhánh nếu lớn hơn hoặc bằng : Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn hoặc bằng $t2"
+    },
+    {
+      "example": "bge $t1,100000,label",
+      "description": "Nhánh nếu lớn hơn hoặc bằng : Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn hoặc bằng 32-bit ngay lập tức"
+    },
+    {
+      "example": "bgeu $t1,-100,label",
+      "description": "Nhánh nếu lớn hơn hoặc bằng Không dấu : Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn hoặc bằng 16 bit ngay lập tức (so sánh không dấu)"
+    },
+    {
+      "example": "bgeu $t1,$t2,label",
+      "description": "Nhánh nếu lớn hơn hoặc bằng Không dấu : Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn hoặc bằng $t2 (so sánh không dấu)"
+    },
+    {
+      "example": "bgeu $t1,100000,label",
+      "description": "Nhánh nếu lớn hơn hoặc bằng Không dấu : Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn hoặc bằng 32 bit ngay lập tức (so sánh không dấu)"
+    },
+    {
+      "example": "bgt $t1,-100,label",
+      "description": "Nhánh nếu lớn hơn : Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn 16-bit ngay lập tức"
+    },
+    {
+      "example": "bgt $t1,$t2,label",
+      "description": "Nhánh nếu lớn hơn : Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn $t2"
+    },
+    {
+      "example": "bgt $t1,100000,label",
+      "description": "Nhánh nếu lớn hơn : Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn 32 bit ngay lập tức"
+    },
+    {
+      "example": "bgtu $t1,-100,label",
+      "description": "Nhánh nếu lớn hơn không dấu: Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn 16 bit ngay lập tức (so sánh không dấu)"
+    },
+    {
+      "example": "bgtu $t1,$t2,label",
+      "description": "Nhánh nếu lớn hơn chưa ký: Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn $t2 (so sánh không dấu)"
+    },
+    {
+      "example": "bgtu $t1,100000,label",
+      "description": "Nhánh nếu lớn hơn không dấu: Phân nhánh tới câu lệnh tại nhãn nếu $t1 lớn hơn 16 bit ngay lập tức (so sánh không dấu)"
+    },
+    {
+      "example": "ble $t1,-100,label",
+      "description": "Nhánh nếu nhỏ hơn hoặc bằng : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn hoặc bằng 16-bit ngay lập tức"
+    },
+    {
+      "example": "ble $t1,$t2,label",
+      "description": "Nhánh nếu Nhỏ hơn hoặc Bằng : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn hoặc bằng $t2"
+    },
+    {
+      "example": "ble $t1,100000,label",
+      "description": "Nhánh nếu nhỏ hơn hoặc bằng : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn hoặc bằng 32-bit ngay lập tức"
+    },
+    {
+      "example": "bleu $t1,-100,label",
+      "description": "Nhánh nếu nhỏ hơn hoặc bằng Không dấu : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn hoặc bằng 16 bit ngay lập tức (so sánh không dấu)"
+    },
+    {
+      "example": "bleu $t1,$t2,label",
+      "description": "Nhánh nếu Nhỏ hơn hoặc Bằng Không dấu : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn hoặc bằng $t2 (so sánh không dấu)"
+    },
+    {
+      "example": "bleu $t1,100000,label",
+      "description": "Nhánh nếu nhỏ hơn hoặc bằng Không dấu : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn hoặc bằng 32 bit ngay lập tức (so sánh không dấu)"
+    },
+    {
+      "example": "blt $t1,-100,label",
+      "description": "Nhánh nếu nhỏ hơn : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn 16 bit ngay lập tức"
+    },
+    {
+      "example": "blt $t1,$t2,label",
+      "description": "Nhánh nếu nhỏ hơn : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn $t2"
+    },
+    {
+      "example": "blt $t1,100000,label",
+      "description": "Nhánh nếu nhỏ hơn : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn 32 bit ngay lập tức"
+    },
+    {
+      "example": "bltu $t1,-100,label",
+      "description": "Nhánh nếu nhỏ hơn không dấu : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn 16 bit ngay lập tức"
+    },
+    {
+      "example": "bltu $t1,$t2,label",
+      "description": "Nhánh nếu nhỏ hơn không dấu : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn $t2"
+    },
+    {
+      "example": "bltu $t1,100000,label",
+      "description": "Nhánh nếu nhỏ hơn không dấu : Phân nhánh tới câu lệnh tại nhãn nếu $t1 nhỏ hơn 32 bit ngay lập tức"
+    },
+    {
+      "example": "bne $t1,-100,label",
+      "description": "Nhánh nếu không bằng : Nhánh tới câu lệnh tại nhãn nếu $t1 không bằng 16-bit ngay lập tức"
+    },
+    {
+      "example": "bne $t1,100000,label",
+      "description": "Nhánh nếu không bằng : Nhánh tới câu lệnh tại nhãn nếu $t1 không bằng 32-bit ngay lập tức"
+    },
+    {
+      "example": "bnez $t1,label",
+      "description": "Nhánh nếu không bằng 0 : Phân nhánh tới câu lệnh tại nhãn nếu $t1 không bằng 0"
+    },
+    {
+      "example": "div $t1,$t2,-100",
+      "description": "DIVision : Đặt $t1 thành ($t2 chia cho phép chia số nguyên, ngay lập tức 16 bit)"
+    },
+    {
+      "example": "div $t1,$t2,$t3",
+      "description": "DIVision : Đặt $t1 thành ($t2 chia cho $t3, chia số nguyên)"
+    },
+    {
+      "example": "div $t1,$t2,100000",
+      "description": "DIVision : Đặt $t1 thành ($t2 chia cho phép chia số nguyên, ngay lập tức 32 bit)"
+    },
+    {
+      "example": "divu $t1,$t2,-100",
+      "description": "DIVision Unsigned : Đặt $t1 thành ($t2 chia cho phép chia số nguyên không dấu 16 bit ngay lập tức)"
+    },
+    {
+      "example": "divu $t1,$t2,$t3",
+      "description": "DIVision Unsigned : Đặt $t1 thành ($t2 chia cho $t3, phép chia số nguyên không dấu)"
+    },
+    {
+      "example": "divu $t1,$t2,100000",
+      "description": "DIVision Unsigned : Đặt $t1 thành ($t2 chia cho phép chia số nguyên không dấu 32 bit ngay lập tức)"
+    },
+    {
+      "example": "l.d $f2,-100",
+      "description": "Tải dấu phẩy động Độ chính xác kép: Đặt cặp đăng ký $f2 và $f3 thành giá trị 64-bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.d $f2,($t2)",
+      "description": "Tải dấu phẩy động Độ chính xác kép: Đặt cặp đăng ký $f2 và $f3 thành giá trị 64-bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.d $f2,100000",
+      "description": "Tải dấu phẩy động Độ chính xác kép: Đặt cặp đăng ký $f2 và $f3 thành giá trị 64-bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.d $f2,100000($t2)",
+      "description": "Tải dấu phẩy động Độ chính xác kép: Đặt cặp đăng ký $f2 và $f3 thành giá trị 64-bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.d $f2,label",
+      "description": "Tải dấu phẩy động Độ chính xác kép: Đặt cặp đăng ký $f2 và $f3 thành giá trị 64-bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.d $f2,label($t2)",
+      "description": "Tải dấu phẩy động Độ chính xác kép: Đặt cặp đăng ký $f2 và $f3 thành giá trị 64-bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.d $f2,label+100000",
+      "description": "Tải dấu phẩy động Độ chính xác kép: Đặt cặp đăng ký $f2 và $f3 thành giá trị 64-bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.d $f2,label+100000($t2)",
+      "description": "Tải dấu phẩy động Độ chính xác kép: Đặt cặp đăng ký $f2 và $f3 thành giá trị 64-bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.s $f1,-100",
+      "description": "Tải dấu phẩy động Độ chính xác đơn: Đặt $f1 thành giá trị 32 bit tại địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.s $f1,($t2)",
+      "description": "Tải dấu phẩy động Độ chính xác đơn: Đặt $f1 thành giá trị 32 bit tại địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.s $f1,100000",
+      "description": "Tải dấu phẩy động Độ chính xác đơn: Đặt $f1 thành giá trị 32 bit tại địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.s $f1,100000($t2)",
+      "description": "Tải dấu phẩy động Độ chính xác đơn: Đặt $f1 thành giá trị 32 bit tại địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.s $f1,label",
+      "description": "Tải dấu phẩy động Độ chính xác đơn: Đặt $f1 thành giá trị 32 bit tại địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.s $f1,label($t2)",
+      "description": "Tải dấu phẩy động Độ chính xác đơn: Đặt $f1 thành giá trị 32 bit tại địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.s $f1,label+100000",
+      "description": "Tải dấu phẩy động Độ chính xác đơn: Đặt $f1 thành giá trị 32 bit tại địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "l.s $f1,label+100000($t2)",
+      "description": "Tải dấu phẩy động Độ chính xác đơn: Đặt $f1 thành giá trị 32 bit tại địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "la $t1,-100",
+      "description": "Tải địa chỉ: Đặt $t1 thành 16 bit ngay lập tức (mở rộng dấu hiệu)"
+    },
+    {
+      "example": "la $t1,($t2)",
+      "description": "Tải địa chỉ: Đặt $t1 thành nội dung của $t2"
+    },
+    {
+      "example": "la $t1,100",
+      "description": "Tải địa chỉ: Đặt $t1 thành 16 bit ngay lập tức (không mở rộng)"
+    },
+    {
+      "example": "la $t1,100($t2)",
+      "description": "Địa chỉ tải: Đặt $t1 thành tổng (của $t2 và 16-bit ngay lập tức)"
+    },
+    {
+      "example": "la $t1,100000",
+      "description": "Tải địa chỉ: Đặt $t1 thành 32-bit ngay lập tức"
+    },
+    {
+      "example": "la $t1,100000($t2)",
+      "description": "Địa chỉ tải: Đặt $t1 thành tổng (của $t2 và 32-bit ngay lập tức)"
+    },
+    {
+      "example": "la $t1,label",
+      "description": "Nạp địa chỉ: Đặt $t1 thành địa chỉ của nhãn"
+    },
+    {
+      "example": "la $t1,label($t2)",
+      "description": "Tải địa chỉ: Đặt $t1 thành tổng (của $t2 và địa chỉ của nhãn)"
+    },
+    {
+      "example": "la $t1,label+100000",
+      "description": "Tải địa chỉ: Đặt $t1 thành tổng (địa chỉ của nhãn và 32 bit tức thời)"
+    },
+    {
+      "example": "la $t1,label+100000($t2)",
+      "description": "Tải địa chỉ : Đặt $t1 thành tổng (địa chỉ của nhãn, tức thời 32 bit và $t2)"
+    },
+    {
+      "example": "lb $t1,-100",
+      "description": "Tải Byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lb $t1,($t2)",
+      "description": "Tải Byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lb $t1,100",
+      "description": "Tải Byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lb $t1,100($t2)",
+      "description": "Tải Byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lb $t1,100000",
+      "description": "Tải Byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lb $t1,100000($t2)",
+      "description": "Tải Byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lb $t1,label",
+      "description": "Tải Byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lb $t1,label($t2)",
+      "description": "Tải Byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lb $t1,label+100000",
+      "description": "Tải Byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lb $t1,label+100000($t2)",
+      "description": "Tải Byte: Đặt $t1 thành giá trị 8 bit được mở rộng bằng dấu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,-100",
+      "description": "Tải byte chưa được ký: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,($t2)",
+      "description": "Tải byte chưa được ký: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,100",
+      "description": "Tải byte chưa được ký: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,100($t2)",
+      "description": "Tải byte chưa được ký: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,100000",
+      "description": "Tải byte chưa được ký: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,100000($t2)",
+      "description": "Tải byte chưa được ký: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,label",
+      "description": "Tải byte chưa được ký: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,label($t2)",
+      "description": "Tải byte chưa được ký: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,label+100000",
+      "description": "Tải byte chưa được ký: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lbu $t1,label+100000($t2)",
+      "description": "Tải byte chưa được ký: Đặt $t1 thành giá trị 8 bit mở rộng bằng 0 từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ld $t1,-100($t2)",
+      "description": "Tải Doubleword: Đặt $t1 và thanh ghi tiếp theo thành 64 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ld $t1,($t2)",
+      "description": "Tải Doubleword: Đặt $t1 và thanh ghi tiếp theo thành 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ld $t1,100000",
+      "description": "Tải Doubleword: Đặt $t1 và thanh ghi tiếp theo thành 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ld $t1,100000($t2)",
+      "description": "Tải Doubleword: Đặt $t1 và thanh ghi tiếp theo thành 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ld $t1,label",
+      "description": "Tải Doubleword: Đặt $t1 và thanh ghi tiếp theo thành 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ld $t1,label($t2)",
+      "description": "Tải Doubleword: Đặt $t1 và thanh ghi tiếp theo thành 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ld $t1,label+100000",
+      "description": "Tải Doubleword: Đặt $t1 và thanh ghi tiếp theo thành 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ld $t1,label+100000($t2)",
+      "description": "Tải Doubleword: Đặt $t1 và thanh ghi tiếp theo thành 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ldc1 $f2,-100",
+      "description": "Tải Bộ đồng xử lý Doubleword 1 : Đặt cặp đăng ký $f2 và $f3 thành giá trị 64 bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "ldc1 $f2,($t2)",
+      "description": "Tải Bộ đồng xử lý Doubleword 1 : Đặt cặp đăng ký $f2 và $f3 thành giá trị 64 bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "ldc1 $f2,100000",
+      "description": "Tải Bộ đồng xử lý Doubleword 1 : Đặt cặp đăng ký $f2 và $f3 thành giá trị 64 bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "ldc1 $f2,100000($t2)",
+      "description": "Tải Bộ đồng xử lý Doubleword 1 : Đặt cặp đăng ký $f2 và $f3 thành giá trị 64 bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "ldc1 $f2,label",
+      "description": "Tải Bộ đồng xử lý Doubleword 1 : Đặt cặp đăng ký $f2 và $f3 thành giá trị 64 bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "ldc1 $f2,label($t2)",
+      "description": "Tải Bộ đồng xử lý Doubleword 1 : Đặt cặp đăng ký $f2 và $f3 thành giá trị 64 bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "ldc1 $f2,label+100000",
+      "description": "Tải Bộ đồng xử lý Doubleword 1 : Đặt cặp đăng ký $f2 và $f3 thành giá trị 64 bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "ldc1 $f2,label+100000($t2)",
+      "description": "Tải Bộ đồng xử lý Doubleword 1 : Đặt cặp đăng ký $f2 và $f3 thành giá trị 64 bit tại địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,-100",
+      "description": "Tải Halfword: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,($t2)",
+      "description": "Tải Halfword: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,100",
+      "description": "Tải Halfword: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,100($t2)",
+      "description": "Tải Halfword: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,100000",
+      "description": "Tải Halfword: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,100000($t2)",
+      "description": "Tải Halfword: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,label",
+      "description": "Tải Halfword: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,label($t2)",
+      "description": "Tải Halfword: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,label+100000",
+      "description": "Tải Halfword: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lh $t1,label+100000($t2)",
+      "description": "Tải Halfword: Đặt $t1 thành giá trị 16 bit được mở rộng bằng dấu từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,-100",
+      "description": "Tải Halfword chưa được ký: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,($t2)",
+      "description": "Tải Halfword chưa được ký: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,100",
+      "description": "Tải Halfword chưa được ký: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,100($t2)",
+      "description": "Tải Halfword chưa được ký: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,100000",
+      "description": "Tải Halfword chưa được ký: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,100000($t2)",
+      "description": "Tải Halfword chưa được ký: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,label",
+      "description": "Tải Halfword chưa được ký: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,label($t2)",
+      "description": "Tải Halfword chưa được ký: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,label+100000",
+      "description": "Tải Halfword chưa được ký: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "lhu $t1,label+100000($t2)",
+      "description": "Tải Halfword chưa được ký: Đặt $t1 thành giá trị 16 bit mở rộng bằng 0 từ địa chỉ nửa từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "li $t1,-100",
+      "description": "Tải ngay lập tức: Đặt $t1 thành 16 bit ngay lập tức (mở rộng dấu hiệu)"
+    },
+    {
+      "example": "li $t1,100",
+      "description": "Tải ngay lập tức: Đặt $t1 thành 16 bit không dấu ngay lập tức (không mở rộng)"
+    },
+    {
+      "example": "li $t1,100000",
+      "description": "Tải ngay lập tức: Đặt $t1 thành 32-bit ngay lập tức"
+    },
+    {
+      "example": "ll $t1,-100",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Điều kiện lưu trữ (sc) tiếp theo."
+    },
+    {
+      "example": "ll $t1,($t2)",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Điều kiện lưu trữ (sc) tiếp theo."
+    },
+    {
+      "example": "ll $t1,100",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Điều kiện lưu trữ (sc) tiếp theo."
+    },
+    {
+      "example": "ll $t1,100($t2)",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Điều kiện lưu trữ (sc) tiếp theo."
+    },
+    {
+      "example": "ll $t1,100000",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Điều kiện lưu trữ (sc) tiếp theo."
+    },
+    {
+      "example": "ll $t1,100000($t2)",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Điều kiện lưu trữ (sc) tiếp theo."
+    },
+    {
+      "example": "ll $t1,label",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Điều kiện lưu trữ (sc) tiếp theo."
+    },
+    {
+      "example": "ll $t1,label($t2)",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Điều kiện lưu trữ (sc) tiếp theo."
+    },
+    {
+      "example": "ll $t1,label+100000",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Điều kiện lưu trữ (sc) tiếp theo."
+    },
+    {
+      "example": "ll $t1,label+100000($t2)",
+      "description": "Tải được liên kết : Tải một từ và thiết lập đặt chỗ cho Điều kiện lưu trữ (sc) tiếp theo."
+    },
+    {
+      "example": "lw $t1,-100",
+      "description": "Tải Word: Đặt $t1 thành nội dung của địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lw $t1,($t2)",
+      "description": "Tải Word: Đặt $t1 thành nội dung của địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lw $t1,100",
+      "description": "Tải Word: Đặt $t1 thành nội dung của địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lw $t1,100($t2)",
+      "description": "Tải Word: Đặt $t1 thành nội dung của địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lw $t1,100000",
+      "description": "Tải Word: Đặt $t1 thành nội dung của địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lw $t1,100000($t2)",
+      "description": "Tải Word: Đặt $t1 thành nội dung của địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lw $t1,label",
+      "description": "Load Word : Đặt $t1 thành nội dung của từ bộ nhớ tại địa chỉ nhãn"
+    },
+    {
+      "example": "lw $t1,label($t2)",
+      "description": "Tải Word: Đặt $t1 thành nội dung của địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lw $t1,label+100000",
+      "description": "Tải Word: Đặt $t1 thành nội dung của địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lw $t1,label+100000($t2)",
+      "description": "Tải Word: Đặt $t1 thành nội dung của địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwc1 $f1,-100",
+      "description": "Tải Bộ đồng xử lý Word 1 : Đặt $f1 thành giá trị 32 bit từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwc1 $f1,($t2)",
+      "description": "Tải Bộ đồng xử lý Word 1 : Đặt $f1 thành giá trị 32 bit từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwc1 $f1,100000",
+      "description": "Tải Bộ đồng xử lý Word 1 : Đặt $f1 thành giá trị 32 bit từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwc1 $f1,100000($t2)",
+      "description": "Tải Bộ đồng xử lý Word 1 : Đặt $f1 thành giá trị 32 bit từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwc1 $f1,label",
+      "description": "Tải Bộ đồng xử lý Word 1 : Đặt $f1 thành giá trị 32 bit từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwc1 $f1,label($t2)",
+      "description": "Tải Bộ đồng xử lý Word 1 : Đặt $f1 thành giá trị 32 bit từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwc1 $f1,label+100000",
+      "description": "Tải Bộ đồng xử lý Word 1 : Đặt $f1 thành giá trị 32 bit từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwc1 $f1,label+100000($t2)",
+      "description": "Tải Bộ đồng xử lý Word 1 : Đặt $f1 thành giá trị 32 bit từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "lwl $t1,-100",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwl $t1,($t2)",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwl $t1,100",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwl $t1,100($t2)",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwl $t1,100000",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwl $t1,100000($t2)",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwl $t1,label",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwl $t1,label($t2)",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwl $t1,label+100000",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwl $t1,label+100000($t2)",
+      "description": "Tải từ bên trái : Tải từ 1 đến 4 byte căn trái vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "lwr $t1,-100",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "lwr $t1,($t2)",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "lwr $t1,100",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "lwr $t1,100($t2)",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "lwr $t1,100000",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "lwr $t1,100000($t2)",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "lwr $t1,label",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "lwr $t1,label($t2)",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "lwr $t1,label+100000",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "lwr $t1,label+100000($t2)",
+      "description": "Tải từ đúng : Tải từ 1 đến 4 byte căn phải vào $t1, bắt đầu bằng địa chỉ byte bộ nhớ hiệu dụng và tiếp tục qua byte thứ tự cao của từ đó"
+    },
+    {
+      "example": "mfc1.d $t1,$f2",
+      "description": "Di chuyển từ Bộ đồng xử lý 1 Double : Đặt $t1 thành nội dung của $f2, đặt thanh ghi cao hơn tiếp theo từ $t1 thành nội dung của thanh ghi cao hơn tiếp theo từ $f2"
+    },
+    {
+      "example": "move $t1,$t2",
+      "description": "MOVE : Đặt $t1 thành nội dung của $t2"
+    },
+    {
+      "example": "mtc1.d $t1,$f2",
+      "description": "Chuyển sang Bộ đồng xử lý 1 Double : Đặt $f2 thành nội dung của $t1, đặt thanh ghi cao hơn tiếp theo từ $f2 thành nội dung của thanh ghi cao hơn tiếp theo từ $t1"
+    },
+    {
+      "example": "mul $t1,$t2,-100",
+      "description": "MULtiplication : Đặt HI thành 32 bit bậc cao, LO và $t1 thành 32 bit bậc thấp của tích $t2 và 16 bit có dấu ngay lập tức (dùng mfhi để truy cập HI, mflo để truy cập LO)"
+    },
+    {
+      "example": "mul $t1,$t2,100000",
+      "description": "MULtiplication : Đặt HI thành 32 bit bậc cao, LO và $t1 thành 32 bit bậc thấp của tích $t2 và 32 bit tức thời (dùng mfhi để truy cập HI, mflo để truy cập LO)"
+    },
+    {
+      "example": "mulo $t1,$t2,-100",
+      "description": "MULTiplication với tràn : Đặt $t1 thành 32 bit bậc thấp của sản phẩm $t2 và ký 16-bit ngay lập tức"
+    },
+    {
+      "example": "mulo $t1,$t2,$t3",
+      "description": "MULTiplication khi tràn : Đặt $t1 thành 32 bit bậc thấp của tích của $t2 và $t3"
+    },
+    {
+      "example": "mulo $t1,$t2,100000",
+      "description": "MULTiplication khi tràn : Đặt $t1 thành 32 bit bậc thấp của tích của $t2 và 32 bit ngay lập tức"
+    },
+    {
+      "example": "mulou $t1,$t2,-100",
+      "description": "MULTiplication với tràn không dấu: Đặt $t1 thành 32 bit bậc thấp của sản phẩm $t2 và ký 16-bit ngay lập tức"
+    },
+    {
+      "example": "mulou $t1,$t2,$t3",
+      "description": "MULTIplication với tràn không dấu: Đặt $t1 thành 32 bit bậc thấp của tích của $t2 và $t3"
+    },
+    {
+      "example": "mulou $t1,$t2,100000",
+      "description": "MULTiplication với tràn không dấu: Đặt $t1 thành 32 bit bậc thấp của sản phẩm $t2 và 32 bit ngay lập tức"
+    },
+    {
+      "example": "mulu $t1,$t2,-100",
+      "description": "MULtiplication Unsigned : Đặt HI thành 32 bit bậc cao, LO và $t1 thành 32 bit bậc thấp của ($t2 nhân với phép nhân 16 bit ngay lập tức, không dấu)"
+    },
+    {
+      "example": "mulu $t1,$t2,$t3",
+      "description": "MULtiplication Unsigned : Đặt HI thành 32 bit bậc cao, LO và $t1 thành 32 bit bậc thấp của ($t2 nhân với $t3, phép nhân không dấu)"
+    },
+    {
+      "example": "mulu $t1,$t2,100000",
+      "description": "MULtiplication Unsigned : Đặt HI thành 32 bit bậc cao, LO và $t1 thành 32 bit bậc thấp của ($t2 nhân với phép nhân 32 bit ngay lập tức, không dấu)"
+    },
+    {
+      "example": "neg $t1,$t2",
+      "description": "NEGate : Đặt $t1 thành phủ định của $t2"
+    },
+    {
+      "example": "negu $t1,$t2",
+      "description": "NEGate Unsigned : Đặt $t1 thành phủ định của $t2, không tràn"
+    },
+    {
+      "example": "not $t1,$t2",
+      "description": "Bitwise NOT (đảo ngược bit)"
+    },
+    {
+      "example": "or $t1,$t2,100",
+      "description": "HOẶC : đặt $t1 thành ($t2 bitwise-OR 16-bit không dấu ngay lập tức)"
+    },
+    {
+      "example": "or $t1,100",
+      "description": "HOẶC : đặt $t1 thành ($t1 bitwise-OR 16-bit không dấu ngay lập tức)"
+    },
+    {
+      "example": "ori $t1,$t2,100000",
+      "description": "HOẶC Ngay lập tức : đặt $t1 thành ($t2 bitwise-OR 32-bit ngay lập tức)"
+    },
+    {
+      "example": "ori $t1,100",
+      "description": "HOẶC Ngay lập tức : đặt $t1 thành ($t1 bitwise-OR 16-bit không dấu ngay lập tức)"
+    },
+    {
+      "example": "ori $t1,100000",
+      "description": "HOẶC Ngay lập tức : đặt $t1 thành ($t1 bitwise-OR 32-bit ngay lập tức)"
+    },
+    {
+      "example": "rem $t1,$t2,-100",
+      "description": "REMainder : Đặt $t1 thành (phần dư của $t2 chia cho 16-bit ngay lập tức)"
+    },
+    {
+      "example": "rem $t1,$t2,$t3",
+      "description": "REMainder : Đặt $t1 thành (phần dư của $t2 chia cho $t3)"
+    },
+    {
+      "example": "rem $t1,$t2,100000",
+      "description": "REMainder : Đặt $t1 thành (phần dư của $t2 chia cho 32-bit ngay lập tức)"
+    },
+    {
+      "example": "remu $t1,$t2,-100",
+      "description": "REMainder : Đặt $t1 thành (phần dư của $t2 chia cho phép chia tức thời 16 bit, không dấu)"
+    },
+    {
+      "example": "remu $t1,$t2,$t3",
+      "description": "REMainder : Đặt $t1 thành (phần dư của $t2 chia cho $t3, phép chia không dấu)"
+    },
+    {
+      "example": "remu $t1,$t2,100000",
+      "description": "REMainder : Đặt $t1 thành (phần dư của $t2 chia cho phép chia tức thời 32 bit, không dấu)"
+    },
+    {
+      "example": "rol $t1,$t2,$t3",
+      "description": "Xoay trái : Đặt $t1 thành ($t2 được xoay sang trái theo số vị trí bit được chỉ định trong $t3)"
+    },
+    {
+      "example": "rol $t1,$t2,10",
+      "description": "Xoay trái : Đặt $t1 thành ($t2 xoay trái theo số vị trí bit được chỉ định trong 5 bit ngay lập tức)"
+    },
+    {
+      "example": "ror $t1,$t2,$t3",
+      "description": "Xoay phải : Đặt $t1 thành ($t2 xoay sang phải theo số vị trí bit được chỉ định trong $t3)"
+    },
+    {
+      "example": "ror $t1,$t2,10",
+      "description": "Xoay phải : Đặt $t1 thành ($t2 xoay sang phải theo số vị trí bit được chỉ định trong 5 bit ngay lập tức)"
+    },
+    {
+      "example": "s.d $f2,-100",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác kép : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.d $f2,($t2)",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác kép : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.d $f2,100000",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác kép : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.d $f2,100000($t2)",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác kép : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.d $f2,label",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác kép : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.d $f2,label($t2)",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác kép : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.d $f2,label+100000",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác kép : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.d $f2,label+100000($t2)",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác kép : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.s $f1,-100",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác đơn : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.s $f1,($t2)",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác đơn : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.s $f1,100000",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác đơn : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.s $f1,100000($t2)",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác đơn : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.s $f1,label",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác đơn : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.s $f1,label($t2)",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác đơn : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.s $f1,label+100000",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác đơn : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "s.s $f1,label+100000($t2)",
+      "description": "Lưu trữ dấu phẩy động Độ chính xác đơn : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sb $t1,-100",
+      "description": "Store Byte : Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sb $t1,($t2)",
+      "description": "Store Byte : Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sb $t1,100",
+      "description": "Store Byte : Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sb $t1,100($t2)",
+      "description": "Store Byte : Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sb $t1,100000",
+      "description": "Store Byte : Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sb $t1,100000($t2)",
+      "description": "Store Byte : Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sb $t1,label",
+      "description": "Store Byte : Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sb $t1,label($t2)",
+      "description": "Store Byte : Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sb $t1,label+100000",
+      "description": "Store Byte : Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sb $t1,label+100000($t2)",
+      "description": "Store Byte : Lưu trữ 8 bit thứ tự thấp của $t1 vào địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sc $t1,-100",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ nếu dự trữ Liên kết tải phù hợp vẫn hợp lệ, sau đó báo cáo thành công hay thất bại trong thanh ghi nguồn."
+    },
+    {
+      "example": "sc $t1,($t2)",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ nếu dự trữ Liên kết tải phù hợp vẫn hợp lệ, sau đó báo cáo thành công hay thất bại trong thanh ghi nguồn."
+    },
+    {
+      "example": "sc $t1,100",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ nếu dự trữ Liên kết tải phù hợp vẫn hợp lệ, sau đó báo cáo thành công hay thất bại trong thanh ghi nguồn."
+    },
+    {
+      "example": "sc $t1,100($t2)",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ nếu dự trữ Liên kết tải phù hợp vẫn hợp lệ, sau đó báo cáo thành công hay thất bại trong thanh ghi nguồn."
+    },
+    {
+      "example": "sc $t1,100000",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ nếu dự trữ Liên kết tải phù hợp vẫn hợp lệ, sau đó báo cáo thành công hay thất bại trong thanh ghi nguồn."
+    },
+    {
+      "example": "sc $t1,100000($t2)",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ nếu dự trữ Liên kết tải phù hợp vẫn hợp lệ, sau đó báo cáo thành công hay thất bại trong thanh ghi nguồn."
+    },
+    {
+      "example": "sc $t1,label",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ nếu dự trữ Liên kết tải phù hợp vẫn hợp lệ, sau đó báo cáo thành công hay thất bại trong thanh ghi nguồn."
+    },
+    {
+      "example": "sc $t1,label($t2)",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ nếu dự trữ Liên kết tải phù hợp vẫn hợp lệ, sau đó báo cáo thành công hay thất bại trong thanh ghi nguồn."
+    },
+    {
+      "example": "sc $t1,label+100000",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ nếu dự trữ Liên kết tải phù hợp vẫn hợp lệ, sau đó báo cáo thành công hay thất bại trong thanh ghi nguồn."
+    },
+    {
+      "example": "sc $t1,label+100000($t2)",
+      "description": "Lưu trữ có điều kiện: Chỉ lưu trữ nếu dự trữ Liên kết tải phù hợp vẫn hợp lệ, sau đó báo cáo thành công hay thất bại trong thanh ghi nguồn."
+    },
+    {
+      "example": "sd $t1,-100($t2)",
+      "description": "Lưu trữ Doubleword : Lưu trữ nội dung của $t1 và thanh ghi tiếp theo vào 64 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sd $t1,($t2)",
+      "description": "Lưu trữ Doubleword : Lưu trữ nội dung của $t1 và thanh ghi tiếp theo vào 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sd $t1,100000",
+      "description": "Lưu trữ Doubleword : Lưu trữ nội dung của $t1 và thanh ghi tiếp theo vào 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sd $t1,100000($t2)",
+      "description": "Lưu trữ Doubleword : Lưu trữ nội dung của $t1 và thanh ghi tiếp theo vào 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sd $t1,label",
+      "description": "Lưu trữ Doubleword : Lưu trữ nội dung của $t1 và thanh ghi tiếp theo vào 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sd $t1,label($t2)",
+      "description": "Lưu trữ Doubleword : Lưu trữ nội dung của $t1 và thanh ghi tiếp theo vào 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sd $t1,label+100000",
+      "description": "Lưu trữ Doubleword : Lưu trữ nội dung của $t1 và thanh ghi tiếp theo vào 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sd $t1,label+100000($t2)",
+      "description": "Lưu trữ Doubleword : Lưu trữ nội dung của $t1 và thanh ghi tiếp theo vào 64 bit bắt đầu từ địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "sdc1 $f2,-100",
+      "description": "Lưu trữ Bộ đồng xử lý Doubleword 1 : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sdc1 $f2,($t2)",
+      "description": "Lưu trữ Bộ đồng xử lý Doubleword 1 : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sdc1 $f2,100000",
+      "description": "Lưu trữ Bộ đồng xử lý Doubleword 1 : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sdc1 $f2,100000($t2)",
+      "description": "Lưu trữ Bộ đồng xử lý Doubleword 1 : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sdc1 $f2,label",
+      "description": "Lưu trữ Bộ đồng xử lý Doubleword 1 : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sdc1 $f2,label($t2)",
+      "description": "Lưu trữ Bộ đồng xử lý Doubleword 1 : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sdc1 $f2,label+100000",
+      "description": "Lưu trữ Bộ đồng xử lý Doubleword 1 : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sdc1 $f2,label+100000($t2)",
+      "description": "Lưu trữ Bộ đồng xử lý Doubleword 1 : Lưu trữ 64 bit từ cặp thanh ghi $f2 và $f3 vào địa chỉ doubleword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "seq $t1,$t2,-100",
+      "description": "Đặt EQual : nếu $t2 bằng 16-bit ngay lập tức thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "seq $t1,$t2,$t3",
+      "description": "Đặt EQual : nếu $t2 bằng $t3 thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "seq $t1,$t2,100000",
+      "description": "Đặt bằng: nếu $t2 bằng 32-bit ngay lập tức rồi đặt $t1 đến 1 khác 0"
+    },
+    {
+      "example": "sge $t1,$t2,-100",
+      "description": "Đặt Lớn hơn hoặc Bằng : nếu $t2 lớn hơn hoặc bằng 16-bit ngay lập tức thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sge $t1,$t2,$t3",
+      "description": "Đặt Lớn hơn hoặc Bằng : nếu $t2 lớn hơn hoặc bằng $t3 thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sge $t1,$t2,100000",
+      "description": "Đặt Lớn hơn hoặc Bằng : nếu $t2 lớn hơn hoặc bằng 32-bit ngay lập tức thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,-100",
+      "description": "Đặt Lớn hơn hoặc Bằng Không dấu: nếu $t2 lớn hơn hoặc bằng 16-bit ngay lập tức (so sánh không dấu) thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,$t3",
+      "description": "Đặt Lớn hơn hoặc Bằng Không dấu: nếu $t2 lớn hơn hoặc bằng $t3 (so sánh không dấu) thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,100000",
+      "description": "Đặt Lớn hơn hoặc Bằng Không dấu: nếu $t2 lớn hơn hoặc bằng 32-bit ngay lập tức (so sánh không dấu) thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sgt $t1,$t2,-100",
+      "description": "Đặt Lớn Hơn : nếu $t2 lớn hơn 16-bit ngay lập tức thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sgt $t1,$t2,$t3",
+      "description": "Đặt Lớn Hơn : nếu $t2 lớn hơn $t3 thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sgt $t1,$t2,100000",
+      "description": "Đặt Lớn Hơn : nếu $t2 lớn hơn 32-bit ngay lập tức thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,-100",
+      "description": "Đặt Lớn hơn Không dấu: nếu $t2 lớn hơn 16 bit ngay lập tức (so sánh không dấu) thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,$t3",
+      "description": "Đặt Lớn hơn Không dấu : nếu $t2 lớn hơn $t3 (so sánh không dấu) thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,100000",
+      "description": "Đặt Lớn hơn Không dấu : nếu $t2 lớn hơn 32 bit ngay lập tức (so sánh không dấu) thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sh $t1,-100",
+      "description": "Lưu trữ Halfword : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ Halfword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sh $t1,($t2)",
+      "description": "Lưu trữ Halfword : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ Halfword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sh $t1,100",
+      "description": "Lưu trữ Halfword : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ Halfword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sh $t1,100($t2)",
+      "description": "Lưu trữ Halfword : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ Halfword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sh $t1,100000",
+      "description": "Lưu trữ Halfword : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ Halfword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sh $t1,100000($t2)",
+      "description": "Lưu trữ Halfword : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ Halfword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sh $t1,label",
+      "description": "Lưu trữ Halfword : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ Halfword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sh $t1,label($t2)",
+      "description": "Lưu trữ Halfword : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ Halfword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sh $t1,label+100000",
+      "description": "Lưu trữ Halfword : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ Halfword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sh $t1,label+100000($t2)",
+      "description": "Lưu trữ Halfword : Lưu trữ 16 bit thứ tự thấp của $t1 vào địa chỉ Halfword bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sle $t1,$t2,-100",
+      "description": "Đặt Ít hơn hoặc Bằng : nếu $t2 nhỏ hơn hoặc bằng 16-bit ngay lập tức thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sle $t1,$t2,$t3",
+      "description": "Đặt Nhỏ hơn hoặc Bằng : nếu $t2 nhỏ hơn hoặc bằng $t3 thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sle $t1,$t2,100000",
+      "description": "Đặt Ít hơn hoặc Bằng : nếu $t2 nhỏ hơn hoặc bằng 32-bit ngay lập tức thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sleu $t1,$t2,-100",
+      "description": "Đặt Ít hơn hoặc Bằng Không dấu: nếu $t2 nhỏ hơn hoặc bằng 16-bit ngay lập tức (so sánh không dấu) thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sleu $t1,$t2,$t3",
+      "description": "Đặt Ít hơn hoặc Bằng Không dấu: nếu $t2 nhỏ hơn hoặc bằng $t3 (so sánh không dấu) thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sleu $t1,$t2,100000",
+      "description": "Đặt Ít hơn hoặc Bằng Không dấu: nếu $t2 nhỏ hơn hoặc bằng 32-bit ngay lập tức (so sánh không dấu) thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sne $t1,$t2,-100",
+      "description": "Đặt không bằng: nếu $t2 không bằng 16-bit ngay lập tức thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sne $t1,$t2,$t3",
+      "description": "Đặt Không Bằng : nếu $t2 không bằng $t3 thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sne $t1,$t2,100000",
+      "description": "Đặt không bằng: nếu $t2 không bằng 32-bit ngay lập tức thì đặt $t1 thành 1 khác 0"
+    },
+    {
+      "example": "sub $t1,$t2,-100",
+      "description": "SUBtraction : đặt $t1 thành ($t2 trừ 16-bit ngay lập tức)"
+    },
+    {
+      "example": "sub $t1,$t2,100000",
+      "description": "SUBtraction : đặt $t1 thành ($t2 trừ 32-bit ngay lập tức)"
+    },
+    {
+      "example": "subi $t1,$t2,-100",
+      "description": "Phép trừ ngay lập tức : đặt $t1 thành ($t2 trừ 16-bit ngay lập tức)"
+    },
+    {
+      "example": "subi $t1,$t2,100000",
+      "description": "Phép trừ ngay lập tức : đặt $t1 thành ($t2 trừ 32-bit ngay lập tức)"
+    },
+    {
+      "example": "subiu $t1,$t2,100000",
+      "description": "SUBtraction Immediate Unsigned : đặt $t1 thành ($t2 trừ 32-bit ngay lập tức), không tràn"
+    },
+    {
+      "example": "subu $t1,$t2,100000",
+      "description": "SUBtraction Unsigned : đặt $t1 thành ($t2 trừ 32-bit ngay lập tức), không tràn"
+    },
+    {
+      "example": "sw $t1,-100",
+      "description": "Lưu trữ Word : Lưu trữ nội dung $t1 vào địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sw $t1,($t2)",
+      "description": "Lưu trữ Word : Lưu trữ nội dung $t1 vào địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sw $t1,100",
+      "description": "Lưu trữ Word : Lưu trữ nội dung $t1 vào địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sw $t1,100($t2)",
+      "description": "Lưu trữ Word : Lưu trữ nội dung $t1 vào địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sw $t1,100000",
+      "description": "Lưu trữ Word : Lưu trữ nội dung $t1 vào địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sw $t1,100000($t2)",
+      "description": "Lưu trữ Word : Lưu trữ nội dung $t1 vào địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sw $t1,label",
+      "description": "Lưu trữ Word : Lưu trữ nội dung $t1 vào bộ nhớ Word tại địa chỉ của nhãn"
+    },
+    {
+      "example": "sw $t1,label($t2)",
+      "description": "Lưu trữ Word : Lưu trữ nội dung $t1 vào địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sw $t1,label+100000",
+      "description": "Lưu trữ Word : Lưu trữ nội dung $t1 vào địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "sw $t1,label+100000($t2)",
+      "description": "Lưu trữ Word : Lưu trữ nội dung $t1 vào địa chỉ từ bộ nhớ hiệu quả"
+    },
+    {
+      "example": "swc1 $f1,-100",
+      "description": "Lưu trữ Bộ đồng xử lý Word 1 : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "swc1 $f1,($t2)",
+      "description": "Lưu trữ Bộ đồng xử lý Word 1 : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "swc1 $f1,100000",
+      "description": "Lưu trữ Bộ đồng xử lý Word 1 : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "swc1 $f1,100000($t2)",
+      "description": "Lưu trữ Bộ đồng xử lý Word 1 : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "swc1 $f1,label",
+      "description": "Lưu trữ Bộ đồng xử lý Word 1 : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "swc1 $f1,label($t2)",
+      "description": "Lưu trữ Bộ đồng xử lý Word 1 : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "swc1 $f1,label+100000",
+      "description": "Lưu trữ Bộ đồng xử lý Word 1 : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "swc1 $f1,label+100000($t2)",
+      "description": "Lưu trữ Bộ đồng xử lý Word 1 : Lưu trữ giá trị 32 bit từ $f1 đến địa chỉ từ bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "swl $t1,-100",
+      "description": "Lưu trữ từ còn lại: Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swl $t1,($t2)",
+      "description": "Lưu trữ từ còn lại: Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swl $t1,100",
+      "description": "Lưu trữ từ còn lại: Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swl $t1,100($t2)",
+      "description": "Lưu trữ từ còn lại: Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swl $t1,100000",
+      "description": "Lưu trữ từ còn lại: Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swl $t1,100000($t2)",
+      "description": "Lưu trữ từ còn lại: Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swl $t1,label",
+      "description": "Lưu trữ từ còn lại: Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swl $t1,label($t2)",
+      "description": "Lưu trữ từ còn lại: Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swl $t1,label+100000",
+      "description": "Lưu trữ từ còn lại: Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swl $t1,label+100000($t2)",
+      "description": "Lưu trữ từ còn lại: Lưu trữ thứ tự cao từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua byte thứ tự thấp của từ đó"
+    },
+    {
+      "example": "swr $t1,-100",
+      "description": "Lưu trữ đúng từ: Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua địa chỉ byte đó"
+    },
+    {
+      "example": "swr $t1,($t2)",
+      "description": "Lưu trữ đúng từ: Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua địa chỉ byte đó"
+    },
+    {
+      "example": "swr $t1,100",
+      "description": "Lưu trữ đúng từ: Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua địa chỉ byte đó"
+    },
+    {
+      "example": "swr $t1,100($t2)",
+      "description": "Lưu trữ đúng từ: Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua địa chỉ byte đó"
+    },
+    {
+      "example": "swr $t1,100000",
+      "description": "Lưu trữ đúng từ: Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua địa chỉ byte đó"
+    },
+    {
+      "example": "swr $t1,100000($t2)",
+      "description": "Lưu trữ đúng từ: Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua địa chỉ byte đó"
+    },
+    {
+      "example": "swr $t1,label",
+      "description": "Lưu trữ đúng từ: Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua địa chỉ byte đó"
+    },
+    {
+      "example": "swr $t1,label($t2)",
+      "description": "Lưu trữ đúng từ: Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua địa chỉ byte đó"
+    },
+    {
+      "example": "swr $t1,label+100000",
+      "description": "Lưu trữ đúng từ: Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua địa chỉ byte đó"
+    },
+    {
+      "example": "swr $t1,label+100000($t2)",
+      "description": "Lưu trữ đúng từ: Lưu trữ thứ tự thấp từ 1 đến 4 byte $t1 vào bộ nhớ, bắt đầu bằng byte từ thứ tự cao chứa địa chỉ byte bộ nhớ hiệu quả và tiếp tục qua địa chỉ byte đó"
+    },
+    {
+      "example": "ulh $t1,-100($t2)",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng dấu hiệu, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulh $t1,($t2)",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng dấu hiệu, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulh $t1,100000",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng dấu hiệu, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulh $t1,100000($t2)",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng dấu hiệu, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulh $t1,label",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng dấu hiệu, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulh $t1,label($t2)",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng dấu hiệu, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulh $t1,label+100000",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng dấu hiệu, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulh $t1,label+100000($t2)",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng dấu hiệu, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulhu $t1,-100($t2)",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng bằng 0, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulhu $t1,($t2)",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng bằng 0, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulhu $t1,100000",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng bằng 0, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulhu $t1,100000($t2)",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng bằng 0, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulhu $t1,label",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng bằng 0, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulhu $t1,label($t2)",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng bằng 0, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulhu $t1,label+100000",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng bằng 0, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulhu $t1,label+100000($t2)",
+      "description": "Halfword tải không được phân bổ: Đặt $t1 thành 16 bit, mở rộng bằng 0, bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulw $t1,-100($t2)",
+      "description": "Từ tải không được căn chỉnh: Đặt $t1 thành 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulw $t1,($t2)",
+      "description": "Từ tải không được căn chỉnh: Đặt $t1 thành 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulw $t1,100000",
+      "description": "Từ tải không được căn chỉnh: Đặt $t1 thành 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulw $t1,100000($t2)",
+      "description": "Từ tải không được căn chỉnh: Đặt $t1 thành 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulw $t1,label",
+      "description": "Từ tải không được căn chỉnh: Đặt $t1 thành 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulw $t1,label($t2)",
+      "description": "Từ tải không được căn chỉnh: Đặt $t1 thành 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulw $t1,label+100000",
+      "description": "Từ tải không được căn chỉnh: Đặt $t1 thành 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ulw $t1,label+100000($t2)",
+      "description": "Từ tải không được căn chỉnh: Đặt $t1 thành 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ush $t1,-100($t2)",
+      "description": "Lưu trữ Halfword không được căn chỉnh: Lưu trữ nội dung Halfword bậc thấp $t1 vào 16 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ush $t1,($t2)",
+      "description": "Lưu trữ Halfword không được căn chỉnh: Lưu trữ nội dung Halfword bậc thấp $t1 vào 16 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ush $t1,100000",
+      "description": "Lưu trữ Halfword không được căn chỉnh: Lưu trữ nội dung Halfword bậc thấp $t1 vào 16 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ush $t1,100000($t2)",
+      "description": "Lưu trữ Halfword không được căn chỉnh: Lưu trữ nội dung Halfword bậc thấp $t1 vào 16 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ush $t1,label",
+      "description": "Lưu trữ Halfword không được căn chỉnh: Lưu trữ nội dung Halfword bậc thấp $t1 vào 16 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ush $t1,label($t2)",
+      "description": "Lưu trữ Halfword không được căn chỉnh: Lưu trữ nội dung Halfword bậc thấp $t1 vào 16 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ush $t1,label+100000",
+      "description": "Lưu trữ Halfword không được căn chỉnh: Lưu trữ nội dung Halfword bậc thấp $t1 vào 16 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "ush $t1,label+100000($t2)",
+      "description": "Lưu trữ Halfword không được căn chỉnh: Lưu trữ nội dung Halfword bậc thấp $t1 vào 16 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "usw $t1,-100($t2)",
+      "description": "Từ lưu trữ không được căn chỉnh: Lưu trữ nội dung $t1 vào 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "usw $t1,($t2)",
+      "description": "Từ lưu trữ không được căn chỉnh: Lưu trữ nội dung $t1 vào 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "usw $t1,100000",
+      "description": "Từ lưu trữ không được căn chỉnh: Lưu trữ nội dung $t1 vào 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "usw $t1,100000($t2)",
+      "description": "Từ lưu trữ không được căn chỉnh: Lưu trữ nội dung $t1 vào 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "usw $t1,label",
+      "description": "Từ lưu trữ không được căn chỉnh: Lưu trữ nội dung $t1 vào 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "usw $t1,label($t2)",
+      "description": "Từ lưu trữ không được căn chỉnh: Lưu trữ nội dung $t1 vào 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "usw $t1,label+100000",
+      "description": "Từ lưu trữ không được căn chỉnh: Lưu trữ nội dung $t1 vào 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "usw $t1,label+100000($t2)",
+      "description": "Từ lưu trữ không được căn chỉnh: Lưu trữ nội dung $t1 vào 32 bit bắt đầu từ địa chỉ byte bộ nhớ hiệu dụng"
+    },
+    {
+      "example": "xor $t1,$t2,100",
+      "description": "XOR : đặt $t1 thành ($t2 bitwise-exclusive-OR 16-bit không dấu ngay lập tức)"
+    },
+    {
+      "example": "xor $t1,100",
+      "description": "XOR : đặt $t1 thành ($t1 bitwise-exclusive-OR 16-bit không dấu ngay lập tức)"
+    },
+    {
+      "example": "xori $t1,$t2,100000",
+      "description": "XOR Ngay lập tức : đặt $t1 thành ($t2 bitwise-độc quyền-HOẶC 32-bit ngay lập tức)"
+    },
+    {
+      "example": "xori $t1,100",
+      "description": "XOR Ngay lập tức : đặt $t1 thành ($t1 bitwise-exclusive-OR 16-bit không dấu ngay lập tức)"
+    },
+    {
+      "example": "xori $t1,100000",
+      "description": "XOR Ngay lập tức : đặt $t1 thành ($t1 bitwise-độc quyền-HOẶC 32-bit ngay lập tức)"
+    }
+  ],
+  "directives": [
+    {
+      "name": ".align",
+      "description": "Căn chỉnh mục dữ liệu tiếp theo trên ranh giới byte được chỉ định (0=byte, 1=half, 2=word, 3=double)"
+    },
+    {
+      "name": ".ascii",
+      "description": "Lưu chuỗi trong phân đoạn Dữ liệu nhưng không thêm dấu kết thúc null"
+    },
+    {
+      "name": ".asciiz",
+      "description": "Lưu chuỗi trong phân đoạn Dữ liệu và thêm dấu kết thúc null"
+    },
+    {
+      "name": ".byte",
+      "description": "Lưu trữ (các) giá trị được liệt kê dưới dạng byte 8 bit"
+    },
+    {
+      "name": ".data",
+      "description": "Các mục tiếp theo được lưu trữ trong Phân đoạn dữ liệu tại địa chỉ khả dụng tiếp theo"
+    },
+    {
+      "name": ".double",
+      "description": "Lưu trữ (các) giá trị được liệt kê dưới dạng dấu phẩy động có độ chính xác kép"
+    },
+    {
+      "name": ".end_macro",
+      "description": "Kết thúc định nghĩa macro.  Xem .macro"
+    },
+    {
+      "name": ".eqv",
+      "description": "Thay thế toán hạng thứ hai cho toán hạng đầu tiên. Toán hạng đầu tiên là ký hiệu, toán hạng thứ hai là biểu thức (như #define)"
+    },
+    {
+      "name": ".extern",
+      "description": "Khai báo nhãn và độ dài byte được liệt kê là trường dữ liệu chung"
+    },
+    {
+      "name": ".float",
+      "description": "Lưu trữ (các) giá trị được liệt kê dưới dạng dấu phẩy động có độ chính xác duy nhất"
+    },
+    {
+      "name": ".globl",
+      "description": "Khai báo (các) nhãn được liệt kê là toàn cục để cho phép tham chiếu từ các tệp khác"
+    },
+    {
+      "name": ".half",
+      "description": "Lưu trữ (các) giá trị được liệt kê dưới dạng nửa từ 16 bit trên ranh giới nửa từ"
+    },
+    {
+      "name": ".include",
+      "description": "Chèn nội dung của tập tin được chỉ định.  Đặt tên tập tin trong dấu ngoặc kép."
+    },
+    {
+      "name": ".kdata",
+      "description": "Các mục tiếp theo được lưu trữ trong phân đoạn Dữ liệu hạt nhân tại địa chỉ khả dụng tiếp theo"
+    },
+    {
+      "name": ".ktext",
+      "description": "Các mục tiếp theo (hướng dẫn) được lưu trữ trong phân đoạn Văn bản hạt nhân tại địa chỉ khả dụng tiếp theo"
+    },
+    {
+      "name": ".macro",
+      "description": "Bắt đầu định nghĩa macro.  Xem .end_macro"
+    },
+    {
+      "name": ".set",
+      "description": "Đặt các biến lắp ráp.  Hiện bị bỏ qua nhưng được bao gồm để tương thích với SPIM"
+    },
+    {
+      "name": ".space",
+      "description": "Dự trữ số byte được chỉ định tiếp theo trong phân đoạn Dữ liệu"
+    },
+    {
+      "name": ".text",
+      "description": "Các mục tiếp theo (hướng dẫn) được lưu trữ trong phân đoạn Văn bản tại địa chỉ khả dụng tiếp theo"
+    },
+    {
+      "name": ".word",
+      "description": "Lưu trữ (các) giá trị được liệt kê dưới dạng các từ 32 bit trên ranh giới từ"
+    }
+  ]
+}

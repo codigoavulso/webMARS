@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS 시작하기</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>시작하기</h1>
+  <p class="lead">webMARS는 브라우저 기반의 MIPS32 어셈블러, 시뮬레이터, 디버거, Mini-C 컴파일러 및 교육 작업 공간입니다. 런타임은 JavaScript에서 완전히 구현됩니다. Java 설치, 기본 실행 파일 또는 WASM 백엔드가 필요하지 않습니다.</p>
+
+  <ol class="steps">
+    <li><strong>소스 파일을 열거나 생성합니다.</strong> 사용 <b>파일 → 예</b> 안내된 출발점을 위해, <b>새 프로젝트</b> 빈 프로젝트의 경우 또는 <b>디스크에서 열기</b> 로컬 파일의 경우.</li>
+    <li><strong>그것을 구축하십시오.</strong> 어셈블리 파일 사용 <b>실행 → 조립</b> (<kbd>F3</kbd>). C 파일 사용 <b>실행 → C0 컴파일</b> (<kbd>F4</kbd>), 생성된 어셈블리를 어셈블합니다.</li>
+    <li><strong>실행하세요.</strong> 선택 <b>이동</b> (<kbd>F5</kbd>) 또는 다음을 사용하여 한 번에 하나의 지침을 진행합니다. <b>단계</b> (<kbd>F7</kbd>).</li>
+    <li><strong>결과를 검사합니다.</strong> 레지스터, 보조 프로세서 1, 메모리, 메시지, 실행 I/O 및 연결된 도구는 프로그램이 실행됨에 따라 업데이트됩니다.</li>
+  </ol>
+
+  <h2>무엇이 포함되어 있나요?</h2>
+  <div class="cards">
+    <section class="card"><h3>MIPS32 런타임</h3><p>지연된 분기 및 자체 수정 코드 옵션을 포함한 정수, 분기, 메모리, 예외, LL/SC 및 COP1 실행.</p></section>
+    <section class="card"><h3>Mini-C 컴파일러</h3><p>C0 교육 하위 집합 및 C1-NATIVE 프로필은 MIPS o32 호출 규칙을 대상으로 합니다.</p></section>
+    <section class="card"><h3>디버거</h3><p>중단점, 스테핑, 백스테핑, 재설정, 일시 중지/중지 제어 및 구성 가능한 실행 속도.</p></section>
+    <section class="card"><h3>장치 및 도구</h3><p>MMIO 장치, 캐시 및 분기 시뮬레이터, 시각적 디스플레이, 통계, ANSI 터미널 등.</p></section>
+  </div>
+
+  <h2>권장 첫 실행</h2>
+  <p>열기 <b>파일 → 예</b>, 영어를 선택하세요 <b>배우다</b> 예를 들어 설명을 읽고 엽니다. 조립 예제를 직접 조립하고 실행할 수 있습니다. C 예제는 최소 컴파일러 하위 집합을 선언하며 여러 프로젝트 파일을 포함할 수 있습니다.</p>
+
+  <div class="note"><strong>파일은 기본적으로 브라우저에 유지됩니다.</strong> 클라우드 메뉴를 명시적으로 사용하지 않으면 로컬 프로젝트 및 복구 데이터가 업로드되지 않습니다. 브라우저 저장 공간은 브라우저나 다른 장치에 의해 삭제될 수 있으므로 중요한 작업을 주기적으로 다운로드하세요. <b>설정 → localStorage 지우기</b>.</div>
+
+  <h2>유용한 단축키</h2>
+  <table class="compact">
+    <tr><th>액션</th><th>바로가기</th></tr>
+    <tr><td>도움말</td><td><kbd>F1</kbd></td></tr>
+    <tr><td>조립하다</td><td><kbd>F3</kbd></td></tr>
+    <tr><td>Mini-C 컴파일</td><td><kbd>F4</kbd></td></tr>
+    <tr><td>달리다/가다</td><td><kbd>F5</kbd></td></tr>
+    <tr><td>단계</td><td><kbd>F7</kbd></td></tr>
+  </table>
+</body>
+</html>

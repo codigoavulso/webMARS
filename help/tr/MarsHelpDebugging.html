@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Çalıştır ve hata ayıkla</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>&amp; hata ayıklamayı çalıştır</h1>
+  <p class="lead">Çalıştır menüsü, kayıtlar, bellek görünümleri, hata ayıklayıcı ve bağlı araçlar tarafından paylaşılan bir JavaScript MIPS motorunu kontrol eder.</p>
+
+  <h2>Yürütme kontrolleri</h2>
+  <table>
+    <tr><th>Kontrol</th><th>Anlamı</th></tr>
+    <tr><td>Git</td><td>Normal tamamlanmaya, bir kesme noktasına, girişi bekleyen bir sistem çağrısına, işlenmeyen bir istisnaya, bir sınıra, Duraklatma veya Durdurmaya kadar çalışır.</td></tr>
+    <tr><td>Duraklat</td><td>Devam edebilmesi için makineyi korurken etkin bir çalışmayı askıya alır.</td></tr>
+    <tr><td>Durdur</td><td>Yürütmeyi sonlandırır ve uzun Uyku sistem çağrısı gibi bekleyen eşzamansız işleri iptal eder. Durdurulan program devam etmez.</td></tr>
+    <tr><td>Adım</td><td>Bir talimatı yürütür. Bir kesme noktası duruşundan sonra, sonraki Git veya Adım bu kesme noktasını bir kez geçer, böylece aynı adreste hemen durmaz.</td></tr>
+    <tr><td>Geri adım</td><td>Önceki kayıtlı çalışma zamanı anlık görüntüsünü, yapılandırılmış geçmiş derinliğine kadar geri yükler.</td></tr>
+    <tr><td>Sıfırla</td><td>Birleştirilmiş programı başlangıç makine durumuna döndürür.</td></tr>
+  </table>
+
+  <h2>Kesme noktaları ve kaynak izleme</h2>
+  <p>Yürütülebilir bir kaynak satırının yanındaki düzenleyici bölümündeki bir kesme noktasını değiştirin. Kesme noktaları çalışma zamanı durumunda saklanır ve normal dışa aktarma/içe aktarma gidiş-dönüş yolculuğundan sonra da geçerliliğini korur. Sözde talimatlar birkaç temel talimata genişletilebilir; adımlama, oluşturulan makine talimatlarını takip ederken kaynak vurgulama, kaynak satırla ilişkili kalır.</p>
+
+  <h2>Hız ve performans şeridi</h2>
+  <p>Çalışma hızı kontrolü, etkileşimli adım hızlarından maksimum hıza kadar değişir. Maksimum hızda webMARS pahalı düzenleyici vurgulamayı ve otomatik kaydırma işini azaltır, ancak araçlar tam çalışma zamanı anlık görüntülerini ve izleme bilgilerini almaya devam eder.</p>
+  <p>Kompakt kıyaslama şeridi, tahmini JavaScript CPU kullanım yüzdesiyle birlikte güncel Derleme, Birleştirme ve Çalıştırma zamanlamasını rapor eder. Ölçümler yerel ve değişkendir: işletim sistemi süreç ölçer olarak değil, iş yüklerini ve algoritma değişikliklerini karşılaştırmaya yöneliktir.</p>
+
+  <h2>Gecikmiş dallar ve istisnalar</h2>
+  <p>Gecikmeli dallanma etkinleştirildiğinde, bir dallanma veya atlamadan sonraki talimat, gecikme yuvası talimatı ve bağlantı talimatları deposudur. <code>PC + 8</code>. Bir gecikme yuvasında ortaya çıkan istisnalar, COP0 Neden BD bitini ayarlar ve dal adresini EPC içine kaydeder.</p>
+  <p>Yapılandırılmış işleyici adresinde geçerli bir istisna işleyicisi mevcutsa, yürütme ona aktarılır ve onunla geri dönebilir. <code>eret</code>. Aksi halde çalıştırma, açık bir neden ve teşhisle durdurulur.</p>
+
+  <div class="note"><strong>Geri adım kapsamı.</strong> Anlık görüntüler; kayıtları, belleği, kesme noktalarını, rastgele akışları, dosya konumlarını, bekleyen girişi, program bağımsız değişkenlerini ve aygıt görüntü tanıtıcılarını içerir. Büyük geçmişler hafızayı tüketir, bu nedenle limiti egzersize göre ayarlayın.</div>
+</body>
+</html>

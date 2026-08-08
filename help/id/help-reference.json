@@ -1442,7 +1442,7 @@
     },
     {
       "example": "ori $t1,100",
-      "description": "ATAU Segera : set $t1 ke ($t1 bitwise-ATAU 16-bit langsung tidak ditandatangani)"
+      "description": "ATAU Segera : set $t1 ke ($t1 bitwise-ATAU 16-bit tidak ditandatangani langsung)"
     },
     {
       "example": "ori $t1,100000",

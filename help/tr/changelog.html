@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS değişiklik günlüğü</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Değişiklik günlüğü</h1>
+  <p class="lead">Sürüm 0.5.5, İş Hattı Laboratuvarını sunar ve tüm öğrenme ortamını yirmi dile genişletir.</p>
+
+  <h2>0.5.5 &mdash; İş Hattı Laboratuvarı ve yirmi dil</h2>
+  <ul>
+    <li>RAW tehlikeleri, iletim, beklemeler, geri alınabilir çevrimler, metrikler ve ölçeklenebilir zaman çizelgesi içeren deterministik beş aşamalı iş hattı eklendi.</li>
+    <li>Arayüz, örnekler, belgeler ve yardım on dilden yirmi dile genişletildi.</li>
+    <li>Araçların duyarlı davranışı, yerelleştirme ve regresyon kapsamı genişletildi.</li>
+  </ul>
+
+  <h2>0.5.4 &mdash; MARS-İşletim Sistemi masaüstü, sanal ekranlar ve sistem teması</h2>
+  <ul>
+    <li>Başlat menüsü, uygulama başlatıcı ve taşınabilir, yeniden boyutlandırılabilir pencerelerle Windows 95 tarzı MARS-İşletim Sistemi deneyimi tamamlandı.</li>
+    <li>TTY ANSI terminali, fare girişi, duyarlı mobil davranış ve MARS-İşletim Sistemi uygulamaları iyileştirildi.</li>
+    <li>Varsayılan olarak TTY ANSI, Bitmap Ekranı ve Bitmap Terminalinde görüntülenecek Sığdır penceresi etkinleştirildi.</li>
+    <li>Hem masaüstü hem de mobil düzenlerde varsayılan olarak daraltılmış sanal ekran ayarları.</li>
+    <li>Açık Açık ve Koyu geçersiz kılmalarla tarayıcı renk şemasını otomatik olarak takip eden bir Sistem teması eklendi.</li>
+  </ul>
+
+  <h2>0.5.3 &mdash; tarayıcı dili önyükleme düzeltmesi</h2>
+  <ul>
+    <li>Uygulama varsayılan kullanıcı arayüzü tercihlerini ilk kez oluşturduğunda tarayıcıdan algılanan dil korundu.</li>
+    <li>Açıkça kaydedilen dil tercihlerini otomatik algılamanın önünde tuttu ve desteklenmeyen diller için geri dönüş olarak İngilizceyi korudu.</li>
+    <li>Bölgesel tarayıcı dilleri için regresyon kapsamı ve tam yeni oturum tercihi önyüklemesi eklendi.</li>
+  </ul>
+
+  <h2>0.5.2 &mdash; on dil, otomatik seçim, MARS-İşletim Sistemi masaüstü</h2>
+  <ul>
+    <li>Tam arayüz, örnek katalog, dokümantasyon ve yardım İngilizce, İspanyolca ve Portekizce'den on dile genişletildi; Mandarin Çincesi, Hintçe, Arapça, Fransızca, Bengalce, Rusça ve Endonezce eklendi.</li>
+    <li>Açıkça kaydedilen tercihler korunurken, bölgesel kod normalleştirmesi ve İngilizce geri dönüş ile ilk ziyarette tarayıcı dili algılama özelliği eklendi.</li>
+    <li>Kaynak kodunu, çalışma zamanı çıktısını ve teknik gösterimi soldan sağa tutarken sağdan sola Arapça düzeni eklendi.</li>
+    <li>MARS-OS, doğrudan Program Yöneticisi'nde açılan ve Terminal uygulaması içinde kabuk komutlarını çalıştıran, fareyle çalıştırılan bir masaüstüne dönüştürüldü.</li>
+    <li>Geliştirilmiş TTY aktarım hızı, Android klavye uyumlu mobil boyutlandırma ve masaüstü dikey aralıklandırma.</li>
+    <li>Tekrarlanabilir yerelleştirme oluşturma, korumalı teknik terminoloji ve on dilde tam regresyon kapsamı eklendi.</li>
+  </ul>
+
+  <h2>0.5.1 &mdash; cihaz kesintileri, çalışma zamanı araçları, MARS-İşletim Sistemi saati</h2>
+  <ul>
+    <li>Zamanlayıcı, klavye, ekran ve Digital Lab onaltılık tuş takımı için CPU tarafı maskeleme ve bekleme durumu teslimi ile eş zamanlı harici kesintiler uygulandı.</li>
+    <li>Tam geri adımlarla uyumlu merkezi seyrek deltalar dahil olmak üzere Sistem Saati ve Yığın Görüntüleyici araçları eklendi.</li>
+    <li>Kodu çözülmüş talimat grupları, birleştirilmiş işleme ve sınırlı çalışma zamanı olay geçmişi sayesinde bağlı araç yükünün azaltılması.</li>
+    <li>Yerelleştirilmiş bir zamanlayıcı kesme örneği eklendi ve MARS-OS'yi çalışmayla genişletti <code>clock</code> ve gerçek zamanlı <code>bench</code> komutlar.</li>
+    <li>Kompakt çalışma zamanı anlık görüntülerinin, yürütme kullanıcı arayüzünde birleştirilmiş bir metin bölümünü geçici olarak temizlemesi engellendi.</li>
+    <li>Dosya yöneticisi ve bulut sözleşmesi, çakışmaya karşı güvenli kaydetme, uzaktan yeniden adlandırma/silme, büyük/küçük harfe duyarlı olmayan proje kimliği ve toplu senkronizasyon durumuyla birleştirildi.</li>
+  </ul>
+
+  <h2>0.5.0 &mdash; olgun çalışma zamanı, delta geri adım, mobil iş akışları</h2>
+  <ul>
+    <li>Bellek limitleri, atomik depolar, COP1 çiftlemeleri ve yuvarlamaları, gecikmeli dallanmaları, istisnaları, LL/SC rezervasyonlarını ve kesme noktalarını kapsayan yüksek etkili çalışma zamanı davranışı düzeltildi.</li>
+    <li>Tam bir geri adım penceresini ve senkronize edilmiş araç durumunu korurken, tam talimat başına anlık görüntüler sınırlı ters deltalarla değiştirildi.</li>
+    <li>Kompakt çalışma zamanı olay grupları, birleştirilmiş araç oluşturma ve daha hafif kullanıcı arayüzü senkronizasyonu sayesinde yürütme yükü azaltıldı.</li>
+    <li>Dinamik Bitmap MMIO yapılandırması eklendi ve Bitmap örnekleri ve kitaplıkları, MARS 4.5 ile uyumlu kalarak kullanılacak şekilde güncellendi.</li>
+    <li>TTY örnekleri pratik bir MIPS kabuğuyla genişletildi ve her üç dilde de Montaj ve Mini-C ders kataloğu geliştirildi.</li>
+    <li>Android klavye uyumlu boyutlandırma, anlamsal sanal klavyeler ve kontrollü kaydırma dahil olmak üzere mobil pencere sistemine entegre araçlar, diyaloglar, Bulut ve Ayarlar.</li>
+    <li>Kapsamlı çalışma zamanı, araç, örnek, belgeler, mobil kullanıcı arayüzü ve sürüm regresyon kapsamı eklendi.</li>
+  </ul>
+
+  <h2>0.4.13 &mdash; mobil tek panel düzeni, yerelleştirilmiş teşhis</h2>
+  <ul>
+    <li>Mobil, Ana, Mesajlar/Çalıştırma G/Ç, Kayıtlar ve herhangi bir açık aracı listeleyen yeni simge sekme çubuğu arasından seçilen bir tam ekran paneli aynı anda gösterir.</li>
+    <li>Mobil görünüm portu, sayfanın artık kaydırılmaması için sabitlendi ve belge ile pencere gövdeleri arasındaki iç içe kaydırma çakışması ortadan kaldırıldı.</li>
+    <li>Mobil araç çubuğu iki kompakt satırda yalnızca simgeden oluşur ve yürütme kontrollerini ve çalışma hızı seçiciyi ekranda tutar; dosya eylemleri burada gizlenir ve Dosya ve Düzen menülerinde kalır.</li>
+    <li>Bir panelin ekranı doldurduğu ve sekme çubuğunun geçiş yaptığı mobil cihazda simge durumuna küçültme ve büyütme düğmelerini gizleyin.</li>
+    <li>Her birleştirici ve Mini-C teşhisini yerelleştirerek 114 şablon değişmez bilgisini adlandırılmış yer tutuculara dönüştürdü ve üç dilde 277 anahtar ekledi.</li>
+    <li>Çevrilebilir bir mesajın katalog girişi olmadığında başarısız olan bir sürüm testi eklendi.</li>
+    <li>Masaüstü düzeni, pencere konumları ve kontrol boyutları değişmedi.</li>
+  </ul>
+
+  <h2>0.4.12 &mdash; karanlık tema, yazı tipi boyutu düzeltmesi, ölü kod temizleme</h2>
+  <ul>
+    <li>Şununla seçilebilen isteğe bağlı karanlık tema eklendi: <code>Settings &gt; Interface...</code>düzenleyiciye, araç pencerelerine ve yardım sayfalarına uygulanır.</li>
+    <li>Düzenleyici yazı tipi boyutu ve satır yüksekliğinin, Arayüz tercihlerinde sayfanın yeniden yüklenmesine gerek kalmadan değiştirildikten hemen sonra uygulanması düzeltildi.</li>
+    <li>Kablolu <em>Tüm Dosyaları Kapat</em> eyleme geçmek <code>File &gt; Close &gt; All files</code>.</li>
+    <li>Hiçbir sürümde ayarlanmayan deneysel bir bayrağın arkasına bağlanan makine oturumu otomatik kaydetme hattı (~400 satır) kaldırıldı.</li>
+    <li>Beş modülde yaklaşık 15 ölü işlev, kullanılmayan kayıt defteri aktarımları, ölü CSS seçiciler ve 113 kullanılmayan i18n anahtarı kaldırıldı.</li>
+    <li>Ulaşılamayan kök düzeyindeki yardım dosyaları sürüm paketinden çıkarıldı.</li>
+  </ul>
+
+  <h2>0.4.11 &mdash; kalıcı bulut oturum açma geri yüklemesi</h2>
+  <ul>
+    <li>Uygulama başlatılırken yapılandırılmış bulut sunucusunu sessizce kontrol etti ve kimliği doğrulanmış mevcut bir kullanıcıyı geri yükledi.</li>
+    <li>Başarılı oturum geri yüklemesinin ardından, yerel çalışma alanını engellemeden yenilenen bulut projesi meta verileri.</li>
+    <li>Kimlik doğrulama çerezinin maksimum bir yıllık kullanım ömrü ve oturum kapatıldığında anında kaldırılması belgelendi.</li>
+    <li>Kimlik bilgilerine sahip istekler ve otomatik başlatma geri yüklemesi için regresyon kapsamı eklendi.</li>
+  </ul>
+
+  <h2>0.4.10 — toplu araç geçmişi ve daha hafif kullanıcı arayüzü güncellemeleri</h2>
+  <ul>
+    <li>Yalnızca motorun tam 100 adımlık geri adım penceresinin kapsadığı talimatlar için tutulan takım deltaları.</li>
+    <li>Görsel güncellemeleri toplu halde tutarken ve geçerliliğini yitirmiş geçmiş tahsisinden kaçınırken her çalışma zamanı olayını takım modellerinde mevcut tuttu.</li>
+    <li>Talimat başına azaltılmış DOM çalışmak BHT ve önbellek simülatöründeki yedek durum kopyaları.</li>
+    <li>Boşta kalan Mars Bot oluşturma işlemi durduruldu ve kullanıcı arayüzü senkronizasyonundan yedekli bir tam çalışma zamanı anlık görüntüsü kaldırıldı.</li>
+    <li>Yalnızca Firefox'ta bulunan pencere başlığı ayırıcı yeniden boyama yapısı düzeltildi.</li>
+    <li>Giriş duyarlılığından veya geri adımlardan ödün vermeden Monty Hall laboratuarında boşta kalan terminal yoklaması azaltıldı.</li>
+  </ul>
+
+  <h2>0.4.9 — çalışma zamanı eşitliği ve güvenilir geri adımlar</h2>
+  <ul>
+    <li>Seyrek günlük hafızasını sınırlandırırken en son 100 geri adımı mevcut tuttu.</li>
+    <li>Uzun tarayıcı çalıştırmalarında eşzamanlı Klavye/Ekran, TTY ve araç olayı davranışı düzeltildi.</li>
+    <li>Yoğun yoklama olmadan tarayıcı girişiyle işbirliği yapmak için Monty Hall laboratuvarı ve etkileşimli örnekler güncellendi.</li>
+    <li>Rastgele sistem çağrıları 40-44'ü, seribaşı dizileri ve örnekleme kurallarıyla eşleştirdi. <code>java.util.Random</code> MARS tarafından kullanılır.</li>
+    <li>Sağlamlaştırılmış çalışma zamanı durumu içe aktarma, uzun talimat sayaçları, montajcı aralıkları ve sayısal yönerge doğrulama.</li>
+    <li>Görüntü meta verileri için geri adım kapsamı tamamlandı ve sıfır uzunluklu inputDialogString arabellekleri düzeltildi.</li>
+    <li>Çalışma zamanı, yerelleştirilmiş örnekler ve bağlı araçlar genelinde genişletilmiş regresyon kapsamı.</li>
+  </ul>
+
+  <h2>0.4.8 - delta geri adımları ve senkronize cihazlar</h2>
+  <ul>
+    <li>Tam talimat başına geri adım anlık görüntüleri, sınırlı ters deltalarla değiştirildi.</li>
+    <li>Ayrılmış senkronize MMIO cihazlar, kompakt çalışma zamanı olay grupları ve periyodik araç anlık görüntüleri.</li>
+    <li>Klavye/Ekran ve TTY giriş/çıkış nedenselliği, geri adımlar ve gizli araç yükü düzeltildi.</li>
+    <li>Önbellek, talimat, bellek referansı ve bitmap araçlarında toplu işleme düzeltildi.</li>
+    <li>Mini-C örnek çerçeve arabellekleri derleyici genellerinden uzağa taşındı ve Bitmap Görüntüsü canlı bellekle senkronize edildi.</li>
+    <li>Yerel kıyaslama şeridi Arayüz Tercihlerinde isteğe bağlı hale getirildi ve varsayılan olarak gizlendi.</li>
+  </ul>
+
+  <h2>0.4.7 — JavaScript çalışma zamanı sağlamlaştırma ve eksiksiz belgeler</h2>
+  <ul>
+    <li>Saf JavaScript motordaki çalışma süresini standartlaştırdı ve deneysel WASM/hibrit arka ucunu kaldırdı.</li>
+    <li>Uygulama içi kıyaslama şeridine Derleme, Birleştirme ve Çalıştırma zamanlaması ve tahmini JavaScript kullanımı eklendi.</li>
+    <li>Maksimum çalıştırma hızında düzenleyici işini azaltırken, tam çalışma zamanı anlık görüntülerinin bağlı cihazlar için kullanılabilir olmasını sağladı.</li>
+    <li>Düzeltilmiş COP1 çift sözcük sıralaması, FCSR tabanlı dönüşüm yuvarlaması ve tam sayısal giriş doğrulaması.</li>
+    <li>Sertleştirilmiş yığın sınırları, atomik depolar, talimat hizalaması, katı kısmi yükler ve LL/SC rezervasyonları.</li>
+    <li>Gecikmeli dal bağlantısı adresleri, gecikme yuvası istisna durumu ve doğrudan motor Go ile tarayıcı odaklı yürütme arasındaki eşitlik düzeltildi.</li>
+    <li>Durdurma Yapıldı motoru durdurur ve bekleyen bir Uykuyu iptal eder; Duraklatma devam ettirilebilir durumda kalır.</li>
+    <li>Kesme noktalarını, rastgele akışları, sanal dosyaları/imleçleri, stdin'i, program bağımsız değişkenlerini ve görüntü tanıtıcılarını korumak için genişletilmiş çalışma zamanı anlık görüntüleri.</li>
+    <li>C1-NATIVE ve çok dosyalı C projeleri de dahil olmak üzere İngilizce, İspanyolca ve Portekizce örnek kataloğu genişletildi ve rasyonelleştirildi.</li>
+    <li>Tüm İngilizce, İspanyolca ve Portekizce uygulama içi yardım, mevcut tarayıcı uygulamasına, çalışma zamanına, Mini-C derleyiciye, araçlara, depolamaya ve gizlilik davranışına uyacak şekilde güncellendi.</li>
+    <li>Sürüm tutarlılığı, bildirimler, geçici dosyalar ve yerelleştirilmiş kullanıcı arayüzü sözleşmeleri için yayına hazırlık kontrolleri eklendi.</li>
+  </ul>
+
+  <h2>0.4.6 — tekrarlanabilir tarayıcı çalışma alanı</h2>
+  <ul>
+    <li>Tekrarlanabilir yükleme, sunma, oluşturma, test etme ve doğrulama komutları oluşturuldu.</li>
+    <li>Derleyici/çalışma zamanı davranışı, tarayıcı entegrasyonu, araçlar ve örnekler için geniş regresyon kapsamı eklendi.</li>
+    <li>Daha güçlü durum kalıcılığıyla yapılandırılabilir çalışma zamanı belleği ve geri adım sınırları tanıtıldı.</li>
+    <li>Genişletilmiş Mini-C profilleri, o32 davranışı, kitaplıklar, örnekler ve çok dilli arayüz kapsamı.</li>
+  </ul>
+
+  <h2>Daha önceki webMARS kilometre taşları</h2>
+  <ul>
+    <li>MARS tarzı düzenleyici, birleştirici ve çalışma zamanı iş akışını tarayıcıya taşıdı.</li>
+    <li>Yerel projeler, oturum kurtarma, isteğe bağlı bulut senkronizasyonu ve tarayıcı sanal dosyaları eklendi.</li>
+    <li>Taşınan ve uyarlanan temel eğitim araçları ve MMIO cihazlar.</li>
+    <li>Mini-C öğretme derleyicisi ve giderek daha zengin alt küme profilleri eklendi.</li>
+  </ul>
+
+  <h2>Tarihsel not</h2>
+  <p>Daha önceki bazı sürümler WebAssembly hızlandırma ve arka uç seçimiyle denemeler yapmıştı. Bu girişler, sürümlerini doğru bir şekilde açıklıyor ancak bu alt sistem artık mevcut değil. Geçerli çalışma zamanı yalnızca JavaScript'dır.</p>
+</body>
+</html>

@@ -66,6 +66,11 @@
                       "id":  "mips-xray"
                   },
                   {
+                      "label":  "Pipeline Lab",
+                      "script":  "./tools/pipeline-lab.js",
+                      "id":  "pipeline-lab"
+                  },
+                  {
                       "label":  "ScavengerHunt",
                       "script":  "./tools/scavenger-hunt.js",
                       "id":  "scavenger-hunt"

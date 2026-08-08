@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pierwsze kroki z webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Rozpoczęcie</h1>
+  <p class="lead">webMARS to oparty na przeglądarce MIPS32 asembler, symulator, debugger, Mini-C kompilator i przestrzeń dydaktyczna. Środowisko wykonawcze jest w całości zaimplementowane w JavaScript; nie jest wymagana instalacja Java, natywny plik wykonywalny ani backend WASM.</p>
+
+  <ol class="steps">
+    <li><strong>Otwórz lub utwórz plik źródłowy.</strong> Użyj <b>Plik → Przykłady</b> dla punktu początkowego z przewodnikiem, <b>Nowy projekt</b> dla pustego projektu lub <b>Otwórz z dysku</b> dla plików lokalnych.</li>
+    <li><strong>Zbuduj to.</strong> Używane są pliki zespołu <b>Uruchom → Złóż</b> (<kbd>F3</kbd>). Używane są pliki C <b>Uruchom → Skompiluj C0</b> (<kbd>F4</kbd>), a następnie zmontuj wygenerowany zespół.</li>
+    <li><strong>Wykonaj to.</strong> Wybierz <b>Idź</b> (<kbd>F5</kbd>) lub przesuwaj dalej o jedną instrukcję na raz za pomocą <b>Krok</b> (<kbd>F7</kbd>).</li>
+    <li><strong>Sprawdź wynik.</strong> Rejestry, koprocesor 1, pamięć, komunikaty, Run I/O i podłączone narzędzia aktualizują się w miarę działania programu.</li>
+  </ol>
+
+  <h2>Co jest wliczone w cenę</h2>
+  <div class="cards">
+    <section class="card"><h3>MIPS32 czas wykonania</h3><p>Wykonanie liczby całkowitej, rozgałęzienia, pamięci, wyjątku, LL/SC i COP1, w tym opcje opóźnionego rozgałęziania i samomodyfikowania kodu.</p></section>
+    <section class="card"><h3>Mini-C kompilator</h3><p>Podzbiory nauczania C0 i profil C1-NATIVE, ukierunkowane na konwencję wywoływania MIPS o32.</p></section>
+    <section class="card"><h3>Debuger</h3><p>Punkty przerwania, kroki, cofanie, resetowanie, kontrola pauzy/zatrzymania i konfigurowalna prędkość wykonywania.</p></section>
+    <section class="card"><h3>Urządzenia i narzędzia</h3><p>Urządzenia MMIO, symulatory pamięci podręcznej i gałęzi, wyświetlacze wizualne, statystyki, terminal ANSI i wiele więcej.</p></section>
+  </div>
+
+  <h2>Zalecane pierwsze uruchomienie</h2>
+  <p>Otwórz <b>Plik → Przykłady</b>, wybierz język angielski <b>Ucz się</b> na przykład przeczytaj jego opis i otwórz go. Przykłady montażu można zmontować i uruchomić bezpośrednio. Przykłady C deklarują minimalny podzbiór kompilatora i mogą zawierać kilka plików projektu.</p>
+
+  <div class="note"><strong>Twoje pliki domyślnie pozostają w przeglądarce.</strong> Lokalne projekty i dane odzyskiwania nie są przesyłane, chyba że wyraźnie skorzystasz z menu Chmura. Okresowo pobieraj ważne prace, ponieważ pamięć przeglądarki może zostać wyczyszczona przez przeglądarkę lub przez <b>Ustawienia → Wyczyść localStorage</b>.</div>
+
+  <h2>Przydatne skróty</h2>
+  <table class="compact">
+    <tr><th>Akcja</th><th>Skrót</th></tr>
+    <tr><td>Pomoc</td><td><kbd>F1</kbd></td></tr>
+    <tr><td>Złóż</td><td><kbd>F3</kbd></td></tr>
+    <tr><td>Skompiluj Mini-C</td><td><kbd>F4</kbd></td></tr>
+    <tr><td>Biegnij / Idź</td><td><kbd>F5</kbd></td></tr>
+    <tr><td>Krok</td><td><kbd>F7</kbd></td></tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C คอมไพเลอร์</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">คอมไพลเลอร์การสอนในตัวจะแปลเซ็ตย่อย C ที่จงใจกำหนดเป็นแอสเซมบลี MIPS32 โดยใช้หลักการเรียก o32 ไม่ใช่คอมไพเลอร์ C ISO สำหรับการใช้งานทั่วไป</p>
+
+  <h2>โปรไฟล์</h2>
+  <table>
+    <tr><th>โปรไฟล์</th><th>วัตถุประสงค์</th></tr>
+    <tr><td><code>C0-S0</code> ถึง <code>C0-S4</code></td><td>ชุดย่อยการสอนแบบสะสม พัฒนาจากนิพจน์และโฟลว์การควบคุมไปยังฟังก์ชัน อาร์เรย์ พอยน์เตอร์ โครงสร้าง typedefs สัญญา และไลบรารี</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>โปรไฟล์เริ่มต้นที่มีความสามารถมากที่สุด: ระบุที่อยู่แบบไบต์ <code>char</code>/<code>char *</code>, สตริงดั้งเดิม <code>argc/argv</code>, พอยน์เตอร์ฟังก์ชัน และ <code>void *</code>.</td></tr>
+  </table>
+  <p>หากแหล่งที่มาต้องการโปรไฟล์ที่สูงกว่า การคอมไพล์จะส่งเสียงที่โฟกัสหนึ่งรายการ <code>MC_SUBSET_MISMATCH</code> การวินิจฉัยมากกว่าการเกิดข้อผิดพลาดรอง</p>
+
+  <h2>รวบรวมโครงการ</h2>
+  <ol class="steps">
+    <li>เลือกโปรไฟล์ที่ต้องการและตัวเลือกเอาต์พุตใน <b>การตั้งค่า → การตั้งค่า Mini-C</b>.</li>
+    <li>เปิดอย่างน้อยหนึ่งรายการ <code>.c</code> ไฟล์ในโครงการเดียวกัน</li>
+    <li>เลือก <b>เรียกใช้ → คอมไพล์ C0</b> หรือกด <kbd>F4</kbd>.</li>
+    <li>ตรวจสอบการวินิจฉัยและสร้างชุดประกอบ MIPS ประกอบและรันโปรแกรมที่สร้างขึ้นตามปกติ</li>
+  </ol>
+
+  <h2>การโทรแบบแผนและจุดเริ่มต้น</h2>
+  <ul>
+    <li>อาร์กิวเมนต์ใช้ <code>$a0</code>–<code>$a3</code>อาร์กิวเมนต์เพิ่มเติมใช้สแต็ก และใช้ค่าส่งคืน <code>$v0</code> (และ <code>$v1</code> ตามความเหมาะสม)</li>
+    <li>รีจิสเตอร์ที่บันทึกไว้ของผู้ถูกเรียกและเฟรมสแต็กเป็นไปตามความคาดหวังของ MIPS o32</li>
+    <li><code>main(void)</code> และใน C1-NATIVE <code>main(int argc, char **argv)</code> ได้รับการสนับสนุน</li>
+    <li>สำหรับอาร์กิวเมนต์ของโปรแกรม webMARS <code>argv[0]</code> เป็นโทเค็นแรกที่จัดทำโดยผู้ใช้ ไม่มีการป้อนชื่อปฏิบัติการอัตโนมัติ</li>
+  </ul>
+
+  <h2>ส่วนหัวและไลบรารีที่แถมมา</h2>
+  <p>
+    <span class="pill">สตูดิโอ</span><span class="pill">โคนิโอ</span><span class="pill">ไฟล์</span>
+    <span class="pill">หาเรื่อง</span><span class="pill">เชือก</span><span class="pill">string_native</span>
+    <span class="pill">แยกวิเคราะห์</span><span class="pill">รูปภาพ</span><span class="pill">ยูทิลิตี้</span>
+    <span class="pill">แรนด์</span><span class="pill">ประเภท</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">มาตรฐาน</span><span class="pill">บิตแมป_rect</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">ทีตี้</span>
+  </p>
+  <p>ส่วนหัวเหล่านี้คือ webMARS ไลบรารีความเข้ากันได้ที่สร้างขึ้นจากการโทรและอุปกรณ์ MIPS พวกเขาใช้ชุดย่อยที่มีเอกสารประกอบ ไม่ใช่ไลบรารีมาตรฐาน C โฮสต์แบบเต็ม</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> นอกจากนี้ยังมี <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> และ <code>bitmap_configure_all</code>อนุญาตให้โปรแกรม C0 ส่งขนาดการแสดงผล ขนาดหน่วย และที่อยู่บัฟเฟอร์เฟรมไปยังเครื่องมือบิตแมป</p>
+
+  <h2>ตัวอย่างการเริ่มต้นที่ดี</h2>
+  <ul>
+    <li><b>สวัสดีชาวโลก (ซี)</b> เพื่อโปรแกรมที่สมบูรณ์น้อยที่สุด</li>
+    <li><b>Mini-C C1 เนทีฟ</b> สำหรับสตริงดั้งเดิมและลักษณะการทำงานของโปรไฟล์ปัจจุบัน</li>
+    <li><b>การสาธิตไลบรารีอาร์กิวเมนต์</b> สำหรับ <code>argc/argv</code>.</li>
+    <li><b>สถิติหลายไฟล์</b> สำหรับการคอมไพล์ทั่วทั้งโปรเจ็กต์และการเรียกใช้ฟังก์ชันข้ามไฟล์</li>
+    <li><b>ข้อมูลพื้นฐานเกี่ยวกับคอนโซล stdio</b> และ <b>ไฟล์ stdio ไป-กลับ</b> สำหรับไลบรารีความเข้ากันได้</li>
+  </ul>
+
+  <div class="note">คู่มือคอมไพเลอร์ในพื้นที่เก็บข้อมูลยังคงเป็นการอ้างอิงภาษาเชิงบรรทัดฐานและมีรายละเอียด หน้าในแอปสรุปพฤติกรรมที่จำเป็นในการเลือกโปรไฟล์และเรียกใช้ตัวอย่างอย่างถูกต้อง</div>
+</body>
+</html>

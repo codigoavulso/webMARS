@@ -1,7 +1,11 @@
 (() => {
   const globalScope = typeof window !== "undefined" ? window : globalThis;
   const STORAGE_KEY = "webmars-language-v1";
-  const SUPPORTED_LANGUAGES = new Set(["en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id"]);
+  const SUPPORTED_LANGUAGES = new Set([
+    "en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id",
+    "de", "ja", "ko", "tr", "vi", "ur", "it", "pl", "fa", "th"
+  ]);
+  const RIGHT_TO_LEFT_LANGUAGES = new Set(["ar", "ur", "fa"]);
   const listeners = new Set();
 
   function normalizeLanguage(language) {
@@ -50,7 +54,7 @@
     if (!documentElement) return;
     const language = state.currentLanguage || state.fallbackLanguage || "en";
     documentElement.lang = language;
-    documentElement.dir = language.toLowerCase().split("-")[0] === "ar" ? "rtl" : "ltr";
+    documentElement.dir = RIGHT_TO_LEFT_LANGUAGES.has(language.toLowerCase().split("-")[0]) ? "rtl" : "ltr";
   }
 
   try {
@@ -86,6 +90,48 @@
     return state.catalogs.get(normalizeLanguage(language)) || null;
   }
 
+  // Catalogs are ~130 KB each, so loading all twenty at boot costs more than
+  // the rest of the application put together. Only English and the active
+  // language are resident; the rest arrive when the reader asks for them.
+  const pendingLanguageLoads = new Map();
+
+  // Assembled from a base rather than written as one literal: the release
+  // packagers resolve every "./....js" string in the sources against the
+  // shipped file list, and a path holding a placeholder resolves to nothing.
+  const LANGUAGE_MODULE_BASE = "./assets/js/i18n/";
+
+  function languageModuleUrl(language) {
+    const path = `${LANGUAGE_MODULE_BASE + language}.js`;
+    const withVersion = globalScope.WebMarsAppVersion?.withVersion;
+    return typeof withVersion === "function" ? withVersion(path) : path;
+  }
+
+  function ensureLanguage(language) {
+    const key = normalizeLanguage(language);
+    if (!key || state.catalogs.has(key)) return Promise.resolve(state.catalogs.has(key));
+    if (pendingLanguageLoads.has(key)) return pendingLanguageLoads.get(key);
+    if (!SUPPORTED_LANGUAGES.has(key)) return Promise.resolve(false);
+
+    const documentRef = globalScope.document;
+    const host = documentRef?.head || documentRef?.body;
+    // Outside a browser (tests, tooling) there is nothing to inject into.
+    if (!host || typeof documentRef.createElement !== "function") return Promise.resolve(false);
+
+    const pending = new Promise((settle) => {
+      const script = documentRef.createElement("script");
+      script.src = languageModuleUrl(key);
+      script.async = false;
+      script.onload = () => settle(state.catalogs.has(key));
+      script.onerror = () => settle(false);
+      host.appendChild(script);
+    }).then((loaded) => {
+      pendingLanguageLoads.delete(key);
+      return loaded;
+    });
+    pendingLanguageLoads.set(key, pending);
+    return pending;
+  }
+
   function registerLanguage(language, catalog = {}) {
     const key = normalizeLanguage(language);
     if (!key) return false;
@@ -108,6 +154,9 @@
     }
     applyDocumentLanguage();
     if (changed) emitChange();
+    // A catalog that is not resident yet renders as English until it lands;
+    // registerLanguage emits again on arrival, so the interface repaints itself.
+    if (!state.catalogs.has(key)) void ensureLanguage(key);
     return true;
   }
 
@@ -130,8 +179,12 @@
     hasLanguage(language) {
       return state.catalogs.has(normalizeLanguage(language));
     },
+    ensureLanguage,
     getLanguages() {
-      return [...state.catalogs.keys()].sort((a, b) => a.localeCompare(b));
+      // Every supported language is offered, not just the resident ones, so
+      // lazy loading never shrinks the picker.
+      return [...new Set([...SUPPORTED_LANGUAGES, ...state.catalogs.keys()])]
+        .sort((a, b) => a.localeCompare(b));
     },
     getLanguage() {
       return state.currentLanguage;

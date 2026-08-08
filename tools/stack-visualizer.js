@@ -351,7 +351,7 @@
     id: "stack-visualizer",
     label: "Stack Visualizer",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("stack-visualizer", "Stack Visualizer - Memory Space and Call Frames, Version 1.0", 1220, 830, `
+      const shell = ctx.createToolWindowShell("stack-visualizer", "Stack Visualizer - Memory Space and Call Frames, Version 1.0", 1060, 700, `
         <div class="sv-tool">
           <div class="sv-toolbar">
             <button class="tool-btn" data-sv="connect" type="button">Connect to MIPS</button>

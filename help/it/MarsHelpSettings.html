@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS impostazioni</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Impostazioni</h1>
+  <p class="lead">Le impostazioni riguardano la presentazione dell'origine, la compatibilità dell'assembler, l'output Mini-C, la persistenza, l'accesso al cloud e i limiti di runtime.</p>
+
+  <h2>Impostazioni rapide</h2>
+  <table>
+    <tr><th>Impostazione</th><th>Effetto</th></tr>
+    <tr><td>Mostra etichette</td><td>Visualizza le etichette accanto agli indirizzi nelle visualizzazioni runtime, ove disponibili.</td></tr>
+    <tr><td>Argomenti del programma</td><td>Richiede argomenti prima di un'esecuzione. <code>$a0</code> riceve argc e <code>$a1</code> riceve argv; Mini-C C1-NATIVE espone gli stessi dati a <code>main(int argc, char **argv)</code>.</td></tr>
+    <tr><td>Chiamate di sistema di input popup</td><td>Utilizza le finestre di dialogo del modulo per i servizi di input della console 5, 6, 7, 8 e 12 invece del riquadro Esegui I/O.</td></tr>
+    <tr><td>Dividi messaggi/Esegui I/O</td><td>Mostra i messaggi di build e gli I/O del programma contemporaneamente.</td></tr>
+    <tr><td>Indirizzi/valori esadecimali</td><td>Commuta le tabelle di runtime tra la presentazione esadecimale e decimale. Non modifica i bit memorizzati.</td></tr>
+  </table>
+
+  <h2>Compatibilità con l'assemblatore e l'esecuzione</h2>
+  <ul>
+    <li><b>Assemblare all'aperto</b> e <b>Assemblare tutti i file</b> automatizzare l'ambito di compilazione selezionato.</li>
+    <li><b>Tratta gli avvisi come errori</b> fa sì che gli avvisi falliscano nell'assemblaggio.</li>
+    <li><b>Inizia dal principale</b> inizia a livello globale <code>main</code> etichetta quando presente.</li>
+    <li><b>Istruzioni estese (pseudo).</b> abilita il catalogo di pseudo-istruzioni mostrato nella Guida.</li>
+    <li><b>Ramificazione ritardata</b> abilita il comportamento dello slot di ritardo dell'architettura.</li>
+    <li><b>Codice automodificante</b> consente la scrittura nella memoria eseguibile. Abilitalo solo per i programmi che lo richiedono intenzionalmente.</li>
+  </ul>
+
+  <h2>Interfaccia</h2>
+  <p>Seleziona il tema dell'interfaccia (Chiaro o Scuro), la lingua dell'interfaccia utente, il layout del menu superiore o laterale, la dimensione del carattere dell'editor, l'interlinea e il comportamento di evidenziazione. Sono disponibili interfacce in inglese, spagnolo, portoghese, cinese mandarino, hindi, arabo, francese, bengalese, russo, indonesiano, tedesco, giapponese, coreano, turco, vietnamita, urdu, italiano, polacco, persiano e tailandese; la guida segue la lingua dell'interfaccia utente attiva. Arabo, urdu e persiano cambiano automaticamente l'interfaccia da destra a sinistra. Alla prima visita, webMARS utilizza una lingua del browser supportata o ricorre all'inglese; una selezione esplicita viene salvata e ha la priorità. Il tema scelto viene memorizzato con le tue preferenze e viene applicato all'intera interfaccia, comprese le finestre degli strumenti e della guida.</p>
+
+  <h2>Memoria di runtime &amp;</h2>
+  <table>
+    <tr><th>Preferenza</th><th>Gamma/scelte</th></tr>
+    <tr><td>Configurazione della memoria</td><td>Predefinito, Dati compatti all'indirizzo 0 o Testo compatto all'indirizzo 0.</td></tr>
+    <tr><td>Memoria massima</td><td>0,25–2 GiB, soggetto ai limiti pratici di memoria del browser.</td></tr>
+    <tr><td>Storia a ritroso</td><td>0–1.000.000 di passi registrati; predefinito 100.</td></tr>
+    <tr><td>Gestore delle eccezioni</td><td>Un indirizzo MIPS completamente valido, predefinito <code>0x80000180</code>.</td></tr>
+  </table>
+
+  <h2>Persistenza e nuvola</h2>
+  <p><b>Stato del negozio</b> e <b>Stato di caricamento</b> gestire uno snapshot completo del runtime locale. <b>Cancella memoria locale</b> rimuove le preferenze webMARS, i progetti salvati, lo stato di ripristino e le posizioni degli strumenti dopo la conferma.</p>
+  <p><b>Server nuvola</b> modifica l'endpoint utilizzato dal menu Cloud opzionale. Le credenziali e i dati del progetto vengono inviati solo quando si richiamano le funzionalità cloud.</p>
+
+  <div class="warning">La modifica della mappa di memoria o delle opzioni di compatibilità dell'assemblatore invalida le ipotesi fatte da un programma già assemblato. Rimontarli dopo averli cambiati.</div>
+</body>
+</html>

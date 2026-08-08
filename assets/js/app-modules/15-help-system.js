@@ -245,15 +245,29 @@
         font: 12px Tahoma, sans-serif;
       }
 
+      /* Automatic layout refuses to size a column below its longest operand
+         list, so in a narrow pane the table grew past the panel and the
+         descriptions were clipped. Fixed layout honours the declared split and
+         lets the prose wrap instead. */
       .mars-help-mips-remarks table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
       }
 
+      .mars-help-remarks-key {
+        width: 42%;
+      }
+
+      /* white-space is set explicitly: these cells were computing nowrap, which
+         is what pushed the descriptions past the panel edge rather than
+         wrapping them onto a second line. */
       .mars-help-mips-remarks th,
       .mars-help-mips-remarks td {
         padding: 2px 8px;
         vertical-align: top;
+        white-space: normal;
+        overflow-wrap: break-word;
       }
 
       .mars-help-mips-remarks th {
@@ -278,11 +292,16 @@
         min-height: 100%;
         background: var(--surface);
         font: 12px "Courier New", monospace;
+        container-type: inline-size;
       }
 
+      /* The example column used to demand 260px before the description got
+         anything, which on a phone left the prose about ninety pixels and ten
+         words per line. Proportional tracks let the description keep the
+         larger share once the example has enough for a typical operand list. */
       .mars-help-list-row {
         display: grid;
-        grid-template-columns: minmax(260px, auto) 1fr;
+        grid-template-columns: minmax(150px, 0.85fr) minmax(0, 1.15fr);
         gap: 12px;
         padding: 3px 8px;
         border-bottom: 1px solid var(--line-subtle);
@@ -297,8 +316,25 @@
         white-space: pre-wrap;
       }
 
+      /* The description is prose, not code. Monospace cost it roughly a third
+         of its characters per line for no benefit. */
       .mars-help-list-description {
         white-space: pre-wrap;
+        font: 12px Tahoma, "Segoe UI", sans-serif;
+      }
+
+      /* Keyed to the pane rather than the viewport: this list is just as
+         cramped in a narrow help window on the desktop as it is on a phone. */
+      @container (max-width: 430px) {
+        .mars-help-list-row {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 0;
+          padding: 5px 8px;
+        }
+
+        .mars-help-list-description {
+          color: var(--text-muted);
+        }
       }
 
       .mars-help-empty {
@@ -549,6 +585,7 @@
     return `
       <div class="mars-help-mips-remarks">
         <table>
+          <colgroup><col class="mars-help-remarks-key"><col></colgroup>
           ${body}
         </table>
       </div>

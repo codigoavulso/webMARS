@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIPS ngoại lệ trong webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Ngoại lệ</h1>
+  <p class="lead">Lỗi thời gian chạy sẽ chuyển quyền điều khiển sang trình xử lý ngoại lệ đã định cấu hình hoặc chấm dứt quá trình chạy với lý do rõ ràng. Các ngoại lệ được xử lý có thể tiếp tục thông qua <code>eret</code>.</p>
+
+  <h2>Mã ngoại lệ được triển khai</h2>
+  <table class="compact">
+    <tr><th>Mã Exc</th><th>Ý nghĩa</th><th>Nguyên nhân điển hình</th></tr>
+    <tr><td>4</td><td>Lỗi địa chỉ khi tải/tìm nạp</td><td>Địa chỉ lệnh hoặc tải bị sai lệch; địa chỉ bên ngoài bản đồ bộ nhớ được phép.</td></tr>
+    <tr><td>5</td><td>Lỗi địa chỉ trên cửa hàng</td><td>Đích đến cửa hàng không đúng hoặc không hợp lệ.</td></tr>
+    <tr><td>8</td><td>Lỗi dịch vụ hệ thống/thời gian chạy</td><td>Đầu vào không hợp lệ, dịch vụ không hợp lệ, yêu cầu heap không được kiểm tra hoặc lỗi dịch vụ thư viện.</td></tr>
+    <tr><td>9</td><td>Điểm dừng</td><td>Một MIPS <code>break</code> hướng dẫn.</td></tr>
+    <tr><td>10</td><td>Hướng dẫn dành riêng</td><td>Hướng dẫn được mã hóa không xác định hoặc không được hỗ trợ.</td></tr>
+    <tr><td>12</td><td>Tràn số học</td><td>Tràn chữ ký trong hướng dẫn số học được kiểm tra.</td></tr>
+    <tr><td>13</td><td>Bẫy</td><td>Một điều kiện bẫy đánh giá đúng.</td></tr>
+    <tr><td>15</td><td>Chia cho số 0</td><td>Phép chia có ước số bằng 0.</td></tr>
+  </table>
+
+  <h2>Bộ đồng xử lý trạng thái 0</h2>
+  <table class="compact">
+    <tr><th>Đăng ký</th><th>Số</th><th>sử dụng</th></tr>
+    <tr><td>BadVAddr</td><td>8</td><td>Lỗi địa chỉ ảo do lỗi địa chỉ.</td></tr>
+    <tr><td>Trạng thái</td><td>12</td><td>Mức ngoại lệ và trạng thái kiểm soát ngắt.</td></tr>
+    <tr><td>nguyên nhân</td><td>13</td><td>Mã ngoại lệ, trạng thái ngắt đang chờ xử lý và cờ khe trễ BD.</td></tr>
+    <tr><td>EPC</td><td>14</td><td>Địa chỉ mà trình xử lý trả về sau khi sửa hoặc nâng cấp nó.</td></tr>
+  </table>
+
+  <h2>Luồng xử lý</h2>
+  <ol>
+    <li>Thời gian chạy ghi lại Nguyên nhân, EPC và BadVAddr nếu thích hợp và nhập mức ngoại lệ.</li>
+    <li>Nếu mã xử lý thực thi tồn tại ở địa chỉ được định cấu hình—thông thường <code>0x80000180</code>—PC chuyển đến đó.</li>
+    <li>Trình xử lý kiểm tra trạng thái COP0, thực hiện khôi phục, điều chỉnh EPC khi được yêu cầu và thực thi <code>eret</code>.</li>
+    <li>Nếu không có trình xử lý nào hoặc xảy ra ngoại lệ không thể truyền an toàn thì quá trình thực thi sẽ tạm dừng và kết quả Chạy sẽ báo cáo ngoại lệ.</li>
+  </ol>
+
+  <div class="note"><strong>Khe trễ.</strong> Đối với một ngoại lệ được đưa ra trong khe trễ nhánh, Cause.BD được đặt và EPC xác định lệnh nhánh chứ không phải địa chỉ khe trễ.</div>
+
+  <h2>Địa chỉ và bảo hành cửa hàng</h2>
+  <p>Mục tiêu hướng dẫn phải được căn chỉnh theo từ. Các cửa hàng nhiều byte đã kiểm tra xác thực toàn bộ đích trước khi thực hiện bất kỳ byte nào, do đó, ngoại lệ địa chỉ không thể để lại một từ hoặc từ kép được viết một phần. Chế độ bộ nhớ nghiêm ngặt cũng áp dụng cho các thao tác một phần từ như <code>LWL</code> và <code>LWR</code>.</p>
+</body>
+</html>

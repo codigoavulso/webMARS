@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Giới hạn và khả năng tương thích</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Giới hạn khả năng tương thích &amp;</h1>
+  <p class="lead">webMARS hướng tới khả năng tương thích nguồn MARS 4.5 thực tế trong khi chạy hoàn toàn trong trình duyệt hiện đại. Các quy tắc về bảo mật, lưu trữ và âm thanh của trình duyệt vẫn được áp dụng.</p>
+
+  <h2>Giới hạn thời gian chạy</h2>
+  <table>
+    <tr><th>Khu vực</th><th>Giới hạn hoặc hành vi</th></tr>
+    <tr><td>Bộ nhớ</td><td>Người dùng có thể lựa chọn 0,25–2 GiB, có trần cứng kiến trúc bên dưới <code>0x80000000</code>. Phân bổ thưa thớt có nghĩa là không gian địa chỉ chưa được xử lý không được cam kết theo từng byte.</td></tr>
+    <tr><td>Đống</td><td><code>sbrk</code> xác thực toàn bộ phần đặt trước chưa được ký trước khi thay đổi con trỏ heap. Yêu cầu không thể bao bọc hoặc bỏ qua trần bộ nhớ đã định cấu hình.</td></tr>
+    <tr><td>Chuỗi thời gian chạy</td><td>Các chuỗi kết thúc bằng null có thể chứa tối đa 1 MiB. Thiếu dấu kết thúc hoặc chuỗi dài hơn sẽ gây ra lỗi tòa nhà rõ ràng thay vì trả về văn bản bị cắt bớt.</td></tr>
+    <tr><td>Bước lùi</td><td>0–1.000.000 delta nghịch đảo. Lịch sử được giới hạn bởi ngân sách đã định cấu hình trong khi luôn giữ lại 100 bước hoàn chỉnh mới nhất khi bật bước lùi.</td></tr>
+    <tr><td>Lưu trữ tập tin trình duyệt</td><td>Dữ liệu dự án/phiên phải tuân theo hạn ngạch của trình duyệt; ứng dụng giới hạn tải trọng lưu trữ trên trình duyệt của người dùng ở mức 1 MiB nếu có và quay trở lại tải trọng khôi phục nhỏ hơn nếu cần.</td></tr>
+    <tr><td>Thời gian chạy</td><td>Thời gian ngủ, MIDI và giao diện người dùng được trình duyệt lên lịch và không chính xác theo chu kỳ.</td></tr>
+    <tr><td>Phân phối</td><td>webMARS 0.5.5 là một ứng dụng web tĩnh, không phải là ứng dụng có thể cài đặt/ngoại tuyến PWA. Nó phải được phân phát qua HTTP bởi máy chủ cục bộ đi kèm hoặc máy chủ tĩnh khác.</td></tr>
+  </table>
+
+  <h2>Bản đồ bộ nhớ</h2>
+  <table class="compact">
+    <tr><th>Vùng</th><th>Cơ sở mặc định</th></tr>
+    <tr><td>văn bản người dùng</td><td><code>0x00400000</code></td></tr>
+    <tr><td>Dữ liệu tĩnh</td><td><code>0x10010000</code></td></tr>
+    <tr><td>Đống</td><td><code>0x10040000</code></td></tr>
+    <tr><td>Con trỏ ngăn xếp ban đầu</td><td><code>0x7ffffffc</code></td></tr>
+    <tr><td>Trình xử lý ngoại lệ hạt nhân</td><td><code>0x80000180</code></td></tr>
+    <tr><td>MMIO</td><td><code>0xffff0000</code></td></tr>
+  </table>
+  <p>Các cài đặt trước Dữ liệu Nhỏ gọn và Văn bản Nhỏ gọn di chuyển các phân đoạn giảng dạy tương ứng về địa chỉ 0. Tập hợp lại sau khi thay đổi bản đồ.</p>
+
+  <h2>hành vi MIPS</h2>
+  <ul>
+    <li>Trí nhớ là endian nhỏ. Các thao tác từ và từ kép sử dụng thứ tự đăng ký/bộ nhớ MIPS.</li>
+    <li>Việc tìm nạp lệnh không đúng và địa chỉ tải/lưu trữ không hợp lệ sẽ gây ra ngoại lệ về địa chỉ.</li>
+    <li>Các cửa hàng xác thực đích đến hoàn chỉnh trước khi ghi, do đó, một cửa hàng bị lỗi sẽ không để lại một phần giá trị.</li>
+    <li><code>LL</code>/<code>SC</code> sử dụng đặt chỗ mà các cửa hàng xung đột vô hiệu.</li>
+    <li>COP1 chuyển đổi tôn trọng chế độ làm tròn FCSR; đầu vào dấu phẩy động từ chối văn bản không phải số ở cuối.</li>
+    <li>Với khả năng tương thích nghiêm ngặt MARS, các hoạt động bộ nhớ—bao gồm cả tải một phần từ—phải nằm trong các phân đoạn được phép.</li>
+  </ul>
+
+  <h2>Các ranh giới về tính di động đã biết</h2>
+  <ul>
+    <li>Hệ thống tệp ảo của trình duyệt không phải là hệ thống tệp không hạn chế của hệ điều hành máy chủ.</li>
+    <li>Chính sách tự động phát và cấp phép âm thanh trên web có thể ảnh hưởng đến các cuộc gọi tổng hợp MIDI.</li>
+    <li>Trình chặn cửa sổ bật lên và chính sách tải xuống có thể ảnh hưởng đến các tệp được xuất.</li>
+    <li>Mini-C chỉ chấp nhận hồ sơ tài liệu của nó; mã dựa trên ISO C đầy đủ, libc máy chủ hoặc hành vi không xác định không thể di chuyển được sang nó.</li>
+    <li>Không có sẵn các tiện ích mở rộng lịch sử MARS phụ thuộc vào các lớp Java hoặc plug-in trên máy tính để bàn.</li>
+  </ul>
+</body>
+</html>

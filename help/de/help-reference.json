@@ -1,0 +1,2274 @@
+{
+  "generatedAt": "2026-07-25T00:00:00.000Z",
+  "source": {
+    "basicInstructions": "../../assets/js/reference/instructions.generated.js",
+    "extendedInstructions": "../../assets/js/reference/pseudo-ops.generated.js",
+    "directives": "../../assets/js/app-modules/00-core.js"
+  },
+  "basicInstructions": [
+    {
+      "example": "abs.d $f2,$f4",
+      "description": "Gleitkomma-Absolutwert mit doppelter Genauigkeit: Setzen Sie $f2 auf den Absolutwert von $f4 mit doppelter Genauigkeit"
+    },
+    {
+      "example": "abs.s $f0,$f1",
+      "description": "Gleitkomma-Absolutwert mit einfacher Genauigkeit: Setzen Sie $f0 auf den Absolutwert von $f1 mit einfacher Genauigkeit"
+    },
+    {
+      "example": "add $t1,$t2,$t3",
+      "description": "Addition mit Überlauf: $t1 auf ($t2 plus $t3 setzen"
+    },
+    {
+      "example": "add.d $f2,$f4,$f6",
+      "description": "Gleitkommaaddition mit doppelter Genauigkeit: Setzen Sie $f2 auf den Gleitkommawert mit doppelter Genauigkeit von $f4 plus $f6"
+    },
+    {
+      "example": "add.s $f0,$f1,$f3",
+      "description": "Gleitkommaaddition mit einfacher Genauigkeit: Setzen Sie $f0 auf den Gleitkommawert mit einfacher Genauigkeit von $f1 plus $f3"
+    },
+    {
+      "example": "addi $t1,$t2,-100",
+      "description": "Addition sofort mit Überlauf: $t1 auf ($t2 plus vorzeichenbehaftetes 16-Bit-Sofort setzen)"
+    },
+    {
+      "example": "addiu $t1,$t2,-100",
+      "description": "Addition sofort ohne Vorzeichen ohne Überlauf: $t1 auf ($t2 plus vorzeichenbehaftetes 16-Bit-Sofort setzen, kein Überlauf"
+    },
+    {
+      "example": "addu $t1,$t2,$t3",
+      "description": "Zusatz ohne Vorzeichen ohne Überlauf: $t1 auf ($t2 plus $t3 setzen, kein Überlauf"
+    },
+    {
+      "example": "and $t1,$t2,$t3",
+      "description": "Bitweise AND: Setzen Sie $t1 auf bitweise AND von $t2 und $t3"
+    },
+    {
+      "example": "andi $t1,$t2,100",
+      "description": "Bitweise AND sofort: Setzen Sie $t1 auf bitweise AND von $t2 und null-erweiterte 16-Bit-Sofortdaten"
+    },
+    {
+      "example": "bc1f 1,label",
+      "description": "Verzweigen, wenn das angegebene FP-Bedingungsflag falsch ist (BC1F, nicht BCLF): Wenn das durch „Sofort“ angegebene Bedingungsflag des Coprozessors 1 falsch (Null) ist, dann verzweigen Sie zur Anweisung an der Adresse des Labels"
+    },
+    {
+      "example": "bc1f label",
+      "description": "Verzweigen, wenn FP-Bedingungsflag 0 falsch ist (BC1F, nicht BCLF): Wenn Coprozessor 1-Bedingungsflag 0 falsch (Null) ist, dann verzweigen Sie zur Anweisung an der Adresse des Labels"
+    },
+    {
+      "example": "bc1t 1,label",
+      "description": "Verzweigen, wenn das angegebene FP-Bedingungsflag wahr ist (BC1T, nicht BCLT): Wenn das durch „Direkt“ angegebene Bedingungsflag des Coprozessors 1 wahr (eins) ist, dann verzweigen Sie zur Anweisung an der Adresse des Labels"
+    },
+    {
+      "example": "bc1t label",
+      "description": "Verzweigen, wenn FP-Bedingungsflag 0 wahr ist (BC1T, nicht BCLT): Wenn Coprozessor 1-Bedingungsflag 0 wahr (eins) ist, dann verzweigen Sie zur Anweisung an der Adresse des Labels"
+    },
+    {
+      "example": "beq $t1,$t2,label",
+      "description": "Verzweigen, wenn gleich: Verzweigen Sie zur Anweisung an der Adresse des Labels, wenn $t1 und $t2 gleich sind"
+    },
+    {
+      "example": "bgez $t1,label",
+      "description": "Verzweigen, wenn größer oder gleich Null: Verzweigen Sie zur Anweisung an der Adresse des Labels, wenn $t1 größer oder gleich Null ist"
+    },
+    {
+      "example": "bgezal $t1,label",
+      "description": "Verzweigen, wenn größer oder gleich Null und Verknüpfung: Wenn $t1 größer oder gleich Null ist, dann setzen Sie $ra auf den Programmzähler und verzweigen Sie zur Anweisung an der Adresse des Labels"
+    },
+    {
+      "example": "bgtz $t1,label",
+      "description": "Verzweigen, wenn größer als Null: Verzweigen Sie zur Anweisung an der Adresse des Labels, wenn $t1 größer als Null ist"
+    },
+    {
+      "example": "blez $t1,label",
+      "description": "Verzweigen, wenn kleiner oder gleich Null: Verzweigen Sie zur Anweisung an der Adresse des Labels, wenn $t1 kleiner oder gleich Null ist"
+    },
+    {
+      "example": "bltz $t1,label",
+      "description": "Verzweigen, wenn kleiner als Null: Verzweigen Sie zur Anweisung an der Adresse des Labels, wenn $t1 kleiner als Null ist"
+    },
+    {
+      "example": "bltzal $t1,label",
+      "description": "Verzweigen, wenn kleiner als Null und Verknüpfung: Wenn $t1 kleiner oder gleich Null ist, dann setzen Sie $ra auf den Programmzähler und verzweigen Sie zur Anweisung an der Adresse des Labels"
+    },
+    {
+      "example": "bne $t1,$t2,label",
+      "description": "Verzweigen, wenn nicht gleich: Verzweigen Sie zur Anweisung an der Adresse des Labels, wenn $t1 und $t2 nicht gleich sind"
+    },
+    {
+      "example": "break",
+      "description": "Ausführung unterbrechen: Programmausführung mit Ausnahme beenden"
+    },
+    {
+      "example": "break 100",
+      "description": "Ausführung mit Code unterbrechen: Programmausführung mit dem angegebenen Ausnahmecode beenden"
+    },
+    {
+      "example": "c.eq.d $f2,$f4",
+      "description": "Gleiche doppelte Genauigkeit vergleichen: Wenn $f2 gleich $f4 (doppelte Genauigkeit) ist, setzen Sie das Bedingungsflag des Coprozessors 1 auf „true“, andernfalls setzen Sie es auf „false“."
+    },
+    {
+      "example": "c.eq.d 1,$f2,$f4",
+      "description": "Gleiche doppelte Genauigkeit vergleichen: Wenn $f2 gleich $f4 (doppelte Genauigkeit) ist, setzen Sie das durch „Sofort“ angegebene Bedingungsflag des Coprozessors 1 auf „true“, andernfalls auf „false“."
+    },
+    {
+      "example": "c.eq.s $f0,$f1",
+      "description": "Gleiche einfache Genauigkeit vergleichen: Wenn $f0 gleich $f1 ist, setzen Sie das Bedingungsflag des Coprozessors 1 auf „true“, andernfalls setzen Sie es auf „false“."
+    },
+    {
+      "example": "c.eq.s 1,$f0,$f1",
+      "description": "Gleiche einfache Genauigkeit vergleichen: Wenn $f0 gleich $f1 ist, setzen Sie das durch „Sofort“ angegebene Bedingungsflag des Coprozessors 1 auf „true“, andernfalls auf „false“."
+    },
+    {
+      "example": "c.le.d $f2,$f4",
+      "description": "Vergleichen Sie kleinere oder gleiche doppelte Genauigkeit: Wenn $f2 kleiner oder gleich $f4 (doppelte Genauigkeit) ist, setzen Sie das Bedingungsflag des Coprozessors 1 auf „true“, andernfalls setzen Sie es auf „false“."
+    },
+    {
+      "example": "c.le.d 1,$f2,$f4",
+      "description": "Vergleichen Sie kleinere oder gleiche doppelte Genauigkeit: Wenn $f2 kleiner oder gleich $f4 (doppelte Genauigkeit) ist, setzen Sie das Bedingungsflag des Coprozessors 1, das durch unmittelbar angegeben ist, auf „true“, andernfalls setzen Sie es auf „false“."
+    },
+    {
+      "example": "c.le.s $f0,$f1",
+      "description": "Vergleichen Sie kleinere oder gleiche einfache Genauigkeit: Wenn $f0 kleiner oder gleich $f1 ist, setzen Sie das Bedingungsflag des Coprozessors 1 auf „true“, andernfalls setzen Sie es auf „false“."
+    },
+    {
+      "example": "c.le.s 1,$f0,$f1",
+      "description": "Vergleichen Sie kleinere oder gleiche einfache Genauigkeit: Wenn $f0 kleiner oder gleich $f1 ist, setzen Sie das durch „Direkt“ angegebene Bedingungsflag des Coprozessors 1 auf „true“, andernfalls auf „false“."
+    },
+    {
+      "example": "c.lt.d $f2,$f4",
+      "description": "Vergleichen Sie mit weniger als doppelter Genauigkeit: Wenn $f2 kleiner als $f4 (doppelte Genauigkeit) ist, setzen Sie das Bedingungsflag des Coprozessors 1 auf „true“, andernfalls setzen Sie es auf „false“."
+    },
+    {
+      "example": "c.lt.d 1,$f2,$f4",
+      "description": "Vergleichen Sie mit weniger als doppelter Genauigkeit: Wenn $f2 kleiner als $f4 (doppelte Genauigkeit) ist, setzen Sie das durch „Sofort“ angegebene Bedingungsflag des Coprozessors 1 auf „true“, andernfalls auf „false“."
+    },
+    {
+      "example": "c.lt.s $f0,$f1",
+      "description": "Vergleichen Sie mit weniger als einfacher Genauigkeit: Wenn $f0 kleiner als $f1 ist, setzen Sie das Bedingungsflag des Coprozessors 1 auf „true“, andernfalls setzen Sie es auf „false“."
+    },
+    {
+      "example": "c.lt.s 1,$f0,$f1",
+      "description": "Vergleich mit weniger als einfacher Genauigkeit: Wenn $f0 kleiner als $f1 ist, setzen Sie das durch „Direkt“ angegebene Bedingungsflag des Coprozessors 1 auf „true“, andernfalls auf „false“."
+    },
+    {
+      "example": "ceil.w.d $f1,$f2",
+      "description": "Obergrenze mit doppelter Genauigkeit für Wort: Setzen Sie $f1 auf die 32-Bit-Ganzzahlobergrenze für Gleitkommazahlen mit doppelter Genauigkeit in $f2"
+    },
+    {
+      "example": "ceil.w.s $f0,$f1",
+      "description": "Obergrenze für einfache Genauigkeit in Wort: Setzen Sie $f0 auf die 32-Bit-Ganzzahlobergrenze für Gleitkommazahl mit einfacher Genauigkeit in $f1"
+    },
+    {
+      "example": "clo $t1,$t2",
+      "description": "Anzahl der führenden Einsen zählen: Setzen Sie $t1 auf die Anzahl der führenden Einsen in $t2, beginnend an der höchstwertigen Bitposition"
+    },
+    {
+      "example": "clz $t1,$t2",
+      "description": "Anzahl der führenden Nullen zählen: Setzen Sie $t1 auf die Anzahl der führenden Nullbits in $t2, beginnend an der höchstwertigen Bitposition"
+    },
+    {
+      "example": "cvt.d.s $f2,$f1",
+      "description": "Konvertieren von einfacher Genauigkeit in doppelte Genauigkeit: Setzen Sie $f2 auf das Äquivalent des einfachen Genauigkeitswerts in $f1 mit doppelter Genauigkeit."
+    },
+    {
+      "example": "cvt.d.w $f2,$f1",
+      "description": "Von Wort in doppelte Genauigkeit konvertieren: Setzen Sie $f2 auf das Äquivalent eines 32-Bit-Ganzzahlwerts mit doppelter Genauigkeit in $f1"
+    },
+    {
+      "example": "cvt.s.d $f1,$f2",
+      "description": "Von doppelter Genauigkeit in einfache Genauigkeit konvertieren: Setzen Sie $f1 auf das Äquivalent des doppelten Genauigkeitswerts in $f2 mit einfacher Genauigkeit."
+    },
+    {
+      "example": "cvt.s.w $f0,$f1",
+      "description": "Von Wort in einfache Genauigkeit konvertieren: Setzen Sie $f0 auf das Äquivalent eines 32-Bit-Ganzzahlwerts mit einfacher Genauigkeit in $f2"
+    },
+    {
+      "example": "cvt.w.d $f1,$f2",
+      "description": "Konvertieren von doppelter Genauigkeit in Wort: Setzen Sie $f1 auf eine 32-Bit-Ganzzahl, die dem Wert mit doppelter Genauigkeit in $f2 entspricht."
+    },
+    {
+      "example": "cvt.w.s $f0,$f1",
+      "description": "Konvertieren von einfacher Genauigkeit in Wort: Setzen Sie $f0 auf eine 32-Bit-Ganzzahl, die dem Wert mit einfacher Genauigkeit in $f1 entspricht."
+    },
+    {
+      "example": "div $t1,$t2",
+      "description": "Division mit Überlauf: Teilen Sie $t1 durch $t2 und setzen Sie dann LO auf Quotient und HI auf Rest (verwenden Sie mfhi, um auf HI zuzugreifen, mflo, um auf LO zuzugreifen)."
+    },
+    {
+      "example": "div.d $f2,$f4,$f6",
+      "description": "Gleitkommadivision mit doppelter Genauigkeit: Setzen Sie $f2 auf den Gleitkommawert mit doppelter Genauigkeit von $f4 geteilt durch $f6"
+    },
+    {
+      "example": "div.s $f0,$f1,$f3",
+      "description": "Gleitkommadivision mit einfacher Genauigkeit: Setzen Sie $f0 auf den Gleitkommawert mit einfacher Genauigkeit von $f1 geteilt durch $f3"
+    },
+    {
+      "example": "divu $t1,$t2",
+      "description": "Division ohne Vorzeichen ohne Überlauf: Division ohne Vorzeichen $t1 durch $t2, dann LO auf Quotient und HI auf Rest setzen (verwenden Sie mfhi, um auf HI zuzugreifen, mflo, um auf LO zuzugreifen)"
+    },
+    {
+      "example": "eret",
+      "description": "Ausnahmerückgabe: Programmzähler auf Coprozessor 0 EPC-Registerwert setzen, Coprozessor-Statusregisterbit 1 (Ausnahmestufe) auf Null setzen"
+    },
+    {
+      "example": "floor.w.d $f1,$f2",
+      "description": "Untergrenze mit doppelter Genauigkeit in Wort: $f1 auf 32-Bit-Ganzzahluntergrenze von Gleitkommazahl mit doppelter Genauigkeit in $f2 setzen"
+    },
+    {
+      "example": "floor.w.s $f0,$f1",
+      "description": "Untergrenze mit einfacher Genauigkeit in Wort: Setzen Sie $f0 auf die 32-Bit-Ganzzahluntergrenze der Gleitkommazahl mit einfacher Genauigkeit in $f1"
+    },
+    {
+      "example": "j target",
+      "description": "Unbedingt springen: Zur Anweisung an der Zieladresse springen"
+    },
+    {
+      "example": "jal target",
+      "description": "Springen und verknüpfen: Setzen Sie $ra auf den Programmzähler (Rückgabeadresse) und springen Sie dann zur Anweisung an der Zieladresse"
+    },
+    {
+      "example": "jalr $t1",
+      "description": "Sprung- und Verknüpfungsregister: Setzen Sie $ra auf den Programmzähler (Rückgabeadresse) und springen Sie dann zu der Anweisung, deren Adresse sich in $t1 befindet."
+    },
+    {
+      "example": "jalr $t1,$t2",
+      "description": "Sprung- und Verknüpfungsregister: Setzen Sie $t1 auf den Programmzähler (Rückgabeadresse) und springen Sie dann zu der Anweisung, deren Adresse sich in $t2 befindet."
+    },
+    {
+      "example": "jr $t1",
+      "description": "Register bedingungslos springen: Zur Anweisung springen, deren Adresse sich in $t1 befindet."
+    },
+    {
+      "example": "lb $t1,-100($t2)",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,-100($t2)",
+      "description": "Byte ohne Vorzeichen laden: Setzen Sie $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ldc1 $f2,-100($t2)",
+      "description": "Doppelwort-Coprozessor 1 laden (FPU)): Setzen Sie $f2 auf den 64-Bit-Wert der effektiven Speicher-Doppelwortadresse"
+    },
+    {
+      "example": "lh $t1,-100($t2)",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,-100($t2)",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "ll $t1,-100($t2)",
+      "description": "Verknüpft laden: Ein Wort laden und eine Reservierung für eine nachfolgende Store Conditional (sc) einrichten."
+    },
+    {
+      "example": "lui $t1,100",
+      "description": "Oberes Unmittelbares laden: Setzt die höherwertigen 16 Bits von $t1 auf 16-Bit-Sofortwerte und die niederwertigen 16 Bits auf 0"
+    },
+    {
+      "example": "lw $t1,-100($t2)",
+      "description": "Wort laden: $t1 auf den Inhalt der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lwc1 $f1,-100($t2)",
+      "description": "Wort in Coprozessor 1 laden (FPU): Setzen Sie $f1 auf den 32-Bit-Wert der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "lwl $t1,-100($t2)",
+      "description": "Wort links laden: 1 bis 4 Bytes linksbündig in $t1 laden, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,-100($t2)",
+      "description": "Wort rechts laden: 1 bis 4 Bytes rechtsbündig in $t1 laden, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "madd $t1,$t2",
+      "description": "Addition multiplizieren: Multiplizieren Sie $t1 mit $t2, erhöhen Sie dann HI um 32 Bits höherer Ordnung des Produkts und erhöhen Sie LO um 32 Bits niedriger Ordnung des Produkts (verwenden Sie mfhi, um auf HI zuzugreifen, mflo, um auf LO zuzugreifen)."
+    },
+    {
+      "example": "maddu $t1,$t2",
+      "description": "Multiplizieren und addieren ohne Vorzeichen: Multiplizieren Sie $t1 mit $t2, erhöhen Sie dann HI um 32 Bits des Produkts höherer Ordnung, erhöhen Sie LO um 32 Bits niedriger Ordnung des Produkts, ohne Vorzeichen (verwenden Sie mfhi, um auf HI zuzugreifen, mflo, um auf LO zuzugreifen)."
+    },
+    {
+      "example": "mfc0 $t1,$8",
+      "description": "Von Coprozessor 0 wechseln: $t1 auf den im Coprozessor 0-Register $8 gespeicherten Wert setzen."
+    },
+    {
+      "example": "mfc1 $t1,$f1",
+      "description": "Von Coprozessor 1 verschieben (FPU): Setzen Sie $t1 auf den Wert im Coprozessor 1-Register $f1"
+    },
+    {
+      "example": "cfc1 $t1,$31",
+      "description": "Wechseln Sie von der Coprozessor-1-Steuerung: Setzen Sie $t1 auf den Steuerungs- und Statuswert FCSR."
+    },
+    {
+      "example": "mfhi $t1",
+      "description": "Vom HI-Register verschieben: $t1 auf den Inhalt von HI setzen (siehe Multiplikations- und Divisionsoperationen)"
+    },
+    {
+      "example": "mflo $t1",
+      "description": "Vom LO-Register verschieben: $t1 auf den Inhalt von LO setzen (siehe Multiplikations- und Divisionsoperationen)"
+    },
+    {
+      "example": "mov.d $f2,$f4",
+      "description": "Gleitkomma mit doppelter Genauigkeit verschieben: Setzen Sie die doppelte Genauigkeit $f2 auf den Wert mit doppelter Genauigkeit in $f4"
+    },
+    {
+      "example": "mov.s $f0,$f1",
+      "description": "Gleitkomma mit einfacher Genauigkeit verschieben: Setzen Sie die einfache Genauigkeit $f0 auf den Wert mit einfacher Genauigkeit in $f1"
+    },
+    {
+      "example": "movf $t1,$t2",
+      "description": "Verschieben, wenn FP-Bedingungsflag 0 falsch ist: Setze $t1 auf $t2, wenn FPU (Coprozessor 1) Bedingungsflag 0 falsch (Null) ist."
+    },
+    {
+      "example": "movf $t1,$t2,1",
+      "description": "Verschieben, wenn angegeben FP-Bedingungsflag falsch: Setzen Sie $t1 auf $t2, wenn das durch die Direktangabe angegebene Bedingungsflag FPU (Coprozessor 1) falsch (Null) ist."
+    },
+    {
+      "example": "movf.d $f2,$f4",
+      "description": "Gleitkomma mit doppelter Genauigkeit verschieben: Wenn Bedingungsflag 0 falsch ist, setzen Sie die doppelte Genauigkeit $f2 auf den Wert mit doppelter Genauigkeit in $f4"
+    },
+    {
+      "example": "movf.d $f2,$f4,1",
+      "description": "Gleitkomma mit doppelter Genauigkeit verschieben: Wenn das durch „Direkt“ angegebene Bedingungsflag „false“ ist, setzen Sie die doppelte Genauigkeit $f2 auf den Wert mit der doppelten Genauigkeit in $f4"
+    },
+    {
+      "example": "movf.s $f0,$f1",
+      "description": "Gleitkomma mit einfacher Genauigkeit verschieben: Wenn Bedingungsflag 0 falsch ist, setzen Sie die einfache Genauigkeit $f0 auf den Wert mit einfacher Genauigkeit in $f1"
+    },
+    {
+      "example": "movf.s $f0,$f1,1",
+      "description": "Gleitkomma mit einfacher Genauigkeit verschieben: Wenn das durch „Direkt“ angegebene Bedingungsflag „false“ ist, setzen Sie die einfache Genauigkeit $f0 auf den Wert mit einfacher Genauigkeit in $f1e"
+    },
+    {
+      "example": "movn $t1,$t2,$t3",
+      "description": "Bedingung verschieben, nicht Null: Setzen Sie $t1 auf $t2, wenn $t3 nicht Null ist"
+    },
+    {
+      "example": "movn.d $f2,$f4,$t3",
+      "description": "Gleitkomma mit doppelter Genauigkeit verschieben: Wenn $t3 nicht Null ist, setzen Sie die doppelte Genauigkeit $f2 auf den Wert mit doppelter Genauigkeit in $f4"
+    },
+    {
+      "example": "movn.s $f0,$f1,$t3",
+      "description": "Gleitkomma mit einfacher Genauigkeit verschieben: Wenn $t3 nicht Null ist, setzen Sie die einfache Genauigkeit $f0 auf den Wert mit einfacher Genauigkeit in $f1"
+    },
+    {
+      "example": "movt $t1,$t2",
+      "description": "Verschieben, wenn FP-Bedingungsflag 0 wahr ist: Setze $t1 auf $t2, wenn FPU (Coprozessor 1) Bedingungsflag 0 wahr ist (eins)"
+    },
+    {
+      "example": "movt $t1,$t2,1",
+      "description": "Verschieben, wenn angegeben FP-Bedingungsflag wahr: Setzen Sie $t1 auf $t2, wenn FPU (Coprozessor 1) durch die Direktangabe angegebenes Bedingungsflag wahr ist (eins)"
+    },
+    {
+      "example": "movt.d $f2,$f4",
+      "description": "Gleitkomma mit doppelter Genauigkeit verschieben: Wenn Bedingungsflag 0 wahr ist, setzen Sie die doppelte Genauigkeit $f2 auf den Wert mit doppelter Genauigkeit in $f4"
+    },
+    {
+      "example": "movt.d $f2,$f4,1",
+      "description": "Gleitkomma mit doppelter Genauigkeit verschieben: Wenn das durch „Direkt“ angegebene Bedingungsflag wahr ist, setzen Sie die doppelte Genauigkeit $f2 auf den Wert mit doppelter Genauigkeit in $f4e"
+    },
+    {
+      "example": "movt.s $f0,$f1",
+      "description": "Gleitkomma mit einfacher Genauigkeit verschieben: Wenn Bedingungsflag 0 wahr ist, setzen Sie die einfache Genauigkeit $f0 auf den Wert mit einfacher Genauigkeit in $f1e"
+    },
+    {
+      "example": "movt.s $f0,$f1,1",
+      "description": "Gleitkomma mit einfacher Genauigkeit verschieben: Wenn das durch „Direkt“ angegebene Bedingungsflag wahr ist, setzen Sie die einfache Genauigkeit $f0 auf den Wert mit einfacher Genauigkeit in $f1e"
+    },
+    {
+      "example": "movz $t1,$t2,$t3",
+      "description": "Bedingte Null verschieben: Setzen Sie $t1 auf $t2, wenn $t3 Null ist"
+    },
+    {
+      "example": "movz.d $f2,$f4,$t3",
+      "description": "Gleitkomma mit doppelter Genauigkeit verschieben: Wenn $t3 Null ist, setzen Sie die doppelte Genauigkeit $f2 auf den Wert mit doppelter Genauigkeit in $f4"
+    },
+    {
+      "example": "movz.s $f0,$f1,$t3",
+      "description": "Gleitkomma mit einfacher Genauigkeit verschieben: Wenn $t3 Null ist, setzen Sie die einfache Genauigkeit $f0 auf den Wert mit einfacher Genauigkeit in $f1"
+    },
+    {
+      "example": "msub $t1,$t2",
+      "description": "Multiplizieren und Subtrahieren: Multiplizieren Sie $t1 mit $t2, dekrementieren Sie dann HI um die höherwertigen 32 Bits des Produkts, dekrementieren Sie LO um die niederwertigen 32 Bits des Produkts (verwenden Sie mfhi, um auf HI zuzugreifen, mflo, um auf LO zuzugreifen)."
+    },
+    {
+      "example": "msubu $t1,$t2",
+      "description": "Multiplizieren, Subtrahieren ohne Vorzeichen: Multiplizieren Sie $t1 mit $t2, dekrementieren Sie dann HI um 32 Bits des Produkts höherer Ordnung, dezementieren Sie LO um 32 Bits niedriger Ordnung des Produkts ohne Vorzeichen (verwenden Sie mfhi, um auf HI zuzugreifen, mflo, um auf LO zuzugreifen)."
+    },
+    {
+      "example": "mtc0 $t1,$8",
+      "description": "Zu Coprozessor 0 wechseln: Coprozessor-0-Register $8 auf den in $t1 gespeicherten Wert setzen."
+    },
+    {
+      "example": "mtc1 $t1,$f1",
+      "description": "Zu Coprozessor 1 verschieben (FPU): Setzen Sie das Coprozessor-1-Register $f1 auf den Wert in $t1"
+    },
+    {
+      "example": "ctc1 $t1,$31",
+      "description": "Zur Steuerung von Coprozessor 1 wechseln: Setzen Sie FCSR, einschließlich seines Rundungsmodus, auf den Wert in $t1"
+    },
+    {
+      "example": "mthi $t1",
+      "description": "In HI-Register verschieben: HI auf den Inhalt von $t1 setzen (siehe Multiplikations- und Divisionsoperationen)"
+    },
+    {
+      "example": "mtlo $t1",
+      "description": "Zum LO-Register wechseln: LO auf den Inhalt von $t1 setzen (siehe Multiplikations- und Divisionsoperationen)"
+    },
+    {
+      "example": "mul $t1,$t2,$t3",
+      "description": "Multiplikation ohne Überlauf: Setzen Sie HI auf 32 Bit hoher Ordnung, LO und $t1 auf 32 Bit niedriger Ordnung des Produkts aus $t2 und $t3 (verwenden Sie mfhi, um auf HI zuzugreifen, mflo, um auf LO zuzugreifen)"
+    },
+    {
+      "example": "mul.d $f2,$f4,$f6",
+      "description": "Gleitkomma-Multiplikation mit doppelter Genauigkeit: Setzen Sie $f2 auf einen Gleitkommawert mit doppelter Genauigkeit von $f4 mal $f6"
+    },
+    {
+      "example": "mul.s $f0,$f1,$f3",
+      "description": "Gleitkomma-Multiplikation mit einfacher Genauigkeit: Setzen Sie $f0 auf einen Gleitkommawert mit einfacher Genauigkeit von $f1 mal $f3"
+    },
+    {
+      "example": "mult $t1,$t2",
+      "description": "Multiplikation: Setzen Sie hi auf 32 Bit hoher Ordnung, lo auf 32 Bit niedriger Ordnung des Produkts aus $t1 und $t2 (verwenden Sie mfhi, um auf hi zuzugreifen, mflo, um auf lo zuzugreifen)"
+    },
+    {
+      "example": "multu $t1,$t2",
+      "description": "Multiplikation ohne Vorzeichen: Setzen Sie HI auf 32 Bit hoher Ordnung, LO auf 32 Bit niedriger Ordnung des Produkts aus vorzeichenlosem $t1 und $t2 (verwenden Sie mfhi, um auf HI zuzugreifen, mflo, um auf LO zuzugreifen)"
+    },
+    {
+      "example": "neg.d $f2,$f4",
+      "description": "Gleitkomma negiert doppelte Genauigkeit: Setzen Sie die doppelte Genauigkeit $f2 auf die Negation des Werts mit doppelter Genauigkeit in $f4"
+    },
+    {
+      "example": "neg.s $f0,$f1",
+      "description": "Gleitkomma negiert einfache Genauigkeit: Setzen Sie die einfache Genauigkeit $f0 auf die Negation des Werts mit einfacher Genauigkeit in $f1"
+    },
+    {
+      "example": "nop",
+      "description": "Nulloperation: Der Maschinencode besteht ausschließlich aus Nullen"
+    },
+    {
+      "example": "nor $t1,$t2,$t3",
+      "description": "Bitweise NOR: Setzen Sie $t1 auf bitweise NOR von $t2 und $t3"
+    },
+    {
+      "example": "or $t1,$t2,$t3",
+      "description": "Bitweises ODER: Set $t1 zum bitweisen ODER von $t2 und $t3"
+    },
+    {
+      "example": "ori $t1,$t2,100",
+      "description": "Bitweise ODER unmittelbar: Set $t1 zum bitweisen ODER von $t2 und Null-erweitertes 16-Bit-Sofortbild"
+    },
+    {
+      "example": "round.w.d $f1,$f2",
+      "description": "Runden Sie doppelte Genauigkeit auf Wort: Setzen Sie $f1 auf eine 32-Bit-Ganzzahl, runden Sie den Float mit doppelter Genauigkeit in $f2"
+    },
+    {
+      "example": "round.w.s $f0,$f1",
+      "description": "Einfache Genauigkeit auf Wort runden: Setzen Sie $f0 auf eine 32-Bit-Ganzzahl, runden Sie den Float mit einfacher Genauigkeit in $f1"
+    },
+    {
+      "example": "sb $t1,-100($t2)",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sc $t1,-100($t2)",
+      "description": "Bedingt speichern: Speichern Sie $t1 nur, wenn die entsprechende Load Linked-Reservierung noch gültig ist, und setzen Sie dann $t1 bei Erfolg auf 1 oder bei Fehler auf 0"
+    },
+    {
+      "example": "sdc1 $f2,-100($t2)",
+      "description": "Doppelwort von Coprozessor 1 speichern (FPU)): Speichern Sie den 64-Bit-Wert in $f2 an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "sh $t1,-100($t2)",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sll $t1,$t2,10",
+      "description": "Logisch nach links verschieben: Setzt $t1 auf das Ergebnis der Verschiebung von $t2 nach links um die Anzahl der durch „Direkt“ angegebenen Bits"
+    },
+    {
+      "example": "sllv $t1,$t2,$t3",
+      "description": "Logische Variable nach links verschieben: Setzt $t1 auf das Ergebnis der Verschiebung von $t2 nach links um die Anzahl der Bits, die durch den Wert in niederwertigen 5 Bits von $t3 angegeben werden."
+    },
+    {
+      "example": "slt $t1,$t2,$t3",
+      "description": "Kleiner setzen als: Wenn $t2 kleiner als $t3 ist, dann setzen Sie $t1 auf 1, andernfalls setzen Sie $t1 auf 0"
+    },
+    {
+      "example": "slti $t1,$t2,-100",
+      "description": "Kleiner als unmittelbar festlegen: Wenn $t2 kleiner als der vorzeichenerweiterte 16-Bit-Sofortwert ist, dann setzen Sie $t1 auf 1, andernfalls setzen Sie $t1 auf 0"
+    },
+    {
+      "example": "sltiu $t1,$t2,-100",
+      "description": "Kleiner als unmittelbar ohne Vorzeichen festlegen: Wenn $t2 kleiner als der vorzeichenerweiterte 16-Bit-Sofortwert mit vorzeichenlosem Vergleich ist, dann setzen Sie $t1 auf 1, andernfalls setzen Sie $t1 auf 0"
+    },
+    {
+      "example": "sltu $t1,$t2,$t3",
+      "description": "Kleiner als vorzeichenlos festlegen: Wenn $t2 bei Verwendung eines vorzeichenlosen Vergleichs kleiner als $t3 ist, setzen Sie $t1 auf 1, andernfalls setzen Sie $t1 auf 0"
+    },
+    {
+      "example": "sqrt.d $f2,$f4",
+      "description": "Quadratwurzel mit doppelter Genauigkeit: Setzen Sie $f2 auf die Gleitkomma-Quadratwurzel mit doppelter Genauigkeit von $f4"
+    },
+    {
+      "example": "sqrt.s $f0,$f1",
+      "description": "Quadratwurzel mit einfacher Genauigkeit: Setzen Sie $f0 auf die Gleitkomma-Quadratwurzel mit einfacher Genauigkeit von $f1"
+    },
+    {
+      "example": "sra $t1,$t2,10",
+      "description": "Rechtsverschiebungsarithmetik: Setzt $t1 auf das Ergebnis der vorzeichenerweiterten Verschiebung von $t2 nach rechts um die Anzahl der Bits, die durch „Sofort“ angegeben wird"
+    },
+    {
+      "example": "srav $t1,$t2,$t3",
+      "description": "Arithmetische Variable nach rechts verschieben: Setzt $t1 auf das Ergebnis der vorzeichenerweiterten Verschiebung von $t2 nach rechts um die Anzahl der Bits, die durch den Wert in niederwertigen 5 Bits von $t3 angegeben sind."
+    },
+    {
+      "example": "srl $t1,$t2,10",
+      "description": "Logisch nach rechts verschieben: Setzt $t1 auf das Ergebnis der Verschiebung von $t2 nach rechts um die Anzahl der durch „Sofort“ angegebenen Bits"
+    },
+    {
+      "example": "srlv $t1,$t2,$t3",
+      "description": "Logische Variable nach rechts verschieben: Setzt $t1 auf das Ergebnis der Verschiebung von $t2 nach rechts um die Anzahl der Bits, die durch den Wert in niederwertigen 5 Bits von $t3 angegeben werden."
+    },
+    {
+      "example": "sub $t1,$t2,$t3",
+      "description": "Subtraktion mit Überlauf: setze $t1 auf ($t2 minus $t3)"
+    },
+    {
+      "example": "sub.d $f2,$f4,$f6",
+      "description": "Gleitkommasubtraktion mit doppelter Genauigkeit: Setzen Sie $f2 auf den Gleitkommawert mit doppelter Genauigkeit von $f4 minus $f6"
+    },
+    {
+      "example": "sub.s $f0,$f1,$f3",
+      "description": "Gleitkommasubtraktion mit einfacher Genauigkeit: Setzen Sie $f0 auf den Gleitkommawert mit einfacher Genauigkeit von $f1 minus $f3"
+    },
+    {
+      "example": "subu $t1,$t2,$t3",
+      "description": "Subtraktion ohne Vorzeichen ohne Überlauf: $t1 auf ($t2 minus $t3 setzen, kein Überlauf"
+    },
+    {
+      "example": "sw $t1,-100($t2)",
+      "description": "Wort speichern: Inhalte von $t1 in der effektiven Speicherwortadresse speichern"
+    },
+    {
+      "example": "swc1 $f1,-100($t2)",
+      "description": "Wort von Koprozessor 1 speichern (FPU): Speichern Sie den 32-Bit-Wert in $f1 an der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "swl $t1,-100($t2)",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Byteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swr $t1,-100($t2)",
+      "description": "Wort richtig speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Byteadresse enthält, und setzen Sie sich fort bis zu dieser Byteadresse"
+    },
+    {
+      "example": "syscall",
+      "description": "Geben Sie einen Systemaufruf aus: Führen Sie den durch den Wert in $v0 angegebenen Systemaufruf aus."
+    },
+    {
+      "example": "teq $t1,$t2",
+      "description": "Falle, wenn gleich: Falle, wenn $t1 gleich $t2 ist"
+    },
+    {
+      "example": "teqi $t1,-100",
+      "description": "Trap, wenn gleich unmittelbar: Trap, wenn $t1 gleich einem vorzeichenerweiterten 16-Bit-Sofortwert ist"
+    },
+    {
+      "example": "tge $t1,$t2",
+      "description": "Trap, wenn größer oder gleich: Trap, wenn $t1 größer oder gleich $t2 ist."
+    },
+    {
+      "example": "tgei $t1,-100",
+      "description": "Trap, wenn größer oder gleich dem unmittelbaren Wert: Trap, wenn $t1 größer oder gleich dem vorzeichenerweiterten 16-Bit-Sofortwert ist"
+    },
+    {
+      "example": "tgeiu $t1,-100",
+      "description": "Trap, wenn größer oder gleich dem unmittelbaren, vorzeichenlosen Vergleich: Trap, wenn $t1 größer oder gleich dem vorzeichenerweiterten 16-Bit-sofortigen, vorzeichenlosen Vergleich ist"
+    },
+    {
+      "example": "tgeu $t1,$t2",
+      "description": "Trap, wenn größer oder gleich ohne Vorzeichen: Trap, wenn $t1 größer oder gleich $t2 ist, unter Verwendung eines vorzeichenlosen Vergleichs"
+    },
+    {
+      "example": "tlt $t1,$t2",
+      "description": "Trap wenn kleiner als: Trap wenn $t1 kleiner als $t2"
+    },
+    {
+      "example": "tlti $t1,-100",
+      "description": "Trap, wenn kleiner als unmittelbar: Trap, wenn $t1 kleiner als vorzeichenerweiterter 16-Bit-Sofortwert ist"
+    },
+    {
+      "example": "tltiu $t1,-100",
+      "description": "Trap, wenn kleiner als unmittelbarer, vorzeichenloser Vergleich: Trap, wenn $t1 kleiner als vorzeichenerweiterter 16-Bit-sofortiger, vorzeichenloser Vergleich"
+    },
+    {
+      "example": "tltu $t1,$t2",
+      "description": "Trap, wenn kleiner als ohne Vorzeichen: Trap, wenn $t1 kleiner als $t2, Vergleich ohne Vorzeichen"
+    },
+    {
+      "example": "tne $t1,$t2",
+      "description": "Falle, wenn nicht gleich: Falle, wenn $t1 nicht gleich $t2 ist."
+    },
+    {
+      "example": "tnei $t1,-100",
+      "description": "Trap, wenn nicht gleich dem unmittelbaren Wert: Trap, wenn $t1 nicht dem vorzeichenerweiterten 16-Bit-Sofortwert entspricht"
+    },
+    {
+      "example": "trunc.w.d $f1,$f2",
+      "description": "Doppelte Genauigkeit auf Wort kürzen: $f1 auf 32-Bit-Ganzzahl setzen, Kürzung des Floats mit doppelter Genauigkeit in $f2"
+    },
+    {
+      "example": "trunc.w.s $f0,$f1",
+      "description": "Einfache Genauigkeit auf Wort kürzen: Setzen Sie $f0 auf eine 32-Bit-Ganzzahlkürzung der Gleitkommazahl mit einfacher Genauigkeit in $f1"
+    },
+    {
+      "example": "xor $t1,$t2,$t3",
+      "description": "Bitweise XOR (exklusives ODER): Festgelegt $t1 bis bitweise XOR von $t2 und $t3"
+    },
+    {
+      "example": "xori $t1,$t2,100",
+      "description": "Bitweise XOR sofort: Setzen Sie $t1 auf bitweise XOR von $t2 und null-erweiterte 16-Bit-Sofortdaten"
+    }
+  ],
+  "extendedInstructions": [
+    {
+      "example": "abs $t1,$t2",
+      "description": "ABSoluter Wert: Setze $t1 auf den absoluten Wert von $t2 (Algorithmus von Hacker's Delight)"
+    },
+    {
+      "example": "add $t1,$t2,-100",
+      "description": "Zusatz: eingestellt $t1 zu ($t2 plus 16-Bit-Sofortversion)"
+    },
+    {
+      "example": "add $t1,$t2,100000",
+      "description": "Zusatz: eingestellt $t1 zu ($t2 plus 32-Bit sofort)"
+    },
+    {
+      "example": "addi $t1,$t2,100000",
+      "description": "ADDition Sofort: eingestellt $t1 zu ($t2 plus 32-Bit sofort)"
+    },
+    {
+      "example": "addiu $t1,$t2,100000",
+      "description": "ADDition Immediate Unsigned: Setzen Sie $t1 auf ($t2 plus 32-Bit-Sofortwert), kein Überlauf"
+    },
+    {
+      "example": "addu $t1,$t2,100000",
+      "description": "ADDition Unsigned: $t1 auf ($t2 plus 32-Bit-Sofortwert setzen), kein Überlauf"
+    },
+    {
+      "example": "and $t1,$t2,100",
+      "description": "AND: Setzen Sie $t1 auf ($t2 bitweise-AND 16-Bit ohne Vorzeichen sofort)"
+    },
+    {
+      "example": "and $t1,100",
+      "description": "AND: Setzen Sie $t1 auf ($t1 bitweise-AND 16-Bit ohne Vorzeichen sofort)"
+    },
+    {
+      "example": "andi $t1,$t2,100000",
+      "description": "AND Sofort: Setzen Sie $t1 auf ($t2 bitweise-AND 32-Bit-Sofort)"
+    },
+    {
+      "example": "andi $t1,100",
+      "description": "AND Sofort: Setzen Sie $t1 auf ($t1 bitweise-AND 16-Bit-Sofort ohne Vorzeichen)"
+    },
+    {
+      "example": "andi $t1,100000",
+      "description": "AND Sofort: Setzen Sie $t1 auf ($t1 bitweise-AND 32-Bit-Sofort)"
+    },
+    {
+      "example": "b label",
+      "description": "Verzweigung: Unbedingt zur Anweisung am Label verzweigen"
+    },
+    {
+      "example": "beq $t1,-100,label",
+      "description": "Verzweigung, wenn EQual: Verzweigung zur Anweisung bei Label, wenn $t1 gleich 16-Bit-Direktwert ist"
+    },
+    {
+      "example": "beq $t1,100000,label",
+      "description": "Verzweigung, wenn EQual: Verzweigung zur Anweisung bei Label, wenn $t1 gleich 32-Bit-Direktwert ist"
+    },
+    {
+      "example": "beqz $t1,label",
+      "description": "Verzweigung, wenn EQual Null: Verzweigung zur Anweisung am Label, wenn $t1 gleich Null ist"
+    },
+    {
+      "example": "bge $t1,-100,label",
+      "description": "Verzweigen, wenn größer oder gleich: Verzweigen Sie zur Anweisung am Label, wenn $t1 größer oder gleich dem 16-Bit-Direktwert ist"
+    },
+    {
+      "example": "bge $t1,$t2,label",
+      "description": "Verzweigung, wenn größer oder gleich: Verzweigung zur Anweisung am Label, wenn $t1 größer oder gleich $t2 ist."
+    },
+    {
+      "example": "bge $t1,100000,label",
+      "description": "Verzweigen, wenn größer oder gleich: Verzweigen Sie zur Anweisung am Label, wenn $t1 größer oder gleich dem 32-Bit-Direktwert ist"
+    },
+    {
+      "example": "bgeu $t1,-100,label",
+      "description": "Verzweigung, wenn größer oder gleich, ohne Vorzeichen: Verzweigung zur Anweisung am Etikett, wenn $t1 größer oder gleich dem 16-Bit-Sofortwert ist (Vergleich ohne Vorzeichen)"
+    },
+    {
+      "example": "bgeu $t1,$t2,label",
+      "description": "Verzweigung, wenn größer oder gleich ohne Vorzeichen: Verzweigung zur Anweisung am Label, wenn $t1 größer oder gleich $t2 ist (Vergleich ohne Vorzeichen)"
+    },
+    {
+      "example": "bgeu $t1,100000,label",
+      "description": "Verzweigung, wenn größer oder gleich, ohne Vorzeichen: Verzweigung zur Anweisung am Label, wenn $t1 größer oder gleich dem 32-Bit-Sofortwert ist (Vergleich ohne Vorzeichen)"
+    },
+    {
+      "example": "bgt $t1,-100,label",
+      "description": "Verzweigen, wenn größer als: Verzweigen Sie zur Anweisung am Label, wenn $t1 größer als 16-Bit-Direktwert ist"
+    },
+    {
+      "example": "bgt $t1,$t2,label",
+      "description": "Verzweigung, wenn größer als: Verzweigung zur Anweisung am Label, wenn $t1 größer als $t2 ist."
+    },
+    {
+      "example": "bgt $t1,100000,label",
+      "description": "Verzweigen, wenn größer als: Verzweigen Sie zur Anweisung am Label, wenn $t1 größer als 32-Bit-Direktwert ist"
+    },
+    {
+      "example": "bgtu $t1,-100,label",
+      "description": "Verzweigung, wenn größer als ohne Vorzeichen: Verzweigung zur Anweisung am Label, wenn $t1 sofort größer als 16 Bit ist (Vergleich ohne Vorzeichen)"
+    },
+    {
+      "example": "bgtu $t1,$t2,label",
+      "description": "Verzweigung, wenn größer als ohne Vorzeichen: Verzweigung zur Anweisung am Label, wenn $t1 größer als $t2 ist (Vergleich ohne Vorzeichen)"
+    },
+    {
+      "example": "bgtu $t1,100000,label",
+      "description": "Verzweigung, wenn größer als ohne Vorzeichen: Verzweigung zur Anweisung am Label, wenn $t1 sofort größer als 16 Bit ist (Vergleich ohne Vorzeichen)"
+    },
+    {
+      "example": "ble $t1,-100,label",
+      "description": "Verzweigen, wenn kleiner oder gleich: Verzweigen Sie zur Anweisung am Label, wenn $t1 kleiner oder gleich 16-Bit-Direktwert ist"
+    },
+    {
+      "example": "ble $t1,$t2,label",
+      "description": "Verzweigung, wenn kleiner oder gleich: Verzweigung zur Anweisung am Label, wenn $t1 kleiner oder gleich $t2 ist."
+    },
+    {
+      "example": "ble $t1,100000,label",
+      "description": "Verzweigen, wenn kleiner oder gleich: Verzweigen Sie zur Anweisung am Label, wenn $t1 kleiner oder gleich dem 32-Bit-Direktwert ist"
+    },
+    {
+      "example": "bleu $t1,-100,label",
+      "description": "Verzweigung, wenn kleiner oder gleich ohne Vorzeichen: Verzweigung zur Anweisung am Etikett, wenn $t1 kleiner oder gleich 16-Bit-Sofortwert ist (Vergleich ohne Vorzeichen)"
+    },
+    {
+      "example": "bleu $t1,$t2,label",
+      "description": "Verzweigung, wenn kleiner oder gleich ohne Vorzeichen: Verzweigung zur Anweisung am Label, wenn $t1 kleiner oder gleich $t2 ist (Vergleich ohne Vorzeichen)"
+    },
+    {
+      "example": "bleu $t1,100000,label",
+      "description": "Verzweigung, wenn kleiner oder gleich ohne Vorzeichen: Verzweigung zur Anweisung am Label, wenn $t1 kleiner oder gleich 32-Bit-Sofortwert ist (Vergleich ohne Vorzeichen)"
+    },
+    {
+      "example": "blt $t1,-100,label",
+      "description": "Verzweigen, wenn kleiner als: Verzweigen Sie zur Anweisung am Label, wenn $t1 kleiner als 16 Bit ist"
+    },
+    {
+      "example": "blt $t1,$t2,label",
+      "description": "Verzweigung, wenn kleiner als: Verzweigung zur Anweisung am Label, wenn $t1 kleiner als $t2 ist."
+    },
+    {
+      "example": "blt $t1,100000,label",
+      "description": "Verzweigen, wenn kleiner als: Verzweigen Sie zur Anweisung am Label, wenn $t1 kleiner als 32-Bit-Direktwert ist"
+    },
+    {
+      "example": "bltu $t1,-100,label",
+      "description": "Verzweigen, wenn kleiner als ohne Vorzeichen: Verzweigen Sie zur Anweisung am Label, wenn $t1 weniger als 16 Bit unmittelbar ist"
+    },
+    {
+      "example": "bltu $t1,$t2,label",
+      "description": "Verzweigung, wenn kleiner als ohne Vorzeichen: Verzweigung zur Anweisung am Label, wenn $t1 kleiner als $t2 ist."
+    },
+    {
+      "example": "bltu $t1,100000,label",
+      "description": "Verzweigung, wenn kleiner als ohne Vorzeichen: Verzweigung zur Anweisung am Label, wenn $t1 kleiner als 32-Bit-Direktwert ist"
+    },
+    {
+      "example": "bne $t1,-100,label",
+      "description": "Verzweigen, wenn nicht gleich: Verzweigen Sie zur Anweisung am Label, wenn $t1 nicht gleich 16-Bit-Direktwert ist"
+    },
+    {
+      "example": "bne $t1,100000,label",
+      "description": "Verzweigen, wenn nicht gleich: Verzweigen Sie zur Anweisung am Label, wenn $t1 nicht gleich 32-Bit-Direktwert ist"
+    },
+    {
+      "example": "bnez $t1,label",
+      "description": "Verzweigen, wenn nicht gleich Null: Verzweigen Sie zur Anweisung am Label, wenn $t1 ungleich Null ist"
+    },
+    {
+      "example": "div $t1,$t2,-100",
+      "description": "DIVision: Setzen Sie $t1 auf ($t2 geteilt durch 16-Bit-Division, Ganzzahldivision)"
+    },
+    {
+      "example": "div $t1,$t2,$t3",
+      "description": "DIVision: Setzen Sie $t1 auf ($t2 geteilt durch $t3, ganzzahlige Division)"
+    },
+    {
+      "example": "div $t1,$t2,100000",
+      "description": "DIVision: Setzen Sie $t1 auf ($t2 geteilt durch 32-Bit-Sofort-, Ganzzahldivision)"
+    },
+    {
+      "example": "divu $t1,$t2,-100",
+      "description": "DIVision Unsigned: Setzen Sie $t1 auf ($t2 dividiert durch eine 16-Bit-Division ohne Vorzeichen)"
+    },
+    {
+      "example": "divu $t1,$t2,$t3",
+      "description": "DIVision Unsigned: Setzen Sie $t1 auf ($t2 geteilt durch $t3, Ganzzahldivision ohne Vorzeichen)"
+    },
+    {
+      "example": "divu $t1,$t2,100000",
+      "description": "DIVision Unsigned: Setzen Sie $t1 auf ($t2 dividiert durch eine 32-Bit-Division ohne Vorzeichen)"
+    },
+    {
+      "example": "l.d $f2,-100",
+      "description": "Gleitkomma mit doppelter Genauigkeit laden: Setzen Sie das Registerpaar $f2 und $f3 auf einen 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "l.d $f2,($t2)",
+      "description": "Gleitkomma mit doppelter Genauigkeit laden: Setzen Sie das Registerpaar $f2 und $f3 auf einen 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "l.d $f2,100000",
+      "description": "Gleitkomma mit doppelter Genauigkeit laden: Setzen Sie das Registerpaar $f2 und $f3 auf einen 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "l.d $f2,100000($t2)",
+      "description": "Gleitkomma mit doppelter Genauigkeit laden: Setzen Sie das Registerpaar $f2 und $f3 auf einen 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "l.d $f2,label",
+      "description": "Gleitkomma mit doppelter Genauigkeit laden: Setzen Sie das Registerpaar $f2 und $f3 auf einen 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "l.d $f2,label($t2)",
+      "description": "Gleitkomma mit doppelter Genauigkeit laden: Setzen Sie das Registerpaar $f2 und $f3 auf einen 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "l.d $f2,label+100000",
+      "description": "Gleitkomma mit doppelter Genauigkeit laden: Setzen Sie das Registerpaar $f2 und $f3 auf einen 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "l.d $f2,label+100000($t2)",
+      "description": "Gleitkomma mit doppelter Genauigkeit laden: Setzen Sie das Registerpaar $f2 und $f3 auf einen 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "l.s $f1,-100",
+      "description": "Gleitkomma laden. Einfache Genauigkeit: Setzen Sie $f1 auf einen 32-Bit-Wert an der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "l.s $f1,($t2)",
+      "description": "Gleitkomma laden. Einfache Genauigkeit: Setzen Sie $f1 auf einen 32-Bit-Wert an der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "l.s $f1,100000",
+      "description": "Gleitkomma laden. Einfache Genauigkeit: Setzen Sie $f1 auf einen 32-Bit-Wert an der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "l.s $f1,100000($t2)",
+      "description": "Gleitkomma laden. Einfache Genauigkeit: Setzen Sie $f1 auf einen 32-Bit-Wert an der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "l.s $f1,label",
+      "description": "Gleitkomma laden. Einfache Genauigkeit: Setzen Sie $f1 auf einen 32-Bit-Wert an der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "l.s $f1,label($t2)",
+      "description": "Gleitkomma laden. Einfache Genauigkeit: Setzen Sie $f1 auf einen 32-Bit-Wert an der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "l.s $f1,label+100000",
+      "description": "Gleitkomma laden. Einfache Genauigkeit: Setzen Sie $f1 auf einen 32-Bit-Wert an der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "l.s $f1,label+100000($t2)",
+      "description": "Gleitkomma laden. Einfache Genauigkeit: Setzen Sie $f1 auf einen 32-Bit-Wert an der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "la $t1,-100",
+      "description": "Adresse laden: $t1 auf 16-Bit sofort setzen (vorzeichenerweitert)"
+    },
+    {
+      "example": "la $t1,($t2)",
+      "description": "Adresse laden: $t1 auf den Inhalt von $t2 setzen"
+    },
+    {
+      "example": "la $t1,100",
+      "description": "Adresse laden: $t1 auf 16-Bit sofort setzen (null-erweitert)"
+    },
+    {
+      "example": "la $t1,100($t2)",
+      "description": "Ladeadresse: $t1 auf die Summe (von $t2 und 16-Bit-Sofortwert setzen)"
+    },
+    {
+      "example": "la $t1,100000",
+      "description": "Adresse laden: $t1 sofort auf 32-Bit setzen"
+    },
+    {
+      "example": "la $t1,100000($t2)",
+      "description": "Ladeadresse: Setzen Sie $t1 auf die Summe (von $t2 und 32-Bit-Sofort)"
+    },
+    {
+      "example": "la $t1,label",
+      "description": "Adresse laden: Setzen Sie $t1 auf die Adresse des Etiketts"
+    },
+    {
+      "example": "la $t1,label($t2)",
+      "description": "Adresse laden: $t1 auf die Summe (von $t2 und der Label-Adresse setzen)"
+    },
+    {
+      "example": "la $t1,label+100000",
+      "description": "Adresse laden: $t1 auf die Summe setzen (aus Label-Adresse und 32-Bit-Direktwert)"
+    },
+    {
+      "example": "la $t1,label+100000($t2)",
+      "description": "Adresse laden: $t1 auf die Summe setzen (aus Label-Adresse, 32-Bit-Direktadresse und $t2)"
+    },
+    {
+      "example": "lb $t1,-100",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lb $t1,($t2)",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lb $t1,100",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lb $t1,100($t2)",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lb $t1,100000",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lb $t1,100000($t2)",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lb $t1,label",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lb $t1,label($t2)",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lb $t1,label+100000",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lb $t1,label+100000($t2)",
+      "description": "Byte laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,-100",
+      "description": "Byte ohne Vorzeichen laden: Setzt $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,($t2)",
+      "description": "Byte ohne Vorzeichen laden: Setzt $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,100",
+      "description": "Byte ohne Vorzeichen laden: Setzt $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,100($t2)",
+      "description": "Byte ohne Vorzeichen laden: Setzt $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,100000",
+      "description": "Byte ohne Vorzeichen laden: Setzt $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,100000($t2)",
+      "description": "Byte ohne Vorzeichen laden: Setzt $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,label",
+      "description": "Byte ohne Vorzeichen laden: Setzt $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,label($t2)",
+      "description": "Byte ohne Vorzeichen laden: Setzt $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,label+100000",
+      "description": "Byte ohne Vorzeichen laden: Setzt $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "lbu $t1,label+100000($t2)",
+      "description": "Byte ohne Vorzeichen laden: Setzt $t1 auf einen mit Null erweiterten 8-Bit-Wert von der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ld $t1,-100($t2)",
+      "description": "Doppelwort laden: Setzen Sie $t1 und das nächste Register auf die 64 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ld $t1,($t2)",
+      "description": "Doppelwort laden: Setzen Sie $t1 und das nächste Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "ld $t1,100000",
+      "description": "Doppelwort laden: Setzen Sie $t1 und das nächste Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "ld $t1,100000($t2)",
+      "description": "Doppelwort laden: Setzen Sie $t1 und das nächste Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "ld $t1,label",
+      "description": "Doppelwort laden: Setzen Sie $t1 und das nächste Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "ld $t1,label($t2)",
+      "description": "Doppelwort laden: Setzen Sie $t1 und das nächste Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "ld $t1,label+100000",
+      "description": "Doppelwort laden: Setzen Sie $t1 und das nächste Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "ld $t1,label+100000($t2)",
+      "description": "Doppelwort laden: Setzen Sie $t1 und das nächste Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "ldc1 $f2,-100",
+      "description": "Doppelwort-Coprozessor 1 laden: Setzen Sie das Registerpaar $f2 und $f3 auf den 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "ldc1 $f2,($t2)",
+      "description": "Doppelwort-Coprozessor 1 laden: Setzen Sie das Registerpaar $f2 und $f3 auf den 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "ldc1 $f2,100000",
+      "description": "Doppelwort-Coprozessor 1 laden: Setzen Sie das Registerpaar $f2 und $f3 auf den 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "ldc1 $f2,100000($t2)",
+      "description": "Doppelwort-Coprozessor 1 laden: Setzen Sie das Registerpaar $f2 und $f3 auf den 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "ldc1 $f2,label",
+      "description": "Doppelwort-Coprozessor 1 laden: Setzen Sie das Registerpaar $f2 und $f3 auf den 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "ldc1 $f2,label($t2)",
+      "description": "Doppelwort-Coprozessor 1 laden: Setzen Sie das Registerpaar $f2 und $f3 auf den 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "ldc1 $f2,label+100000",
+      "description": "Doppelwort-Coprozessor 1 laden: Setzen Sie das Registerpaar $f2 und $f3 auf den 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "ldc1 $f2,label+100000($t2)",
+      "description": "Doppelwort-Coprozessor 1 laden: Setzen Sie das Registerpaar $f2 und $f3 auf den 64-Bit-Wert an der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "lh $t1,-100",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lh $t1,($t2)",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lh $t1,100",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lh $t1,100($t2)",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lh $t1,100000",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lh $t1,100000($t2)",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lh $t1,label",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lh $t1,label($t2)",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lh $t1,label+100000",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lh $t1,label+100000($t2)",
+      "description": "Halbwort laden: Setzen Sie $t1 auf einen vorzeichenerweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,-100",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,($t2)",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,100",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,100($t2)",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,100000",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,100000($t2)",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,label",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,label($t2)",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,label+100000",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "lhu $t1,label+100000($t2)",
+      "description": "Halbwort ohne Vorzeichen laden: Setzen Sie $t1 auf einen auf Null erweiterten 16-Bit-Wert von der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "li $t1,-100",
+      "description": "Sofort laden: $t1 auf 16-Bit-Sofort (vorzeichenerweitert) setzen"
+    },
+    {
+      "example": "li $t1,100",
+      "description": "Sofort laden: Setzen Sie $t1 auf vorzeichenlose 16-Bit-Sofortdaten (Null-erweitert)."
+    },
+    {
+      "example": "li $t1,100000",
+      "description": "Sofort laden: Setzen Sie $t1 auf 32-Bit sofort"
+    },
+    {
+      "example": "ll $t1,-100",
+      "description": "Verknüpft laden: Laden Sie ein Wort und richten Sie eine Reservierung für eine nachfolgende Store Conditional (sc) ein."
+    },
+    {
+      "example": "ll $t1,($t2)",
+      "description": "Verknüpft laden: Laden Sie ein Wort und richten Sie eine Reservierung für eine nachfolgende Store Conditional (sc) ein."
+    },
+    {
+      "example": "ll $t1,100",
+      "description": "Verknüpft laden: Laden Sie ein Wort und richten Sie eine Reservierung für eine nachfolgende Store Conditional (sc) ein."
+    },
+    {
+      "example": "ll $t1,100($t2)",
+      "description": "Verknüpft laden: Laden Sie ein Wort und richten Sie eine Reservierung für eine nachfolgende Store Conditional (sc) ein."
+    },
+    {
+      "example": "ll $t1,100000",
+      "description": "Verknüpft laden: Laden Sie ein Wort und richten Sie eine Reservierung für eine nachfolgende Store Conditional (sc) ein."
+    },
+    {
+      "example": "ll $t1,100000($t2)",
+      "description": "Verknüpft laden: Laden Sie ein Wort und richten Sie eine Reservierung für eine nachfolgende Store Conditional (sc) ein."
+    },
+    {
+      "example": "ll $t1,label",
+      "description": "Verknüpft laden: Laden Sie ein Wort und richten Sie eine Reservierung für eine nachfolgende Store Conditional (sc) ein."
+    },
+    {
+      "example": "ll $t1,label($t2)",
+      "description": "Verknüpft laden: Laden Sie ein Wort und richten Sie eine Reservierung für eine nachfolgende Store Conditional (sc) ein."
+    },
+    {
+      "example": "ll $t1,label+100000",
+      "description": "Verknüpft laden: Laden Sie ein Wort und richten Sie eine Reservierung für eine nachfolgende Store Conditional (sc) ein."
+    },
+    {
+      "example": "ll $t1,label+100000($t2)",
+      "description": "Verknüpft laden: Laden Sie ein Wort und richten Sie eine Reservierung für eine nachfolgende Store Conditional (sc) ein."
+    },
+    {
+      "example": "lw $t1,-100",
+      "description": "Wort laden: $t1 auf den Inhalt der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lw $t1,($t2)",
+      "description": "Wort laden: $t1 auf den Inhalt der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lw $t1,100",
+      "description": "Wort laden: $t1 auf den Inhalt der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lw $t1,100($t2)",
+      "description": "Wort laden: $t1 auf den Inhalt der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lw $t1,100000",
+      "description": "Wort laden: $t1 auf den Inhalt der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lw $t1,100000($t2)",
+      "description": "Wort laden: $t1 auf den Inhalt der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lw $t1,label",
+      "description": "Wort laden: $t1 auf den Inhalt des Speicherworts an der Adresse des Etiketts setzen"
+    },
+    {
+      "example": "lw $t1,label($t2)",
+      "description": "Wort laden: $t1 auf den Inhalt der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lw $t1,label+100000",
+      "description": "Wort laden: $t1 auf den Inhalt der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lw $t1,label+100000($t2)",
+      "description": "Wort laden: $t1 auf den Inhalt der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lwc1 $f1,-100",
+      "description": "Wort-Coprozessor 1 laden: $f1 auf den 32-Bit-Wert der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lwc1 $f1,($t2)",
+      "description": "Wort-Coprozessor 1 laden: $f1 auf den 32-Bit-Wert der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lwc1 $f1,100000",
+      "description": "Wort-Coprozessor 1 laden: $f1 auf den 32-Bit-Wert der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lwc1 $f1,100000($t2)",
+      "description": "Wort-Coprozessor 1 laden: $f1 auf den 32-Bit-Wert der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lwc1 $f1,label",
+      "description": "Wort-Coprozessor 1 laden: $f1 auf den 32-Bit-Wert der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lwc1 $f1,label($t2)",
+      "description": "Wort-Coprozessor 1 laden: $f1 auf den 32-Bit-Wert der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lwc1 $f1,label+100000",
+      "description": "Wort-Coprozessor 1 laden: $f1 auf den 32-Bit-Wert der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lwc1 $f1,label+100000($t2)",
+      "description": "Wort-Coprozessor 1 laden: $f1 auf den 32-Bit-Wert der effektiven Speicherwortadresse setzen"
+    },
+    {
+      "example": "lwl $t1,-100",
+      "description": "Wort links laden: Lädt 1 bis 4 Bytes linksbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwl $t1,($t2)",
+      "description": "Wort links laden: Lädt 1 bis 4 Bytes linksbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwl $t1,100",
+      "description": "Wort links laden: Lädt 1 bis 4 Bytes linksbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwl $t1,100($t2)",
+      "description": "Wort links laden: Lädt 1 bis 4 Bytes linksbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwl $t1,100000",
+      "description": "Wort links laden: Lädt 1 bis 4 Bytes linksbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwl $t1,100000($t2)",
+      "description": "Wort links laden: Lädt 1 bis 4 Bytes linksbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwl $t1,label",
+      "description": "Wort links laden: Lädt 1 bis 4 Bytes linksbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwl $t1,label($t2)",
+      "description": "Wort links laden: Lädt 1 bis 4 Bytes linksbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwl $t1,label+100000",
+      "description": "Wort links laden: Lädt 1 bis 4 Bytes linksbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwl $t1,label+100000($t2)",
+      "description": "Wort links laden: Lädt 1 bis 4 Bytes linksbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,-100",
+      "description": "Wort rechts laden: Laden Sie 1 bis 4 Bytes rechtsbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,($t2)",
+      "description": "Wort rechts laden: Laden Sie 1 bis 4 Bytes rechtsbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,100",
+      "description": "Wort rechts laden: Laden Sie 1 bis 4 Bytes rechtsbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,100($t2)",
+      "description": "Wort rechts laden: Laden Sie 1 bis 4 Bytes rechtsbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,100000",
+      "description": "Wort rechts laden: Laden Sie 1 bis 4 Bytes rechtsbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,100000($t2)",
+      "description": "Wort rechts laden: Laden Sie 1 bis 4 Bytes rechtsbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,label",
+      "description": "Wort rechts laden: Laden Sie 1 bis 4 Bytes rechtsbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,label($t2)",
+      "description": "Wort rechts laden: Laden Sie 1 bis 4 Bytes rechtsbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,label+100000",
+      "description": "Wort rechts laden: Laden Sie 1 bis 4 Bytes rechtsbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "lwr $t1,label+100000($t2)",
+      "description": "Wort rechts laden: Laden Sie 1 bis 4 Bytes rechtsbündig in $t1, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum höherwertigen Byte seines Wortes"
+    },
+    {
+      "example": "mfc1.d $t1,$f2",
+      "description": "Von Coprozessor 1 doppelt verschieben: $t1 auf den Inhalt von $f2 setzen, nächsthöheres Register von $t1 auf den Inhalt des nächsthöheren Registers von $f2 setzen"
+    },
+    {
+      "example": "move $t1,$t2",
+      "description": "MOVE: Setzen Sie $t1 auf den Inhalt von $t2"
+    },
+    {
+      "example": "mtc1.d $t1,$f2",
+      "description": "Zum Coprozessor 1 verschieben Doppelt: $f2 auf den Inhalt von $t1 setzen, nächsthöheres Register von $f2 auf den Inhalt des nächsthöheren Registers von $t1 setzen"
+    },
+    {
+      "example": "mul $t1,$t2,-100",
+      "description": "MULtiplikation: Setzen Sie HI auf 32 Bit hoher Ordnung, LO und $t1 auf 32 Bit niedriger Ordnung des Produkts aus $t2 und 16-Bit-Direktanzeige mit Vorzeichen (verwenden Sie mfhi, um auf HI zuzugreifen, mflo, um auf LO zuzugreifen)."
+    },
+    {
+      "example": "mul $t1,$t2,100000",
+      "description": "MULtiplikation: Setzen Sie HI auf 32 Bit hoher Ordnung, LO und $t1 auf 32 Bit niedriger Ordnung des Produkts aus $t2 und 32-Bit-Direktwert (verwenden Sie mfhi, um auf HI zuzugreifen, mflo, um auf LO zuzugreifen)."
+    },
+    {
+      "example": "mulo $t1,$t2,-100",
+      "description": "MULtiplikation mit Überlauf: Setzen Sie $t1 auf 32 Bits niedriger Ordnung des Produkts aus $t2 und einem vorzeichenbehafteten 16-Bit-Sofortwert"
+    },
+    {
+      "example": "mulo $t1,$t2,$t3",
+      "description": "MULtiplikation mit Überlauf: Setzen Sie $t1 auf 32 Bits niedriger Ordnung des Produkts von $t2 und $t3"
+    },
+    {
+      "example": "mulo $t1,$t2,100000",
+      "description": "MULtiplikation mit Überlauf: Setzen Sie $t1 auf 32 Bits niedriger Ordnung des Produkts aus $t2 und 32-Bit-Sofortwerten"
+    },
+    {
+      "example": "mulou $t1,$t2,-100",
+      "description": "MULtiplikation mit Überlauf ohne Vorzeichen: Setzen Sie $t1 auf 32 Bits niedriger Ordnung des Produkts aus $t2 und einem vorzeichenbehafteten 16-Bit-Sofortwert"
+    },
+    {
+      "example": "mulou $t1,$t2,$t3",
+      "description": "MULtiplikation mit Überlauf ohne Vorzeichen: Setzen Sie $t1 auf 32 Bits niedriger Ordnung des Produkts von $t2 und $t3"
+    },
+    {
+      "example": "mulou $t1,$t2,100000",
+      "description": "MULtiplikation mit Überlauf ohne Vorzeichen: Setzen Sie $t1 auf 32 Bits niedriger Ordnung des Produkts aus $t2 und 32-Bit-Sofortwerten"
+    },
+    {
+      "example": "mulu $t1,$t2,-100",
+      "description": "MULtiplication Unsigned: Setzen Sie HI auf 32 Bit hoher Ordnung, LO und $t1 auf 32 Bit niedriger Ordnung von ($t2 multipliziert mit einer unmittelbaren 16-Bit-Multiplikation ohne Vorzeichen)"
+    },
+    {
+      "example": "mulu $t1,$t2,$t3",
+      "description": "MULtiplikation ohne Vorzeichen: Setzen Sie HI auf 32 Bit hoher Ordnung, LO und $t1 auf 32 Bit niedriger Ordnung von ($t2 multipliziert mit $t3, vorzeichenlose Multiplikation)"
+    },
+    {
+      "example": "mulu $t1,$t2,100000",
+      "description": "MULtiplication Unsigned: Setzen Sie HI auf 32 Bit hoher Ordnung, LO und $t1 auf 32 Bit niedriger Ordnung von ($t2 multipliziert mit einer unmittelbaren 32-Bit-Multiplikation ohne Vorzeichen)"
+    },
+    {
+      "example": "neg $t1,$t2",
+      "description": "NEGate: $t1 auf Negation von $t2 setzen"
+    },
+    {
+      "example": "negu $t1,$t2",
+      "description": "NEGate Unsigned: $t1 auf Negation von $t2 setzen, kein Überlauf"
+    },
+    {
+      "example": "not $t1,$t2",
+      "description": "Bitweise NOT (Bitinversion)"
+    },
+    {
+      "example": "or $t1,$t2,100",
+      "description": "ODER: eingestellt $t1 zu ($t2 bitweises ODER 16-Bit-Sofort ohne Vorzeichen)"
+    },
+    {
+      "example": "or $t1,100",
+      "description": "ODER: eingestellt $t1 zu ($t1 bitweises ODER 16-Bit-Sofort ohne Vorzeichen)"
+    },
+    {
+      "example": "ori $t1,$t2,100000",
+      "description": "ODER Sofort: eingestellt $t1 zu ($t2 bitweises ODER 32-Bit-Sofort)"
+    },
+    {
+      "example": "ori $t1,100",
+      "description": "ODER Sofort: eingestellt $t1 zu ($t1 bitweises ODER 16-Bit-Sofort ohne Vorzeichen)"
+    },
+    {
+      "example": "ori $t1,100000",
+      "description": "ODER Sofort: eingestellt $t1 zu ($t1 bitweises ODER 32-Bit-Sofort)"
+    },
+    {
+      "example": "rem $t1,$t2,-100",
+      "description": "REMainder: Setzen Sie $t1 auf (Rest von $t2 dividiert durch 16-Bit-Sofortwert)"
+    },
+    {
+      "example": "rem $t1,$t2,$t3",
+      "description": "REMainder: Setzen Sie $t1 auf (Rest von $t2 geteilt durch $t3)"
+    },
+    {
+      "example": "rem $t1,$t2,100000",
+      "description": "REMainder: Setzen Sie $t1 auf (Rest von $t2 geteilt durch 32-Bit-Sofortwert)"
+    },
+    {
+      "example": "remu $t1,$t2,-100",
+      "description": "REMainder: Setzen Sie $t1 auf (Rest von $t2 dividiert durch eine 16-Bit-Division ohne Vorzeichen)"
+    },
+    {
+      "example": "remu $t1,$t2,$t3",
+      "description": "REMainder: Setzen Sie $t1 auf (Rest von $t2 geteilt durch $t3, Division ohne Vorzeichen)"
+    },
+    {
+      "example": "remu $t1,$t2,100000",
+      "description": "REMainder: Setzen Sie $t1 auf (Rest von $t2 geteilt durch 32-Bit-Division ohne Vorzeichen)"
+    },
+    {
+      "example": "rol $t1,$t2,$t3",
+      "description": "Nach links drehen: $t1 auf ($t2 um die in $t3 angegebene Anzahl der Bitpositionen nach links gedreht setzen."
+    },
+    {
+      "example": "rol $t1,$t2,10",
+      "description": "Nach links drehen: $t1 auf ($t2 um die im 5-Bit-Sofort angegebene Anzahl von Bitpositionen nach links gedreht setzen)"
+    },
+    {
+      "example": "ror $t1,$t2,$t3",
+      "description": "Nach rechts drehen: $t1 auf ($t2 um die in $t3 angegebene Anzahl der Bitpositionen nach rechts gedreht setzen."
+    },
+    {
+      "example": "ror $t1,$t2,10",
+      "description": "Nach rechts drehen: $t1 auf ($t2 um die im 5-Bit-Sofortwert angegebene Anzahl der Bitpositionen nach rechts gedreht setzen)"
+    },
+    {
+      "example": "s.d $f2,-100",
+      "description": "Gleitkomma mit doppelter Genauigkeit speichern: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "s.d $f2,($t2)",
+      "description": "Gleitkomma mit doppelter Genauigkeit speichern: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "s.d $f2,100000",
+      "description": "Gleitkomma mit doppelter Genauigkeit speichern: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "s.d $f2,100000($t2)",
+      "description": "Gleitkomma mit doppelter Genauigkeit speichern: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "s.d $f2,label",
+      "description": "Gleitkomma mit doppelter Genauigkeit speichern: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "s.d $f2,label($t2)",
+      "description": "Gleitkomma mit doppelter Genauigkeit speichern: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "s.d $f2,label+100000",
+      "description": "Gleitkomma mit doppelter Genauigkeit speichern: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "s.d $f2,label+100000($t2)",
+      "description": "Gleitkomma mit doppelter Genauigkeit speichern: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "s.s $f1,-100",
+      "description": "Gleitkommazahl mit einfacher Genauigkeit speichern: 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse speichern"
+    },
+    {
+      "example": "s.s $f1,($t2)",
+      "description": "Gleitkommazahl mit einfacher Genauigkeit speichern: 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse speichern"
+    },
+    {
+      "example": "s.s $f1,100000",
+      "description": "Gleitkommazahl mit einfacher Genauigkeit speichern: 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse speichern"
+    },
+    {
+      "example": "s.s $f1,100000($t2)",
+      "description": "Gleitkommazahl mit einfacher Genauigkeit speichern: 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse speichern"
+    },
+    {
+      "example": "s.s $f1,label",
+      "description": "Gleitkommazahl mit einfacher Genauigkeit speichern: 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse speichern"
+    },
+    {
+      "example": "s.s $f1,label($t2)",
+      "description": "Gleitkommazahl mit einfacher Genauigkeit speichern: 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse speichern"
+    },
+    {
+      "example": "s.s $f1,label+100000",
+      "description": "Gleitkommazahl mit einfacher Genauigkeit speichern: 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse speichern"
+    },
+    {
+      "example": "s.s $f1,label+100000($t2)",
+      "description": "Gleitkommazahl mit einfacher Genauigkeit speichern: 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse speichern"
+    },
+    {
+      "example": "sb $t1,-100",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sb $t1,($t2)",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sb $t1,100",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sb $t1,100($t2)",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sb $t1,100000",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sb $t1,100000($t2)",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sb $t1,label",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sb $t1,label($t2)",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sb $t1,label+100000",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sb $t1,label+100000($t2)",
+      "description": "Byte speichern: Speichern Sie die niederwertigen 8 Bits von $t1 in der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sc $t1,-100",
+      "description": "Store Conditional: Nur speichern, wenn die entsprechende Load Linked-Reservierung gültig bleibt, dann Erfolg oder Fehler im Quellregister melden."
+    },
+    {
+      "example": "sc $t1,($t2)",
+      "description": "Store Conditional: Nur speichern, wenn die entsprechende Load Linked-Reservierung gültig bleibt, dann Erfolg oder Fehler im Quellregister melden."
+    },
+    {
+      "example": "sc $t1,100",
+      "description": "Store Conditional: Nur speichern, wenn die entsprechende Load Linked-Reservierung gültig bleibt, dann Erfolg oder Fehler im Quellregister melden."
+    },
+    {
+      "example": "sc $t1,100($t2)",
+      "description": "Store Conditional: Nur speichern, wenn die entsprechende Load Linked-Reservierung gültig bleibt, dann Erfolg oder Fehler im Quellregister melden."
+    },
+    {
+      "example": "sc $t1,100000",
+      "description": "Store Conditional: Nur speichern, wenn die entsprechende Load Linked-Reservierung gültig bleibt, dann Erfolg oder Fehler im Quellregister melden."
+    },
+    {
+      "example": "sc $t1,100000($t2)",
+      "description": "Store Conditional: Nur speichern, wenn die entsprechende Load Linked-Reservierung gültig bleibt, dann Erfolg oder Fehler im Quellregister melden."
+    },
+    {
+      "example": "sc $t1,label",
+      "description": "Store Conditional: Nur speichern, wenn die entsprechende Load Linked-Reservierung gültig bleibt, dann Erfolg oder Fehler im Quellregister melden."
+    },
+    {
+      "example": "sc $t1,label($t2)",
+      "description": "Store Conditional: Nur speichern, wenn die entsprechende Load Linked-Reservierung gültig bleibt, dann Erfolg oder Fehler im Quellregister melden."
+    },
+    {
+      "example": "sc $t1,label+100000",
+      "description": "Store Conditional: Nur speichern, wenn die entsprechende Load Linked-Reservierung gültig bleibt, dann Erfolg oder Fehler im Quellregister melden."
+    },
+    {
+      "example": "sc $t1,label+100000($t2)",
+      "description": "Store Conditional: Nur speichern, wenn die entsprechende Load Linked-Reservierung gültig bleibt, dann Erfolg oder Fehler im Quellregister melden."
+    },
+    {
+      "example": "sd $t1,-100($t2)",
+      "description": "Doppelwort speichern: Speichert den Inhalt von $t1 und dem nächsten Register auf die 64 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "sd $t1,($t2)",
+      "description": "Doppelwort speichern: Speichert den Inhalt von $t1 und dem nächsten Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sd $t1,100000",
+      "description": "Doppelwort speichern: Speichert den Inhalt von $t1 und dem nächsten Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sd $t1,100000($t2)",
+      "description": "Doppelwort speichern: Speichert den Inhalt von $t1 und dem nächsten Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sd $t1,label",
+      "description": "Doppelwort speichern: Speichert den Inhalt von $t1 und dem nächsten Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sd $t1,label($t2)",
+      "description": "Doppelwort speichern: Speichert den Inhalt von $t1 und dem nächsten Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sd $t1,label+100000",
+      "description": "Doppelwort speichern: Speichert den Inhalt von $t1 und dem nächsten Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sd $t1,label+100000($t2)",
+      "description": "Doppelwort speichern: Speichert den Inhalt von $t1 und dem nächsten Register auf die 64 Bits, beginnend bei der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sdc1 $f2,-100",
+      "description": "Speichern Sie Doppelwort-Coprozessor 1: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "sdc1 $f2,($t2)",
+      "description": "Speichern Sie Doppelwort-Coprozessor 1: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "sdc1 $f2,100000",
+      "description": "Speichern Sie Doppelwort-Coprozessor 1: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "sdc1 $f2,100000($t2)",
+      "description": "Speichern Sie Doppelwort-Coprozessor 1: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "sdc1 $f2,label",
+      "description": "Speichern Sie Doppelwort-Coprozessor 1: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "sdc1 $f2,label($t2)",
+      "description": "Speichern Sie Doppelwort-Coprozessor 1: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "sdc1 $f2,label+100000",
+      "description": "Speichern Sie Doppelwort-Coprozessor 1: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "sdc1 $f2,label+100000($t2)",
+      "description": "Speichern Sie Doppelwort-Coprozessor 1: Speichern Sie 64 Bits aus dem Registerpaar $f2 und $f3 in der effektiven Speicherdoppelwortadresse"
+    },
+    {
+      "example": "seq $t1,$t2,-100",
+      "description": "Setzen Sie EQual: Wenn $t2 gleich 16-Bit-Sofortwert ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "seq $t1,$t2,$t3",
+      "description": "Setzen Sie EQual: Wenn $t2 gleich $t3 ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "seq $t1,$t2,100000",
+      "description": "Setzen Sie EQual: Wenn $t2 gleich 32-Bit-Sofortwert ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sge $t1,$t2,-100",
+      "description": "Größer oder gleich festlegen: Wenn $t2 sofort größer oder gleich 16-Bit ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sge $t1,$t2,$t3",
+      "description": "Größer oder gleich festlegen: Wenn $t2 größer oder gleich $t3 ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sge $t1,$t2,100000",
+      "description": "Größer oder gleich festlegen: Wenn $t2 größer oder gleich 32-Bit-Sofortwert ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,-100",
+      "description": "Größer oder gleich ohne Vorzeichen festlegen: Wenn $t2 größer oder gleich 16-Bit-Sofortwert ist (Vergleich ohne Vorzeichen), dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,$t3",
+      "description": "Größer oder gleich ohne Vorzeichen festlegen: Wenn $t2 größer oder gleich $t3 ist (Vergleich ohne Vorzeichen), dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,100000",
+      "description": "Größer oder gleich ohne Vorzeichen festlegen: Wenn $t2 größer oder gleich 32-Bit-Sofortwert ist (Vergleich ohne Vorzeichen), dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sgt $t1,$t2,-100",
+      "description": "Größer festlegen: Wenn $t2 sofort größer als 16-Bit ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sgt $t1,$t2,$t3",
+      "description": "Größer festlegen als: Wenn $t2 größer als $t3 ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sgt $t1,$t2,100000",
+      "description": "Größer festlegen als: Wenn $t2 sofort größer als 32-Bit ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,-100",
+      "description": "Größer als ohne Vorzeichen festlegen: Wenn $t2 größer als 16-Bit-Direktwert ist (Vergleich ohne Vorzeichen), dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,$t3",
+      "description": "Größer als ohne Vorzeichen festlegen: Wenn $t2 größer als $t3 ist (Vergleich ohne Vorzeichen), dann setzen Sie $t1 auf 1, sonst auf 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,100000",
+      "description": "Größer als vorzeichenlos festlegen: Wenn $t2 größer als 32-Bit-Direktwert ist (Vergleich ohne Vorzeichen), dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sh $t1,-100",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sh $t1,($t2)",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sh $t1,100",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sh $t1,100($t2)",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sh $t1,100000",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sh $t1,100000($t2)",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sh $t1,label",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sh $t1,label($t2)",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sh $t1,label+100000",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sh $t1,label+100000($t2)",
+      "description": "Halbwort speichern: Speichern Sie die niederwertigen 16 Bits von $t1 in der effektiven Speicherhalbwortadresse"
+    },
+    {
+      "example": "sle $t1,$t2,-100",
+      "description": "Kleiner oder gleich festlegen: Wenn $t2 kleiner oder gleich 16-Bit-Sofortwert ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sle $t1,$t2,$t3",
+      "description": "Kleiner oder gleich setzen: Wenn $t2 kleiner oder gleich $t3 ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sle $t1,$t2,100000",
+      "description": "Kleiner oder gleich festlegen: Wenn $t2 kleiner oder gleich 32-Bit-Sofortwert ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sleu $t1,$t2,-100",
+      "description": "Kleiner oder gleich ohne Vorzeichen festlegen: Wenn $t2 kleiner oder gleich 16-Bit-Sofortwert ist (Vergleich ohne Vorzeichen), dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sleu $t1,$t2,$t3",
+      "description": "Kleiner oder gleich ohne Vorzeichen festlegen: Wenn $t2 kleiner oder gleich $t3 ist (Vergleich ohne Vorzeichen), dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sleu $t1,$t2,100000",
+      "description": "Kleiner oder gleich ohne Vorzeichen festlegen: Wenn $t2 kleiner oder gleich 32-Bit-Sofortwert ist (Vergleich ohne Vorzeichen), dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sne $t1,$t2,-100",
+      "description": "Nicht gleich setzen: Wenn $t2 nicht gleich 16-Bit-Direktwert ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sne $t1,$t2,$t3",
+      "description": "Nicht gleich setzen: Wenn $t2 nicht gleich $t3 ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sne $t1,$t2,100000",
+      "description": "Nicht gleich setzen: Wenn $t2 nicht gleich 32-Bit-Direktwert ist, dann setzen Sie $t1 auf 1, sonst 0"
+    },
+    {
+      "example": "sub $t1,$t2,-100",
+      "description": "SUBtraktion: $t1 auf ($t2 minus 16-Bit sofort setzen)"
+    },
+    {
+      "example": "sub $t1,$t2,100000",
+      "description": "SUBtraction: $t1 auf ($t2 minus 32-Bit sofort setzen)"
+    },
+    {
+      "example": "subi $t1,$t2,-100",
+      "description": "SUBtraction Immediate: Setze $t1 auf ($t2 minus 16-Bit-Sofort)"
+    },
+    {
+      "example": "subi $t1,$t2,100000",
+      "description": "SUBtraction Immediate: Setze $t1 auf ($t2 minus 32-Bit-Direktwert)"
+    },
+    {
+      "example": "subiu $t1,$t2,100000",
+      "description": "SUBtraction Immediate Unsigned: $t1 auf ($t2 minus 32-Bit-Sofortwert setzen), kein Überlauf"
+    },
+    {
+      "example": "subu $t1,$t2,100000",
+      "description": "SUBtraction Unsigned: $t1 auf ($t2 minus 32-Bit sofort setzen, kein Überlauf"
+    },
+    {
+      "example": "sw $t1,-100",
+      "description": "Wort speichern: Speichern Sie den Inhalt von $t1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sw $t1,($t2)",
+      "description": "Wort speichern: Speichern Sie den Inhalt von $t1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sw $t1,100",
+      "description": "Wort speichern: Speichern Sie den Inhalt von $t1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sw $t1,100($t2)",
+      "description": "Wort speichern: Speichern Sie den Inhalt von $t1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sw $t1,100000",
+      "description": "Wort speichern: Speichern Sie den Inhalt von $t1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sw $t1,100000($t2)",
+      "description": "Wort speichern: Speichern Sie den Inhalt von $t1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sw $t1,label",
+      "description": "Wort speichern: Speichern Sie den Inhalt von $t1 im Speicherwort an der Adresse des Etiketts"
+    },
+    {
+      "example": "sw $t1,label($t2)",
+      "description": "Wort speichern: Speichern Sie den Inhalt von $t1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sw $t1,label+100000",
+      "description": "Wort speichern: Speichern Sie den Inhalt von $t1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "sw $t1,label+100000($t2)",
+      "description": "Wort speichern: Speichern Sie den Inhalt von $t1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "swc1 $f1,-100",
+      "description": "Speicherwort-Coprozessor 1: Speichern Sie den 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "swc1 $f1,($t2)",
+      "description": "Speicherwort-Coprozessor 1: Speichern Sie den 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "swc1 $f1,100000",
+      "description": "Speicherwort-Coprozessor 1: Speichern Sie den 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "swc1 $f1,100000($t2)",
+      "description": "Speicherwort-Coprozessor 1: Speichern Sie den 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "swc1 $f1,label",
+      "description": "Speicherwort-Coprozessor 1: Speichern Sie den 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "swc1 $f1,label($t2)",
+      "description": "Speicherwort-Coprozessor 1: Speichern Sie den 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "swc1 $f1,label+100000",
+      "description": "Speicherwort-Coprozessor 1: Speichern Sie den 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "swc1 $f1,label+100000($t2)",
+      "description": "Speicherwort-Coprozessor 1: Speichern Sie den 32-Bit-Wert von $f1 in der effektiven Speicherwortadresse"
+    },
+    {
+      "example": "swl $t1,-100",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swl $t1,($t2)",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swl $t1,100",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swl $t1,100($t2)",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swl $t1,100000",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swl $t1,100000($t2)",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swl $t1,label",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swl $t1,label($t2)",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swl $t1,label+100000",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swl $t1,label+100000($t2)",
+      "description": "Wort links speichern: Speichern Sie 1 bis 4 höherwertige Bytes von $t1 im Speicher, beginnend mit der effektiven Speicherbyteadresse und weiter bis zum niederwertigen Byte seines Wortes"
+    },
+    {
+      "example": "swr $t1,-100",
+      "description": "Wort rechts speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Speicherbyteadresse enthält, und fahren Sie mit dieser Byteadresse fort"
+    },
+    {
+      "example": "swr $t1,($t2)",
+      "description": "Wort rechts speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Speicherbyteadresse enthält, und fahren Sie mit dieser Byteadresse fort"
+    },
+    {
+      "example": "swr $t1,100",
+      "description": "Wort rechts speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Speicherbyteadresse enthält, und fahren Sie mit dieser Byteadresse fort"
+    },
+    {
+      "example": "swr $t1,100($t2)",
+      "description": "Wort rechts speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Speicherbyteadresse enthält, und fahren Sie mit dieser Byteadresse fort"
+    },
+    {
+      "example": "swr $t1,100000",
+      "description": "Wort rechts speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Speicherbyteadresse enthält, und fahren Sie mit dieser Byteadresse fort"
+    },
+    {
+      "example": "swr $t1,100000($t2)",
+      "description": "Wort rechts speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Speicherbyteadresse enthält, und fahren Sie mit dieser Byteadresse fort"
+    },
+    {
+      "example": "swr $t1,label",
+      "description": "Wort rechts speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Speicherbyteadresse enthält, und fahren Sie mit dieser Byteadresse fort"
+    },
+    {
+      "example": "swr $t1,label($t2)",
+      "description": "Wort rechts speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Speicherbyteadresse enthält, und fahren Sie mit dieser Byteadresse fort"
+    },
+    {
+      "example": "swr $t1,label+100000",
+      "description": "Wort rechts speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Speicherbyteadresse enthält, und fahren Sie mit dieser Byteadresse fort"
+    },
+    {
+      "example": "swr $t1,label+100000($t2)",
+      "description": "Wort rechts speichern: Speichern Sie 1 bis 4 niederwertige Bytes von $t1 im Speicher, beginnend mit dem höherwertigen Byte des Wortes, das die effektive Speicherbyteadresse enthält, und fahren Sie mit dieser Byteadresse fort"
+    },
+    {
+      "example": "ulh $t1,-100($t2)",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, vorzeichenerweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulh $t1,($t2)",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, vorzeichenerweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulh $t1,100000",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, vorzeichenerweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulh $t1,100000($t2)",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, vorzeichenerweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulh $t1,label",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, vorzeichenerweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulh $t1,label($t2)",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, vorzeichenerweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulh $t1,label+100000",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, vorzeichenerweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulh $t1,label+100000($t2)",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, vorzeichenerweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulhu $t1,-100($t2)",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, mit Nullen erweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulhu $t1,($t2)",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, mit Nullen erweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulhu $t1,100000",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, mit Nullen erweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulhu $t1,100000($t2)",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, mit Nullen erweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulhu $t1,label",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, mit Nullen erweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulhu $t1,label($t2)",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, mit Nullen erweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulhu $t1,label+100000",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, mit Nullen erweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulhu $t1,label+100000($t2)",
+      "description": "Nicht ausgerichtetes Ladehalbwort: Setzen Sie $t1 auf die 16 Bits, mit Nullen erweitert, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulw $t1,-100($t2)",
+      "description": "Nicht ausgerichtetes Ladewort: Setzen Sie $t1 auf die 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulw $t1,($t2)",
+      "description": "Nicht ausgerichtetes Ladewort: Setzen Sie $t1 auf die 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulw $t1,100000",
+      "description": "Nicht ausgerichtetes Ladewort: Setzen Sie $t1 auf die 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulw $t1,100000($t2)",
+      "description": "Nicht ausgerichtetes Ladewort: Setzen Sie $t1 auf die 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulw $t1,label",
+      "description": "Nicht ausgerichtetes Ladewort: Setzen Sie $t1 auf die 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulw $t1,label($t2)",
+      "description": "Nicht ausgerichtetes Ladewort: Setzen Sie $t1 auf die 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulw $t1,label+100000",
+      "description": "Nicht ausgerichtetes Ladewort: Setzen Sie $t1 auf die 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ulw $t1,label+100000($t2)",
+      "description": "Nicht ausgerichtetes Ladewort: Setzen Sie $t1 auf die 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ush $t1,-100($t2)",
+      "description": "Nicht ausgerichtetes Halbwort speichern: Speichern Sie den Inhalt des Halbworts niedriger Ordnung $t1 in den 16 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ush $t1,($t2)",
+      "description": "Nicht ausgerichtetes Halbwort speichern: Speichern Sie den Inhalt des Halbworts niedriger Ordnung $t1 in den 16 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ush $t1,100000",
+      "description": "Nicht ausgerichtetes Halbwort speichern: Speichern Sie den Inhalt des Halbworts niedriger Ordnung $t1 in den 16 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ush $t1,100000($t2)",
+      "description": "Nicht ausgerichtetes Halbwort speichern: Speichern Sie den Inhalt des Halbworts niedriger Ordnung $t1 in den 16 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ush $t1,label",
+      "description": "Nicht ausgerichtetes Halbwort speichern: Speichern Sie den Inhalt des Halbworts niedriger Ordnung $t1 in den 16 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ush $t1,label($t2)",
+      "description": "Nicht ausgerichtetes Halbwort speichern: Speichern Sie den Inhalt des Halbworts niedriger Ordnung $t1 in den 16 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ush $t1,label+100000",
+      "description": "Nicht ausgerichtetes Halbwort speichern: Speichern Sie den Inhalt des Halbworts niedriger Ordnung $t1 in den 16 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "ush $t1,label+100000($t2)",
+      "description": "Nicht ausgerichtetes Halbwort speichern: Speichern Sie den Inhalt des Halbworts niedriger Ordnung $t1 in den 16 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "usw $t1,-100($t2)",
+      "description": "Nicht ausgerichtetes Speicherwort: Speichern Sie $t1-Inhalte in den 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "usw $t1,($t2)",
+      "description": "Nicht ausgerichtetes Speicherwort: Speichern Sie $t1-Inhalte in den 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "usw $t1,100000",
+      "description": "Nicht ausgerichtetes Speicherwort: Speichern Sie $t1-Inhalte in den 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "usw $t1,100000($t2)",
+      "description": "Nicht ausgerichtetes Speicherwort: Speichern Sie $t1-Inhalte in den 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "usw $t1,label",
+      "description": "Nicht ausgerichtetes Speicherwort: Speichern Sie $t1-Inhalte in den 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "usw $t1,label($t2)",
+      "description": "Nicht ausgerichtetes Speicherwort: Speichern Sie $t1-Inhalte in den 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "usw $t1,label+100000",
+      "description": "Nicht ausgerichtetes Speicherwort: Speichern Sie $t1-Inhalte in den 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "usw $t1,label+100000($t2)",
+      "description": "Nicht ausgerichtetes Speicherwort: Speichern Sie $t1-Inhalte in den 32 Bits, beginnend bei der effektiven Speicherbyteadresse"
+    },
+    {
+      "example": "xor $t1,$t2,100",
+      "description": "XOR : eingestellt $t1 zu ($t2 bitweises Exklusiv-ODER 16-Bit-Sofort ohne Vorzeichen)"
+    },
+    {
+      "example": "xor $t1,100",
+      "description": "XOR : eingestellt $t1 zu ($t1 bitweises Exklusiv-ODER 16-Bit-Sofort ohne Vorzeichen)"
+    },
+    {
+      "example": "xori $t1,$t2,100000",
+      "description": "XOR Sofort: eingestellt $t1 zu ($t2 bitweises-exklusives-ODER 32-Bit-Sofort)"
+    },
+    {
+      "example": "xori $t1,100",
+      "description": "XOR Sofort: eingestellt $t1 zu ($t1 bitweises Exklusiv-ODER 16-Bit-Sofort ohne Vorzeichen)"
+    },
+    {
+      "example": "xori $t1,100000",
+      "description": "XOR Sofort: eingestellt $t1 zu ($t1 bitweises-exklusives-ODER 32-Bit-Sofort)"
+    }
+  ],
+  "directives": [
+    {
+      "name": ".align",
+      "description": "Nächstes Datenelement an der angegebenen Bytegrenze ausrichten (0=Byte, 1=halb, 2=Wort, 3=doppelt)"
+    },
+    {
+      "name": ".ascii",
+      "description": "Speichern Sie die Zeichenfolge im Datensegment, fügen Sie jedoch kein Null-Terminator hinzu"
+    },
+    {
+      "name": ".asciiz",
+      "description": "Speichern Sie die Zeichenfolge im Datensegment und fügen Sie ein Null-Terminator hinzu"
+    },
+    {
+      "name": ".byte",
+      "description": "Speichern Sie die aufgelisteten Werte als 8-Bit-Bytes"
+    },
+    {
+      "name": ".data",
+      "description": "Nachfolgende Elemente werden im Datensegment an der nächsten verfügbaren Adresse gespeichert"
+    },
+    {
+      "name": ".double",
+      "description": "Speichern Sie die aufgelisteten Werte als Gleitkomma mit doppelter Genauigkeit"
+    },
+    {
+      "name": ".end_macro",
+      "description": "Makrodefinition beenden.  Siehe .macro"
+    },
+    {
+      "name": ".eqv",
+      "description": "Ersetzen Sie den ersten durch den zweiten Operanden. Der erste Operand ist ein Symbol, der zweite Operand ist ein Ausdruck (wie #define)"
+    },
+    {
+      "name": ".extern",
+      "description": "Deklarieren Sie die aufgelistete Bezeichnung und Bytelänge als globales Datenfeld"
+    },
+    {
+      "name": ".float",
+      "description": "Speichern Sie die aufgelisteten Werte als Gleitkommazahl mit einfacher Genauigkeit"
+    },
+    {
+      "name": ".globl",
+      "description": "Deklarieren Sie die aufgelisteten Labels als global, um die Referenzierung aus anderen Dateien zu ermöglichen"
+    },
+    {
+      "name": ".half",
+      "description": "Speichern Sie die aufgelisteten Werte als 16-Bit-Halbwörter an der Halbwortgrenze"
+    },
+    {
+      "name": ".include",
+      "description": "Fügt den Inhalt der angegebenen Datei ein.  Setzen Sie den Dateinamen in Anführungszeichen."
+    },
+    {
+      "name": ".kdata",
+      "description": "Nachfolgende Elemente werden im Kernel-Datensegment an der nächsten verfügbaren Adresse gespeichert"
+    },
+    {
+      "name": ".ktext",
+      "description": "Nachfolgende Elemente (Anweisungen) werden im Kernel-Textsegment an der nächsten verfügbaren Adresse gespeichert"
+    },
+    {
+      "name": ".macro",
+      "description": "Beginnen Sie mit der Makrodefinition.  Siehe .end_macro"
+    },
+    {
+      "name": ".set",
+      "description": "Assembler-Variablen festlegen.  Wird derzeit ignoriert, ist aber aus Kompatibilitätsgründen mit SPIM enthalten"
+    },
+    {
+      "name": ".space",
+      "description": "Reservieren Sie die nächste angegebene Anzahl von Bytes im Datensegment"
+    },
+    {
+      "name": ".text",
+      "description": "Nachfolgende Elemente (Anweisungen) werden im Textsegment an der nächsten verfügbaren Adresse gespeichert"
+    },
+    {
+      "name": ".word",
+      "description": "Speichern Sie die aufgelisteten Werte als 32-Bit-Wörter an der Wortgrenze"
+    }
+  ]
+}

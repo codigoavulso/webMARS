@@ -8,6 +8,7 @@ import { projectRoot } from "./helpers/engines.mjs";
 const managerPath = resolve(projectRoot, "assets/js/app-modules/12-ui-tool-manager.js");
 const runtimePath = resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js");
 const uiPath = resolve(projectRoot, "assets/js/app-modules/10-ui.js");
+const pipelineLabPath = resolve(projectRoot, "tools/pipeline-lab.js");
 
 function sourceBetween(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);
@@ -16,6 +17,115 @@ function sourceBetween(source, startMarker, endMarker) {
   assert.notEqual(end, -1, `Missing source marker: ${endMarker}`);
   return source.slice(start, end);
 }
+
+async function loadPipelineLabCore() {
+  const source = await readFile(pipelineLabPath, "utf8");
+  const context = vm.createContext({});
+  vm.runInContext(source, context);
+  assert.ok(context.MarsPipelineLabCore, "Pipeline Lab exposes its deterministic core");
+  return context.MarsPipelineLabCore;
+}
+
+test("Pipeline Lab decodes load dependencies", async () => {
+  const core = await loadPipelineLabCore();
+  const instruction = core.decodeInstruction({ basic: "lw $t0, 8($t1)", address: 0x00400000 });
+
+  assert.equal(instruction.opcode, "lw");
+  assert.equal(instruction.isLoad, true);
+  assert.deepEqual([...instruction.reads], ["$t1"]);
+  assert.deepEqual([...instruction.writes], ["$t0"]);
+});
+
+test("Pipeline Lab models RAW stalls and configurable forwarding", async () => {
+  const core = await loadPipelineLabCore();
+  const rows = [
+    { basic: "add $t0, $t1, $t2" },
+    { basic: "sub $t3, $t0, $t4" },
+    { basic: "or $t5, $t6, $t7" }
+  ];
+
+  const withoutForwarding = core.createSimulator(rows, { forwarding: false }).run();
+  assert.equal(withoutForwarding.cycle, 9);
+  assert.equal(withoutForwarding.completed, 3);
+  assert.equal(withoutForwarding.stalls, 2);
+  assert.equal(withoutForwarding.cpi, 3);
+
+  const withForwarding = core.createSimulator(rows, { forwarding: true }).run();
+  assert.equal(withForwarding.cycle, 7);
+  assert.equal(withForwarding.completed, 3);
+  assert.equal(withForwarding.stalls, 0);
+  assert.equal(withForwarding.cpi, 7 / 3);
+});
+
+test("Pipeline Lab inserts one load-use stall with forwarding", async () => {
+  const core = await loadPipelineLabCore();
+  const simulator = core.createSimulator([
+    { basic: "lw $t0, 0($t1)" },
+    { basic: "add $t2, $t0, $t3" }
+  ], { forwarding: true });
+  const result = simulator.run();
+
+  assert.equal(result.cycle, 7);
+  assert.equal(result.completed, 2);
+  assert.equal(result.stalls, 1);
+  assert.equal(Object.values(result.timeline[1]).filter((stage) => stage === "ID*").length, 1);
+});
+
+test("Pipeline Lab can restore the exact previous cycle", async () => {
+  const core = await loadPipelineLabCore();
+  const simulator = core.createSimulator([
+    { basic: "add $t0, $t1, $t2" },
+    { basic: "sub $t3, $t0, $t4" }
+  ]);
+  simulator.step();
+  simulator.step();
+  const previous = JSON.parse(JSON.stringify(simulator.step()));
+  simulator.step();
+  const restored = JSON.parse(JSON.stringify(simulator.back()));
+
+  assert.deepEqual(restored, previous);
+});
+
+test("Pipeline Lab keeps large-program timelines persistent and bounded in the UI", async () => {
+  const core = await loadPipelineLabCore();
+  const rows = Array.from({ length: 12000 }, (_, index) => ({
+    index,
+    basic: "add $t0, $t1, $t2"
+  }));
+  const simulator = core.createSimulator(rows, { forwarding: true });
+  simulator.step();
+  const firstTimeline = simulator.snapshot().timeline;
+  simulator.step();
+  const secondTimeline = simulator.snapshot().timeline;
+
+  assert.equal(Object.isFrozen(firstTimeline), true);
+  assert.equal(Object.isFrozen(secondTimeline), true);
+  assert.notEqual(secondTimeline, firstTimeline);
+  assert.equal(secondTimeline[1000], firstTimeline[1000], "untouched instruction histories are shared");
+
+  const completed = core.createSimulator(rows, { forwarding: true }).run(13000);
+  assert.equal(completed.done, true);
+  assert.equal(completed.cycle, 12004);
+  assert.equal(completed.completed, 12000);
+
+  const source = await readFile(pipelineLabPath, "utf8");
+  assert.match(source, /const maxVisibleInstructions = 160;/);
+  assert.match(source, /const maxVisibleCycles = 80;/);
+  assert.match(source, /simulator\.program\.length \* 4 \+ 16/);
+});
+
+test("Pipeline Lab is present in the primary and fallback tool catalogs", async () => {
+  const [manifestSource, managerSource] = await Promise.all([
+    readFile(resolve(projectRoot, "tools/tools.json"), "utf8"),
+    readFile(managerPath, "utf8")
+  ]);
+  const manifest = JSON.parse(manifestSource);
+  assert.deepEqual(
+    manifest.tools.find((tool) => tool.id === "pipeline-lab"),
+    { label: "Pipeline Lab", script: "./tools/pipeline-lab.js", id: "pipeline-lab" }
+  );
+  assert.match(managerSource, /\{ id: "pipeline-lab", label: "Pipeline Lab", script: "\.\/tools\/pipeline-lab\.js" \}/);
+});
 
 test("tool batches reach hidden tools in order and isolate failures", async () => {
   const source = await readFile(managerPath, "utf8");

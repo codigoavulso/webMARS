@@ -262,7 +262,7 @@
     id: "cache-simulator",
     label: "Data Cache Simulator",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("cache-simulator", "Data Cache Simulation Tool, Version 1.2", 940, 760, `
+      const shell = ctx.createToolWindowShell("cache-simulator", "Data Cache Simulation Tool, Version 1.2", 780, 620, `
         <div class="mars-tool-shell cache-tool">
           <h2 class="mars-tool-heading">Simulate and illustrate data cache performance</h2>
           <section class="mars-tool-panel">

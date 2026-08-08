@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Birleştirici makroları</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Birleştirici makroları</h1>
+  <p class="lead">Makrolar normal derlemeden önce kaynak düzeyinde değişiklik gerçekleştirir. Etkinleştirilebilmeleri için genişletilmiş montajcı desteğine ihtiyaç duyarlar.</p>
+
+  <h2>Tanım ve kullanım</h2>
+  <pre>.macro print_int (%value)
+    move $a0, %value
+    li   $v0, 1
+    syscall
+.end_macro
+
+li $t0, 42
+print_int ($t0)</pre>
+  <p>Parametrelerin ve çağrı bağımsız değişkenlerinin etrafındaki parantezler isteğe bağlıdır. Parametreler virgülle ayrılmış belirteçlerdir ve dize değişmezlerinin içinde değil, yalnızca tanımlayıcı olarak değiştirilir.</p>
+
+  <h2>webMARS tarafından uygulanan kurallar</h2>
+  <ul>
+    <li>Bir makro, adı ve niteliğiyle tanımlanır, dolayısıyla aynı adın farklı parametre sayılarına sahip tanımları olabilir.</li>
+    <li>Tanımın çağrılmadan önce görünmesi gerekir. İleriye dönük bir referans hata olarak rapor edilir.</li>
+    <li>İç içe geçmiş makro tanımlarına izin verilmez.</li>
+    <li>Bir tanım yalnızca aşağıdakileri içeren bir satırla biter: <code>.end_macro</code>.</li>
+    <li>Aynı ada ve niteliğe sahip yinelenen tanımlar bir uyarı oluşturur ve kopyalar dikkate alınmaz.</li>
+    <li>Genişletmeler arasındaki çakışmaları önlemek amacıyla, genişletme içindeki etiketler her çağrı için benzersiz hale getirilir.</li>
+    <li>Genişletme özyinelemelidir, ancak sessizce kod oluşturmak yerine geçersiz özyineleme ve hatalı biçimlendirilmiş çağrılar teşhis edilir.</li>
+  </ul>
+
+  <h2>Sabitler ve içerir</h2>
+  <p><code>.eqv</code> adlandırılmış sabitler için tanımlayıcı ikamesi sağlar. <code>.include</code> genişletilmiş assembler yönerge setinin bir parçasıdır ve mevcut tarayıcı projesinin sağladığı proje kaynağını çözer. Projeye bağlı adları tercih edin ve dahil edilen kaynakları aynı projede tutun.</p>
+
+  <h2>Makrolar sahte talimatlara karşı</h2>
+  <p>webMARS'in talimat referansından bir sözde talimat seçilir ve işlenen modellerine göre genişler. Bir makro, program tarafından tanımlanır ve kaynak ifadelerinin rastgele bir dizisini içerebilir. Her ikisi de yürütmeden önce genişletilir ve bir kaynak satırını birkaç temel talimatla eşleyebilir.</p>
+
+  <div class="warning">Makro bağımsız değişkenleri, yazılan değerler değil, belirteç ikameleridir. Sözdizimsel olarak geçerli bir genişletme, çağrı sitesinde yine de birleştirici türü veya aralığı hatası üretebilir.</div>
+</body>
+</html>

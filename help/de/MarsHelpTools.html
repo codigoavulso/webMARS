@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS-Tools</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Werkzeuge</h1>
+  <p class="lead">Öffnen Sie Tools über das Menü „Extras“. Jedes Tool verfügt über ein unabhängiges Fenster und kann eine Verbindung zur aktuellen MIPS-Laufzeit herstellen, um Anweisungen, Speicher oder MMIO-Aktivitäten zu beobachten.</p>
+
+  <div class="note"><strong>Stellen Sie vor dem Ausführen eine Verbindung her.</strong> Ein verbundenes Tool empfängt vollständige Laufzeit-Snapshots und Trace-Ereignisse, selbst wenn die Ausführung mit maximaler Geschwindigkeit die Editor-Hervorhebung unterdrückt. Trennen Sie das Tool oder setzen Sie es zurück, wenn Sie ein unabhängiges Experiment starten.</div>
+
+  <h2>Architektur und Leistung</h2>
+  <table>
+    <tr><th>Werkzeug</th><th>Benutze es für</th></tr>
+    <tr><td>Simulator für Filialverlaufstabellen</td><td>Vergleichen Sie Vorhersageschemata und überprüfen Sie die Genauigkeit der Verzweigungsvorhersage.</td></tr>
+    <tr><td>Daten-Cache-Simulator</td><td>Konfigurieren Sie einen Cache und messen Sie Treffer, Fehler und Lokalität, während ein Programm auf Daten zugreift.</td></tr>
+    <tr><td>Befehlszähler</td><td>Zählen Sie ausgeführte Anweisungen und verfolgen Sie die aktuelle Gesamtzahl.</td></tr>
+    <tr><td>Unterrichtsstatistik</td><td>Gruppieren Sie die Ausführung nach Anweisungskategorie, um die Zusammensetzung der Arbeitslast zu verstehen.</td></tr>
+    <tr><td>Visualisierung von Speicherreferenzen</td><td>Visualisieren Sie räumliche Speicherzugriffsmuster und Hot-Regionen.</td></tr>
+    <tr><td>MIPS Röntgen</td><td>Erkunden Sie Befehlsfelder, Dekodierung und Datenpfad-/Steuerbeziehungen.</td></tr>
+  </table>
+
+  <h2>Displays, Terminals und Geräte</h2>
+  <table>
+    <tr><th>Werkzeug</th><th>Benutze es für</th></tr>
+    <tr><td>Bitmap-Anzeige</td><td>Rendern Sie Pixel aus einem konfigurierbaren speichergestützten Framebuffer.</td></tr>
+    <tr><td>Bitmap-Terminal-Tool</td><td>Verwenden Sie ein Framebuffer-basiertes Textterminal zusammen mit der Tastatureingabe.</td></tr>
+    <tr><td>Tastatur- und Display-Simulator MMIO.</td><td>Üben Sie Empfänger-/Sendersteuerung und Datenregister im Standardbereich MMIO aus.</td></tr>
+    <tr><td>TTY Gerät + ANSI Terminal</td><td>Führen Sie Terminalprogramme mit Tastatureingabe, ANSI-Rendering und Opt-in-xterm-Mausereignissen aus.</td></tr>
+    <tr><td>Digital Lab Sim</td><td>Steuern Sie Sieben-Segment-Anzeigen, Tastatureingaben und zugehöriges Digitallabor MMIO.</td></tr>
+    <tr><td>Systemuhr und Timer</td><td>Steuern Sie einen speicherabgebildeten Timer, der ausgeführte Anweisungen oder echte Millisekunden zählt, und lösen Sie den Timer-Interrupt MARS aus, damit bei jedem Tick ein Ausnahmehandler ausgeführt wird.</td></tr>
+    <tr><td>Mars Bot</td><td>Steuern Sie den simulierten Roboter über seine speicherzugeordnete Schnittstelle.</td></tr>
+  </table>
+  <div class="note"><strong>MARS-OS TTY Beispiel für das Betriebssystem.</strong> Öffnen Sie das Beispiel mit mehreren Dateien, schließen Sie dieses Tool an, montieren Sie es und führen Sie es aus. Es bootet direkt in seinen Programm-Manager im Windows 95-Stil; Öffnen Sie die Terminal-App für die 46-Befehle-Shell. Das Startmenü, die Fenster und Anwendungsstarter werden vollständig von der MIPS-Assembly gezeichnet und mit xterm SGR-Mausberichten gesteuert. Die beschreibbare RAM-Festplatte, der Editor, die Tabellenkalkulation und der BASIC-Interpreter bleiben verfügbar; Der Editor-Cursor und die Tabellenzellen akzeptieren auch Mausklicks.</div>
+  <div class="note"><strong>Fensteroptionen für virtuelle Anzeigen.</strong> Bitmap Display, Bitmap Terminal Tool und TTY Device + ANSI Terminal verfügen jeweils über zwei Fensteroptionen über ihren Einstellungen. <em>Passen Sie das Fenster an die Anzeige an</em> Ändert die Größe des Werkzeugfensters, sodass die gesamte Anzeige ohne Bildlaufleisten und leeren Raum um das Fenster herum passt, und wird immer dann erneut angewendet, wenn sich die Anzeigegröße oder die Einstellungen ändern. Wenn Sie die Größe des Fensters manuell ändern, wird es wieder deaktiviert. Die Anpassungsoption wird ausgewählt und die Konfigurationseingaben werden sowohl auf dem Desktop als auch auf Mobilgeräten minimiert. Im gestapelten mobilen Layout bleibt die Passform ausgewählt, es ist jedoch keine Größenänderung erforderlich, da das Panel bereits den gesamten Bildschirm umfasst.</div>
+
+  <h2>Lernhilfsmittel</h2>
+  <table>
+    <tr><th>Werkzeug</th><th>Benutze es für</th></tr>
+    <tr><td>Gleitkommadarstellung</td><td>Konvertieren und prüfen Sie IEEE 754 Werte, Felder und Bitmuster mit einfacher Genauigkeit.</td></tr>
+    <tr><td>Einführung in Tools</td><td>Lernen Sie den standardmäßigen Verbindungs-, Reset- und Interaktionslebenszyklus kennen.</td></tr>
+    <tr><td>Schnitzeljagd</td><td>Führen Sie die interaktive Herausforderung zur Assemblerprogrammierung durch.</td></tr>
+    <tr><td>Bildschirmlupe</td><td>Vergrößern Sie einen ausgewählten Teil des Arbeitsbereichs für Demonstrationen und Zugänglichkeit.</td></tr>
+    <tr><td>Stapelvisualisierer</td><td>Verfolgen Sie den gesamten Adressraum und den Stapel Wort für Wort: Frames, die bei jedem Aufruf geöffnet werden, gespeicherte und wiederhergestellte Register, ein Zoom von Segmentblöcken bis hin zu einzelnen Bits und ein Klartextprotokoll jeder $sp-Bewegung mit Warnungen für die klassischen Frame-Fehler. Es steuert auch die Ausführung mit Stack-bewussten Stopps: zum nächsten Aufruf laufen, über einen Aufruf gehen, laufen lassen, bis der aktuelle Frame zurückkehrt, bis $sp sich bewegt oder bis sich ein beobachtetes Wort ändert, und pausieren, sobald eine Stack-Warnung erscheint.</td></tr>
+  </table>
+
+  <h2>Bitmap-Konfiguration von MIPS</h2>
+  <p>Ein Programm kann jedes Bitmap-Tool konfigurieren, indem es diesen versionierten Kontrollblock relativ zur aktiven MMIO-Basis schreibt (normalerweise). <code>0xffff0000</code>). Beschreiben Sie zuerst alle Felder und schreiben Sie <code>1</code> zum letzten Befehl; Das Tool ändert sich erst nach diesem atomaren Commit.</p>
+  <table>
+    <tr><th>Versatz</th><th>Wert</th></tr>
+    <tr><td><code>+0x20</code></td><td>Unterschrift <code>0x57424d50</code> (<code>WBMP</code>)</td></tr>
+    <tr><td><code>+0x24</code></td><td>Protokollversion <code>1</code></td></tr>
+    <tr><td><code>+0x28</code></td><td>Ziel: <code>1</code> Anzeige, <code>2</code> Terminal, <code>3</code> beides</td></tr>
+    <tr><td><code>+0x2c … +0x38</code></td><td>Anzeigebreite, Anzeigehöhe, Gerätebreite und Gerätehöhe</td></tr>
+    <tr><td><code>+0x3c</code></td><td>Framebuffer-Basisadresse</td></tr>
+    <tr><td><code>+0x40</code></td><td>Befehl: <code>1</code> bewerben, <code>2</code> klare Programmkonfiguration</td></tr>
+  </table>
+  <p>Ungültige oder unvollständige Blöcke werden ignoriert. Backstep, Laufzeitexport und Sitzungswiederherstellung bewahren die festgeschriebene Konfiguration. Dies ist eine optionale webMARS-Erweiterung: MARS 4.5 ignoriert diese nicht verwendeten MMIO-Wörter, während derselbe Framebuffer-Code weiterhin mit manuellen Tooleinstellungen funktioniert.</p>
+
+  <h2>MMIO Sicherheit</h2>
+  <p>MMIO Geräte sind in der Nähe zugeordnet <code>0xffff0000</code>. Gerätetools und die Laufzeit teilen sich diese Adressen; Abfrageprogramme sollten Bereitschaftsbits berücksichtigen und Interrupt-gesteuerte Programme sollten einen gültigen Ausnahmehandler installieren. Durch das Zurücksetzen eines Tools wird dessen Visualisierung oder Gerätestatus gelöscht, nicht unbedingt das zusammengestellte Programm.</p>
+</body>
+</html>

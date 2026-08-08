@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS narzędzia</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Narzędzia</h1>
+  <p class="lead">Otwórz narzędzia z menu Narzędzia. Każde narzędzie posiada niezależne okno i może łączyć się z bieżącym środowiskiem wykonawczym MIPS w celu obserwacji instrukcji, pamięci lub aktywności MMIO.</p>
+
+  <div class="note"><strong>Podłącz przed uruchomieniem.</strong> Podłączone narzędzie otrzymuje pełne migawki środowiska wykonawczego i zdarzenia śledzenia, nawet jeśli wykonanie z maksymalną szybkością pomija podświetlanie edytora. Odłącz lub zresetuj narzędzie, rozpoczynając niepowiązany eksperyment.</div>
+
+  <h2>Architektura i wydajność</h2>
+  <table>
+    <tr><th>Narzędzie</th><th>Użyj go do</th></tr>
+    <tr><td>Symulator tabeli historii oddziałów</td><td>Porównaj schematy przewidywania i sprawdź dokładność przewidywania gałęzi.</td></tr>
+    <tr><td>Symulator pamięci podręcznej danych</td><td>Skonfiguruj pamięć podręczną i mierz trafienia, chybienia i lokalizację, podczas gdy program uzyskuje dostęp do danych.</td></tr>
+    <tr><td>Licznik instrukcji</td><td>Policz wykonane instrukcje i śledź aktualną sumę.</td></tr>
+    <tr><td>Statystyki instrukcji</td><td>Wykonywanie grupowe według kategorii instrukcji, aby zrozumieć skład obciążenia.</td></tr>
+    <tr><td>Wizualizacja odniesienia do pamięci</td><td>Wizualizuj wzorce dostępu do pamięci przestrzennej i gorące regiony.</td></tr>
+    <tr><td>MIPS Rentgen</td><td>Przeglądaj pola instrukcji, dekodowanie i relacje ścieżki danych/kontroli.</td></tr>
+  </table>
+
+  <h2>Wyświetlacze, terminale i urządzenia</h2>
+  <table>
+    <tr><th>Narzędzie</th><th>Użyj go do</th></tr>
+    <tr><td>Wyświetlanie mapy bitowej</td><td>Renderuj piksele z konfigurowalnego bufora ramki opartego na pamięci.</td></tr>
+    <tr><td>Narzędzie terminala bitmapowego</td><td>Użyj terminala tekstowego opartego na buforze ramki wraz z wprowadzaniem danych z klawiatury.</td></tr>
+    <tr><td>Symulator klawiatury i wyświetlacza MMIO.</td><td>Ćwicz sterowanie odbiornikiem/nadajnikiem i rejestrami danych w standardowym zakresie MMIO.</td></tr>
+    <tr><td>TTY Urządzenie + ANSI Terminal</td><td>Uruchamiaj programy terminalowe za pomocą klawiatury, renderowania ANSI i włączania zdarzeń myszy Xterm.</td></tr>
+    <tr><td>Cyfrowy symulator laboratorium</td><td>Sterowanie wyświetlaczami siedmiosegmentowymi, klawiaturą wprowadzającą i powiązanym laboratorium cyfrowym MMIO.</td></tr>
+    <tr><td>Zegar systemowy i timer</td><td>Steruj zegarem mapowanym w pamięci, który zlicza wykonane instrukcje lub rzeczywiste milisekundy, i zwiększ przerwanie czasowe MARS, aby procedura obsługi wyjątku działała przy każdym taktowaniu.</td></tr>
+    <tr><td>Robot Mars</td><td>Steruj symulowanym robotem poprzez interfejs mapowany w pamięci.</td></tr>
+  </table>
+  <div class="note"><strong>MARS-OS TTY Przykład systemu operacyjnego.</strong> Otwórz przykład z wieloma plikami, podłącz to narzędzie, zmontuj i uruchom. Uruchamia się bezpośrednio w Menedżerze programów w stylu Windows 95; otwórz aplikację Terminal dla powłoki z 46 poleceniami. Menu Start, okna i programy uruchamiające aplikacje są rysowane w całości przez zespół MIPS i kontrolowane za pomocą raportów myszy xterm SGR. Zapisywalny dysk RAM, edytor, arkusz kalkulacyjny i interpreter BASIC pozostają dostępne; kursor edytora i komórki arkusza kalkulacyjnego również akceptują kliknięcia myszą.</div>
+  <div class="note"><strong>Opcje okien dla wyświetlaczy wirtualnych.</strong> Wyświetlanie bitmap, narzędzie terminala bitmapowego i TTY urządzenie + ANSI terminal mają po dwie opcje okna nad swoimi ustawieniami. <em>Dopasuj okno do wyświetlenia</em> zmienia rozmiar okna narzędzia tak, aby cały wyświetlacz zmieścił się bez pasków przewijania i pustej przestrzeni wokół niego, i stosuje się ponownie za każdym razem, gdy zmienia się rozmiar wyświetlacza lub ustawienia; ręczna zmiana rozmiaru okna powoduje jego ponowne wyłączenie. Opcja dopasowania zostanie zaznaczona, a dane wejściowe konfiguracji zaczną być zwinięte zarówno na komputerze stacjonarnym, jak i mobilnym. W skumulowanym układzie mobilnym dopasowanie pozostaje wybrane, ale zmiana rozmiaru nie jest konieczna, ponieważ panel obejmuje już ekran.</div>
+
+  <h2>Narzędzia do nauki</h2>
+  <table>
+    <tr><th>Narzędzie</th><th>Użyj go do</th></tr>
+    <tr><td>Reprezentacja zmiennoprzecinkowa</td><td>Konwertuj i sprawdzaj IEEE 754 wartości, pól i wzorców bitowych o pojedynczej precyzji.</td></tr>
+    <tr><td>Wprowadzenie do narzędzi</td><td>Poznaj standardowy cykl życia łączenia, resetowania i interakcji.</td></tr>
+    <tr><td>Polowanie na padlinożerców</td><td>Uruchom interaktywne wyzwanie programowania w asemblerze.</td></tr>
+    <tr><td>Lupa ekranowa</td><td>Powiększ wybraną część obszaru roboczego w celu demonstracji i zapewnienia dostępności.</td></tr>
+    <tr><td>Wizualizator stosu</td><td>Śledź całą przestrzeń adresową i stos słowo po słowie: ramki otwierane przy każdym wywołaniu, rejestry zapisywane i przywracane, zoom od bloków segmentów do pojedynczych bitów i prosty dziennik każdego $sp ruchu z ostrzeżeniami o klasycznych błędach ramek. Steruje także wykonaniem za pomocą zatrzymań uwzględniających stos: biegnij do następnego wywołania, przechodź nad wywołaniem, biegnij, aż bieżąca ramka powróci, aż $sp przesunie się lub zmieni się obserwowane słowo i zatrzymaj się, gdy tylko pojawi się ostrzeżenie o stosie.</td></tr>
+  </table>
+
+  <h2>Konfiguracja bitmapy z MIPS</h2>
+  <p>Program może skonfigurować dowolne narzędzie Bitmap, zapisując ten wersjonowany blok kontrolny względem aktywnej bazy MMIO (zwykle <code>0xffff0000</code>). Najpierw wpisz wszystkie pola i napisz <code>1</code> do polecenia ostatni; narzędzie zmienia się dopiero po tym niepodzielnym zatwierdzeniu.</p>
+  <table>
+    <tr><th>Przesunięcie</th><th>Wartość</th></tr>
+    <tr><td><code>+0x20</code></td><td>Podpis <code>0x57424d50</code> (<code>WBMP</code>)</td></tr>
+    <tr><td><code>+0x24</code></td><td>Wersja protokołu <code>1</code></td></tr>
+    <tr><td><code>+0x28</code></td><td>Cel: <code>1</code> wyświetlacz, <code>2</code> Terminal, <code>3</code> oba</td></tr>
+    <tr><td><code>+0x2c … +0x38</code></td><td>Szerokość wyświetlacza, wysokość wyświetlacza, szerokość jednostki i wysokość jednostki</td></tr>
+    <tr><td><code>+0x3c</code></td><td>Adres bazowy bufora ramki</td></tr>
+    <tr><td><code>+0x40</code></td><td>Polecenie: <code>1</code> zastosować, <code>2</code> przejrzysta konfiguracja programu</td></tr>
+  </table>
+  <p>Nieprawidłowe lub niekompletne bloki są ignorowane. Krok wstecz, eksport w czasie wykonywania i przywracanie sesji zachowują zatwierdzoną konfigurację. Jest to opcjonalne rozszerzenie webMARS: MARS 4.5 ignoruje te nieużywane słowa MMIO, podczas gdy ten sam kod bufora ramki nadal działa przy ręcznych ustawieniach narzędzi.</p>
+
+  <h2>MMIO bezpieczeństwo</h2>
+  <p>MMIO urządzenia są mapowane w pobliżu <code>0xffff0000</code>. Narzędzia urządzenia i środowisko wykonawcze współdzielą te adresy; programy odpytujące powinny honorować gotowe bity, a programy sterowane przerwaniami powinny zainstalować prawidłową procedurę obsługi wyjątków. Zresetowanie narzędzia czyści jego wizualizację lub stan urządzenia, niekoniecznie zmontowanego programu.</p>
+</body>
+</html>

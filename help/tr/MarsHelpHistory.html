@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS geçmişi</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Tarih</h1>
+  <p class="lead">webMARS, MARS 4.5 MIPS simülatörünün tarayıcı bağlantı noktası olarak başladı. Artık bağımsız bir JavaScript çalışma zamanı, düzenleyici, hata ayıklayıcı, Mini-C derleyici, yerel/bulut proje iş akışları ve tarayıcıya özgü araçları birleştiriyor.</p>
+
+  <h2>Mevcut geliştirme hattı</h2>
+  <ul>
+    <li><strong>JavaScript-yalnızca çalışma zamanı.</strong> Deneysel hibrit/WASM yolu, ölçüm bu iş yükü için kayda değer bir iyileştirme olmaksızın karmaşıklık kattığını gösterdikten sonra kaldırıldı.</li>
+    <li><strong>Çalışma zamanı doğruluğu.</strong> Son zamanlarda yapılan çalışmalar güçlendirilmiş çift kelime COP1 sıralaması, atomik bellek depoları, yığın rezervasyonları, LL/SC, kesin adresleme, gecikmeli dal bağlantıları, FCSR yuvarlama, istisna devamı ve Durdurma davranışı.</li>
+    <li><strong>Tam durum anlık görüntüleri.</strong> Dışa aktarma/içe aktarma ve geri adım artık rastgele akışları, sanal dosyaları ve imleçleri, stdin'i, program bağımsız değişkenlerini, görüntü tanıtıcılarını ve kesme noktalarını hesaba katıyor.</li>
+    <li><strong>Performans gözlemlenebilirliği.</strong> Uygulama, yerel Derleme, Birleştirme ve Çalıştırma zamanlamalarının yanı sıra tahmini JavaScript kullanımı bildirirken, maksimum hızda yürütme, çalışma zamanı durumunu aç bırakmadan sunum yükünü azaltır.</li>
+    <li><strong>Mini-C evrim.</strong> C0 öğretme alt kümeleri, C1-NATIVE, o32 çağrıları, bayt dizeleri, bağımsız değişkenler, işlev işaretçileri, çok dosyalı projeler ve uyumluluk kitaplıklarının yanı sıra kullanılabilir durumda kalır.</li>
+    <li><strong>Müfredat olarak örnekler.</strong> Montaj ve C örnekleri, çok dilli değişkenler ve çok dosyalı projelerle amaca, dile ve minimum derleyici profiline göre kataloglanır.</li>
+  </ul>
+
+  <h2>Uyumluluk kökeni</h2>
+  <p>Öğretim sözlüğü, ortak sistem çağrıları, kullanıcı arayüzü kavramları ve öğretim modeli orijinalinden türetilmiştir. MARS Pete Sanderson ve Kenneth Vollmar'ın projesi. webMARS Java masaüstü entegrasyonunu tarayıcı API'leri ve kendi yürütme motoruyla değiştirirken bu kökeni korur.</p>
+
+  <h2>Sürüm kaydı</h2>
+  <p>The <b>webMARS → Değişiklik Günlüğü</b> yardım sayfası, sürüm bazında ayrıntılı proje kaydını içerir. Tarihsel kayıtlar, bunların yayınlanma durumunu açıklamaktadır; mevcut yapıda deneysel bir alt sistemin kalacağına dair sözler değiller.</p>
+
+  <div class="note">Dokümantasyon ve geçmiş değişiklik günlüğü girişi farklı olduğunda geçerli konu sayfaları ve geçerli çalışma zamanı davranışı öncelikli olur.</div>
+</body>
+</html>

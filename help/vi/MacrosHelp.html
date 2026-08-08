@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Macro trình biên dịch</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Macro trình biên dịch</h1>
+  <p class="lead">Macro thực hiện thay thế cấp nguồn trước khi lắp ráp thông thường. Họ yêu cầu hỗ trợ trình biên dịch mã mở rộng để được kích hoạt.</p>
+
+  <h2>Định nghĩa và sử dụng</h2>
+  <pre>.macro print_int (%value)
+    move $a0, %value
+    li   $v0, 1
+    syscall
+.end_macro
+
+li $t0, 42
+print_int ($t0)</pre>
+  <p>Dấu ngoặc đơn xung quanh các tham số và đối số lệnh gọi là tùy chọn. Các tham số là các mã thông báo được phân tách bằng dấu phẩy và chỉ được thay thế dưới dạng mã định danh chứ không phải bên trong chuỗi ký tự.</p>
+
+  <h2>Các quy tắc được thực hiện bởi webMARS</h2>
+  <ul>
+    <li>Một macro được xác định theo tên và tính chất của nó, do đó, cùng một tên có thể có các định nghĩa với số lượng tham số khác nhau.</li>
+    <li>Định nghĩa phải xuất hiện trước lời gọi của nó. Tham chiếu chuyển tiếp được báo cáo là có lỗi.</li>
+    <li>Định nghĩa macro lồng nhau không được phép.</li>
+    <li>Một định nghĩa kết thúc bằng một dòng chỉ chứa <code>.end_macro</code>.</li>
+    <li>Các định nghĩa trùng lặp có cùng tên và mức độ sẽ tạo ra cảnh báo và định nghĩa trùng lặp sẽ bị bỏ qua.</li>
+    <li>Các nhãn bên trong một bản mở rộng được tạo riêng cho mỗi lệnh gọi để tránh xung đột giữa các bản mở rộng.</li>
+    <li>Việc mở rộng là đệ quy, nhưng đệ quy không hợp lệ và các lệnh gọi không đúng định dạng được chẩn đoán thay vì tạo mã một cách âm thầm.</li>
+  </ul>
+
+  <h2>Các hằng số và bao gồm</h2>
+  <p><code>.eqv</code> cung cấp sự thay thế định danh cho các hằng số được đặt tên. <code>.include</code> là một phần của bộ chỉ thị trình biên dịch mã mở rộng và phân giải nguồn dự án nơi dự án trình duyệt hiện tại cung cấp nó. Thích tên liên quan đến dự án và giữ các nguồn được bao gồm trong cùng một dự án.</p>
+
+  <h2>Macro so với hướng dẫn giả</h2>
+  <p>Một lệnh giả được chọn từ tham chiếu lệnh của webMARS và mở rộng theo các mẫu toán hạng. Một macro được chương trình xác định và có thể chứa một chuỗi các câu lệnh nguồn tùy ý. Cả hai đều được mở rộng trước khi thực thi và có thể ánh xạ một dòng nguồn tới một số lệnh cơ bản.</p>
+
+  <div class="warning">Đối số macro là sự thay thế mã thông báo, không phải giá trị được nhập. Việc mở rộng hợp lệ về mặt cú pháp vẫn có thể tạo ra lỗi phạm vi hoặc loại trình biên dịch mã tại trang gọi.</div>
+</body>
+</html>

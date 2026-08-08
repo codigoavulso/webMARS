@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sınırlar ve uyumluluk</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>&amp; uyumluluğunu sınırlar</h1>
+  <p class="lead">webMARS tamamen modern bir tarayıcıda çalışırken pratik MARS 4.5 kaynak uyumluluğunu hedefler. Tarayıcı güvenliği, depolama ve ses kuralları hâlâ geçerlidir.</p>
+
+  <h2>Çalışma zamanı sınırları</h2>
+  <table>
+    <tr><th>Alan</th><th>Sınır veya davranış</th></tr>
+    <tr><td>Bellek</td><td>Kullanıcı tarafından seçilebilen 0,25–2 GiB, altında mimari sert tavan bulunur <code>0x80000000</code>. Seyrek ayırma, dokunulmamış adres alanının bayt bayt olarak işlenmediği anlamına gelir.</td></tr>
+    <tr><td>yığın</td><td><code>sbrk</code> yığın işaretçisini değiştirmeden önce imzasız rezervasyonun tamamını doğrular. İstekler yapılandırılmış bellek tavanını saramaz veya atlayamaz.</td></tr>
+    <tr><td>Çalışma zamanı dizeleri</td><td>Boş sonlandırılmış dizeler en fazla 1 MiB içerebilir. Eksik bir sonlandırıcı veya daha uzun bir dize, kesilmiş metni döndürmek yerine açık bir sistem çağrısı hatasına neden olur.</td></tr>
+    <tr><td>Geri adım</td><td>0–1.000.000 ters delta. Geçmiş, yapılandırılan bütçeyle sınırlanır ve geri adım etkinleştirildiğinde her zaman en son 100 tamamlanmış adım korunur.</td></tr>
+    <tr><td>Tarayıcı dosya depolama</td><td>Proje/oturum verileri tarayıcı kotasına tabidir; uygulama, uygun olduğu durumlarda kullanıcı tarayıcı depolama verilerini 1 MiB ile sınırlar ve gerekirse daha küçük kurtarma yüklerine geri döner.</td></tr>
+    <tr><td>Zamanlamayı çalıştır</td><td>Uyku, MIDI ve kullanıcı arayüzü zamanlaması tarayıcı tarafından planlanır ve döngü açısından doğru değildir.</td></tr>
+    <tr><td>Dağıtım</td><td>webMARS 0.5.5 statik bir web uygulamasıdır, kurulabilir/çevrimdışı değildir PWA. Dahil edilen yerel sunucu veya başka bir statik ana bilgisayar tarafından HTTP üzerinden sunulması gerekir.</td></tr>
+  </table>
+
+  <h2>Bellek haritaları</h2>
+  <table class="compact">
+    <tr><th>Bölge</th><th>Varsayılan taban</th></tr>
+    <tr><td>Kullanıcı metni</td><td><code>0x00400000</code></td></tr>
+    <tr><td>Statik veriler</td><td><code>0x10010000</code></td></tr>
+    <tr><td>yığın</td><td><code>0x10040000</code></td></tr>
+    <tr><td>İlk yığın işaretçisi</td><td><code>0x7ffffffc</code></td></tr>
+    <tr><td>Çekirdek istisna işleyicisi</td><td><code>0x80000180</code></td></tr>
+    <tr><td>MMIO</td><td><code>0xffff0000</code></td></tr>
+  </table>
+  <p>Sıkıştırılmış Veri ve Sıkıştırılmış Metin ön ayarları, karşılık gelen öğretme bölümlerini sıfır adresine taşır. Haritaları değiştirdikten sonra yeniden birleştirin.</p>
+
+  <h2>MIPS davranışı</h2>
+  <ul>
+    <li>Hafıza küçük-endian'dır. Kelime ve çift kelime işlemleri, MIPS kayıt/bellek sıralamasını kullanır.</li>
+    <li>Yanlış hizalanmış talimat alımları ve geçersiz yükleme/depolama adresleri, adres istisnalarına neden olur.</li>
+    <li>Mağazalar yazmadan önce hedefin tamamını doğrular, böylece başarısız bir mağaza geride kısmi bir değer bırakmaz.</li>
+    <li><code>LL</code>/<code>SC</code> Çakışan mağazaların geçersiz kıldığı bir rezervasyonu kullanın.</li>
+    <li>COP1 dönüşümleri, FCSR yuvarlama modlarını dikkate alır; kayan nokta girişi, sondaki sayısal olmayan metni reddeder.</li>
+    <li>Sıkı MARS uyumluluğuyla, kısmi sözcük yüklemeleri de dahil olmak üzere bellek işlemleri izin verilen segmentlerin içinde kalmalıdır.</li>
+  </ul>
+
+  <h2>Bilinen taşınabilirlik sınırları</h2>
+  <ul>
+    <li>Tarayıcı sanal dosya sistemi, ana işletim sisteminin sınırsız dosya sistemi değildir.</li>
+    <li>Web ses izni ve otomatik oynatma politikası, MIDI sistem çağrılarını etkileyebilir.</li>
+    <li>Açılır pencere engelleyicileri ve indirme politikası, dışa aktarılan dosyaları etkileyebilir.</li>
+    <li>Mini-C yalnızca belgelenmiş profillerini kabul eder; tam ISO C'ye dayanan kod, bir ana bilgisayar libc'si veya tanımlanmamış davranışı ona taşınabilir değildir.</li>
+    <li>Java sınıflarına veya masaüstü eklentilerine bağlı olan eski MARS uzantılar mevcut değildir.</li>
+  </ul>
+</body>
+</html>

@@ -1164,6 +1164,39 @@ function createWindowManager(refs) {
     window.setTimeout(() => entry.element.classList.remove("window-focus"), 180);
   }
 
+  // A pointer event inside an iframe never reaches this document, so a window
+  // whose content is a frame -- help, about, the document viewer -- stayed
+  // behind whatever was above it however often the reader clicked its text.
+  // Neither pointerdown nor focusin crosses the boundary; the listener has to
+  // live in the frame's own document.
+  function bindFrameFocus(entry) {
+    const raise = () => focus(entry.id, { skipRestore: true });
+
+    function attach(frame) {
+      let frameDocument = null;
+      try {
+        frameDocument = frame.contentDocument;
+      } catch {
+        // Cross-origin, or a plugin document such as the PDF viewer: the
+        // browser owns it and there is nothing we may bind.
+        return;
+      }
+      // Navigation installs a fresh document, so the flag rides on the
+      // document rather than the frame element.
+      if (!frameDocument || frameDocument.marsFocusBound) return;
+      frameDocument.marsFocusBound = true;
+      frameDocument.addEventListener("pointerdown", raise, true);
+    }
+
+    // Help and about build their frames after registration, and every
+    // navigation replaces the document. A capture-phase listener still sees
+    // load events aimed at descendants even though they do not bubble.
+    entry.element.addEventListener("load", (event) => {
+      if (event.target instanceof HTMLIFrameElement) attach(event.target);
+    }, true);
+    entry.element.querySelectorAll("iframe").forEach(attach);
+  }
+
   function pulse(windowId) {
     const resolvedId = resolveWindowId(windowId);
     const entry = windows.get(resolvedId);
@@ -2598,6 +2631,7 @@ function createWindowManager(refs) {
     bindControls(entry);
 
     win.addEventListener("pointerdown", () => focus(win.id, { skipRestore: true }));
+    bindFrameFocus(entry);
     win.addEventListener("pointerup", () => {
       if (isStackedMode() && isStackedFlowEntry(entry)) {
         layoutStackedWindows(true);
@@ -6642,6 +6676,20 @@ function injectRuntimeStyles() {
       min-height: 56px;
       resize: none;
       color: var(--text);
+    }
+
+    /* With a form present the description is a caption, not the content, so the
+       free row belongs to the fields. The stacked layout already did this; on
+       the desktop the message box stretched to fill the window while the
+       fields it introduces scrolled inside a short strip below it.
+       Three rows for three visible children: the text input is hidden here. */
+    .dialog-form-active .dialog-window-content {
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .dialog-form-active .dialog-message {
+      min-height: 0;
+      max-height: 84px;
     }
 
     .dialog-message.info {

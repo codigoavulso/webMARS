@@ -153,7 +153,7 @@
     id: "float-representation",
     label: "Floating Point Representation",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("float-representation", "Floating Point Representation, Version 1.1", 1150, 920, `
+      const shell = ctx.createToolWindowShell("float-representation", "Floating Point Representation, Version 1.1", 760, 500, `
         <div class="float-tool">
           <h2>32-bit IEEE 754 Floating Point Representation</h2>
           <div class="float-hex-row">

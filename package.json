@@ -1,6 +1,6 @@
 {
   "name": "webmars",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "private": true,
   "description": "Browser implementation of the MARS MIPS 4.5 assembler and simulator.",
   "license": "MIT",
@@ -12,6 +12,7 @@
     "build": "node scripts/check-static.mjs",
     "test": "node --test tests/core-regression.test.mjs tests/runtime-regression.test.mjs tests/runtime-isa-regression.test.mjs tests/runtime-memory-invariants.test.mjs tests/runtime-interrupt-regression.test.mjs tests/benchmark-regression.test.mjs tests/runtime-stop-regression.test.mjs tests/c-compiler-regression.test.mjs tests/tool-runtime-regression.test.mjs tests/cloud-sync-contract-regression.test.mjs tests/examples-catalog-regression.test.mjs tests/lessons-catalog-regression.test.mjs tests/help-documentation-regression.test.mjs tests/release-readiness.test.mjs",
     "test:regression": "node --test tests/core-regression.test.mjs tests/runtime-regression.test.mjs tests/runtime-isa-regression.test.mjs tests/runtime-memory-invariants.test.mjs tests/runtime-interrupt-regression.test.mjs tests/benchmark-regression.test.mjs tests/runtime-stop-regression.test.mjs tests/c-compiler-regression.test.mjs tests/tool-runtime-regression.test.mjs tests/cloud-sync-contract-regression.test.mjs tests/examples-catalog-regression.test.mjs tests/lessons-catalog-regression.test.mjs tests/help-documentation-regression.test.mjs tests/release-readiness.test.mjs",
+    "check:i18n": "node scripts/check-i18n-coverage.mjs",
     "package:release": "node scripts/package-release.mjs",
     "validate": "node scripts/validate.mjs"
   }

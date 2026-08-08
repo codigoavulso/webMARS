@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIPS webMARS의 예외</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>예외</h1>
+  <p class="lead">런타임 오류는 구성된 예외 처리기로 제어를 전송하거나 명시적인 이유로 실행을 종료합니다. 처리된 예외는 다음을 통해 계속될 수 있습니다. <code>eret</code>.</p>
+
+  <h2>구현된 예외 코드</h2>
+  <table class="compact">
+    <tr><th>Exc코드</th><th>의미</th><th>일반적인 원인</th></tr>
+    <tr><td>4</td><td>로드/가져오기 시 주소 오류</td><td>잘못 정렬된 명령어 주소 또는 로드 허용된 메모리 맵 외부의 주소입니다.</td></tr>
+    <tr><td>5</td><td>매장 주소 오류</td><td>잘못 정렬되었거나 잘못된 저장소 대상입니다.</td></tr>
+    <tr><td>8</td><td>시스템 호출/런타임 서비스 오류</td><td>잘못된 입력, 잘못된 서비스, 확인된 힙 요청 실패 또는 라이브러리 서비스 오류입니다.</td></tr>
+    <tr><td>9</td><td>중단점</td><td>A MIPS <code>break</code> 지시.</td></tr>
+    <tr><td>10</td><td>예약된 명령</td><td>알 수 없거나 지원되지 않는 인코딩된 명령어입니다.</td></tr>
+    <tr><td>12</td><td>산술 오버플로</td><td>검사된 산술 명령어의 부호 있는 오버플로입니다.</td></tr>
+    <tr><td>13</td><td>함정</td><td>트랩 조건은 true로 평가됩니다.</td></tr>
+    <tr><td>15</td><td>0으로 나누기</td><td>제로 제수가 있는 나눗셈.</td></tr>
+  </table>
+
+  <h2>보조 프로세서 0 상태</h2>
+  <table class="compact">
+    <tr><th>등록</th><th>번호</th><th>사용</th></tr>
+    <tr><td>BadVAddr</td><td>8</td><td>주소 오류로 인해 가상 주소에 오류가 발생했습니다.</td></tr>
+    <tr><td>상태</td><td>12</td><td>예외 수준 및 인터럽트 제어 상태.</td></tr>
+    <tr><td>원인</td><td>13</td><td>예외 코드, 보류 중인 인터럽트 상태 및 BD 지연 슬롯 플래그.</td></tr>
+    <tr><td>EPC</td><td>14</td><td>핸들러가 수정하거나 진행한 후 반환되는 주소입니다.</td></tr>
+  </table>
+
+  <h2>핸들러 흐름</h2>
+  <ol>
+    <li>런타임은 원인, EPC 및 BadVAddr을 적절하게 캡처하고 예외 수준으로 들어갑니다.</li>
+    <li>실행 가능한 핸들러 코드가 구성된 주소에 존재하는 경우 - 일반적으로 <code>0x80000180</code>—PC가 그곳으로 전송됩니다.</li>
+    <li>핸들러는 COP0 상태를 검사하고, 복구를 수행하고, 필요할 때 EPC를 조정하고, 다음을 실행합니다. <code>eret</code>.</li>
+    <li>핸들러가 없거나 안전하게 전송할 수 없는 예외가 발생하면 실행이 중단되고 실행 결과에 예외가 보고됩니다.</li>
+  </ol>
+
+  <div class="note"><strong>지연 슬롯.</strong> 분기 지연 슬롯에서 발생한 예외의 경우 Cause.BD가 설정되고 EPC는 지연 슬롯 주소가 아닌 분기 명령을 식별합니다.</div>
+
+  <h2>주소 및 매장 보증</h2>
+  <p>명령어 대상은 단어로 정렬되어야 합니다. 확인된 멀티바이트 저장소는 바이트를 커밋하기 전에 전체 대상을 검증하므로 주소 예외는 부분적으로 작성된 워드나 더블워드를 남길 수 없습니다. 엄격한 메모리 모드는 다음과 같은 부분 단어 연산에도 적용됩니다. <code>LWL</code> 그리고 <code>LWR</code>.</p>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Không gian làm việc và tập tin</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Tệp không gian làm việc &amp;</h1>
+  <p class="lead">Một dự án là đơn vị webMARS lưu trữ, biên dịch và lắp ráp. Nó có thể chứa một hoặc nhiều <code>.asm</code>/<code>.s</code> tập tin lắp ráp và Mini-C <code>.c</code> tập tin.</p>
+
+  <h2>Trình đơn tập tin</h2>
+  <table>
+    <tr><th>Lệnh</th><th>Hành vi hiện tại</th></tr>
+    <tr><td>Dự án mới</td><td>Tạo một dự án trống. Khi một dự án được mở, hãy thêm tệp nguồn C hoặc tập hợp từ menu con Mới.</td></tr>
+    <tr><td>Mở từ đĩa</td><td>Nhập các tập tin được chọn thông qua trình duyệt. Lựa chọn nhiều tập tin được hỗ trợ.</td></tr>
+    <tr><td>Mở từ bộ nhớ trình duyệt</td><td>Khôi phục dự án được lưu ở một trong các vị trí dự án cục bộ.</td></tr>
+    <tr><td>Lưu tệp hiện hoạt / Lưu dự án</td><td>Lưu nguồn hoạt động hoặc dự án hoàn chỉnh vào bộ lưu trữ của trình duyệt.</td></tr>
+    <tr><td>Tải xuống / Tải xuống dưới dạng</td><td>Xuất nội dung đang hoạt động thông qua hệ thống tải xuống của trình duyệt.</td></tr>
+    <tr><td>Ví dụ</td><td>Mở danh mục ví dụ có thể tìm kiếm và tuyển chọn, được nhóm theo ngôn ngữ và mục tiêu học tập.</td></tr>
+    <tr><td>Kết xuất I/O chạy</td><td>Tải xuống bản ghi đầu vào/đầu ra của chương trình hiện tại để chẩn đoán hoặc đánh giá.</td></tr>
+  </table>
+
+  <h2>Trình chỉnh sửa và điều hướng dự án</h2>
+  <ul>
+    <li>Sử dụng các tab nguồn để chuyển đổi tập tin đang hoạt động. Đóng một tập tin không đóng toàn bộ dự án.</li>
+    <li>Lỗi hội và chẩn đoán Mini-C xác định tệp nguồn và dòng bất cứ khi nào có sẵn.</li>
+    <li>Làm nổi bật nhãn, làm nổi bật cú pháp, kích thước phông chữ và khoảng cách dòng được kiểm soát trong <b>Cài đặt → Giao diện</b>.</li>
+    <li>Tập hợp Mini-C đã tạo có thể tự động mở trong cửa sổ riêng của nó khi tùy chọn đó được bật.</li>
+  </ul>
+
+  <h2>Xây dựng mô hình</h2>
+  <p><b>lắp ráp</b> xây dựng các nguồn lắp ráp đã chọn thành hình ảnh chương trình. <b>Biên dịch C0</b> dịch dự án C sang tập hợp MIPS; lắp ráp được tạo ra sau đó được lắp ráp trước khi thực hiện. Các dự án C gồm nhiều tệp được trình biên dịch giảng dạy liên kết thành một đơn vị dịch thuật.</p>
+
+  <h2>Các dự án đám mây và phục hồi cục bộ</h2>
+  <p>webMARS duy trì dữ liệu khôi phục trong bộ lưu trữ của trình duyệt để việc tải lại có thể khôi phục phiên làm việc. Năm vị trí dự án cục bộ rõ ràng tách biệt với phiên khôi phục đó.</p>
+  <p>các <b>đám mây</b> thực đơn là tùy chọn. Đăng nhập, mở/lưu dự án, đồng bộ hóa và làm mới giao tiếp với máy chủ đám mây đã được định cấu hình. Không bao giờ cần sử dụng đám mây để chỉnh sửa, biên dịch hoặc chạy cục bộ.</p>
+
+  <div class="warning"><strong>Bộ nhớ trình duyệt không phải là bản sao lưu vĩnh viễn.</strong> Duyệt web riêng tư, áp lực hạn ngạch, dọn dẹp trình duyệt hoặc lệnh Clear localStorage có thể xóa nó. Tải xuống tác phẩm phải được giữ lại.</div>
+</body>
+</html>

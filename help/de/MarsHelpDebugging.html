@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ausführen und debuggen</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Führen Sie das Debuggen &amp; aus</h1>
+  <p class="lead">Das Menü „Ausführen“ steuert eine JavaScript MIPS-Engine, die von den Registern, Speicheransichten, dem Debugger und verbundenen Tools gemeinsam genutzt wird.</p>
+
+  <h2>Ausführungskontrollen</h2>
+  <table>
+    <tr><th>Kontrolle</th><th>Bedeutung</th></tr>
+    <tr><td>Geh</td><td>Läuft bis zum normalen Abschluss, einem Haltepunkt, einem auf Eingaben wartenden Systemaufruf, einer nicht behandelten Ausnahme, einem Limit, einer Pause oder einem Stopp.</td></tr>
+    <tr><td>Pause</td><td>Unterbricht einen aktiven Lauf, während die Maschine erhalten bleibt, damit sie fortgesetzt werden kann.</td></tr>
+    <tr><td>Stopp</td><td>Beendet die Ausführung und bricht ausstehende asynchrone Arbeiten ab, beispielsweise einen langen Sleep-Systemaufruf. Ein gestopptes Programm wird nicht fortgesetzt.</td></tr>
+    <tr><td>Schritt</td><td>Führt eine Anweisung aus. Nach einem Haltepunktstopp überquert der nächste Go oder Step diesen Haltepunkt einmal, sodass er nicht sofort wieder an derselben Adresse stoppt.</td></tr>
+    <tr><td>Rückschritt</td><td>Stellt den zuvor aufgezeichneten Laufzeit-Snapshot bis zur konfigurierten Verlaufstiefe wieder her.</td></tr>
+    <tr><td>Zurücksetzen</td><td>Setzt das zusammengestellte Programm in seinen ursprünglichen Maschinenzustand zurück.</td></tr>
+  </table>
+
+  <h2>Haltepunkte und Quellenverfolgung</h2>
+  <p>Schalten Sie einen Haltepunkt im Randbereich des Editors neben einer ausführbaren Quellzeile um. Haltepunkte werden im Laufzeitstatus gespeichert und überleben den normalen Export-/Import-Roundtrip. Pseudoanweisungen können sich zu mehreren grundlegenden Anweisungen erweitern; Die Schrittfolge folgt den generierten Maschinenanweisungen, während die Hervorhebung der Quelle mit der Ursprungslinie verknüpft bleibt.</p>
+
+  <h2>Geschwindigkeits- und Leistungsstreifen</h2>
+  <p>Die Laufgeschwindigkeitssteuerung reicht von interaktiven Schrittraten bis hin zur Höchstgeschwindigkeit. Bei maximaler Geschwindigkeit reduziert webMARS teure Editor-Hervorhebungen und automatisches Scrollen, aber die Tools erhalten weiterhin vollständige Laufzeit-Snapshots und Trace-Informationen.</p>
+  <p>Der kompakte Benchmark-Streifen meldet das aktuelle Kompilierungs-, Assemble- und Ausführungs-Timing zusammen mit einem geschätzten Auslastungsprozentsatz von JavaScript CPU. Messungen sind lokal und flüchtig: Sie sind für den Vergleich von Arbeitslasten und Algorithmusänderungen gedacht und nicht als Prozessmessgerät für das Betriebssystem.</p>
+
+  <h2>Verzögerte Zweige und Ausnahmen</h2>
+  <p>Wenn die verzögerte Verzweigung aktiviert ist, ist der auf eine Verzweigung oder einen Sprung folgende Befehl der Delay-Slot-Befehls- und Link-Befehlsspeicher <code>PC + 8</code>. Ausnahmen, die in einem Verzögerungsschlitz ausgelöst werden, setzen das COP0 Cause BD-Bit und zeichnen die Verzweigungsadresse in EPC auf.</p>
+  <p>Wenn an der konfigurierten Handleradresse ein gültiger Ausnahmehandler vorhanden ist, wird die Ausführung dorthin übertragen und möglicherweise mit zurückgegeben <code>eret</code>. Andernfalls wird der Lauf mit einem expliziten Grund und einer expliziten Diagnose gestoppt.</p>
+
+  <div class="note"><strong>Backstep-Zielfernrohr.</strong> Snapshots umfassen Register, Speicher, Haltepunkte, Zufallsströme, Dateipositionen, ausstehende Eingaben, Programmargumente und Geräte-Image-Handles. Große Historien verbrauchen Speicher. Passen Sie daher das Limit an die Übung an.</div>
+</body>
+</html>

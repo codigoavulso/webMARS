@@ -42,7 +42,7 @@
     id: "mars-bot",
     label: "Mars Bot",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("mars-bot", "This is the MarsBot", 980, 780, `
+      const shell = ctx.createToolWindowShell("mars-bot", "This is the MarsBot", 880, 680, `
         <div class="mbot-tool">
           <div class="mbot-canvas-wrap"><canvas class="mbot-canvas" data-mb="canvas" width="760" height="560"></canvas></div>
           <div class="mbot-info" data-mb="info"></div>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS wywołania systemowe</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Wywołania systemowe</h1>
+  <p class="lead">Wpisz numer serwisowy <code>$v0</code>, umieść argumenty w rejestrach pokazanych poniżej i wykonaj <code>syscall</code>. Jeżeli w wierszu nie określono inaczej, zachowywane są rejestry inne niż udokumentowane wyniki.</p>
+
+  <h2>Konsola, pamięć i pliki</h2>
+  <table class="compact">
+    <tr><th>Serwis</th><th>Nie.</th><th>Argumenty</th><th>Wynik / zachowanie</th></tr>
+    <tr><td>Wydrukuj liczbę całkowitą</td><td>1</td><td><code>$a0</code> wartość</td><td>Zapisuje dziesiętne ze znakiem.</td></tr>
+    <tr><td>Drukuj pływak</td><td>2</td><td><code>$f12</code> wartość</td><td>Zapisuje z pojedynczą precyzją.</td></tr>
+    <tr><td>Drukuj podwójnie</td><td>3</td><td><code>$f12/$f13</code> wartość</td><td>Zapisuje podwójną precyzję.</td></tr>
+    <tr><td>Wydrukuj ciąg</td><td>4</td><td><code>$a0</code> Ciąg bajtów zakończony zerem</td><td>Pisze tekst.</td></tr>
+    <tr><td>Przeczytaj liczbę całkowitą</td><td>5</td><td>—</td><td><code>$v0</code>; pełne dane wejściowe muszą być prawidłową liczbą całkowitą.</td></tr>
+    <tr><td>Przeczytaj pływak</td><td>6</td><td>—</td><td><code>$f0</code>; końcowe śmieci są odrzucane.</td></tr>
+    <tr><td>Przeczytaj dwukrotnie</td><td>7</td><td>—</td><td><code>$f0/$f1</code>; końcowe śmieci są odrzucane.</td></tr>
+    <tr><td>Przeczytaj ciąg</td><td>8</td><td><code>$a0</code> bufor, <code>$a1</code> maksymalna długość</td><td>Przestrzega zasad długości i terminatora w stylu fgets.</td></tr>
+    <tr><td>sbrk</td><td>9</td><td><code>$a0</code> nieujemna liczba bajtów</td><td><code>$v0</code> poprzedni adres sterty; sprawdzone pod kątem mapy i limitu pamięci.</td></tr>
+    <tr><td>Wyjdź</td><td>10</td><td>—</td><td>Kończy się normalnie.</td></tr>
+    <tr><td>Wydrukuj znak</td><td>11</td><td>młodszy bajt <code>$a0</code></td><td>Zapisuje jeden znak.</td></tr>
+    <tr><td>Przeczytaj znak</td><td>12</td><td>—</td><td><code>$v0</code> kod znaku.</td></tr>
+    <tr><td>Otwórz plik</td><td>13</td><td><code>$a0</code> imię, <code>$a1</code> flagi</td><td><code>$v0</code> deskryptor lub błąd negatywny. Flagi: 0 odczytów, 1 zapis/utwórz, 9 dołącz/utwórz.</td></tr>
+    <tr><td>Przeczytaj plik</td><td>14</td><td><code>$a0</code> fd, <code>$a1</code> bufor, <code>$a2</code> liczyć</td><td><code>$v0</code> odczytane bajty, 0 w EOF lub błąd ujemny.</td></tr>
+    <tr><td>Zapisz plik</td><td>15</td><td><code>$a0</code> fd, <code>$a1</code> bufor, <code>$a2</code> liczyć</td><td><code>$v0</code> zapisanych bajtów lub błąd ujemny.</td></tr>
+    <tr><td>Zamknij plik</td><td>16</td><td><code>$a0</code> fd</td><td>Zamyka deskryptor pliku wirtualnego.</td></tr>
+    <tr><td>Wyjdź z kodem</td><td>17</td><td><code>$a0</code> kod</td><td>Kończy i zapisuje kod.</td></tr>
+  </table>
+  <p>Deskryptory 0, 1 i 2 to stdin, stdout i stderr. Deskryptory użytkownika zaczynają się od 3 i są obsługiwane przez wirtualny system plików przeglądarki; nie zapewniają nieograniczonego dostępu do pliku hosta.</p>
+
+  <h2>Formatowanie czasu, MIDI i liczb</h2>
+  <table class="compact">
+    <tr><th>Serwis</th><th>Nie.</th><th>Argumenty</th><th>Wynik / zachowanie</th></tr>
+    <tr><td>Czas systemowy</td><td>30</td><td>—</td><td>Niskie 32 bity <code>$a0</code>, wysokość 32 bity <code>$a1</code>, milisekund od epoki Uniksa.</td></tr>
+    <tr><td>MIDI wyszło</td><td>31</td><td><code>$a0</code> smoła, <code>$a1</code> czas trwania, <code>$a2</code> instrument, <code>$a3</code> objętość</td><td>Uruchamia się asynchronicznie.</td></tr>
+    <tr><td>Spać</td><td>32</td><td><code>$a0</code> milisekundy</td><td>Czeka, korzystając z taktowania przeglądarki; Zatrzymaj anuluje oczekiwanie.</td></tr>
+    <tr><td>MIDI wyjście synchroniczne</td><td>33</td><td>tak samo jak 31</td><td>Powraca po upływie czasu trwania sygnału.</td></tr>
+    <tr><td>Drukuj w formacie szesnastkowym</td><td>34</td><td><code>$a0</code></td><td>Osiem cyfr szesnastkowych.</td></tr>
+    <tr><td>Wydrukuj binarnie</td><td>35</td><td><code>$a0</code></td><td>Trzydzieści dwie cyfry binarne.</td></tr>
+    <tr><td>Drukuj bez podpisu</td><td>36</td><td><code>$a0</code></td><td>Ułamek dziesiętny bez znaku.</td></tr>
+  </table>
+  <p>MIDI korzysta z Web Audio API. Uprawnienia przeglądarki, zasady autoodtwarzania i ładowanie harmonogramu mogą mieć wpływ na moment uruchomienia dźwięku.</p>
+
+  <h2>Strumienie pseudolosowe</h2>
+  <table class="compact">
+    <tr><th>Serwis</th><th>Nie.</th><th>Argumenty</th><th>Wynik</th></tr>
+    <tr><td>Ustaw nasiona</td><td>40</td><td><code>$a0</code> identyfikator strumienia, <code>$a1</code> nasiona</td><td>Ustawia ten strumień.</td></tr>
+    <tr><td>Losowa liczba całkowita</td><td>41</td><td><code>$a0</code> identyfikator strumienia</td><td><code>$a0</code> losowa 32-bitowa liczba całkowita.</td></tr>
+    <tr><td>Losowy zakres liczb całkowitych</td><td>42</td><td><code>$a0</code> identyfikator strumienia, <code>$a1</code> związane dodatnio</td><td><code>$a0</code> w [0, związany).</td></tr>
+    <tr><td>Losowy pływak</td><td>43</td><td><code>$a0</code> identyfikator strumienia</td><td><code>$f0</code> w [0, 1).</td></tr>
+    <tr><td>Losowe podwójne</td><td>44</td><td><code>$a0</code> identyfikator strumienia</td><td><code>$f0/$f1</code> w [0, 1).</td></tr>
+  </table>
+  <p>Każdy identyfikator całkowity identyfikuje niezależny strumień deterministyczny. Strumienie są uwzględniane w wyeksportowanych migawkach stanu środowiska wykonawczego i migawkach wstecznych.</p>
+
+  <h2>Dialogi</h2>
+  <table class="compact">
+    <tr><th>Nie.</th><th>Serwis</th><th>Umowa</th></tr>
+    <tr><td>50</td><td>Potwierdź okno dialogowe</td><td><code>$a0</code> wiadomość; wybór powrócił <code>$a0</code> (Tak 0, Nie 1, Anuluj 2).</td></tr>
+    <tr><td>51</td><td>Wprowadź liczbę całkowitą</td><td><code>$a0</code> podpowiedź; wartość w <code>$a0</code>, stan w <code>$a1</code>.</td></tr>
+    <tr><td>52</td><td>Pływak wejściowy</td><td><code>$a0</code> podpowiedź; wartość w <code>$f0</code>, stan w <code>$a1</code>.</td></tr>
+    <tr><td>53</td><td>Wejście podwójne</td><td><code>$a0</code> podpowiedź; wartość w <code>$f0/$f1</code>, stan w <code>$a1</code>.</td></tr>
+    <tr><td>54</td><td>Ciąg wejściowy</td><td><code>$a0</code> podpowiedź, <code>$a1</code> bufor, <code>$a2</code> maksymalny; stan w <code>$a1</code>.</td></tr>
+    <tr><td>55–59</td><td>Okna dialogowe wiadomości</td><td>Wyświetlaj wiadomości zwykłe, całkowite, zmiennoprzecinkowe, podwójne lub łańcuchowe. Usługa 55 korzysta <code>$a1</code> dla typu wiadomości.</td></tr>
+  </table>
+  <p>Stan wejścia jest zgodny z konwencją MARS: 0 powodzenia, -1 nieprawidłowe wejście, -2 anulowanie i -3 puste wejście; Wejście łańcuchowe również używa -4 po obcięciu.</p>
+
+  <h2>webMARS usługi biblioteczne</h2>
+  <p>Usługi 60–103 obsługują dołączone biblioteki zgodności Mini-C. Preferuj nagłówki bibliotek, które zapewniają prawidłowe typy i protokół rejestru, zamiast bezpośrednio wywoływać te liczby.</p>
+  <table class="compact">
+    <tr><th>Zasięg</th><th>Usługi</th></tr>
+    <tr><td>60–64</td><td>równo, eof, readline, printf, format</td></tr>
+    <tr><td>65–69</td><td>plik_czytany, plik_zamknięty, plik_zamknięty, plik_eof, plik_czytany</td></tr>
+    <tr><td>70–73</td><td>args_flag, args_int, args_string, args_parse</td></tr>
+    <tr><td>74–84</td><td>długość łańcucha, indeksowanie, łączenie, podciąg, porównywanie, konwersje, małe litery, zakończenie i mostki tablicy znaków</td></tr>
+    <tr><td>85–92</td><td>analizowanie znaków, analizowanie wartości logicznych/całkowitych, analizowanie tokenów i pomocników zamiany liczb całkowitych na szesnastkowe</td></tr>
+    <tr><td>93–100</td><td>wymiary obrazu, tworzenie, klonowanie, podobraz, ładowanie, zapisywanie i dostęp do danych</td></tr>
+    <tr><td>101–103</td><td>Zakończenie ciągu C i konwersja ciągu natywnego/ciągu C</td></tr>
+  </table>
+</body>
+</html>

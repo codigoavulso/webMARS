@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS システムコール</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>システムコール</h1>
+  <p class="lead">サービス番号を入力します <code>$v0</code>、以下に示すレジスタに引数を入れて実行します。 <code>syscall</code>。行に特に記載がない限り、文書化された結果以外のレジスタは保存されます。</p>
+
+  <h2>コンソール、メモリ、ファイル</h2>
+  <table class="compact">
+    <tr><th>サービス</th><th>いいえ。</th><th>引数</th><th>結果・行動</th></tr>
+    <tr><td>整数を出力する</td><td>1</td><td><code>$a0</code> 値</td><td>符号付き 10 進数を書き込みます。</td></tr>
+    <tr><td>プリントフロート</td><td>2</td><td><code>$f12</code> 値</td><td>単精度を書き込みます。</td></tr>
+    <tr><td>両面印刷</td><td>3</td><td><code>$f12/$f13</code> 値</td><td>倍精度を書き込みます。</td></tr>
+    <tr><td>文字列を印刷する</td><td>4</td><td><code>$a0</code> ゼロで終わるバイト文字列</td><td>テキストを書き込みます。</td></tr>
+    <tr><td>整数の読み取り</td><td>5</td><td>—</td><td><code>$v0</code>;完全な入力は有効な整数である必要があります。</td></tr>
+    <tr><td>フロートの読み取り</td><td>6</td><td>—</td><td><code>$f0</code>;後続のジャンクは拒否されます。</td></tr>
+    <tr><td>ダブルリード</td><td>7</td><td>—</td><td><code>$f0/$f1</code>;後続のジャンクは拒否されます。</td></tr>
+    <tr><td>文字列の読み取り</td><td>8</td><td><code>$a0</code> バッファー、 <code>$a1</code> 最大長さ</td><td>fgets スタイルの長さとターミネータの規則に従います。</td></tr>
+    <tr><td>sbrk</td><td>9</td><td><code>$a0</code> 負でないバイト数</td><td><code>$v0</code> 以前のヒープアドレス。マップとメモリ制限に対してチェックされます。</td></tr>
+    <tr><td>終了</td><td>10</td><td>—</td><td>正常に終了します。</td></tr>
+    <tr><td>印刷文字</td><td>11</td><td>下位バイト <code>$a0</code></td><td>1文字を書きます。</td></tr>
+    <tr><td>文字を読む</td><td>12</td><td>—</td><td><code>$v0</code> 文字コード。</td></tr>
+    <tr><td>ファイルを開く</td><td>13</td><td><code>$a0</code> 名前、 <code>$a1</code> フラグ</td><td><code>$v0</code> 記述子または負のエラー。フラグ: 0 読み取り、1 書き込み/作成、9 追加/作成。</td></tr>
+    <tr><td>ファイルの読み取り</td><td>14</td><td><code>$a0</code> FD、 <code>$a1</code> バッファー、 <code>$a2</code> 数える</td><td><code>$v0</code> 読み取られたバイト数、EOF で 0、または負のエラー。</td></tr>
+    <tr><td>ファイルの書き込み</td><td>15</td><td><code>$a0</code> FD、 <code>$a1</code> バッファー、 <code>$a2</code> 数える</td><td><code>$v0</code> 書き込まれたバイト数または負のエラー。</td></tr>
+    <tr><td>ファイルを閉じる</td><td>16</td><td><code>$a0</code> fd</td><td>仮想ファイル記述子を閉じます。</td></tr>
+    <tr><td>コードで終了</td><td>17</td><td><code>$a0</code> コード</td><td>コードを終了して記録します。</td></tr>
+  </table>
+  <p>記述子 0、1、2 は stdin、stdout、stderr です。ユーザー記述子は 3 で始まり、ブラウザーの仮想ファイル システムによってサポートされます。無制限のホスト ファイル アクセスを許可するものではありません。</p>
+
+  <h2>時間、MIDI、および数値の書式設定</h2>
+  <table class="compact">
+    <tr><th>サービス</th><th>いいえ。</th><th>引数</th><th>結果・行動</th></tr>
+    <tr><td>システム時間</td><td>30</td><td>—</td><td>下位32ビット入力 <code>$a0</code>、上位 32 ビット <code>$a1</code>、Unix エポックからのミリ秒。</td></tr>
+    <tr><td>MIDI アウト</td><td>31</td><td><code>$a0</code> ピッチ、 <code>$a1</code> 期間、 <code>$a2</code> 楽器、 <code>$a3</code> ボリューム</td><td>非同期で起動します。</td></tr>
+    <tr><td>睡眠</td><td>32</td><td><code>$a0</code> ミリ秒</td><td>ブラウザのタイミングを使用して待機します。 Stop は待機をキャンセルします。</td></tr>
+    <tr><td>MIDI 出力同期</td><td>33</td><td>31と同じ</td><td>トーン持続時間が経過すると戻ります。</td></tr>
+    <tr><td>16 進数を出力します</td><td>34</td><td><code>$a0</code></td><td>8 桁の 16 進数。</td></tr>
+    <tr><td>バイナリを印刷する</td><td>35</td><td><code>$a0</code></td><td>2 進数 32 桁。</td></tr>
+    <tr><td>署名なしで印刷する</td><td>36</td><td><code>$a0</code></td><td>符号なし 10 進数。</td></tr>
+  </table>
+  <p>MIDI は Web オーディオ API を使用します。ブラウザの許可、自動再生ポリシー、スケジューラの負荷は、サウンドの開始時期に影響を与える可能性があります。</p>
+
+  <h2>擬似ランダムストリーム</h2>
+  <table class="compact">
+    <tr><th>サービス</th><th>いいえ。</th><th>引数</th><th>結果</th></tr>
+    <tr><td>シードを設定する</td><td>40</td><td><code>$a0</code> ストリームID、 <code>$a1</code> 種子</td><td>そのストリームを設定します。</td></tr>
+    <tr><td>ランダムな整数</td><td>41</td><td><code>$a0</code> ストリームID</td><td><code>$a0</code> ランダムな 32 ビット整数。</td></tr>
+    <tr><td>ランダムな整数の範囲</td><td>42</td><td><code>$a0</code> ストリームID、 <code>$a1</code> 正の境界</td><td><code>$a0</code> [0、バウンド) で。</td></tr>
+    <tr><td>ランダムフロート</td><td>43</td><td><code>$a0</code> ストリームID</td><td><code>$f0</code> [0, 1) で。</td></tr>
+    <tr><td>ランダムダブル</td><td>44</td><td><code>$a0</code> ストリームID</td><td><code>$f0/$f1</code> [0, 1) で。</td></tr>
+  </table>
+  <p>各整数 ID は、独立した決定論的なストリームを識別します。ストリームは、エクスポートされたランタイム状態とバックステップ スナップショットに含まれます。</p>
+
+  <h2>ダイアログ</h2>
+  <table class="compact">
+    <tr><th>いいえ。</th><th>サービス</th><th>契約書</th></tr>
+    <tr><td>50</td><td>確認ダイアログ</td><td><code>$a0</code> メッセージ;選択内容が返されました <code>$a0</code> (はい 0、いいえ 1、キャンセル 2)。</td></tr>
+    <tr><td>51</td><td>整数を入力してください</td><td><code>$a0</code> プロンプト;の値 <code>$a0</code>、ステータス <code>$a1</code>.</td></tr>
+    <tr><td>52</td><td>入力浮動小数点数</td><td><code>$a0</code> プロンプト;の値 <code>$f0</code>、ステータス <code>$a1</code>.</td></tr>
+    <tr><td>53</td><td>ダブル入力</td><td><code>$a0</code> プロンプト;の値 <code>$f0/$f1</code>、ステータス <code>$a1</code>.</td></tr>
+    <tr><td>54</td><td>入力文字列</td><td><code>$a0</code> プロンプト、 <code>$a1</code> バッファー、 <code>$a2</code> 最大。のステータス <code>$a1</code>.</td></tr>
+    <tr><td>55–59</td><td>メッセージダイアログ</td><td>プレーン、整数、浮動小数点、倍精度、または文字列のメッセージを表示します。サービス 55 件の利用 <code>$a1</code> メッセージタイプの場合。</td></tr>
+  </table>
+  <p>入力ステータスは MARS の規則に従います: 0 成功、-1 無効な入力、-2 キャンセル、および -3 空の入力。文字列入力も切り捨てられた場合に -4 を使用します。</p>
+
+  <h2>webMARS 図書館サービス</h2>
+  <p>サービス 60 ～ 103 は、バンドルされている Mini-C 互換ライブラリをサポートしています。これらの番号を直接呼び出すよりも、正しい型と登録プロトコルを提供するライブラリ ヘッダーを優先します。</p>
+  <table class="compact">
+    <tr><th>範囲</th><th>サービス</th></tr>
+    <tr><td>60–64</td><td>フラッシュ、eof、readline、printf、フォーマット</td></tr>
+    <tr><td>65–69</td><td>file_read、file_closed、file_close、file_eof、file_readline</td></tr>
+    <tr><td>70–73</td><td>args_flag、args_int、args_string、args_parse</td></tr>
+    <tr><td>74–84</td><td>文字列の長さ、インデックス付け、結合、部分文字列、比較、変換、小文字、終端、および文字配列ブリッジ</td></tr>
+    <tr><td>85–92</td><td>文字、ブール/整数の解析、トークンの解析、および整数から 16 進数へのヘルパー</td></tr>
+    <tr><td>93–100</td><td>イメージの寸法、作成、クローン、サブイメージ、ロード、保存、データ アクセス</td></tr>
+    <tr><td>101–103</td><td>C 文字列の終端とネイティブ文字列/C 文字列の変換</td></tr>
+  </table>
+</body>
+</html>

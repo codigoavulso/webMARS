@@ -268,7 +268,16 @@ function computeDisplayFitSize(metrics = {}) {
   };
 }
 
-function createToolManager(engine, messagesPane, windowManager, desktop) {
+function createToolManager(engine, messagesPane, windowManager, desktop, helpSystem = null) {
+  // Tools reach the embedded document viewer through the context rather than
+  // window.open: a help page belongs in the application's own mini-browser,
+  // where it follows the interface language and theme, not in a browser tab.
+  function openHelpDocument(path, title) {
+    if (typeof helpSystem?.openDocument !== "function") return false;
+    void helpSystem.openDocument(path, title);
+    return true;
+  }
+
   function dispatchToolLoaderEvent(name, detail) {
     try {
       window.dispatchEvent(new CustomEvent(name, { detail }));
@@ -292,6 +301,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
     { id: "mars-bot", label: "Mars Bot", script: "./tools/mars-bot.js" },
     { id: "memory-reference-visualization", label: "Memory Reference Visualization", script: "./tools/memory-reference-visualization.js" },
     { id: "mips-xray", label: "MIPS X-Ray", script: "./tools/mips-xray.js" },
+    { id: "pipeline-lab", label: "Pipeline Lab", script: "./tools/pipeline-lab.js" },
     { id: "scavenger-hunt", label: "ScavengerHunt", script: "./tools/scavenger-hunt.js" },
     { id: "screen-magnifier", label: "Screen Magnifier", script: "./tools/screen-magnifier.js" },
     { id: "system-clock", label: "System Clock and Timer", script: "./tools/system-clock.js" },
@@ -694,7 +704,31 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
     return { id, label, script };
   }
 
-  async function loadManifestAndScripts() {
+  // Tool modules are fetched when a tool is first opened rather than at
+  // startup. Nothing observes the runtime until open() builds its instance, so
+  // an unloaded tool and an unopened one behave identically -- the difference
+  // is ~460 KB that used to be spent before the first frame.
+  const toolScriptLoads = new Map();
+
+  function ensureToolScript(toolId) {
+    const definition = toolEntries.find((tool) => tool.id === toolId);
+    if (!definition || !definition.script || typeof definition.factory === "function") {
+      return Promise.resolve(true);
+    }
+    if (toolScriptLoads.has(toolId)) return toolScriptLoads.get(toolId);
+
+    const pending = loadScript(definition.script).then((loaded) => {
+      const plugin = registry.definitions.get(toolId);
+      if (plugin) {
+        upsertEntries([{ ...definition, label: plugin.label || definition.label, factory: plugin.create }]);
+      }
+      return loaded;
+    });
+    toolScriptLoads.set(toolId, pending);
+    return pending;
+  }
+
+  async function loadManifest() {
     let manifestTools = FALLBACK_TOOLS;
     let manifestLoadedFromDisk = false;
     try {
@@ -725,19 +759,8 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
 
     upsertEntries(manifestTools);
 
-    let scriptsLoaded = 0;
-    let scriptsFailed = 0;
-    for (const tool of manifestTools) {
-      if (!tool.script) continue;
-      const loaded = await loadScript(tool.script);
-      if (loaded) scriptsLoaded += 1;
-      else scriptsFailed += 1;
-      const plugin = registry.definitions.get(tool.id);
-      if (plugin) {
-        upsertEntries([{ ...tool, label: plugin.label || tool.label, factory: plugin.create }]);
-      }
-    }
-
+    // A tool that registered itself without appearing in the manifest still
+    // belongs in the menu.
     registry.definitions.forEach((plugin, id) => {
       if (!toolEntries.some((entry) => entry.id === id)) {
         upsertEntries([{ id, label: plugin.label || id, factory: plugin.create, script: "" }]);
@@ -745,17 +768,15 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
     });
 
     dispatchToolLoaderEvent("webmars:tools-ready", {
-      ok: scriptsFailed === 0,
+      ok: true,
       manifestLoadedFromDisk,
-      count: toolEntries.length,
-      scriptsLoaded,
-      scriptsFailed
+      count: toolEntries.length
     });
   }
 
   function ensureLoaded() {
     if (!loadPromise) {
-      loadPromise = loadManifestAndScripts();
+      loadPromise = loadManifest();
     }
     return loadPromise;
   }
@@ -779,6 +800,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
           createToolDeltaHistory,
           createDisplayFitController,
           runtimeControls: runtimeControlBridge,
+          openHelpDocument,
           nextPlacement
         });
 
@@ -884,7 +906,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop) {
       return toolEntries.map(({ id, label }) => ({ id, label }));
     },
     open(toolId) {
-      void ensureLoaded().finally(() => {
+      void ensureLoaded().then(() => ensureToolScript(toolId)).finally(() => {
         const alreadyCreated = instances.has(toolId);
         const tool = ensureToolInstance(toolId);
         if (!tool) {

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Area di lavoro e file</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>File dell'area di lavoro &amp;.</h1>
+  <p class="lead">Un progetto è l'unità che webMARS salva, compila e assembla. Può contenerne uno o più <code>.asm</code>/<code>.s</code> file di assieme e Mini-C <code>.c</code> file.</p>
+
+  <h2>Menù archivio</h2>
+  <table>
+    <tr><th>Comando</th><th>Comportamento attuale</th></tr>
+    <tr><td>Nuovo progetto</td><td>Crea un progetto vuoto. Una volta aperto un progetto, aggiungi i file sorgente C o assembly dal sottomenu Nuovo.</td></tr>
+    <tr><td>Apri da disco</td><td>Importa i file selezionati tramite il browser. Sono supportate selezioni di più file.</td></tr>
+    <tr><td>Apri da Archiviazione browser</td><td>Ripristina un progetto salvato in uno degli slot di progetto locale.</td></tr>
+    <tr><td>Salva file attivo/Salva progetto</td><td>Salva la sorgente attiva o il progetto completo nella memoria del browser.</td></tr>
+    <tr><td>Scarica / Scarica come</td><td>Esporta il contenuto attivo tramite il sistema di download del browser.</td></tr>
+    <tr><td>Esempi</td><td>Apre il catalogo di esempi curato e ricercabile, raggruppato per lingua e obiettivo di apprendimento.</td></tr>
+    <tr><td>Scarica I/O di esecuzione</td><td>Scarica la trascrizione di input/output corrente del programma per la diagnosi o la valutazione.</td></tr>
+  </table>
+
+  <h2>Editor e navigazione del progetto</h2>
+  <ul>
+    <li>Utilizza le schede di origine per cambiare il file attivo. La chiusura di un file non chiude l'intero progetto.</li>
+    <li>Gli errori di assemblaggio e la diagnostica Mini-C identificano il file e la riga di origine quando disponibili.</li>
+    <li>Vengono controllate l'evidenziazione dell'etichetta, l'evidenziazione della sintassi, la dimensione del carattere e l'interlinea <b>Impostazioni → Interfaccia</b>.</li>
+    <li>L'assembly Mini-C generato può aprirsi automaticamente nella propria finestra quando tale preferenza è abilitata.</li>
+  </ul>
+
+  <h2>Costruisci modello</h2>
+  <p><b>Assemblare</b> costruisce le origini dell'assembly selezionato in un'immagine del programma. <b>Compila C0</b> traduce il progetto C nell'assembly MIPS; l'assembly generato viene quindi assemblato prima dell'esecuzione. I progetti C multifile sono collegati come un'unica unità di traduzione dal compilatore didattico.</p>
+
+  <h2>Progetti di ripristino locale e cloud</h2>
+  <p>webMARS mantiene i dati di ripristino nella memoria del browser in modo che un ricaricamento possa ripristinare la sessione di lavoro. I cinque slot di progetto locale espliciti sono separati da quella sessione di ripristino.</p>
+  <p>Il <b>Nuvola</b> il menu è facoltativo. Login, apertura/salvataggio progetto, sincronizzazione e aggiornamento comunicano con il server cloud configurato. L'uso del cloud non è mai richiesto per la modifica, la compilazione o l'esecuzione locale.</p>
+
+  <div class="warning"><strong>L'archiviazione del browser non è un backup permanente.</strong> La navigazione privata, la pressione sulle quote, la pulizia del browser o il comando Cancella localStorage possono rimuoverlo. Scaricare il lavoro che deve essere conservato.</div>
+</body>
+</html>

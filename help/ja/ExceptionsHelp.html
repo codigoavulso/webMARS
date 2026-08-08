@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIPS の例外 webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>例外</h1>
+  <p class="lead">実行時エラーは、設定された例外ハンドラーに制御を移すか、明示的な理由で実行を終了します。処理された例外は継続できる <code>eret</code>.</p>
+
+  <h2>実装された例外コード</h2>
+  <table class="compact">
+    <tr><th>ExcCode</th><th>意味</th><th>代表的な原因</th></tr>
+    <tr><td>4</td><td>ロード/フェッチ時のアドレスエラー</td><td>命令アドレスまたはロードの位置がずれています。許可されたメモリマップ外のアドレスです。</td></tr>
+    <tr><td>5</td><td>ストア上の住所エラー</td><td>格納先が正しくないか、無効です。</td></tr>
+    <tr><td>8</td><td>システムコール/ランタイムサービスエラー</td><td>無効な入力、無効なサービス、チェックされたヒープ要求の失敗、またはライブラリ サービス エラー。</td></tr>
+    <tr><td>9</td><td>ブレークポイント</td><td>A MIPS <code>break</code> 指示。</td></tr>
+    <tr><td>10</td><td>予約命令</td><td>不明またはサポートされていないエンコードされた命令です。</td></tr>
+    <tr><td>12</td><td>算術オーバーフロー</td><td>チェックされた算術命令での符号付きオーバーフロー。</td></tr>
+    <tr><td>13</td><td>トラップ</td><td>トラップ条件は true と評価されます。</td></tr>
+    <tr><td>15</td><td>ゼロで割る</td><td>除数がゼロの除算。</td></tr>
+  </table>
+
+  <h2>コプロセッサ0の状態</h2>
+  <table class="compact">
+    <tr><th>登録する</th><th>番号</th><th>使用する</th></tr>
+    <tr><td>BadVAddr</td><td>8</td><td>アドレス エラーの障害のある仮想アドレス。</td></tr>
+    <tr><td>ステータス</td><td>12</td><td>例外レベルと割り込み制御状態。</td></tr>
+    <tr><td>原因</td><td>13</td><td>例外コード、保留中の割り込み状態、および BD 遅延スロット フラグ。</td></tr>
+    <tr><td>EPC</td><td>14</td><td>ハンドラーを修正または進めた後に戻るアドレス。</td></tr>
+  </table>
+
+  <h2>ハンドラーフロー</h2>
+  <ol>
+    <li>ランタイムは、Cause、EPC、および BadVAddr を必要に応じてキャプチャし、例外レベルに入ります。</li>
+    <li>実行可能なハンドラー コードが構成されたアドレスに存在する場合、通常は <code>0x80000180</code>—PC がそこに転送されます。</li>
+    <li>ハンドラーは COP0 状態を検査し、その回復を実行し、必要に応じて EPC を調整し、実行します <code>eret</code>.</li>
+    <li>ハンドラーが存在しない場合、または安全に転送できない例外が発生した場合、実行は停止し、実行結果で例外が報告されます。</li>
+  </ol>
+
+  <div class="note"><strong>遅延スロット。</strong> 分岐遅延スロットで発生した例外の場合、Cause.BD が設定され、EPC は遅延スロット アドレスではなく分岐命令を識別します。</div>
+
+  <h2>住所と店舗の保証</h2>
+  <p>命令ターゲットはワードアライメントされている必要があります。チェックされたマルチバイト ストアでは、バイトをコミットする前に宛先全体が検証されるため、アドレス例外によって部分的に書き込まれたワードまたはダブルワードが残ることはありません。ストリクト メモリ モードは、次のような部分ワード操作にも適用されます。 <code>LWL</code> そして <code>LWR</code>.</p>
+</body>
+</html>

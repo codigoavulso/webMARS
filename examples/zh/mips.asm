@@ -1,6 +1,6 @@
 #MARS-OS 1.0 - 完整的交互式TTY操作环境
 #打开工具 > TTY 设备 + ANSI 终端，连接到 MIPS，
-#组装此项目并为鼠标 UI 键入“桌面”或“帮助”。
+#组装并运行；它打开鼠标桌面。启动 shell 的终端。
 #
 #该文件仅保存本地化文本。内核本身位于
 #底部包含的语言中性模块：
@@ -223,8 +223,9 @@ sheet_menu: .asciiz " ESC   s save   q quit   x save and exit   c clear cell   r
 sheet_closed: .asciiz "sheet: closed "
 msg_sheet_usage: .asciiz "usage: sheet FILE   the sheet is created when it does not exist\r\n"
 
-#---- 鼠标桌面 ----
-# English ASCII fallback: the terminal font is byte-oriented.
+#---- 窗口桌面 ----
+#菜单栏标题和菜单条目。桌面上的菜单布局如下
+#这些字符串，因此较长的翻译只会使菜单更宽。
 desktop_start: .asciiz "[ Start ]"
 mb_system:   .asciiz "System"
 mb_programs: .asciiz "Programs"
@@ -264,7 +265,7 @@ mi_close:      .asciiz "Close window"
 mi_close_all:  .asciiz "Close all"
 mi_keys:       .asciiz "Keyboard and mouse"
 
-# Window titles are indexed by the desktop window kind.
+#窗口标题，按窗口类型索引。
 wt_programs: .asciiz "Program Manager"
 wt_about:    .asciiz "About"
 wt_files:    .asciiz "File Manager"

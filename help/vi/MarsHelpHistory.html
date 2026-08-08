@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS lịch sử</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Lịch sử</h1>
+  <p class="lead">webMARS bắt đầu như một cổng trình duyệt của MARS 4.5 MIPS mô phỏng. Bây giờ nó kết hợp một độc lập JavaScript thời gian chạy, trình soạn thảo, trình gỡ lỗi, Mini-C trình biên dịch, quy trình làm việc dự án cục bộ/đám mây và các công cụ gốc của trình duyệt.</p>
+
+  <h2>Dòng phát triển hiện tại</h2>
+  <ul>
+    <li><strong>Thời gian chạy chỉ JavaScript.</strong> Đường dẫn kết hợp/WASM thử nghiệm đã bị xóa sau khi phép đo cho thấy rằng đường dẫn này đã tăng thêm độ phức tạp mà không có sự cải thiện đáng kể cho khối lượng công việc này.</li>
+    <li><strong>Độ chính xác của thời gian chạy.</strong> Công việc gần đây đã tăng cường đặt hàng từ kép COP1, lưu trữ bộ nhớ nguyên tử, đặt chỗ heap, LL/SC, địa chỉ nghiêm ngặt, liên kết nhánh bị trì hoãn, làm tròn FCSR, tiếp tục ngoại lệ và hành vi Dừng.</li>
+    <li><strong>Hoàn thành ảnh chụp nhanh trạng thái.</strong> Xuất/nhập và lùi lại hiện chiếm các luồng ngẫu nhiên, tệp ảo và con trỏ, stdin, đối số chương trình, bộ điều khiển hình ảnh và điểm dừng.</li>
+    <li><strong>Khả năng quan sát hiệu suất.</strong> Ứng dụng báo cáo thời gian Biên dịch, Lắp ráp và Chạy cục bộ cộng với mức sử dụng JavaScript ước tính, trong khi việc thực thi ở tốc độ tối đa giúp giảm chi phí trình bày mà không làm thiếu các công cụ ở trạng thái thời gian chạy.</li>
+    <li><strong>Mini-C tiến hóa.</strong> Các tập hợp con giảng dạy C0 vẫn có sẵn cùng với lệnh gọi C1-NATIVE, o32, chuỗi byte, đối số, con trỏ hàm, dự án nhiều tệp và thư viện tương thích.</li>
+    <li><strong>Ví dụ như một chương trình giảng dạy</strong> Các ví dụ về Assembly và C được phân loại theo mục đích, ngôn ngữ và cấu hình trình biên dịch tối thiểu, với các biến thể đa ngôn ngữ và các dự án nhiều tệp.</li>
+  </ul>
+
+  <h2>Dòng tương thích</h2>
+  <p>Từ vựng hướng dẫn, các tòa nhà chung, khái niệm giao diện người dùng và mô hình giảng dạy đều bắt nguồn từ bản gốc MARS dự án của Pete Sanderson và Kenneth Vollmar. webMARS duy trì dòng dõi đó trong khi thay thế tích hợp máy tính để bàn Java bằng API trình duyệt và công cụ thực thi của riêng nó.</p>
+
+  <h2>Bản ghi phiên bản</h2>
+  <p>các <b>webMARS → Nhật ký thay đổi</b> trang trợ giúp chứa bản ghi dự án chi tiết theo từng phiên bản. Các mục lịch sử mô tả trạng thái phát hành của chúng; chúng không phải là lời hứa rằng hệ thống con thử nghiệm vẫn còn trong bản dựng hiện tại.</p>
+
+  <div class="note">Khi tài liệu và mục nhật ký thay đổi lịch sử khác nhau, các trang chủ đề hiện tại và hành vi thời gian chạy hiện tại sẽ được ưu tiên.</div>
+</body>
+</html>

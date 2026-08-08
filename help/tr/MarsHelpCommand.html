@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C derleyici</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">Yerleşik öğretme derleyicisi, o32 çağırma kuralını kullanarak kasıtlı olarak tanımlanmış bir C alt kümesini MIPS32 derlemesine çevirir. Genel amaçlı bir ISO C derleyicisi değildir.</p>
+
+  <h2>Profiller</h2>
+  <table>
+    <tr><th>Profil</th><th>Amaç</th></tr>
+    <tr><td><code>C0-S0</code> için <code>C0-S4</code></td><td>İfadelerden ve kontrol akışından işlevlere, dizilere, işaretçilere, yapılara, yazı tanımlarına, sözleşmelere ve kitaplıklara ilerleyen kümülatif öğretim alt kümeleri.</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>Varsayılan, en yetenekli profil: bayt adresli <code>char</code>/<code>char *</code>, yerel dizeler, <code>argc/argv</code>, işlev işaretçileri ve <code>void *</code>.</td></tr>
+  </table>
+  <p>Bir kaynak daha yüksek bir profil gerektiriyorsa derleme odaklanmış bir profil yayınlar <code>MC_SUBSET_MISMATCH</code> bir dizi ikincil hatadan ziyade tanısaldır.</p>
+
+  <h2>Bir proje derleyin</h2>
+  <ol class="steps">
+    <li>İstediğiniz profili ve çıktı seçeneklerini seçin. <b>Ayarlar → Mini-C tercihleri</b>.</li>
+    <li>Bir veya daha fazlasını açın <code>.c</code> Aynı projedeki dosyalar.</li>
+    <li>Seç <b>Çalıştır → C0'ı Derle</b> veya tuşuna basın <kbd>F4</kbd>.</li>
+    <li>Tanılamayı gözden geçirin ve oluşturulan MIPS düzeneğini inceleyin. Oluşturulan programı normal şekilde birleştirin ve çalıştırın.</li>
+  </ol>
+
+  <h2>Çağrı kuralı ve giriş noktası</h2>
+  <ul>
+    <li>Argümanların kullanımı <code>$a0</code>–<code>$a3</code>, ek argümanlar yığını kullanır ve dönüş değerleri kullanılır <code>$v0</code> (ve <code>$v1</code> uygun olduğunda).</li>
+    <li>Callee tarafından kaydedilen kayıtlar ve yığın çerçeveleri MIPS o32 beklentilerini karşılar.</li>
+    <li><code>main(void)</code> ve, C1-NATIVE içinde, <code>main(int argc, char **argv)</code> desteklenmektedir.</li>
+    <li>webMARS program argümanları için, <code>argv[0]</code> kullanıcı tarafından sağlanan ilk jetondur; otomatik yürütülebilir dosya adı girişi yoktur.</li>
+  </ul>
+
+  <h2>Paketlenmiş başlıklar ve kitaplıklar</h2>
+  <p>
+    <span class="pill">stdio</span><span class="pill">konio</span><span class="pill">dosya</span>
+    <span class="pill">argümanlar</span><span class="pill">dize</span><span class="pill">string_native</span>
+    <span class="pill">ayrıştırmak</span><span class="pill">img</span><span class="pill">faydalanmak</span>
+    <span class="pill">rand</span><span class="pill">C tipi</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">stddef</span><span class="pill">bitmap_rect</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>Bu başlıklar webMARS etrafında oluşturulmuş uyumluluk kitaplıkları MIPS sistem çağrıları ve cihazlar. Ana bilgisayar C standart kitaplığının tamamını değil, belgelenmiş alt kümelerini uygularlar.</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> ayrıca sağlar <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> ve <code>bitmap_configure_all</code>, bir C0 programının ekran boyutunu, birim boyutunu ve çerçeve arabellek adresini Bitmap araçlarına göndermesine olanak tanır.</p>
+
+  <h2>İyi başlangıç örnekleri</h2>
+  <ul>
+    <li><b>Merhaba Dünya (C)</b> en küçük tam program için.</li>
+    <li><b>Mini-C C1 Yerel</b> yerel dizeler ve geçerli profil davranışı için.</li>
+    <li><b>Argüman Kitaplığı Demosu</b> için <code>argc/argv</code>.</li>
+    <li><b>Çoklu Dosya İstatistikleri</b> proje çapında derleme ve dosyalar arasında işlev çağrıları için.</li>
+    <li><b>stdio Konsol Temelleri</b> ve <b>stdio Dosyası Gidiş Dönüşü</b> uyumluluk kitaplıkları için.</li>
+  </ul>
+
+  <div class="note">Depodaki derleyici kılavuzu normatif, ayrıntılı dil referansı olmaya devam ediyor. Uygulama içi sayfa, bir profil seçmek ve örnekleri doğru bir şekilde çalıştırmak için gereken davranışları özetler.</div>
+</body>
+</html>

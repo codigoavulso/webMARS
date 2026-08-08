@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS ustawienia</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Ustawienia</h1>
+  <p class="lead">Ustawienia obejmują prezentację źródła, zgodność z asemblerem, dane wyjściowe Mini-C, trwałość, dostęp do chmury i limity czasu działania.</p>
+
+  <h2>Szybkie ustawienia</h2>
+  <table>
+    <tr><th>Ustawienie</th><th>Efekt</th></tr>
+    <tr><td>Pokaż etykiety</td><td>Wyświetla etykiety obok adresów w widokach środowiska wykonawczego, jeśli są dostępne.</td></tr>
+    <tr><td>Argumenty programu</td><td>Monituje o argumenty przed uruchomieniem. <code>$a0</code> odbiera argc i <code>$a1</code> otrzymuje argv; Mini-C C1-NATIVE udostępnia te same dane <code>main(int argc, char **argv)</code>.</td></tr>
+    <tr><td>Wyskakujące wywołania systemowe wejściowe</td><td>Używa okien dialogowych formularzy dla usług wejściowych konsoli 5, 6, 7, 8 i 12 zamiast panelu Uruchom we/wy.</td></tr>
+    <tr><td>Podziel wiadomości/Uruchom we/wy</td><td>Pokazuje jednocześnie komunikaty kompilacji i wejścia/wyjścia programu.</td></tr>
+    <tr><td>Adresy/wartości szesnastkowe</td><td>Przełącza tabele wykonawcze między prezentacją szesnastkową i dziesiętną. Nie zmienia przechowywanych bitów.</td></tr>
+  </table>
+
+  <h2>Zgodność asemblera i wykonania</h2>
+  <ul>
+    <li><b>Montaż na otwartym</b> i <b>Zmontuj wszystkie pliki</b> zautomatyzować wybrany zakres kompilacji.</li>
+    <li><b>Traktuj ostrzeżenia jako błędy</b> powoduje niepowodzenie montażu ostrzeżeń.</li>
+    <li><b>Zacznij od głównego</b> zaczyna się od globala <code>main</code> etykietę, jeśli jest obecna.</li>
+    <li><b>Rozszerzone (pseudo)instrukcje</b> włącza katalog pseudoinstrukcji pokazany w Pomocy.</li>
+    <li><b>Opóźnione rozgałęzianie</b> umożliwia architektoniczne zachowanie szczeliny opóźnienia.</li>
+    <li><b>Samomodyfikujący się kod</b> pozwala na zapis do pamięci wykonywalnej. Włącz tę opcję tylko dla programów, które celowo tego wymagają.</li>
+  </ul>
+
+  <h2>Interfejs</h2>
+  <p>Wybierz motyw interfejsu (jasny lub ciemny), język interfejsu użytkownika, układ menu górnego lub bocznego, rozmiar czcionki edytora, odstępy między wierszami i zachowanie podświetlania. Dostępne są interfejsy w języku angielskim, hiszpańskim, portugalskim, chińskim mandaryńskim, hindi, arabskim, francuskim, bengalskim, rosyjskim, indonezyjskim, niemieckim, japońskim, koreańskim, tureckim, wietnamskim, urdu, włoskim, polskim, perskim i tajskim; pomoc jest zgodna z aktywnym językiem interfejsu użytkownika. Arabski, urdu i perski automatycznie przełączają interfejs z prawej na lewą. Podczas pierwszej wizyty webMARS używa obsługiwanego języka przeglądarki lub wraca do języka angielskiego; jawny wybór jest zapisywany i ma priorytet. Wybrany motyw jest zapisywany wraz z Twoimi preferencjami i stosowany w całym interfejsie, łącznie z narzędziami i oknami pomocy.</p>
+
+  <h2>Pamięć uruchomieniowa &amp;.</h2>
+  <table>
+    <tr><th>Preferencje</th><th>Zakres / wybory</th></tr>
+    <tr><td>Konfiguracja pamięci</td><td>Domyślne, kompaktowe dane pod adresem 0 lub kompaktowy tekst pod adresem 0.</td></tr>
+    <tr><td>Maksymalna pamięć</td><td>0,25–2 GiB, w zależności od praktycznych ograniczeń pamięci przeglądarki.</td></tr>
+    <tr><td>Historia wsteczna</td><td>0–1 000 000 zarejestrowanych kroków; domyślnie 100.</td></tr>
+    <tr><td>Procedura obsługi wyjątków</td><td>W pełni prawidłowy adres MIPS, domyślny <code>0x80000180</code>.</td></tr>
+  </table>
+
+  <h2>Trwałość i chmura</h2>
+  <p><b>Stan sklepu</b> i <b>Stan obciążenia</b> zarządzaj pełną lokalną migawką środowiska wykonawczego. <b>Wyczyść lokalną pamięć masową</b> usuwa preferencje webMARS, zapisane projekty, stan przywracania i pozycje narzędzi po potwierdzeniu.</p>
+  <p><b>Serwer w chmurze</b> zmienia punkt końcowy używany przez opcjonalne menu Chmura. Poświadczenia i dane projektu są wysyłane tylko wtedy, gdy wywołujesz funkcje chmury.</p>
+
+  <div class="warning">Zmiana mapy pamięci lub opcji kompatybilności asemblera unieważnia założenia przyjęte przez już zmontowany program. Po ich wymianie zmontuj ponownie.</div>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS nhật ký thay đổi</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Nhật ký thay đổi</h1>
+  <p class="lead">Bản phát hành 0.5.5 giới thiệu Phòng thí nghiệm Pipeline và mở rộng toàn bộ môi trường học tập lên hai mươi ngôn ngữ.</p>
+
+  <h2>0.5.5 &mdash; Phòng thí nghiệm Pipeline và hai mươi ngôn ngữ</h2>
+  <ul>
+    <li>Thêm pipeline năm giai đoạn xác định với xung đột RAW, chuyển tiếp, dừng, chu kỳ có thể đảo ngược, số liệu và dòng thời gian có thể mở rộng.</li>
+    <li>Mở rộng giao diện, ví dụ, tài liệu và trợ giúp từ mười lên hai mươi ngôn ngữ.</li>
+    <li>Mở rộng hành vi đáp ứng của công cụ, bản địa hóa và phạm vi kiểm thử hồi quy.</li>
+  </ul>
+
+  <h2>0.5.4 &mdash; MARS-OS máy tính để bàn, màn hình ảo và chủ đề hệ thống</h2>
+  <ul>
+    <li>Đã hoàn thiện trải nghiệm Windows 95 kiểu MARS-OS với menu Bắt đầu, trình khởi chạy ứng dụng và các cửa sổ có thể di chuyển, thay đổi kích thước.</li>
+    <li>Cải thiện thiết bị đầu cuối TTY ANSI, đầu vào chuột, hoạt động phản hồi trên thiết bị di động và các ứng dụng MARS-OS.</li>
+    <li>Đã bật cửa sổ Fit để hiển thị theo mặc định trong TTY ANSI, Bitmap Display và Bitmap Terminal.</li>
+    <li>Cài đặt hiển thị ảo được thu gọn theo mặc định trên cả bố cục máy tính để bàn và thiết bị di động.</li>
+    <li>Đã thêm chủ đề Hệ thống tự động tuân theo bảng màu của trình duyệt, với các phần ghi đè Sáng và Tối rõ ràng.</li>
+  </ul>
+
+  <h2>0.5.3 &mdash; bản sửa lỗi khởi động ngôn ngữ trình duyệt</h2>
+  <ul>
+    <li>Giữ nguyên ngôn ngữ được phát hiện từ trình duyệt khi ứng dụng tạo tùy chọn giao diện người dùng mặc định lần đầu tiên.</li>
+    <li>Giữ các tùy chọn ngôn ngữ đã lưu rõ ràng trước khi tự động phát hiện và giữ lại tiếng Anh làm ngôn ngữ dự phòng cho các ngôn ngữ không được hỗ trợ.</li>
+    <li>Đã thêm phạm vi hồi quy cho các ngôn ngữ trình duyệt khu vực và khởi động tùy chọn phiên mới đầy đủ.</li>
+  </ul>
+
+  <h2>0.5.2 &mdash; mười ngôn ngữ, lựa chọn tự động, máy tính để bàn MARS-OS</h2>
+  <ul>
+    <li>Mở rộng giao diện hoàn chỉnh, danh mục mẫu, tài liệu và trợ giúp từ tiếng Anh, tiếng Tây Ban Nha và tiếng Bồ Đào Nha sang 10 ngôn ngữ, thêm tiếng Trung phổ thông, tiếng Hindi, tiếng Ả Rập, tiếng Pháp, tiếng Bengali, tiếng Nga và tiếng Indonesia.</li>
+    <li>Đã thêm tính năng phát hiện ngôn ngữ trình duyệt trong lần truy cập đầu tiên với tính năng chuẩn hóa mã vùng và dự phòng tiếng Anh, trong khi vẫn duy trì các tùy chọn đã lưu rõ ràng.</li>
+    <li>Đã thêm bố cục tiếng Ả Rập từ phải sang trái trong khi vẫn giữ mã nguồn, đầu ra thời gian chạy và ký hiệu kỹ thuật từ trái sang phải.</li>
+    <li>Đã làm lại MARS-OS thành máy tính để bàn điều khiển bằng chuột, mở trực tiếp trong Trình quản lý chương trình và chạy các lệnh shell bên trong ứng dụng Terminal.</li>
+    <li>Cải thiện thông lượng TTY, kích thước thiết bị di động nhận biết bàn phím Android và khoảng cách dọc trên màn hình.</li>
+    <li>Đã thêm tính năng tạo nội địa hóa có thể tái tạo, thuật ngữ kỹ thuật được bảo vệ và phạm vi hồi quy đầy đủ của mười ngôn ngữ.</li>
+  </ul>
+
+  <h2>0.5.1 &mdash; ngắt thiết bị, công cụ thời gian chạy, MARS-đồng hồ hệ điều hành</h2>
+  <ul>
+    <li>Đã triển khai các ngắt bên ngoài đồng thời cho bộ hẹn giờ, bàn phím, màn hình và bàn phím thập lục phân của Digital Lab, với tính năng che mặt bên CPU và phân phối trạng thái chờ xử lý.</li>
+    <li>Đã thêm các công cụ Đồng hồ hệ thống và Trình hiển thị ngăn xếp, bao gồm các đồng bằng thưa thớt tập trung tương thích với các bước lùi chính xác.</li>
+    <li>Giảm chi phí sử dụng công cụ được kết nối thông qua các lô lệnh được giải mã, hiển thị kết hợp và lịch sử sự kiện thời gian chạy bị giới hạn.</li>
+    <li>Đã thêm ví dụ về ngắt hẹn giờ cục bộ và mở rộng MARS-OS với hoạt động <code>clock</code> và thời gian thực <code>bench</code> lệnh.</li>
+    <li>Đã ngăn ảnh chụp nhanh thời gian chạy nhỏ gọn tạm thời xóa một đoạn văn bản đã được tập hợp trong giao diện người dùng thực thi.</li>
+    <li>Hợp nhất trình quản lý tệp và hợp đồng đám mây với tính năng lưu an toàn xung đột, đổi tên/xóa từ xa, nhận dạng dự án không phân biệt chữ hoa chữ thường và trạng thái đồng bộ hóa theo đợt.</li>
+  </ul>
+
+  <h2>0.5.0 &mdash; thời gian chạy hoàn thiện, bước lùi delta, quy trình làm việc trên thiết bị di động</h2>
+  <ul>
+    <li>Đã sửa hành vi thời gian chạy có tác động cao trên các giới hạn bộ nhớ, kho lưu trữ nguyên tử, COP1 nhân đôi và làm tròn, các nhánh bị trì hoãn, ngoại lệ, đặt trước LL/SC và điểm dừng.</li>
+    <li>Đã thay thế các ảnh chụp nhanh đầy đủ theo hướng dẫn bằng các vùng delta nghịch đảo được giới hạn trong khi vẫn giữ lại cửa sổ bước lùi chính xác và trạng thái công cụ được đồng bộ hóa.</li>
+    <li>Giảm chi phí thực thi thông qua các đợt sự kiện thời gian chạy nhỏ gọn, kết xuất công cụ hợp nhất và đồng bộ hóa giao diện người dùng nhẹ hơn.</li>
+    <li>Đã thêm cấu hình Bitmap động MMIO và cập nhật các ví dụ và thư viện Bitmap để sử dụng nó trong khi vẫn tương thích với MARS 4.5.</li>
+    <li>Đã mở rộng các ví dụ TTY với trình bao MIPS thực tế và cải thiện danh mục bài học Assembly và Mini-C bằng cả ba ngôn ngữ.</li>
+    <li>Các công cụ, hộp thoại, Đám mây và Cài đặt tích hợp vào hệ thống cửa sổ di động, bao gồm kích thước nhận biết bàn phím Android, bàn phím ảo ngữ nghĩa và tính năng cuộn.</li>
+    <li>Đã thêm thời gian chạy, công cụ, ví dụ, tài liệu, giao diện người dùng di động và phạm vi hồi quy phát hành toàn diện.</li>
+  </ul>
+
+  <h2>0.4.13 &mdash; bố cục bảng điều khiển đơn dành cho thiết bị di động, chẩn đoán cục bộ</h2>
+  <ul>
+    <li>Điện thoại di động hiển thị một bảng toàn màn hình tại một thời điểm, được chọn từ thanh tab biểu tượng mới liệt kê Chính, Tin nhắn/Chạy I/O, Đăng ký và bất kỳ công cụ mở nào.</li>
+    <li>Đã ghim chế độ xem trên thiết bị di động để trang không còn cuộn nữa, loại bỏ xung đột cuộn lồng nhau giữa tài liệu và nội dung cửa sổ.</li>
+    <li>Thanh công cụ di động chỉ có biểu tượng trên hai hàng nhỏ gọn, giữ các điều khiển thực thi và bộ chọn tốc độ chạy trên màn hình; các hành động của tệp được ẩn ở đó và vẫn còn trong menu Tệp và Chỉnh sửa.</li>
+    <li>Ẩn các nút thu nhỏ và phóng to trên thiết bị di động, trong đó một bảng sẽ lấp đầy màn hình và thanh tab thực hiện chuyển đổi.</li>
+    <li>Bản địa hóa mọi trình biên dịch mã và chẩn đoán Mini-C, chuyển đổi 114 chữ mẫu thành các phần giữ chỗ được đặt tên và thêm 277 khóa trên ba ngôn ngữ.</li>
+    <li>Đã thêm thử nghiệm phát hành không thành công khi thông báo có thể dịch được không có mục nhập danh mục.</li>
+    <li>Bố cục màn hình, vị trí cửa sổ và kích thước điều khiển không thay đổi.</li>
+  </ul>
+
+  <h2>0.4.12 &mdash; chủ đề tối, sửa kích thước phông chữ, dọn dẹp mã chết</h2>
+  <ul>
+    <li>Đã thêm chủ đề tối chọn tham gia có thể chọn thông qua <code>Settings &gt; Interface...</code>, được áp dụng cho trình chỉnh sửa, cửa sổ công cụ và trang trợ giúp.</li>
+    <li>Đã sửa lỗi áp dụng kích thước phông chữ và chiều cao dòng của trình soạn thảo ngay sau khi thay đổi chúng trong tùy chọn Giao diện mà không yêu cầu tải lại trang.</li>
+    <li>Nối dây <em>Đóng tất cả các tệp</em> hành động vào <code>File &gt; Close &gt; All files</code>.</li>
+    <li>Đã xóa quy trình lưu tự động phiên máy (~400 dòng) được kiểm soát phía sau cờ thử nghiệm chưa bao giờ được đặt trong bất kỳ bản phát hành nào.</li>
+    <li>Đã loại bỏ ~15 chức năng chết trên năm mô-đun, xuất sổ đăng ký không được sử dụng, bộ chọn CSS không hoạt động và 113 khóa i18n không được sử dụng.</li>
+    <li>Đã loại trừ các tệp trợ giúp cấp gốc không thể truy cập được khỏi gói phát hành.</li>
+  </ul>
+
+  <h2>0.4.11 &mdash; khôi phục đăng nhập vào đám mây liên tục</h2>
+  <ul>
+    <li>Đã kiểm tra máy chủ đám mây đã định cấu hình một cách âm thầm trong quá trình khởi động ứng dụng và khôi phục người dùng đã được xác thực hiện có.</li>
+    <li>Làm mới siêu dữ liệu của dự án đám mây sau khi khôi phục phiên thành công mà không chặn không gian làm việc cục bộ.</li>
+    <li>Đã ghi lại thời gian tồn tại tối đa một năm của cookie xác thực và bị xóa ngay lập tức khi đăng xuất.</li>
+    <li>Đã thêm phạm vi hồi quy cho các yêu cầu được xác thực và khôi phục khởi động tự động.</li>
+  </ul>
+
+  <h2>0.4.10 — lịch sử công cụ theo đợt và cập nhật giao diện người dùng nhẹ hơn</h2>
+  <ul>
+    <li>Các vùng đồng bằng công cụ được giữ lại chỉ dành cho các hướng dẫn vẫn được bao phủ bởi cửa sổ lùi 100 bước chính xác của động cơ.</li>
+    <li>Giữ mọi sự kiện thời gian chạy có sẵn cho các mô hình công cụ đồng thời thực hiện các cập nhật trực quan theo nhóm và tránh việc phân bổ lịch sử lỗi thời.</li>
+    <li>Giảm hoạt động theo lệnh DOM trong BHT và các bản sao trạng thái dự phòng trong trình mô phỏng bộ nhớ đệm.</li>
+    <li>Đã dừng kết xuất Mars Bot nhàn rỗi và xóa ảnh chụp nhanh toàn bộ thời gian chạy dư thừa khỏi quá trình đồng bộ hóa giao diện người dùng.</li>
+    <li>Đã sửa lỗi tạo lại dấu phân cách tiêu đề cửa sổ chỉ dành cho Firefox.</li>
+    <li>Giảm việc thăm dò thiết bị đầu cuối nhàn rỗi trong phòng thí nghiệm Monty Hall mà không ảnh hưởng đến khả năng phản hồi đầu vào hoặc bước lùi.</li>
+  </ul>
+
+  <h2>0.4.9 — tính chẵn lẻ trong thời gian chạy và các bước lùi đáng tin cậy</h2>
+  <ul>
+    <li>Giữ sẵn 100 bước lùi gần đây nhất trong khi giới hạn bộ nhớ nhật ký thưa thớt.</li>
+    <li>Đã sửa lỗi Bàn phím/Màn hình đồng bộ, TTY và hành vi sự kiện của công cụ khi chạy trình duyệt trong thời gian dài.</li>
+    <li>Đã cập nhật phòng thí nghiệm Monty Hall và các ví dụ tương tác để hợp tác với đầu vào của trình duyệt mà không cần bỏ phiếu bận rộn.</li>
+    <li>Kết hợp các tòa nhà chọc trời ngẫu nhiên 40–44 với trình tự gieo hạt và quy tắc lấy mẫu của <code>java.util.Random</code> được sử dụng bởi MARS.</li>
+    <li>Nhập trạng thái thời gian chạy được tăng cường, bộ đếm lệnh dài, phạm vi trình biên dịch mã và xác thực lệnh số.</li>
+    <li>Đã hoàn thành phạm vi bao phủ bước lùi cho siêu dữ liệu hình ảnh và bộ đệm inputDialogString có độ dài bằng 0 đã được sửa.</li>
+    <li>Phạm vi hồi quy được mở rộng trong thời gian chạy, các ví dụ được bản địa hóa và các công cụ được kết nối.</li>
+  </ul>
+
+  <h2>0.4.8 — bước lùi delta và thiết bị đồng bộ</h2>
+  <ul>
+    <li>Đã thay thế các ảnh chụp nhanh bước lùi đầy đủ theo hướng dẫn bằng các vùng delta nghịch đảo được giới hạn.</li>
+    <li>Các thiết bị MMIO đồng bộ riêng biệt, các lô sự kiện thời gian chạy nhỏ gọn và ảnh chụp nhanh công cụ định kỳ.</li>
+    <li>Đã sửa Bàn phím/Màn hình và TTY quan hệ nhân quả đầu vào/đầu ra, bước lùi và chi phí công cụ ẩn.</li>
+    <li>Đã sửa lỗi hiển thị hàng loạt trong bộ đệm, hướng dẫn, tham chiếu bộ nhớ và công cụ bitmap.</li>
+    <li>Đã di chuyển bộ đệm khung ví dụ Mini-C khỏi toàn bộ trình biên dịch và Hiển thị Bitmap được đồng bộ hóa với bộ nhớ trực tiếp.</li>
+    <li>Làm cho dải điểm chuẩn cục bộ trở thành tùy chọn trong Tùy chọn Giao diện và được ẩn theo mặc định.</li>
+  </ul>
+
+  <h2>0.4.7 — JavaScript tăng cường thời gian chạy và tài liệu đầy đủ</h2>
+  <ul>
+    <li>Đã chuẩn hóa thời gian chạy trên công cụ JavaScript thuần túy và loại bỏ phần phụ trợ thử nghiệm WASM/hybrid.</li>
+    <li>Đã thêm thời gian Biên dịch, Lắp ráp và Chạy cộng với mức sử dụng ước tính JavaScript vào dải điểm chuẩn trong ứng dụng.</li>
+    <li>Giữ các ảnh chụp nhanh thời gian chạy đầy đủ có sẵn cho các thiết bị được kết nối đồng thời giảm công việc của trình chỉnh sửa ở tốc độ chạy tối đa.</li>
+    <li>Đã sửa thứ tự từ kép COP1, làm tròn chuyển đổi dựa trên FCSR và xác thực đầu vào số hoàn chỉnh.</li>
+    <li>Giới hạn heap được tăng cường, lưu trữ nguyên tử, căn chỉnh lệnh, tải một phần nghiêm ngặt và đặt trước LL/SC.</li>
+    <li>Đã sửa các địa chỉ liên kết nhánh bị trì hoãn, trạng thái ngoại lệ của khe trễ và tính chẵn lẻ giữa công cụ trực tiếp Go và thực thi dựa trên trình duyệt.</li>
+    <li>Made Stop chấm dứt động cơ và hủy chế độ Ngủ đang chờ xử lý, trong khi Tạm dừng vẫn có thể tiếp tục.</li>
+    <li>Ảnh chụp nhanh thời gian chạy được mở rộng để bảo toàn các điểm dừng, luồng ngẫu nhiên, tệp/con trỏ ảo, stdin, đối số chương trình và xử lý hình ảnh.</li>
+    <li>Mở rộng và hợp lý hóa danh mục ví dụ bằng tiếng Anh, tiếng Tây Ban Nha và tiếng Bồ Đào Nha, bao gồm C1-NATIVE và các dự án C nhiều tệp.</li>
+    <li>Đã cập nhật tất cả trợ giúp trong ứng dụng bằng tiếng Anh, tiếng Tây Ban Nha và tiếng Bồ Đào Nha để phù hợp với ứng dụng trình duyệt, thời gian chạy, trình biên dịch, công cụ, lưu trữ và hành vi bảo mật Mini-C hiện tại.</li>
+    <li>Đã thêm các kiểm tra về tính sẵn sàng phát hành để đảm bảo tính nhất quán của phiên bản, tệp kê khai, tệp tạm thời và hợp đồng giao diện người dùng được bản địa hóa.</li>
+  </ul>
+
+  <h2>0.4.6 — không gian làm việc của trình duyệt có thể tái tạo</h2>
+  <ul>
+    <li>Đã thiết lập các lệnh cài đặt, phục vụ, xây dựng, kiểm tra và xác thực có thể lặp lại.</li>
+    <li>Đã thêm phạm vi hồi quy rộng cho hành vi của trình biên dịch mã/thời gian chạy, tích hợp trình duyệt, các công cụ và ví dụ.</li>
+    <li>Giới thiệu bộ nhớ thời gian chạy có thể định cấu hình và giới hạn bước lùi với khả năng duy trì trạng thái mạnh hơn.</li>
+    <li>Đã mở rộng cấu hình Mini-C, hành vi o32, thư viện, ví dụ và phạm vi giao diện đa ngôn ngữ.</li>
+  </ul>
+
+  <h2>Các cột mốc webMARS trước đó</h2>
+  <ul>
+    <li>Đã chuyển quy trình làm việc trong thời gian chạy, trình biên dịch và trình biên dịch kiểu MARS sang trình duyệt.</li>
+    <li>Đã thêm các dự án cục bộ, phục hồi phiên, đồng bộ hóa đám mây tùy chọn và các tệp ảo trình duyệt.</li>
+    <li>Các công cụ giáo dục cốt lõi và thiết bị MMIO đã được chuyển đổi và điều chỉnh.</li>
+    <li>Đã thêm trình biên dịch giảng dạy Mini-C và các cấu hình tập hợp con ngày càng phong phú hơn.</li>
+  </ul>
+
+  <h2>Ghi chú lịch sử</h2>
+  <p>Một số bản phát hành trước đó đã thử nghiệm tính năng tăng tốc WebAssembly và lựa chọn phụ trợ. Những mục đó mô tả chính xác bản phát hành của chúng, nhưng hệ thống con đó không còn tồn tại nữa. Thời gian chạy hiện tại chỉ là JavaScript.</p>
+</body>
+</html>

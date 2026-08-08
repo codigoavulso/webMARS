@@ -1,6 +1,6 @@
 #MARS-OS 1.0 - un environnement d'exploitation interactif complet TTY
 #Ouvrez Outils > TTY Appareil + ANSI Terminal, connectez-vous à MIPS,
-#assemblez ce projet et tapez « bureau » pour l'interface utilisateur de la souris ou « aide ».
+#assembler et exécuter; il ouvre le bureau de la souris. Lancez le terminal pour le shell.
 #
 #Ce fichier contient uniquement le texte localisé. Le noyau lui-même vit dans
 #les modules neutres en termes de langue inclus en bas :
@@ -223,8 +223,9 @@ sheet_menu: .asciiz " ESC   s save   q quit   x save and exit   c clear cell   r
 sheet_closed: .asciiz "sheet: closed "
 msg_sheet_usage: .asciiz "usage: sheet FILE   the sheet is created when it does not exist\r\n"
 
-#---- bureau de la souris ----
-# English ASCII fallback: the terminal font is byte-oriented.
+#---- bureau fenêtré ----
+#Titres de la barre de menus et entrées de menu. Le bureau présente les menus à partir de
+#ces chaînes, donc une traduction plus longue ne fait qu'élargir le menu.
 desktop_start: .asciiz "[ Start ]"
 mb_system:   .asciiz "System"
 mb_programs: .asciiz "Programs"
@@ -264,7 +265,7 @@ mi_close:      .asciiz "Close window"
 mi_close_all:  .asciiz "Close all"
 mi_keys:       .asciiz "Keyboard and mouse"
 
-# Window titles are indexed by the desktop window kind.
+#Titres de fenêtres, indexés par type de fenêtre.
 wt_programs: .asciiz "Program Manager"
 wt_about:    .asciiz "About"
 wt_files:    .asciiz "File Manager"

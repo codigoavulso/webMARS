@@ -649,7 +649,7 @@ async function openMemoryConfigurationPreferencesDialog() {
   }
 
   const menu = ids
-    .map((id, index) => `${index + 1}: ${memoryPresets[id].label || id}`)
+    .map((id, index) => `${index + 1}: ${translateText(memoryPresets[id].label || id)}`)
     .join("\n");
   const raw = await requestTextDialog(
     "Memory Configuration",

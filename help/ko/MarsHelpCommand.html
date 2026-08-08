@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C 컴파일러</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">내장된 교육 컴파일러는 o32 호출 규칙을 사용하여 의도적으로 정의된 C 하위 집합을 MIPS32 어셈블리로 변환합니다. 범용 ISO C 컴파일러가 아닙니다.</p>
+
+  <h2>프로필</h2>
+  <table>
+    <tr><th>프로필</th><th>목적</th></tr>
+    <tr><td><code>C0-S0</code> 에 <code>C0-S4</code></td><td>표현식 및 제어 흐름에서 함수, 배열, 포인터, 구조, 형식 정의, 계약 및 라이브러리로 진행되는 누적 교육 하위 집합입니다.</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>가장 유능한 기본 프로필: 바이트 주소 지정 <code>char</code>/<code>char *</code>, 네이티브 문자열, <code>argc/argv</code>, 함수 포인터 및 <code>void *</code>.</td></tr>
+  </table>
+  <p>소스에 더 높은 프로필이 필요한 경우 컴파일은 집중된 프로필을 내보냅니다. <code>MC_SUBSET_MISMATCH</code> 일련의 2차 오류가 아닌 진단입니다.</p>
+
+  <h2>프로젝트 컴파일</h2>
+  <ol class="steps">
+    <li>원하는 프로필과 출력 옵션을 선택하세요. <b>설정 → Mini-C 환경 설정</b>.</li>
+    <li>하나 이상 열기 <code>.c</code> 동일한 프로젝트의 파일.</li>
+    <li>선택 <b>실행 → C0 컴파일</b> 또는 <kbd>F4</kbd>.</li>
+    <li>진단 및 생성된 MIPS 어셈블리를 검토합니다. 생성된 프로그램을 정상적으로 어셈블하고 실행합니다.</li>
+  </ol>
+
+  <h2>호출 규칙 및 진입점</h2>
+  <ul>
+    <li>인수 사용 <code>$a0</code>–<code>$a3</code>, 추가 인수는 스택을 사용하고 반환 값은 <code>$v0</code> (그리고 <code>$v1</code> 적절한 경우).</li>
+    <li>호출 수신자가 저장한 레지스터와 스택 프레임은 MIPS o32 기대치를 따릅니다.</li>
+    <li><code>main(void)</code> 그리고 C1-NATIVE에서, <code>main(int argc, char **argv)</code> 지원됩니다.</li>
+    <li>webMARS 프로그램 인수의 경우, <code>argv[0]</code> 사용자가 제공한 첫 번째 토큰입니다. 자동 실행 파일 이름 항목이 없습니다.</li>
+  </ul>
+
+  <h2>번들 헤더 및 라이브러리</h2>
+  <p>
+    <span class="pill">스튜디오</span><span class="pill">코니오</span><span class="pill">파일</span>
+    <span class="pill">인수</span><span class="pill">문자열</span><span class="pill">문자열_네이티브</span>
+    <span class="pill">분석하다</span><span class="pill">img</span><span class="pill">유틸리티</span>
+    <span class="pill">랜드</span><span class="pill">ctype</span><span class="pill">stdlib</span>
+    <span class="pill">표준</span><span class="pill">표준 정의</span><span class="pill">비트맵_직사각형</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>이러한 헤더는 webMARS 주변에 구축된 호환성 라이브러리 MIPS syscall 및 장치. 전체 호스트 C 표준 라이브러리가 아닌 문서화된 하위 집합을 구현합니다.</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> 또한 제공합니다 <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> 그리고 <code>bitmap_configure_all</code>, C0 프로그램이 디스플레이 크기, 단위 크기 및 프레임 버퍼 주소를 비트맵 도구로 보낼 수 있습니다.</p>
+
+  <h2>좋은 시작 사례</h2>
+  <ul>
+    <li><b>헬로 월드(C)</b> 가장 작은 완전한 프로그램을 위해.</li>
+    <li><b>Mini-C C1 네이티브</b> 기본 문자열 및 현재 프로필 동작에 대한 것입니다.</li>
+    <li><b>인수 라이브러리 데모</b> 에 대한 <code>argc/argv</code>.</li>
+    <li><b>다중 파일 통계</b> 프로젝트 전반의 컴파일 및 파일 전반의 함수 호출을 위해.</li>
+    <li><b>stdio 콘솔 기본 사항</b> 그리고 <b>stdio 파일 왕복</b> 호환성 라이브러리의 경우.</li>
+  </ul>
+
+  <div class="note">저장소의 컴파일러 매뉴얼은 규범적이고 상세한 언어 참조로 남아 있습니다. 인앱 페이지에는 프로필을 선택하고 예제를 올바르게 실행하는 데 필요한 동작이 요약되어 있습니다.</div>
+</body>
+</html>

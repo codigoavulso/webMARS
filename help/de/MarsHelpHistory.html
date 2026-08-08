@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS Verlauf</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Geschichte</h1>
+  <p class="lead">webMARS begann als Browser-Port des Simulators MARS 4.5 MIPS. Es kombiniert jetzt eine unabhängige JavaScript Laufzeit, einen Editor, einen Debugger, einen Mini-C Compiler, lokale/Cloud-Projektworkflows und browsernative Tools.</p>
+
+  <h2>Aktuelle Entwicklungslinie</h2>
+  <ul>
+    <li><strong>Nur JavaScript-Laufzeit.</strong> Der experimentelle Hybrid-/WASM-Pfad wurde entfernt, nachdem Messungen ergaben, dass er die Komplexität erhöhte, ohne dass sich eine lohnende Verbesserung für diese Arbeitslast ergab.</li>
+    <li><strong>Laufzeitkorrektheit.</strong> Kürzlich wurden die Doppelwortreihenfolge COP1, atomare Speicherspeicher, Heap-Reservierungen, LL/SC, strikte Adressierung, verzögerte Verzweigungslinks, FCSR Rundung, Ausnahmefortsetzung und Stoppverhalten verbessert.</li>
+    <li><strong>Vollständige Status-Snapshots.</strong> Export/Import und Backstep berücksichtigen jetzt zufällige Streams, virtuelle Dateien und Cursor, stdin, Programmargumente, Bildhandles und Haltepunkte.</li>
+    <li><strong>Beobachtbarkeit der Leistung.</strong> Die App meldet lokale Kompilierungs-, Assemble- und Ausführungszeiten sowie die geschätzte Auslastung von JavaScript, während die Ausführung mit maximaler Geschwindigkeit den Präsentationsaufwand reduziert, ohne den Tools den Laufzeitstatus zu entziehen.</li>
+    <li><strong>Mini-C Entwicklung.</strong> C0-Lehrteilmengen bleiben neben C1-NATIVE, o32-Aufrufen, Byte-Strings, Argumenten, Funktionszeigern, Projekten mit mehreren Dateien und Kompatibilitätsbibliotheken verfügbar.</li>
+    <li><strong>Beispiele als Lehrplan.</strong> Assembly- und C-Beispiele werden nach Zweck, Sprache und minimalem Compilerprofil katalogisiert, mit mehrsprachigen Varianten und Projekten mit mehreren Dateien.</li>
+  </ul>
+
+  <h2>Kompatibilitätslinie</h2>
+  <p>Das Anweisungsvokabular, allgemeine Systemaufrufe, Benutzeroberflächenkonzepte und das Lehrmodell stammen aus dem ursprünglichen MARS-Projekt von Pete Sanderson und Kenneth Vollmar. webMARS behält diese Abstammung bei und ersetzt gleichzeitig die Java-Desktop-Integration durch Browser-APIs und eine eigene Ausführungs-Engine.</p>
+
+  <h2>Versionsdatensatz</h2>
+  <p>Die <b>webMARS → Änderungsprotokoll</b> Die Hilfeseite enthält den detaillierten Projektdatensatz für jede Version. Historische Einträge beschreiben den Stand ihrer Veröffentlichung; Es handelt sich nicht um Versprechen, dass ein experimentelles Subsystem im aktuellen Build verbleibt.</p>
+
+  <div class="note">Wenn sich die Dokumentation und ein historischer Änderungsprotokolleintrag unterscheiden, haben die aktuellen Themenseiten und das aktuelle Laufzeitverhalten Vorrang.</div>
+</body>
+</html>

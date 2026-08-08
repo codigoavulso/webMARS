@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS 시스템콜</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>시스템콜</h1>
+  <p class="lead">서비스 번호를 입력하세요. <code>$v0</code>, 아래 표시된 레지스터에 인수를 배치하고 실행합니다. <code>syscall</code>. 행에 달리 명시되지 않는 한, 문서화된 결과 이외의 레지스터는 보존됩니다.</p>
+
+  <h2>콘솔, 메모리 및 파일</h2>
+  <table class="compact">
+    <tr><th>서비스</th><th>아니요.</th><th>인수</th><th>결과/행동</th></tr>
+    <tr><td>정수 인쇄</td><td>1</td><td><code>$a0</code> 가치</td><td>부호 있는 십진수를 씁니다.</td></tr>
+    <tr><td>플로트 인쇄</td><td>2</td><td><code>$f12</code> 가치</td><td>단정밀도를 씁니다.</td></tr>
+    <tr><td>이중 인쇄</td><td>3</td><td><code>$f12/$f13</code> 가치</td><td>배정밀도를 씁니다.</td></tr>
+    <tr><td>문자열 인쇄</td><td>4</td><td><code>$a0</code> 0으로 끝나는 바이트 문자열</td><td>텍스트를 씁니다.</td></tr>
+    <tr><td>정수 읽기</td><td>5</td><td>—</td><td><code>$v0</code>; 전체 입력은 유효한 정수여야 합니다.</td></tr>
+    <tr><td>플로트 읽기</td><td>6</td><td>—</td><td><code>$f0</code>; 후행 정크는 거부됩니다.</td></tr>
+    <tr><td>두 번 읽기</td><td>7</td><td>—</td><td><code>$f0/$f1</code>; 후행 정크는 거부됩니다.</td></tr>
+    <tr><td>문자열 읽기</td><td>8</td><td><code>$a0</code> 버퍼, <code>$a1</code> 최대 길이</td><td>fgets 스타일의 길이와 종결자 규칙을 따릅니다.</td></tr>
+    <tr><td>sbrk</td><td>9</td><td><code>$a0</code> 음수가 아닌 바이트 수</td><td><code>$v0</code> 이전 힙 주소; 맵과 메모리 제한을 비교하여 확인했습니다.</td></tr>
+    <tr><td>종료</td><td>10</td><td>—</td><td>정상적으로 종료됩니다.</td></tr>
+    <tr><td>인쇄 문자</td><td>11</td><td>낮은 바이트 <code>$a0</code></td><td>한 글자씩 씁니다.</td></tr>
+    <tr><td>문자 읽기</td><td>12</td><td>—</td><td><code>$v0</code> 문자 코드.</td></tr>
+    <tr><td>파일 열기</td><td>13</td><td><code>$a0</code> 이름, <code>$a1</code> 깃발</td><td><code>$v0</code> 설명 또는 부정적인 오류. 플래그: 읽기 0개, 쓰기/생성 1개, 추가/생성 9개.</td></tr>
+    <tr><td>파일 읽기</td><td>14</td><td><code>$a0</code> FD, <code>$a1</code> 버퍼, <code>$a2</code> 카운트</td><td><code>$v0</code> 읽은 바이트, EOF에서 0 또는 음수 오류입니다.</td></tr>
+    <tr><td>파일 쓰기</td><td>15</td><td><code>$a0</code> FD, <code>$a1</code> 버퍼, <code>$a2</code> 카운트</td><td><code>$v0</code> 바이트 쓰기 또는 음수 오류.</td></tr>
+    <tr><td>파일 닫기</td><td>16</td><td><code>$a0</code> fd</td><td>가상 파일 설명자를 닫습니다.</td></tr>
+    <tr><td>코드로 종료</td><td>17</td><td><code>$a0</code> 코드</td><td>코드를 종료하고 기록합니다.</td></tr>
+  </table>
+  <p>설명자 0, 1, 2는 stdin, stdout 및 stderr입니다. 사용자 설명자는 3부터 시작하며 브라우저 가상 파일 시스템에 의해 지원됩니다. 무제한 호스트 파일 액세스를 허용하지 않습니다.</p>
+
+  <h2>시간, MIDI 및 숫자 형식</h2>
+  <table class="compact">
+    <tr><th>서비스</th><th>아니요.</th><th>인수</th><th>결과/행동</th></tr>
+    <tr><td>시스템 시간</td><td>30</td><td>—</td><td>하위 32비트 <code>$a0</code>, 상위 32비트 <code>$a1</code>, Unix 시대 이후의 밀리초입니다.</td></tr>
+    <tr><td>MIDI 출력</td><td>31</td><td><code>$a0</code> 피치, <code>$a1</code> 기간, <code>$a2</code> 악기, <code>$a3</code> 볼륨</td><td>비동기식으로 시작됩니다.</td></tr>
+    <tr><td>수면</td><td>32</td><td><code>$a0</code> 밀리초</td><td>브라우저 타이밍을 사용하여 기다립니다. Stop은 대기를 취소합니다.</td></tr>
+    <tr><td>MIDI 동기 출력</td><td>33</td><td>31과 동일</td><td>신호음 지속 시간 후에 반환됩니다.</td></tr>
+    <tr><td>16진수로 인쇄</td><td>34</td><td><code>$a0</code></td><td>8개의 16진수 숫자입니다.</td></tr>
+    <tr><td>바이너리 인쇄</td><td>35</td><td><code>$a0</code></td><td>32개의 이진수입니다.</td></tr>
+    <tr><td>서명 없이 인쇄</td><td>36</td><td><code>$a0</code></td><td>부호 없는 십진수.</td></tr>
+  </table>
+  <p>MIDI는 웹 오디오 API를 사용합니다. 브라우저 권한, 자동 재생 정책 및 스케줄러 로드는 사운드가 시작되는 시점에 영향을 미칠 수 있습니다.</p>
+
+  <h2>의사 무작위 스트림</h2>
+  <table class="compact">
+    <tr><th>서비스</th><th>아니요.</th><th>인수</th><th>결과</th></tr>
+    <tr><td>시드 설정</td><td>40</td><td><code>$a0</code> 스트림 ID, <code>$a1</code> 종자</td><td>해당 스트림을 설정합니다.</td></tr>
+    <tr><td>임의의 정수</td><td>41</td><td><code>$a0</code> 스트림 ID</td><td><code>$a0</code> 임의의 32비트 정수.</td></tr>
+    <tr><td>임의의 정수 범위</td><td>42</td><td><code>$a0</code> 스트림 ID, <code>$a1</code> 양수 경계</td><td><code>$a0</code> [0, 경계).</td></tr>
+    <tr><td>랜덤 플로트</td><td>43</td><td><code>$a0</code> 스트림 ID</td><td><code>$f0</code> [0, 1)에서.</td></tr>
+    <tr><td>랜덤 더블</td><td>44</td><td><code>$a0</code> 스트림 ID</td><td><code>$f0/$f1</code> [0, 1)에서.</td></tr>
+  </table>
+  <p>각 정수 ID는 독립적인 결정적 스트림을 식별합니다. 스트림은 내보낸 런타임 상태 및 백스텝 스냅샷에 포함됩니다.</p>
+
+  <h2>대화상자</h2>
+  <table class="compact">
+    <tr><th>아니요.</th><th>서비스</th><th>계약</th></tr>
+    <tr><td>50</td><td>확인 대화상자</td><td><code>$a0</code> 메시지; 선택 항목이 반환됨 <code>$a0</code> (예 0, 아니오 1, 취소 2).</td></tr>
+    <tr><td>51</td><td>정수 입력</td><td><code>$a0</code> 즉각적인; 가치를 부여하다 <code>$a0</code>, 상태 <code>$a1</code>.</td></tr>
+    <tr><td>52</td><td>입력 플로트</td><td><code>$a0</code> 즉각적인; 가치를 부여하다 <code>$f0</code>, 상태 <code>$a1</code>.</td></tr>
+    <tr><td>53</td><td>더블 입력</td><td><code>$a0</code> 즉각적인; 가치를 부여하다 <code>$f0/$f1</code>, 상태 <code>$a1</code>.</td></tr>
+    <tr><td>54</td><td>입력 문자열</td><td><code>$a0</code> 프롬프트, <code>$a1</code> 버퍼, <code>$a2</code> 최대; 상태 <code>$a1</code>.</td></tr>
+    <tr><td>55–59</td><td>메시지 대화상자</td><td>일반, 정수, 부동, 이중 또는 문자열 메시지를 표시합니다. 서비스 55 용도 <code>$a1</code> 메시지 유형의 경우.</td></tr>
+  </table>
+  <p>입력 상태는 MARS 규칙을 따릅니다: 0 성공, −1 잘못된 입력, −2 취소 및 −3 빈 입력; 문자열 입력은 잘릴 때 -4도 사용합니다.</p>
+
+  <h2>webMARS 도서관 서비스</h2>
+  <p>서비스 60-103은 번들로 제공되는 Mini-C 호환성 라이브러리를 지원합니다. 이러한 번호를 직접 호출하는 것보다 올바른 유형과 레지스터 프로토콜을 제공하는 라이브러리 헤더를 선호합니다.</p>
+  <table class="compact">
+    <tr><th>범위</th><th>서비스</th></tr>
+    <tr><td>60–64</td><td>플러시, eof, readline, printf, 형식</td></tr>
+    <tr><td>65–69</td><td>file_read, file_closed, file_close, file_eof, file_readline</td></tr>
+    <tr><td>70–73</td><td>args_flag, args_int, args_string, args_parse</td></tr>
+    <tr><td>74–84</td><td>문자열 길이, 인덱싱, 조인, 하위 문자열, 비교, 변환, 소문자, 종료 및 문자 배열 브리지</td></tr>
+    <tr><td>85–92</td><td>문자, 부울/정수 구문 분석, 토큰 구문 분석 및 정수-16진수 도우미</td></tr>
+    <tr><td>93–100</td><td>이미지 크기, 생성, 복제, 하위 이미지, 로드, 저장 및 데이터 액세스</td></tr>
+    <tr><td>101–103</td><td>C-문자열 종료 및 기본 문자열/C-문자열 변환</td></tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS công cụ</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Công cụ</h1>
+  <p class="lead">Mở công cụ từ menu Công cụ. Mỗi công cụ có một cửa sổ độc lập và có thể kết nối với thời gian chạy MIPS hiện tại để quan sát hướng dẫn, bộ nhớ hoặc hoạt động MMIO.</p>
+
+  <div class="note"><strong>Kết nối trước khi chạy.</strong> Công cụ được kết nối sẽ nhận được ảnh chụp nhanh thời gian chạy hoàn chỉnh và theo dõi các sự kiện ngay cả khi quá trình thực thi ở tốc độ tối đa ngăn chặn việc đánh dấu trình soạn thảo. Ngắt kết nối hoặc đặt lại công cụ khi bắt đầu thử nghiệm không liên quan.</div>
+
+  <h2>Kiến trúc và hiệu suất</h2>
+  <table>
+    <tr><th>Công cụ</th><th>Sử dụng nó cho</th></tr>
+    <tr><td>Trình mô phỏng bảng lịch sử chi nhánh</td><td>So sánh các sơ đồ dự đoán và kiểm tra độ chính xác của dự đoán nhánh.</td></tr>
+    <tr><td>Trình mô phỏng bộ đệm dữ liệu</td><td>Định cấu hình bộ đệm và đo số lần truy cập, số lần bỏ lỡ và vị trí trong khi chương trình truy cập dữ liệu.</td></tr>
+    <tr><td>Bộ đếm hướng dẫn</td><td>Đếm các hướng dẫn đã thực hiện và làm theo tổng số hiện tại.</td></tr>
+    <tr><td>Thống kê hướng dẫn</td><td>Thực hiện nhóm theo danh mục lệnh để hiểu thành phần khối lượng công việc.</td></tr>
+    <tr><td>Trực quan hóa tham chiếu bộ nhớ</td><td>Trực quan hóa các mẫu truy cập bộ nhớ không gian và các vùng nóng.</td></tr>
+    <tr><td>MIPS Tia X</td><td>Khám phá các trường hướng dẫn, giải mã và mối quan hệ đường dẫn dữ liệu/điều khiển.</td></tr>
+  </table>
+
+  <h2>Màn hình, thiết bị đầu cuối và thiết bị</h2>
+  <table>
+    <tr><th>Công cụ</th><th>Sử dụng nó cho</th></tr>
+    <tr><td>Hiển thị bitmap</td><td>Kết xuất pixel từ bộ đệm khung hỗ trợ bộ nhớ có thể định cấu hình.</td></tr>
+    <tr><td>Công cụ đầu cuối bitmap</td><td>Sử dụng thiết bị đầu cuối văn bản dựa trên bộ đệm khung cùng với đầu vào bàn phím.</td></tr>
+    <tr><td>Bàn phím và màn hình MMIO Trình mô phỏng</td><td>Thực hiện điều khiển máy thu/máy phát và các thanh ghi dữ liệu trong phạm vi MMIO tiêu chuẩn.</td></tr>
+    <tr><td>TTY Thiết bị + ANSI Thiết bị đầu cuối</td><td>Chạy các chương trình đầu cuối với đầu vào bàn phím, hiển thị ANSI và chọn tham gia các sự kiện chuột xterm.</td></tr>
+    <tr><td>Sim phòng thí nghiệm kỹ thuật số</td><td>Điều khiển màn hình bảy đoạn, đầu vào bàn phím và phòng thí nghiệm kỹ thuật số liên quan MMIO.</td></tr>
+    <tr><td>Đồng hồ và hẹn giờ hệ thống</td><td>Điều khiển bộ hẹn giờ được ánh xạ bộ nhớ để đếm các hướng dẫn đã thực hiện hoặc mili giây thực và tăng ngắt bộ đếm thời gian MARS để trình xử lý ngoại lệ chạy theo từng tích tắc.</td></tr>
+    <tr><td>Robot sao Hỏa</td><td>Điều khiển robot mô phỏng thông qua giao diện được ánh xạ bộ nhớ của nó.</td></tr>
+  </table>
+  <div class="note"><strong>MARS-OS TTY Ví dụ về hệ điều hành.</strong> Mở ví dụ nhiều tệp, kết nối công cụ này, lắp ráp và chạy. Nó khởi động trực tiếp vào Trình quản lý chương trình kiểu Windows 95; mở ứng dụng Terminal cho shell 46 lệnh. Menu Bắt đầu, cửa sổ và trình khởi chạy ứng dụng được vẽ hoàn toàn bằng tập hợp MIPS và được điều khiển bằng các báo cáo chuột xterm SGR. Đĩa RAM có thể ghi, trình chỉnh sửa, bảng tính và trình thông dịch BASIC vẫn khả dụng; con trỏ soạn thảo và các ô trong bảng tính cũng chấp nhận nhấp chuột.</div>
+  <div class="note"><strong>Tùy chọn cửa sổ cho màn hình ảo.</strong> Bitmap Display, Bitmap Terminal Tool và TTY Device + ANSI Terminal, mỗi thiết bị đều có hai tùy chọn cửa sổ phía trên cài đặt của chúng. <em>Vừa cửa sổ để hiển thị</em> thay đổi kích thước cửa sổ công cụ để toàn bộ màn hình không có thanh cuộn và không có khoảng trống xung quanh nó, đồng thời áp dụng lại bất cứ khi nào kích thước màn hình hoặc cài đặt thay đổi; thay đổi kích thước cửa sổ bằng tay sẽ tắt nó một lần nữa. Tùy chọn phù hợp bắt đầu được chọn và đầu vào cấu hình bắt đầu được thu gọn trên cả máy tính để bàn và thiết bị di động. Trong bố cục di động xếp chồng, phần vừa vặn vẫn được chọn nhưng không cần thay đổi kích thước vì bảng điều khiển đã mở rộng màn hình.</div>
+
+  <h2>Tiện ích học tập</h2>
+  <table>
+    <tr><th>Công cụ</th><th>Sử dụng nó cho</th></tr>
+    <tr><td>Biểu diễn dấu phẩy động</td><td>Chuyển đổi và kiểm tra IEEE 754 giá trị, trường và mẫu bit có độ chính xác đơn.</td></tr>
+    <tr><td>Giới thiệu về Công cụ</td><td>Tìm hiểu vòng đời kết nối, đặt lại và tương tác tiêu chuẩn.</td></tr>
+    <tr><td>Người nhặt rácSăn</td><td>Chạy thử thách lập trình lắp ráp tương tác.</td></tr>
+    <tr><td>Kính lúp màn hình</td><td>Phóng to một phần được chọn của không gian làm việc để trình diễn và tiếp cận.</td></tr>
+    <tr><td>Trình hiển thị ngăn xếp</td><td>Theo dõi toàn bộ không gian địa chỉ và ngăn xếp từng từ: các khung được mở bởi mỗi cuộc gọi, các thanh ghi được lưu và khôi phục, thu phóng từ các khối phân đoạn xuống các bit đơn và nhật ký bằng ngôn ngữ đơn giản của mọi chuyển động $sp kèm theo các cảnh báo về các lỗi khung cổ điển. Nó cũng thúc đẩy quá trình thực thi với các điểm dừng nhận biết ngăn xếp: chạy tới cuộc gọi tiếp theo, chuyển qua cuộc gọi, chạy cho đến khi khung hiện tại quay trở lại, cho đến khi $sp di chuyển hoặc cho đến khi từ được xem thay đổi và tạm dừng ngay khi cảnh báo ngăn xếp xuất hiện.</td></tr>
+  </table>
+
+  <h2>Cấu hình bitmap từ MIPS</h2>
+  <p>Một chương trình có thể định cấu hình công cụ Bitmap bằng cách viết khối điều khiển được phiên bản này liên quan đến cơ sở MMIO đang hoạt động (thông thường <code>0xffff0000</code>). Viết tất cả các trường đầu tiên và viết <code>1</code> đến lệnh cuối cùng; công cụ chỉ thay đổi sau lần cam kết nguyên tử đó.</p>
+  <table>
+    <tr><th>Bù đắp</th><th>Giá trị</th></tr>
+    <tr><td><code>+0x20</code></td><td>Chữ ký <code>0x57424d50</code> (<code>WBMP</code>)</td></tr>
+    <tr><td><code>+0x24</code></td><td>Phiên bản giao thức <code>1</code></td></tr>
+    <tr><td><code>+0x28</code></td><td>Mục tiêu: <code>1</code> Hiển thị, <code>2</code> thiết bị đầu cuối, <code>3</code> cả hai</td></tr>
+    <tr><td><code>+0x2c … +0x38</code></td><td>Chiều rộng hiển thị, chiều cao hiển thị, chiều rộng đơn vị và chiều cao đơn vị</td></tr>
+    <tr><td><code>+0x3c</code></td><td>Địa chỉ cơ sở bộ đệm khung</td></tr>
+    <tr><td><code>+0x40</code></td><td>Lệnh: <code>1</code> áp dụng, <code>2</code> cấu hình chương trình rõ ràng</td></tr>
+  </table>
+  <p>Các khối không hợp lệ hoặc không đầy đủ sẽ bị bỏ qua. Bước lùi, xuất thời gian chạy và khôi phục phiên duy trì cấu hình đã cam kết. Đây là phần mở rộng webMARS tùy chọn: MARS 4.5 bỏ qua các từ MMIO không được sử dụng này, trong khi mã bộ đệm khung tương tự vẫn tiếp tục hoạt động với cài đặt công cụ thủ công.</p>
+
+  <h2>MMIO an toàn</h2>
+  <p>MMIO thiết bị được ánh xạ gần <code>0xffff0000</code>. Công cụ thiết bị và thời gian chạy chia sẻ những địa chỉ đó; các chương trình thăm dò phải tôn trọng các bit sẵn sàng và các chương trình điều khiển ngắt phải cài đặt một trình xử lý ngoại lệ hợp lệ. Việc đặt lại một công cụ sẽ xóa trạng thái hiển thị hoặc trạng thái thiết bị của nó, không nhất thiết là chương trình đã được lắp ráp.</p>
+</body>
+</html>

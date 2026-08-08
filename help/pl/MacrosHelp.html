@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Makra asemblera</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Makra asemblera</h1>
+  <p class="lead">Makra wykonują podstawienie na poziomie źródła przed normalnym montażem. Wymagają włączenia rozszerzonej obsługi asemblera.</p>
+
+  <h2>Definicja i zastosowanie</h2>
+  <pre>.macro print_int (%value)
+    move $a0, %value
+    li   $v0, 1
+    syscall
+.end_macro
+
+li $t0, 42
+print_int ($t0)</pre>
+  <p>Nawiasy wokół parametrów i argumentów wywołania są opcjonalne. Parametry są tokenami rozdzielonymi przecinkami i są zastępowane tylko jako identyfikatory, a nie wewnątrz literałów ciągu.</p>
+
+  <h2>Reguły wdrożone przez webMARS</h2>
+  <ul>
+    <li>Makro jest identyfikowane poprzez jego nazwę i arity, więc ta sama nazwa może mieć definicje z różną liczbą parametrów.</li>
+    <li>Definicja musi pojawić się przed jej wywołaniem. Odwołanie do przodu jest zgłaszane jako błąd.</li>
+    <li>Zagnieżdżone definicje makr są niedozwolone.</li>
+    <li>Definicja kończy się linią zawierającą tylko <code>.end_macro</code>.</li>
+    <li>Zduplikowane definicje o tej samej nazwie i charakterze powodują wyświetlenie ostrzeżenia, a duplikat jest ignorowany.</li>
+    <li>Etykiety wewnątrz rozszerzenia są unikalne dla każdego wywołania, aby zapobiec kolizjom między rozszerzeniami.</li>
+    <li>Rozwijanie jest rekurencyjne, ale zamiast cichego generowania kodu diagnozowane są nieprawidłowe rekursje i źle sformułowane wywołania.</li>
+  </ul>
+
+  <h2>Stałe i zawiera</h2>
+  <p><code>.eqv</code> dostarcza podstawienie identyfikatora dla nazwanych stałych. <code>.include</code> jest częścią rozszerzonego zestawu dyrektyw asemblera i rozpoznaje źródło projektu tam, gdzie zapewnia je bieżący projekt przeglądarki. Preferuj nazwy powiązane z projektem i przechowuj uwzględnione źródła w tym samym projekcie.</p>
+
+  <h2>Makra a pseudoinstrukcje</h2>
+  <p>Pseudoinstrukcja jest wybierana z referencji instrukcji webMARS i rozwijana zgodnie ze wzorami argumentów. Makro jest definiowane przez program i może zawierać dowolną sekwencję instrukcji źródłowych. Obydwa są rozwijane przed wykonaniem i mogą mapować jedną linię źródłową na kilka podstawowych instrukcji.</p>
+
+  <div class="warning">Argumenty makro są podstawieniami tokenów, a nie wartościami wpisywanymi. Syntaktycznie poprawne rozwinięcie może w dalszym ciągu generować błąd typu lub zakresu asemblera w miejscu wywołania.</div>
+</body>
+</html>

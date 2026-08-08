@@ -8,7 +8,10 @@ import vm from "node:vm";
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const helpBase = resolve(projectRoot, "help");
 const helpSystemPath = resolve(projectRoot, "assets", "js", "app-modules", "15-help-system.js");
-const locales = ["en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id"];
+const locales = [
+  "en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id",
+  "de", "ja", "ko", "tr", "vi", "ur", "it", "pl", "fa", "th"
+];
 
 async function exists(path) {
   try {
@@ -176,7 +179,17 @@ test("localized help labels are integrated into every UI catalog", async () => {
       { id: "fr", label: "Français", dir: "fr" },
       { id: "bn", label: "বাংলা", dir: "bn" },
       { id: "ru", label: "Русский", dir: "ru" },
-      { id: "id", label: "Bahasa Indonesia", dir: "id" }
+      { id: "id", label: "Bahasa Indonesia", dir: "id" },
+      { id: "de", label: "Deutsch", dir: "de" },
+      { id: "ja", label: "日本語", dir: "ja" },
+      { id: "ko", label: "한국어", dir: "ko" },
+      { id: "tr", label: "Türkçe", dir: "tr" },
+      { id: "vi", label: "Tiếng Việt", dir: "vi" },
+      { id: "ur", label: "اردو", dir: "ur" },
+      { id: "it", label: "Italiano", dir: "it" },
+      { id: "pl", label: "Polski", dir: "pl" },
+      { id: "fa", label: "فارسی", dir: "fa" },
+      { id: "th", label: "ไทย", dir: "th" }
     ]
   );
 });

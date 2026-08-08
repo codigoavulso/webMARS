@@ -1,0 +1,57 @@
+#نسخه ی نمایشی فراخوانی تابع سبک C-کامپایل شده
+#شبیه سازی پیش درآمد / پایانی رایج و متغیرهای محلی در پشته.
+
+.data
+msg0: .asciiz "Result sumSquares(3,7) = "
+
+.text
+main:
+  li   $a0, 3
+  li   $a1, 7
+  jal  sumSquares
+
+  move $s0, $v0
+
+  li $v0, 4
+  la $a0, msg0
+  syscall
+
+  li $v0, 1
+  move $a0, $s0
+  syscall
+
+  li $v0, 11
+  li $a0, '\n'
+  syscall
+
+  li $v0, 10
+  syscall
+
+#int sumSquares(int x, int y) {
+#int sx = x*x;
+#int sy = y*y;
+#بازگشت sx + sy;
+# }
+sumSquares:
+  addiu $sp, $sp, -24
+  sw    $ra, 20($sp)
+  sw    $fp, 16($sp)
+  move  $fp, $sp
+
+  sw    $a0, 0($fp)      #x محلی
+  sw    $a1, 4($fp)      #y محلی
+
+  lw    $t0, 0($fp)
+  mul   $t1, $t0, $t0
+  sw    $t1, 8($fp)      #sx محلی
+
+  lw    $t2, 4($fp)
+  mul   $t3, $t2, $t2
+  sw    $t3, 12($fp)     #sy محلی
+
+  addu  $v0, $t1, $t3
+
+  lw    $fp, 16($sp)
+  lw    $ra, 20($sp)
+  addiu $sp, $sp, 24
+  jr    $ra

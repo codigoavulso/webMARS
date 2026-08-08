@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Macro dell'assemblatore</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Macro dell'assemblatore</h1>
+  <p class="lead">Le macro eseguono la sostituzione a livello di sorgente prima del normale assemblaggio. Richiedono il supporto esteso dell'assemblatore per essere abilitati.</p>
+
+  <h2>Definizione e utilizzo</h2>
+  <pre>.macro print_int (%value)
+    move $a0, %value
+    li   $v0, 1
+    syscall
+.end_macro
+
+li $t0, 42
+print_int ($t0)</pre>
+  <p>Le parentesi attorno ai parametri e agli argomenti di chiamata sono facoltative. I parametri sono token separati da virgole e vengono sostituiti solo come identificatori, non all'interno di stringhe letterali.</p>
+
+  <h2>Regole implementate da webMARS</h2>
+  <ul>
+    <li>Una macro è identificata dal suo nome e dalla sua arità, quindi lo stesso nome può avere definizioni con conteggi di parametri diversi.</li>
+    <li>La definizione deve apparire prima della sua invocazione. Un riferimento futuro viene segnalato come errore.</li>
+    <li>Non sono consentite definizioni di macro nidificate.</li>
+    <li>Una definizione termina con una riga che contiene solo <code>.end_macro</code>.</li>
+    <li>Le definizioni duplicate con lo stesso nome e arità producono un avviso e il duplicato viene ignorato.</li>
+    <li>Le etichette all'interno di un'espansione vengono rese univoche per ogni invocazione per evitare collisioni tra le espansioni.</li>
+    <li>L'espansione è ricorsiva, ma vengono diagnosticate la ricorsione non valida e le invocazioni non corrette invece di generare codice silenziosamente.</li>
+  </ul>
+
+  <h2>Costanti e include</h2>
+  <p><code>.eqv</code> fornisce la sostituzione dell'identificatore per le costanti denominate. <code>.include</code> fa parte del set esteso di direttive assembler e risolve l'origine del progetto dove il progetto del browser corrente lo fornisce. Preferisci nomi relativi al progetto e mantieni le fonti incluse nello stesso progetto.</p>
+
+  <h2>Macro contro pseudo-istruzioni</h2>
+  <p>Una pseudo-istruzione viene selezionata dal riferimento dell'istruzione di webMARS e si espande in base ai modelli di operandi. Una macro è definita dal programma e può contenere una sequenza arbitraria di istruzioni sorgente. Entrambi vengono espansi prima dell'esecuzione e possono associare una riga sorgente a diverse istruzioni di base.</p>
+
+  <div class="warning">Gli argomenti macro sono sostituzioni di token, non valori tipizzati. Un'espansione sintatticamente valida può ancora produrre un errore di tipo assembler o di intervallo nel sito di invocazione.</div>
+</body>
+</html>

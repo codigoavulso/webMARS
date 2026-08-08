@@ -1,0 +1,2274 @@
+{
+  "generatedAt": "2026-07-25T00:00:00.000Z",
+  "source": {
+    "basicInstructions": "../../assets/js/reference/instructions.generated.js",
+    "extendedInstructions": "../../assets/js/reference/pseudo-ops.generated.js",
+    "directives": "../../assets/js/app-modules/00-core.js"
+  },
+  "basicInstructions": [
+    {
+      "example": "abs.d $f2,$f4",
+      "description": "Doppia precisione con valore assoluto in virgola mobile: imposta $f2 sul valore assoluto di $f4, doppia precisione"
+    },
+    {
+      "example": "abs.s $f0,$f1",
+      "description": "Precisione singola con valore assoluto in virgola mobile: imposta $f0 sul valore assoluto di $f1, precisione singola"
+    },
+    {
+      "example": "add $t1,$t2,$t3",
+      "description": "Addizione con overflow: imposta $t1 su ($t2 più $t3)"
+    },
+    {
+      "example": "add.d $f2,$f4,$f6",
+      "description": "Doppia precisione addizione in virgola mobile: imposta $f2 sul valore in virgola mobile a precisione doppia di $f4 più $f6"
+    },
+    {
+      "example": "add.s $f0,$f1,$f3",
+      "description": "Aggiunta in virgola mobile a precisione singola: imposta $f0 sul valore in virgola mobile a precisione singola di $f1 più $f3"
+    },
+    {
+      "example": "addi $t1,$t2,-100",
+      "description": "Addizione immediata con overflow: imposta $t1 su ($t2 più immediato a 16 bit con segno)"
+    },
+    {
+      "example": "addiu $t1,$t2,-100",
+      "description": "Addizione immediata senza segno senza overflow: imposta $t1 su ($t2 più immediato a 16 bit con segno), nessun overflow"
+    },
+    {
+      "example": "addu $t1,$t2,$t3",
+      "description": "Addizione senza segno senza overflow: imposta $t1 su ($t2 più $t3), nessun overflow"
+    },
+    {
+      "example": "and $t1,$t2,$t3",
+      "description": "Bit per bit AND: imposta $t1 su bit per bit AND di $t2 e $t3"
+    },
+    {
+      "example": "andi $t1,$t2,100",
+      "description": "Bit per bit AND immediato: imposta $t1 su bit per bit AND di $t2 e zero-extended 16 bit immediato"
+    },
+    {
+      "example": "bc1f 1,label",
+      "description": "Salta se specificato flag di condizione FP falso (BC1F, non BCLF): se il flag di condizione del coprocessore 1 specificato da immediato è falso (zero), passa all'istruzione all'indirizzo dell'etichetta"
+    },
+    {
+      "example": "bc1f label",
+      "description": "Salta se il flag di condizione FP 0 è falso (BC1F, non BCLF): se il flag di condizione 0 del coprocessore 1 è falso (zero), passa all'istruzione all'indirizzo dell'etichetta"
+    },
+    {
+      "example": "bc1t 1,label",
+      "description": "Salta se il flag di condizione FP specificato è vero (BC1T, non BCLT): se il flag di condizione del coprocessore 1 specificato da immediato è vero (uno), passa all'istruzione all'indirizzo dell'etichetta"
+    },
+    {
+      "example": "bc1t label",
+      "description": "Salta se il flag di condizione FP 0 è vero (BC1T, non BCLT): se il flag di condizione 0 del coprocessore 1 è vero (uno), quindi passa all'istruzione all'indirizzo dell'etichetta"
+    },
+    {
+      "example": "beq $t1,$t2,label",
+      "description": "Dirama se uguale: dirama l'istruzione all'indirizzo dell'etichetta se $t1 e $t2 sono uguali"
+    },
+    {
+      "example": "bgez $t1,label",
+      "description": "Dirama se maggiore o uguale a zero: dirama all'istruzione all'indirizzo dell'etichetta se $t1 è maggiore o uguale a zero"
+    },
+    {
+      "example": "bgezal $t1,label",
+      "description": "Ramo se maggiore o uguale a zero e collegamento: se $t1 è maggiore o uguale a zero, imposta $ra sul contatore del programma e ramo all'istruzione all'indirizzo dell'etichetta"
+    },
+    {
+      "example": "bgtz $t1,label",
+      "description": "Dirama se maggiore di zero: dirama all'istruzione all'indirizzo dell'etichetta se $t1 è maggiore di zero"
+    },
+    {
+      "example": "blez $t1,label",
+      "description": "Dirama se minore o uguale a zero: dirama all'istruzione all'indirizzo dell'etichetta se $t1 è minore o uguale a zero"
+    },
+    {
+      "example": "bltz $t1,label",
+      "description": "Dirama se inferiore a zero: dirama all'istruzione all'indirizzo dell'etichetta se $t1 è inferiore a zero"
+    },
+    {
+      "example": "bltzal $t1,label",
+      "description": "Ramo se inferiore a zero e collegamento: se $t1 è inferiore o uguale a zero, imposta $ra sul contatore del programma e ramo all'istruzione all'indirizzo dell'etichetta"
+    },
+    {
+      "example": "bne $t1,$t2,label",
+      "description": "Dirama se non uguale: Dirama l'istruzione all'indirizzo dell'etichetta se $t1 e $t2 non sono uguali"
+    },
+    {
+      "example": "break",
+      "description": "Interrompi esecuzione: termina l'esecuzione del programma con un'eccezione"
+    },
+    {
+      "example": "break 100",
+      "description": "Interrompi l'esecuzione con il codice: termina l'esecuzione del programma con il codice di eccezione specificato"
+    },
+    {
+      "example": "c.eq.d $f2,$f4",
+      "description": "Confronta doppia precisione uguale: se $f2 è uguale a $f4 (precisione doppia), imposta il flag di condizione del coprocessore 1 su 0 vero altrimenti impostalo falso"
+    },
+    {
+      "example": "c.eq.d 1,$f2,$f4",
+      "description": "Confronta doppia precisione uguale: se $f2 è uguale a $f4 (precisione doppia), imposta il flag di condizione del coprocessore 1 specificato da immediato su true, altrimenti impostalo su false"
+    },
+    {
+      "example": "c.eq.s $f0,$f1",
+      "description": "Confronta precisione singola uguale: se $f0 è uguale a $f1, imposta il flag di condizione del coprocessore 1 su 0 su vero altrimenti impostalo su falso"
+    },
+    {
+      "example": "c.eq.s 1,$f0,$f1",
+      "description": "Confronta precisione singola uguale: se $f0 è uguale a $f1, imposta il flag di condizione del coprocessore 1 specificato da immediato su true, altrimenti impostalo su false"
+    },
+    {
+      "example": "c.le.d $f2,$f4",
+      "description": "Confronta doppia precisione inferiore o uguale: se $f2 è inferiore o uguale a $f4 (precisione doppia), imposta il flag di condizione del coprocessore 1 su 0 vero altrimenti impostalo falso"
+    },
+    {
+      "example": "c.le.d 1,$f2,$f4",
+      "description": "Confronta doppia precisione inferiore o uguale: se $f2 è inferiore o uguale a $f4 (precisione doppia), imposta il flag di condizione del coprocessore 1 specificato da vero immediato altrimenti impostalo su falso"
+    },
+    {
+      "example": "c.le.s $f0,$f1",
+      "description": "Confronta precisione singola inferiore o uguale: se $f0 è inferiore o uguale a $f1, imposta il flag di condizione del coprocessore 1 su 0 vero altrimenti impostalo falso"
+    },
+    {
+      "example": "c.le.s 1,$f0,$f1",
+      "description": "Confronta precisione singola inferiore o uguale: se $f0 è inferiore o uguale a $f1, imposta il flag di condizione del coprocessore 1 specificato da immediato su vero, altrimenti impostalo su falso"
+    },
+    {
+      "example": "c.lt.d $f2,$f4",
+      "description": "Confronta meno della doppia precisione: se $f2 è inferiore a $f4 (doppia precisione), imposta il flag di condizione del coprocessore 1 su 0 su vero altrimenti impostalo su falso"
+    },
+    {
+      "example": "c.lt.d 1,$f2,$f4",
+      "description": "Confronta meno della doppia precisione: se $f2 è inferiore a $f4 (doppia precisione), imposta il flag di condizione del coprocessore 1 specificato da immediato su true altrimenti impostalo su false"
+    },
+    {
+      "example": "c.lt.s $f0,$f1",
+      "description": "Confronta precisione inferiore a singola: se $f0 è inferiore a $f1, imposta il flag di condizione del coprocessore 1 su 0 vero altrimenti impostalo su falso"
+    },
+    {
+      "example": "c.lt.s 1,$f0,$f1",
+      "description": "Confronta precisione inferiore a singola: se $f0 è inferiore a $f1, imposta il flag di condizione del coprocessore 1 specificato da immediato su true, altrimenti impostalo su false"
+    },
+    {
+      "example": "ceil.w.d $f1,$f2",
+      "description": "Soffitto a doppia precisione in parola: imposta $f1 sul limite intero a 32 bit del float a doppia precisione in $f2"
+    },
+    {
+      "example": "ceil.w.s $f0,$f1",
+      "description": "Soffitto a precisione singola in parola: imposta $f0 sul limite intero a 32 bit del float a precisione singola in $f1"
+    },
+    {
+      "example": "clo $t1,$t2",
+      "description": "Conteggio del numero di bit iniziali: imposta $t1 sul conteggio dei bit iniziali in $t2 a partire dalla posizione del bit più significativo"
+    },
+    {
+      "example": "clz $t1,$t2",
+      "description": "Conteggio del numero di zeri iniziali: imposta $t1 sul conteggio dei bit zero iniziali in $t2 a partire dalla posizione del bit più significativo"
+    },
+    {
+      "example": "cvt.d.s $f2,$f1",
+      "description": "Converti da precisione singola a precisione doppia: imposta $f2 sull'equivalente in precisione doppia del valore a precisione singola in $f1"
+    },
+    {
+      "example": "cvt.d.w $f2,$f1",
+      "description": "Converti da parola a doppia precisione: imposta $f2 sull'equivalente in doppia precisione del valore intero a 32 bit in $f1"
+    },
+    {
+      "example": "cvt.s.d $f1,$f2",
+      "description": "Converti da precisione doppia a precisione singola: imposta $f1 sull'equivalente in precisione singola del valore a precisione doppia in $f2"
+    },
+    {
+      "example": "cvt.s.w $f0,$f1",
+      "description": "Converti da parola a precisione singola: imposta $f0 sull'equivalente in precisione singola del valore intero a 32 bit in $f2"
+    },
+    {
+      "example": "cvt.w.d $f1,$f2",
+      "description": "Converti da doppia precisione a parola: imposta $f1 sull'equivalente intero a 32 bit del valore di doppia precisione in $f2"
+    },
+    {
+      "example": "cvt.w.s $f0,$f1",
+      "description": "Converti da precisione singola a parola: imposta $f0 sull'equivalente intero a 32 bit del valore a precisione singola in $f1"
+    },
+    {
+      "example": "div $t1,$t2",
+      "description": "Divisione con overflow: dividere $t1 per $t2 quindi impostare LO sul quoziente e HI sul resto (utilizzare mfhi per accedere a HI, mflo per accedere a LO)"
+    },
+    {
+      "example": "div.d $f2,$f4,$f6",
+      "description": "Divisione in virgola mobile a doppia precisione: imposta $f2 sul valore in virgola mobile a precisione doppia di $f4 diviso per $f6"
+    },
+    {
+      "example": "div.s $f0,$f1,$f3",
+      "description": "Divisione in virgola mobile a precisione singola: imposta $f0 sul valore in virgola mobile a precisione singola di $f1 diviso per $f3"
+    },
+    {
+      "example": "divu $t1,$t2",
+      "description": "Divisione senza segno senza overflow: dividere $t1 senza segno per $t2 quindi impostare LO sul quoziente e HI sul resto (utilizzare mfhi per accedere a HI, mflo per accedere a LO)"
+    },
+    {
+      "example": "eret",
+      "description": "Ritorno eccezione: imposta il contatore del programma sul valore del registro del coprocessore 0 EPC, imposta il bit 1 del registro di stato del coprocessore (livello di eccezione) su zero"
+    },
+    {
+      "example": "floor.w.d $f1,$f2",
+      "description": "Piano a doppia precisione su parola: imposta $f1 sul piano intero a 32 bit del float a doppia precisione in $f2"
+    },
+    {
+      "example": "floor.w.s $f0,$f1",
+      "description": "Piano da precisione singola a parola: imposta $f0 sul piano intero a 32 bit del float a precisione singola in $f1"
+    },
+    {
+      "example": "j target",
+      "description": "Salta incondizionatamente: salta all'istruzione all'indirizzo di destinazione"
+    },
+    {
+      "example": "jal target",
+      "description": "Salta e collega: imposta $ra su Program Counter (indirizzo di ritorno), quindi passa all'istruzione all'indirizzo di destinazione"
+    },
+    {
+      "example": "jalr $t1",
+      "description": "Registro di salto e collegamento: imposta $ra su Program Counter (indirizzo di ritorno), quindi passa all'istruzione il cui indirizzo è in $t1"
+    },
+    {
+      "example": "jalr $t1,$t2",
+      "description": "Registro di salto e collegamento: imposta $t1 su Program Counter (indirizzo di ritorno), quindi passa all'istruzione il cui indirizzo è in $t2"
+    },
+    {
+      "example": "jr $t1",
+      "description": "Salta il registro incondizionatamente: salta all'istruzione il cui indirizzo è in $t1"
+    },
+    {
+      "example": "lb $t1,-100($t2)",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,-100($t2)",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ldc1 $f2,-100($t2)",
+      "description": "Carica doppia parola Coprocessore 1 (FPU)): imposta $f2 su un valore a 64 bit dall'indirizzo effettivo della doppia parola di memoria"
+    },
+    {
+      "example": "lh $t1,-100($t2)",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,-100($t2)",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "ll $t1,-100($t2)",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)"
+    },
+    {
+      "example": "lui $t1,100",
+      "description": "Carica immediato superiore: imposta i 16 bit di ordine superiore di $t1 su 16 bit immediati e i 16 bit di ordine inferiore su 0"
+    },
+    {
+      "example": "lw $t1,-100($t2)",
+      "description": "Carica parola: imposta $t1 sul contenuto dell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "lwc1 $f1,-100($t2)",
+      "description": "Carica la parola nel coprocessore 1 (FPU): imposta $f1 su un valore a 32 bit dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "lwl $t1,-100($t2)",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,-100($t2)",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "madd $t1,$t2",
+      "description": "Moltiplica aggiunta: moltiplica $t1 per $t2 quindi incrementa HI per 32 bit di prodotto di ordine superiore, incrementa LO per 32 bit di prodotto di ordine inferiore (usa mfhi per accedere a HI, mflo per accedere a LO)"
+    },
+    {
+      "example": "maddu $t1,$t2",
+      "description": "Moltiplica aggiungi senza segno: moltiplica $t1 per $t2 quindi incrementa HI per 32 bit di prodotto di ordine superiore, incrementa LO per 32 bit di prodotto di ordine inferiore, senza segno (usa mfhi per accedere a HI, mflo per accedere a LO)"
+    },
+    {
+      "example": "mfc0 $t1,$8",
+      "description": "Sposta dal coprocessore 0: imposta $t1 sul valore memorizzato nel registro del coprocessore 0 $8"
+    },
+    {
+      "example": "mfc1 $t1,$f1",
+      "description": "Sposta dal coprocessore 1 (FPU): imposta $t1 sul valore nel registro del coprocessore 1 $f1"
+    },
+    {
+      "example": "cfc1 $t1,$31",
+      "description": "Passa dal controllo del coprocessore 1: imposta $t1 sul controllo FCSR e sul valore di stato"
+    },
+    {
+      "example": "mfhi $t1",
+      "description": "Sposta dal registro HI: imposta $t1 sul contenuto di HI (vedi operazioni di moltiplicazione e divisione)"
+    },
+    {
+      "example": "mflo $t1",
+      "description": "Sposta dal registro LO: imposta $t1 sul contenuto di LO (vedi operazioni di moltiplicazione e divisione)"
+    },
+    {
+      "example": "mov.d $f2,$f4",
+      "description": "Sposta precisione doppia in virgola mobile: imposta la precisione doppia $f2 sul valore di precisione doppia in $f4"
+    },
+    {
+      "example": "mov.s $f0,$f1",
+      "description": "Sposta precisione singola in virgola mobile: imposta la precisione singola $f0 sul valore di precisione singola in $f1"
+    },
+    {
+      "example": "movf $t1,$t2",
+      "description": "Sposta se il flag di condizione FP 0 è falso: imposta $t1 su $t2 se il flag di condizione 0 FPU (coprocessore 1) è falso (zero)"
+    },
+    {
+      "example": "movf $t1,$t2,1",
+      "description": "Sposta se specificato flag di condizione FP falso: imposta $t1 su $t2 se il flag di condizione FPU (Coprocessore 1) specificato dall'immediato è falso (zero)"
+    },
+    {
+      "example": "movf.d $f2,$f4",
+      "description": "Sposta la doppia precisione in virgola mobile: se il flag di condizione 0 è falso, imposta la doppia precisione $f2 sul valore di doppia precisione in $f4"
+    },
+    {
+      "example": "movf.d $f2,$f4,1",
+      "description": "Sposta precisione doppia in virgola mobile: se il flag di condizione specificato da immediato è falso, imposta la doppia precisione $f2 sul valore di doppia precisione in $f4"
+    },
+    {
+      "example": "movf.s $f0,$f1",
+      "description": "Sposta precisione singola in virgola mobile: se il flag di condizione 0 è falso, imposta la precisione singola $f0 sul valore di precisione singola in $f1"
+    },
+    {
+      "example": "movf.s $f0,$f1,1",
+      "description": "Sposta precisione singola in virgola mobile: se il flag di condizione specificato da immediato è falso, imposta la precisione singola $f0 sul valore di precisione singola in $f1e"
+    },
+    {
+      "example": "movn $t1,$t2,$t3",
+      "description": "Sposta condizionale diverso da zero: imposta $t1 su $t2 se $t3 non è zero"
+    },
+    {
+      "example": "movn.d $f2,$f4,$t3",
+      "description": "Sposta la precisione doppia in virgola mobile: se $t3 non è zero, imposta la doppia precisione $f2 sul valore di doppia precisione in $f4"
+    },
+    {
+      "example": "movn.s $f0,$f1,$t3",
+      "description": "Sposta precisione singola in virgola mobile: se $t3 non è zero, imposta precisione singola $f0 sul valore di precisione singola in $f1"
+    },
+    {
+      "example": "movt $t1,$t2",
+      "description": "Sposta se il flag di condizione FP 0 è vero: imposta $t1 su $t2 se il flag di condizione 0 FPU (coprocessore 1) è vero (uno)"
+    },
+    {
+      "example": "movt $t1,$t2,1",
+      "description": "Sposta se specificato il flag di condizione FP vero: imposta $t1 su $t2 se il flag di condizione FPU (Coprocessore 1) specificato dall'immediato è vero (uno)"
+    },
+    {
+      "example": "movt.d $f2,$f4",
+      "description": "Sposta la doppia precisione in virgola mobile: se il flag di condizione è vero 0, imposta la doppia precisione $f2 sul valore di doppia precisione in $f4"
+    },
+    {
+      "example": "movt.d $f2,$f4,1",
+      "description": "Sposta precisione doppia in virgola mobile: se il flag di condizione specificato da immediato è vero, imposta la precisione doppia $f2 sul valore di precisione doppia in $f4e"
+    },
+    {
+      "example": "movt.s $f0,$f1",
+      "description": "Sposta precisione singola in virgola mobile: se il flag di condizione 0 è vero, imposta la precisione singola $f0 sul valore di precisione singola in $f1e"
+    },
+    {
+      "example": "movt.s $f0,$f1,1",
+      "description": "Sposta precisione singola in virgola mobile: se il flag di condizione specificato da immediato è vero, imposta la precisione singola $f0 sul valore di precisione singola in $f1e"
+    },
+    {
+      "example": "movz $t1,$t2,$t3",
+      "description": "Sposta lo zero condizionale: imposta $t1 su $t2 se $t3 è zero"
+    },
+    {
+      "example": "movz.d $f2,$f4,$t3",
+      "description": "Sposta la doppia precisione in virgola mobile: se $t3 è zero, imposta la doppia precisione $f2 sul valore di doppia precisione in $f4"
+    },
+    {
+      "example": "movz.s $f0,$f1,$t3",
+      "description": "Sposta precisione singola in virgola mobile: se $t3 è zero, imposta precisione singola $f0 sul valore di precisione singola in $f1"
+    },
+    {
+      "example": "msub $t1,$t2",
+      "description": "Moltiplica sottrazione: moltiplica $t1 per $t2 quindi decrementa HI per 32 bit di prodotto di ordine superiore, decrementa LO per 32 bit di prodotto di ordine inferiore (usa mfhi per accedere a HI, mflo per accedere a LO)"
+    },
+    {
+      "example": "msubu $t1,$t2",
+      "description": "Moltiplica sottrai senza segno: moltiplica $t1 per $t2 quindi decrementa HI per 32 bit di prodotto di ordine superiore, decrementa LO per 32 bit di prodotto di ordine inferiore, senza segno (usa mfhi per accedere a HI, mflo per accedere a LO)"
+    },
+    {
+      "example": "mtc0 $t1,$8",
+      "description": "Passa al coprocessore 0: imposta il registro del coprocessore 0 $8 sul valore memorizzato in $t1"
+    },
+    {
+      "example": "mtc1 $t1,$f1",
+      "description": "Passa al coprocessore 1 (FPU): imposta il registro del coprocessore 1 $f1 sul valore in $t1"
+    },
+    {
+      "example": "ctc1 $t1,$31",
+      "description": "Passa al controllo del coprocessore 1: imposta FCSR, inclusa la modalità di arrotondamento, sul valore in $t1"
+    },
+    {
+      "example": "mthi $t1",
+      "description": "Passa al registro HI: imposta HI sul contenuto di $t1 (vedere operazioni di moltiplicazione e divisione)"
+    },
+    {
+      "example": "mtlo $t1",
+      "description": "Passa al registro LO: imposta LO sul contenuto di $t1 (vedere operazioni di moltiplicazione e divisione)"
+    },
+    {
+      "example": "mul $t1,$t2,$t3",
+      "description": "Moltiplicazione senza overflow: imposta HI su 32 bit di ordine superiore, LO e $t1 su 32 bit di ordine inferiore del prodotto di $t2 e $t3 (utilizzare mfhi per accedere a HI, mflo per accedere a LO)"
+    },
+    {
+      "example": "mul.d $f2,$f4,$f6",
+      "description": "Moltiplicazione a virgola mobile a doppia precisione: imposta $f2 sul valore a virgola mobile a precisione doppia di $f4 volte $f6"
+    },
+    {
+      "example": "mul.s $f0,$f1,$f3",
+      "description": "Moltiplicazione a virgola mobile a precisione singola: imposta $f0 sul valore a virgola mobile a precisione singola di $f1 volte $f3"
+    },
+    {
+      "example": "mult $t1,$t2",
+      "description": "Moltiplicazione: imposta hi su 32 bit di ordine superiore, lo su 32 bit di ordine inferiore del prodotto di $t1 e $t2 (utilizzare mfhi per accedere a hi, mflo per accedere a lo)"
+    },
+    {
+      "example": "multu $t1,$t2",
+      "description": "Moltiplicazione senza segno: imposta HI su 32 bit di ordine superiore, LO su 32 bit di ordine inferiore del prodotto di $t1 e $t2 senza segno (utilizzare mfhi per accedere a HI, mflo per accedere a LO)"
+    },
+    {
+      "example": "neg.d $f2,$f4",
+      "description": "Virgola mobile nega doppia precisione: imposta la doppia precisione $f2 sulla negazione del valore di doppia precisione in $f4"
+    },
+    {
+      "example": "neg.s $f0,$f1",
+      "description": "Virgola mobile nega precisione singola: imposta la precisione singola $f0 sulla negazione del valore di precisione singola in $f1"
+    },
+    {
+      "example": "nop",
+      "description": "Operazione nulla: il codice macchina è tutto zero"
+    },
+    {
+      "example": "nor $t1,$t2,$t3",
+      "description": "Bit per bit NOR: imposta $t1 su bit per bit NOR di $t2 e $t3"
+    },
+    {
+      "example": "or $t1,$t2,$t3",
+      "description": "OR bit a bit: imposta $t1 sull'OR bit a bit di $t2 e $t3"
+    },
+    {
+      "example": "ori $t1,$t2,100",
+      "description": "OR bit per bit immediato: imposta $t1 sull'OR bit per bit di $t2 e immediato a 16 bit con estensione zero"
+    },
+    {
+      "example": "round.w.d $f1,$f2",
+      "description": "Arrotonda la doppia precisione alla parola: imposta $f1 sull'intero a 32 bit, arrotondando il float a doppia precisione in $f2"
+    },
+    {
+      "example": "round.w.s $f0,$f1",
+      "description": "Arrotonda precisione singola a parola: imposta $f0 su un intero a 32 bit di arrotondamento del float a precisione singola in $f1"
+    },
+    {
+      "example": "sb $t1,-100($t2)",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sc $t1,-100($t2)",
+      "description": "Memorizza condizionale: memorizza $t1 solo se la prenotazione collegata al carico corrispondente è ancora valida, quindi imposta $t1 su 1 in caso di successo o 0 in caso di fallimento"
+    },
+    {
+      "example": "sdc1 $f2,-100($t2)",
+      "description": "Memorizza doppia parola dal coprocessore 1 (FPU)): memorizza il valore a 64 bit in $f2 nell'indirizzo effettivo della doppia parola di memoria"
+    },
+    {
+      "example": "sh $t1,-100($t2)",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine inferiore di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sll $t1,$t2,10",
+      "description": "Scorrimento logico a sinistra: imposta $t1 sul risultato dello spostamento $t2 a sinistra in base al numero di bit specificato da immediato"
+    },
+    {
+      "example": "sllv $t1,$t2,$t3",
+      "description": "Sposta la variabile logica a sinistra: imposta $t1 sul risultato dello spostamento di $t2 a sinistra per il numero di bit specificati dal valore nei 5 bit di ordine inferiore di $t3"
+    },
+    {
+      "example": "slt $t1,$t2,$t3",
+      "description": "Imposta inferiore a: Se $t2 è inferiore a $t3, imposta $t1 su 1 altrimenti imposta $t1 su 0"
+    },
+    {
+      "example": "slti $t1,$t2,-100",
+      "description": "Imposta meno di immediato: se $t2 è inferiore a immediato a 16 bit con estensione del segno, imposta $t1 su 1 altrimenti imposta $t1 su 0"
+    },
+    {
+      "example": "sltiu $t1,$t2,-100",
+      "description": "Imposta meno che immediato senza segno: se $t2 è inferiore a 16 bit immediato con estensione del segno utilizzando il confronto senza segno, imposta $t1 su 1 altrimenti imposta $t1 su 0"
+    },
+    {
+      "example": "sltu $t1,$t2,$t3",
+      "description": "Imposta minore di senza segno: se $t2 è inferiore a $t3 utilizzando il confronto senza segno, imposta $t1 su 1 altrimenti imposta $t1 su 0"
+    },
+    {
+      "example": "sqrt.d $f2,$f4",
+      "description": "Radice quadrata a doppia precisione: imposta $f2 sulla radice quadrata in virgola mobile a precisione doppia di $f4"
+    },
+    {
+      "example": "sqrt.s $f0,$f1",
+      "description": "Radice quadrata a precisione singola: imposta $f0 sulla radice quadrata in virgola mobile a precisione singola di $f1"
+    },
+    {
+      "example": "sra $t1,$t2,10",
+      "description": "Aritmetica dello spostamento a destra: imposta $t1 sul risultato dello spostamento con segno esteso $t2 a destra in base al numero di bit specificato da immediato"
+    },
+    {
+      "example": "srav $t1,$t2,$t3",
+      "description": "Spostamento della variabile aritmetica a destra: imposta $t1 sul risultato dello spostamento con segno esteso $t2 a destra in base al numero di bit specificato dal valore nei 5 bit di ordine inferiore di $t3"
+    },
+    {
+      "example": "srl $t1,$t2,10",
+      "description": "Scorrimento logico a destra: imposta $t1 sul risultato dello spostamento $t2 a destra in base al numero di bit specificati da immediato"
+    },
+    {
+      "example": "srlv $t1,$t2,$t3",
+      "description": "Sposta la variabile logica a destra: imposta $t1 sul risultato dello spostamento $t2 a destra in base al numero di bit specificati dal valore nei 5 bit di ordine inferiore di $t3"
+    },
+    {
+      "example": "sub $t1,$t2,$t3",
+      "description": "Sottrazione con overflow: imposta $t1 su ($t2 meno $t3)"
+    },
+    {
+      "example": "sub.d $f2,$f4,$f6",
+      "description": "Sottrazione in virgola mobile a doppia precisione: imposta $f2 sul valore in virgola mobile a precisione doppia di $f4 meno $f6"
+    },
+    {
+      "example": "sub.s $f0,$f1,$f3",
+      "description": "Sottrazione in virgola mobile a precisione singola: imposta $f0 sul valore in virgola mobile a precisione singola di $f1 meno $f3"
+    },
+    {
+      "example": "subu $t1,$t2,$t3",
+      "description": "Sottrazione senza segno senza overflow: imposta $t1 su ($t2 meno $t3), nessun overflow"
+    },
+    {
+      "example": "sw $t1,-100($t2)",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "swc1 $f1,-100($t2)",
+      "description": "Memorizza parola dal coprocessore 1 (FPU): memorizza il valore a 32 bit in $f1 nell'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "swl $t1,-100($t2)",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swr $t1,-100($t2)",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo byte effettivo e continuando attraverso quell'indirizzo byte"
+    },
+    {
+      "example": "syscall",
+      "description": "Emetti una chiamata di sistema: esegui la chiamata di sistema specificata dal valore in $v0"
+    },
+    {
+      "example": "teq $t1,$t2",
+      "description": "Trappola se uguale: Trappola se $t1 è uguale a $t2"
+    },
+    {
+      "example": "teqi $t1,-100",
+      "description": "Trap se uguale a immediato: Trap se $t1 è uguale a 16 bit con estensione del segno immediato"
+    },
+    {
+      "example": "tge $t1,$t2",
+      "description": "Trap se maggiore o uguale: Trap se $t1 è maggiore o uguale a $t2"
+    },
+    {
+      "example": "tgei $t1,-100",
+      "description": "Trap se maggiore o uguale a immediato : Trap se $t1 maggiore o uguale a 16 bit con estensione del segno immediato"
+    },
+    {
+      "example": "tgeiu $t1,-100",
+      "description": "Trap se maggiore o uguale a immediato senza segno: Trap se $t1 maggiore o uguale al confronto immediato senza segno a 16 bit con estensione del segno"
+    },
+    {
+      "example": "tgeu $t1,$t2",
+      "description": "Trap se maggiore o uguale senza segno: Trap se $t1 è maggiore o uguale a $t2 utilizzando il confronto senza segno"
+    },
+    {
+      "example": "tlt $t1,$t2",
+      "description": "Effettua il trap se inferiore a: Effettua il trap se $t1 inferiore a $t2"
+    },
+    {
+      "example": "tlti $t1,-100",
+      "description": "Trap se inferiore a immediato: Trap se $t1 inferiore a segno esteso a 16 bit immediato"
+    },
+    {
+      "example": "tltiu $t1,-100",
+      "description": "Trap se inferiore a immediato senza segno: Trap se $t1 inferiore a segno esteso confronto immediato senza segno a 16 bit"
+    },
+    {
+      "example": "tltu $t1,$t2",
+      "description": "Trap se inferiore a senza segno: Trap se $t1 inferiore a $t2, confronto senza segno"
+    },
+    {
+      "example": "tne $t1,$t2",
+      "description": "Trappola se non uguale: Trappola se $t1 non è uguale a $t2"
+    },
+    {
+      "example": "tnei $t1,-100",
+      "description": "Trap se diverso da immediato: Trap se $t1 non è uguale a 16 bit con estensione del segno immediato"
+    },
+    {
+      "example": "trunc.w.d $f1,$f2",
+      "description": "Tronca la doppia precisione in parola: imposta $f1 sul troncamento intero a 32 bit del float a doppia precisione in $f2"
+    },
+    {
+      "example": "trunc.w.s $f0,$f1",
+      "description": "Tronca precisione singola in parola: imposta $f0 sul troncamento intero a 32 bit del float a precisione singola in $f1"
+    },
+    {
+      "example": "xor $t1,$t2,$t3",
+      "description": "Bit a bit XOR (OR esclusivo): imposta $t1 su bit a XOR di $t2 e $t3"
+    },
+    {
+      "example": "xori $t1,$t2,100",
+      "description": "Bit per bit XOR immediato: imposta $t1 su bit per bit XOR di $t2 e zero-extended 16 bit immediato"
+    }
+  ],
+  "extendedInstructions": [
+    {
+      "example": "abs $t1,$t2",
+      "description": "Valore assoluto: imposta $t1 sul valore assoluto di $t2 (algoritmo di Hacker's Delight)"
+    },
+    {
+      "example": "add $t1,$t2,-100",
+      "description": "AGGIUNTA: imposta $t1 a ($t2 più 16 bit immediato)"
+    },
+    {
+      "example": "add $t1,$t2,100000",
+      "description": "AGGIUNTA: imposta $t1 a ($t2 più 32 bit immediato)"
+    },
+    {
+      "example": "addi $t1,$t2,100000",
+      "description": "AGGIUNTA Immediata: imposta $t1 a ($t2 più 32 bit immediato)"
+    },
+    {
+      "example": "addiu $t1,$t2,100000",
+      "description": "ADDizione immediata Senza segno: imposta $t1 su ($t2 più 32 bit immediato), nessun overflow"
+    },
+    {
+      "example": "addu $t1,$t2,100000",
+      "description": "ADDition Unsigned: imposta $t1 su ($t2 più 32 bit immediato), nessun overflow"
+    },
+    {
+      "example": "and $t1,$t2,100",
+      "description": "AND: imposta $t1 su ($t2 bit per bit-AND 16 bit senza segno immediato)"
+    },
+    {
+      "example": "and $t1,100",
+      "description": "AND: imposta $t1 su ($t1 bit per bit-AND 16 bit senza segno immediato)"
+    },
+    {
+      "example": "andi $t1,$t2,100000",
+      "description": "AND Immediato: imposta $t1 su ($t2 bit a bit-AND 32 bit immediato)"
+    },
+    {
+      "example": "andi $t1,100",
+      "description": "AND Immediato: imposta $t1 su ($t1 bit per bit-AND 16 bit senza segno immediato)"
+    },
+    {
+      "example": "andi $t1,100000",
+      "description": "AND Immediato: imposta $t1 su ($t1 bit a bit-AND 32 bit immediato)"
+    },
+    {
+      "example": "b label",
+      "description": "Ramo: ramo incondizionatamente all'istruzione in etichetta"
+    },
+    {
+      "example": "beq $t1,-100,label",
+      "description": "Dirama se EQual: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è uguale a 16 bit immediato"
+    },
+    {
+      "example": "beq $t1,100000,label",
+      "description": "Dirama se EQual: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è uguale a 32 bit immediato"
+    },
+    {
+      "example": "beqz $t1,label",
+      "description": "Dirama se EQual Zero: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è uguale a zero"
+    },
+    {
+      "example": "bge $t1,-100,label",
+      "description": "Dirama se maggiore o uguale: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è maggiore o uguale a 16 bit immediato"
+    },
+    {
+      "example": "bge $t1,$t2,label",
+      "description": "Dirama se maggiore o uguale: dirama nell'istruzione in corrispondenza dell'etichetta se $t1 è maggiore o uguale a $t2"
+    },
+    {
+      "example": "bge $t1,100000,label",
+      "description": "Dirama se maggiore o uguale: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è maggiore o uguale a 32 bit immediato"
+    },
+    {
+      "example": "bgeu $t1,-100,label",
+      "description": "Dirama se maggiore o uguale senza segno: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è maggiore o uguale a 16 bit immediato (confronto senza segno)"
+    },
+    {
+      "example": "bgeu $t1,$t2,label",
+      "description": "Dirama se maggiore o uguale senza segno: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è maggiore o uguale a $t2 (confronto senza segno)"
+    },
+    {
+      "example": "bgeu $t1,100000,label",
+      "description": "Dirama se maggiore o uguale senza segno: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è maggiore o uguale a 32 bit immediato (confronto senza segno)"
+    },
+    {
+      "example": "bgt $t1,-100,label",
+      "description": "Dirama se maggiore di: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è maggiore di 16 bit immediato"
+    },
+    {
+      "example": "bgt $t1,$t2,label",
+      "description": "Dirama se maggiore di: dirama nell'istruzione in corrispondenza dell'etichetta se $t1 è maggiore di $t2"
+    },
+    {
+      "example": "bgt $t1,100000,label",
+      "description": "Dirama se maggiore di: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è maggiore di 32 bit immediato"
+    },
+    {
+      "example": "bgtu $t1,-100,label",
+      "description": "Dirama se maggiore di senza segno: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è maggiore di 16 bit immediato (confronto senza segno)"
+    },
+    {
+      "example": "bgtu $t1,$t2,label",
+      "description": "Dirama se maggiore di senza segno: dirama nell'istruzione in corrispondenza dell'etichetta se $t1 è maggiore di $t2 (confronto senza segno)"
+    },
+    {
+      "example": "bgtu $t1,100000,label",
+      "description": "Dirama se maggiore di senza segno: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è maggiore di 16 bit immediato (confronto senza segno)"
+    },
+    {
+      "example": "ble $t1,-100,label",
+      "description": "Dirama se minore o uguale: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è inferiore o uguale a 16 bit immediato"
+    },
+    {
+      "example": "ble $t1,$t2,label",
+      "description": "Dirama se minore o uguale: dirama nell'istruzione in corrispondenza dell'etichetta se $t1 è minore o uguale a $t2"
+    },
+    {
+      "example": "ble $t1,100000,label",
+      "description": "Dirama se minore o uguale: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è inferiore o uguale a 32 bit immediato"
+    },
+    {
+      "example": "bleu $t1,-100,label",
+      "description": "Dirama se inferiore o uguale a senza segno: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è inferiore o uguale a 16 bit immediato (confronto senza segno)"
+    },
+    {
+      "example": "bleu $t1,$t2,label",
+      "description": "Dirama se inferiore o uguale a senza segno: dirama nell'istruzione in corrispondenza dell'etichetta se $t1 è minore o uguale a $t2 (confronto senza segno)"
+    },
+    {
+      "example": "bleu $t1,100000,label",
+      "description": "Dirama se inferiore o uguale a senza segno: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è inferiore o uguale a 32 bit immediato (confronto senza segno)"
+    },
+    {
+      "example": "blt $t1,-100,label",
+      "description": "Dirama se inferiore a: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è inferiore a 16 bit immediato"
+    },
+    {
+      "example": "blt $t1,$t2,label",
+      "description": "Dirama se inferiore a: Dirama nell'istruzione in corrispondenza dell'etichetta se $t1 è inferiore a $t2"
+    },
+    {
+      "example": "blt $t1,100000,label",
+      "description": "Dirama se inferiore a: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è inferiore a 32 bit immediato"
+    },
+    {
+      "example": "bltu $t1,-100,label",
+      "description": "Dirama se inferiore a non firmato: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è inferiore a 16 bit immediato"
+    },
+    {
+      "example": "bltu $t1,$t2,label",
+      "description": "Dirama se inferiore a non firmato: dirama nell'istruzione in corrispondenza dell'etichetta se $t1 è inferiore a $t2"
+    },
+    {
+      "example": "bltu $t1,100000,label",
+      "description": "Dirama se inferiore a non firmato: dirama all'istruzione in corrispondenza dell'etichetta se $t1 è inferiore a 32 bit immediato"
+    },
+    {
+      "example": "bne $t1,-100,label",
+      "description": "Dirama se non uguale: dirama all'istruzione in corrispondenza dell'etichetta se $t1 non è uguale a 16 bit immediato"
+    },
+    {
+      "example": "bne $t1,100000,label",
+      "description": "Dirama se non uguale: dirama all'istruzione in corrispondenza dell'etichetta se $t1 non è uguale a 32 bit immediato"
+    },
+    {
+      "example": "bnez $t1,label",
+      "description": "Dirama se non uguale a zero: dirama all'istruzione in corrispondenza dell'etichetta se $t1 non è uguale a zero"
+    },
+    {
+      "example": "div $t1,$t2,-100",
+      "description": "DIVision: imposta $t1 su ($t2 diviso per divisione intera immediata a 16 bit)"
+    },
+    {
+      "example": "div $t1,$t2,$t3",
+      "description": "DIVision: imposta $t1 su ($t2 diviso per $t3, divisione intera)"
+    },
+    {
+      "example": "div $t1,$t2,100000",
+      "description": "DIVision: imposta $t1 su ($t2 diviso per divisione intera immediata a 32 bit)"
+    },
+    {
+      "example": "divu $t1,$t2,-100",
+      "description": "DIVision Unsigned: imposta $t1 su ($t2 diviso per la divisione intera immediata senza segno a 16 bit)"
+    },
+    {
+      "example": "divu $t1,$t2,$t3",
+      "description": "DIVision Unsigned: imposta $t1 su ($t2 diviso per $t3, divisione intera senza segno)"
+    },
+    {
+      "example": "divu $t1,$t2,100000",
+      "description": "DIVision Unsigned: imposta $t1 su ($t2 diviso per la divisione intera immediata senza segno a 32 bit)"
+    },
+    {
+      "example": "l.d $f2,-100",
+      "description": "Carica la doppia precisione in virgola mobile: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "l.d $f2,($t2)",
+      "description": "Carica la doppia precisione in virgola mobile: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "l.d $f2,100000",
+      "description": "Carica la doppia precisione in virgola mobile: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "l.d $f2,100000($t2)",
+      "description": "Carica la doppia precisione in virgola mobile: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "l.d $f2,label",
+      "description": "Carica la doppia precisione in virgola mobile: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "l.d $f2,label($t2)",
+      "description": "Carica la doppia precisione in virgola mobile: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "l.d $f2,label+100000",
+      "description": "Carica la doppia precisione in virgola mobile: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "l.d $f2,label+100000($t2)",
+      "description": "Carica la doppia precisione in virgola mobile: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "l.s $f1,-100",
+      "description": "Carica virgola mobile Precisione singola: imposta $f1 su un valore a 32 bit all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "l.s $f1,($t2)",
+      "description": "Carica virgola mobile Precisione singola: imposta $f1 su un valore a 32 bit all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "l.s $f1,100000",
+      "description": "Carica virgola mobile Precisione singola: imposta $f1 su un valore a 32 bit all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "l.s $f1,100000($t2)",
+      "description": "Carica virgola mobile Precisione singola: imposta $f1 su un valore a 32 bit all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "l.s $f1,label",
+      "description": "Carica virgola mobile Precisione singola: imposta $f1 su un valore a 32 bit all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "l.s $f1,label($t2)",
+      "description": "Carica virgola mobile Precisione singola: imposta $f1 su un valore a 32 bit all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "l.s $f1,label+100000",
+      "description": "Carica virgola mobile Precisione singola: imposta $f1 su un valore a 32 bit all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "l.s $f1,label+100000($t2)",
+      "description": "Carica virgola mobile Precisione singola: imposta $f1 su un valore a 32 bit all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "la $t1,-100",
+      "description": "Carica indirizzo: imposta $t1 su 16 bit immediato (segno esteso)"
+    },
+    {
+      "example": "la $t1,($t2)",
+      "description": "Carica indirizzo: imposta $t1 sul contenuto di $t2"
+    },
+    {
+      "example": "la $t1,100",
+      "description": "Carica indirizzo: imposta $t1 su 16 bit immediato (zero-esteso)"
+    },
+    {
+      "example": "la $t1,100($t2)",
+      "description": "Carica indirizzo: imposta $t1 sulla somma (di $t2 e 16 bit immediato)"
+    },
+    {
+      "example": "la $t1,100000",
+      "description": "Carica indirizzo: imposta $t1 su 32 bit immediato"
+    },
+    {
+      "example": "la $t1,100000($t2)",
+      "description": "Carica indirizzo: imposta $t1 sulla somma (di $t2 e 32 bit immediato)"
+    },
+    {
+      "example": "la $t1,label",
+      "description": "Carica indirizzo: imposta $t1 sull'indirizzo dell'etichetta"
+    },
+    {
+      "example": "la $t1,label($t2)",
+      "description": "Carica indirizzo: imposta $t1 sulla somma (di $t2 e l'indirizzo dell'etichetta)"
+    },
+    {
+      "example": "la $t1,label+100000",
+      "description": "Carica indirizzo: imposta $t1 sulla somma (dell'indirizzo dell'etichetta e dell'immediato a 32 bit)"
+    },
+    {
+      "example": "la $t1,label+100000($t2)",
+      "description": "Carica indirizzo: imposta $t1 sulla somma (dell'indirizzo dell'etichetta, immediato a 32 bit e $t2)"
+    },
+    {
+      "example": "lb $t1,-100",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lb $t1,($t2)",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lb $t1,100",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lb $t1,100($t2)",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lb $t1,100000",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lb $t1,100000($t2)",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lb $t1,label",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lb $t1,label($t2)",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lb $t1,label+100000",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lb $t1,label+100000($t2)",
+      "description": "Carica byte: imposta $t1 sul valore a 8 bit con estensione del segno dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,-100",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,($t2)",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,100",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,100($t2)",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,100000",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,100000($t2)",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,label",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,label($t2)",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,label+100000",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "lbu $t1,label+100000($t2)",
+      "description": "Carica byte senza segno: imposta $t1 sul valore a 8 bit esteso zero dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ld $t1,-100($t2)",
+      "description": "Carica doppia parola: imposta $t1 e il registro successivo su 64 bit a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ld $t1,($t2)",
+      "description": "Carica doppia parola: imposta $t1 e il registro successivo su 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "ld $t1,100000",
+      "description": "Carica doppia parola: imposta $t1 e il registro successivo su 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "ld $t1,100000($t2)",
+      "description": "Carica doppia parola: imposta $t1 e il registro successivo su 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "ld $t1,label",
+      "description": "Carica doppia parola: imposta $t1 e il registro successivo su 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "ld $t1,label($t2)",
+      "description": "Carica doppia parola: imposta $t1 e il registro successivo su 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "ld $t1,label+100000",
+      "description": "Carica doppia parola: imposta $t1 e il registro successivo su 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "ld $t1,label+100000($t2)",
+      "description": "Carica doppia parola: imposta $t1 e il registro successivo su 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "ldc1 $f2,-100",
+      "description": "Carica coprocessore a doppia parola 1: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo effettivo della doppia parola di memoria"
+    },
+    {
+      "example": "ldc1 $f2,($t2)",
+      "description": "Carica coprocessore a doppia parola 1: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo effettivo della doppia parola di memoria"
+    },
+    {
+      "example": "ldc1 $f2,100000",
+      "description": "Carica coprocessore a doppia parola 1: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo effettivo della doppia parola di memoria"
+    },
+    {
+      "example": "ldc1 $f2,100000($t2)",
+      "description": "Carica coprocessore a doppia parola 1: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo effettivo della doppia parola di memoria"
+    },
+    {
+      "example": "ldc1 $f2,label",
+      "description": "Carica coprocessore a doppia parola 1: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo effettivo della doppia parola di memoria"
+    },
+    {
+      "example": "ldc1 $f2,label($t2)",
+      "description": "Carica coprocessore a doppia parola 1: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo effettivo della doppia parola di memoria"
+    },
+    {
+      "example": "ldc1 $f2,label+100000",
+      "description": "Carica coprocessore a doppia parola 1: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo effettivo della doppia parola di memoria"
+    },
+    {
+      "example": "ldc1 $f2,label+100000($t2)",
+      "description": "Carica coprocessore a doppia parola 1: imposta la coppia di registri $f2 e $f3 su un valore a 64 bit nell'indirizzo effettivo della doppia parola di memoria"
+    },
+    {
+      "example": "lh $t1,-100",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lh $t1,($t2)",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lh $t1,100",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lh $t1,100($t2)",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lh $t1,100000",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lh $t1,100000($t2)",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lh $t1,label",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lh $t1,label($t2)",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lh $t1,label+100000",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lh $t1,label+100000($t2)",
+      "description": "Carica mezza parola: imposta $t1 sul valore a 16 bit con segno esteso dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,-100",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,($t2)",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,100",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,100($t2)",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,100000",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,100000($t2)",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,label",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,label($t2)",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,label+100000",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "lhu $t1,label+100000($t2)",
+      "description": "Carica mezza parola senza segno: imposta $t1 sul valore a 16 bit esteso zero dall'indirizzo effettivo della mezza parola di memoria"
+    },
+    {
+      "example": "li $t1,-100",
+      "description": "Caricamento immediato: imposta $t1 su 16 bit immediato (segno esteso)"
+    },
+    {
+      "example": "li $t1,100",
+      "description": "Caricamento immediato: imposta $t1 su immediato a 16 bit senza segno (esteso con zero)"
+    },
+    {
+      "example": "li $t1,100000",
+      "description": "Caricamento immediato: imposta $t1 su 32 bit immediato"
+    },
+    {
+      "example": "ll $t1,-100",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)."
+    },
+    {
+      "example": "ll $t1,($t2)",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)."
+    },
+    {
+      "example": "ll $t1,100",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)."
+    },
+    {
+      "example": "ll $t1,100($t2)",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)."
+    },
+    {
+      "example": "ll $t1,100000",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)."
+    },
+    {
+      "example": "ll $t1,100000($t2)",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)."
+    },
+    {
+      "example": "ll $t1,label",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)."
+    },
+    {
+      "example": "ll $t1,label($t2)",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)."
+    },
+    {
+      "example": "ll $t1,label+100000",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)."
+    },
+    {
+      "example": "ll $t1,label+100000($t2)",
+      "description": "Carica collegato: carica una parola e stabilisce una prenotazione per un successivo Store Conditional (sc)."
+    },
+    {
+      "example": "lw $t1,-100",
+      "description": "Carica parola: imposta $t1 sul contenuto dell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "lw $t1,($t2)",
+      "description": "Carica parola: imposta $t1 sul contenuto dell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "lw $t1,100",
+      "description": "Carica parola: imposta $t1 sul contenuto dell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "lw $t1,100($t2)",
+      "description": "Carica parola: imposta $t1 sul contenuto dell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "lw $t1,100000",
+      "description": "Carica parola: imposta $t1 sul contenuto dell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "lw $t1,100000($t2)",
+      "description": "Carica parola: imposta $t1 sul contenuto dell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "lw $t1,label",
+      "description": "Carica parola: imposta $t1 sul contenuto della parola di memoria all'indirizzo dell'etichetta"
+    },
+    {
+      "example": "lw $t1,label($t2)",
+      "description": "Carica parola: imposta $t1 sul contenuto dell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "lw $t1,label+100000",
+      "description": "Carica parola: imposta $t1 sul contenuto dell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "lw $t1,label+100000($t2)",
+      "description": "Carica parola: imposta $t1 sul contenuto dell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "lwc1 $f1,-100",
+      "description": "Carica coprocessore parola 1: imposta $f1 su un valore a 32 bit dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "lwc1 $f1,($t2)",
+      "description": "Carica coprocessore parola 1: imposta $f1 su un valore a 32 bit dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "lwc1 $f1,100000",
+      "description": "Carica coprocessore parola 1: imposta $f1 su un valore a 32 bit dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "lwc1 $f1,100000($t2)",
+      "description": "Carica coprocessore parola 1: imposta $f1 su un valore a 32 bit dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "lwc1 $f1,label",
+      "description": "Carica coprocessore parola 1: imposta $f1 su un valore a 32 bit dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "lwc1 $f1,label($t2)",
+      "description": "Carica coprocessore parola 1: imposta $f1 su un valore a 32 bit dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "lwc1 $f1,label+100000",
+      "description": "Carica coprocessore parola 1: imposta $f1 su un valore a 32 bit dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "lwc1 $f1,label+100000($t2)",
+      "description": "Carica coprocessore parola 1: imposta $f1 su un valore a 32 bit dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "lwl $t1,-100",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwl $t1,($t2)",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwl $t1,100",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwl $t1,100($t2)",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwl $t1,100000",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwl $t1,100000($t2)",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwl $t1,label",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwl $t1,label($t2)",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwl $t1,label+100000",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwl $t1,label+100000($t2)",
+      "description": "Carica parola a sinistra: carica da 1 a 4 byte giustificati a sinistra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,-100",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,($t2)",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,100",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,100($t2)",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,100000",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,100000($t2)",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,label",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,label($t2)",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,label+100000",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "lwr $t1,label+100000($t2)",
+      "description": "Carica parola a destra: carica da 1 a 4 byte giustificati a destra in $t1, iniziando con l'indirizzo del byte di memoria effettivo e continuando attraverso il byte di ordine superiore della sua parola"
+    },
+    {
+      "example": "mfc1.d $t1,$f2",
+      "description": "Sposta dal coprocessore 1 Doppio: imposta $t1 sul contenuto di $f2, imposta il registro successivo superiore da $t1 sul contenuto del registro successivo superiore da $f2"
+    },
+    {
+      "example": "move $t1,$t2",
+      "description": "MOVE: imposta $t1 sul contenuto di $t2"
+    },
+    {
+      "example": "mtc1.d $t1,$f2",
+      "description": "Sposta al coprocessore 1 Doppio: imposta $f2 sul contenuto di $t1, imposta il registro successivo superiore da $f2 sul contenuto del registro successivo superiore da $t1"
+    },
+    {
+      "example": "mul $t1,$t2,-100",
+      "description": "MULtiplicazione: imposta HI su 32 bit di ordine superiore, LO e $t1 su 32 bit di ordine inferiore del prodotto di $t2 e immediato con segno a 16 bit (utilizzare mfhi per accedere a HI, mflo per accedere a LO)"
+    },
+    {
+      "example": "mul $t1,$t2,100000",
+      "description": "MULtiplicazione: imposta HI su 32 bit di ordine superiore, LO e $t1 su 32 bit di ordine inferiore del prodotto di $t2 e 32 bit immediati (utilizzare mfhi per accedere a HI, mflo per accedere a LO)"
+    },
+    {
+      "example": "mulo $t1,$t2,-100",
+      "description": "MULTIplicazione con overflow: imposta $t1 su 32 bit di ordine basso del prodotto di $t2 e 16 bit con segno immediato"
+    },
+    {
+      "example": "mulo $t1,$t2,$t3",
+      "description": "MULTIplicazione con overflow: imposta $t1 sui 32 bit di ordine inferiore del prodotto di $t2 e $t3"
+    },
+    {
+      "example": "mulo $t1,$t2,100000",
+      "description": "MULTIplicazione con overflow: imposta $t1 sui 32 bit di ordine inferiore del prodotto di $t2 e 32 bit immediati"
+    },
+    {
+      "example": "mulou $t1,$t2,-100",
+      "description": "MULTIplicazione con overflow senza segno: imposta $t1 sui 32 bit di ordine inferiore del prodotto di $t2 e 16 bit con segno immediato"
+    },
+    {
+      "example": "mulou $t1,$t2,$t3",
+      "description": "MULTIplicazione con overflow senza segno: imposta $t1 sui 32 bit di ordine inferiore del prodotto di $t2 e $t3"
+    },
+    {
+      "example": "mulou $t1,$t2,100000",
+      "description": "MULTIplicazione con overflow senza segno: imposta $t1 sui 32 bit di ordine inferiore del prodotto di $t2 e 32 bit immediati"
+    },
+    {
+      "example": "mulu $t1,$t2,-100",
+      "description": "MULtiplicazione senza segno: imposta HI su 32 bit di ordine superiore, LO e $t1 su 32 bit di ordine inferiore di ($t2 moltiplicato per moltiplicazione immediata, senza segno a 16 bit)"
+    },
+    {
+      "example": "mulu $t1,$t2,$t3",
+      "description": "MULtiplicazione senza segno: imposta HI su 32 bit di ordine superiore, LO e $t1 su 32 bit di ordine basso di ($t2 moltiplicato per $t3, moltiplicazione senza segno)"
+    },
+    {
+      "example": "mulu $t1,$t2,100000",
+      "description": "MULtiplicazione senza segno: imposta HI su 32 bit di ordine superiore, LO e $t1 su 32 bit di ordine inferiore di ($t2 moltiplicato per moltiplicazione immediata a 32 bit, senza segno)"
+    },
+    {
+      "example": "neg $t1,$t2",
+      "description": "NEGate: imposta $t1 sulla negazione di $t2"
+    },
+    {
+      "example": "negu $t1,$t2",
+      "description": "NEGate Unsigned: imposta $t1 sulla negazione di $t2, nessun overflow"
+    },
+    {
+      "example": "not $t1,$t2",
+      "description": "Bit a bit NOT (inversione di bit)"
+    },
+    {
+      "example": "or $t1,$t2,100",
+      "description": "OR: imposta $t1 su ($t2 bit per bit-OR a 16 bit senza segno immediato)"
+    },
+    {
+      "example": "or $t1,100",
+      "description": "OR: imposta $t1 su ($t1 bit per bit-OR a 16 bit senza segno immediato)"
+    },
+    {
+      "example": "ori $t1,$t2,100000",
+      "description": "OR immediato: imposta $t1 su ($t2 bit per bit-OR 32 bit immediato)"
+    },
+    {
+      "example": "ori $t1,100",
+      "description": "OR immediato: imposta $t1 su ($t1 bit per bit-OR 16 bit senza segno immediato)"
+    },
+    {
+      "example": "ori $t1,100000",
+      "description": "OR immediato: imposta $t1 su ($t1 bit per bit-OR 32 bit immediato)"
+    },
+    {
+      "example": "rem $t1,$t2,-100",
+      "description": "Remainder: imposta $t1 su (resto di $t2 diviso per 16 bit immediato)"
+    },
+    {
+      "example": "rem $t1,$t2,$t3",
+      "description": "Remainder: imposta $t1 su (resto di $t2 diviso per $t3)"
+    },
+    {
+      "example": "rem $t1,$t2,100000",
+      "description": "Riepilogo: imposta $t1 su (resto di $t2 diviso per 32 bit immediato)"
+    },
+    {
+      "example": "remu $t1,$t2,-100",
+      "description": "Remainder: imposta $t1 su (resto di $t2 diviso per divisione immediata, senza segno a 16 bit)"
+    },
+    {
+      "example": "remu $t1,$t2,$t3",
+      "description": "Remainder: imposta $t1 su (resto di $t2 diviso per $t3, divisione senza segno)"
+    },
+    {
+      "example": "remu $t1,$t2,100000",
+      "description": "Riepilogo: imposta $t1 su (resto di $t2 diviso per divisione immediata, senza segno a 32 bit)"
+    },
+    {
+      "example": "rol $t1,$t2,$t3",
+      "description": "ROta a sinistra: imposta $t1 su ($t2 ruotato a sinistra in base al numero di posizioni bit specificate in $t3)"
+    },
+    {
+      "example": "rol $t1,$t2,10",
+      "description": "ROtate Left: imposta $t1 su ($t2 ruotato a sinistra in base al numero di posizioni bit specificate nell'immediato a 5 bit)"
+    },
+    {
+      "example": "ror $t1,$t2,$t3",
+      "description": "ROta a destra: imposta $t1 su ($t2 ruotato a destra in base al numero di posizioni bit specificate in $t3)"
+    },
+    {
+      "example": "ror $t1,$t2,10",
+      "description": "ROtate Right: imposta $t1 su ($t2 ruotato a destra in base al numero di posizioni bit specificate in immediato a 5 bit)"
+    },
+    {
+      "example": "s.d $f2,-100",
+      "description": "Memorizza virgola mobile Doppia precisione: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "s.d $f2,($t2)",
+      "description": "Memorizza virgola mobile Doppia precisione: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "s.d $f2,100000",
+      "description": "Memorizza virgola mobile Doppia precisione: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "s.d $f2,100000($t2)",
+      "description": "Memorizza virgola mobile Doppia precisione: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "s.d $f2,label",
+      "description": "Memorizza virgola mobile Doppia precisione: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "s.d $f2,label($t2)",
+      "description": "Memorizza virgola mobile Doppia precisione: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "s.d $f2,label+100000",
+      "description": "Memorizza virgola mobile Doppia precisione: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "s.d $f2,label+100000($t2)",
+      "description": "Memorizza virgola mobile Doppia precisione: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "s.s $f1,-100",
+      "description": "Memorizza virgola mobile Precisione singola: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "s.s $f1,($t2)",
+      "description": "Memorizza virgola mobile Precisione singola: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "s.s $f1,100000",
+      "description": "Memorizza virgola mobile Precisione singola: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "s.s $f1,100000($t2)",
+      "description": "Memorizza virgola mobile Precisione singola: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "s.s $f1,label",
+      "description": "Memorizza virgola mobile Precisione singola: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "s.s $f1,label($t2)",
+      "description": "Memorizza virgola mobile Precisione singola: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "s.s $f1,label+100000",
+      "description": "Memorizza virgola mobile Precisione singola: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "s.s $f1,label+100000($t2)",
+      "description": "Memorizza virgola mobile Precisione singola: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "sb $t1,-100",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sb $t1,($t2)",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sb $t1,100",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sb $t1,100($t2)",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sb $t1,100000",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sb $t1,100000($t2)",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sb $t1,label",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sb $t1,label($t2)",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sb $t1,label+100000",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sb $t1,label+100000($t2)",
+      "description": "Memorizza byte: memorizza gli 8 bit di ordine inferiore di $t1 nell'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sc $t1,-100",
+      "description": "Memorizza condizionale: memorizza solo se la prenotazione collegata al carico corrispondente rimane valida, quindi segnala l'esito positivo o negativo nel registro di origine."
+    },
+    {
+      "example": "sc $t1,($t2)",
+      "description": "Memorizza condizionale: memorizza solo se la prenotazione collegata al carico corrispondente rimane valida, quindi segnala l'esito positivo o negativo nel registro di origine."
+    },
+    {
+      "example": "sc $t1,100",
+      "description": "Memorizza condizionale: memorizza solo se la prenotazione collegata al carico corrispondente rimane valida, quindi segnala l'esito positivo o negativo nel registro di origine."
+    },
+    {
+      "example": "sc $t1,100($t2)",
+      "description": "Memorizza condizionale: memorizza solo se la prenotazione collegata al carico corrispondente rimane valida, quindi segnala l'esito positivo o negativo nel registro di origine."
+    },
+    {
+      "example": "sc $t1,100000",
+      "description": "Memorizza condizionale: memorizza solo se la prenotazione collegata al carico corrispondente rimane valida, quindi segnala l'esito positivo o negativo nel registro di origine."
+    },
+    {
+      "example": "sc $t1,100000($t2)",
+      "description": "Memorizza condizionale: memorizza solo se la prenotazione collegata al carico corrispondente rimane valida, quindi segnala l'esito positivo o negativo nel registro di origine."
+    },
+    {
+      "example": "sc $t1,label",
+      "description": "Memorizza condizionale: memorizza solo se la prenotazione collegata al carico corrispondente rimane valida, quindi segnala l'esito positivo o negativo nel registro di origine."
+    },
+    {
+      "example": "sc $t1,label($t2)",
+      "description": "Memorizza condizionale: memorizza solo se la prenotazione collegata al carico corrispondente rimane valida, quindi segnala l'esito positivo o negativo nel registro di origine."
+    },
+    {
+      "example": "sc $t1,label+100000",
+      "description": "Memorizza condizionale: memorizza solo se la prenotazione collegata al carico corrispondente rimane valida, quindi segnala l'esito positivo o negativo nel registro di origine."
+    },
+    {
+      "example": "sc $t1,label+100000($t2)",
+      "description": "Memorizza condizionale: memorizza solo se la prenotazione collegata al carico corrispondente rimane valida, quindi segnala l'esito positivo o negativo nel registro di origine."
+    },
+    {
+      "example": "sd $t1,-100($t2)",
+      "description": "Memorizza doppia parola: memorizza il contenuto di $t1 e il registro successivo a 64 bit a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "sd $t1,($t2)",
+      "description": "Memorizza doppia parola: memorizza il contenuto di $t1 e il registro successivo a 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "sd $t1,100000",
+      "description": "Memorizza doppia parola: memorizza il contenuto di $t1 e il registro successivo a 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "sd $t1,100000($t2)",
+      "description": "Memorizza doppia parola: memorizza il contenuto di $t1 e il registro successivo a 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "sd $t1,label",
+      "description": "Memorizza doppia parola: memorizza il contenuto di $t1 e il registro successivo a 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "sd $t1,label($t2)",
+      "description": "Memorizza doppia parola: memorizza il contenuto di $t1 e il registro successivo a 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "sd $t1,label+100000",
+      "description": "Memorizza doppia parola: memorizza il contenuto di $t1 e il registro successivo a 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "sd $t1,label+100000($t2)",
+      "description": "Memorizza doppia parola: memorizza il contenuto di $t1 e il registro successivo a 64 bit a partire dall'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "sdc1 $f2,-100",
+      "description": "Memorizza coprocessore a doppia parola 1: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "sdc1 $f2,($t2)",
+      "description": "Memorizza coprocessore a doppia parola 1: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "sdc1 $f2,100000",
+      "description": "Memorizza coprocessore a doppia parola 1: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "sdc1 $f2,100000($t2)",
+      "description": "Memorizza coprocessore a doppia parola 1: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "sdc1 $f2,label",
+      "description": "Memorizza coprocessore a doppia parola 1: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "sdc1 $f2,label($t2)",
+      "description": "Memorizza coprocessore a doppia parola 1: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "sdc1 $f2,label+100000",
+      "description": "Memorizza coprocessore a doppia parola 1: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "sdc1 $f2,label+100000($t2)",
+      "description": "Memorizza coprocessore a doppia parola 1: memorizza 64 bit dalla coppia di registri $f2 e $f3 all'indirizzo di memoria a doppia parola effettivo"
+    },
+    {
+      "example": "seq $t1,$t2,-100",
+      "description": "Imposta EQual: se $t2 è uguale a 16 bit immediato, imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "seq $t1,$t2,$t3",
+      "description": "Imposta EQual: se $t2 è uguale a $t3 quindi imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "seq $t1,$t2,100000",
+      "description": "Imposta EQual: se $t2 è uguale a 32 bit immediato, imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sge $t1,$t2,-100",
+      "description": "Imposta Maggiore o Uguale: se $t2 maggiore o uguale a 16 bit immediato, imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sge $t1,$t2,$t3",
+      "description": "Imposta Maggiore o Uguale: se $t2 maggiore o uguale a $t3 imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sge $t1,$t2,100000",
+      "description": "Imposta Maggiore o Uguale: se $t2 maggiore o uguale a 32 bit immediato, imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,-100",
+      "description": "Imposta maggiore o uguale senza segno: se $t2 maggiore o uguale a 16 bit immediato (confronto senza segno), imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,$t3",
+      "description": "Imposta maggiore o uguale senza segno: se $t2 maggiore o uguale a $t3 (confronto senza segno), imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,100000",
+      "description": "Imposta maggiore o uguale senza segno: se $t2 maggiore o uguale a 32 bit immediato (confronto senza segno), imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sgt $t1,$t2,-100",
+      "description": "Imposta maggiore di: se $t2 è maggiore di 16 bit immediato, imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sgt $t1,$t2,$t3",
+      "description": "Imposta maggiore di: se $t2 maggiore di $t3 imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sgt $t1,$t2,100000",
+      "description": "Imposta maggiore di: se $t2 maggiore di 32 bit immediato, imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,-100",
+      "description": "Imposta maggiore di senza segno: se $t2 maggiore di 16 bit immediato (confronto senza segno), imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,$t3",
+      "description": "Imposta maggiore di senza segno: se $t2 maggiore di $t3 (confronto senza segno), imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,100000",
+      "description": "Imposta maggiore di senza segno: se $t2 maggiore di 32 bit immediato (confronto senza segno), imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sh $t1,-100",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine basso di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sh $t1,($t2)",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine basso di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sh $t1,100",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine basso di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sh $t1,100($t2)",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine basso di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sh $t1,100000",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine basso di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sh $t1,100000($t2)",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine basso di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sh $t1,label",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine basso di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sh $t1,label($t2)",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine basso di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sh $t1,label+100000",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine basso di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sh $t1,label+100000($t2)",
+      "description": "Memorizza mezza parola: memorizza i 16 bit di ordine basso di $t1 nell'indirizzo di mezza parola di memoria effettivo"
+    },
+    {
+      "example": "sle $t1,$t2,-100",
+      "description": "Imposta Minore o Uguale: se $t2 minore o uguale a 16 bit immediato, imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sle $t1,$t2,$t3",
+      "description": "Imposta Minore o Uguale: se $t2 minore o uguale a $t3 imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sle $t1,$t2,100000",
+      "description": "Imposta Minore o Uguale: se $t2 minore o uguale a 32 bit immediato, imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sleu $t1,$t2,-100",
+      "description": "Imposta minore o uguale senza segno: se $t2 minore o uguale a 16 bit immediato (confronto senza segno), imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sleu $t1,$t2,$t3",
+      "description": "Imposta minore o uguale senza segno: se $t2 minore o uguale a $t3 (confronto senza segno), imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sleu $t1,$t2,100000",
+      "description": "Imposta minore o uguale senza segno: se $t2 minore o uguale a 32 bit immediato (confronto senza segno), imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sne $t1,$t2,-100",
+      "description": "Imposta Diverso: se $t2 non è uguale a 16 bit immediato, imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sne $t1,$t2,$t3",
+      "description": "Imposta Diverso: se $t2 non è uguale a $t3 imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sne $t1,$t2,100000",
+      "description": "Imposta Diverso: se $t2 non è uguale a 32 bit immediato, imposta $t1 su 1 altrimenti 0"
+    },
+    {
+      "example": "sub $t1,$t2,-100",
+      "description": "SUBtrazione: imposta $t1 su ($t2 meno 16 bit immediato)"
+    },
+    {
+      "example": "sub $t1,$t2,100000",
+      "description": "SUBtrazione: imposta $t1 su ($t2 meno 32 bit immediato)"
+    },
+    {
+      "example": "subi $t1,$t2,-100",
+      "description": "SUBtraction Immediato: imposta $t1 su ($t2 meno 16 bit immediato)"
+    },
+    {
+      "example": "subi $t1,$t2,100000",
+      "description": "SUBtraction Immediato: imposta $t1 su ($t2 meno 32 bit immediato)"
+    },
+    {
+      "example": "subiu $t1,$t2,100000",
+      "description": "SUBtraction Immediato Senza segno: imposta $t1 su ($t2 meno 32 bit immediato), nessun overflow"
+    },
+    {
+      "example": "subu $t1,$t2,100000",
+      "description": "SUBtraction Unsigned: imposta $t1 su ($t2 meno 32 bit immediato), nessun overflow"
+    },
+    {
+      "example": "sw $t1,-100",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "sw $t1,($t2)",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "sw $t1,100",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "sw $t1,100($t2)",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "sw $t1,100000",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "sw $t1,100000($t2)",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "sw $t1,label",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nella parola di memoria all'indirizzo dell'etichetta"
+    },
+    {
+      "example": "sw $t1,label($t2)",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "sw $t1,label+100000",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "sw $t1,label+100000($t2)",
+      "description": "Memorizza parola: memorizza il contenuto di $t1 nell'indirizzo della parola di memoria effettiva"
+    },
+    {
+      "example": "swc1 $f1,-100",
+      "description": "Memorizza coprocessore parola 1: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "swc1 $f1,($t2)",
+      "description": "Memorizza coprocessore parola 1: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "swc1 $f1,100000",
+      "description": "Memorizza coprocessore parola 1: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "swc1 $f1,100000($t2)",
+      "description": "Memorizza coprocessore parola 1: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "swc1 $f1,label",
+      "description": "Memorizza coprocessore parola 1: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "swc1 $f1,label($t2)",
+      "description": "Memorizza coprocessore parola 1: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "swc1 $f1,label+100000",
+      "description": "Memorizza coprocessore parola 1: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "swc1 $f1,label+100000($t2)",
+      "description": "Memorizza coprocessore parola 1: memorizza il valore a 32 bit da $f1 all'indirizzo effettivo della parola di memoria"
+    },
+    {
+      "example": "swl $t1,-100",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte di memoria effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swl $t1,($t2)",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte di memoria effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swl $t1,100",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte di memoria effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swl $t1,100($t2)",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte di memoria effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swl $t1,100000",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte di memoria effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swl $t1,100000($t2)",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte di memoria effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swl $t1,label",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte di memoria effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swl $t1,label($t2)",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte di memoria effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swl $t1,label+100000",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte di memoria effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swl $t1,label+100000($t2)",
+      "description": "Memorizza parola sinistra: memorizza da 1 a 4 byte di ordine superiore di $t1 in memoria, iniziando con l'indirizzo del byte di memoria effettivo e continuando fino al byte di ordine inferiore della sua parola"
+    },
+    {
+      "example": "swr $t1,-100",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo di byte di memoria effettivo e continuando attraverso quell'indirizzo di byte"
+    },
+    {
+      "example": "swr $t1,($t2)",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo di byte di memoria effettivo e continuando attraverso quell'indirizzo di byte"
+    },
+    {
+      "example": "swr $t1,100",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo di byte di memoria effettivo e continuando attraverso quell'indirizzo di byte"
+    },
+    {
+      "example": "swr $t1,100($t2)",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo di byte di memoria effettivo e continuando attraverso quell'indirizzo di byte"
+    },
+    {
+      "example": "swr $t1,100000",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo di byte di memoria effettivo e continuando attraverso quell'indirizzo di byte"
+    },
+    {
+      "example": "swr $t1,100000($t2)",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo di byte di memoria effettivo e continuando attraverso quell'indirizzo di byte"
+    },
+    {
+      "example": "swr $t1,label",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo di byte di memoria effettivo e continuando attraverso quell'indirizzo di byte"
+    },
+    {
+      "example": "swr $t1,label($t2)",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo di byte di memoria effettivo e continuando attraverso quell'indirizzo di byte"
+    },
+    {
+      "example": "swr $t1,label+100000",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo di byte di memoria effettivo e continuando attraverso quell'indirizzo di byte"
+    },
+    {
+      "example": "swr $t1,label+100000($t2)",
+      "description": "Memorizza parola destra: memorizza da 1 a 4 byte di ordine basso di $t1 in memoria, iniziando con il byte di parola di ordine più alto contenente l'indirizzo di byte di memoria effettivo e continuando attraverso quell'indirizzo di byte"
+    },
+    {
+      "example": "ulh $t1,-100($t2)",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con segno esteso, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulh $t1,($t2)",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con segno esteso, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulh $t1,100000",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con segno esteso, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulh $t1,100000($t2)",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con segno esteso, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulh $t1,label",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con segno esteso, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulh $t1,label($t2)",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con segno esteso, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulh $t1,label+100000",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con segno esteso, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulh $t1,label+100000($t2)",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con segno esteso, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulhu $t1,-100($t2)",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con estensione zero, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulhu $t1,($t2)",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con estensione zero, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulhu $t1,100000",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con estensione zero, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulhu $t1,100000($t2)",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con estensione zero, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulhu $t1,label",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con estensione zero, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulhu $t1,label($t2)",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con estensione zero, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulhu $t1,label+100000",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con estensione zero, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulhu $t1,label+100000($t2)",
+      "description": "Mezzaparola di caricamento non allineata: imposta $t1 su 16 bit, con estensione zero, a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulw $t1,-100($t2)",
+      "description": "Parola di caricamento non allineata: imposta $t1 su 32 bit a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulw $t1,($t2)",
+      "description": "Parola di caricamento non allineata: imposta $t1 su 32 bit a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulw $t1,100000",
+      "description": "Parola di caricamento non allineata: imposta $t1 su 32 bit a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulw $t1,100000($t2)",
+      "description": "Parola di caricamento non allineata: imposta $t1 su 32 bit a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulw $t1,label",
+      "description": "Parola di caricamento non allineata: imposta $t1 su 32 bit a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulw $t1,label($t2)",
+      "description": "Parola di caricamento non allineata: imposta $t1 su 32 bit a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulw $t1,label+100000",
+      "description": "Parola di caricamento non allineata: imposta $t1 su 32 bit a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ulw $t1,label+100000($t2)",
+      "description": "Parola di caricamento non allineata: imposta $t1 su 32 bit a partire dall'indirizzo del byte di memoria effettivo"
+    },
+    {
+      "example": "ush $t1,-100($t2)",
+      "description": "Memorizza mezza parola non allineata: memorizza il contenuto della mezza parola di ordine inferiore $t1 nei 16 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "ush $t1,($t2)",
+      "description": "Memorizza mezza parola non allineata: memorizza il contenuto della mezza parola di ordine inferiore $t1 nei 16 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "ush $t1,100000",
+      "description": "Memorizza mezza parola non allineata: memorizza il contenuto della mezza parola di ordine inferiore $t1 nei 16 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "ush $t1,100000($t2)",
+      "description": "Memorizza mezza parola non allineata: memorizza il contenuto della mezza parola di ordine inferiore $t1 nei 16 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "ush $t1,label",
+      "description": "Memorizza mezza parola non allineata: memorizza il contenuto della mezza parola di ordine inferiore $t1 nei 16 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "ush $t1,label($t2)",
+      "description": "Memorizza mezza parola non allineata: memorizza il contenuto della mezza parola di ordine inferiore $t1 nei 16 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "ush $t1,label+100000",
+      "description": "Memorizza mezza parola non allineata: memorizza il contenuto della mezza parola di ordine inferiore $t1 nei 16 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "ush $t1,label+100000($t2)",
+      "description": "Memorizza mezza parola non allineata: memorizza il contenuto della mezza parola di ordine inferiore $t1 nei 16 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "usw $t1,-100($t2)",
+      "description": "Parola di memorizzazione non allineata: memorizza il contenuto $t1 nei 32 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "usw $t1,($t2)",
+      "description": "Parola di memorizzazione non allineata: memorizza il contenuto $t1 nei 32 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "usw $t1,100000",
+      "description": "Parola di memorizzazione non allineata: memorizza il contenuto $t1 nei 32 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "usw $t1,100000($t2)",
+      "description": "Parola di memorizzazione non allineata: memorizza il contenuto $t1 nei 32 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "usw $t1,label",
+      "description": "Parola di memorizzazione non allineata: memorizza il contenuto $t1 nei 32 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "usw $t1,label($t2)",
+      "description": "Parola di memorizzazione non allineata: memorizza il contenuto $t1 nei 32 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "usw $t1,label+100000",
+      "description": "Parola di memorizzazione non allineata: memorizza il contenuto $t1 nei 32 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "usw $t1,label+100000($t2)",
+      "description": "Parola di memorizzazione non allineata: memorizza il contenuto $t1 nei 32 bit a partire dall'indirizzo byte di memoria effettivo"
+    },
+    {
+      "example": "xor $t1,$t2,100",
+      "description": "XOR: imposta $t1 su ($t2 bit per bit esclusivo OR a 16 bit senza segno immediato)"
+    },
+    {
+      "example": "xor $t1,100",
+      "description": "XOR: imposta $t1 su ($t1 bit per bit esclusivo OR a 16 bit senza segno immediato)"
+    },
+    {
+      "example": "xori $t1,$t2,100000",
+      "description": "XOR Immediato: imposta $t1 su ($t2 bit per bit esclusivo OR a 32 bit immediato)"
+    },
+    {
+      "example": "xori $t1,100",
+      "description": "XOR Immediato: imposta $t1 su ($t1 OR esclusivo bit per bit a 16 bit senza segno immediato)"
+    },
+    {
+      "example": "xori $t1,100000",
+      "description": "XOR Immediato: imposta $t1 su ($t1 bit per bit esclusivo OR a 32 bit immediato)"
+    }
+  ],
+  "directives": [
+    {
+      "name": ".align",
+      "description": "Allinea l'elemento di dati successivo al limite di byte specificato (0=byte, 1=metà, 2=parola, 3=doppio)"
+    },
+    {
+      "name": ".ascii",
+      "description": "Memorizza la stringa nel segmento Dati ma non aggiungere un terminatore null"
+    },
+    {
+      "name": ".asciiz",
+      "description": "Memorizza la stringa nel segmento Dati e aggiungi un terminatore null"
+    },
+    {
+      "name": ".byte",
+      "description": "Memorizza i valori elencati come byte a 8 bit"
+    },
+    {
+      "name": ".data",
+      "description": "Elementi successivi archiviati nel segmento Dati al successivo indirizzo disponibile"
+    },
+    {
+      "name": ".double",
+      "description": "Memorizza i valori elencati come virgola mobile a doppia precisione"
+    },
+    {
+      "name": ".end_macro",
+      "description": "Termina la definizione della macro.  Vedi .macro"
+    },
+    {
+      "name": ".eqv",
+      "description": "Sostituisci il secondo operando con il primo. Il primo operando è un simbolo, il secondo operando è un'espressione (come #define)"
+    },
+    {
+      "name": ".extern",
+      "description": "Dichiara che l'etichetta elencata e la lunghezza in byte sono un campo dati globale"
+    },
+    {
+      "name": ".float",
+      "description": "Memorizza i valori elencati come virgola mobile a precisione singola"
+    },
+    {
+      "name": ".globl",
+      "description": "Dichiara le etichette elencate come globali per consentire il riferimento da altri file"
+    },
+    {
+      "name": ".half",
+      "description": "Memorizza i valori elencati come mezze parole a 16 bit sul limite della mezza parola"
+    },
+    {
+      "name": ".include",
+      "description": "Inserisci il contenuto del file specificato.  Metti il ​​nome del file tra virgolette."
+    },
+    {
+      "name": ".kdata",
+      "description": "Elementi successivi archiviati nel segmento dati kernel al successivo indirizzo disponibile"
+    },
+    {
+      "name": ".ktext",
+      "description": "Elementi successivi (istruzioni) memorizzati nel segmento Kernel Text al successivo indirizzo disponibile"
+    },
+    {
+      "name": ".macro",
+      "description": "Inizia la definizione della macro.  Vedi .end_macro"
+    },
+    {
+      "name": ".set",
+      "description": "Imposta le variabili assembler.  Attualmente ignorato ma incluso per la compatibilità SPIM."
+    },
+    {
+      "name": ".space",
+      "description": "Prenota il numero di byte specificato successivo nel segmento dati"
+    },
+    {
+      "name": ".text",
+      "description": "Elementi successivi (istruzioni) memorizzati nel segmento di testo al successivo indirizzo disponibile"
+    },
+    {
+      "name": ".word",
+      "description": "Memorizzare i valori elencati come parole a 32 bit sul limite della parola"
+    }
+  ]
+}

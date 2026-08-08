@@ -1,6 +1,6 @@
 #MARS-OS 1.0 - بيئة تشغيل تفاعلية كاملة TTY
 #افتح الأدوات > TTY الجهاز + ANSI الطرفية، اتصل بـ MIPS،
-#قم بتجميع هذا المشروع واكتب "سطح المكتب" لواجهة مستخدم الماوس أو "مساعدة".
+#التجميع والتشغيل؛ يفتح سطح مكتب الماوس. إطلاق المحطة الطرفية للقذيفة.
 #
 #يحتوي هذا الملف على النص المترجم فقط. النواة نفسها تعيش فيها
 #وحدات اللغة المحايدة المضمنة في الأسفل:
@@ -223,8 +223,9 @@ sheet_menu: .asciiz " ESC   s save   q quit   x save and exit   c clear cell   r
 sheet_closed: .asciiz "sheet: closed "
 msg_sheet_usage: .asciiz "usage: sheet FILE   the sheet is created when it does not exist\r\n"
 
-#---- فأرة سطح المكتب ----
-# English ASCII fallback: the terminal font is byte-oriented.
+#---- سطح المكتب ذو النوافذ ----
+#عناوين شريط القوائم وإدخالات القائمة. يقوم سطح المكتب بوضع القوائم من
+#هذه السلاسل، لذا فإن الترجمة الأطول تجعل القائمة أوسع.
 desktop_start: .asciiz "[ Start ]"
 mb_system:   .asciiz "System"
 mb_programs: .asciiz "Programs"
@@ -264,7 +265,7 @@ mi_close:      .asciiz "Close window"
 mi_close_all:  .asciiz "Close all"
 mi_keys:       .asciiz "Keyboard and mouse"
 
-# Window titles are indexed by the desktop window kind.
+#عناوين النوافذ، مفهرسة حسب نوع النافذة.
 wt_programs: .asciiz "Program Manager"
 wt_about:    .asciiz "About"
 wt_files:    .asciiz "File Manager"

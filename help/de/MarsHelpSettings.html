@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS Einstellungen</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Einstellungen</h1>
+  <p class="lead">Die Einstellungen umfassen Quellpräsentation, Assembler-Kompatibilität, Mini-C-Ausgabe, Persistenz, Cloud-Zugriff und Laufzeitbeschränkungen.</p>
+
+  <h2>Schnelleinstellungen</h2>
+  <table>
+    <tr><th>Einstellung</th><th>Wirkung</th></tr>
+    <tr><td>Beschriftungen anzeigen</td><td>Zeigt Beschriftungen neben Adressen in Laufzeitansichten an, sofern verfügbar.</td></tr>
+    <tr><td>Programmargumente</td><td>Fordert vor einer Ausführung zur Eingabe von Argumenten auf. <code>$a0</code> empfängt argc und <code>$a1</code> empfängt argv; Mini-C C1-NATIVE stellt dieselben Daten bereit <code>main(int argc, char **argv)</code>.</td></tr>
+    <tr><td>Popup-Eingabesystemaufrufe</td><td>Verwendet Formulardialoge für die Konsoleneingabedienste 5, 6, 7, 8 und 12 anstelle des Bereichs „E/A ausführen“.</td></tr>
+    <tr><td>Nachrichten aufteilen / E/A ausführen</td><td>Zeigt gleichzeitig Build-Meldungen und Programm-E/A an.</td></tr>
+    <tr><td>Hex-Adressen/Werte</td><td>Schaltet Laufzeittabellen zwischen hexadezimaler und dezimaler Darstellung um. Gespeicherte Bits werden nicht verändert.</td></tr>
+  </table>
+
+  <h2>Assembler- und Ausführungskompatibilität</h2>
+  <ul>
+    <li><b>Im offenen Zustand zusammenbauen</b> und <b>Stellen Sie alle Dateien zusammen</b> Automatisieren Sie den ausgewählten Build-Bereich.</li>
+    <li><b>Behandeln Sie Warnungen als Fehler</b> bewirkt, dass Warnungen bei der Montage fehlschlagen.</li>
+    <li><b>Beginnen Sie im Hauptmenü</b> beginnt im Globalen <code>main</code> Etikett, falls vorhanden.</li>
+    <li><b>Erweiterte (Pseudo-)Anweisungen</b> Aktiviert den in der Hilfe angezeigten Pseudo-Anweisungskatalog.</li>
+    <li><b>Verzögerte Verzweigung</b> ermöglicht architektonisches Delay-Slot-Verhalten.</li>
+    <li><b>Selbstmodifizierender Code</b> erlaubt Schreibvorgänge in den ausführbaren Speicher. Aktivieren Sie es nur für Programme, die es absichtlich benötigen.</li>
+  </ul>
+
+  <h2>Schnittstelle</h2>
+  <p>Wählen Sie das Oberflächendesign (Hell oder Dunkel), die Sprache der Benutzeroberfläche, das Layout des oberen oder seitlichen Menüs, die Schriftgröße des Editors, den Zeilenabstand und das Hervorhebungsverhalten. Englisch, Spanisch, Portugiesisch, Mandarin-Chinesisch, Hindi, Arabisch, Französisch, Bengali, Russisch, Indonesisch, Deutsch, Japanisch, Koreanisch, Türkisch, Vietnamesisch, Urdu, Italienisch, Polnisch, Persisch und Thailändisch sind verfügbar; Die Hilfe folgt der aktiven UI-Sprache. Arabisch, Urdu und Persisch schalten die Benutzeroberfläche automatisch auf Rechts-nach-Links um. Beim ersten Besuch verwendet webMARS eine unterstützte Browsersprache oder greift auf Englisch zurück; Eine explizite Auswahl wird gespeichert und hat Vorrang. Das ausgewählte Thema wird mit Ihren Einstellungen gespeichert und auf die gesamte Benutzeroberfläche angewendet, einschließlich der Tool- und Hilfefenster.</p>
+
+  <h2>Laufzeitspeicher &amp;.</h2>
+  <table>
+    <tr><th>Präferenz</th><th>Sortiment / Auswahl</th></tr>
+    <tr><td>Speicherkonfiguration</td><td>Standard: Kompakte Daten an Adresse 0 oder Kompakter Text an Adresse 0.</td></tr>
+    <tr><td>Maximaler Speicher</td><td>0,25–2 GiB, vorbehaltlich der praktischen Speichergrenzen des Browsers.</td></tr>
+    <tr><td>Backstep-Geschichte</td><td>0–1.000.000 aufgezeichnete Schritte; Standardwert 100.</td></tr>
+    <tr><td>Ausnahmehandler</td><td>Standardmäßig eine vollständig gültige MIPS-Adresse <code>0x80000180</code>.</td></tr>
+  </table>
+
+  <h2>Beständigkeit und Wolke</h2>
+  <p><b>Speicherstatus</b> und <b>Ladezustand</b> Verwalten Sie einen vollständigen lokalen Laufzeit-Snapshot. <b>Lokalen Speicher löschen</b> Entfernt webMARS-Einstellungen, gespeicherte Projekte, Wiederherstellungsstatus und Werkzeugpositionen nach Bestätigung.</p>
+  <p><b>Cloud-Server</b> Ändert den Endpunkt, der vom optionalen Cloud-Menü verwendet wird. Anmeldeinformationen und Projektdaten werden nur gesendet, wenn Sie Cloud-Funktionen aufrufen.</p>
+
+  <div class="warning">Durch das Ändern der Speicherzuordnung oder der Assembler-Kompatibilitätsoptionen werden Annahmen ungültig, die von einem bereits assemblierten Programm getroffen wurden. Nach dem Austausch wieder zusammenbauen.</div>
+</body>
+</html>

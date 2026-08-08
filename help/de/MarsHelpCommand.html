@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C-Compiler</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">Der integrierte Lehrcompiler übersetzt eine bewusst definierte C-Teilmenge mithilfe der o32-Aufrufkonvention in eine MIPS32-Assembly. Es handelt sich nicht um einen Allzweck-ISO-C-Compiler.</p>
+
+  <h2>Profile</h2>
+  <table>
+    <tr><th>Profil</th><th>Zweck</th></tr>
+    <tr><td><code>C0-S0</code> zu <code>C0-S4</code></td><td>Kumulative Unterrichtsteilmengen, die von Ausdrücken und Kontrollfluss bis hin zu Funktionen, Arrays, Zeigern, Strukturen, Typdefinitionen, Verträgen und Bibliotheken reichen.</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>Das standardmäßige, leistungsfähigste Profil: byteadressiert <code>char</code>/<code>char *</code>, native Zeichenfolgen, <code>argc/argv</code>, Funktionszeiger und <code>void *</code>.</td></tr>
+  </table>
+  <p>Wenn eine Quelle ein höheres Profil erfordert, gibt die Kompilierung ein fokussiertes Profil aus <code>MC_SUBSET_MISMATCH</code> eher diagnostisch als eine Kaskade sekundärer Fehler.</p>
+
+  <h2>Kompilieren Sie ein Projekt</h2>
+  <ol class="steps">
+    <li>Wählen Sie das gewünschte Profil und die Ausgabeoptionen aus <b>Einstellungen → Mini-C Präferenzen</b>.</li>
+    <li>Öffnen Sie eines oder mehrere <code>.c</code> Dateien im selben Projekt.</li>
+    <li>Auswählen <b>Ausführen → C0 kompilieren</b> oder drücken <kbd>F4</kbd>.</li>
+    <li>Überprüfen Sie die Diagnose und die generierte MIPS-Assembly. Stellen Sie das generierte Programm normal zusammen und führen Sie es aus.</li>
+  </ol>
+
+  <h2>Aufrufkonvention und Einstiegspunkt</h2>
+  <ul>
+    <li>Argumente verwenden <code>$a0</code>–<code>$a3</code>, zusätzliche Argumente verwenden den Stapel und Rückgabewerte verwenden <code>$v0</code> (und <code>$v1</code> gegebenenfalls).</li>
+    <li>Vom Aufrufer gespeicherte Register und Stapelrahmen entsprechen den Erwartungen von MIPS o32.</li>
+    <li><code>main(void)</code> und in C1-NATIVE, <code>main(int argc, char **argv)</code> werden unterstützt.</li>
+    <li>Für webMARS Programmargumente: <code>argv[0]</code> ist das erste vom Benutzer bereitgestellte Token; Es gibt keinen automatischen Eintrag für den Namen der ausführbaren Datei.</li>
+  </ul>
+
+  <h2>Gebündelte Header und Bibliotheken</h2>
+  <p>
+    <span class="pill">stdio</span><span class="pill">conio</span><span class="pill">Datei</span>
+    <span class="pill">args</span><span class="pill">Zeichenfolge</span><span class="pill">string_native</span>
+    <span class="pill">analysieren</span><span class="pill">Bild</span><span class="pill">util</span>
+    <span class="pill">Rand</span><span class="pill">ctype</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">stddef</span><span class="pill">bitmap_rect</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>Bei diesen Headern handelt es sich um webMARS-Kompatibilitätsbibliotheken, die um MIPS-Systemaufrufe und -Geräte herum aufgebaut sind. Sie implementieren ihre dokumentierte Teilmenge, nicht die vollständige Host-C-Standardbibliothek.</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> bietet auch <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> und <code>bitmap_configure_all</code>, wodurch ein C0-Programm seine Anzeigegröße, Einheitengröße und Framebuffer-Adresse an die Bitmap-Tools senden kann.</p>
+
+  <h2>Gute Einstiegsbeispiele</h2>
+  <ul>
+    <li><b>Hallo Welt (C)</b> für das kleinste Komplettprogramm.</li>
+    <li><b>Mini-C C1 Native</b> für native Zeichenfolgen und aktuelles Profilverhalten.</li>
+    <li><b>Demo der Argumentbibliothek</b> für <code>argc/argv</code>.</li>
+    <li><b>Statistiken über mehrere Dateien</b> für projektweite Kompilierung und dateiübergreifende Funktionsaufrufe.</li>
+    <li><b>Grundlagen der stdio-Konsole</b> und <b>stdio-Datei-Roundtrip</b> für die Kompatibilitätsbibliotheken.</li>
+  </ul>
+
+  <div class="note">Das Compiler-Handbuch im Repository bleibt die normative, detaillierte Sprachreferenz. Auf der In-App-Seite werden die Verhaltensweisen zusammengefasst, die zum Auswählen eines Profils und zum korrekten Ausführen von Beispielen erforderlich sind.</div>
+</body>
+</html>

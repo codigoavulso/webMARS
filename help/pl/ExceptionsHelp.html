@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIPS wyjątki w webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Wyjątki</h1>
+  <p class="lead">Błąd wykonania albo przekazuje kontrolę do skonfigurowanej procedury obsługi wyjątków, albo kończy działanie z wyraźnego powodu. Obsługiwane wyjątki mogą być kontynuowane <code>eret</code>.</p>
+
+  <h2>Zaimplementowane kody wyjątków</h2>
+  <table class="compact">
+    <tr><th>Kod Ex</th><th>Znaczenie</th><th>Typowe przyczyny</th></tr>
+    <tr><td>4</td><td>Błąd adresu podczas ładowania/pobierania</td><td>Nieprawidłowy adres instrukcji lub obciążenie; adres spoza dozwolonej mapy pamięci.</td></tr>
+    <tr><td>5</td><td>Błąd adresu w sklepie</td><td>Niewłaściwie wyrównane lub nieprawidłowe miejsce docelowe sklepu.</td></tr>
+    <tr><td>8</td><td>Błąd usługi Syscall/runtime</td><td>Nieprawidłowe dane wejściowe, nieprawidłowa usługa, nieudane sprawdzenie żądania sterty lub błąd usługi bibliotecznej.</td></tr>
+    <tr><td>9</td><td>Punkt przerwania</td><td>A MIPS <code>break</code> instrukcja.</td></tr>
+    <tr><td>10</td><td>Zastrzeżona instrukcja</td><td>Nieznana lub nieobsługiwana zakodowana instrukcja.</td></tr>
+    <tr><td>12</td><td>Przepełnienie arytmetyczne</td><td>Podpisane przepełnienie w sprawdzonych instrukcjach arytmetycznych.</td></tr>
+    <tr><td>13</td><td>Pułapka</td><td>Warunek pułapki ma wartość true.</td></tr>
+    <tr><td>15</td><td>Podziel przez zero</td><td>Dzielenie przez dzielnik zera.</td></tr>
+  </table>
+
+  <h2>Stan koprocesora 0</h2>
+  <table class="compact">
+    <tr><th>Zarejestruj się</th><th>Numer</th><th>Użyj</th></tr>
+    <tr><td>Zły adres VAdr</td><td>8</td><td>Wadliwy adres wirtualny z powodu błędów adresowych.</td></tr>
+    <tr><td>Stan</td><td>12</td><td>Poziom wyjątków i stan kontroli przerwań.</td></tr>
+    <tr><td>Przyczyna</td><td>13</td><td>Kod wyjątku, stan oczekującego przerwania i flaga szczeliny opóźnienia BD.</td></tr>
+    <tr><td>EPC</td><td>14</td><td>Adres, z którego handler powraca po jego poprawieniu lub udoskonaleniu.</td></tr>
+  </table>
+
+  <h2>Przepływ obsługi</h2>
+  <ol>
+    <li>Środowisko wykonawcze przechwytuje odpowiednio przyczynę, EPC i BadVAddr i przechodzi do poziomu wyjątku.</li>
+    <li>Jeśli pod skonfigurowanym adresem istnieje wykonywalny kod obsługi – zwykle <code>0x80000180</code>— komputer zostaje tam przeniesiony.</li>
+    <li>Procedura obsługi sprawdza stan COP0, przeprowadza jego odtworzenie, dostosowuje EPC, jeśli jest to wymagane, i wykonuje <code>eret</code>.</li>
+    <li>Jeśli nie ma procedury obsługi lub wystąpi wyjątek, którego nie można bezpiecznie przenieść, wykonywanie zostanie zatrzymane, a wynik Run zgłosi wyjątek.</li>
+  </ol>
+
+  <div class="note"><strong>Szczeliny opóźniające.</strong> W przypadku wyjątku zgłoszonego w szczelinie opóźnienia rozgałęzienia ustawiany jest Cause.BD, a EPC identyfikuje instrukcję rozgałęzienia, a nie adres szczeliny opóźnienia.</div>
+
+  <h2>Adres i gwarancja sklepu</h2>
+  <p>Cele instrukcji muszą być wyrównane do słów. Sprawdzone magazyny wielobajtowe weryfikują całe miejsce docelowe przed zatwierdzeniem jakiegokolwiek bajtu, więc wyjątek adresu nie może pozostawić częściowo zapisanego słowa lub podwójnego słowa. Tryb pamięci ścisłej dotyczy również operacji na częściowych słowach, takich jak <code>LWL</code> i <code>LWR</code>.</p>
+</body>
+</html>

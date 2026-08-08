@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C コンパイラ</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">組み込みの教育コンパイラは、o32 呼び出し規約を使用して、意図的に定義された C サブセットを MIPS32 アセンブリに変換します。これは汎用の ISO C コンパイラではありません。</p>
+
+  <h2>プロフィール</h2>
+  <table>
+    <tr><th>プロフィール</th><th>目的</th></tr>
+    <tr><td><code>C0-S0</code> に <code>C0-S4</code></td><td>累積的な教育サブセット。式や制御フローから関数、配列、ポインタ、構造体、typedef、コントラクト、ライブラリに進みます。</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>デフォルトの最も機能的なプロファイル: バイトアドレス指定 <code>char</code>/<code>char *</code>、ネイティブ文字列、 <code>argc/argv</code>、関数ポインタ、および <code>void *</code>.</td></tr>
+  </table>
+  <p>ソースがより高いプロファイルを必要とする場合、コンパイルでは焦点を絞ったプロファイルが出力されます。 <code>MC_SUBSET_MISMATCH</code> 一連の二次エラーではなく、診断に役立ちます。</p>
+
+  <h2>プロジェクトをコンパイルする</h2>
+  <ol class="steps">
+    <li>必要なプロファイルと出力オプションを選択します。 <b>設定 → Mini-C 設定</b>.</li>
+    <li>1 つ以上開く <code>.c</code> 同じプロジェクト内のファイル。</li>
+    <li>選択 <b>実行 → C0 をコンパイル</b> または を押してください <kbd>F4</kbd>.</li>
+    <li>診断と生成された MIPS アセンブリを確認します。生成されたプログラムを通常どおりアセンブルして実行します。</li>
+  </ol>
+
+  <h2>呼び出し規約とエントリポイント</h2>
+  <ul>
+    <li>引数の使用 <code>$a0</code>–<code>$a3</code>、追加の引数はスタックを使用し、戻り値は使用します。 <code>$v0</code> (そして <code>$v1</code> 該当する場合）。</li>
+    <li>呼び出し先で保存されたレジスタとスタック フレームは MIPS o32 の期待に従います。</li>
+    <li><code>main(void)</code> そして、C1-NATIVE では、 <code>main(int argc, char **argv)</code> サポートされています。</li>
+    <li>webMARS プログラム引数の場合、 <code>argv[0]</code> ユーザーが指定した最初のトークンです。自動実行可能ファイル名のエントリはありません。</li>
+  </ul>
+
+  <h2>バンドルされたヘッダーとライブラリ</h2>
+  <p>
+    <span class="pill">標準デジタル</span><span class="pill">コニオ</span><span class="pill">ファイル</span>
+    <span class="pill">引数</span><span class="pill">文字列</span><span class="pill">文字列ネイティブ</span>
+    <span class="pill">解析する</span><span class="pill">画像</span><span class="pill">ユーティリティ</span>
+    <span class="pill">ランド</span><span class="pill">ctype</span><span class="pill">標準ライブラリ</span>
+    <span class="pill">標準ブール</span><span class="pill">標準定義</span><span class="pill">ビットマップ_rect</span>
+    <span class="pill">ビットマップ_ascii</span><span class="pill">てぃ</span>
+  </p>
+  <p>これらのヘッダーは、 webMARS 互換性ライブラリを中心に構築 MIPS システムコールとデバイス。これらは、完全なホスト C 標準ライブラリではなく、文書化されたサブセットを実装しています。</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> も提供します <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> そして <code>bitmap_configure_all</code>これにより、C0 プログラムがその表示サイズ、ユニット サイズ、フレームバッファー アドレスをビットマップ ツールに送信できるようになります。</p>
+
+  <h2>良い開始例</h2>
+  <ul>
+    <li><b>ハローワールド (C)</b> 最小の完全なプログラムの場合。</li>
+    <li><b>Mini-C C1 ネイティブ</b> ネイティブ文字列と現在のプロファイルの動作について。</li>
+    <li><b>引数ライブラリのデモ</b> のために <code>argc/argv</code>.</li>
+    <li><b>複数ファイルの統計</b> プロジェクト全体のコンパイルとファイル全体の関数呼び出し用。</li>
+    <li><b>標準出力コンソールの基本</b> そして <b>stdio ファイルの往復</b> 互換性ライブラリの場合。</li>
+  </ul>
+
+  <div class="note">リポジトリ内のコンパイラ マニュアルは、引き続き標準的な詳細な言語リファレンスです。アプリ内ページには、プロファイルを選択してサンプルを正しく実行するために必要な動作がまとめられています。</div>
+</body>
+</html>

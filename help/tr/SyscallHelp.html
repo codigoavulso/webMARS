@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS sistem çağrıları</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Sistem çağrıları</h1>
+  <p class="lead">Servis numarasını girin <code>$v0</code>, argümanları aşağıda gösterilen kayıtlara yerleştirin ve yürütün <code>syscall</code>. Bir satırda aksi belirtilmediği sürece belgelenen sonuçlar dışındaki kayıtlar korunur.</p>
+
+  <h2>Konsol, bellek ve dosyalar</h2>
+  <table class="compact">
+    <tr><th>Hizmet</th><th>Hayır.</th><th>Argümanlar</th><th>Sonuç / davranış</th></tr>
+    <tr><td>Tamsayıyı yazdır</td><td>1</td><td><code>$a0</code> değer</td><td>İmzalı ondalık sayı yazar.</td></tr>
+    <tr><td>Kayan noktayı yazdır</td><td>2</td><td><code>$f12</code> değer</td><td>Tek duyarlıklı yazar.</td></tr>
+    <tr><td>Çift yazdır</td><td>3</td><td><code>$f12/$f13</code> değer</td><td>Çift duyarlıklı yazar.</td></tr>
+    <tr><td>Dizeyi yazdır</td><td>4</td><td><code>$a0</code> sıfır sonlandırılmış bayt dizesi</td><td>Metin yazar.</td></tr>
+    <tr><td>Tamsayıyı oku</td><td>5</td><td>—</td><td><code>$v0</code>; tam giriş geçerli bir tamsayı olmalıdır.</td></tr>
+    <tr><td>Şamandırayı oku</td><td>6</td><td>—</td><td><code>$f0</code>; sondaki önemsiz reddedilir.</td></tr>
+    <tr><td>Çift oku</td><td>7</td><td>—</td><td><code>$f0/$f1</code>; sondaki önemsiz reddedilir.</td></tr>
+    <tr><td>Dizeyi oku</td><td>8</td><td><code>$a0</code> tampon, <code>$a1</code> maksimum uzunluk</td><td>Fgets tarzı uzunluk ve sonlandırıcı kurallarına uyar.</td></tr>
+    <tr><td>sbrk</td><td>9</td><td><code>$a0</code> negatif olmayan bayt sayısı</td><td><code>$v0</code> önceki yığın adresi; harita ve hafıza sınırına göre kontrol edildi.</td></tr>
+    <tr><td>Çıkış</td><td>10</td><td>—</td><td>Normal şekilde sonlandırılır.</td></tr>
+    <tr><td>Karakteri yazdır</td><td>11</td><td>düşük bayt <code>$a0</code></td><td>Bir karakter yazar.</td></tr>
+    <tr><td>Karakteri oku</td><td>12</td><td>—</td><td><code>$v0</code> karakter kodu.</td></tr>
+    <tr><td>Dosyayı aç</td><td>13</td><td><code>$a0</code> isim, <code>$a1</code> bayraklar</td><td><code>$v0</code> tanımlayıcı veya negatif hata. Bayraklar: 0 okuma, 1 yazma/oluşturma, 9 ekleme/oluşturma.</td></tr>
+    <tr><td>Dosyayı oku</td><td>14</td><td><code>$a0</code> fd, <code>$a1</code> tampon, <code>$a2</code> saymak</td><td><code>$v0</code> okunan bayt, EOF'da 0 veya negatif hata.</td></tr>
+    <tr><td>Dosya yaz</td><td>15</td><td><code>$a0</code> fd, <code>$a1</code> tampon, <code>$a2</code> saymak</td><td><code>$v0</code> bayt yazılı veya negatif hata.</td></tr>
+    <tr><td>Dosyayı kapat</td><td>16</td><td><code>$a0</code> fd</td><td>Bir sanal dosya tanımlayıcıyı kapatır.</td></tr>
+    <tr><td>Kodla çık</td><td>17</td><td><code>$a0</code> kod</td><td>Kodu sonlandırır ve kaydeder.</td></tr>
+  </table>
+  <p>0, 1 ve 2 tanımlayıcıları stdin, stdout ve stderr'dir. Kullanıcı tanımlayıcıları 3'ten başlar ve tarayıcının sanal dosya sistemi tarafından desteklenir; sınırsız ana bilgisayar dosyası erişimi sağlamazlar.</p>
+
+  <h2>Saat, MIDI ve sayı biçimlendirmesi</h2>
+  <table class="compact">
+    <tr><th>Hizmet</th><th>Hayır.</th><th>Argümanlar</th><th>Sonuç / davranış</th></tr>
+    <tr><td>Sistem zamanı</td><td>30</td><td>—</td><td>Düşük 32 bit <code>$a0</code>, yüksek 32 bit <code>$a1</code>Unix çağından bu yana milisaniye.</td></tr>
+    <tr><td>MIDI çıkış</td><td>31</td><td><code>$a0</code> saha, <code>$a1</code> süre, <code>$a2</code> enstrüman, <code>$a3</code> hacim</td><td>Eşzamansız olarak başlar.</td></tr>
+    <tr><td>Uyku</td><td>32</td><td><code>$a0</code> milisaniye</td><td>Tarayıcı zamanlamasını kullanarak bekler; Durdur beklemeyi iptal eder.</td></tr>
+    <tr><td>MIDI çıkış senkron</td><td>33</td><td>31 ile aynı</td><td>Ton süresinden sonra geri döner.</td></tr>
+    <tr><td>Onaltılı yazdırma</td><td>34</td><td><code>$a0</code></td><td>Sekiz onaltılık basamak.</td></tr>
+    <tr><td>İkili yazdır</td><td>35</td><td><code>$a0</code></td><td>Otuz iki ikili rakam.</td></tr>
+    <tr><td>İmzasız yazdır</td><td>36</td><td><code>$a0</code></td><td>İmzasız ondalık sayı.</td></tr>
+  </table>
+  <p>MIDI Web Sesi'ni API kullanır. Tarayıcı izni, otomatik oynatma politikası ve zamanlayıcı yükü bir sesin başlama zamanını etkileyebilir.</p>
+
+  <h2>Sahte rastgele akışlar</h2>
+  <table class="compact">
+    <tr><th>Hizmet</th><th>Hayır.</th><th>Argümanlar</th><th>Sonuç</th></tr>
+    <tr><td>Tohumu ayarla</td><td>40</td><td><code>$a0</code> akış kimliği, <code>$a1</code> tohum</td><td>Bu akışı ayarlar.</td></tr>
+    <tr><td>Rastgele tamsayı</td><td>41</td><td><code>$a0</code> akış kimliği</td><td><code>$a0</code> rastgele 32 bitlik tamsayı.</td></tr>
+    <tr><td>Rastgele tamsayı aralığı</td><td>42</td><td><code>$a0</code> akış kimliği, <code>$a1</code> pozitif sınır</td><td><code>$a0</code> [0, bağlı).</td></tr>
+    <tr><td>Rastgele kayan nokta</td><td>43</td><td><code>$a0</code> akış kimliği</td><td><code>$f0</code> [0, 1).</td></tr>
+    <tr><td>Rastgele çift</td><td>44</td><td><code>$a0</code> akış kimliği</td><td><code>$f0/$f1</code> [0, 1).</td></tr>
+  </table>
+  <p>Her tamsayı kimliği bağımsız bir deterministik akışı tanımlar. Akışlar, dışa aktarılan çalışma zamanı durumuna ve geri adım anlık görüntülerine dahil edilir.</p>
+
+  <h2>Diyaloglar</h2>
+  <table class="compact">
+    <tr><th>Hayır.</th><th>Hizmet</th><th>Sözleşme</th></tr>
+    <tr><td>50</td><td>İletişim kutusunu onayla</td><td><code>$a0</code> mesaj; seçim geri döndü <code>$a0</code> (Evet 0, Hayır 1, İptal 2).</td></tr>
+    <tr><td>51</td><td>Giriş tamsayı</td><td><code>$a0</code> çabuk; değer <code>$a0</code>, durumu <code>$a1</code>.</td></tr>
+    <tr><td>52</td><td>Giriş kayan nokta</td><td><code>$a0</code> çabuk; değer <code>$f0</code>, durumu <code>$a1</code>.</td></tr>
+    <tr><td>53</td><td>Çift giriş</td><td><code>$a0</code> çabuk; değer <code>$f0/$f1</code>, durumu <code>$a1</code>.</td></tr>
+    <tr><td>54</td><td>Giriş dizesi</td><td><code>$a0</code> istemi, <code>$a1</code> tampon, <code>$a2</code> maksimum; durumu <code>$a1</code>.</td></tr>
+    <tr><td>55–59</td><td>Mesaj diyalogları</td><td>Düz, tam sayı, kayan nokta, çift veya dize mesajlarını gösterin. Hizmet 55 kullanım alanı <code>$a1</code> mesaj türü için.</td></tr>
+  </table>
+  <p>Giriş durumu MARS kurallarına uygundur: 0 başarılı, −1 geçersiz giriş, −2 iptal ve −3 boş giriş; dize girişi ayrıca kesildiğinde -4 kullanır.</p>
+
+  <h2>webMARS kütüphane hizmetleri</h2>
+  <p>Hizmetler 60–103, birlikte verilen Mini-C uyumluluk kitaplıklarını destekler. Bu numaraları doğrudan çağırmak yerine, doğru türleri ve kayıt protokolünü sağlayan kitaplık başlıklarını tercih edin.</p>
+  <table class="compact">
+    <tr><th>Aralık</th><th>Hizmetler</th></tr>
+    <tr><td>60–64</td><td>floş, eof, okuma satırı, printf, format</td></tr>
+    <tr><td>65–69</td><td>dosya_oku, dosya_kapalı, dosya_kapat, dosya_eof, dosya_okuma satırı</td></tr>
+    <tr><td>70–73</td><td>args_flag, args_int, args_string, args_parse</td></tr>
+    <tr><td>74–84</td><td>dize uzunluğu, indeksleme, birleştirme, alt dize, karşılaştırma, dönüştürmeler, küçük harf, sonlandırma ve karakter dizisi köprüleri</td></tr>
+    <tr><td>85–92</td><td>karakter, boolean/tamsayı ayrıştırma, belirteç ayrıştırma ve tamsayıdan onaltılığa dönüştürme yardımcıları</td></tr>
+    <tr><td>93–100</td><td>görüntü boyutları, oluşturma, klonlama, alt görüntü, yükleme, kaydetme ve veri erişimi</td></tr>
+    <tr><td>101–103</td><td>C-string sonlandırma ve yerel-string/C-string dönüşümü</td></tr>
+  </table>
+</body>
+</html>

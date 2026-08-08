@@ -1,6 +1,6 @@
 #MARS-OS 1.0 — полная интерактивная TTY операционная среда
 #Откройте «Инструменты» > TTY Устройство + ANSI Терминал, подключитесь к MIPS,
-#соберите этот проект и введите «рабочий стол» для пользовательского интерфейса мыши или «справка».
+#собрать и запустить; он открывает рабочий стол мыши. Запустите терминал для оболочки.
 #
 #Этот файл содержит только локализованный текст. Само ядро живет в
 #нейтральные к языку модули, включенные внизу:
@@ -223,8 +223,9 @@ sheet_menu: .asciiz " ESC   s save   q quit   x save and exit   c clear cell   r
 sheet_closed: .asciiz "sheet: closed "
 msg_sheet_usage: .asciiz "usage: sheet FILE   the sheet is created when it does not exist\r\n"
 
-#---- мышь на рабочем столе ----
-# English ASCII fallback: the terminal font is byte-oriented.
+#---- рабочий стол в окне ----
+#Заголовки строк меню и записи меню. На рабочем столе расположены меню из
+#эти строки, поэтому более длинный перевод только делает меню шире.
 desktop_start: .asciiz "[ Start ]"
 mb_system:   .asciiz "System"
 mb_programs: .asciiz "Programs"
@@ -264,7 +265,7 @@ mi_close:      .asciiz "Close window"
 mi_close_all:  .asciiz "Close all"
 mi_keys:       .asciiz "Keyboard and mouse"
 
-# Window titles are indexed by the desktop window kind.
+#Заголовки окон, индексированные по типу окна.
 wt_programs: .asciiz "Program Manager"
 wt_about:    .asciiz "About"
 wt_files:    .asciiz "File Manager"

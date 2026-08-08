@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS の使用を開始する</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>はじめに</h1>
+  <p class="lead">webMARS は、ブラウザベースの MIPS32 アセンブラ、シミュレータ、デバッガ、Mini-C コンパイラおよび教育ワークスペースです。ランタイムは完全に JavaScript で実装されます。 Java のインストール、ネイティブ実行可能ファイル、または WASM バックエンドは必要ありません。</p>
+
+  <ol class="steps">
+    <li><strong>ソース ファイルを開くか作成します。</strong> 使用する <b>ファイル → 例</b> ガイド付きの開始点として、 <b>新しいプロジェクト</b> 空のプロジェクトの場合、または <b>ディスクから開く</b> ローカルファイルの場合。</li>
+    <li><strong>構築してください。</strong> アセンブリファイルの使用 <b>走行→組み立て</b> (<kbd>F3</kbd>）。 C ファイルは使用します <b>実行 → C0 をコンパイル</b> (<kbd>F4</kbd>)、生成されたアセンブリをアセンブルします。</li>
+    <li><strong>実行してください。</strong> 選択 <b>行く</b> (<kbd>F5</kbd>) または、次のようにして一度に 1 つの命令を進めます。 <b>ステップ</b> (<kbd>F7</kbd>).</li>
+    <li><strong>結果を調べます。</strong> プログラムの実行に応じて、レジスタ、コプロセッサ 1、メモリ、メッセージ、実行 I/O、および接続されたツールが更新されます。</li>
+  </ol>
+
+  <h2>含まれるもの</h2>
+  <div class="cards">
+    <section class="card"><h3>MIPS32 ランタイム</h3><p>整数、分岐、メモリ、例外、LL/SC および COP1 の実行 (遅延分岐および自己変更コード オプションを含む)。</p></section>
+    <section class="card"><h3>Mini-C コンパイラ</h3><p>C0 ティーチングサブセットと C1-NATIVE プロファイル、ターゲティング MIPS o32 呼び出し規約。</p></section>
+    <section class="card"><h3>デバッガ</h3><p>ブレークポイント、ステップ実行、バックステップ実行、リセット、一時停止/停止コントロール、および構成可能な実行速度。</p></section>
+    <section class="card"><h3>デバイスとツール</h3><p>MMIO デバイス、キャッシュおよびブランチ シミュレーター、ビジュアル ディスプレイ、統計、ANSI ターミナルなど。</p></section>
+  </div>
+
+  <h2>推奨される初回実行</h2>
+  <p>開く <b>ファイル → 例</b>、英語を選択してください <b>学ぶ</b> たとえば、説明を読んで開きます。アセンブリ例は直接アセンブルして実行できます。 C の例では、最小のコンパイラ サブセットを宣言しており、複数のプロジェクト ファイルが含まれている場合があります。</p>
+
+  <div class="note"><strong>デフォルトでは、ファイルはブラウザ内に残ります。</strong> 明示的にクラウド メニューを使用しない限り、ローカル プロジェクトとリカバリ データはアップロードされません。ブラウザのストレージはブラウザによってクリアされる可能性があるため、重要な作業を定期的にダウンロードしてください。 <b>設定→localStorageをクリア</b>.</div>
+
+  <h2>便利なショートカット</h2>
+  <table class="compact">
+    <tr><th>アクション</th><th>ショートカット</th></tr>
+    <tr><td>ヘルプ</td><td><kbd>F1</kbd></td></tr>
+    <tr><td>組み立てる</td><td><kbd>F3</kbd></td></tr>
+    <tr><td>Mini-C をコンパイルします</td><td><kbd>F4</kbd></td></tr>
+    <tr><td>ラン/ゴー</td><td><kbd>F5</kbd></td></tr>
+    <tr><td>ステップ</td><td><kbd>F7</kbd></td></tr>
+  </table>
+</body>
+</html>

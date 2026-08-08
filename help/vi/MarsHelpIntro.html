@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bắt đầu với webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Bắt đầu</h1>
+  <p class="lead">webMARS là trình biên dịch, trình mô phỏng, trình gỡ lỗi, trình biên dịch MIPS32, trình biên dịch và không gian giảng dạy Mini-C dựa trên trình duyệt. Thời gian chạy được triển khai hoàn toàn trong JavaScript; không cần cài đặt Java, tệp thực thi gốc hoặc phần phụ trợ WASM.</p>
+
+  <ol class="steps">
+    <li><strong>Mở hoặc tạo một tập tin nguồn.</strong> sử dụng <b>Tệp → Ví dụ</b> để có điểm khởi đầu được hướng dẫn, <b>Dự án mới</b> cho một dự án trống, hoặc <b>Mở từ đĩa</b> cho các tập tin địa phương.</li>
+    <li><strong>Xây dựng nó.</strong> Sử dụng tập tin hội <b>Chạy → Lắp ráp</b> (<kbd>F3</kbd>). Sử dụng tập tin C <b>Chạy → Biên dịch C0</b> (<kbd>F4</kbd>), sau đó lắp ráp tổ hợp được tạo ra.</li>
+    <li><strong>Thực hiện nó.</strong> chọn <b>Đi</b> (<kbd>F5</kbd>) hoặc nâng cao từng lệnh một với <b>Bước</b> (<kbd>F7</kbd>).</li>
+    <li><strong>Kiểm tra kết quả.</strong> Các thanh ghi, Bộ đồng xử lý 1, bộ nhớ, thông báo, Chạy I/O và các công cụ được kết nối sẽ cập nhật khi chương trình chạy.</li>
+  </ol>
+
+  <h2>Những gì được bao gồm</h2>
+  <div class="cards">
+    <section class="card"><h3>MIPS32 thời gian chạy</h3><p>Thực thi số nguyên, nhánh, bộ nhớ, ngoại lệ, LL/SC và COP1, bao gồm các tùy chọn phân nhánh bị trì hoãn và mã tự sửa đổi.</p></section>
+    <section class="card"><h3>Trình biên dịch Mini-C</h3><p>Các tập hợp con giảng dạy C0 và cấu hình C1-NATIVE, hướng tới quy ước gọi điện MIPS o32.</p></section>
+    <section class="card"><h3>Trình gỡ lỗi</h3><p>Điểm dừng, bước, bước lùi, đặt lại, điều khiển tạm dừng/dừng và tốc độ thực thi có thể định cấu hình.</p></section>
+    <section class="card"><h3>Thiết bị và công cụ</h3><p>Thiết bị MMIO, bộ nhớ đệm và trình mô phỏng nhánh, hiển thị trực quan, số liệu thống kê, thiết bị đầu cuối ANSI và hơn thế nữa.</p></section>
+  </div>
+
+  <h2>Lần chạy đầu tiên được đề xuất</h2>
+  <p>Mở <b>Tệp → Ví dụ</b>, chọn một tiếng Anh <b>Tìm hiểu</b> ví dụ, đọc mô tả của nó và mở nó. Các ví dụ lắp ráp có thể được lắp ráp và chạy trực tiếp. Các ví dụ C khai báo tập hợp con trình biên dịch tối thiểu của chúng và có thể chứa một số tệp dự án.</p>
+
+  <div class="note"><strong>Các tập tin của bạn vẫn ở trong trình duyệt của bạn theo mặc định.</strong> Các dự án cục bộ và dữ liệu khôi phục sẽ không được tải lên trừ khi bạn sử dụng menu Đám mây một cách rõ ràng. Tải xuống tác phẩm quan trọng theo định kỳ vì bộ nhớ trình duyệt có thể bị xóa bởi trình duyệt hoặc bởi <b>Cài đặt → Xóa bộ nhớ cục bộ</b>.</div>
+
+  <h2>Phím tắt hữu ích</h2>
+  <table class="compact">
+    <tr><th>hành động</th><th>Phím tắt</th></tr>
+    <tr><td>Trợ giúp</td><td><kbd>F1</kbd></td></tr>
+    <tr><td>lắp ráp</td><td><kbd>F3</kbd></td></tr>
+    <tr><td>Biên dịch Mini-C</td><td><kbd>F4</kbd></td></tr>
+    <tr><td>Chạy / Đi</td><td><kbd>F5</kbd></td></tr>
+    <tr><td>Bước</td><td><kbd>F7</kbd></td></tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS cài đặt</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Cài đặt</h1>
+  <p class="lead">Các cài đặt bao gồm trình bày nguồn, khả năng tương thích của trình biên dịch mã, đầu ra Mini-C, tính ổn định, quyền truy cập đám mây và giới hạn thời gian chạy.</p>
+
+  <h2>Cài đặt nhanh</h2>
+  <table>
+    <tr><th>Cài đặt</th><th>Hiệu ứng</th></tr>
+    <tr><td>Hiển thị nhãn</td><td>Hiển thị nhãn cùng với địa chỉ trong chế độ xem thời gian chạy nếu có.</td></tr>
+    <tr><td>Đối số chương trình</td><td>Lời nhắc tranh luận trước khi chạy. <code>$a0</code> nhận argc và <code>$a1</code> nhận argv; Mini-C C1-NATIVE hiển thị cùng một dữ liệu cho <code>main(int argc, char **argv)</code>.</td></tr>
+    <tr><td>Cửa sổ bật lên của hệ thống đầu vào</td><td>Sử dụng hộp thoại biểu mẫu cho các dịch vụ đầu vào của bảng điều khiển 5, 6, 7, 8 và 12 thay vì ngăn Chạy I/O.</td></tr>
+    <tr><td>Tách tin nhắn/Chạy I/O</td><td>Hiển thị thông báo bản dựng và chương trình I/O cùng một lúc.</td></tr>
+    <tr><td>Địa chỉ/giá trị hex</td><td>Chuyển đổi các bảng thời gian chạy giữa cách trình bày thập lục phân và thập phân. Nó không thay đổi các bit được lưu trữ.</td></tr>
+  </table>
+
+  <h2>Khả năng tương thích của trình biên dịch và thực thi</h2>
+  <ul>
+    <li><b>Lắp ráp khi mở</b> và <b>Tập hợp tất cả các tập tin</b> tự động hóa phạm vi xây dựng đã chọn.</li>
+    <li><b>Coi cảnh báo là lỗi</b> làm cho cảnh báo lắp ráp thất bại.</li>
+    <li><b>Bắt đầu từ chính</b> bắt đầu ở toàn cầu <code>main</code> nhãn khi có mặt.</li>
+    <li><b>Hướng dẫn mở rộng (giả)</b> bật danh mục hướng dẫn giả được hiển thị trong Trợ giúp.</li>
+    <li><b>Phân nhánh chậm</b> cho phép hoạt động của khe trễ kiến trúc.</li>
+    <li><b>Mã tự sửa đổi</b> cho phép ghi vào bộ nhớ thực thi. Chỉ kích hoạt nó cho các chương trình cố tình yêu cầu nó.</li>
+  </ul>
+
+  <h2>Giao diện</h2>
+  <p>Chọn chủ đề giao diện (Sáng hoặc Tối), ngôn ngữ giao diện người dùng, bố cục menu trên cùng hoặc bên cạnh, kích thước phông chữ của trình chỉnh sửa, khoảng cách dòng và hành vi đánh dấu. Có sẵn giao diện tiếng Anh, tiếng Tây Ban Nha, tiếng Bồ Đào Nha, tiếng Quan Thoại, tiếng Hindi, tiếng Ả Rập, tiếng Pháp, tiếng Bengali, tiếng Nga, tiếng Indonesia, tiếng Đức, tiếng Nhật, tiếng Hàn, tiếng Thổ Nhĩ Kỳ, tiếng Việt, tiếng Urdu, tiếng Ý, tiếng Ba Lan, tiếng Ba Tư và tiếng Thái; trợ giúp tuân theo ngôn ngữ giao diện người dùng đang hoạt động. Tiếng Ả Rập, tiếng Urdu và tiếng Ba Tư tự động chuyển giao diện từ phải sang trái. Trong lần truy cập đầu tiên, webMARS sử dụng ngôn ngữ trình duyệt được hỗ trợ hoặc quay lại tiếng Anh; một lựa chọn rõ ràng sẽ được lưu và được ưu tiên. Chủ đề đã chọn sẽ được lưu trữ cùng với các tùy chọn của bạn và được áp dụng cho toàn bộ giao diện, bao gồm các cửa sổ công cụ và trợ giúp.</p>
+
+  <h2>Bộ nhớ thời gian chạy &amp;</h2>
+  <table>
+    <tr><th>Ưu tiên</th><th>Phạm vi/lựa chọn</th></tr>
+    <tr><td>Cấu hình bộ nhớ</td><td>Dữ liệu mặc định, thu gọn tại địa chỉ 0 hoặc văn bản thu gọn tại địa chỉ 0.</td></tr>
+    <tr><td>Bộ nhớ tối đa</td><td>0,25–2 GiB, tùy theo giới hạn bộ nhớ thực tế của trình duyệt.</td></tr>
+    <tr><td>Lịch sử bước lùi</td><td>0–1.000.000 bước được ghi lại; mặc định 100.</td></tr>
+    <tr><td>xử lý ngoại lệ</td><td>Địa chỉ MIPS hoàn toàn hợp lệ, mặc định <code>0x80000180</code>.</td></tr>
+  </table>
+
+  <h2>Sự kiên trì và đám mây</h2>
+  <p><b>Trạng thái cửa hàng</b> và <b>Trạng thái tải</b> quản lý ảnh chụp nhanh thời gian chạy cục bộ hoàn chỉnh. <b>Xóa bộ nhớ cục bộ</b> xóa tùy chọn webMARS, dự án đã lưu, trạng thái khôi phục và vị trí công cụ sau khi xác nhận.</p>
+  <p><b>Máy chủ đám mây</b> thay đổi điểm cuối được sử dụng bởi menu Đám mây tùy chọn. Thông tin xác thực và dữ liệu dự án chỉ được gửi khi bạn gọi các tính năng đám mây.</p>
+
+  <div class="warning">Việc thay đổi bản đồ bộ nhớ hoặc các tùy chọn tương thích của trình biên dịch mã sẽ làm mất hiệu lực các giả định được đưa ra bởi một chương trình đã được biên dịch sẵn. Lắp ráp lại sau khi thay đổi chúng.</div>
+</body>
+</html>

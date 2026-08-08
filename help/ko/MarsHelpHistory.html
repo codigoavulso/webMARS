@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS 이력</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>역사</h1>
+  <p class="lead">webMARS는 MARS 4.5 MIPS 시뮬레이터의 브라우저 포트로 시작되었습니다. 이제 독립적인 JavaScript 런타임, 편집기, 디버거, Mini-C 컴파일러, 로컬/클라우드 프로젝트 워크플로 및 브라우저 기본 도구를 결합합니다.</p>
+
+  <h2>현재 개발 라인</h2>
+  <ul>
+    <li><strong>JavaScript 전용 런타임.</strong> 실험적 하이브리드/WASM 경로는 이 워크로드에 대한 가치 있는 개선 없이 복잡성을 추가한 것으로 측정된 후 제거되었습니다.</li>
+    <li><strong>런타임 정확성.</strong> 최근 작업에서는 이중 단어 COP1 순서 지정, 원자 메모리 저장소, 힙 예약, LL/SC, 엄격한 주소 지정, 지연된 분기 링크, FCSR 반올림, 예외 지속 및 중지 동작이 강화되었습니다.</li>
+    <li><strong>상태 스냅샷을 완료하세요.</strong> 내보내기/가져오기 및 백스텝은 이제 무작위 스트림, 가상 파일 및 커서, stdin, 프로그램 인수, 이미지 핸들 및 중단점을 고려합니다.</li>
+    <li><strong>성능 관찰 가능성.</strong> 앱은 로컬 컴파일, 어셈블 및 실행 타이밍과 예상 JavaScript 활용도를 보고하며, 최대 속도 실행은 도구의 런타임 상태를 중단시키지 않으면서 프레젠테이션 오버헤드를 줄여줍니다.</li>
+    <li><strong>Mini-C 진화.</strong> C0 교육 하위 집합은 C1-NATIVE, o32 호출, 바이트 문자열, 인수, 함수 포인터, 다중 파일 프로젝트 및 호환성 라이브러리와 함께 계속 사용할 수 있습니다.</li>
+    <li><strong>커리큘럼으로서의 예.</strong> 어셈블리 및 C 예제는 다국어 변형 및 다중 파일 프로젝트와 함께 목적, 언어 및 최소 컴파일러 프로필별로 분류되어 있습니다.</li>
+  </ul>
+
+  <h2>호환성 계보</h2>
+  <p>지침 어휘, 일반적인 syscall, 사용자 인터페이스 개념 및 교육 모델은 원본에서 파생됩니다. MARS Pete Sanderson과 Kenneth Vollmar의 프로젝트. webMARS Java 데스크탑 통합을 브라우저 API 및 자체 실행 엔진으로 대체하면서 해당 계보를 유지합니다.</p>
+
+  <h2>버전 기록</h2>
+  <p>는 <b>webMARS → 변경 내역</b> 도움말 페이지에는 자세한 버전별 프로젝트 기록이 포함되어 있습니다. 기록 항목은 릴리스 상태를 설명합니다. 이는 실험적인 하위 시스템이 현재 빌드에 남아 있다는 약속이 아닙니다.</p>
+
+  <div class="note">문서와 기록 변경 로그 항목이 다른 경우 현재 주제 페이지와 현재 런타임 동작이 우선합니다.</div>
+</body>
+</html>

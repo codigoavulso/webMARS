@@ -1,4 +1,4 @@
-# webMARS v0.5.4
+# webMARS v0.5.5
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,13 +22,12 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.5.4
+## Highlights in v0.5.5
 
-- Reworked MARS-OS into a mouse-driven Windows 95-style desktop with a Start menu, application launcher, movable/resizable windows, terminal shell, editor, spreadsheet and BASIC app.
-- Improved the TTY ANSI terminal, mouse reports, responsive mobile behavior and display-window fitting.
-- Enabled automatic display fitting and collapsed settings by default in TTY ANSI, Bitmap Display and Bitmap Terminal on desktop and mobile layouts.
-- Added a System theme that follows the browser's light/dark preference automatically while preserving explicit Light and Dark overrides.
-- Expanded localization, documentation and regression coverage across all ten supported languages.
+- Added Pipeline Lab with a deterministic five-stage IF/ID/EX/MEM/WB model, RAW hazard detection, configurable forwarding, stalls, reversible cycles, metrics and a virtualized instruction timeline.
+- Expanded the complete interface, examples, documentation and help from ten to twenty languages, including right-to-left support for Persian and Urdu alongside Arabic.
+- Refined virtual-display defaults, responsive tool layouts, automatic browser-aware theming and localized tool behavior.
+- Preserved the improved mouse-driven MARS-OS desktop, TTY terminal, movable/resizable windows and application suite with broader regression coverage.
 
 ## Main Capabilities
 
@@ -39,7 +38,8 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - MARS-style tools such as Bitmap Display, Cache Simulator, Digital Lab Sim, Keyboard/Display MMIO, and more.
 - System, light and dark interface themes, selected in `Settings > Interface...` and applied to the editor,
   tool windows and help pages. System follows the browser color scheme and is the default.
-- Localized UI, examples, documentation and help for English, Spanish, Portuguese, Mandarin Chinese, Hindi, Arabic, French, Bengali, Russian and Indonesian.
+- Localized UI, examples, documentation and help for English, Spanish, Portuguese, Mandarin Chinese, Hindi, Arabic, French, Bengali, Russian, Indonesian, German, Japanese, Korean, Turkish, Vietnamese, Urdu, Italian, Polish, Persian and Thai.
+- Right-to-left layout is applied automatically for Arabic, Urdu and Persian.
 - On a fresh session, the interface follows the first supported language reported by `navigator.languages` (for example, `pt-PT` selects Portuguese); unsupported languages fall back to English, and an explicit saved choice always takes priority.
 - Browser storage for source files with virtual folders and quota management.
 - Project/editor/runtime workflow with persistent preferences and recoverable session state.
@@ -135,6 +135,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.5.5`: Pipeline Lab, twenty-language interface/help/examples, scalable cycle history, and expanded UI/tool regression coverage
 - `v0.5.4`: MARS-OS desktop/window overhaul, improved TTY, automatic virtual-display fitting, collapsed display settings, and browser-aware system theme
 - `v0.5.3`: browser-language bootstrap fix for fresh sessions and private windows
 - `v0.5.2`: ten-language UI/help/examples, automatic browser-language selection, Arabic RTL, mouse-driven MARS-OS desktop, and faster responsive TTY

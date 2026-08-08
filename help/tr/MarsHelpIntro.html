@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS ile çalışmaya başlama</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Başlarken</h1>
+  <p class="lead">webMARS tarayıcı tabanlı bir MIPS32 birleştirici, simülatör, hata ayıklayıcı, Mini-C derleyici ve öğretme çalışma alanıdır. Çalışma zamanı tamamen JavaScript içinde uygulanır; Java kurulumu, yerel yürütülebilir dosya veya WASM arka uç gerekmez.</p>
+
+  <ol class="steps">
+    <li><strong>Bir kaynak dosya açın veya oluşturun.</strong> Kullanım <b>Dosya → Örnekler</b> rehberli bir başlangıç noktası için, <b>Yeni Proje</b> boş bir proje için veya <b>Diskten aç</b> yerel dosyalar için.</li>
+    <li><strong>İnşa et.</strong> Montaj dosyalarının kullanımı <b>Çalıştır → Birleştir</b> (<kbd>F3</kbd>). C dosyalarının kullanımı <b>Çalıştır → C0'ı Derle</b> (<kbd>F4</kbd>), ardından oluşturulan derlemeyi birleştirin.</li>
+    <li><strong>Yürüt.</strong> Seç <b>Git</b> (<kbd>F5</kbd>) veya ile her seferinde bir talimat ilerletin <b>Adım</b> (<kbd>F7</kbd>).</li>
+    <li><strong>Sonucu inceleyin.</strong> Kayıtlar, Yardımcı İşlemci 1, bellek, mesajlar, Çalıştırma G/Ç'si ve bağlı araçlar, program çalışırken güncellenir.</li>
+  </ol>
+
+  <h2>Neler dahil</h2>
+  <div class="cards">
+    <section class="card"><h3>MIPS32 çalışma zamanı</h3><p>Tamsayı, dallanma, bellek, istisna, LL/SC ve COP1 yürütme, gecikmeli dallanma ve kendi kendini değiştiren kod seçenekleri dahil.</p></section>
+    <section class="card"><h3>Mini-C derleyici</h3><p>C0 öğretme alt kümeleri ve C1-NATIVE profili, MIPS o32 çağırma kuralını hedefler.</p></section>
+    <section class="card"><h3>Hata ayıklayıcı</h3><p>Kesme noktaları, adımlama, geri adım atma, sıfırlama, duraklatma/durdurma kontrolleri ve yapılandırılabilir yürütme hızı.</p></section>
+    <section class="card"><h3>Cihazlar ve araçlar</h3><p>MMIO cihazlar, önbellek ve şube simülatörleri, görsel ekranlar, istatistikler, ANSI terminali ve daha fazlası.</p></section>
+  </div>
+
+  <h2>Önerilen ilk çalıştırma</h2>
+  <p>Açık <b>Dosya → Örnekler</b>, bir İngilizce seçin <b>Öğren</b> örneğin, açıklamasını okuyun ve açın. Montaj örnekleri doğrudan monte edilebilir ve çalıştırılabilir. C örnekleri minimum derleyici alt kümelerini bildirir ve birkaç proje dosyası içerebilir.</p>
+
+  <div class="note"><strong>Dosyalarınız varsayılan olarak tarayıcınızda kalır.</strong> Bulut menüsünü açıkça kullanmadığınız sürece yerel projeler ve kurtarma verileri yüklenmez. Tarayıcı depolama alanı tarayıcı tarafından temizlenebildiği için önemli çalışmaları düzenli aralıklarla indirin. <b>Ayarlar → localStorage'ı temizle</b>.</div>
+
+  <h2>Yararlı kısayollar</h2>
+  <table class="compact">
+    <tr><th>Eylem</th><th>Kısayol</th></tr>
+    <tr><td>Yardım</td><td><kbd>F1</kbd></td></tr>
+    <tr><td>Birleştir</td><td><kbd>F3</kbd></td></tr>
+    <tr><td>Derle Mini-C</td><td><kbd>F4</kbd></td></tr>
+    <tr><td>Koş / Git</td><td><kbd>F5</kbd></td></tr>
+    <tr><td>Adım</td><td><kbd>F7</kbd></td></tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C کامپایلر</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">کامپایلر آموزشی داخلی یک زیرمجموعه C عمداً تعریف شده را با استفاده از قرارداد فراخوانی o32 به مونتاژ MIPS32 ترجمه می‌کند. این یک کامپایلر C همه منظوره ISO نیست.</p>
+
+  <h2>پروفایل ها</h2>
+  <table>
+    <tr><th>نمایه</th><th>هدف</th></tr>
+    <tr><td><code>C0-S0</code> به <code>C0-S4</code></td><td>زیر مجموعه‌های آموزشی تجمعی، پیشرفت از عبارات و جریان کنترل به توابع، آرایه‌ها، اشاره‌گرها، ساختارها، تایپ‌دف‌ها، قراردادها و کتابخانه‌ها.</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>نمایه پیش‌فرض و تواناترین: بایت آدرس‌دهی شده است <code>char</code>/<code>char *</code>، رشته های بومی، <code>argc/argv</code>، نشانگرهای تابع و <code>void *</code>.</td></tr>
+  </table>
+  <p>اگر منبعی به نمایه بالاتری نیاز دارد، کامپایل یک نمایه متمرکز را منتشر می کند <code>MC_SUBSET_MISMATCH</code> تشخیصی به جای آبشاری از خطاهای ثانویه.</p>
+
+  <h2>یک پروژه را تدوین کنید</h2>
+  <ol class="steps">
+    <li>نمایه و گزینه های خروجی مورد نظر را در آن انتخاب کنید <b>تنظیمات → Mini-C تنظیمات برگزیده</b>.</li>
+    <li>یک یا چند مورد را باز کنید <code>.c</code> فایل های موجود در همان پروژه</li>
+    <li>انتخاب کنید <b>اجرا → کامپایل C0</b> یا فشار دهید <kbd>F4</kbd>.</li>
+    <li>عیب یابی و مونتاژ تولید شده MIPS را مرور کنید. برنامه تولید شده را به صورت عادی جمع آوری و اجرا کنید.</li>
+  </ol>
+
+  <h2>تماس با کنفرانس و نقطه ورود</h2>
+  <ul>
+    <li>استفاده از استدلال <code>$a0</code>–<code>$a3</code>، آرگومان های اضافی از پشته استفاده می کنند و از مقادیر بازگشتی استفاده می کنند <code>$v0</code> (و <code>$v1</code> در صورت لزوم).</li>
+    <li>رجیسترها و قاب‌های پشته‌ای ذخیره‌شده در Callee از MIPS انتظارات o32 پیروی می‌کنند.</li>
+    <li><code>main(void)</code> و در C1-NATIVE، <code>main(int argc, char **argv)</code> پشتیبانی می شوند.</li>
+    <li>برای webMARS آرگومان های برنامه، <code>argv[0]</code> اولین نشانه ارائه شده توسط کاربر است. هیچ ورودی نام اجرایی خودکاری وجود ندارد.</li>
+  </ul>
+
+  <h2>هدرها و کتابخانه های همراه</h2>
+  <p>
+    <span class="pill">stdio</span><span class="pill">conio</span><span class="pill">فایل</span>
+    <span class="pill">ارگ</span><span class="pill">رشته</span><span class="pill">string_native</span>
+    <span class="pill">تجزیه</span><span class="pill">img</span><span class="pill">استفاده کنید</span>
+    <span class="pill">رند</span><span class="pill">ctype</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">stddef</span><span class="pill">bitmap_rect</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>این سرصفحه‌ها webMARS کتابخانه‌های سازگاری هستند که پیرامون MIPS سیستم‌ها و دستگاه‌ها ساخته شده‌اند. آنها زیر مجموعه مستند خود را پیاده سازی می کنند، نه کتابخانه استاندارد C میزبان کامل.</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> نیز فراهم می کند <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> و <code>bitmap_configure_all</code>، به یک برنامه C0 اجازه می دهد تا اندازه نمایشگر، اندازه واحد و آدرس فریم بافر خود را به ابزار Bitmap ارسال کند.</p>
+
+  <h2>نمونه های شروع خوب</h2>
+  <ul>
+    <li><b>سلام دنیا (C)</b> برای کوچکترین برنامه کامل</li>
+    <li><b>Mini-C C1 بومی</b> برای رشته های بومی و رفتار نمایه فعلی.</li>
+    <li><b>نسخه نمایشی کتابخانه استدلال</b> برای <code>argc/argv</code>.</li>
+    <li><b>آمار چند فایلی</b> برای کامپایل در کل پروژه و فراخوانی تابع در بین فایل ها.</li>
+    <li><b>مبانی کنسول stdio</b> و <b>فایل stdio رفت و برگشت</b> برای کتابخانه های سازگاری</li>
+  </ul>
+
+  <div class="note">کتابچه راهنمای کامپایلر در مخزن به عنوان مرجع هنجاری و دقیق زبان باقی می ماند. صفحه درون برنامه رفتارهای مورد نیاز برای انتخاب نمایه و اجرای صحیح نمونه ها را خلاصه می کند.</div>
+</body>
+</html>

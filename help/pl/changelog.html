@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS dziennik zmian</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Dziennik zmian</h1>
+  <p class="lead">Wersja 0.5.5 wprowadza Laboratorium potoku i rozszerza całe środowisko nauki do dwudziestu języków.</p>
+
+  <h2>0.5.5 &mdash; Laboratorium potoku i dwadzieścia języków</h2>
+  <ul>
+    <li>Dodano deterministyczny pięciostopniowy potok z hazardami RAW, przekazywaniem, przestojami, odwracalnymi cyklami, metrykami i skalowalną osią czasu.</li>
+    <li>Rozszerzono interfejs, przykłady, dokumentację i pomoc z dziesięciu do dwudziestu języków.</li>
+    <li>Rozszerzono responsywność narzędzi, lokalizację i pokrycie testami regresji.</li>
+  </ul>
+
+  <h2>0.5.4 &mdash; MARS – Pulpit systemu operacyjnego, wirtualne wyświetlacze i motyw systemu</h2>
+  <ul>
+    <li>Ukończono korzystanie z systemu operacyjnego MARS w stylu Windows 95 z menu Start, programem uruchamiającym aplikacje i ruchomymi oknami o zmiennym rozmiarze.</li>
+    <li>Ulepszono terminal TTY ANSI, obsługę myszy, responsywne zachowanie mobilne i aplikacje MARS-OS.</li>
+    <li>Włączono domyślne wyświetlanie okna Dopasuj w TTY ANSI, wyświetlaczu bitmapowym i terminalu bitmapowym.</li>
+    <li>Domyślnie zwinięte ustawienia wyświetlania wirtualnego zarówno w układach komputerów stacjonarnych, jak i mobilnych.</li>
+    <li>Dodano motyw systemowy, który automatycznie dopasowuje się do schematu kolorów przeglądarki, z wyraźnymi nadpisaniami Jasnego i Ciemnego.</li>
+  </ul>
+
+  <h2>0.5.3 &mdash; poprawka ładowania początkowego języka przeglądarki</h2>
+  <ul>
+    <li>Zachowano język wykryty w przeglądarce, gdy aplikacja po raz pierwszy tworzy domyślne preferencje interfejsu użytkownika.</li>
+    <li>Zachowano wyraźnie zapisane preferencje językowe przed automatycznym wykryciem i zachowano angielski jako język zastępczy dla nieobsługiwanych języków.</li>
+    <li>Dodano pokrycie regresji dla regionalnych języków przeglądarek i pełny pasek początkowy preferencji nowej sesji.</li>
+  </ul>
+
+  <h2>0.5.2 &mdash; dziesięć języków, wybór automatyczny, MARS-pulpit systemu operacyjnego</h2>
+  <ul>
+    <li>Rozszerzono kompletny interfejs, przykładowy katalog, dokumentację i pomoc z języka angielskiego, hiszpańskiego i portugalskiego do dziesięciu języków, dodając chiński mandaryński, hindi, arabski, francuski, bengalski, rosyjski i indonezyjski.</li>
+    <li>Dodano wykrywanie języka przeglądarki przy pierwszej wizycie z normalizacją kodu regionalnego i wersją zastępczą w języku angielskim, zachowując jednocześnie wyraźnie zapisane preferencje.</li>
+    <li>Dodano układ arabski pisany od prawej do lewej, zachowując kod źródłowy, dane wyjściowe i notację techniczną od lewej do prawej.</li>
+    <li>Przerobiono MARS-OS na pulpit sterowany myszą, który otwiera się bezpośrednio w Menedżerze programów i uruchamia polecenia powłoki w aplikacji Terminal.</li>
+    <li>Poprawiona przepustowość TTY, rozmiar mobilny obsługujący klawiaturę Android i odstępy w pionie pulpitu.</li>
+    <li>Dodano generowanie powtarzalnej lokalizacji, chronioną terminologię techniczną i pełne pokrycie regresji w dziesięciu językach.</li>
+  </ul>
+
+  <h2>0.5.1 &mdash; przerwania urządzenia, narzędzia wykonawcze, MARS-zegar systemu operacyjnego</h2>
+  <ul>
+    <li>Zaimplementowano jednoczesne przerwania zewnętrzne dla timera, klawiatury, wyświetlacza i klawiatury szesnastkowej Digital Lab, z maskowaniem po stronie CPU i dostarczaniem stanu oczekującego.</li>
+    <li>Dodano narzędzia zegara systemowego i wizualizatora stosu, w tym scentralizowane rzadkie delty kompatybilne z dokładnymi krokami wstecznymi.</li>
+    <li>Zmniejszony narzut związany z podłączonym narzędziem dzięki zdekodowanym partiom instrukcji, łączonemu renderowaniu i ograniczonej historii zdarzeń w czasie wykonywania.</li>
+    <li>Dodano zlokalizowany przykład przerwania czasowego i rozszerzono MARS-OS z działającym <code>clock</code> i w czasie rzeczywistym <code>bench</code> polecenia.</li>
+    <li>Zapobiegnięto tymczasowemu czyszczeniu złożonego segmentu tekstu w interfejsie użytkownika wykonania przez kompaktowe migawki środowiska wykonawczego.</li>
+    <li>Skonsolidowano menedżera plików i umowę w chmurze z bezpiecznym dla konfliktów zapisem, zdalną zmianą/usuwaniem nazwy, tożsamością projektu niewrażliwą na wielkość liter i stanem synchronizacji wsadowej.</li>
+  </ul>
+
+  <h2>0.5.0 &mdash; dojrzałe środowisko wykonawcze, backstep delta, mobilne przepływy pracy</h2>
+  <ul>
+    <li>Poprawione zachowanie środowiska wykonawczego o dużym wpływie na limity pamięci, magazyny atomowe, COP1 podwojenia i zaokrąglenia, opóźnione rozgałęzienia, wyjątki, rezerwacje LL/SC i punkty przerwania.</li>
+    <li>Zastąpiono pełne migawki poszczególnych instrukcji ograniczonymi odwrotnymi deltami, zachowując jednocześnie dokładne okno cofania i zsynchronizowany stan narzędzia.</li>
+    <li>Mniejsze obciążenie związane z wykonaniem dzięki kompaktowym wsadom zdarzeń w czasie wykonywania, zintegrowanemu renderowaniu narzędzi i lżejszej synchronizacji interfejsu użytkownika.</li>
+    <li>Dodano konfigurację dynamicznej mapy bitowej MMIO i zaktualizowano przykłady i biblioteki bitmap, aby z niej korzystać, zachowując jednocześnie kompatybilność z MARS 4.5.</li>
+    <li>Rozszerzono przykłady TTY o praktyczną powłokę MIPS oraz udoskonalono katalog lekcji Assembly i Mini-C we wszystkich trzech językach.</li>
+    <li>Zintegrowane narzędzia, okna dialogowe, chmura i ustawienia w mobilnym systemie okien, w tym dostosowywanie rozmiaru klawiatury Android, semantyczne klawiatury wirtualne i zawarte przewijanie.</li>
+    <li>Dodano kompleksowe środowisko wykonawcze, narzędzie, przykład, dokumentację, mobilny interfejs użytkownika i pokrycie regresji wersji.</li>
+  </ul>
+
+  <h2>0.4.13 &mdash; mobilny układ jednopanelowy, zlokalizowana diagnostyka</h2>
+  <ul>
+    <li>Mobile wyświetla jednocześnie jeden panel pełnoekranowy, wybrany z nowego paska zakładek z ikonami, zawierającego listę Main, Messages/Run I/O, Registers i dowolne otwarte narzędzie.</li>
+    <li>Przypięto rzutnię mobilną, aby strona nie była już przewijana, eliminując konflikt zagnieżdżonego przewijania między dokumentem a treścią okna.</li>
+    <li>Mobilny pasek narzędzi zawiera tylko ikony w dwóch kompaktowych rzędach, dzięki czemu elementy sterujące wykonaniem i selektor prędkości działania są widoczne na ekranie; akcje dotyczące plików są tam ukryte i pozostają w menu Plik i Edycja.</li>
+    <li>Ukryłem przyciski minimalizacji i maksymalizacji na telefonie komórkowym, gdzie jeden panel wypełnia ekran, a pasek kart przełącza.</li>
+    <li>Zlokalizowano każdy asembler i Mini-C diagnostykę, konwertując 114 literałów szablonu na nazwane symbole zastępcze i dodając 277 kluczy w trzech językach.</li>
+    <li>Dodano test wersji, który kończy się niepowodzeniem, jeśli wiadomość do przetłumaczenia nie ma wpisu w katalogu.</li>
+    <li>Układ pulpitu, położenie okien i rozmiary elementów sterujących pozostają niezmienione.</li>
+  </ul>
+
+  <h2>0.4.12 &mdash; ciemny motyw, poprawka rozmiaru czcionki, czyszczenie martwego kodu</h2>
+  <ul>
+    <li>Dodano opcję ciemnego motywu, którą można wybrać za pomocą <code>Settings &gt; Interface...</code>, stosowane do edytora, okien narzędzi i stron pomocy.</li>
+    <li>Naprawiono rozmiar czcionki edytora i wysokość linii stosowane natychmiast po ich zmianie w preferencjach interfejsu bez konieczności ponownego ładowania strony.</li>
+    <li>Podłączono <em>Zamknij wszystkie pliki</em> akcja w <code>File &gt; Close &gt; All files</code>.</li>
+    <li>Usunięto potok automatycznego zapisywania sesji maszynowej (~400 linii), który był zamknięty za eksperymentalną flagą, której nigdy nie ustawiano w żadnej wersji.</li>
+    <li>Usunięto ~15 martwych funkcji w pięciu modułach, nieużywane eksporty rejestru, martwe selektory CSS i 113 nieużywanych kluczy i18n.</li>
+    <li>Wykluczono nieosiągalne pliki pomocy na poziomie głównym z pakietu wydania.</li>
+  </ul>
+
+  <h2>0.4.11 &mdash; trwałe przywrócenie logowania do chmury</h2>
+  <ul>
+    <li>Sprawdziłem po cichu skonfigurowany serwer chmurowy podczas uruchamiania aplikacji i przywróciłem istniejącego uwierzytelnionego użytkownika.</li>
+    <li>Odświeżone metadane projektu w chmurze po pomyślnym przywróceniu sesji bez blokowania lokalnego obszaru roboczego.</li>
+    <li>Udokumentowano maksymalny roczny okres ważności pliku cookie uwierzytelniającego i jego natychmiastowe usunięcie po wylogowaniu.</li>
+    <li>Dodano pokrycie regresji dla żądań uwierzytelnionych i automatyczne przywracanie przy uruchomieniu.</li>
+  </ul>
+
+  <h2>0.4.10 — zbiorcza historia narzędzi i lżejsze aktualizacje interfejsu użytkownika</h2>
+  <ul>
+    <li>Zachowane delty narzędzi tylko dla instrukcji nadal objętych dokładnym 100-stopniowym oknem cofania silnika.</li>
+    <li>Zapewnij dostępność każdego zdarzenia wykonawczego dla modeli narzędzi, jednocześnie grupując aktualizacje wizualne i unikając przestarzałej alokacji historii.</li>
+    <li>Zmniejszona praca na instrukcję DOM w BHT i nadmiarowe kopie stanu w symulatorze pamięci podręcznej.</li>
+    <li>Zatrzymano bezczynne renderowanie robota Mars Bot i usunięto nadmiarową migawkę pełnego środowiska wykonawczego z synchronizacji interfejsu użytkownika.</li>
+    <li>Poprawiono artefakt ponownego malowania separatora tytułu okna dostępny tylko w przeglądarce Firefox.</li>
+    <li>Zredukowano odpytywanie terminala w stanie bezczynności w laboratorium Monty Hall bez pogarszania szybkości reakcji wejścia lub cofania się.</li>
+  </ul>
+
+  <h2>0.4.9 — parzystość środowiska wykonawczego i niezawodne backstepy</h2>
+  <ul>
+    <li>Zachowano 100 ostatnich dostępnych kroków wstecz, ograniczając rzadką pamięć dziennika.</li>
+    <li>Poprawiono synchroniczną klawiaturę/wyświetlacz, TTY i zachowanie zdarzenia narzędzia podczas długich uruchomień przeglądarki.</li>
+    <li>Zaktualizowano laboratorium Monty Hall i interaktywne przykłady, aby współpracowały z danymi wejściowymi przeglądarki bez zajętego odpytywania.</li>
+    <li>Dopasowano losowe wywołania systemowe 40–44 do sekwencji zaszczepionych i reguł próbkowania <code>java.util.Random</code> używany przez MARS.</li>
+    <li>Ulepszony import stanu środowiska wykonawczego, długie liczniki instrukcji, zakresy asemblera i walidacja dyrektyw numerycznych.</li>
+    <li>Zakończono obsługę kroków wstecznych dla metadanych obrazu i poprawiono bufory InputDialogString o zerowej długości.</li>
+    <li>Rozszerzony zakres regresji w całym środowisku wykonawczym, zlokalizowane przykłady i połączone narzędzia.</li>
+  </ul>
+
+  <h2>0.4.8 — backstepy delta i urządzenia synchroniczne</h2>
+  <ul>
+    <li>Zastąpiono pełne migawki wsteczne dla poszczególnych instrukcji ograniczonymi odwrotnymi deltami.</li>
+    <li>Oddzielne urządzenia synchroniczne MMIO, kompaktowe partie zdarzeń w czasie wykonywania i okresowe migawki narzędzi.</li>
+    <li>Poprawiono klawiaturę/wyświetlacz i TTY przyczynowość wejścia/wyjścia, cofanie się i narzut związany z ukrytymi narzędziami.</li>
+    <li>Naprawiono renderowanie wsadowe w narzędziach pamięci podręcznej, instrukcjach, odniesieniach do pamięci i mapach bitowych.</li>
+    <li>Przeniesiono przykładowe bufory ramki Mini-C z globalnych kompilatora i zsynchronizowano wyświetlanie bitmap z pamięcią na żywo.</li>
+    <li>Ustawiliśmy lokalny pasek porównawczy jako opcjonalny w Preferencjach interfejsu i domyślnie ukryty.</li>
+  </ul>
+
+  <h2>0.4.7 — JavaScript utwardzanie środowiska wykonawczego i kompletna dokumentacja</h2>
+  <ul>
+    <li>Ujednolicono środowisko wykonawcze na czystym silniku JavaScript i usunięto eksperymentalny backend WASM/hybrydowy.</li>
+    <li>Dodano czas kompilacji, montażu i uruchomienia oraz szacowane wykorzystanie JavaScript do paska porównawczego w aplikacji.</li>
+    <li>Zachowano pełną dostępność migawek dla podłączonych urządzeń, jednocześnie ograniczając pracę edytora przy maksymalnej prędkości działania.</li>
+    <li>Poprawiono kolejność podwójnych słów COP1, zaokrąglanie konwersji w oparciu o FCSR i pełną weryfikację danych liczbowych.</li>
+    <li>Utwardzone limity stert, magazyny atomowe, wyrównanie instrukcji, ścisłe częściowe ładowanie i rezerwacje LL/SC.</li>
+    <li>Poprawiono adresy łączy z opóźnionym rozgałęzieniem, stan wyjątku szczeliny opóźnienia i parzystość pomiędzy bezpośrednim silnikiem Go i wykonaniem sterowanym przez przeglądarkę.</li>
+    <li>Wykonane Stop kończy działanie silnika i anuluje oczekujący tryb uśpienia, podczas gdy Pauza pozostaje wznowiona.</li>
+    <li>Rozszerzone migawki środowiska wykonawczego w celu zachowania punktów przerwania, losowych strumieni, wirtualnych plików/kursorów, stdin, argumentów programów i uchwytów obrazów.</li>
+    <li>Rozszerzono i zracjonalizowano katalog przykładów w języku angielskim, hiszpańskim i portugalskim, obejmujący projekty C1-NATIVE i wieloplikowe projekty w języku C.</li>
+    <li>Zaktualizowano całą pomoc w aplikacji w języku angielskim, hiszpańskim i portugalskim, aby dopasować ją do bieżącej aplikacji przeglądarki, środowiska wykonawczego, kompilatora Mini-C, narzędzi, przechowywania i zachowań związanych z prywatnością.</li>
+    <li>Dodano kontrole gotowości do wydania pod kątem spójności wersji, manifestów, plików przejściowych i zlokalizowanych kontraktów interfejsu użytkownika.</li>
+  </ul>
+
+  <h2>0.4.6 — odtwarzalny obszar roboczy przeglądarki</h2>
+  <ul>
+    <li>Ustalono powtarzalne polecenia instalacji, obsługi, budowania, testowania i sprawdzania poprawności.</li>
+    <li>Dodano szeroki zakres regresji dla zachowania asemblera/środowiska wykonawczego, integracji przeglądarki, narzędzi i przykładów.</li>
+    <li>Wprowadzono konfigurowalną pamięć uruchomieniową i limity cofania z większą trwałością stanu.</li>
+    <li>Rozszerzone profile Mini-C, zachowanie o32, biblioteki, przykłady i pokrycie wielojęzycznego interfejsu.</li>
+  </ul>
+
+  <h2>Wcześniejsze webMARS kamienie milowe</h2>
+  <ul>
+    <li>Przeniesiono edytor, asembler i środowisko wykonawcze w stylu MARS do przeglądarki.</li>
+    <li>Dodano projekty lokalne, odzyskiwanie sesji, opcjonalną synchronizację z chmurą i wirtualne pliki przeglądarki.</li>
+    <li>Przeniesiono i zaadaptowano podstawowe narzędzia edukacyjne i urządzenia MMIO.</li>
+    <li>Dodano kompilator uczący Mini-C i coraz bogatsze profile podzbiorów.</li>
+  </ul>
+
+  <h2>Notatka historyczna</h2>
+  <p>W niektórych wcześniejszych wersjach eksperymentowano z akceleracją zestawu WebAssembly i wyborem zaplecza. Wpisy te dokładnie opisują ich wydanie, ale ten podsystem nie jest już obecny. Bieżące środowisko wykonawcze to tylko JavaScript.</p>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Çalışma alanı ve dosyalar</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Çalışma alanı &amp; dosyaları</h1>
+  <p class="lead">Proje, webMARS'in kaydettiği, derlediği ve bir araya getirdiği birimdir. Bir veya daha fazlasını içerebilir <code>.asm</code>/<code>.s</code> derleme dosyaları ve Mini-C <code>.c</code> dosyalar.</p>
+
+  <h2>Dosya menüsü</h2>
+  <table>
+    <tr><th>Komut</th><th>Mevcut davranış</th></tr>
+    <tr><td>Yeni Proje</td><td>Boş bir proje oluşturur. Bir proje açıldığında Yeni alt menüsünden C veya derleme kaynak dosyalarını ekleyin.</td></tr>
+    <tr><td>Diskten aç</td><td>Tarayıcı aracılığıyla seçilen dosyaları içe aktarır. Çoklu dosya seçimleri desteklenir.</td></tr>
+    <tr><td>Tarayıcı Depolama Alanından Aç</td><td>Yerel proje yuvalarından birinde kayıtlı bir projeyi geri yükler.</td></tr>
+    <tr><td>Aktif Dosyayı Kaydet / Projeyi Kaydet</td><td>Etkin kaynağı veya projenin tamamını tarayıcı depolama alanına kaydeder.</td></tr>
+    <tr><td>İndir / Farklı İndir</td><td>Etkin içeriği tarayıcı indirme sistemi aracılığıyla dışa aktarır.</td></tr>
+    <tr><td>Örnekler</td><td>Dile ve öğrenme hedefine göre gruplandırılmış, seçilmiş, aranabilir örnek kataloğunu açar.</td></tr>
+    <tr><td>Döküm Çalıştırması G/Ç</td><td>Teşhis veya değerlendirme için mevcut program giriş/çıkış metnini indirir.</td></tr>
+  </table>
+
+  <h2>Editör ve proje navigasyonu</h2>
+  <ul>
+    <li>Etkin dosyayı değiştirmek için kaynak sekmelerini kullanın. Bir dosyayı kapatmak projenin tamamını kapatmaz.</li>
+    <li>Derleme hataları ve Mini-C tanılamaları, mevcut olduğunda kaynak dosyayı ve satırı tanımlar.</li>
+    <li>Etiket vurgulama, sözdizimi vurgulama, yazı tipi boyutu ve satır aralığı kontrol edilir <b>Ayarlar → Arayüz</b>.</li>
+    <li>Oluşturulan Mini-C derlemesi, bu tercih etkinleştirildiğinde otomatik olarak kendi penceresinde açılabilir.</li>
+  </ul>
+
+  <h2>Model oluştur</h2>
+  <p><b>Birleştir</b> seçilen montaj kaynaklarını bir program görüntüsüne oluşturur. <b>C0'ı derle</b> C projesini MIPS derlemesine çevirir; oluşturulan montaj daha sonra yürütmeden önce birleştirilir. Çok dosyalı C projeleri, öğretim derleyicisi tarafından tek bir çeviri birimi olarak bağlanır.</p>
+
+  <h2>Yerel kurtarma ve bulut projeleri</h2>
+  <p>webMARS, yeniden yüklemenin çalışma oturumunu geri yükleyebilmesi için kurtarma verilerini tarayıcı deposunda tutar. Beş açık yerel proje yuvası, bu kurtarma oturumundan ayrıdır.</p>
+  <p>The <b>Bulut</b> menü isteğe bağlıdır. Oturum açma, proje açma/kaydetme, senkronizasyon ve yenileme, yapılandırılmış bulut sunucusuyla iletişim kurar. Yerel düzenleme, derleme veya çalıştırma için hiçbir zaman bulut kullanımına gerek yoktur.</p>
+
+  <div class="warning"><strong>Tarayıcı depolaması kalıcı bir yedekleme değildir.</strong> Özel tarama, kota baskısı, tarayıcı temizleme veya localStorage'ı temizle komutu bunu kaldırabilir. Saklanması gereken çalışmaları indirin.</div>
+</body>
+</html>

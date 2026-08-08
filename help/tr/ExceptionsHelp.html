@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIPS webMARS içindeki istisnalar</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>İstisnalar</h1>
+  <p class="lead">Bir çalışma zamanı hatası, kontrolü yapılandırılmış istisna işleyiciye aktarır veya açık bir nedenden dolayı çalışmayı sonlandırır. Ele alınan istisnalar devam edebilir <code>eret</code>.</p>
+
+  <h2>Uygulanan istisna kodları</h2>
+  <table class="compact">
+    <tr><th>Hariç Kod</th><th>Anlamı</th><th>Tipik nedenler</th></tr>
+    <tr><td>4</td><td>Yükleme/getirme sırasında adres hatası</td><td>Yanlış hizalanmış talimat adresi veya yükü; izin verilen hafıza haritasının dışındaki adres.</td></tr>
+    <tr><td>5</td><td>Mağazada adres hatası</td><td>Yanlış hizalanmış veya geçersiz mağaza hedefi.</td></tr>
+    <tr><td>8</td><td>Sistem çağrısı/çalışma zamanı hizmeti hatası</td><td>Geçersiz giriş, geçersiz hizmet, başarısız kontrol edilen yığın isteği veya kütüphane hizmeti hatası.</td></tr>
+    <tr><td>9</td><td>Kesme noktası</td><td>bir MIPS <code>break</code> talimat.</td></tr>
+    <tr><td>10</td><td>Ayrılmış talimat</td><td>Bilinmeyen veya desteklenmeyen kodlanmış talimat.</td></tr>
+    <tr><td>12</td><td>Aritmetik taşma</td><td>Kontrol edilen aritmetik talimatlarda imzalı taşma.</td></tr>
+    <tr><td>13</td><td>Tuzak</td><td>Bir tuzak koşulu doğru olarak değerlendirilir.</td></tr>
+    <tr><td>15</td><td>Sıfıra böl</td><td>Sıfır bölenle bölme.</td></tr>
+  </table>
+
+  <h2>Yardımcı işlemci 0 durumu</h2>
+  <table class="compact">
+    <tr><th>Kayıt ol</th><th>Sayı</th><th>Kullanım</th></tr>
+    <tr><td>BadVAddr</td><td>8</td><td>Adres hataları için hatalı sanal adres.</td></tr>
+    <tr><td>Durum</td><td>12</td><td>İstisna düzeyi ve kesme kontrol durumu.</td></tr>
+    <tr><td>Sebep</td><td>13</td><td>İstisna kodu, bekleyen kesme durumu ve BD gecikme yuvası bayrağı.</td></tr>
+    <tr><td>EPC</td><td>14</td><td>İşleyicinin düzelttikten veya ilerlettikten sonra geri döndüğü adres.</td></tr>
+  </table>
+
+  <h2>İşleyici akışı</h2>
+  <ol>
+    <li>Çalışma zamanı, uygun şekilde Cause, EPC ve BadVAddr'ı yakalar ve istisna düzeyine girer.</li>
+    <li>Yapılandırılmış adreste yürütülebilir işleyici kodu varsa, normalde <code>0x80000180</code>—PC oraya aktarılır.</li>
+    <li>İşleyici COP0 durumunu inceler, kurtarma işlemini gerçekleştirir, gerektiğinde EPC'i ayarlar ve yürütür <code>eret</code>.</li>
+    <li>Hiçbir işleyici mevcut değilse veya güvenli bir şekilde aktarılamayan bir özel durum ortaya çıkarsa yürütme durdurulur ve Çalıştırma sonucu, özel durumu bildirir.</li>
+  </ol>
+
+  <div class="note"><strong>Gecikme yuvaları.</strong> Dal gecikme yuvasında ortaya çıkan bir istisna için Cause.BD ayarlanır ve EPC gecikme yuvası adresini değil dal talimatını tanımlar.</div>
+
+  <h2>Adres ve mağaza garantileri</h2>
+  <p>Talimat hedefleri kelimelerle hizalanmalıdır. İşaretli çok baytlı depolar, herhangi bir baytı işlemeden önce hedefin tamamını doğrular, dolayısıyla bir adres istisnası, kısmen yazılmış bir kelime veya çift kelime bırakamaz. Katı hafıza modu aynı zamanda kısmi kelime işlemleri için de geçerlidir. <code>LWL</code> ve <code>LWR</code>.</p>
+</body>
+</html>

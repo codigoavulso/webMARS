@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS ayarları</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Ayarlar</h1>
+  <p class="lead">Ayarlar kaynak sunumunu, derleyici uyumluluğunu, Mini-C çıktısını, kalıcılığı, bulut erişimini ve çalışma zamanı sınırlarını kapsar.</p>
+
+  <h2>Hızlı ayarlar</h2>
+  <table>
+    <tr><th>Ayar</th><th>Etki</th></tr>
+    <tr><td>Etiketleri göster</td><td>Mümkün olduğunda, çalışma zamanı görünümlerinde adreslerin yanında etiketleri görüntüler.</td></tr>
+    <tr><td>Program argümanları</td><td>Çalıştırmadan önce argümanlar ister. <code>$a0</code> argc'yi alır ve <code>$a1</code> argv'yi alır; Mini-C C1-NATIVE aynı verileri <code>main(int argc, char **argv)</code>.</td></tr>
+    <tr><td>Açılan giriş sistem çağrıları</td><td>Çalıştır G/Ç bölmesi yerine 5, 6, 7, 8 ve 12 numaralı konsol giriş hizmetleri için form iletişim kutularını kullanır.</td></tr>
+    <tr><td>Mesajları Böl / G/Ç'yi Çalıştır</td><td>Derleme mesajlarını ve program G/Ç'sini aynı anda gösterir.</td></tr>
+    <tr><td>Onaltılı adresler / değerler</td><td>Çalışma zamanı tablolarını onaltılı ve ondalık gösterim arasında değiştirir. Saklanan bitleri değiştirmez.</td></tr>
+  </table>
+
+  <h2>Assembler ve yürütme uyumluluğu</h2>
+  <ul>
+    <li><b>Açıkta topla</b> ve <b>Tüm dosyaları birleştir</b> seçilen derleme kapsamını otomatikleştirin.</li>
+    <li><b>Uyarıları hata olarak değerlendirin</b> Uyarıların montajda başarısız olmasını sağlar.</li>
+    <li><b>Ana sayfadan başla</b> küresel ölçekte başlıyor <code>main</code> mevcut olduğunda etiketleyin.</li>
+    <li><b>Genişletilmiş (sözde) talimatlar</b> Yardım'da gösterilen sözde talimat kataloğunu etkinleştirir.</li>
+    <li><b>Gecikmeli dallanma</b> mimari gecikme yuvası davranışına olanak tanır.</li>
+    <li><b>Kendi kendini değiştiren kod</b> yürütülebilir belleğe yazma işlemine izin verir. Yalnızca kasıtlı olarak gerektiren programlar için etkinleştirin.</li>
+  </ul>
+
+  <h2>Arayüz</h2>
+  <p>Arayüz temasını (Açık veya Koyu), kullanıcı arayüzü dilini, üst veya yan menü düzenini, düzenleyici yazı tipi boyutunu, satır aralığını ve vurgulama davranışını seçin. İngilizce, İspanyolca, Portekizce, Mandarin Çincesi, Hintçe, Arapça, Fransızca, Bengalce, Rusça, Endonezce, Almanca, Japonca, Korece, Türkçe, Vietnamca, Urduca, İtalyanca, Lehçe, Farsça ve Tayca arayüzler mevcuttur; yardım, etkin kullanıcı arayüzü dilini takip eder. Arapça, Urduca ve Farsça arayüzü otomatik olarak sağdan sola geçirir. İlk ziyarette, webMARS desteklenen bir tarayıcı dilini kullanır veya İngilizceye geri döner; açık bir seçim kaydedilir ve öncelik kazanır. Seçilen tema tercihlerinizle birlikte saklanır ve araç ve yardım pencereleri de dahil olmak üzere tüm arayüze uygulanır.</p>
+
+  <h2>Çalışma zamanı &amp; belleği</h2>
+  <table>
+    <tr><th>Tercih</th><th>Aralık / seçimler</th></tr>
+    <tr><td>Bellek yapılandırması</td><td>Varsayılan, Adres 0'da Sıkıştırılmış Veri veya Adres 0'da Sıkıştırılmış Metin.</td></tr>
+    <tr><td>Maksimum bellek</td><td>0,25–2 GiB, tarayıcının pratik bellek sınırlarına bağlıdır.</td></tr>
+    <tr><td>Geri adım geçmişi</td><td>0–1.000.000 kayıtlı adım; varsayılan 100.</td></tr>
+    <tr><td>İstisna işleyicisi</td><td>Tamamen geçerli bir MIPS adresi, varsayılan <code>0x80000180</code>.</td></tr>
+  </table>
+
+  <h2>Kalıcılık ve bulut</h2>
+  <p><b>Mağaza durumu</b> ve <b>Yük durumu</b> tam bir yerel çalışma zamanı anlık görüntüsünü yönetin. <b>localStorage'ı temizle</b> onaylandıktan sonra webMARS tercihleri, kayıtlı projeleri, kurtarma durumunu ve takım konumlarını kaldırır.</p>
+  <p><b>Bulut Sunucusu</b> isteğe bağlı Bulut menüsü tarafından kullanılan uç noktayı değiştirir. Kimlik bilgileri ve proje verileri yalnızca bulut özelliklerini çağırdığınızda gönderilir.</p>
+
+  <div class="warning">Bellek haritasının veya derleyici uyumluluk seçeneklerinin değiştirilmesi, önceden derlenmiş bir program tarafından yapılan varsayımları geçersiz kılar. Değiştirdikten sonra tekrar monte edin.</div>
+</body>
+</html>

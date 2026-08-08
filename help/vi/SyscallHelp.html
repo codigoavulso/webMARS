@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS tòa nhà cao tầng</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>tòa nhà chọc trời</h1>
+  <p class="lead">Đặt số dịch vụ vào <code>$v0</code>, đặt các đối số vào các thanh ghi hiển thị bên dưới và thực thi <code>syscall</code>. Trừ khi một hàng có quy định khác, các sổ đăng ký không phải là kết quả được ghi lại sẽ được giữ nguyên.</p>
+
+  <h2>Bảng điều khiển, bộ nhớ và tập tin</h2>
+  <table class="compact">
+    <tr><th>Dịch vụ</th><th>Không.</th><th>Đối số</th><th>Kết quả/hành vi</th></tr>
+    <tr><td>In số nguyên</td><td>1</td><td><code>$a0</code> giá trị</td><td>Viết số thập phân có dấu.</td></tr>
+    <tr><td>In nổi</td><td>2</td><td><code>$f12</code> giá trị</td><td>Viết độ chính xác duy nhất.</td></tr>
+    <tr><td>In đôi</td><td>3</td><td><code>$f12/$f13</code> giá trị</td><td>Viết chính xác gấp đôi.</td></tr>
+    <tr><td>Chuỗi in</td><td>4</td><td><code>$a0</code> chuỗi byte kết thúc bằng 0</td><td>Viết văn bản.</td></tr>
+    <tr><td>Đọc số nguyên</td><td>5</td><td>—</td><td><code>$v0</code>; đầu vào đầy đủ phải là số nguyên hợp lệ.</td></tr>
+    <tr><td>Đọc nổi</td><td>6</td><td>—</td><td><code>$f0</code>; rác theo sau bị từ chối.</td></tr>
+    <tr><td>Đọc đôi</td><td>7</td><td>—</td><td><code>$f0/$f1</code>; rác theo sau bị từ chối.</td></tr>
+    <tr><td>Đọc chuỗi</td><td>8</td><td><code>$a0</code> đệm, <code>$a1</code> chiều dài tối đa</td><td>Tuân theo các quy tắc về độ dài và kết thúc kiểu fgets.</td></tr>
+    <tr><td>sbrk</td><td>9</td><td><code>$a0</code> số byte không âm</td><td><code>$v0</code> địa chỉ heap trước đó; được kiểm tra dựa trên giới hạn bản đồ và bộ nhớ.</td></tr>
+    <tr><td>Thoát</td><td>10</td><td>—</td><td>Chấm dứt bình thường.</td></tr>
+    <tr><td>In ký tự</td><td>11</td><td>byte thấp của <code>$a0</code></td><td>Viết một ký tự.</td></tr>
+    <tr><td>Đọc ký tự</td><td>12</td><td>—</td><td><code>$v0</code> mã ký tự.</td></tr>
+    <tr><td>Mở tập tin</td><td>13</td><td><code>$a0</code> tên, <code>$a1</code> cờ</td><td><code>$v0</code> mô tả hoặc lỗi tiêu cực. Cờ: 0 đọc, 1 ghi/tạo, 9 thêm/tạo.</td></tr>
+    <tr><td>Đọc tập tin</td><td>14</td><td><code>$a0</code> fd, <code>$a1</code> đệm, <code>$a2</code> đếm</td><td><code>$v0</code> byte đã đọc, 0 tại EOF hoặc lỗi âm.</td></tr>
+    <tr><td>Viết tập tin</td><td>15</td><td><code>$a0</code> fd, <code>$a1</code> đệm, <code>$a2</code> đếm</td><td><code>$v0</code> byte được ghi hoặc lỗi âm.</td></tr>
+    <tr><td>Đóng tập tin</td><td>16</td><td><code>$a0</code> fd</td><td>Đóng một bộ mô tả tập tin ảo.</td></tr>
+    <tr><td>Thoát bằng mã</td><td>17</td><td><code>$a0</code> mã</td><td>Chấm dứt và ghi lại mã.</td></tr>
+  </table>
+  <p>Các mô tả 0, 1 và 2 là stdin, stdout và stderr. Bộ mô tả người dùng bắt đầu từ số 3 và được hỗ trợ bởi hệ thống tệp ảo của trình duyệt; họ không cấp quyền truy cập tệp máy chủ không hạn chế.</p>
+
+  <h2>Định dạng thời gian, MIDI và số</h2>
+  <table class="compact">
+    <tr><th>Dịch vụ</th><th>Không.</th><th>Đối số</th><th>Kết quả/hành vi</th></tr>
+    <tr><td>Thời gian hệ thống</td><td>30</td><td>—</td><td>Thấp 32 bit trong <code>$a0</code>, cao 32 bit trong <code>$a1</code>, mili giây kể từ kỷ nguyên Unix.</td></tr>
+    <tr><td>MIDI ra</td><td>31</td><td><code>$a0</code> sân, <code>$a1</code> thời gian, <code>$a2</code> nhạc cụ, <code>$a3</code> khối lượng</td><td>Bắt đầu không đồng bộ.</td></tr>
+    <tr><td>Ngủ</td><td>32</td><td><code>$a0</code> mili giây</td><td>Chờ sử dụng thời gian của trình duyệt; Dừng hủy bỏ sự chờ đợi.</td></tr>
+    <tr><td>MIDI không đồng bộ</td><td>33</td><td>giống như 31</td><td>Trả về sau thời lượng âm thanh.</td></tr>
+    <tr><td>In thập lục phân</td><td>34</td><td><code>$a0</code></td><td>Tám chữ số thập lục phân.</td></tr>
+    <tr><td>In nhị phân</td><td>35</td><td><code>$a0</code></td><td>Ba mươi hai chữ số nhị phân.</td></tr>
+    <tr><td>In không dấu</td><td>36</td><td><code>$a0</code></td><td>Số thập phân không dấu.</td></tr>
+  </table>
+  <p>MIDI sử dụng Âm thanh trên web API. Quyền của trình duyệt, chính sách tự động phát và tải lịch trình có thể ảnh hưởng đến thời điểm âm thanh bắt đầu.</p>
+
+  <h2>Luồng giả ngẫu nhiên</h2>
+  <table class="compact">
+    <tr><th>Dịch vụ</th><th>Không.</th><th>Đối số</th><th>kết quả</th></tr>
+    <tr><td>Đặt hạt giống</td><td>40</td><td><code>$a0</code> id luồng, <code>$a1</code> hạt giống</td><td>Đặt luồng đó.</td></tr>
+    <tr><td>Số nguyên ngẫu nhiên</td><td>41</td><td><code>$a0</code> id luồng</td><td><code>$a0</code> số nguyên 32 bit ngẫu nhiên.</td></tr>
+    <tr><td>Phạm vi số nguyên ngẫu nhiên</td><td>42</td><td><code>$a0</code> id luồng, <code>$a1</code> ràng buộc tích cực</td><td><code>$a0</code> trong [0, ràng buộc).</td></tr>
+    <tr><td>Phao ngẫu nhiên</td><td>43</td><td><code>$a0</code> id luồng</td><td><code>$f0</code> trong [0, 1).</td></tr>
+    <tr><td>Nhân đôi ngẫu nhiên</td><td>44</td><td><code>$a0</code> id luồng</td><td><code>$f0/$f1</code> trong [0, 1).</td></tr>
+  </table>
+  <p>Mỗi id số nguyên xác định một luồng xác định độc lập. Các luồng được đưa vào trạng thái thời gian chạy đã xuất và ảnh chụp nhanh bước lùi.</p>
+
+  <h2>Hộp thoại</h2>
+  <table class="compact">
+    <tr><th>Không.</th><th>Dịch vụ</th><th>hợp đồng</th></tr>
+    <tr><td>50</td><td>Hộp thoại xác nhận</td><td><code>$a0</code> tin nhắn; lựa chọn được trả về trong <code>$a0</code> (Có 0, Không 1, Hủy 2).</td></tr>
+    <tr><td>51</td><td>Số nguyên đầu vào</td><td><code>$a0</code> nhắc nhở; giá trị trong <code>$a0</code>, trạng thái trong <code>$a1</code>.</td></tr>
+    <tr><td>52</td><td>Phao đầu vào</td><td><code>$a0</code> nhắc nhở; giá trị trong <code>$f0</code>, trạng thái trong <code>$a1</code>.</td></tr>
+    <tr><td>53</td><td>Nhập gấp đôi</td><td><code>$a0</code> nhắc nhở; giá trị trong <code>$f0/$f1</code>, trạng thái trong <code>$a1</code>.</td></tr>
+    <tr><td>54</td><td>Chuỗi đầu vào</td><td><code>$a0</code> nhắc nhở, <code>$a1</code> đệm, <code>$a2</code> tối đa; trạng thái trong <code>$a1</code>.</td></tr>
+    <tr><td>55–59</td><td>Hộp thoại tin nhắn</td><td>Hiển thị các tin nhắn đơn giản, số nguyên, float, double hoặc chuỗi. Dịch vụ 55 công dụng <code>$a1</code> cho loại tin nhắn.</td></tr>
+  </table>
+  <p>Trạng thái đầu vào tuân theo quy ước MARS: 0 thành công, −1 đầu vào không hợp lệ, −2 hủy và −3 đầu vào trống; đầu vào chuỗi cũng sử dụng −4 khi bị cắt bớt.</p>
+
+  <h2>webMARS dịch vụ thư viện</h2>
+  <p>Các dịch vụ 60–103 hỗ trợ các thư viện tương thích Mini-C đi kèm. Ưu tiên các tiêu đề thư viện cung cấp các loại và giao thức đăng ký chính xác hơn là gọi trực tiếp những số này.</p>
+  <table class="compact">
+    <tr><th>Phạm vi</th><th>Dịch vụ</th></tr>
+    <tr><td>60–64</td><td>tuôn ra, eof, readline, printf, định dạng</td></tr>
+    <tr><td>65–69</td><td>file_read, file_closed, file_close, file_eof, file_readline</td></tr>
+    <tr><td>70–73</td><td>args_flag, args_int, args_string, args_parse</td></tr>
+    <tr><td>74–84</td><td>độ dài chuỗi, lập chỉ mục, nối, chuỗi con, so sánh, chuyển đổi, chữ thường, chấm dứt và cầu nối mảng ký tự</td></tr>
+    <tr><td>85–92</td><td>ký tự, phân tích cú pháp boolean/số nguyên, phân tích mã thông báo và trợ giúp từ số nguyên sang hex</td></tr>
+    <tr><td>93–100</td><td>kích thước hình ảnh, tạo, sao chép, hình ảnh phụ, tải, lưu và truy cập dữ liệu</td></tr>
+    <tr><td>101–103</td><td>Chấm dứt chuỗi C và chuyển đổi chuỗi gốc/chuỗi C</td></tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ograniczenia i kompatybilność</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Ogranicza kompatybilność &amp;.</h1>
+  <p class="lead">webMARS ma na celu praktyczną kompatybilność ze źródłami MARS 4.5 przy jednoczesnym działaniu w nowoczesnej przeglądarce. Zasady dotyczące bezpieczeństwa przeglądarki, przechowywania i dźwięku nadal obowiązują.</p>
+
+  <h2>Limity czasu wykonania</h2>
+  <table>
+    <tr><th>Obszar</th><th>Limit lub zachowanie</th></tr>
+    <tr><td>Pamięć</td><td>Wybierane przez użytkownika 0,25–2 GiB, z architektonicznym twardym sufitem poniżej <code>0x80000000</code>. Alokacja rzadka oznacza, że ​​nietknięta przestrzeń adresowa nie jest zatwierdzana bajt po bajcie.</td></tr>
+    <tr><td>Kupa</td><td><code>sbrk</code> sprawdza pełną niepodpisaną rezerwację przed zmianą wskaźnika sterty. Żądania nie mogą zawijać ani omijać skonfigurowanego limitu pamięci.</td></tr>
+    <tr><td>Ciągi wykonawcze</td><td>Ciągi zakończone znakiem null mogą zawierać do 1 MiB. Brakujący terminator lub dłuższy ciąg powoduje jawny błąd wywołania systemowego zamiast zwracać obcięty tekst.</td></tr>
+    <tr><td>Krok wstecz</td><td>0–1 000 000 odwrotnych delt. Historia jest ograniczona skonfigurowanym budżetem, ale zawsze zachowuje ostatnie 100 pełnych kroków, gdy włączona jest funkcja cofania.</td></tr>
+    <tr><td>Przechowywanie plików przeglądarki</td><td>Dane projektu/sesji podlegają limitowi przeglądarki; aplikacja ogranicza zawartość pamięci przeglądarki użytkownika do 1 MiB, jeśli ma to zastosowanie, i w razie potrzeby wraca do mniejszych ładunków odzyskiwania.</td></tr>
+    <tr><td>Uruchomienie czasu</td><td>Uśpienie, MIDI i czas interfejsu użytkownika są zaplanowane przez przeglądarkę i nie są dokładne w cyklu.</td></tr>
+    <tr><td>Dystrybucja</td><td>webMARS 0.5.5 jest statyczną aplikacją internetową, a nie instalowalną/offline PWA. Musi być obsługiwany przez HTTP przez dołączony serwer lokalny lub inny host statyczny.</td></tr>
+  </table>
+
+  <h2>Mapy pamięci</h2>
+  <table class="compact">
+    <tr><th>Region</th><th>Domyślna baza</th></tr>
+    <tr><td>Tekst użytkownika</td><td><code>0x00400000</code></td></tr>
+    <tr><td>Dane statyczne</td><td><code>0x10010000</code></td></tr>
+    <tr><td>Kupa</td><td><code>0x10040000</code></td></tr>
+    <tr><td>Początkowy wskaźnik stosu</td><td><code>0x7ffffffc</code></td></tr>
+    <tr><td>Procedura obsługi wyjątków jądra</td><td><code>0x80000180</code></td></tr>
+    <tr><td>MMIO</td><td><code>0xffff0000</code></td></tr>
+  </table>
+  <p>Ustawienia wstępne Compact Data i Compact Text przesuwają odpowiednie segmenty uczenia do adresu zerowego. Zmontuj ponownie po zmianie map.</p>
+
+  <h2>MIPS zachowanie</h2>
+  <ul>
+    <li>Pamięć jest mała-endianowa. Operacje na słowach i podwójnych słowach wykorzystują MIPS porządkowanie rejestrów/pamięci.</li>
+    <li>Nieprawidłowo ustawione pobieranie instrukcji i nieprawidłowe adresy ładowania/zapisywania powodują wyjątki dotyczące adresów.</li>
+    <li>Sklepy weryfikują całe miejsce docelowe przed zapisaniem, więc uszkodzony sklep nie pozostawia częściowej wartości.</li>
+    <li><code>LL</code>/<code>SC</code> skorzystać z rezerwacji, którą sklepy będące w konflikcie unieważniają.</li>
+    <li>COP1 konwersje uwzględniają FCSR tryby zaokrąglania; Dane wejściowe zmiennoprzecinkowe odrzucają końcowy tekst nienumeryczny.</li>
+    <li>Przy ścisłej zgodności MARS operacje na pamięci — w tym ładowanie części słów — muszą pozostać w dozwolonych segmentach.</li>
+  </ul>
+
+  <h2>Znane granice przenośności</h2>
+  <ul>
+    <li>Wirtualny system plików przeglądarki nie jest nieograniczonym systemem plików systemu operacyjnego hosta.</li>
+    <li>Zezwolenia na dźwięk w sieci Web i zasady autoodtwarzania mogą wpływać na wywołania systemowe MIDI.</li>
+    <li>Blokowanie wyskakujących okienek i zasady pobierania mogą mieć wpływ na eksportowane pliki.</li>
+    <li>Mini-C akceptuje wyłącznie swoje udokumentowane profile; kod oparty na pełnym ISO C, biblioteka hosta lub niezdefiniowane zachowanie nie są na niego przenośne.</li>
+    <li>Historyczne rozszerzenia MARS zależne od klas Java lub wtyczek do komputerów stacjonarnych nie są dostępne.</li>
+  </ul>
+</body>
+</html>

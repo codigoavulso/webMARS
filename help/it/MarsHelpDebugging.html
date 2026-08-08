@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Esegui ed esegui il debug</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Esegui il debug &amp;</h1>
+  <p class="lead">Il menu Esegui controlla un motore JavaScript MIPS condiviso dai registri, dalle visualizzazioni della memoria, dal debugger e dagli strumenti collegati.</p>
+
+  <h2>Controlli di esecuzione</h2>
+  <table>
+    <tr><th>Controllo</th><th>Significato</th></tr>
+    <tr><td>Vai</td><td>Viene eseguito fino al completamento normale, un punto di interruzione, una chiamata di sistema in attesa di input, un'eccezione non gestita, un limite, una pausa o un arresto.</td></tr>
+    <tr><td>Pausa</td><td>Sospende una corsa attiva preservando la macchina in modo che possa continuare.</td></tr>
+    <tr><td>Fermare</td><td>Termina l'esecuzione e annulla il lavoro asincrono in sospeso, ad esempio una chiamata di sistema Sleep lunga. Un programma interrotto non riprende.</td></tr>
+    <tr><td>Passo</td><td>Esegue un'istruzione. Dopo l'arresto di un punto di interruzione, il Go o il Passo successivo attraversa quel punto di interruzione una volta, quindi non si ferma di nuovo immediatamente allo stesso indirizzo.</td></tr>
+    <tr><td>Passo indietro</td><td>Ripristina la precedente istantanea di runtime registrata, fino alla profondità della cronologia configurata.</td></tr>
+    <tr><td>Ripristina</td><td>Riporta il programma assemblato al suo stato macchina iniziale.</td></tr>
+  </table>
+
+  <h2>Punti di interruzione e tracciamento della fonte</h2>
+  <p>Attiva o disattiva un punto di interruzione nel margine interno dell'editor accanto a una riga di origine eseguibile. I punti di interruzione vengono archiviati nello stato di runtime e sopravvivono al normale viaggio di andata e ritorno di esportazione/importazione. Le pseudo-istruzioni possono espandersi in diverse istruzioni di base; lo stepping segue le istruzioni macchina generate mentre l'evidenziazione della sorgente rimane associata alla riga di origine.</p>
+
+  <h2>Striscia di velocità e prestazioni</h2>
+  <p>Il controllo della velocità di corsa varia dalle velocità di passo interattive alla velocità massima. Alla massima velocità webMARS riduce i costosi lavori di evidenziazione dell'editor e di scorrimento automatico, ma gli strumenti continuano a ricevere istantanee di runtime complete e informazioni di traccia.</p>
+  <p>La striscia di benchmark compatta riporta i tempi recenti di compilazione, assemblaggio ed esecuzione insieme a una percentuale di utilizzo stimata di JavaScript CPU. Le misurazioni sono locali e volatili: sono destinate al confronto dei carichi di lavoro e delle modifiche agli algoritmi, non come misuratore del processo del sistema operativo.</p>
+
+  <h2>Rami ritardati ed eccezioni</h2>
+  <p>Quando è abilitata la diramazione ritardata, l'istruzione che segue una diramazione o un salto costituisce l'istruzione dello slot di ritardo e la memorizzazione delle istruzioni di collegamento <code>PC + 8</code>. Le eccezioni sollevate in uno slot di ritardo impostano il bit BD causa COP0 e registrano l'indirizzo del ramo in EPC.</p>
+  <p>Se esiste un gestore eccezioni valido all'indirizzo del gestore configurato, l'esecuzione viene trasferita ad esso e potrebbe restituire con <code>eret</code>. Altrimenti la corsa si interrompe con una ragione e una diagnostica esplicite.</p>
+
+  <div class="note"><strong>Ambito del passo indietro.</strong> Le istantanee includono registri, memoria, punti di interruzione, flussi casuali, posizioni di file, input in sospeso, argomenti di programma e handle di immagini del dispositivo. Le storie di grandi dimensioni consumano memoria, quindi sintonizza il limite sull'esercizio.</div>
+</body>
+</html>

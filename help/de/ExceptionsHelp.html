@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIPS Ausnahmen in webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Ausnahmen</h1>
+  <p class="lead">Ein Laufzeitfehler übergibt entweder die Kontrolle an den konfigurierten Ausnahmehandler oder beendet die Ausführung mit einem expliziten Grund. Behandelte Ausnahmen können fortgesetzt werden <code>eret</code>.</p>
+
+  <h2>Ausnahmecodes implementiert</h2>
+  <table class="compact">
+    <tr><th>ExcCode</th><th>Bedeutung</th><th>Typische Ursachen</th></tr>
+    <tr><td>4</td><td>Adressfehler beim Laden/Abrufen</td><td>Befehlsadresse oder -last falsch ausgerichtet; Adresse außerhalb der zulässigen Speicherzuordnung.</td></tr>
+    <tr><td>5</td><td>Adressfehler im Geschäft</td><td>Falsch ausgerichtetes oder ungültiges Speicherziel.</td></tr>
+    <tr><td>8</td><td>Syscall-/Laufzeitdienstfehler</td><td>Ungültige Eingabe, ungültiger Dienst, fehlgeschlagene geprüfte Heap-Anfrage oder Bibliotheksdienstfehler.</td></tr>
+    <tr><td>9</td><td>Haltepunkt</td><td>A MIPS <code>break</code> Anleitung.</td></tr>
+    <tr><td>10</td><td>Reservierter Unterricht</td><td>Unbekannte oder nicht unterstützte codierte Anweisung.</td></tr>
+    <tr><td>12</td><td>Arithmetischer Überlauf</td><td>Vorzeichenbehafteter Überlauf in geprüften arithmetischen Anweisungen.</td></tr>
+    <tr><td>13</td><td>Falle</td><td>Eine Trap-Bedingung wird als wahr ausgewertet.</td></tr>
+    <tr><td>15</td><td>Durch Null dividieren</td><td>Division mit einem Nullteiler.</td></tr>
+  </table>
+
+  <h2>Zustand des Coprozessors 0</h2>
+  <table class="compact">
+    <tr><th>Registrieren</th><th>Nummer</th><th>Benutzen</th></tr>
+    <tr><td>BadVAddr</td><td>8</td><td>Fehlerhafte virtuelle Adresse wegen Adressfehlern.</td></tr>
+    <tr><td>Status</td><td>12</td><td>Ausnahmeebene und Interrupt-Kontrollstatus.</td></tr>
+    <tr><td>Ursache</td><td>13</td><td>Ausnahmecode, ausstehender Interrupt-Status und das BD-Delay-Slot-Flag.</td></tr>
+    <tr><td>EPC</td><td>14</td><td>Adresse, von der der Handler zurückkehrt, nachdem er sie korrigiert oder erweitert hat.</td></tr>
+  </table>
+
+  <h2>Handler-Flow</h2>
+  <ol>
+    <li>Die Laufzeit erfasst Cause, EPC und BadVAddr entsprechend und wechselt in die Ausnahmeebene.</li>
+    <li>Wenn an der konfigurierten Adresse ausführbarer Handlercode vorhanden ist – normalerweise <code>0x80000180</code>– der PC transferiert dorthin.</li>
+    <li>Der Handler prüft den Status COP0, führt seine Wiederherstellung durch, passt EPC bei Bedarf an und führt ihn aus <code>eret</code>.</li>
+    <li>Wenn kein Handler vorhanden ist oder eine Ausnahme auftritt, die nicht sicher übertragen werden kann, wird die Ausführung angehalten und das Ausführungsergebnis meldet die Ausnahme.</li>
+  </ol>
+
+  <div class="note"><strong>Verzögerungsslots.</strong> Bei einer in einem Verzweigungsverzögerungsschlitz ausgelösten Ausnahme wird Cause.BD gesetzt und EPC identifiziert den Verzweigungsbefehl, nicht die Verzögerungsschlitzadresse.</div>
+
+  <h2>Adress- und Filialgarantien</h2>
+  <p>Unterrichtsziele müssen wortorientiert sein. Überprüfte Multibyte-Speicher validieren das gesamte Ziel, bevor ein Byte festgeschrieben wird, sodass eine Adressausnahme kein teilweise geschriebenes Wort oder Doppelwort zurücklassen kann. Der strikte Speichermodus gilt auch für Teilwortoperationen wie z <code>LWL</code> und <code>LWR</code>.</p>
+</body>
+</html>

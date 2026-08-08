@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MIPS eccezioni in webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Eccezioni</h1>
+  <p class="lead">Un errore di runtime trasferisce il controllo al gestore di eccezioni configurato o termina l'esecuzione con un motivo esplicito. Le eccezioni gestite possono continuare <code>eret</code>.</p>
+
+  <h2>Codici di eccezione implementati</h2>
+  <table class="compact">
+    <tr><th>Codice escluso</th><th>Significato</th><th>Cause tipiche</th></tr>
+    <tr><td>4</td><td>Errore di indirizzo durante il caricamento/recupero</td><td>Indirizzo o carico dell'istruzione disallineato; indirizzo esterno alla mappa di memoria consentita.</td></tr>
+    <tr><td>5</td><td>Errore di indirizzo nel negozio</td><td>Destinazione del negozio disallineata o non valida.</td></tr>
+    <tr><td>8</td><td>Errore del servizio syscall/runtime</td><td>Input non valido, servizio non valido, richiesta heap controllata non riuscita o errore del servizio libreria.</td></tr>
+    <tr><td>9</td><td>Punto di interruzione</td><td>Un MIPS <code>break</code> istruzione.</td></tr>
+    <tr><td>10</td><td>Istruzioni riservate</td><td>Istruzione codificata sconosciuta o non supportata.</td></tr>
+    <tr><td>12</td><td>Overflow aritmetico</td><td>Overflow con segno nelle istruzioni aritmetiche controllate.</td></tr>
+    <tr><td>13</td><td>Trappola</td><td>Una condizione trap risulta vera.</td></tr>
+    <tr><td>15</td><td>Dividere per zero</td><td>Divisione con divisore zero.</td></tr>
+  </table>
+
+  <h2>Stato del coprocessore 0</h2>
+  <table class="compact">
+    <tr><th>Registrati</th><th>Numero</th><th>Utilizzare</th></tr>
+    <tr><td>BadVAddr</td><td>8</td><td>Indirizzo virtuale in errore per errori di indirizzo.</td></tr>
+    <tr><td>Stato</td><td>12</td><td>Livello di eccezione e stato di controllo dell'interruzione.</td></tr>
+    <tr><td>Causa</td><td>13</td><td>Codice di eccezione, stato di interruzione in sospeso e flag dello slot di ritardo BD.</td></tr>
+    <tr><td>EPC</td><td>14</td><td>Indirizzo da cui il conduttore ritorna dopo averlo corretto o avanzato.</td></tr>
+  </table>
+
+  <h2>Flusso del gestore</h2>
+  <ol>
+    <li>Il runtime acquisisce Cause, EPC e BadVAddr come appropriato e inserisce il livello di eccezione.</li>
+    <li>Se il codice del gestore eseguibile esiste all'indirizzo configurato, normalmente <code>0x80000180</code>—il PC si trasferisce lì.</li>
+    <li>Il gestore controlla lo stato COP0, esegue il ripristino, regola EPC quando richiesto ed esegue <code>eret</code>.</li>
+    <li>Se non è presente alcun gestore o si verifica un'eccezione che non può essere trasferita in modo sicuro, l'esecuzione si interrompe e il risultato Esegui segnala l'eccezione.</li>
+  </ol>
+
+  <div class="note"><strong>Slot di ritardo.</strong> Per un'eccezione sollevata in uno slot di ritardo di diramazione, viene impostato Cause.BD e EPC identifica l'istruzione di diramazione, non l'indirizzo dello slot di ritardo.</div>
+
+  <h2>Indirizzo e garanzie del negozio</h2>
+  <p>I target delle istruzioni devono essere allineati alle parole. Gli archivi multibyte controllati convalidano l'intera destinazione prima di impegnare qualsiasi byte, quindi un'eccezione di indirizzo non può lasciare una parola o una doppia parola parzialmente scritta. La modalità di memoria rigorosa si applica anche alle operazioni di parole parziali come <code>LWL</code> e <code>LWR</code>.</p>
+</body>
+</html>

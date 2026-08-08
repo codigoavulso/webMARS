@@ -1067,7 +1067,7 @@ const engine = createMarsEngine({ settings: runtimeSettings, memoryMap: initialM
 let activeMemoryConfigId = memoryPresets[initialMemorySelection.id] ? initialMemorySelection.id : "Default";
 const executePane = createExecutePane(refs, engine);
 const registersPane = createRegistersPane(refs);
-const toolManager = createToolManager(engine, messagesPane, windowManager, refs.windows.desktop);
+const toolManager = createToolManager(engine, messagesPane, windowManager, refs.windows.desktop, helpSystem);
 const modeController = createModeController(refs, windowManager);
 editor.setActiveFileChangeHandler?.((file) => {
   modeController.syncForFileName?.(file?.name || "");
@@ -6709,7 +6709,17 @@ const LANGUAGE_ENDONYMS = {
   fr: "Français",
   bn: "বাংলা",
   ru: "Русский",
-  id: "Bahasa Indonesia"
+  id: "Bahasa Indonesia",
+  de: "Deutsch",
+  ja: "日本語",
+  ko: "한국어",
+  tr: "Türkçe",
+  vi: "Tiếng Việt",
+  ur: "اردو",
+  it: "Italiano",
+  pl: "Polski",
+  fa: "فارسی",
+  th: "ไทย"
 };
 
 function describeLanguageOption(language) {
@@ -6732,6 +6742,7 @@ async function openInterfacePreferencesPanel() {
     sections: [
       {
         title: translateText("Appearance"),
+        layout: "table",
         fields: [
           {
             name: "theme",
@@ -6747,6 +6758,7 @@ async function openInterfacePreferencesPanel() {
       },
       {
         title: translateText("Language"),
+        layout: "table",
         fields: [
           {
             name: "language",
@@ -6759,6 +6771,7 @@ async function openInterfacePreferencesPanel() {
       },
       {
         title: translateText("Layout"),
+        layout: "table",
         fields: [
           {
             name: "menuPosition",
@@ -6780,6 +6793,7 @@ async function openInterfacePreferencesPanel() {
       },
       {
         title: translateText("Editor"),
+        layout: "table",
         fields: [
           {
             name: "editorFontSize",
@@ -6803,6 +6817,7 @@ async function openInterfacePreferencesPanel() {
       },
       {
         title: translateText("Highlighting"),
+        layout: "table",
         fields: [
           {
             name: "highlightTextUpdates",
@@ -7059,12 +7074,12 @@ async function openMiniCCompilerPreferencesPanel() {
             type: "select",
             value: currentSubsetToken,
             options: [
-              { value: "C0-S0", label: "C0-S0 (phase 2 baseline)" },
-              { value: "C0-S1", label: "C0-S1 (S0 + dialogs/files/includes)" },
-              { value: "C0-S2", label: "C0-S2 (loop control profile)" },
-              { value: "C0-S3", label: "C0-S3 (array-centric profile)" },
-              { value: "C0-S4", label: "C0-S4 (full academic C0 layer)" },
-              { value: "C1-NATIVE", label: "C1/native (byte-addressed char*, argv, native string helpers)" }
+              { value: "C0-S0", label: translateText("C0-S0 (phase 2 baseline)") },
+              { value: "C0-S1", label: translateText("C0-S1 (S0 + dialogs/files/includes)") },
+              { value: "C0-S2", label: translateText("C0-S2 (loop control profile)") },
+              { value: "C0-S3", label: translateText("C0-S3 (array-centric profile)") },
+              { value: "C0-S4", label: translateText("C0-S4 (full academic C0 layer)") },
+              { value: "C1-NATIVE", label: translateText("C1/native (byte-addressed char*, argv, native string helpers)") }
             ]
           }
         ]

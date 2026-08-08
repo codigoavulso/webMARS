@@ -1,0 +1,2274 @@
+{
+  "generatedAt": "2026-07-25T00:00:00.000Z",
+  "source": {
+    "basicInstructions": "../../assets/js/reference/instructions.generated.js",
+    "extendedInstructions": "../../assets/js/reference/pseudo-ops.generated.js",
+    "directives": "../../assets/js/app-modules/00-core.js"
+  },
+  "basicInstructions": [
+    {
+      "example": "abs.d $f2,$f4",
+      "description": "Kayan nokta mutlak değeri çift duyarlıklı : $f2'ı $f4'in mutlak değerine ayarlayın, çift duyarlıklı"
+    },
+    {
+      "example": "abs.s $f0,$f1",
+      "description": "Kayan nokta mutlak değeri tek duyarlıklı : $f0'ı $f1'in mutlak değerine, tek duyarlıklı olarak ayarlayın"
+    },
+    {
+      "example": "add $t1,$t2,$t3",
+      "description": "Taşma ile ekleme: $t1'ı ($t2 artı $t3) olarak ayarlayın"
+    },
+    {
+      "example": "add.d $f2,$f4,$f6",
+      "description": "Kayan nokta ekleme çift duyarlıklı : $f2'ı, $f4 artı $f6'nin çift duyarlıklı kayan nokta değerine ayarlayın"
+    },
+    {
+      "example": "add.s $f0,$f1,$f3",
+      "description": "Kayan nokta ekleme tek duyarlıklı : $f0'ı, $f1 artı $f3'nin tek duyarlıklı kayan nokta değerine ayarlayın"
+    },
+    {
+      "example": "addi $t1,$t2,-100",
+      "description": "Taşma ile anında ekleme: $t1'ı ($t2 artı işaretli 16 bit anında) olarak ayarlayın"
+    },
+    {
+      "example": "addiu $t1,$t2,-100",
+      "description": "Taşma olmadan anında imzasız ekleme: $t1'ı ($t2 artı işaretli 16 bit anında olarak ayarlayın), taşma yok"
+    },
+    {
+      "example": "addu $t1,$t2,$t3",
+      "description": "Taşma olmadan imzasız ekleme: $t1'ı ($t2 artı $t3 olarak ayarlayın), taşma yok"
+    },
+    {
+      "example": "and $t1,$t2,$t3",
+      "description": "Bitsel AND : Ayarla $t1 bit bazında AND arasında $t2 ve $t3"
+    },
+    {
+      "example": "andi $t1,$t2,100",
+      "description": "Bitsel AND hemen: Ayarla $t1 bit bazında AND arasında $t2 ve sıfır genişletilmiş 16 bit anında"
+    },
+    {
+      "example": "bc1f 1,label",
+      "description": "Belirtilmişse dallanma FP koşul bayrağı yanlış (BC1F, BCLF değil): Anlık tarafından belirtilen Yardımcı İşlemci 1 koşul bayrağı yanlış (sıfır) ise, etiketin adresindeki ifadeye dallanma"
+    },
+    {
+      "example": "bc1f label",
+      "description": "FP koşul bayrağı 0 yanlışsa dallanma (BC1F, BCLF değil): Yardımcı İşlemci 1 koşul bayrağı 0 yanlış (sıfır) ise, etiketin adresindeki ifadeye dallanma"
+    },
+    {
+      "example": "bc1t 1,label",
+      "description": "Belirtilmişse dallanma FP koşul bayrağı doğru (BC1T, BCLT değil): Anlık tarafından belirtilen Yardımcı İşlemci 1 koşul bayrağı doğruysa (bir) o zaman etiketin adresindeki ifadeye dallanma"
+    },
+    {
+      "example": "bc1t label",
+      "description": "FP koşul bayrağı 0 doğruysa dallanma (BC1T, BCLT değil): Yardımcı İşlemci 1 koşul bayrağı 0 doğruysa (bir) etiketin adresindeki ifadeye dallanma"
+    },
+    {
+      "example": "beq $t1,$t2,label",
+      "description": "Dallanma eşitse : $t1 ve $t2 eşitse etiket adresindeki ifadeye dallanma"
+    },
+    {
+      "example": "bgez $t1,label",
+      "description": "Sıfırdan büyük veya sıfıra eşitse dallanma : $t1 sıfırdan büyük veya sıfıra eşitse etiket adresindeki ifadeye dallanma"
+    },
+    {
+      "example": "bgezal $t1,label",
+      "description": "Sıfırdan büyük veya sıfıra eşitse dallanma ve bağlantı: Eğer $t1 sıfırdan büyük veya sıfıra eşitse, Program Sayacı'na $ra ayarlayın ve etiketin adresindeki ifadeye dallanma yapın"
+    },
+    {
+      "example": "bgtz $t1,label",
+      "description": "Sıfırdan büyükse dallanma : $t1 sıfırdan büyükse etiket adresindeki ifadeye dallanma"
+    },
+    {
+      "example": "blez $t1,label",
+      "description": "Sıfırdan küçük veya sıfıra eşitse dallanma : $t1 sıfırdan küçük veya sıfıra eşitse etiket adresindeki ifadeye dallanma"
+    },
+    {
+      "example": "bltz $t1,label",
+      "description": "Sıfırdan küçükse dallanma : $t1 sıfırdan küçükse etiket adresindeki ifadeye dallanma"
+    },
+    {
+      "example": "bltzal $t1,label",
+      "description": "Sıfırdan küçükse dallanma ve bağlantı: Eğer $t1 sıfırdan küçük veya sıfıra eşitse, o zaman $ra'i Program Sayacı'na ayarlayın ve etiketin adresindeki ifadeye dallanma yapın"
+    },
+    {
+      "example": "bne $t1,$t2,label",
+      "description": "Dallanma eşit değilse : $t1 ve $t2 eşit değilse etiket adresindeki ifadeye dallanma"
+    },
+    {
+      "example": "break",
+      "description": "Yürütmeyi kes: İstisna dışında program yürütmeyi sonlandır"
+    },
+    {
+      "example": "break 100",
+      "description": "Yürütmeyi kodla sonlandır: Belirtilen istisna koduyla program yürütmeyi sonlandır"
+    },
+    {
+      "example": "c.eq.d $f2,$f4",
+      "description": "Eşit çift duyarlılığı karşılaştırın: Eğer $f2, $f4 (çift duyarlıklı) değerine eşitse, Yardımcı İşlemci 1 koşul bayrağını 0 olarak ayarlayın, aksi takdirde yanlış olarak ayarlayın"
+    },
+    {
+      "example": "c.eq.d 1,$f2,$f4",
+      "description": "Eşit çift duyarlılığı karşılaştırın: Eğer $f2, $f4 (çift duyarlıklı) değerine eşitse, hemen tarafından belirtilen Yardımcı İşlemci 1 koşul bayrağını true olarak ayarlayın, aksi halde false olarak ayarlayın"
+    },
+    {
+      "example": "c.eq.s $f0,$f1",
+      "description": "Eşit tek duyarlılığı karşılaştırın: Eğer $f0, $f1'e eşitse, Yardımcı İşlemci 1 koşul bayrağını 0 olarak ayarlayın, aksi takdirde yanlış olarak ayarlayın"
+    },
+    {
+      "example": "c.eq.s 1,$f0,$f1",
+      "description": "Eşit tek duyarlılığı karşılaştırın: Eğer $f0, $f1'e eşitse, hemen tarafından belirtilen Yardımcı İşlemci 1 koşul bayrağını true olarak ayarlayın, aksi halde false olarak ayarlayın"
+    },
+    {
+      "example": "c.le.d $f2,$f4",
+      "description": "Daha az veya eşit çift duyarlılığı karşılaştırın: Eğer $f2, $f4 (çift duyarlık) değerinden küçük veya ona eşitse, Yardımcı İşlemci 1 koşul bayrağını 0 olarak ayarlayın, aksi takdirde yanlış olarak ayarlayın"
+    },
+    {
+      "example": "c.le.d 1,$f2,$f4",
+      "description": "Daha az veya eşit çift duyarlılığı karşılaştırın: Eğer $f2, $f4 (çift duyarlık) değerinden küçük veya ona eşitse, anında true tarafından belirtilen Yardımcı İşlemci 1 koşul bayrağını ayarlayın, aksi halde yanlış olarak ayarlayın"
+    },
+    {
+      "example": "c.le.s $f0,$f1",
+      "description": "Daha az veya eşit tek duyarlılığı karşılaştırın: Eğer $f0, $f1'den küçük veya ona eşitse, Yardımcı İşlemci 1 koşul bayrağını 0 olarak ayarlayın, aksi takdirde yanlış olarak ayarlayın"
+    },
+    {
+      "example": "c.le.s 1,$f0,$f1",
+      "description": "Daha az veya eşit tek duyarlılığı karşılaştırın: Eğer $f0, $f1'den küçük veya ona eşitse, hemen tarafından belirtilen Yardımcı İşlemci 1 koşul bayrağını true olarak ayarlayın, aksi halde false olarak ayarlayın"
+    },
+    {
+      "example": "c.lt.d $f2,$f4",
+      "description": "Çift duyarlıklıdan daha azını karşılaştırın: Eğer $f2, $f4'den (çift duyarlıklı) küçükse, Yardımcı İşlemci 1 koşul bayrağını 0 olarak ayarlayın, aksi takdirde yanlış olarak ayarlayın"
+    },
+    {
+      "example": "c.lt.d 1,$f2,$f4",
+      "description": "Çift duyarlıklıdan daha azını karşılaştırın: Eğer $f2, $f4'den (çift duyarlıklı) küçükse, hemen tarafından belirtilen Yardımcı İşlemci 1 koşul bayrağını true olarak ayarlayın, aksi halde false olarak ayarlayın"
+    },
+    {
+      "example": "c.lt.s $f0,$f1",
+      "description": "Tek duyarlıktan daha azını karşılaştırın: Eğer $f0, $f1'den küçükse, Yardımcı İşlemci 1 koşul bayrağını 0 olarak ayarlayın, aksi takdirde yanlış olarak ayarlayın"
+    },
+    {
+      "example": "c.lt.s 1,$f0,$f1",
+      "description": "Tek duyarlıktan daha azını karşılaştırın: Eğer $f0, $f1'den küçükse, hemen tarafından belirtilen Yardımcı İşlemci 1 koşul bayrağını true olarak ayarlayın, aksi halde false olarak ayarlayın"
+    },
+    {
+      "example": "ceil.w.d $f1,$f2",
+      "description": "Word'e çift duyarlıklı tavan : $f1'ı, $f2 içinde çift duyarlıklı kayan noktanın 32 bit tamsayı tavanına ayarlayın"
+    },
+    {
+      "example": "ceil.w.s $f0,$f1",
+      "description": "Word'e tek duyarlıklı tavan : $f0'ı, $f1 içinde tek duyarlıklı kayan noktanın 32 bit tamsayı tavanına ayarlayın"
+    },
+    {
+      "example": "clo $t1,$t2",
+      "description": "Baştakileri say : En anlamlı bit konumundan başlayarak $t1'ı, $t2'deki baştaki bir bitlerin sayısına ayarlayın"
+    },
+    {
+      "example": "clz $t1,$t2",
+      "description": "Baştaki sıfırların sayısını say : En anlamlı bit konumundan başlayarak $t1'ı, $t2 içindeki baştaki sıfır bitlerin sayısına ayarlayın"
+    },
+    {
+      "example": "cvt.d.s $f2,$f1",
+      "description": "Tek duyarlıktan çift duyarlıklıya dönüştür : $f2'ı, $f1 içindeki tek duyarlıklı değerin çift duyarlıklı eşdeğerine ayarlayın"
+    },
+    {
+      "example": "cvt.d.w $f2,$f1",
+      "description": "Word'den çift duyarlıklıya dönüştür : $f2'ı, $f1 içindeki 32 bit tamsayı değerinin çift duyarlıklı eşdeğerine ayarlayın"
+    },
+    {
+      "example": "cvt.s.d $f1,$f2",
+      "description": "Çift duyarlıklıdan tek duyarlıklıya dönüştür : $f1'ı, $f2 içindeki çift duyarlıklı eşdeğerine ayarlayın"
+    },
+    {
+      "example": "cvt.s.w $f0,$f1",
+      "description": "Kelimeden tek duyarlıklıya dönüştürme : $f0'ı, $f2 cinsinden 32 bitlik tamsayı değerinin tek duyarlıklı eşdeğerine ayarlayın"
+    },
+    {
+      "example": "cvt.w.d $f1,$f2",
+      "description": "Çift duyarlıktan kelimeye dönüştür : $f1'ı, $f2 içindeki çift duyarlıklı değerin 32 bit tamsayı eşdeğerine ayarlayın"
+    },
+    {
+      "example": "cvt.w.s $f0,$f1",
+      "description": "Tek duyarlıktan kelimeye dönüştür : $f0'ı, $f1 içindeki tek duyarlıklı değerin 32 bit tamsayı eşdeğerine ayarlayın"
+    },
+    {
+      "example": "div $t1,$t2",
+      "description": "Taşma ile bölme: $t1'i $t2'e bölün, ardından LO'yu bölüme ve HI'yı kalana ayarlayın (HI'ye erişmek için mfhi'yi, LO'ya erişmek için mflo'yu kullanın)"
+    },
+    {
+      "example": "div.d $f2,$f4,$f6",
+      "description": "Kayan nokta bölmeli çift duyarlıklı : $f2'ı, $f4'in çift duyarlıklı kayan nokta değerinin $f6'ye bölünmesine ayarlayın"
+    },
+    {
+      "example": "div.s $f0,$f1,$f3",
+      "description": "Kayan nokta bölme tek duyarlıklı : $f0'ı, $f1'in tek duyarlıklı kayan nokta değerinin $f3'ye bölünmesine ayarlayın"
+    },
+    {
+      "example": "divu $t1,$t2",
+      "description": "Taşma olmadan işaretsiz bölme: İşaretsiz $t1'i $t2'e bölün, ardından LO'yu bölüme ve HI'yı kalana ayarlayın (HI'ye erişmek için mfhi'yi, LO'ya erişmek için mflo'yu kullanın)"
+    },
+    {
+      "example": "eret",
+      "description": "İstisna dönüşü : Program Sayacı'nı Yardımcı İşlemci 0 EPC kayıt değerine ayarlayın, Yardımcı İşlemci Durum kaydı bit 1'i (istisna seviyesi) sıfıra ayarlayın"
+    },
+    {
+      "example": "floor.w.d $f1,$f2",
+      "description": "Word'e çift duyarlıklı kat : $f1'ı, $f2 içinde çift duyarlıklı kayan noktanın 32 bitlik tamsayı tabanına ayarlayın"
+    },
+    {
+      "example": "floor.w.s $f0,$f1",
+      "description": "Word'e tek duyarlık kat : $f0'ı, $f1'de tek duyarlıklı kayan noktanın 32 bit tamsayı tabanına ayarlayın"
+    },
+    {
+      "example": "j target",
+      "description": "Koşulsuz olarak atla: Hedef adresteki ifadeye atla"
+    },
+    {
+      "example": "jal target",
+      "description": "Atlama ve bağlantı: $ra'i Program Sayacı'na (dönüş adresi) ayarlayın, ardından hedef adresteki ifadeye atlayın"
+    },
+    {
+      "example": "jalr $t1",
+      "description": "Atlama ve bağlantı kaydı : $ra'i Program Sayacı'na (dönüş adresi) ayarlayın, ardından adresi $t1 içinde olan ifadeye atlayın"
+    },
+    {
+      "example": "jalr $t1,$t2",
+      "description": "Atlama ve bağlantı kaydı : $t1'i Program Sayacı'na (dönüş adresi) ayarlayın, ardından adresi $t2 içinde olan ifadeye atlayın"
+    },
+    {
+      "example": "jr $t1",
+      "description": "Kayıt koşulsuz olarak atla : Adresi $t1 içinde olan ifadeye atla"
+    },
+    {
+      "example": "lb $t1,-100($t2)",
+      "description": "Bayt yükle: Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lbu $t1,-100($t2)",
+      "description": "İmzasız bayt yükle: $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "ldc1 $f2,-100($t2)",
+      "description": "Double word Yardımcı İşlemci 1'i yükle (FPU)) : $f2'i etkin bellek doubleword adresinden 64 bit değere ayarlayın"
+    },
+    {
+      "example": "lh $t1,-100($t2)",
+      "description": "Yarım kelimeyi yükle : Etkin bellek yarım kelime adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lhu $t1,-100($t2)",
+      "description": "İmzasız yarım kelimeyi yükle : $t1'i etkin hafıza yarım kelime adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "ll $t1,-100($t2)",
+      "description": "Bağlantılı yükle: Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun"
+    },
+    {
+      "example": "lui $t1,100",
+      "description": "Üst hemen yükle : Yüksek dereceli 16 bitlik $t1'i 16 bitlik anında ve düşük sıralı 16 bit'i 0'a ayarlayın"
+    },
+    {
+      "example": "lw $t1,-100($t2)",
+      "description": "Sözcüğü yükle : $t1'i etkin bellek sözcüğü adresinin içeriğine ayarlayın"
+    },
+    {
+      "example": "lwc1 $f1,-100($t2)",
+      "description": "Sözcüğü Yardımcı İşlemci 1'e yükleyin (FPU): $f1'i etkin bellek sözcüğü adresinden 32 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lwl $t1,-100($t2)",
+      "description": "Sola sözcük yükle: Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,-100($t2)",
+      "description": "Sağa sözcük yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek sıralı baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "madd $t1,$t2",
+      "description": "Çarpma ekleme : $t1 ile $t2 çarpın, ardından HI'yi yüksek dereceli 32 bitlik ürün kadar artırın, LO'yu düşük dereceli 32 bitlik ürün kadar artırın (HI'ye erişmek için mfhi'yi, LO'ya erişmek için mflo'yu kullanın)"
+    },
+    {
+      "example": "maddu $t1,$t2",
+      "description": "İşaretsizleri ekle: $t1 ile $t2 çarpın, ardından HI'yi yüksek dereceli 32 bitlik ürün kadar artırın, LO'yu düşük dereceli 32 bitlik ürün kadar artırın, imzasız (HI'ye erişmek için mfhi, LO'ya erişmek için mflo kullanın)"
+    },
+    {
+      "example": "mfc0 $t1,$8",
+      "description": "Yardımcı İşlemci 0'dan Geçiş: $t1'ı Yardımcı İşlemci 0 kaydında $8 saklanan değere ayarlayın"
+    },
+    {
+      "example": "mfc1 $t1,$f1",
+      "description": "Yardımcı İşlemci 1'den geçiş (FPU): $t1'i Yardımcı İşlemci 1 kaydındaki $f1 değere ayarlayın"
+    },
+    {
+      "example": "cfc1 $t1,$31",
+      "description": "Yardımcı İşlemci 1 kontrolünden geçiş: $t1'ı FCSR kontrolüne ve durum değerine ayarlayın"
+    },
+    {
+      "example": "mfhi $t1",
+      "description": "HI kaydından taşıyın: $t1'i HI içeriğine ayarlayın (çarpma ve bölme işlemlerine bakın)"
+    },
+    {
+      "example": "mflo $t1",
+      "description": "LO kaydından taşıyın: $t1'i LO içeriğine ayarlayın (çarpma ve bölme işlemlerine bakın)"
+    },
+    {
+      "example": "mov.d $f2,$f4",
+      "description": "Kayan nokta çift hassasiyetini taşı : Çift hassasiyeti $f2, $f4 içinde çift hassasiyet değerine ayarlayın"
+    },
+    {
+      "example": "mov.s $f0,$f1",
+      "description": "Kayan nokta tek hassasiyetini taşı : Tek hassasiyeti $f0, $f1 içindeki tek hassasiyet değerine ayarlayın"
+    },
+    {
+      "example": "movf $t1,$t2",
+      "description": "FP koşulu bayrağı 0 yanlışsa taşı: Ayarla $t1 için $t2 eğer FPU (Yardımcı işlemci 1) koşul bayrağı 0 yanlıştır (sıfır)"
+    },
+    {
+      "example": "movf $t1,$t2,1",
+      "description": "Belirtilen FP koşulu bayrağı yanlışsa taşı: Ayarla $t1 için $t2 eğer FPU (Yardımcı işlemci 1) anında belirtilen koşul bayrağı yanlıştır (sıfır)"
+    },
+    {
+      "example": "movf.d $f2,$f4",
+      "description": "Kayan nokta çift duyarlılığını taşıyın: Koşul bayrağı 0 yanlışsa, çift duyarlılığı $f2, $f4 içinde çift duyarlık değerine ayarlayın"
+    },
+    {
+      "example": "movf.d $f2,$f4,1",
+      "description": "Kayan noktalı çift duyarlıklı taşı: Anlık tarafından belirtilen koşul bayrağı yanlışsa, çift duyarlıklıyı $f2, $f4 içindeki çift duyarlıklı değere ayarlayın."
+    },
+    {
+      "example": "movf.s $f0,$f1",
+      "description": "Kayan nokta tek duyarlıklı taşı: Koşul bayrağı 0 yanlışsa, tek duyarlıklıyı $f0, $f1 içindeki tek duyarlıklı değere ayarlayın"
+    },
+    {
+      "example": "movf.s $f0,$f1,1",
+      "description": "Kayan noktalı tek duyarlıklı taşı: Anlık tarafından belirtilen koşul bayrağı yanlışsa, tek duyarlıklı $f0'ı $f1e içindeki tek duyarlıklı değere ayarlayın"
+    },
+    {
+      "example": "movn $t1,$t2,$t3",
+      "description": "Sıfır değil koşullu taşı: Ayarla $t1 için $t2 eğer $t3 sıfır değil"
+    },
+    {
+      "example": "movn.d $f2,$f4,$t3",
+      "description": "Kayan nokta çift duyarlılığını taşıyın: Eğer $t3 sıfır değilse, çift duyarlılığı $f2, $f4 cinsinden çift duyarlık değerine ayarlayın."
+    },
+    {
+      "example": "movn.s $f0,$f1,$t3",
+      "description": "Kayan nokta tek duyarlıklı taşı: $t3 sıfır değilse, tek duyarlıklı $f0'ı $f1 içindeki tek duyarlıklı değere ayarlayın"
+    },
+    {
+      "example": "movt $t1,$t2",
+      "description": "FP koşulu bayrağı 0 doğruysa taşı: Ayarla $t1 için $t2 eğer FPU (Yardımcı işlemci 1) koşul bayrağı 0 doğru (bir)"
+    },
+    {
+      "example": "movt $t1,$t2,1",
+      "description": "Belirtilen FP koşulu bayrağı doğruysa taşı: Ayarla $t1 için $t2 eğer FPU (Yardımcı işlemci 1) anında belirtilen koşul bayrağı doğru (bir)"
+    },
+    {
+      "example": "movt.d $f2,$f4",
+      "description": "Kayan nokta çift duyarlılığını taşıyın: Koşul bayrağı 0 doğruysa, çift duyarlılığı $f2, $f4 içinde çift duyarlık değerine ayarlayın"
+    },
+    {
+      "example": "movt.d $f2,$f4,1",
+      "description": "Kayan nokta çift duyarlılığını taşı: Anlık tarafından belirtilen koşul bayrağı doğruysa, çift duyarlılığı $f2, $f4e içinde çift duyarlık değerine ayarlayın"
+    },
+    {
+      "example": "movt.s $f0,$f1",
+      "description": "Kayan nokta tek duyarlıklı taşı: Koşul bayrağı 0 doğruysa, tek duyarlıklı $f0'ı $f1e içindeki tek duyarlıklı değere ayarlayın"
+    },
+    {
+      "example": "movt.s $f0,$f1,1",
+      "description": "Kayan nokta tek duyarlıklı taşı: Anlık tarafından belirtilen koşul bayrağı doğruysa, tek duyarlıklı $f0'ı $f1e içindeki tek duyarlıklı değere ayarlayın"
+    },
+    {
+      "example": "movz $t1,$t2,$t3",
+      "description": "Koşullu sıfırı taşı: Ayarla $t1 için $t2 eğer $t3 sıfır"
+    },
+    {
+      "example": "movz.d $f2,$f4,$t3",
+      "description": "Kayan nokta çift duyarlılığını taşıyın: Eğer $t3 sıfır ise, çift duyarlılığı $f2, $f4 cinsinden çift duyarlık değerine ayarlayın."
+    },
+    {
+      "example": "movz.s $f0,$f1,$t3",
+      "description": "Kayan nokta tek duyarlıklılığını taşı : Eğer $t3 sıfır ise, tek duyarlıklı $f0'ı $f1 içindeki tek duyarlıklı değere ayarlayın"
+    },
+    {
+      "example": "msub $t1,$t2",
+      "description": "Çarpma çıkarma : $t1 ile $t2 çarpın, ardından HI'yi yüksek dereceli 32 bitlik ürün kadar azaltın, LO'yu düşük dereceli 32 bitlik ürün kadar azaltın (HI'ye erişmek için mfhi'yi, LO'ya erişmek için mflo'yu kullanın)"
+    },
+    {
+      "example": "msubu $t1,$t2",
+      "description": "İşaretsizleri çarpın: $t1 ile $t2 çarpın, ardından HI'yi yüksek dereceli 32 bitlik ürün kadar azaltın, LO'yu düşük dereceli 32 bitlik ürünle azaltın, işaretsiz (HI'ye erişmek için mfhi'yi, LO'ya erişmek için mflo'yu kullanın)"
+    },
+    {
+      "example": "mtc0 $t1,$8",
+      "description": "Yardımcı İşlemci 0'a Taşı: Yardımcı İşlemci 0 kaydını $8, $t1 içinde depolanan değere ayarlayın."
+    },
+    {
+      "example": "mtc1 $t1,$f1",
+      "description": "Yardımcı İşlemci 1'e Taşı (FPU): Yardımcı İşlemci 1 kaydını $f1, $t1 cinsinden değere ayarlayın"
+    },
+    {
+      "example": "ctc1 $t1,$31",
+      "description": "Yardımcı İşlemci 1 kontrolüne geçin: Yuvarlama modu da dahil olmak üzere FCSR'i $t1 içindeki değere ayarlayın"
+    },
+    {
+      "example": "mthi $t1",
+      "description": "HI kaydına taşı : HI'yı $t1 içeriğine ayarlayın (çarpma ve bölme işlemlerine bakın)"
+    },
+    {
+      "example": "mtlo $t1",
+      "description": "LO kaydına git : LO'yu $t1 içeriğine ayarlayın (çarpma ve bölme işlemlerine bakın)"
+    },
+    {
+      "example": "mul $t1,$t2,$t3",
+      "description": "Taşma olmadan çarpma: HI'yı yüksek dereceli 32 bit'e, LO ve $t1'ı $t2 ve $t3 ürününün düşük dereceli 32 biti olarak ayarlayın (HI'ye erişmek için mfhi'yi, LO'ya erişmek için mflo'yu kullanın)"
+    },
+    {
+      "example": "mul.d $f2,$f4,$f6",
+      "description": "Kayan nokta çarpımı çift duyarlıklı : $f2 değerini, $f4 katının $f6 çift duyarlıklı kayan nokta değerine ayarlayın"
+    },
+    {
+      "example": "mul.s $f0,$f1,$f3",
+      "description": "Kayan nokta çarpımı tek duyarlıklı : $f0'ı, $f1 çarpı $f3 tek duyarlıklı kayan nokta değerine ayarlayın"
+    },
+    {
+      "example": "mult $t1,$t2",
+      "description": "Çarpma : $t1 ve $t2 çarpımının hi'yi yüksek dereceli 32 bit'e, lo'yu düşük sıralı 32 bit'e ayarlayın (hi'ye erişmek için mfhi'yi, lo'ya erişmek için mflo'yu kullanın)"
+    },
+    {
+      "example": "multu $t1,$t2",
+      "description": "İşaretsiz çarpma: HI'yı yüksek dereceli 32 bit'e, LO'yu işaretsiz $t1 ve $t2 ürününün düşük dereceli 32 bitine ayarlayın (HI'ye erişmek için mfhi'yi, LO'ya erişmek için mflo'yu kullanın)"
+    },
+    {
+      "example": "neg.d $f2,$f4",
+      "description": "Kayan nokta çift duyarlılığı olumsuzla : Çift duyarlılığı $f2, $f4 içindeki çift duyarlık değerinin olumsuzluğuna ayarlayın"
+    },
+    {
+      "example": "neg.s $f0,$f1",
+      "description": "Kayan nokta tek duyarlıklı olumsuzlama : Tek duyarlıklıyı $f0, $f1 içindeki tek duyarlıklı değerin olumsuzlamasına ayarlayın"
+    },
+    {
+      "example": "nop",
+      "description": "Boş işlem: makine kodunun tamamı sıfırdır"
+    },
+    {
+      "example": "nor $t1,$t2,$t3",
+      "description": "Bitsel NOR : Ayarla $t1 bit bazında NOR arasında $t2 ve $t3"
+    },
+    {
+      "example": "or $t1,$t2,$t3",
+      "description": "Bitsel VEYA : Ayarla $t1 bit bazında VEYA'ya $t2 ve $t3"
+    },
+    {
+      "example": "ori $t1,$t2,100",
+      "description": "Bit bazında VEYA anında: Ayarla $t1 bit bazında VEYA'ya $t2 ve sıfır genişletilmiş 16 bit anında"
+    },
+    {
+      "example": "round.w.d $f1,$f2",
+      "description": "Kelimeye çift duyarlıklı yuvarlama : $f1'ı, $f2 içinde çift duyarlıklı kayan noktanın 32 bitlik tamsayı turuna ayarlayın"
+    },
+    {
+      "example": "round.w.s $f0,$f1",
+      "description": "Tek duyarlıklı kelimeyi kelimeye yuvarla : $f0'ı, $f1 içindeki tek duyarlıklı kayan noktanın 32 bitlik tamsayı turuna ayarlayın"
+    },
+    {
+      "example": "sb $t1,-100($t2)",
+      "description": "Baytı sakla : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sc $t1,-100($t2)",
+      "description": "Koşullu depola: $t1'i yalnızca eşleşen Yük Bağlantılı ayırma hala geçerliyse depolayın, ardından başarı durumunda $t1'i 1'e veya başarısızlık durumunda 0'a ayarlayın"
+    },
+    {
+      "example": "sdc1 $f2,-100($t2)",
+      "description": "Çift işlemciyi Yardımcı İşlemci 1'den depola (FPU)) : 64 bit değeri $f2 içinde etkili bellek çift kelime adresine depolayın"
+    },
+    {
+      "example": "sh $t1,-100($t2)",
+      "description": "Yarım kelimeyi sakla : $t1'in düşük dereceli 16 bitini etkili hafıza yarım kelime adresine depolayın"
+    },
+    {
+      "example": "sll $t1,$t2,10",
+      "description": "Mantıksal sola kaydırma: Ayarla $t1 yer değiştirmenin sonucu $t2 anında belirtilen bit sayısına göre sola"
+    },
+    {
+      "example": "sllv $t1,$t2,$t3",
+      "description": "Mantıksal değişkeni sola kaydır : $t1'i, $t2'i, $t3'nin düşük dereceli 5 bitindeki değer tarafından belirtilen bit sayısı kadar sola kaydırmanın sonucu olarak ayarlayın"
+    },
+    {
+      "example": "slt $t1,$t2,$t3",
+      "description": "Şundan daha azını ayarlayın: Eğer $t2, $t3'den küçükse, o zaman $t1'yi 1'e ayarlayın, aksi takdirde $t1'i 0'a ayarlayın"
+    },
+    {
+      "example": "slti $t1,$t2,-100",
+      "description": "Anında daha azını ayarlayın: Eğer $t2, işaret genişletilmiş 16 bitlik anlıktan küçükse, $t1'i 1'e ayarlayın, aksi halde $t1'yi 0'a ayarlayın"
+    },
+    {
+      "example": "sltiu $t1,$t2,-100",
+      "description": "Anlık imzasızdan daha azını ayarlayın: Eğer $t2, imzasız karşılaştırma kullanılarak işaret genişletilmiş 16 bitlik anlıktan küçükse, $t1'i 1'e ayarlayın, aksi halde $t1'yi 0'a ayarlayın"
+    },
+    {
+      "example": "sltu $t1,$t2,$t3",
+      "description": "İmzasızdan daha azını ayarlayın: İmzasız karşılaştırmayı kullanarak $t2, $t3'den küçükse, o zaman $t1'yi 1'e ayarlayın, aksi takdirde $t1'i 0'a ayarlayın"
+    },
+    {
+      "example": "sqrt.d $f2,$f4",
+      "description": "Karekök çift duyarlıklı : $f2'ı, $f4'in çift duyarlıklı kayan noktalı kareköküne ayarlayın"
+    },
+    {
+      "example": "sqrt.s $f0,$f1",
+      "description": "Tek duyarlıklı kare kök : $f0'ı, $f1'in tek duyarlıklı kayan noktalı kareköküne ayarlayın"
+    },
+    {
+      "example": "sra $t1,$t2,10",
+      "description": "Sağa kaydırma aritmetiği : $t1'i, işaret genişletilmiş kaydırmanın sonucu olarak $t2 doğrudan belirtilen bit sayısına göre sağa ayarlayın."
+    },
+    {
+      "example": "srav $t1,$t2,$t3",
+      "description": "Aritmetik değişkeni sağa kaydırma : $t1'i, $t2'in düşük dereceli 5 bitlik $t3 değeriyle belirtilen bit sayısı kadar sağa işaret genişletilmiş kaydırmanın sonucu olarak ayarlayın"
+    },
+    {
+      "example": "srl $t1,$t2,10",
+      "description": "Sağa mantıksal kaydırma : Ayarla $t1 yer değiştirmenin sonucu $t2 derhal belirtilen bit sayısına göre"
+    },
+    {
+      "example": "srlv $t1,$t2,$t3",
+      "description": "Mantıksal değişkeni sağa kaydır : $t1'i, $t2'i, $t3'nin düşük sıralı 5 bitindeki değerle belirtilen bit sayısı kadar sağa kaydırmanın sonucu olarak ayarlayın"
+    },
+    {
+      "example": "sub $t1,$t2,$t3",
+      "description": "Taşma ile çıkarma: $t1'ı ($t2 eksi $t3) olarak ayarlayın"
+    },
+    {
+      "example": "sub.d $f2,$f4,$f6",
+      "description": "Kayan nokta çıkarma çift duyarlıklı : $f2 değerini, $f4 eksi $f6 çift duyarlıklı kayan nokta değerine ayarlayın"
+    },
+    {
+      "example": "sub.s $f0,$f1,$f3",
+      "description": "Kayan nokta çıkarma tek duyarlıklı : $f0'ı, $f1 eksi $f3 tek duyarlıklı kayan nokta değerine ayarlayın"
+    },
+    {
+      "example": "subu $t1,$t2,$t3",
+      "description": "Taşma olmadan işaretsiz çıkarma: $t1'ı ($t2 eksi $t3 olarak ayarlayın), taşma yok"
+    },
+    {
+      "example": "sw $t1,-100($t2)",
+      "description": "Kelimeyi sakla : $t1 içeriğini etkili hafıza kelime adresine depola"
+    },
+    {
+      "example": "swc1 $f1,-100($t2)",
+      "description": "Yardımcı İşlemci 1'den kelime depola (FPU): 32 bit değeri $f1 içinde etkin hafıza kelime adresine depola"
+    },
+    {
+      "example": "swl $t1,-100($t2)",
+      "description": "Soldaki kelimeyi sakla : Etkili bayt adresinden başlayıp sözcüğünün düşük sıralı baytına kadar devam ederek yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,-100($t2)",
+      "description": "Kelimeyi sağda depola: Etkin bayt adresini içeren yüksek dereceli kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "syscall",
+      "description": "Bir sistem çağrısı yapın : $v0 içindeki değere göre belirtilen sistem çağrısını yürütün"
+    },
+    {
+      "example": "teq $t1,$t2",
+      "description": "Tuzak eşitse : Tuzak eğer $t1, $t2'e eşitse"
+    },
+    {
+      "example": "teqi $t1,-100",
+      "description": "Tuzak eğer hemen eşitse : Tuzak eğer $t1 işaret genişletilmiş 16 bit hemen eşitse"
+    },
+    {
+      "example": "tge $t1,$t2",
+      "description": "Tuzak büyük veya eşitse : Tuzak eğer $t1 büyük veya eşitse $t2"
+    },
+    {
+      "example": "tgei $t1,-100",
+      "description": "Tuzak, anından büyük veya eşitse : $t1 işaret genişletilmiş 16 bitten büyük veya ona eşitse tuzak"
+    },
+    {
+      "example": "tgeiu $t1,-100",
+      "description": "Tuzak, anında imzasızdan büyük veya eşitse : Tuzak, eğer $t1 işaret genişletilmiş 16 bitten büyük veya ona eşitse, anında, imzasız karşılaştırma"
+    },
+    {
+      "example": "tgeu $t1,$t2",
+      "description": "Tuzak büyük veya eşitse işaretsiz : İmzasız karşılaştırmayı kullanarak $t1, $t2'den büyük veya eşitse tuzak"
+    },
+    {
+      "example": "tlt $t1,$t2",
+      "description": "Tuzak küçükse: Tuzak eğer $t1 küçükse $t2"
+    },
+    {
+      "example": "tlti $t1,-100",
+      "description": "Tuzak eğer anlıktan küçükse : $t1 işaret genişletilmiş 16 bitten küçükse tuzak"
+    },
+    {
+      "example": "tltiu $t1,-100",
+      "description": "Tuzak, anında imzasızdan küçükse : Tuzak, eğer $t1, işaret genişletilmiş 16 bitten küçükse, anında, imzasız karşılaştırma"
+    },
+    {
+      "example": "tltu $t1,$t2",
+      "description": "Tuzak, işaretsizden küçükse : Tuzak, eğer $t1, $t2'den küçükse, imzasız karşılaştırma"
+    },
+    {
+      "example": "tne $t1,$t2",
+      "description": "Tuzak eşit değilse : Tuzak eğer $t1, $t2'e eşit değilse"
+    },
+    {
+      "example": "tnei $t1,-100",
+      "description": "Tuzak eğer anında eşit değilse : $t1 işaret genişletilmiş 16 bit hemen eşit değilse tuzak"
+    },
+    {
+      "example": "trunc.w.d $f1,$f2",
+      "description": "Sözcüğe çift duyarlıklı kesme : $f1'ı, $f2 içindeki çift duyarlıklı kayan noktanın 32 bitlik tamsayı kesilmesine ayarlayın"
+    },
+    {
+      "example": "trunc.w.s $f0,$f1",
+      "description": "Tek duyarlıklı kelimeyi kes : $f0'ı, $f1 içindeki tek duyarlıklı kayan noktanın 32 bitlik tamsayı kesilmesine ayarlayın"
+    },
+    {
+      "example": "xor $t1,$t2,$t3",
+      "description": "Bitsel XOR (özel VEYA): Ayarla $t1 bit bazında XOR arasında $t2 ve $t3"
+    },
+    {
+      "example": "xori $t1,$t2,100",
+      "description": "Bitsel XOR hemen: Ayarla $t1 bit bazında XOR arasında $t2 ve sıfır genişletilmiş 16 bit anında"
+    }
+  ],
+  "extendedInstructions": [
+    {
+      "example": "abs $t1,$t2",
+      "description": "Mutlak değer : $t1'ı $t2'nin mutlak değerine ayarlayın (Hacker's Delight'tan algoritma)"
+    },
+    {
+      "example": "add $t1,$t2,-100",
+      "description": "EK : $t1'i ($t2 artı 16 bit anında) olarak ayarlayın"
+    },
+    {
+      "example": "add $t1,$t2,100000",
+      "description": "EK : $t1'ı ($t2 artı 32 bit anında) olarak ayarlayın"
+    },
+    {
+      "example": "addi $t1,$t2,100000",
+      "description": "EKLEME Hemen : set $t1 ($t2 artı 32 bit anında)"
+    },
+    {
+      "example": "addiu $t1,$t2,100000",
+      "description": "ADDition Immediate Unsigned: $t1'ı ($t2 artı 32 bit anında olarak ayarlayın), taşma yok"
+    },
+    {
+      "example": "addu $t1,$t2,100000",
+      "description": "ADDition Unsigned : $t1'ı ($t2 artı 32 bit anında olarak ayarlayın), taşma yok"
+    },
+    {
+      "example": "and $t1,$t2,100",
+      "description": "AND : $t1'i ($t2 bit düzeyinde-AND 16 bit işaretsiz olarak ayarlayın)"
+    },
+    {
+      "example": "and $t1,100",
+      "description": "AND : $t1'i ($t1 bit düzeyinde-AND 16 bit işaretsiz olarak ayarlayın)"
+    },
+    {
+      "example": "andi $t1,$t2,100000",
+      "description": "AND Hemen : $t1'i ($t2 bit düzeyinde-AND 32 bit anında) olarak ayarlayın"
+    },
+    {
+      "example": "andi $t1,100",
+      "description": "AND Anında : $t1'i ($t1 bit düzeyinde-AND 16 bit işaretsiz hemen) olarak ayarlayın"
+    },
+    {
+      "example": "andi $t1,100000",
+      "description": "AND Hemen : $t1'i ($t1 bit düzeyinde-AND 32 bit anında) olarak ayarlayın"
+    },
+    {
+      "example": "b label",
+      "description": "Şube : Koşulsuz olarak etiketteki ekstreye şube"
+    },
+    {
+      "example": "beq $t1,-100,label",
+      "description": "Dallanma if EQual : Eğer $t1 16 bitlik anlık değere eşitse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "beq $t1,100000,label",
+      "description": "Dallanma if EQual : Eğer $t1 32-bit anlık değere eşitse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "beqz $t1,label",
+      "description": "EQual Zero ise dallanma : $t1 sıfıra eşitse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bge $t1,-100,label",
+      "description": "Büyük veya Eşitse Dallanma: $t1, anında 16 bitten büyük veya eşitse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bge $t1,$t2,label",
+      "description": "Büyük veya Eşitse Dallanma : $t1, $t2'den büyük veya eşitse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bge $t1,100000,label",
+      "description": "Büyük veya Eşitse Dallanma : $t1 32 bitten büyük veya eşitse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bgeu $t1,-100,label",
+      "description": "Büyük veya Eşitse Dallanma İmzasız : $t1 anında 16 bitten büyük veya eşitse etiketteki ifadeye dallanma (imzasız karşılaştırma)"
+    },
+    {
+      "example": "bgeu $t1,$t2,label",
+      "description": "Büyük veya Eşitse Dallanma İmzasız : $t1, $t2'den büyük veya eşitse etiketteki ifadeye dallanma (imzasız karşılaştırma)"
+    },
+    {
+      "example": "bgeu $t1,100000,label",
+      "description": "Büyük veya Eşitse Dallanma İmzasız : $t1 32 bitten büyük veya ona eşitse etiketteki ifadeye dallanma (imzasız karşılaştırma)"
+    },
+    {
+      "example": "bgt $t1,-100,label",
+      "description": "Büyükse Dallanma : Eğer $t1 anında 16 bitten büyükse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bgt $t1,$t2,label",
+      "description": "Dallanma if Greater Than : Eğer $t1, $t2 değerinden büyükse, etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bgt $t1,100000,label",
+      "description": "Büyükse Dallanma : Eğer $t1 32 bitten büyükse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bgtu $t1,-100,label",
+      "description": "İmzasızdan Büyükse Dallanma: $t1 anında 16 bitten büyükse etiketteki ifadeye dallanma (imzasız karşılaştırma)"
+    },
+    {
+      "example": "bgtu $t1,$t2,label",
+      "description": "İmzasızdan Büyükse Dallanma: $t1, $t2 değerinden büyükse etiketteki ifadeye dallanma (imzasız karşılaştırma)"
+    },
+    {
+      "example": "bgtu $t1,100000,label",
+      "description": "İmzasızdan Büyükse Dallanma: $t1 anında 16 bitten büyükse etiketteki ifadeye dallanma (imzasız karşılaştırma)"
+    },
+    {
+      "example": "ble $t1,-100,label",
+      "description": "Küçük veya Eşitse Dallanma : $t1 anında 16 bitten küçük veya ona eşitse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "ble $t1,$t2,label",
+      "description": "Küçük veya Eşitse Dallanma : $t1, $t2 değerinden küçük veya ona eşitse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "ble $t1,100000,label",
+      "description": "Küçük veya Eşitse Dallanma : $t1 anında 32 bitten küçük veya ona eşitse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bleu $t1,-100,label",
+      "description": "Daha Az veya Eşitse Dallanma İmzasız : $t1 16 bitten küçük veya ona eşitse etiketteki ifadeye dallanma (imzasız karşılaştırma)"
+    },
+    {
+      "example": "bleu $t1,$t2,label",
+      "description": "Küçük veya Eşit ise Dallanma İmzasız : $t1, $t2'den küçük veya ona eşitse etiketteki ifadeye dallanma (imzasız karşılaştırma)"
+    },
+    {
+      "example": "bleu $t1,100000,label",
+      "description": "Daha Az veya Eşitse Dallanma İmzasız : $t1 32 bitten küçük veya ona eşitse, etiketteki ifadeye dallanma (imzasız karşılaştırma)"
+    },
+    {
+      "example": "blt $t1,-100,label",
+      "description": "Küçükse Dallanma: Eğer $t1 anında 16 bitten küçükse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "blt $t1,$t2,label",
+      "description": "Dallanma if Less Than : Eğer $t1, $t2 değerinden küçükse, etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "blt $t1,100000,label",
+      "description": "Dallanma Küçükse : Eğer $t1 32 bitten küçükse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bltu $t1,-100,label",
+      "description": "İmzasızdan Küçükse Dallanma : $t1 anında 16 bitten küçükse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bltu $t1,$t2,label",
+      "description": "İmzasızdan Küçükse Dallanma : $t1, $t2 değerinden küçükse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bltu $t1,100000,label",
+      "description": "İmzasızdan Küçükse Dallanma : $t1 anında 32 bitten küçükse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bne $t1,-100,label",
+      "description": "Eşit Değilse Dallanma : $t1 16 bitlik anlık değere eşit değilse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bne $t1,100000,label",
+      "description": "Eşit Değilse Dallanma : $t1 32 bit anında eşit değilse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "bnez $t1,label",
+      "description": "Eşit Değilse Dallanma Sıfır : $t1 sıfıra eşit değilse etiketteki ifadeye dallanma"
+    },
+    {
+      "example": "div $t1,$t2,-100",
+      "description": "BÖLÜM : Ayarla $t1 ($t2 16 bitlik anlık, tamsayı bölümüne bölünür)"
+    },
+    {
+      "example": "div $t1,$t2,$t3",
+      "description": "BÖLÜM : Ayarla $t1 ($t2 bölünmüş $t3, tam sayı bölümü)"
+    },
+    {
+      "example": "div $t1,$t2,100000",
+      "description": "BÖLÜM : Ayarla $t1 ($t2 32-bit anında, tamsayı bölümüne bölünür)"
+    },
+    {
+      "example": "divu $t1,$t2,-100",
+      "description": "DIVision Unsigned : $t1'ı ($t2 16 bitlik anlık, işaretsiz tamsayı bölümüne bölünmüş) olarak ayarlayın."
+    },
+    {
+      "example": "divu $t1,$t2,$t3",
+      "description": "Bölme İşaretsiz : $t1'ı ($t2 bölü $t3 olarak ayarlayın, işaretsiz tamsayı bölümü)"
+    },
+    {
+      "example": "divu $t1,$t2,100000",
+      "description": "Bölünme İşaretsiz : $t1'ı ($t2 32 bitlik anlık, işaretsiz tamsayı bölmesine bölünmüş) olarak ayarlayın."
+    },
+    {
+      "example": "l.d $f2,-100",
+      "description": "Kayan nokta Çift duyarlılığı yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "l.d $f2,($t2)",
+      "description": "Kayan nokta Çift duyarlılığı yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "l.d $f2,100000",
+      "description": "Kayan nokta Çift duyarlılığı yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "l.d $f2,100000($t2)",
+      "description": "Kayan nokta Çift duyarlılığı yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "l.d $f2,label",
+      "description": "Kayan nokta Çift duyarlılığı yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "l.d $f2,label($t2)",
+      "description": "Kayan nokta Çift duyarlılığı yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "l.d $f2,label+100000",
+      "description": "Kayan nokta Çift duyarlılığı yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "l.d $f2,label+100000($t2)",
+      "description": "Kayan nokta Çift duyarlılığı yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "l.s $f1,-100",
+      "description": "Kayan nokta yükle Tek duyarlıklı : Etkin bellek sözcüğü adresinde $f1'ı 32 bit değere ayarlayın"
+    },
+    {
+      "example": "l.s $f1,($t2)",
+      "description": "Kayan nokta yükle Tek duyarlıklı : Etkin bellek sözcüğü adresinde $f1'ı 32 bit değere ayarlayın"
+    },
+    {
+      "example": "l.s $f1,100000",
+      "description": "Kayan nokta yükle Tek duyarlıklı : Etkin bellek sözcüğü adresinde $f1'ı 32 bit değere ayarlayın"
+    },
+    {
+      "example": "l.s $f1,100000($t2)",
+      "description": "Kayan nokta yükle Tek duyarlıklı : Etkin bellek sözcüğü adresinde $f1'ı 32 bit değere ayarlayın"
+    },
+    {
+      "example": "l.s $f1,label",
+      "description": "Kayan nokta yükle Tek duyarlıklı : Etkin bellek sözcüğü adresinde $f1'ı 32 bit değere ayarlayın"
+    },
+    {
+      "example": "l.s $f1,label($t2)",
+      "description": "Kayan nokta yükle Tek duyarlıklı : Etkin bellek sözcüğü adresinde $f1'ı 32 bit değere ayarlayın"
+    },
+    {
+      "example": "l.s $f1,label+100000",
+      "description": "Kayan nokta yükle Tek duyarlıklı : Etkin bellek sözcüğü adresinde $f1'ı 32 bit değere ayarlayın"
+    },
+    {
+      "example": "l.s $f1,label+100000($t2)",
+      "description": "Kayan nokta yükle Tek duyarlıklı : Etkin bellek sözcüğü adresinde $f1'ı 32 bit değere ayarlayın"
+    },
+    {
+      "example": "la $t1,-100",
+      "description": "Adresi Yükle : $t1'ı 16 bit anında (işaret genişletilmiş) olarak ayarlayın"
+    },
+    {
+      "example": "la $t1,($t2)",
+      "description": "Adresi Yükle : $t1'i $t2 içeriğine ayarlayın"
+    },
+    {
+      "example": "la $t1,100",
+      "description": "Adresi Yükle : $t1'ı 16 bit anında (sıfır genişletilmiş) olarak ayarlayın"
+    },
+    {
+      "example": "la $t1,100($t2)",
+      "description": "Adresi Yükle : $t1'i ($t2 ve 16 bitlik anlık) toplayacak şekilde ayarlayın"
+    },
+    {
+      "example": "la $t1,100000",
+      "description": "Adresi Yükle : $t1'ı anında 32 bit olarak ayarlayın"
+    },
+    {
+      "example": "la $t1,100000($t2)",
+      "description": "Adresi Yükle : $t1'i ($t2 ve 32 bit anında) toplayacak şekilde ayarlayın"
+    },
+    {
+      "example": "la $t1,label",
+      "description": "Adresi Yükle : $t1'i etiketin adresine ayarlayın"
+    },
+    {
+      "example": "la $t1,label($t2)",
+      "description": "Adresi Yükle : $t1'i ($t2 ve etiket adresinin toplamı olarak ayarlayın."
+    },
+    {
+      "example": "la $t1,label+100000",
+      "description": "Adresi Yükle : $t1'i (etiket adresi ve 32 bit anlık) toplayacak şekilde ayarlayın"
+    },
+    {
+      "example": "la $t1,label+100000($t2)",
+      "description": "Adresi Yükle : $t1'i (etiket adresi, 32 bit anlık ve $t2 toplamına ayarlayın)"
+    },
+    {
+      "example": "lb $t1,-100",
+      "description": "Bayt Yükle : Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lb $t1,($t2)",
+      "description": "Bayt Yükle : Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lb $t1,100",
+      "description": "Bayt Yükle : Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lb $t1,100($t2)",
+      "description": "Bayt Yükle : Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lb $t1,100000",
+      "description": "Bayt Yükle : Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lb $t1,100000($t2)",
+      "description": "Bayt Yükle : Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lb $t1,label",
+      "description": "Bayt Yükle : Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lb $t1,label($t2)",
+      "description": "Bayt Yükle : Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lb $t1,label+100000",
+      "description": "Bayt Yükle : Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lb $t1,label+100000($t2)",
+      "description": "Bayt Yükle : Etkin bellek bayt adresinden genişletilmiş 8 bitlik değeri imzalamak için $t1'ı ayarlayın"
+    },
+    {
+      "example": "lbu $t1,-100",
+      "description": "İmzasız Baytı Yükle : $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lbu $t1,($t2)",
+      "description": "İmzasız Baytı Yükle : $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lbu $t1,100",
+      "description": "İmzasız Baytı Yükle : $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lbu $t1,100($t2)",
+      "description": "İmzasız Baytı Yükle : $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lbu $t1,100000",
+      "description": "İmzasız Baytı Yükle : $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lbu $t1,100000($t2)",
+      "description": "İmzasız Baytı Yükle : $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lbu $t1,label",
+      "description": "İmzasız Baytı Yükle : $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lbu $t1,label($t2)",
+      "description": "İmzasız Baytı Yükle : $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lbu $t1,label+100000",
+      "description": "İmzasız Baytı Yükle : $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lbu $t1,label+100000($t2)",
+      "description": "İmzasız Baytı Yükle : $t1'i etkin bellek bayt adresinden sıfır genişletilmiş 8 bitlik değere ayarlayın"
+    },
+    {
+      "example": "ld $t1,-100($t2)",
+      "description": "Doubleword Yükle : $t1 ve sonraki kaydı etkin bellek bayt adresinden başlayarak 64 bit olarak ayarlayın"
+    },
+    {
+      "example": "ld $t1,($t2)",
+      "description": "Doubleword Yükle : $t1 ve sonraki kaydı etkin bellek word adresinden başlayarak 64 bit olarak ayarlayın"
+    },
+    {
+      "example": "ld $t1,100000",
+      "description": "Doubleword Yükle : $t1 ve sonraki kaydı etkin bellek word adresinden başlayarak 64 bit olarak ayarlayın"
+    },
+    {
+      "example": "ld $t1,100000($t2)",
+      "description": "Doubleword Yükle : $t1 ve sonraki kaydı etkin bellek word adresinden başlayarak 64 bit olarak ayarlayın"
+    },
+    {
+      "example": "ld $t1,label",
+      "description": "Doubleword Yükle : $t1 ve sonraki kaydı etkin bellek word adresinden başlayarak 64 bit olarak ayarlayın"
+    },
+    {
+      "example": "ld $t1,label($t2)",
+      "description": "Doubleword Yükle : $t1 ve sonraki kaydı etkin bellek word adresinden başlayarak 64 bit olarak ayarlayın"
+    },
+    {
+      "example": "ld $t1,label+100000",
+      "description": "Doubleword Yükle : $t1 ve sonraki kaydı etkin bellek word adresinden başlayarak 64 bit olarak ayarlayın"
+    },
+    {
+      "example": "ld $t1,label+100000($t2)",
+      "description": "Doubleword Yükle : $t1 ve sonraki kaydı etkin bellek word adresinden başlayarak 64 bit olarak ayarlayın"
+    },
+    {
+      "example": "ldc1 $f2,-100",
+      "description": "Doubleword Yardımcı İşlemcisi 1'i Yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "ldc1 $f2,($t2)",
+      "description": "Doubleword Yardımcı İşlemcisi 1'i Yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "ldc1 $f2,100000",
+      "description": "Doubleword Yardımcı İşlemcisi 1'i Yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "ldc1 $f2,100000($t2)",
+      "description": "Doubleword Yardımcı İşlemcisi 1'i Yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "ldc1 $f2,label",
+      "description": "Doubleword Yardımcı İşlemcisi 1'i Yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "ldc1 $f2,label($t2)",
+      "description": "Doubleword Yardımcı İşlemcisi 1'i Yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "ldc1 $f2,label+100000",
+      "description": "Doubleword Yardımcı İşlemcisi 1'i Yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "ldc1 $f2,label+100000($t2)",
+      "description": "Doubleword Yardımcı İşlemcisi 1'i Yükle: $f2 ve $f3 kayıt çiftini etkin bellek doubleword adresinde 64 bit değere ayarlayın"
+    },
+    {
+      "example": "lh $t1,-100",
+      "description": "Yarı Sözcüğü Yükle : Etkin bellek yarım sözcük adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1 öğesini ayarlayın"
+    },
+    {
+      "example": "lh $t1,($t2)",
+      "description": "Yarı Sözcüğü Yükle : Etkin bellek yarım sözcük adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1 öğesini ayarlayın"
+    },
+    {
+      "example": "lh $t1,100",
+      "description": "Yarı Sözcüğü Yükle : Etkin bellek yarım sözcük adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1 öğesini ayarlayın"
+    },
+    {
+      "example": "lh $t1,100($t2)",
+      "description": "Yarı Sözcüğü Yükle : Etkin bellek yarım sözcük adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1 öğesini ayarlayın"
+    },
+    {
+      "example": "lh $t1,100000",
+      "description": "Yarı Sözcüğü Yükle : Etkin bellek yarım sözcük adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1 öğesini ayarlayın"
+    },
+    {
+      "example": "lh $t1,100000($t2)",
+      "description": "Yarı Sözcüğü Yükle : Etkin bellek yarım sözcük adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1 öğesini ayarlayın"
+    },
+    {
+      "example": "lh $t1,label",
+      "description": "Yarı Sözcüğü Yükle : Etkin bellek yarım sözcük adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1 öğesini ayarlayın"
+    },
+    {
+      "example": "lh $t1,label($t2)",
+      "description": "Yarı Sözcüğü Yükle : Etkin bellek yarım sözcük adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1 öğesini ayarlayın"
+    },
+    {
+      "example": "lh $t1,label+100000",
+      "description": "Yarı Sözcüğü Yükle : Etkin bellek yarım sözcük adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1 öğesini ayarlayın"
+    },
+    {
+      "example": "lh $t1,label+100000($t2)",
+      "description": "Yarı Sözcüğü Yükle : Etkin bellek yarım sözcük adresinden genişletilmiş 16 bitlik değeri imzalamak için $t1 öğesini ayarlayın"
+    },
+    {
+      "example": "lhu $t1,-100",
+      "description": "İmzasız Yarı Sözcüğü Yükle : $t1'i etkin bellek yarım sözcük adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lhu $t1,($t2)",
+      "description": "İmzasız Yarı Sözcüğü Yükle : $t1'i etkin bellek yarım sözcük adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lhu $t1,100",
+      "description": "İmzasız Yarı Sözcüğü Yükle : $t1'i etkin bellek yarım sözcük adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lhu $t1,100($t2)",
+      "description": "İmzasız Yarı Sözcüğü Yükle : $t1'i etkin bellek yarım sözcük adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lhu $t1,100000",
+      "description": "İmzasız Yarı Sözcüğü Yükle : $t1'i etkin bellek yarım sözcük adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lhu $t1,100000($t2)",
+      "description": "İmzasız Yarı Sözcüğü Yükle : $t1'i etkin bellek yarım sözcük adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lhu $t1,label",
+      "description": "İmzasız Yarı Sözcüğü Yükle : $t1'i etkin bellek yarım sözcük adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lhu $t1,label($t2)",
+      "description": "İmzasız Yarı Sözcüğü Yükle : $t1'i etkin bellek yarım sözcük adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lhu $t1,label+100000",
+      "description": "İmzasız Yarı Sözcüğü Yükle : $t1'i etkin bellek yarım sözcük adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lhu $t1,label+100000($t2)",
+      "description": "İmzasız Yarı Sözcüğü Yükle : $t1'i etkin bellek yarım sözcük adresinden sıfır genişletilmiş 16 bitlik değere ayarlayın"
+    },
+    {
+      "example": "li $t1,-100",
+      "description": "Hemen Yükle : $t1'ı 16 bit anında (işaret genişletilmiş) olarak ayarlayın"
+    },
+    {
+      "example": "li $t1,100",
+      "description": "Hemen Yükle : $t1'i işaretsiz 16 bit anında (sıfır genişletilmiş) olarak ayarlayın"
+    },
+    {
+      "example": "li $t1,100000",
+      "description": "Hemen Yükle : $t1'ı 32 bit anında olarak ayarlayın"
+    },
+    {
+      "example": "ll $t1,-100",
+      "description": "Bağlantılı Yükle : Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun."
+    },
+    {
+      "example": "ll $t1,($t2)",
+      "description": "Bağlantılı Yükle : Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun."
+    },
+    {
+      "example": "ll $t1,100",
+      "description": "Bağlantılı Yükle : Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun."
+    },
+    {
+      "example": "ll $t1,100($t2)",
+      "description": "Bağlantılı Yükle : Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun."
+    },
+    {
+      "example": "ll $t1,100000",
+      "description": "Bağlantılı Yükle : Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun."
+    },
+    {
+      "example": "ll $t1,100000($t2)",
+      "description": "Bağlantılı Yükle : Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun."
+    },
+    {
+      "example": "ll $t1,label",
+      "description": "Bağlantılı Yükle : Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun."
+    },
+    {
+      "example": "ll $t1,label($t2)",
+      "description": "Bağlantılı Yükle : Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun."
+    },
+    {
+      "example": "ll $t1,label+100000",
+      "description": "Bağlantılı Yükle : Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun."
+    },
+    {
+      "example": "ll $t1,label+100000($t2)",
+      "description": "Bağlantılı Yükle : Bir kelime yükleyin ve sonraki bir Mağaza Koşullu (sc) için rezervasyon oluşturun."
+    },
+    {
+      "example": "lw $t1,-100",
+      "description": "Kelime Yükle : $t1'i etkin hafıza kelime adresinin içeriğine ayarlayın"
+    },
+    {
+      "example": "lw $t1,($t2)",
+      "description": "Kelime Yükle : $t1'i etkin hafıza kelime adresinin içeriğine ayarlayın"
+    },
+    {
+      "example": "lw $t1,100",
+      "description": "Kelime Yükle : $t1'i etkin hafıza kelime adresinin içeriğine ayarlayın"
+    },
+    {
+      "example": "lw $t1,100($t2)",
+      "description": "Kelime Yükle : $t1'i etkin hafıza kelime adresinin içeriğine ayarlayın"
+    },
+    {
+      "example": "lw $t1,100000",
+      "description": "Kelime Yükle : $t1'i etkin hafıza kelime adresinin içeriğine ayarlayın"
+    },
+    {
+      "example": "lw $t1,100000($t2)",
+      "description": "Kelime Yükle : $t1'i etkin hafıza kelime adresinin içeriğine ayarlayın"
+    },
+    {
+      "example": "lw $t1,label",
+      "description": "Kelime Yükle : Etiketin adresindeki hafıza kelimesinin içeriğine $t1 ayarlayın"
+    },
+    {
+      "example": "lw $t1,label($t2)",
+      "description": "Kelime Yükle : $t1'i etkin hafıza kelime adresinin içeriğine ayarlayın"
+    },
+    {
+      "example": "lw $t1,label+100000",
+      "description": "Kelime Yükle : $t1'i etkin hafıza kelime adresinin içeriğine ayarlayın"
+    },
+    {
+      "example": "lw $t1,label+100000($t2)",
+      "description": "Kelime Yükle : $t1'i etkin hafıza kelime adresinin içeriğine ayarlayın"
+    },
+    {
+      "example": "lwc1 $f1,-100",
+      "description": "Kelime Yardımcı İşlemcisi 1'i Yükle: $f1'ı etkin hafıza kelime adresinden 32 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lwc1 $f1,($t2)",
+      "description": "Kelime Yardımcı İşlemcisi 1'i Yükle: $f1'ı etkin hafıza kelime adresinden 32 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lwc1 $f1,100000",
+      "description": "Kelime Yardımcı İşlemcisi 1'i Yükle: $f1'ı etkin hafıza kelime adresinden 32 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lwc1 $f1,100000($t2)",
+      "description": "Kelime Yardımcı İşlemcisi 1'i Yükle: $f1'ı etkin hafıza kelime adresinden 32 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lwc1 $f1,label",
+      "description": "Kelime Yardımcı İşlemcisi 1'i Yükle: $f1'ı etkin hafıza kelime adresinden 32 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lwc1 $f1,label($t2)",
+      "description": "Kelime Yardımcı İşlemcisi 1'i Yükle: $f1'ı etkin hafıza kelime adresinden 32 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lwc1 $f1,label+100000",
+      "description": "Kelime Yardımcı İşlemcisi 1'i Yükle: $f1'ı etkin hafıza kelime adresinden 32 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lwc1 $f1,label+100000($t2)",
+      "description": "Kelime Yardımcı İşlemcisi 1'i Yükle: $f1'ı etkin hafıza kelime adresinden 32 bitlik değere ayarlayın"
+    },
+    {
+      "example": "lwl $t1,-100",
+      "description": "Sola Kelime Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwl $t1,($t2)",
+      "description": "Sola Kelime Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwl $t1,100",
+      "description": "Sola Kelime Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwl $t1,100($t2)",
+      "description": "Sola Kelime Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwl $t1,100000",
+      "description": "Sola Kelime Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwl $t1,100000($t2)",
+      "description": "Sola Kelime Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwl $t1,label",
+      "description": "Sola Kelime Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwl $t1,label($t2)",
+      "description": "Sola Kelime Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwl $t1,label+100000",
+      "description": "Sola Kelime Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwl $t1,label+100000($t2)",
+      "description": "Sola Kelime Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytı boyunca devam ederek, 1 ila 4 bayt sola dayalı olarak $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,-100",
+      "description": "Kelimeyi Sağa Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek dereceli baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,($t2)",
+      "description": "Kelimeyi Sağa Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek dereceli baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,100",
+      "description": "Kelimeyi Sağa Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek dereceli baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,100($t2)",
+      "description": "Kelimeyi Sağa Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek dereceli baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,100000",
+      "description": "Kelimeyi Sağa Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek dereceli baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,100000($t2)",
+      "description": "Kelimeyi Sağa Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek dereceli baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,label",
+      "description": "Kelimeyi Sağa Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek dereceli baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,label($t2)",
+      "description": "Kelimeyi Sağa Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek dereceli baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,label+100000",
+      "description": "Kelimeyi Sağa Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek dereceli baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "lwr $t1,label+100000($t2)",
+      "description": "Kelimeyi Sağa Yükle : Etkin bellek bayt adresinden başlayarak ve sözcüğünün yüksek dereceli baytı boyunca devam ederek, sağa dayalı olarak 1'den 4 bayta kadar $t1 içine yükleyin"
+    },
+    {
+      "example": "mfc1.d $t1,$f2",
+      "description": "Yardımcı İşlemci 1 Çiftinden Geçiş: $t1'i $f2 içeriğine ayarlayın, sonraki daha yüksek kaydı $t1'den $f2'den sonraki daha yüksek kaydın içeriğine ayarlayın"
+    },
+    {
+      "example": "move $t1,$t2",
+      "description": "MOVE : $t1'i, $t2 içeriğine ayarlayın"
+    },
+    {
+      "example": "mtc1.d $t1,$f2",
+      "description": "Yardımcı İşlemci 1'e Taşı Çift: $f2'i $t1 içeriğine ayarlayın, sonraki daha yüksek kaydı $f2'den $t1'den sonraki daha yüksek kaydın içeriğine ayarlayın."
+    },
+    {
+      "example": "mul $t1,$t2,-100",
+      "description": "MULTiplication : HI'yı yüksek dereceli 32 bit'e, LO ve $t1'i $t2 ürününün düşük sıralı 32 biti ve 16 bit imzalı anında ayarlayın (HI'ye erişmek için mfhi'yi, LO'ya erişmek için mflo'yu kullanın)"
+    },
+    {
+      "example": "mul $t1,$t2,100000",
+      "description": "MULTiplication : HI'yı yüksek dereceli 32 bit'e, LO ve $t1'i $t2 ürününün düşük sıralı 32 biti ve 32 bit anlık olarak ayarlayın (HI'ye erişmek için mfhi'yi, LO'ya erişmek için mflo'yu kullanın)"
+    },
+    {
+      "example": "mulo $t1,$t2,-100",
+      "description": "Taşma ile MULTiplication : $t1'ı, $t2 ürününün düşük dereceli 32 bitine ayarlayın ve 16 bitlik anında imzalayın"
+    },
+    {
+      "example": "mulo $t1,$t2,$t3",
+      "description": "Taşma ile MULTiplication : $t1'ı, $t2 ve $t3 çarpımının düşük dereceli 32 bitine ayarlayın"
+    },
+    {
+      "example": "mulo $t1,$t2,100000",
+      "description": "Taşma ile MULTiplication : $t1'ı, $t2 ürününün düşük dereceli 32 bitine ve 32 bit anlık olarak ayarlayın"
+    },
+    {
+      "example": "mulou $t1,$t2,-100",
+      "description": "Taşma İmzasız MULTiplication : $t1'ı, $t2 ürününün düşük dereceli 32 bitine ayarlayın ve imzalı 16 bitlik anında"
+    },
+    {
+      "example": "mulou $t1,$t2,$t3",
+      "description": "Taşma İmzasız MULTiplication : $t1'ı, $t2 ve $t3 çarpımının düşük dereceli 32 bitine ayarlayın"
+    },
+    {
+      "example": "mulou $t1,$t2,100000",
+      "description": "Taşma İmzasız MULTiplication : $t1'ı, $t2 ürününün düşük dereceli 32 bitine ve 32 bit anlık olarak ayarlayın"
+    },
+    {
+      "example": "mulu $t1,$t2,-100",
+      "description": "MULTiplication Unsigned : HI'yı yüksek dereceli 32 bit'e, LO'yu ve $t1'ı düşük dereceli 32 bit'e ($t2 16 bitlik anında, işaretsiz çarpma ile çarparak) ayarlayın."
+    },
+    {
+      "example": "mulu $t1,$t2,$t3",
+      "description": "MULTiplication Unsigned : HI'yi yüksek dereceli 32 bit'e, LO ve $t1'ı düşük dereceli 32 bit'e ayarlayın ($t2 ile $t3 çarpı, işaretsiz çarpma)"
+    },
+    {
+      "example": "mulu $t1,$t2,100000",
+      "description": "MULTiplication Unsigned : HI'yı yüksek dereceli 32 bit'e, LO'yu ve $t1'ı düşük dereceli 32 bit'e ($t2 32 bitlik anında, işaretsiz çarpma ile çarparak) ayarlayın."
+    },
+    {
+      "example": "neg $t1,$t2",
+      "description": "NEGate : $t1'i, $t2'in olumsuzluğuna ayarlayın"
+    },
+    {
+      "example": "negu $t1,$t2",
+      "description": "NEGate Unsigned : $t1'ı $t2'in olumsuzlamasına ayarlayın, taşma yok"
+    },
+    {
+      "example": "not $t1,$t2",
+      "description": "Bit bazında NOT (bit ters çevirme)"
+    },
+    {
+      "example": "or $t1,$t2,100",
+      "description": "VEYA : ayarla $t1 ($t2 bitsel-VEYA 16-bit imzasız hemen)"
+    },
+    {
+      "example": "or $t1,100",
+      "description": "VEYA : ayarla $t1 ($t1 bitsel-VEYA 16-bit imzasız hemen)"
+    },
+    {
+      "example": "ori $t1,$t2,100000",
+      "description": "VEYA Hemen : ayarla $t1 ($t2 bit düzeyinde VEYA 32 bit anında)"
+    },
+    {
+      "example": "ori $t1,100",
+      "description": "VEYA Hemen : ayarla $t1 ($t1 bitsel-VEYA 16-bit imzasız hemen)"
+    },
+    {
+      "example": "ori $t1,100000",
+      "description": "VEYA Hemen : ayarla $t1 ($t1 bit düzeyinde VEYA 32 bit anında)"
+    },
+    {
+      "example": "rem $t1,$t2,-100",
+      "description": "Geriye Kalan : Ayarla $t1 (geriye kalan) $t2 anında 16 bit'e bölünür)"
+    },
+    {
+      "example": "rem $t1,$t2,$t3",
+      "description": "Kalan : $t1'ı ($t2'nin $t3'ye bölümü) olarak ayarlayın."
+    },
+    {
+      "example": "rem $t1,$t2,100000",
+      "description": "Geriye Kalan : Ayarla $t1 (geriye kalan) $t2 32 bit anında bölünür)"
+    },
+    {
+      "example": "remu $t1,$t2,-100",
+      "description": "Geriye Kalan : Ayarla $t1 (geriye kalan) $t2 16 bitlik anlık, imzasız bölüme bölünmüş)"
+    },
+    {
+      "example": "remu $t1,$t2,$t3",
+      "description": "Kalan : $t1'ı şu şekilde ayarlayın ($t2'in $t3'ye bölümü, işaretsiz bölüm)"
+    },
+    {
+      "example": "remu $t1,$t2,100000",
+      "description": "Geriye Kalan : Ayarla $t1 (geriye kalan) $t2 32 bitlik anlık, imzasız bölüme bölünmüştür)"
+    },
+    {
+      "example": "rol $t1,$t2,$t3",
+      "description": "Sola Döndür : $t1'i ($t2, $t3 içinde belirtilen bit konumu sayısına göre sola döndürülmüş olarak ayarlayın)"
+    },
+    {
+      "example": "rol $t1,$t2,10",
+      "description": "Sola Döndür : $t1'i ($t2, 5 bitlik anında belirtilen bit konumu sayısına göre sola döndürülür) olarak ayarlayın."
+    },
+    {
+      "example": "ror $t1,$t2,$t3",
+      "description": "Sağa Döndür : $t1'i ($t2, $t3 içinde belirtilen bit konumlarının sayısına göre sağa döndürülmüş olarak ayarlayın)"
+    },
+    {
+      "example": "ror $t1,$t2,10",
+      "description": "Sağa Döndür : $t1'i ($t2, 5 bitlik anında belirtilen bit konumu sayısına göre sağa döndürülür) olarak ayarlayın."
+    },
+    {
+      "example": "s.d $f2,-100",
+      "description": "Kayan noktayı saklayın Çift duyarlıklı: $f2 ve $f3 kayıt çiftinden 64 bit'i etkili bellek çift sözcük adresine depolayın"
+    },
+    {
+      "example": "s.d $f2,($t2)",
+      "description": "Kayan noktayı saklayın Çift duyarlıklı: $f2 ve $f3 kayıt çiftinden 64 bit'i etkili bellek çift sözcük adresine depolayın"
+    },
+    {
+      "example": "s.d $f2,100000",
+      "description": "Kayan noktayı saklayın Çift duyarlıklı: $f2 ve $f3 kayıt çiftinden 64 bit'i etkili bellek çift sözcük adresine depolayın"
+    },
+    {
+      "example": "s.d $f2,100000($t2)",
+      "description": "Kayan noktayı saklayın Çift duyarlıklı: $f2 ve $f3 kayıt çiftinden 64 bit'i etkili bellek çift sözcük adresine depolayın"
+    },
+    {
+      "example": "s.d $f2,label",
+      "description": "Kayan noktayı saklayın Çift duyarlıklı: $f2 ve $f3 kayıt çiftinden 64 bit'i etkili bellek çift sözcük adresine depolayın"
+    },
+    {
+      "example": "s.d $f2,label($t2)",
+      "description": "Kayan noktayı saklayın Çift duyarlıklı: $f2 ve $f3 kayıt çiftinden 64 bit'i etkili bellek çift sözcük adresine depolayın"
+    },
+    {
+      "example": "s.d $f2,label+100000",
+      "description": "Kayan noktayı saklayın Çift duyarlıklı: $f2 ve $f3 kayıt çiftinden 64 bit'i etkili bellek çift sözcük adresine depolayın"
+    },
+    {
+      "example": "s.d $f2,label+100000($t2)",
+      "description": "Kayan noktayı saklayın Çift duyarlıklı: $f2 ve $f3 kayıt çiftinden 64 bit'i etkili bellek çift sözcük adresine depolayın"
+    },
+    {
+      "example": "s.s $f1,-100",
+      "description": "Kayan noktayı saklayın Tek duyarlıklı: 32 bitlik değeri $f1'den etkin bellek sözcüğü adresine depolayın"
+    },
+    {
+      "example": "s.s $f1,($t2)",
+      "description": "Kayan noktayı saklayın Tek duyarlıklı: 32 bitlik değeri $f1'den etkin bellek sözcüğü adresine depolayın"
+    },
+    {
+      "example": "s.s $f1,100000",
+      "description": "Kayan noktayı saklayın Tek duyarlıklı: 32 bitlik değeri $f1'den etkin bellek sözcüğü adresine depolayın"
+    },
+    {
+      "example": "s.s $f1,100000($t2)",
+      "description": "Kayan noktayı saklayın Tek duyarlıklı: 32 bitlik değeri $f1'den etkin bellek sözcüğü adresine depolayın"
+    },
+    {
+      "example": "s.s $f1,label",
+      "description": "Kayan noktayı saklayın Tek duyarlıklı: 32 bitlik değeri $f1'den etkin bellek sözcüğü adresine depolayın"
+    },
+    {
+      "example": "s.s $f1,label($t2)",
+      "description": "Kayan noktayı saklayın Tek duyarlıklı: 32 bitlik değeri $f1'den etkin bellek sözcüğü adresine depolayın"
+    },
+    {
+      "example": "s.s $f1,label+100000",
+      "description": "Kayan noktayı saklayın Tek duyarlıklı: 32 bitlik değeri $f1'den etkin bellek sözcüğü adresine depolayın"
+    },
+    {
+      "example": "s.s $f1,label+100000($t2)",
+      "description": "Kayan noktayı saklayın Tek duyarlıklı: 32 bitlik değeri $f1'den etkin bellek sözcüğü adresine depolayın"
+    },
+    {
+      "example": "sb $t1,-100",
+      "description": "Baytı Kaydet : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sb $t1,($t2)",
+      "description": "Baytı Kaydet : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sb $t1,100",
+      "description": "Baytı Kaydet : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sb $t1,100($t2)",
+      "description": "Baytı Kaydet : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sb $t1,100000",
+      "description": "Baytı Kaydet : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sb $t1,100000($t2)",
+      "description": "Baytı Kaydet : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sb $t1,label",
+      "description": "Baytı Kaydet : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sb $t1,label($t2)",
+      "description": "Baytı Kaydet : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sb $t1,label+100000",
+      "description": "Baytı Kaydet : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sb $t1,label+100000($t2)",
+      "description": "Baytı Kaydet : $t1'in düşük sıralı 8 bitini etkin bellek bayt adresine depolayın"
+    },
+    {
+      "example": "sc $t1,-100",
+      "description": "Koşullu Sakla: Yalnızca eşleşen Yük Bağlantılı ayırma geçerli kalırsa saklayın, ardından başarıyı veya başarısızlığı kaynak kaydında bildirin."
+    },
+    {
+      "example": "sc $t1,($t2)",
+      "description": "Koşullu Sakla: Yalnızca eşleşen Yük Bağlantılı ayırma geçerli kalırsa saklayın, ardından başarıyı veya başarısızlığı kaynak kaydında bildirin."
+    },
+    {
+      "example": "sc $t1,100",
+      "description": "Koşullu Sakla: Yalnızca eşleşen Yük Bağlantılı ayırma geçerli kalırsa saklayın, ardından başarıyı veya başarısızlığı kaynak kaydında bildirin."
+    },
+    {
+      "example": "sc $t1,100($t2)",
+      "description": "Koşullu Sakla: Yalnızca eşleşen Yük Bağlantılı ayırma geçerli kalırsa saklayın, ardından başarıyı veya başarısızlığı kaynak kaydında bildirin."
+    },
+    {
+      "example": "sc $t1,100000",
+      "description": "Koşullu Sakla: Yalnızca eşleşen Yük Bağlantılı ayırma geçerli kalırsa saklayın, ardından başarıyı veya başarısızlığı kaynak kaydında bildirin."
+    },
+    {
+      "example": "sc $t1,100000($t2)",
+      "description": "Koşullu Sakla: Yalnızca eşleşen Yük Bağlantılı ayırma geçerli kalırsa saklayın, ardından başarıyı veya başarısızlığı kaynak kaydında bildirin."
+    },
+    {
+      "example": "sc $t1,label",
+      "description": "Koşullu Sakla: Yalnızca eşleşen Yük Bağlantılı ayırma geçerli kalırsa saklayın, ardından başarıyı veya başarısızlığı kaynak kaydında bildirin."
+    },
+    {
+      "example": "sc $t1,label($t2)",
+      "description": "Koşullu Sakla: Yalnızca eşleşen Yük Bağlantılı ayırma geçerli kalırsa saklayın, ardından başarıyı veya başarısızlığı kaynak kaydında bildirin."
+    },
+    {
+      "example": "sc $t1,label+100000",
+      "description": "Koşullu Sakla: Yalnızca eşleşen Yük Bağlantılı ayırma geçerli kalırsa saklayın, ardından başarıyı veya başarısızlığı kaynak kaydında bildirin."
+    },
+    {
+      "example": "sc $t1,label+100000($t2)",
+      "description": "Koşullu Sakla: Yalnızca eşleşen Yük Bağlantılı ayırma geçerli kalırsa saklayın, ardından başarıyı veya başarısızlığı kaynak kaydında bildirin."
+    },
+    {
+      "example": "sd $t1,-100($t2)",
+      "description": "Doubleword'ü Sakla : $t1 içeriğini ve etkin bellek bayt adresinden başlayarak 64 bitlik sonraki kaydı depolar"
+    },
+    {
+      "example": "sd $t1,($t2)",
+      "description": "Doubleword'ü Sakla : $t1 içeriğini ve etkin bellek word adresinden başlayarak 64 bitlik sonraki kaydı saklayın"
+    },
+    {
+      "example": "sd $t1,100000",
+      "description": "Doubleword'ü Sakla : $t1 içeriğini ve etkin bellek word adresinden başlayarak 64 bitlik sonraki kaydı saklayın"
+    },
+    {
+      "example": "sd $t1,100000($t2)",
+      "description": "Doubleword'ü Sakla : $t1 içeriğini ve etkin bellek word adresinden başlayarak 64 bitlik sonraki kaydı saklayın"
+    },
+    {
+      "example": "sd $t1,label",
+      "description": "Doubleword'ü Sakla : $t1 içeriğini ve etkin bellek word adresinden başlayarak 64 bitlik sonraki kaydı saklayın"
+    },
+    {
+      "example": "sd $t1,label($t2)",
+      "description": "Doubleword'ü Sakla : $t1 içeriğini ve etkin bellek word adresinden başlayarak 64 bitlik sonraki kaydı saklayın"
+    },
+    {
+      "example": "sd $t1,label+100000",
+      "description": "Doubleword'ü Sakla : $t1 içeriğini ve etkin bellek word adresinden başlayarak 64 bitlik sonraki kaydı saklayın"
+    },
+    {
+      "example": "sd $t1,label+100000($t2)",
+      "description": "Doubleword'ü Sakla : $t1 içeriğini ve etkin bellek word adresinden başlayarak 64 bitlik sonraki kaydı saklayın"
+    },
+    {
+      "example": "sdc1 $f2,-100",
+      "description": "Doubleword Yardımcı İşlemcisini Sakla 1: $f2 ve $f3 kayıt çiftinden 64 biti etkin çift kelime adresine depolayın"
+    },
+    {
+      "example": "sdc1 $f2,($t2)",
+      "description": "Doubleword Yardımcı İşlemcisini Sakla 1: $f2 ve $f3 kayıt çiftinden 64 biti etkin çift kelime adresine depolayın"
+    },
+    {
+      "example": "sdc1 $f2,100000",
+      "description": "Doubleword Yardımcı İşlemcisini Sakla 1: $f2 ve $f3 kayıt çiftinden 64 biti etkin çift kelime adresine depolayın"
+    },
+    {
+      "example": "sdc1 $f2,100000($t2)",
+      "description": "Doubleword Yardımcı İşlemcisini Sakla 1: $f2 ve $f3 kayıt çiftinden 64 biti etkin çift kelime adresine depolayın"
+    },
+    {
+      "example": "sdc1 $f2,label",
+      "description": "Doubleword Yardımcı İşlemcisini Sakla 1: $f2 ve $f3 kayıt çiftinden 64 biti etkin çift kelime adresine depolayın"
+    },
+    {
+      "example": "sdc1 $f2,label($t2)",
+      "description": "Doubleword Yardımcı İşlemcisini Sakla 1: $f2 ve $f3 kayıt çiftinden 64 biti etkin çift kelime adresine depolayın"
+    },
+    {
+      "example": "sdc1 $f2,label+100000",
+      "description": "Doubleword Yardımcı İşlemcisini Sakla 1: $f2 ve $f3 kayıt çiftinden 64 biti etkin çift kelime adresine depolayın"
+    },
+    {
+      "example": "sdc1 $f2,label+100000($t2)",
+      "description": "Doubleword Yardımcı İşlemcisini Sakla 1: $f2 ve $f3 kayıt çiftinden 64 biti etkin çift kelime adresine depolayın"
+    },
+    {
+      "example": "seq $t1,$t2,-100",
+      "description": "EQual'ı ayarlayın: eğer $t2 anında 16 bit'e eşitse, $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "seq $t1,$t2,$t3",
+      "description": "EQual'ı ayarlayın: eğer $t2, $t3'e eşitse, ardından $t1'yi 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "seq $t1,$t2,100000",
+      "description": "EQual'ı ayarlayın: eğer $t2 anında 32 bit'e eşitse, $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sge $t1,$t2,-100",
+      "description": "Büyük veya Eşit olarak ayarlayın: eğer $t2 anında 16 bit'ten büyük veya eşitse, $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sge $t1,$t2,$t3",
+      "description": "Büyük veya Eşit Olarak Ayarlayın: eğer $t2, $t3'den büyük veya eşitse, $t1'yi 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sge $t1,$t2,100000",
+      "description": "Büyük veya Eşit olarak ayarlayın: eğer $t2 32-bit'ten büyük veya eşitse, o zaman $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,-100",
+      "description": "Büyük veya Eşit İmzasız olarak ayarlayın: eğer $t2 16-bit anından büyük veya eşitse (imzasız karşılaştırma), ardından $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,$t3",
+      "description": "Büyük veya Eşit İmzasız olarak ayarlayın: eğer $t2, $t3'den büyük veya eşitse (işaretsiz karşılaştırma), ardından $t1'yi 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sgeu $t1,$t2,100000",
+      "description": "Büyük veya Eşit İmzasız olarak ayarlayın: eğer $t2 32-bit anından büyük veya eşitse (imzasız karşılaştırma), ardından $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sgt $t1,$t2,-100",
+      "description": "Şundan Büyük Olarak Ayarla: eğer $t2 anında 16 bitten büyükse, $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sgt $t1,$t2,$t3",
+      "description": "Şundan Büyük Olarak Ayarlayın: eğer $t2, $t3'den büyükse, $t1'yi 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sgt $t1,$t2,100000",
+      "description": "Şundan Büyük Olarak Ayarla: eğer $t2 anında 32 bitten büyükse, $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,-100",
+      "description": "İmzasızdan Büyük Olarak Ayarla: eğer $t2 anında 16 bitten büyükse (imzasız karşılaştırma), ardından $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sgtu $t1,$t2,$t3",
+      "description": "İmzasızdan Büyük Olarak Ayarla: eğer $t2, $t3'den büyükse (imzasız karşılaştırma), ardından $t1'yi 1 veya 0 olarak ayarlayın"
+    },
+    {
+      "example": "sgtu $t1,$t2,100000",
+      "description": "İmzasızdan Büyük Olarak Ayarla: eğer $t2 anında 32 bitten büyükse (imzasız karşılaştırma), ardından $t1 değerini 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sh $t1,-100",
+      "description": "Yarı Sözcüğü Sakla : $t1'in düşük dereceli 16 bitini etkili bellek yarım sözcük adresine depolayın"
+    },
+    {
+      "example": "sh $t1,($t2)",
+      "description": "Yarı Sözcüğü Sakla : $t1'in düşük dereceli 16 bitini etkili bellek yarım sözcük adresine depolayın"
+    },
+    {
+      "example": "sh $t1,100",
+      "description": "Yarı Sözcüğü Sakla : $t1'in düşük dereceli 16 bitini etkili bellek yarım sözcük adresine depolayın"
+    },
+    {
+      "example": "sh $t1,100($t2)",
+      "description": "Yarı Sözcüğü Sakla : $t1'in düşük dereceli 16 bitini etkili bellek yarım sözcük adresine depolayın"
+    },
+    {
+      "example": "sh $t1,100000",
+      "description": "Yarı Sözcüğü Sakla : $t1'in düşük dereceli 16 bitini etkili bellek yarım sözcük adresine depolayın"
+    },
+    {
+      "example": "sh $t1,100000($t2)",
+      "description": "Yarı Sözcüğü Sakla : $t1'in düşük dereceli 16 bitini etkili bellek yarım sözcük adresine depolayın"
+    },
+    {
+      "example": "sh $t1,label",
+      "description": "Yarı Sözcüğü Sakla : $t1'in düşük dereceli 16 bitini etkili bellek yarım sözcük adresine depolayın"
+    },
+    {
+      "example": "sh $t1,label($t2)",
+      "description": "Yarı Sözcüğü Sakla : $t1'in düşük dereceli 16 bitini etkili bellek yarım sözcük adresine depolayın"
+    },
+    {
+      "example": "sh $t1,label+100000",
+      "description": "Yarı Sözcüğü Sakla : $t1'in düşük dereceli 16 bitini etkili bellek yarım sözcük adresine depolayın"
+    },
+    {
+      "example": "sh $t1,label+100000($t2)",
+      "description": "Yarı Sözcüğü Sakla : $t1'in düşük dereceli 16 bitini etkili bellek yarım sözcük adresine depolayın"
+    },
+    {
+      "example": "sle $t1,$t2,-100",
+      "description": "Daha Az veya Eşit Olarak Ayarlayın: eğer $t2 anında 16-bit'e eşit veya daha küçükse, $t1'i 1'e ayarlayın, aksi takdirde 0"
+    },
+    {
+      "example": "sle $t1,$t2,$t3",
+      "description": "Daha Az veya Eşit Olarak Ayarlayın: eğer $t2, $t3'den küçük veya eşitse, $t1'yi 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sle $t1,$t2,100000",
+      "description": "Daha Az veya Eşit Olarak Ayarlayın: eğer $t2 32-bit'ten küçük veya eşitse, o zaman $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sleu $t1,$t2,-100",
+      "description": "Daha Az veya Eşit İmzasız Olarak Ayarla: eğer $t2 16-bit'e eşit veya daha küçükse (imzasız karşılaştırma), o zaman $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sleu $t1,$t2,$t3",
+      "description": "Daha Az veya Eşit İmzasız olarak ayarlayın: eğer $t2, $t3'den küçük veya eşitse (işaretsiz karşılaştırma), ardından $t1'yi 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sleu $t1,$t2,100000",
+      "description": "Daha Az veya Eşit İmzasız olarak ayarlayın: eğer $t2 32-bit anından küçük veya ona eşitse (imzasız karşılaştırma), o zaman $t1'i 1'e ayarlayın, aksi takdirde 0"
+    },
+    {
+      "example": "sne $t1,$t2,-100",
+      "description": "Eşit Değil'i Ayarlayın: $t2 anında 16 bit'e eşit değilse $t1'i 1'e ayarlayın, aksi takdirde 0"
+    },
+    {
+      "example": "sne $t1,$t2,$t3",
+      "description": "Eşit Değil'i Ayarlayın: eğer $t2, $t3'e eşit değilse, $t1'yi 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sne $t1,$t2,100000",
+      "description": "Eşit Değil'i Ayarlayın: eğer $t2 32-bit'e eşit değilse, o zaman $t1'i 1'e ayarlayın, aksi halde 0"
+    },
+    {
+      "example": "sub $t1,$t2,-100",
+      "description": "Çıkarma: set $t1 ($t2 eksi 16 bit anında)"
+    },
+    {
+      "example": "sub $t1,$t2,100000",
+      "description": "Çıkarma: set $t1 ($t2 eksi 32 bit anında)"
+    },
+    {
+      "example": "subi $t1,$t2,-100",
+      "description": "Hemen Çıkarma : $t1'ı ($t2 eksi 16 bit anında) olarak ayarlayın"
+    },
+    {
+      "example": "subi $t1,$t2,100000",
+      "description": "Hemen Çıkarma : $t1'ı ($t2 eksi 32 bit anında) olarak ayarlayın"
+    },
+    {
+      "example": "subiu $t1,$t2,100000",
+      "description": "SUBtraction Anında İmzasız: $t1'ı ($t2 eksi 32 bit anında olarak ayarlayın), taşma yok"
+    },
+    {
+      "example": "subu $t1,$t2,100000",
+      "description": "SUBtraction Unsigned : $t1'ı ($t2 eksi 32 bit anında olarak ayarlayın), taşma yok"
+    },
+    {
+      "example": "sw $t1,-100",
+      "description": "Word'ü Sakla : $t1 içeriğini etkin bellek sözcük adresine depolayın"
+    },
+    {
+      "example": "sw $t1,($t2)",
+      "description": "Word'ü Sakla : $t1 içeriğini etkin bellek sözcük adresine depolayın"
+    },
+    {
+      "example": "sw $t1,100",
+      "description": "Word'ü Sakla : $t1 içeriğini etkin bellek sözcük adresine depolayın"
+    },
+    {
+      "example": "sw $t1,100($t2)",
+      "description": "Word'ü Sakla : $t1 içeriğini etkin bellek sözcük adresine depolayın"
+    },
+    {
+      "example": "sw $t1,100000",
+      "description": "Word'ü Sakla : $t1 içeriğini etkin bellek sözcük adresine depolayın"
+    },
+    {
+      "example": "sw $t1,100000($t2)",
+      "description": "Word'ü Sakla : $t1 içeriğini etkin bellek sözcük adresine depolayın"
+    },
+    {
+      "example": "sw $t1,label",
+      "description": "Word'ü Sakla : $t1 içeriğini etiketin adresindeki bellek sözcüğüne depolayın"
+    },
+    {
+      "example": "sw $t1,label($t2)",
+      "description": "Word'ü Sakla : $t1 içeriğini etkin bellek sözcük adresine depolayın"
+    },
+    {
+      "example": "sw $t1,label+100000",
+      "description": "Word'ü Sakla : $t1 içeriğini etkin bellek sözcük adresine depolayın"
+    },
+    {
+      "example": "sw $t1,label+100000($t2)",
+      "description": "Word'ü Sakla : $t1 içeriğini etkin bellek sözcük adresine depolayın"
+    },
+    {
+      "example": "swc1 $f1,-100",
+      "description": "Word Yardımcı İşlemcisini Depolayın 1: 32 bitlik değeri $f1'den etkin bellek word adresine depolayın"
+    },
+    {
+      "example": "swc1 $f1,($t2)",
+      "description": "Word Yardımcı İşlemcisini Depolayın 1: 32 bitlik değeri $f1'den etkin bellek word adresine depolayın"
+    },
+    {
+      "example": "swc1 $f1,100000",
+      "description": "Word Yardımcı İşlemcisini Depolayın 1: 32 bitlik değeri $f1'den etkin bellek word adresine depolayın"
+    },
+    {
+      "example": "swc1 $f1,100000($t2)",
+      "description": "Word Yardımcı İşlemcisini Depolayın 1: 32 bitlik değeri $f1'den etkin bellek word adresine depolayın"
+    },
+    {
+      "example": "swc1 $f1,label",
+      "description": "Word Yardımcı İşlemcisini Depolayın 1: 32 bitlik değeri $f1'den etkin bellek word adresine depolayın"
+    },
+    {
+      "example": "swc1 $f1,label($t2)",
+      "description": "Word Yardımcı İşlemcisini Depolayın 1: 32 bitlik değeri $f1'den etkin bellek word adresine depolayın"
+    },
+    {
+      "example": "swc1 $f1,label+100000",
+      "description": "Word Yardımcı İşlemcisini Depolayın 1: 32 bitlik değeri $f1'den etkin bellek word adresine depolayın"
+    },
+    {
+      "example": "swc1 $f1,label+100000($t2)",
+      "description": "Word Yardımcı İşlemcisini Depolayın 1: 32 bitlik değeri $f1'den etkin bellek word adresine depolayın"
+    },
+    {
+      "example": "swl $t1,-100",
+      "description": "Sol Kelimeyi Sakla : Etkili bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytına kadar devam ederek, yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swl $t1,($t2)",
+      "description": "Sol Kelimeyi Sakla : Etkili bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytına kadar devam ederek, yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swl $t1,100",
+      "description": "Sol Kelimeyi Sakla : Etkili bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytına kadar devam ederek, yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swl $t1,100($t2)",
+      "description": "Sol Kelimeyi Sakla : Etkili bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytına kadar devam ederek, yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swl $t1,100000",
+      "description": "Sol Kelimeyi Sakla : Etkili bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytına kadar devam ederek, yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swl $t1,100000($t2)",
+      "description": "Sol Kelimeyi Sakla : Etkili bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytına kadar devam ederek, yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swl $t1,label",
+      "description": "Sol Kelimeyi Sakla : Etkili bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytına kadar devam ederek, yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swl $t1,label($t2)",
+      "description": "Sol Kelimeyi Sakla : Etkili bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytına kadar devam ederek, yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swl $t1,label+100000",
+      "description": "Sol Kelimeyi Sakla : Etkili bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytına kadar devam ederek, yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swl $t1,label+100000($t2)",
+      "description": "Sol Kelimeyi Sakla : Etkili bellek bayt adresinden başlayarak ve sözcüğünün düşük sıralı baytına kadar devam ederek, yüksek sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,-100",
+      "description": "Kelimeyi Sağda Sakla : Etkili hafıza bayt adresini içeren yüksek sıralı kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,($t2)",
+      "description": "Kelimeyi Sağda Sakla : Etkili hafıza bayt adresini içeren yüksek sıralı kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,100",
+      "description": "Kelimeyi Sağda Sakla : Etkili hafıza bayt adresini içeren yüksek sıralı kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,100($t2)",
+      "description": "Kelimeyi Sağda Sakla : Etkili hafıza bayt adresini içeren yüksek sıralı kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,100000",
+      "description": "Kelimeyi Sağda Sakla : Etkili hafıza bayt adresini içeren yüksek sıralı kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,100000($t2)",
+      "description": "Kelimeyi Sağda Sakla : Etkili hafıza bayt adresini içeren yüksek sıralı kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,label",
+      "description": "Kelimeyi Sağda Sakla : Etkili hafıza bayt adresini içeren yüksek sıralı kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,label($t2)",
+      "description": "Kelimeyi Sağda Sakla : Etkili hafıza bayt adresini içeren yüksek sıralı kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,label+100000",
+      "description": "Kelimeyi Sağda Sakla : Etkili hafıza bayt adresini içeren yüksek sıralı kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "swr $t1,label+100000($t2)",
+      "description": "Kelimeyi Sağda Sakla : Etkili hafıza bayt adresini içeren yüksek sıralı kelime baytından başlayarak ve bu bayt adresi boyunca devam ederek, düşük sıralı 1 ila 4 baytlık $t1'ı belleğe depolayın"
+    },
+    {
+      "example": "ulh $t1,-100($t2)",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i işaret genişletilmiş 16 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulh $t1,($t2)",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i işaret genişletilmiş 16 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulh $t1,100000",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i işaret genişletilmiş 16 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulh $t1,100000($t2)",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i işaret genişletilmiş 16 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulh $t1,label",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i işaret genişletilmiş 16 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulh $t1,label($t2)",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i işaret genişletilmiş 16 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulh $t1,label+100000",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i işaret genişletilmiş 16 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulh $t1,label+100000($t2)",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i işaret genişletilmiş 16 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulhu $t1,-100($t2)",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i 16 bit, sıfır genişletilmiş olarak ayarlayın"
+    },
+    {
+      "example": "ulhu $t1,($t2)",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i 16 bit, sıfır genişletilmiş olarak ayarlayın"
+    },
+    {
+      "example": "ulhu $t1,100000",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i 16 bit, sıfır genişletilmiş olarak ayarlayın"
+    },
+    {
+      "example": "ulhu $t1,100000($t2)",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i 16 bit, sıfır genişletilmiş olarak ayarlayın"
+    },
+    {
+      "example": "ulhu $t1,label",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i 16 bit, sıfır genişletilmiş olarak ayarlayın"
+    },
+    {
+      "example": "ulhu $t1,label($t2)",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i 16 bit, sıfır genişletilmiş olarak ayarlayın"
+    },
+    {
+      "example": "ulhu $t1,label+100000",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i 16 bit, sıfır genişletilmiş olarak ayarlayın"
+    },
+    {
+      "example": "ulhu $t1,label+100000($t2)",
+      "description": "Hizalanmamış Yarı Sözcüğü Yükle : Etkin bellek bayt adresinden başlayarak $t1'i 16 bit, sıfır genişletilmiş olarak ayarlayın"
+    },
+    {
+      "example": "ulw $t1,-100($t2)",
+      "description": "Hizalanmamış Yükleme Sözcüğü : $t1'i etkin bellek bayt adresinden başlayarak 32 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulw $t1,($t2)",
+      "description": "Hizalanmamış Yükleme Sözcüğü : $t1'i etkin bellek bayt adresinden başlayarak 32 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulw $t1,100000",
+      "description": "Hizalanmamış Yükleme Sözcüğü : $t1'i etkin bellek bayt adresinden başlayarak 32 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulw $t1,100000($t2)",
+      "description": "Hizalanmamış Yükleme Sözcüğü : $t1'i etkin bellek bayt adresinden başlayarak 32 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulw $t1,label",
+      "description": "Hizalanmamış Yükleme Sözcüğü : $t1'i etkin bellek bayt adresinden başlayarak 32 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulw $t1,label($t2)",
+      "description": "Hizalanmamış Yükleme Sözcüğü : $t1'i etkin bellek bayt adresinden başlayarak 32 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulw $t1,label+100000",
+      "description": "Hizalanmamış Yükleme Sözcüğü : $t1'i etkin bellek bayt adresinden başlayarak 32 bit olarak ayarlayın"
+    },
+    {
+      "example": "ulw $t1,label+100000($t2)",
+      "description": "Hizalanmamış Yükleme Sözcüğü : $t1'i etkin bellek bayt adresinden başlayarak 32 bit olarak ayarlayın"
+    },
+    {
+      "example": "ush $t1,-100($t2)",
+      "description": "Hizalanmamış Yarım Sözcüğü Sakla: Düşük dereceli yarım sözcük $t1 içeriklerini etkin bellek bayt adresinden başlayarak 16 bitte depolayın"
+    },
+    {
+      "example": "ush $t1,($t2)",
+      "description": "Hizalanmamış Yarım Sözcüğü Sakla: Düşük dereceli yarım sözcük $t1 içeriklerini etkin bellek bayt adresinden başlayarak 16 bitte depolayın"
+    },
+    {
+      "example": "ush $t1,100000",
+      "description": "Hizalanmamış Yarım Sözcüğü Sakla: Düşük dereceli yarım sözcük $t1 içeriklerini etkin bellek bayt adresinden başlayarak 16 bitte depolayın"
+    },
+    {
+      "example": "ush $t1,100000($t2)",
+      "description": "Hizalanmamış Yarım Sözcüğü Sakla: Düşük dereceli yarım sözcük $t1 içeriklerini etkin bellek bayt adresinden başlayarak 16 bitte depolayın"
+    },
+    {
+      "example": "ush $t1,label",
+      "description": "Hizalanmamış Yarım Sözcüğü Sakla: Düşük dereceli yarım sözcük $t1 içeriklerini etkin bellek bayt adresinden başlayarak 16 bitte depolayın"
+    },
+    {
+      "example": "ush $t1,label($t2)",
+      "description": "Hizalanmamış Yarım Sözcüğü Sakla: Düşük dereceli yarım sözcük $t1 içeriklerini etkin bellek bayt adresinden başlayarak 16 bitte depolayın"
+    },
+    {
+      "example": "ush $t1,label+100000",
+      "description": "Hizalanmamış Yarım Sözcüğü Sakla: Düşük dereceli yarım sözcük $t1 içeriklerini etkin bellek bayt adresinden başlayarak 16 bitte depolayın"
+    },
+    {
+      "example": "ush $t1,label+100000($t2)",
+      "description": "Hizalanmamış Yarım Sözcüğü Sakla: Düşük dereceli yarım sözcük $t1 içeriklerini etkin bellek bayt adresinden başlayarak 16 bitte depolayın"
+    },
+    {
+      "example": "usw $t1,-100($t2)",
+      "description": "Hizalanmamış Kelimeyi Sakla : $t1 içeriğini etkin hafıza bayt adresinden başlayarak 32 bit'te depolayın"
+    },
+    {
+      "example": "usw $t1,($t2)",
+      "description": "Hizalanmamış Kelimeyi Sakla : $t1 içeriğini etkin hafıza bayt adresinden başlayarak 32 bit'te depolayın"
+    },
+    {
+      "example": "usw $t1,100000",
+      "description": "Hizalanmamış Kelimeyi Sakla : $t1 içeriğini etkin hafıza bayt adresinden başlayarak 32 bit'te depolayın"
+    },
+    {
+      "example": "usw $t1,100000($t2)",
+      "description": "Hizalanmamış Kelimeyi Sakla : $t1 içeriğini etkin hafıza bayt adresinden başlayarak 32 bit'te depolayın"
+    },
+    {
+      "example": "usw $t1,label",
+      "description": "Hizalanmamış Kelimeyi Sakla : $t1 içeriğini etkin hafıza bayt adresinden başlayarak 32 bit'te depolayın"
+    },
+    {
+      "example": "usw $t1,label($t2)",
+      "description": "Hizalanmamış Kelimeyi Sakla : $t1 içeriğini etkin hafıza bayt adresinden başlayarak 32 bit'te depolayın"
+    },
+    {
+      "example": "usw $t1,label+100000",
+      "description": "Hizalanmamış Kelimeyi Sakla : $t1 içeriğini etkin hafıza bayt adresinden başlayarak 32 bit'te depolayın"
+    },
+    {
+      "example": "usw $t1,label+100000($t2)",
+      "description": "Hizalanmamış Kelimeyi Sakla : $t1 içeriğini etkin hafıza bayt adresinden başlayarak 32 bit'te depolayın"
+    },
+    {
+      "example": "xor $t1,$t2,100",
+      "description": "XOR : ayarla $t1 ($t2 bit bazında özel VEYA 16 bit imzasız anında)"
+    },
+    {
+      "example": "xor $t1,100",
+      "description": "XOR : ayarla $t1 ($t1 bit bazında özel VEYA 16 bit imzasız anında)"
+    },
+    {
+      "example": "xori $t1,$t2,100000",
+      "description": "XOR Hemen : ayarla $t1 ($t2 bit düzeyinde özel VEYA 32 bit anında)"
+    },
+    {
+      "example": "xori $t1,100",
+      "description": "XOR Hemen : ayarla $t1 ($t1 bit bazında özel VEYA 16 bit imzasız anında)"
+    },
+    {
+      "example": "xori $t1,100000",
+      "description": "XOR Hemen : ayarla $t1 ($t1 bit düzeyinde özel VEYA 32 bit anında)"
+    }
+  ],
+  "directives": [
+    {
+      "name": ".align",
+      "description": "Sonraki veri öğesini belirtilen bayt sınırına göre hizalayın (0=bayt, 1=yarım, 2=kelime, 3=çift)"
+    },
+    {
+      "name": ".ascii",
+      "description": "Dizeyi Veri segmentinde saklayın ancak boş sonlandırıcı eklemeyin"
+    },
+    {
+      "name": ".asciiz",
+      "description": "Dizeyi Veri segmentinde saklayın ve boş sonlandırıcı ekleyin"
+    },
+    {
+      "name": ".byte",
+      "description": "Listelenen değer(ler)i 8 bit bayt olarak saklayın"
+    },
+    {
+      "name": ".data",
+      "description": "Sonraki öğeler Veri segmentinde bir sonraki uygun adreste saklanır"
+    },
+    {
+      "name": ".double",
+      "description": "Listelenen değer(ler)i çift duyarlıklı kayan nokta olarak saklayın"
+    },
+    {
+      "name": ".end_macro",
+      "description": "Makro tanımını sonlandırın.  .macro'ya bakın"
+    },
+    {
+      "name": ".eqv",
+      "description": "Birinci işleneni ikinci işlenenle değiştirin. İlk işlenen sembol, ikinci işlenen ise ifadedir (#define gibi)"
+    },
+    {
+      "name": ".extern",
+      "description": "Listelenen etiketi ve bayt uzunluğunu küresel bir veri alanı olarak bildirin"
+    },
+    {
+      "name": ".float",
+      "description": "Listelenen değer(ler)i tek duyarlıklı kayan nokta olarak saklayın"
+    },
+    {
+      "name": ".globl",
+      "description": "Diğer dosyalardan referans almayı etkinleştirmek için listelenen etiketleri global olarak bildirin"
+    },
+    {
+      "name": ".half",
+      "description": "Listelenen değer(ler)i yarım kelime sınırında 16 bitlik yarım kelimeler olarak saklayın"
+    },
+    {
+      "name": ".include",
+      "description": "Belirtilen dosyanın içeriğini ekleyin.  Dosya adını tırnak içine alın."
+    },
+    {
+      "name": ".kdata",
+      "description": "Sonraki öğeler, bir sonraki kullanılabilir adreste Çekirdek Veri segmentinde saklanır"
+    },
+    {
+      "name": ".ktext",
+      "description": "Sonraki öğeler (talimatlar) bir sonraki kullanılabilir adreste Çekirdek Metni segmentinde saklanır"
+    },
+    {
+      "name": ".macro",
+      "description": "Makro tanımına başlayın.  .end_macro'ya bakın"
+    },
+    {
+      "name": ".set",
+      "description": "Derleyici değişkenlerini ayarlayın.  Şu anda göz ardı edildi ancak SPIM uyumluluğu için dahil edildi"
+    },
+    {
+      "name": ".space",
+      "description": "Veri segmentinde belirtilen sonraki bayt sayısını ayırın"
+    },
+    {
+      "name": ".text",
+      "description": "Sonraki öğeler (talimatlar) bir sonraki mevcut adresteki Metin bölümünde saklanır"
+    },
+    {
+      "name": ".word",
+      "description": "Listelenen değer(ler)i kelime sınırında 32 bitlik kelimeler olarak saklayın"
+    }
+  ]
+}

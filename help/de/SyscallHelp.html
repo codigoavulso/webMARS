@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS Systemaufrufe</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Systemaufrufe</h1>
+  <p class="lead">Geben Sie die Servicenummer ein <code>$v0</code>, platzieren Sie Argumente in den unten gezeigten Registern und führen Sie sie aus <code>syscall</code>. Sofern in einer Zeile nichts anderes angegeben ist, bleiben andere Register als die dokumentierten Ergebnisse erhalten.</p>
+
+  <h2>Konsole, Speicher und Dateien</h2>
+  <table class="compact">
+    <tr><th>Service</th><th>Nein.</th><th>Argumente</th><th>Ergebnis / Verhalten</th></tr>
+    <tr><td>Ganzzahl drucken</td><td>1</td><td><code>$a0</code> Wert</td><td>Schreibt eine vorzeichenbehaftete Dezimalzahl.</td></tr>
+    <tr><td>Float drucken</td><td>2</td><td><code>$f12</code> Wert</td><td>Schreibt einfache Genauigkeit.</td></tr>
+    <tr><td>Doppelt drucken</td><td>3</td><td><code>$f12/$f13</code> Wert</td><td>Schreibt doppelte Genauigkeit.</td></tr>
+    <tr><td>Zeichenfolge drucken</td><td>4</td><td><code>$a0</code> nullterminierte Bytefolge</td><td>Schreibt Text.</td></tr>
+    <tr><td>Ganzzahl lesen</td><td>5</td><td>—</td><td><code>$v0</code>; Die vollständige Eingabe muss eine gültige Ganzzahl sein.</td></tr>
+    <tr><td>Float lesen</td><td>6</td><td>—</td><td><code>$f0</code>; Nachgestellter Müll wird abgelehnt.</td></tr>
+    <tr><td>Doppelt lesen</td><td>7</td><td>—</td><td><code>$f0/$f1</code>; Nachgestellter Müll wird abgelehnt.</td></tr>
+    <tr><td>Zeichenfolge lesen</td><td>8</td><td><code>$a0</code> Puffer, <code>$a1</code> maximale Länge</td><td>Befolgt die Längen- und Abschlussregeln im Fgets-Stil.</td></tr>
+    <tr><td>sbrk</td><td>9</td><td><code>$a0</code> nicht-negative Byteanzahl</td><td><code>$v0</code> vorherige Heap-Adresse; gegen Karte und Speicherlimit geprüft.</td></tr>
+    <tr><td>Ausstieg</td><td>10</td><td>—</td><td>Wird normal beendet.</td></tr>
+    <tr><td>Zeichen drucken</td><td>11</td><td>Low-Byte von <code>$a0</code></td><td>Schreibt ein Zeichen.</td></tr>
+    <tr><td>Charakter lesen</td><td>12</td><td>—</td><td><code>$v0</code> Zeichencode.</td></tr>
+    <tr><td>Datei öffnen</td><td>13</td><td><code>$a0</code> Name, <code>$a1</code> Flaggen</td><td><code>$v0</code> Deskriptor oder negativer Fehler. Flags: 0 lesen, 1 schreiben/erstellen, 9 anhängen/erstellen.</td></tr>
+    <tr><td>Datei lesen</td><td>14</td><td><code>$a0</code> fd, <code>$a1</code> Puffer, <code>$a2</code> zählen</td><td><code>$v0</code> Gelesene Bytes, 0 bei EOF oder negativer Fehler.</td></tr>
+    <tr><td>Datei schreiben</td><td>15</td><td><code>$a0</code> fd, <code>$a1</code> Puffer, <code>$a2</code> zählen</td><td><code>$v0</code> Bytes geschrieben oder negativer Fehler.</td></tr>
+    <tr><td>Datei schließen</td><td>16</td><td><code>$a0</code> fd</td><td>Schließt einen virtuellen Dateideskriptor.</td></tr>
+    <tr><td>Mit Code beenden</td><td>17</td><td><code>$a0</code> Code</td><td>Beendet und zeichnet den Code auf.</td></tr>
+  </table>
+  <p>Die Deskriptoren 0, 1 und 2 sind stdin, stdout und stderr. Benutzerdeskriptoren beginnen bei 3 und werden vom virtuellen Dateisystem des Browsers unterstützt; Sie gewähren keinen uneingeschränkten Zugriff auf die Hostdatei.</p>
+
+  <h2>Zeit, MIDI und Zahlenformatierung</h2>
+  <table class="compact">
+    <tr><th>Service</th><th>Nein.</th><th>Argumente</th><th>Ergebnis / Verhalten</th></tr>
+    <tr><td>Systemzeit</td><td>30</td><td>—</td><td>Niedrige 32 Bit in <code>$a0</code>, hoch 32 Bit in <code>$a1</code>, Millisekunden seit der Unix-Epoche.</td></tr>
+    <tr><td>MIDI aus</td><td>31</td><td><code>$a0</code> Tonhöhe, <code>$a1</code> Dauer, <code>$a2</code> Instrument, <code>$a3</code> Lautstärke</td><td>Startet asynchron.</td></tr>
+    <tr><td>Schlafen</td><td>32</td><td><code>$a0</code> Millisekunden</td><td>Wartet mit Browser-Timing; Stop bricht das Warten ab.</td></tr>
+    <tr><td>MIDI synchron ausgegeben</td><td>33</td><td>gleich wie 31</td><td>Rückkehr nach der Tondauer.</td></tr>
+    <tr><td>Hexadezimal drucken</td><td>34</td><td><code>$a0</code></td><td>Acht hexadezimale Ziffern.</td></tr>
+    <tr><td>Binär drucken</td><td>35</td><td><code>$a0</code></td><td>Zweiunddreißig Binärziffern.</td></tr>
+    <tr><td>Ohne Unterschrift drucken</td><td>36</td><td><code>$a0</code></td><td>Dezimalzahl ohne Vorzeichen.</td></tr>
+  </table>
+  <p>MIDI verwendet das Web-Audio API. Browserberechtigungen, Autoplay-Richtlinien und die Auslastung des Zeitplaners können sich darauf auswirken, wann ein Sound startet.</p>
+
+  <h2>Pseudozufällige Streams</h2>
+  <table class="compact">
+    <tr><th>Service</th><th>Nein.</th><th>Argumente</th><th>Ergebnis</th></tr>
+    <tr><td>Samen setzen</td><td>40</td><td><code>$a0</code> Stream-ID, <code>$a1</code> Samen</td><td>Legt diesen Stream fest.</td></tr>
+    <tr><td>Zufällige Ganzzahl</td><td>41</td><td><code>$a0</code> Stream-ID</td><td><code>$a0</code> zufällige 32-Bit-Ganzzahl.</td></tr>
+    <tr><td>Zufälliger Ganzzahlbereich</td><td>42</td><td><code>$a0</code> Stream-ID, <code>$a1</code> positive Grenze</td><td><code>$a0</code> in [0, gebunden).</td></tr>
+    <tr><td>Zufälliger Float</td><td>43</td><td><code>$a0</code> Stream-ID</td><td><code>$f0</code> in [0, 1).</td></tr>
+    <tr><td>Zufälliges Doppel</td><td>44</td><td><code>$a0</code> Stream-ID</td><td><code>$f0/$f1</code> in [0, 1).</td></tr>
+  </table>
+  <p>Jede ganzzahlige ID identifiziert einen unabhängigen deterministischen Stream. Streams sind in exportierten Laufzeitstatus- und Backstep-Snapshots enthalten.</p>
+
+  <h2>Dialoge</h2>
+  <table class="compact">
+    <tr><th>Nein.</th><th>Service</th><th>Vertrag</th></tr>
+    <tr><td>50</td><td>Dialog bestätigen</td><td><code>$a0</code> Nachricht; Auswahl zurückgegeben <code>$a0</code> (Ja 0, Nein 1, Abbrechen 2).</td></tr>
+    <tr><td>51</td><td>Geben Sie eine Ganzzahl ein</td><td><code>$a0</code> prompt; Wert in <code>$a0</code>, Status in <code>$a1</code>.</td></tr>
+    <tr><td>52</td><td>Eingabe-Float</td><td><code>$a0</code> prompt; Wert in <code>$f0</code>, Status in <code>$a1</code>.</td></tr>
+    <tr><td>53</td><td>Geben Sie doppelt ein</td><td><code>$a0</code> prompt; Wert in <code>$f0/$f1</code>, Status in <code>$a1</code>.</td></tr>
+    <tr><td>54</td><td>Eingabezeichenfolge</td><td><code>$a0</code> schnelle, <code>$a1</code> Puffer, <code>$a2</code> maximal; Status in <code>$a1</code>.</td></tr>
+    <tr><td>55–59</td><td>Nachrichtendialoge</td><td>Zeigt Plain-, Integer-, Float-, Double- oder String-Nachrichten an. Dienst 55 verwendet <code>$a1</code> für den Nachrichtentyp.</td></tr>
+  </table>
+  <p>Der Eingabestatus folgt den MARS-Konventionen: 0 Erfolg, −1 ungültige Eingabe, −2 Abbruch und −3 leere Eingabe; Die Zeichenfolgeneingabe verwendet beim Abschneiden ebenfalls −4.</p>
+
+  <h2>webMARS Bibliotheksdienste</h2>
+  <p>Die Dienste 60–103 unterstützen die gebündelten Mini-C-Kompatibilitätsbibliotheken. Bevorzugen Sie die Bibliotheksheader, die die richtigen Typen und das richtige Registerprotokoll bereitstellen, anstatt diese Nummern direkt aufzurufen.</p>
+  <table class="compact">
+    <tr><th>Reichweite</th><th>Dienstleistungen</th></tr>
+    <tr><td>60–64</td><td>Flush, Eof, Readline, Printf, Format</td></tr>
+    <tr><td>65–69</td><td>file_read, file_closed, file_close, file_eof, file_readline</td></tr>
+    <tr><td>70–73</td><td>args_flag, args_int, args_string, args_parse</td></tr>
+    <tr><td>74–84</td><td>Stringlänge, Indizierung, Join, Teilstring, Vergleich, Konvertierungen, Kleinschreibung, Terminierung und Char-Array-Brücken</td></tr>
+    <tr><td>85–92</td><td>Zeichen-, Boolesche/Ganzzahl-Analyse, Token-Analyse und Ganzzahl-zu-Hex-Helfer</td></tr>
+    <tr><td>93–100</td><td>Bildabmessungen, Erstellung, Klonen, Unterbild, Laden, Speichern und Datenzugriff</td></tr>
+    <tr><td>101–103</td><td>C-String-Terminierung und Native-String/C-String-Konvertierung</td></tr>
+  </table>
+</body>
+</html>

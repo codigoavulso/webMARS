@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS araçlar</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Araçlar</h1>
+  <p class="lead">Araçlar menüsünden araçları açın. Her aracın bağımsız bir penceresi vardır ve mevcut araca bağlanabilir. MIPS talimat, hafıza veya gözlemlemek için çalışma zamanı MMIO aktivite.</p>
+
+  <div class="note"><strong>Çalıştırmadan önce bağlanın.</strong> Bağlantılı bir araç, maksimum hızda yürütme düzenleyicinin vurgulamasını bastırdığında bile tam çalışma zamanı anlık görüntülerini alır ve olayları takip eder. İlgisiz bir deneme başlatırken aracın bağlantısını kesin veya sıfırlayın.</div>
+
+  <h2>Mimari ve performans</h2>
+  <table>
+    <tr><th>Araç</th><th>Bunun için kullan</th></tr>
+    <tr><td>Şube Geçmişi Tablosu Simülatörü</td><td>Tahmin şemalarını karşılaştırın ve dallanma tahmin doğruluğunu inceleyin.</td></tr>
+    <tr><td>Veri Önbelleği Simülatörü</td><td>Bir program verilere erişirken bir önbellek yapılandırın ve isabetleri, kaçırılanları ve yerelliği ölçün.</td></tr>
+    <tr><td>Talimat Sayacı</td><td>Yürütülen talimatları sayın ve mevcut toplamı takip edin.</td></tr>
+    <tr><td>Talimat İstatistikleri</td><td>İş yükü kompozisyonunu anlamak için talimat kategorisine göre grup yürütme.</td></tr>
+    <tr><td>Bellek Referans Görselleştirmesi</td><td>Uzamsal bellek erişim modellerini ve sıcak bölgeleri görselleştirin.</td></tr>
+    <tr><td>MIPS Röntgen</td><td>Talimat alanlarını, kod çözmeyi ve veri yolu/kontrol ilişkilerini keşfedin.</td></tr>
+  </table>
+
+  <h2>Ekranlar, terminaller ve cihazlar</h2>
+  <table>
+    <tr><th>Araç</th><th>Bunun için kullan</th></tr>
+    <tr><td>Bit Eşlem Görünümü</td><td>Yapılandırılabilir bellek destekli bir çerçeve arabelleğinden pikselleri işleyin.</td></tr>
+    <tr><td>Bitmap Terminal Aracı</td><td>Klavye girişiyle birlikte çerçeve tamponu tabanlı bir metin terminali kullanın.</td></tr>
+    <tr><td>Klavye ve Ekran MMIO Simülatörü</td><td>Standart MMIO aralığında alıcı/verici kontrolünü ve veri kayıtlarını kullanın.</td></tr>
+    <tr><td>TTY Cihaz + ANSI Terminal</td><td>Klavye girişi, ANSI oluşturma ve xterm fare olaylarını etkinleştirme ile terminal programlarını çalıştırın.</td></tr>
+    <tr><td>Dijital Laboratuvar Simülasyonu</td><td>Yedi bölümlü ekranları, tuş takımı girişini ve ilgili dijital laboratuarı MMIO sürün.</td></tr>
+    <tr><td>Sistem Saati ve Zamanlayıcısı</td><td>Yürütülen talimatları veya gerçek milisaniyeleri sayan bellek eşlemeli bir zamanlayıcı çalıştırın ve her onay işaretinde bir istisna işleyicisinin çalışması için MARS zamanlayıcı kesmesini yükseltin.</td></tr>
+    <tr><td>Mars Robotu</td><td>Simüle edilmiş robotu bellek eşlemeli arayüzü aracılığıyla kontrol edin.</td></tr>
+  </table>
+  <div class="note"><strong>MARS-OS TTY İşletim Sistemi örneği.</strong> Çoklu dosya örneğini açın, bu aracı bağlayın, birleştirin ve çalıştırın. Doğrudan Windows 95 tarzı Program Yöneticisine önyükleme yapar; 46 komutlu kabuk için Terminal uygulamasını açın. Başlat menüsü, pencereler ve uygulama başlatıcıları tamamen MIPS derlemesi tarafından çizilir ve xterm SGR fare raporlarıyla kontrol edilir. Yazılabilir RAM disk, düzenleyici, elektronik tablo ve BASIC yorumlayıcı kullanılabilir durumda kalır; düzenleyici imleci ve elektronik tablo hücreleri de fare tıklamalarını kabul eder.</div>
+  <div class="note"><strong>Sanal ekranlar için pencere seçenekleri.</strong> Bitmap Görüntüleme, Bitmap Terminal Aracı ve TTY Device + ANSI Terminallerinin her biri, kendi ayarlarının üzerinde iki pencere seçeneği taşır. <em>Pencereyi görüntüye sığdır</em> Araç penceresini, ekranın tamamı kaydırma çubukları ve çevresinde boş alan olmayacak şekilde sığacak şekilde yeniden boyutlandırır ve ekran boyutu veya ayarlar değiştiğinde yeniden uygulanır; pencereyi elle yeniden boyutlandırmak onu tekrar kapatır. Sığdır seçeneği seçilmeye başlar ve yapılandırma girişleri hem masaüstü hem de mobil cihazlarda daraltılmaya başlar. Yığılmış mobil düzende sığdırma seçili kalır ancak panel zaten ekranı kapladığı için yeniden boyutlandırmaya gerek yoktur.</div>
+
+  <h2>Öğrenme yardımcı programları</h2>
+  <table>
+    <tr><th>Araç</th><th>Bunun için kullan</th></tr>
+    <tr><td>Kayan Nokta Gösterimi</td><td>IEEE 754 tek duyarlıklı değeri, alanı ve bit modelini dönüştürün ve inceleyin.</td></tr>
+    <tr><td>Araçlara Giriş</td><td>Standart bağlantı, sıfırlama ve etkileşim yaşam döngüsünü öğrenin.</td></tr>
+    <tr><td>Çöpçü Avı</td><td>Etkileşimli montaj programlama yarışmasını çalıştırın.</td></tr>
+    <tr><td>Ekran Büyüteci</td><td>Gösterimler ve erişilebilirlik için çalışma alanının seçilen bir bölümünü büyütün.</td></tr>
+    <tr><td>Yığın Görselleştirici</td><td>Tüm adres alanını ve yığını kelime kelime takip edin: her çağrı tarafından açılan çerçeveler, kaydedilen ve geri yüklenen kayıtlar, segment bloklarından tek bitlere kadar yakınlaştırma ve klasik çerçeve hatalarına yönelik uyarılarla birlikte her $sp hareketinin düz dilli günlüğü. Aynı zamanda yığın bilinçli duraklamalarla yürütmeyi de yönlendirir: bir sonraki çağrıya koşun, bir çağrının üzerinden geçin, mevcut çerçeve dönene kadar, $sp hareket edene kadar veya izlenen bir sözcük değişene kadar koşun ve bir yığın uyarısı belirir belirmez duraklatın.</td></tr>
+  </table>
+
+  <h2>MIPS'dan bit eşlem yapılandırması</h2>
+  <p>Bir program, bu sürümlendirilmiş kontrol bloğunu etkin MMIO tabanına göre yazarak Bitmap aracından herhangi birini yapılandırabilir (normalde <code>0xffff0000</code>). Önce tüm alanları yazın ve yazın <code>1</code> son komuta; araç ancak bu atomik taahhütten sonra değişir.</p>
+  <table>
+    <tr><th>Ofset</th><th>Değer</th></tr>
+    <tr><td><code>+0x20</code></td><td>İmza <code>0x57424d50</code> (<code>WBMP</code>)</td></tr>
+    <tr><td><code>+0x24</code></td><td>Protokol sürümü <code>1</code></td></tr>
+    <tr><td><code>+0x28</code></td><td>Hedef: <code>1</code> Ekran, <code>2</code> terminali, <code>3</code> ikisi de</td></tr>
+    <tr><td><code>+0x2c … +0x38</code></td><td>Ekran genişliği, ekran yüksekliği, birim genişliği ve birim yüksekliği</td></tr>
+    <tr><td><code>+0x3c</code></td><td>Çerçeve arabelleği temel adresi</td></tr>
+    <tr><td><code>+0x40</code></td><td>Komut: <code>1</code> uygulamak, <code>2</code> program yapılandırmasını temizle</td></tr>
+  </table>
+  <p>Geçersiz veya eksik bloklar dikkate alınmaz. Geri adım, çalışma zamanı dışa aktarma ve oturum geri yükleme, taahhüt edilen yapılandırmayı korur. Bu, isteğe bağlı bir webMARS uzantısıdır: MARS 4.5, bu kullanılmayan MMIO sözcüklerini yok sayar, aynı çerçeve arabellek kodu ise manuel araç ayarlarıyla çalışmaya devam eder.</p>
+
+  <h2>MMIO güvenlik</h2>
+  <p>Yakınında MMIO cihazlar eşlendi <code>0xffff0000</code>. Cihaz araçları ve çalışma zamanı bu adresleri paylaşır; yoklama programları hazır bitleri dikkate almalı ve kesmeye dayalı programlar geçerli bir istisna işleyicisi kurmalıdır. Bir aracın sıfırlanması, birleştirilmiş programın değil, görselleştirmesinin veya cihaz durumunun temizlenmesine neden olur.</p>
+</body>
+</html>

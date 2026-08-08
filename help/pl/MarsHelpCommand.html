@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C kompilator</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">Wbudowany kompilator uczący tłumaczy celowo zdefiniowany podzbiór C na zestaw MIPS32 przy użyciu konwencji wywoływania o32. To nie jest kompilator C ISO ogólnego przeznaczenia.</p>
+
+  <h2>Profile</h2>
+  <table>
+    <tr><th>Profil</th><th>Cel</th></tr>
+    <tr><td><code>C0-S0</code> do <code>C0-S4</code></td><td>Skumulowane podzbiory nauczania, przechodzące od wyrażeń i przepływu sterowania do funkcji, tablic, wskaźników, struktur, typedef, kontraktów i bibliotek.</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>Domyślny, najbardziej wydajny profil: adresowany bajtowo <code>char</code>/<code>char *</code>, natywne ciągi znaków, <code>argc/argv</code>, wskaźniki funkcji i <code>void *</code>.</td></tr>
+  </table>
+  <p>Jeśli źródło wymaga wyższego profilu, kompilacja emituje profil skupiony <code>MC_SUBSET_MISMATCH</code> diagnostycznym, a nie kaskadą błędów wtórnych.</p>
+
+  <h2>Skompiluj projekt</h2>
+  <ol class="steps">
+    <li>Wybierz żądany profil i opcje wyjściowe w <b>Ustawienia → Mini-C preferencje</b>.</li>
+    <li>Otwórz jeden lub więcej <code>.c</code> plików w tym samym projekcie.</li>
+    <li>Wybierz <b>Uruchom → Skompiluj C0</b> lub naciśnij <kbd>F4</kbd>.</li>
+    <li>Przejrzyj diagnostykę i wygenerowany zespół MIPS. Złóż i uruchom wygenerowany program normalnie.</li>
+  </ol>
+
+  <h2>Konwencja wywoływania i punkt wejścia</h2>
+  <ul>
+    <li>Używanie argumentów <code>$a0</code>–<code>$a3</code>, dodatkowe argumenty używają stosu, a zwracane wartości używają <code>$v0</code> (i <code>$v1</code> tam, gdzie to stosowne).</li>
+    <li>Rejestry i ramki stosu zapisane przez wywołanie są zgodne z oczekiwaniami MIPS o32.</li>
+    <li><code>main(void)</code> oraz w C1-NATIVE, <code>main(int argc, char **argv)</code> są obsługiwane.</li>
+    <li>Dla webMARS argumentów programu, <code>argv[0]</code> jest pierwszym tokenem dostarczonym przez użytkownika; nie ma automatycznego wpisu nazwy pliku wykonywalnego.</li>
+  </ul>
+
+  <h2>Dołączone nagłówki i biblioteki</h2>
+  <p>
+    <span class="pill">stdio</span><span class="pill">conia</span><span class="pill">plik</span>
+    <span class="pill">argumenty</span><span class="pill">ciąg</span><span class="pill">string_native</span>
+    <span class="pill">analizować</span><span class="pill">obraz</span><span class="pill">użytkowy</span>
+    <span class="pill">rand</span><span class="pill">typ</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">stddef</span><span class="pill">bitmap_rect</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>Te nagłówki to biblioteki zgodności webMARS zbudowane wokół wywołań systemowych i urządzeń MIPS. Implementują swój udokumentowany podzbiór, a nie pełną standardową bibliotekę C hosta.</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> zapewnia również <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> i <code>bitmap_configure_all</code>, umożliwiając programowi C0 wysyłanie rozmiaru wyświetlacza, rozmiaru jednostki i adresu bufora ramki do narzędzi Bitmap.</p>
+
+  <h2>Dobre przykłady na początek</h2>
+  <ul>
+    <li><b>Witaj świecie (C)</b> dla najmniejszego kompletnego programu.</li>
+    <li><b>Mini-C C1 Natywny</b> dla ciągów natywnych i bieżącego zachowania profilu.</li>
+    <li><b>Demo biblioteki argumentów</b> dla <code>argc/argv</code>.</li>
+    <li><b>Statystyki wieloplikowe</b> do kompilacji całego projektu i wywołań funkcji w plikach.</li>
+    <li><b>Podstawy konsoli stdio</b> i <b>Stdio Plik w obie strony</b> dla bibliotek kompatybilności.</li>
+  </ul>
+
+  <div class="note">Podręcznik kompilatora w repozytorium pozostaje normatywnym, szczegółowym odniesieniem do języka. Strona w aplikacji podsumowuje zachowania potrzebne do prawidłowego wybrania profilu i prawidłowego uruchomienia przykładów.</div>
+</body>
+</html>

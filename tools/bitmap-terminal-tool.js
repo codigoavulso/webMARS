@@ -121,7 +121,7 @@
   }
 
   function buildBaseOptions(selected) {
-    return BASE_OPTIONS.map(({ value, label }) => `<option value="${value}"${value === selected ? " selected" : ""}>${label}</option>`).join("");
+    return BASE_OPTIONS.map(({ value, label }) => `<option value="${value}"${value === selected ? " selected" : ""}>${t(label)}</option>`).join("");
   }
 
   function ensureSelectOption(select, value, label = String(value)) {
@@ -139,7 +139,7 @@
     id: "bitmap-terminal-tool",
     label: "Bitmap Terminal Tool",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("bitmap-terminal-tool", "Bitmap Terminal Tool, Version 0.1", 1080, 780, `
+      const shell = ctx.createToolWindowShell("bitmap-terminal-tool", "Bitmap Terminal Tool, Version 0.1", 900, 660, `
         <div class="bt-tool">
           <h2 class="bt-title">Bitmap Terminal (Framebuffer + Keyboard)</h2>
           <div class="mars-tool-display-options">

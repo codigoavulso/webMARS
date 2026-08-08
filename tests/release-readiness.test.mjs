@@ -4,10 +4,14 @@ import { access, readFile, readdir } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { collectFindings } from "../scripts/check-i18n-coverage.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.5.4";
-const languages = ["en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id"];
+const expectedReleaseVersion = "0.5.5";
+const languages = [
+  "en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id",
+  "de", "ja", "ko", "tr", "vi", "ur", "it", "pl", "fa", "th"
+];
 const localizedLanguages = languages.filter((language) => language !== "en");
 
 async function exists(path) {
@@ -63,7 +67,7 @@ function placeholders(value) {
     .sort();
 }
 
-test("0.5.4 version is coherent across runtime and release metadata", async () => {
+test("0.5.5 version is coherent across runtime and release metadata", async () => {
   const packageJson = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
   const packageLock = JSON.parse(await readFile(resolve(projectRoot, "package-lock.json"), "utf8"));
   const appVersion = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");
@@ -255,6 +259,48 @@ test("localized MIPS reference catalogs do not fall back to English", async () =
   }
 });
 
+test("no user-facing string reaches the interface without a catalog entry", async () => {
+  // A missing entry is silent: translateText falls through to its key, so the
+  // string simply stays English in all twenty languages instead of failing.
+  const { missingEntries } = await collectFindings();
+  assert.deepEqual(
+    missingEntries.map((item) => `${item.file}:${item.line} ${JSON.stringify(item.text)}`),
+    []
+  );
+});
+
+test("switching to a language that is not resident loads its catalog on demand", async () => {
+  const source = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "00-i18n.js"), "utf8");
+  const requested = [];
+  const sandbox = {
+    document: {
+      documentElement: { lang: "en", dir: "ltr" },
+      head: { appendChild(script) { requested.push(script.src); } },
+      createElement: () => ({})
+    },
+    localStorage: { getItem: () => null, setItem() {} },
+    CustomEvent: class CustomEvent {},
+    dispatchEvent() {}
+  };
+  sandbox.window = sandbox;
+  vm.runInNewContext(source, sandbox, { filename: "00-i18n.js" });
+
+  // The picker offers every supported language, not only the resident ones.
+  // Joined rather than deep-compared: the sandbox is a separate realm, so its
+  // arrays never match a host array under deepStrictEqual.
+  assert.equal(
+    sandbox.WebMarsI18n.getLanguages().join(","),
+    [...languages].sort((a, b) => a.localeCompare(b)).join(",")
+  );
+
+  sandbox.WebMarsI18n.setLanguage("ko");
+  assert.deepEqual(requested, ["./assets/js/i18n/ko.js"]);
+
+  // An unsupported language must never trigger a fetch.
+  await sandbox.WebMarsI18n.ensureLanguage("xx");
+  assert.deepEqual(requested, ["./assets/js/i18n/ko.js"]);
+});
+
 test("the document language follows the selected interface language", async () => {
   const source = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "00-i18n.js"), "utf8");
   const values = new Map([["webmars-language-v1", "pt"]]);
@@ -281,6 +327,12 @@ test("the document language follows the selected interface language", async () =
   assert.equal(sandbox.WebMarsI18n.setLanguage("ar"), true);
   assert.equal(sandbox.document.documentElement.lang, "ar");
   assert.equal(sandbox.document.documentElement.dir, "rtl");
+  assert.equal(sandbox.WebMarsI18n.setLanguage("ur"), true);
+  assert.equal(sandbox.document.documentElement.dir, "rtl");
+  assert.equal(sandbox.WebMarsI18n.setLanguage("fa"), true);
+  assert.equal(sandbox.document.documentElement.dir, "rtl");
+  assert.equal(sandbox.WebMarsI18n.setLanguage("ja"), true);
+  assert.equal(sandbox.document.documentElement.dir, "ltr");
 });
 
 test("the first visit follows a supported browser language and otherwise uses English", async () => {
@@ -303,10 +355,15 @@ test("the first visit follows a supported browser language and otherwise uses En
   };
 
   assert.equal(boot(["fr-CA", "en-US"]).WebMarsI18n.getLanguage(), "fr");
-  assert.equal(boot(["de-DE", "ar-EG"]).WebMarsI18n.getLanguage(), "ar");
+  assert.equal(boot(["sv-SE", "ar-EG"]).WebMarsI18n.getLanguage(), "ar");
   assert.equal(boot(["zh-Hant-HK"]).WebMarsI18n.getLanguage(), "zh");
-  assert.equal(boot(["de-DE", "ja-JP"]).WebMarsI18n.getLanguage(), "en");
+  assert.equal(boot(["nl-NL", "sv-SE"]).WebMarsI18n.getLanguage(), "en");
   assert.equal(boot(["fr-FR"], "pt-PT").WebMarsI18n.getLanguage(), "pt");
+  assert.equal(boot(["de-AT", "en-US"]).WebMarsI18n.getLanguage(), "de");
+  assert.equal(boot(["ja-JP"]).WebMarsI18n.getLanguage(), "ja");
+  assert.equal(boot(["ko-KR"]).WebMarsI18n.getLanguage(), "ko");
+  assert.equal(boot(["fa-IR"]).WebMarsI18n.getLanguage(), "fa");
+  assert.equal(boot(["vi-VN"]).WebMarsI18n.getLanguage(), "vi");
 });
 
 test("fresh UI preferences preserve the language detected during bootstrap", async () => {

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS Änderungsprotokoll</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Änderungsprotokoll</h1>
+  <p class="lead">Version 0.5.5 führt das Pipeline-Labor ein und erweitert die vollständige Lernumgebung auf zwanzig Sprachen.</p>
+
+  <h2>0.5.5 &mdash; Pipeline-Labor und zwanzig Sprachen</h2>
+  <ul>
+    <li>Deterministisches fünfstufiges Pipeline-Labor mit RAW-Konflikten, Weiterleitung, Stalls, reversiblen Zyklen, Metriken und skalierbarer Zeitleiste hinzugefügt.</li>
+    <li>Oberfläche, Beispiele, Dokumentation und Hilfe von zehn auf zwanzig Sprachen erweitert.</li>
+    <li>Responsives Werkzeugverhalten, Lokalisierung und Regressionstests ausgebaut.</li>
+  </ul>
+
+  <h2>0.5.4 &mdash; MARS-OS-Desktop, virtuelle Anzeigen und Systemdesign</h2>
+  <ul>
+    <li>Vervollständigung des MARS-Betriebssystemerlebnisses im Windows 95-Stil mit einem Startmenü, einem Anwendungsstarter und beweglichen, in der Größe veränderbaren Fenstern.</li>
+    <li>Das TTY ANSI-Terminal, die Mauseingabe, das reaktionsfähige mobile Verhalten und die MARS-OS-Anwendungen wurden verbessert.</li>
+    <li>Das Fenster „Anpassen“ wurde aktiviert, damit es standardmäßig in TTY ANSI, der Bitmap-Anzeige und dem Bitmap-Terminal angezeigt wird.</li>
+    <li>Reduzierte Einstellungen für die virtuelle Anzeige standardmäßig sowohl bei Desktop- als auch bei mobilen Layouts.</li>
+    <li>Es wurde ein Systemdesign hinzugefügt, das automatisch dem Farbschema des Browsers folgt, mit expliziten Überschreibungen von Hell und Dunkel.</li>
+  </ul>
+
+  <h2>0.5.3 &mdash; Browser-Sprach-Bootstrap-Korrektur</h2>
+  <ul>
+    <li>Die vom Browser erkannte Sprache wurde beibehalten, wenn die Anwendung zum ersten Mal ihre Standard-Benutzeroberflächeneinstellungen erstellt.</li>
+    <li>Explizit gespeicherte Spracheinstellungen wurden vor der automatischen Erkennung beibehalten und Englisch als Ersatz für nicht unterstützte Sprachen beibehalten.</li>
+    <li>Regressionsabdeckung für regionale Browsersprachen und der vollständige Bootstrap für neue Sitzungseinstellungen hinzugefügt.</li>
+  </ul>
+
+  <h2>0.5.2 &mdash; zehn Sprachen, automatische Auswahl, MARS-OS-Desktop</h2>
+  <ul>
+    <li>Die vollständige Benutzeroberfläche, der Beispielkatalog, die Dokumentation und die Hilfe wurden von Englisch, Spanisch und Portugiesisch auf zehn Sprachen erweitert und Mandarin-Chinesisch, Hindi, Arabisch, Französisch, Bengali, Russisch und Indonesisch hinzugefügt.</li>
+    <li>Browser-Spracherkennung beim ersten Besuch mit Regionalcode-Normalisierung und einem englischen Fallback hinzugefügt, wobei explizit gespeicherte Einstellungen beibehalten werden.</li>
+    <li>Arabisches Rechts-nach-links-Layout hinzugefügt, wobei Quellcode, Laufzeitausgabe und technische Notation von links nach rechts beibehalten werden.</li>
+    <li>Überarbeitetes MARS-OS in einen mausgesteuerten Desktop, der direkt im Programm-Manager geöffnet wird und Shell-Befehle in der Terminal-App ausführt.</li>
+    <li>Verbesserter TTY-Durchsatz, mobile Größenanpassung für Android-Tastaturen und vertikaler Desktop-Abstand.</li>
+    <li>Reproduzierbare Lokalisierungsgenerierung, geschützte technische Terminologie und vollständige Regressionsabdeckung für zehn Sprachen hinzugefügt.</li>
+  </ul>
+
+  <h2>0.5.1 &mdash; Geräteinterrupts, Laufzeittools, MARS-OS-Uhr</h2>
+  <ul>
+    <li>Gleichzeitige externe Interrupts für den Timer, die Tastatur, das Display und die Hexadezimaltastatur von Digital Lab implementiert, mit CPU-seitiger Maskierung und Übermittlung im ausstehenden Zustand.</li>
+    <li>System Clock- und Stack Visualizer-Tools hinzugefügt, einschließlich zentralisierter Sparse-Deltas, die mit exakten Backsteps kompatibel sind.</li>
+    <li>Reduzierter Aufwand für verbundene Tools durch dekodierte Befehlsstapel, zusammengeführtes Rendering und begrenzten Laufzeitereignisverlauf.</li>
+    <li>Ein lokalisiertes Timer-Interrupt-Beispiel hinzugefügt und MARS-OS um Funktionsfähigkeit erweitert <code>clock</code> und in Echtzeit <code>bench</code> Befehle.</li>
+    <li>Es wurde verhindert, dass kompakte Laufzeit-Snapshots vorübergehend ein zusammengesetztes Textsegment in der Ausführungsoberfläche löschen.</li>
+    <li>Konsolidierung des Dateimanagers und des Cloud-Vertrags mit konfliktsicheren Speicherungen, Remote-Umbenennen/Löschen, Berücksichtigung der Groß-/Kleinschreibung bei der Projektidentität und Batch-Synchronisierungsstatus.</li>
+  </ul>
+
+  <h2>0.5.0 &mdash; ausgereifte Laufzeit, Delta-Backstep, mobile Workflows</h2>
+  <ul>
+    <li>Das stark beeinträchtigende Laufzeitverhalten bei Speichergrenzen, atomaren Speichern, COP1-Verdopplungen und Rundungen, verzögerten Verzweigungen, Ausnahmen, LL/SC-Reservierungen und Haltepunkten wurde korrigiert.</li>
+    <li>Vollständige Snapshots pro Anweisung wurden durch begrenzte inverse Deltas ersetzt, wobei ein exaktes Backstep-Fenster und ein synchronisierter Werkzeugstatus beibehalten wurden.</li>
+    <li>Reduzierter Ausführungsaufwand durch kompakte Laufzeitereignis-Batches, zusammengeführtes Tool-Rendering und einfachere UI-Synchronisierung.</li>
+    <li>Dynamische Bitmap-Konfiguration MMIO hinzugefügt und die Bitmap-Beispiele und Bibliotheken aktualisiert, um sie zu verwenden und gleichzeitig mit MARS 4.5 kompatibel zu bleiben.</li>
+    <li>Die TTY-Beispiele wurden um eine praktische MIPS-Shell erweitert und der Assembly- und Mini-C-Lektionskatalog in allen drei Sprachen verbessert.</li>
+    <li>Integrierte Tools, Dialoge, Cloud und Einstellungen in das mobile Fenstersystem, einschließlich Android-Tastatur-unterstützter Größenanpassung, semantischen virtuellen Tastaturen und integriertem Scrollen.</li>
+    <li>Umfassende Laufzeit-, Tool-, Beispiel-, Dokumentations-, mobile UI- und Release-Regressionsabdeckung hinzugefügt.</li>
+  </ul>
+
+  <h2>0.4.13 &mdash; mobiles Single-Panel-Layout, lokalisierte Diagnose</h2>
+  <ul>
+    <li>Mobile zeigt jeweils ein Vollbildfenster an, das aus einer neuen Symbol-Registerkartenleiste ausgewählt wird, in der „Hauptmenü“, „Nachrichten/E/A ausführen“, „Register“ und alle geöffneten Tools aufgeführt sind.</li>
+    <li>Das mobile Ansichtsfenster wurde angeheftet, sodass die Seite nicht mehr scrollt, wodurch der Konflikt beim verschachtelten Scrollen zwischen dem Dokument und den Fensterkörpern beseitigt wurde.</li>
+    <li>Die mobile Symbolleiste besteht nur aus Symbolen und erstreckt sich über zwei kompakte Reihen. Die Ausführungssteuerung und die Laufgeschwindigkeitsauswahl bleiben auf dem Bildschirm. Die Dateiaktionen werden dort ausgeblendet und verbleiben in den Menüs Datei und Bearbeiten.</li>
+    <li>Die Schaltflächen zum Minimieren und Maximieren wurden auf Mobilgeräten ausgeblendet, wo ein Panel den Bildschirm ausfüllt und die Tab-Leiste für den Wechsel sorgt.</li>
+    <li>Jeder Assembler und jede Mini-C-Diagnose wurde lokalisiert, 114 Vorlagenliterale in benannte Platzhalter konvertiert und 277 Schlüssel in den drei Sprachen hinzugefügt.</li>
+    <li>Es wurde ein Release-Test hinzugefügt, der fehlschlägt, wenn eine übersetzbare Nachricht keinen Katalogeintrag hat.</li>
+    <li>Desktop-Layout, Fensterpositionen und Steuerelementgrößen bleiben unverändert.</li>
+  </ul>
+
+  <h2>0.4.12 &mdash; dunkles Design, Korrektur der Schriftgröße, Bereinigung von totem Code</h2>
+  <ul>
+    <li>Opt-in-dunkles Theme hinzugefügt, das über ausgewählt werden kann <code>Settings &gt; Interface...</code>, angewendet auf den Editor, Toolfenster und Hilfeseiten.</li>
+    <li>Korrigiert, dass die Editor-Schriftgröße und Zeilenhöhe sofort angewendet werden, nachdem sie in den Benutzeroberflächeneinstellungen geändert wurden, ohne dass ein Neuladen der Seite erforderlich war.</li>
+    <li>Verkabelt <em>Alle Dateien schließen</em> Aktion in <code>File &gt; Close &gt; All files</code>.</li>
+    <li>Die Pipeline zum automatischen Speichern von Maschinensitzungen (ca. 400 Zeilen) wurde entfernt, die hinter einem experimentellen Flag verborgen war, das in keiner Version gesetzt wurde.</li>
+    <li>Etwa 15 tote Funktionen in fünf Modulen, nicht verwendete Registrierungsexporte, tote CSS-Selektoren und 113 nicht verwendete i18n-Schlüssel wurden entfernt.</li>
+    <li>Nicht erreichbare Hilfedateien auf Root-Ebene aus dem Release-Paket ausgeschlossen.</li>
+  </ul>
+
+  <h2>0.4.11 &mdash; dauerhafte Wiederherstellung der Cloud-Anmeldung</h2>
+  <ul>
+    <li>Der konfigurierte Cloud-Server wurde während des Anwendungsstarts stillschweigend überprüft und ein vorhandener authentifizierter Benutzer wiederhergestellt.</li>
+    <li>Aktualisierte Metadaten des Cloud-Projekts nach erfolgreicher Sitzungswiederherstellung, ohne den lokalen Arbeitsbereich zu blockieren.</li>
+    <li>Dokumentiert die maximale Lebensdauer des Authentifizierungscookies von einem Jahr und die sofortige Entfernung beim Abmelden.</li>
+    <li>Regressionsabdeckung für Anmeldeinformationen und automatische Startwiederherstellung hinzugefügt.</li>
+  </ul>
+
+  <h2>0.4.10 – Batch-Tool-Verlauf und einfachere UI-Updates</h2>
+  <ul>
+    <li>Behaltene Tool-Deltas nur für Anweisungen, die noch vom genauen 100-Schritte-Backstep-Fenster der Engine abgedeckt werden.</li>
+    <li>Jedes Laufzeitereignis blieb für Werkzeugmodelle verfügbar, während visuelle Aktualisierungen stapelweise durchgeführt wurden und eine veraltete Verlaufszuordnung vermieden wurde.</li>
+    <li>Reduzierte Arbeit pro Anweisung DOM in BHT und redundante Zustandskopien im Cache-Simulator.</li>
+    <li>Das Rendern im Leerlauf des Mars Bot wurde gestoppt und ein redundanter vollständiger Laufzeit-Snapshot aus der UI-Synchronisierung entfernt.</li>
+    <li>Ein Repaint-Artefakt für Fenstertiteltrennzeichen nur in Firefox wurde korrigiert.</li>
+    <li>Reduzierte Abfragen im Leerlaufterminal im Monty Hall-Labor, ohne die Reaktionsfähigkeit der Eingaben oder Backsteps zu beeinträchtigen.</li>
+  </ul>
+
+  <h2>0.4.9 – Laufzeitparität und zuverlässige Backsteps</h2>
+  <ul>
+    <li>Behielt die letzten 100 verfügbaren Backsteps bei und begrenzte gleichzeitig den spärlichen Journalspeicher.</li>
+    <li>Das synchrone Verhalten von Tastatur/Anzeige, TTY und Tool-Ereignissen bei langen Browserläufen wurde korrigiert.</li>
+    <li>Das Monty Hall-Labor und die interaktiven Beispiele wurden aktualisiert, um mit Browsereingaben ohne geschäftige Abfragen zu kooperieren.</li>
+    <li>Zufällige Systemaufrufe 40–44 wurden den gesetzten Sequenzen und Stichprobenregeln von zugeordnet <code>java.util.Random</code> verwendet von MARS.</li>
+    <li>Gehärteter Laufzeitstatusimport, lange Befehlszähler, Assemblerbereiche und numerische Direktivenvalidierung.</li>
+    <li>Backstep-Abdeckung für Bildmetadaten abgeschlossen und InputDialogString-Puffer mit der Länge Null korrigiert.</li>
+    <li>Erweiterte Regressionsabdeckung über die gesamte Laufzeit hinweg, lokalisierte Beispiele und verbundene Tools.</li>
+  </ul>
+
+  <h2>0,4,8 – Delta-Backsteps und synchrone Geräte</h2>
+  <ul>
+    <li>Vollständige Backstep-Snapshots pro Befehl durch begrenzte inverse Deltas ersetzt.</li>
+    <li>Getrennte synchrone MMIO Geräte, kompakte Laufzeitereignis-Batches und regelmäßige Tool-Snapshots.</li>
+    <li>Tastatur/Display und TTY Ein-/Ausgabekausalität, Backsteps und Overhead durch versteckte Werkzeuge korrigiert.</li>
+    <li>Das Batch-Rendering in Cache-, Befehls-, Speicherreferenz- und Bitmap-Tools wurde korrigiert.</li>
+    <li>Mini-C Beispiel-Framebuffer wurden von den Compiler-Globals entfernt und die Bitmap-Anzeige mit dem Live-Speicher synchronisiert.</li>
+    <li>Der lokale Benchmark-Strip ist in den Benutzeroberflächeneinstellungen optional und standardmäßig ausgeblendet.</li>
+  </ul>
+
+  <h2>0.4.7 – JavaScript Laufzeithärtung und vollständige Dokumentation</h2>
+  <ul>
+    <li>Standardisierte die Laufzeit auf der reinen JavaScript-Engine und entfernte das experimentelle WASM/Hybrid-Backend.</li>
+    <li>Kompilierungs-, Assemble- und Ausführungs-Timing sowie geschätzte Auslastung von JavaScript zum In-App-Benchmark-Strip hinzugefügt.</li>
+    <li>Vollständige Laufzeit-Snapshots bleiben für angeschlossene Geräte verfügbar, während gleichzeitig die Arbeit des Editors bei maximaler Ausführungsgeschwindigkeit reduziert wird.</li>
+    <li>Korrigierte COP1-Doppelwortreihenfolge, FCSR-basierte Konvertierungsrundung und vollständige numerische Eingabevalidierung.</li>
+    <li>Gehärtete Heap-Limits, atomare Speicher, Befehlsausrichtung, strikte Teilladungen und LL/SC-Reservierungen.</li>
+    <li>Korrigierte verzögerte Branch-Link-Adressen, Delay-Slot-Ausnahmestatus und Parität zwischen Direct Engine Go und browsergesteuerter Ausführung.</li>
+    <li>Stop beendet den Motor und bricht einen ausstehenden Ruhezustand ab, während Pause fortgesetzt werden kann.</li>
+    <li>Erweiterte Laufzeit-Snapshots zur Beibehaltung von Haltepunkten, Zufallsströmen, virtuellen Dateien/Cursoren, stdin, Programmargumenten und Bildhandles.</li>
+    <li>Erweiterung und Rationalisierung des englischen, spanischen und portugiesischen Beispielkatalogs, einschließlich C1-NATIVE und C-Projekten mit mehreren Dateien.</li>
+    <li>Die gesamte englische, spanische und portugiesische In-App-Hilfe wurde aktualisiert, um sie an die aktuelle Browseranwendung, Laufzeit, Mini-C-Compiler, Tools, Speicher- und Datenschutzverhalten anzupassen.</li>
+    <li>Release-Bereitschaftsprüfungen für Versionskonsistenz, Manifeste, transiente Dateien und lokalisierte UI-Verträge hinzugefügt.</li>
+  </ul>
+
+  <h2>0.4.6 – reproduzierbarer Browser-Arbeitsbereich</h2>
+  <ul>
+    <li>Etablierte reproduzierbare Installations-, Bereitstellungs-, Build-, Test- und Validierungsbefehle.</li>
+    <li>Breite Regressionsabdeckung für Assembler-/Laufzeitverhalten, Browser-Integration, Tools und Beispiele hinzugefügt.</li>
+    <li>Einführung konfigurierbarer Laufzeitspeicher- und Backstep-Grenzwerte mit stärkerer Zustandspersistenz.</li>
+    <li>Erweiterte Mini-C-Profile, o32-Verhalten, Bibliotheken, Beispiele und mehrsprachige Schnittstellenabdeckung.</li>
+  </ul>
+
+  <h2>Frühere webMARS Meilensteine</h2>
+  <ul>
+    <li>Der MARS-artige Editor, Assembler und Laufzeit-Workflow wurde auf den Browser portiert.</li>
+    <li>Lokale Projekte, Sitzungswiederherstellung, optionale Cloud-Synchronisierung und virtuelle Browserdateien hinzugefügt.</li>
+    <li>Portierte und angepasste Kernlehrmittel und MMIO-Geräte.</li>
+    <li>Der Lehrcompiler Mini-C und zunehmend umfangreichere Teilmengenprofile wurden hinzugefügt.</li>
+  </ul>
+
+  <h2>Historische Anmerkung</h2>
+  <p>In einigen früheren Versionen wurde mit WebAssembly-Beschleunigung und Backend-Auswahl experimentiert. Diese Einträge beschreiben ihre Veröffentlichung genau, aber dieses Subsystem ist nicht mehr vorhanden. Die aktuelle Laufzeit ist nur JavaScript.</p>
+</body>
+</html>

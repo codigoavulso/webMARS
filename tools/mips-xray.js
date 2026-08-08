@@ -103,7 +103,7 @@
     id: "mips-xray",
     label: "MIPS X-Ray",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("mips-xray", "MIPS X-Ray - Animation of MIPS Datapath, Version 2.0", 1240, 840, `
+      const shell = ctx.createToolWindowShell("mips-xray", "MIPS X-Ray - Animation of MIPS Datapath, Version 2.0", 1040, 680, `
         <div class="xray-tool">
           <div class="xray-toolbar">
             <button class="tool-btn" data-xray="connect" type="button">Connect to MIPS</button>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Erste Schritte mit webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Erste Schritte</h1>
+  <p class="lead">webMARS ist ein browserbasierter MIPS32 Assembler, Simulator, Debugger, Mini-C Compiler und Lehrarbeitsbereich. Die Laufzeit ist vollständig in JavaScript implementiert. Es ist keine Java-Installation, keine native ausführbare Datei oder kein WASM-Backend erforderlich.</p>
+
+  <ol class="steps">
+    <li><strong>Öffnen oder erstellen Sie eine Quelldatei.</strong> Benutzen <b>Datei → Beispiele</b> für einen geführten Ausgangspunkt, <b>Neues Projekt</b> für ein leeres Projekt, oder <b>Von der Festplatte öffnen</b> für lokale Dateien.</li>
+    <li><strong>Baue es.</strong> Verwendung von Montagedateien <b>Ausführen → Zusammenbauen</b> (<kbd>F3</kbd>). C-Dateien verwenden <b>Ausführen → C0 kompilieren</b> (<kbd>F4</kbd>), und stellen Sie dann die generierte Baugruppe zusammen.</li>
+    <li><strong>Führen Sie es aus.</strong> Auswählen <b>Geh</b> (<kbd>F5</kbd>) oder eine Anweisung nach der anderen vorrücken <b>Schritt</b> (<kbd>F7</kbd>).</li>
+    <li><strong>Überprüfen Sie das Ergebnis.</strong> Register, Coprozessor 1, Speicher, Nachrichten, Lauf-E/A und verbundene Tools werden aktualisiert, während das Programm ausgeführt wird.</li>
+  </ol>
+
+  <h2>Was ist enthalten</h2>
+  <div class="cards">
+    <section class="card"><h3>MIPS32 Laufzeit</h3><p>Ganzzahl-, Verzweigungs-, Speicher-, Ausnahme-, LL/SC- und COP1-Ausführung, einschließlich verzögerter Verzweigung und selbstmodifizierender Codeoptionen.</p></section>
+    <section class="card"><h3>Mini-C-Compiler</h3><p>C0-Lehrteilmengen und das C1-NATIVE-Profil, das auf die MIPS o32-Aufrufkonvention abzielt.</p></section>
+    <section class="card"><h3>Debugger</h3><p>Haltepunkte, Stepping, Backstepping, Reset, Pause/Stopp-Steuerung und konfigurierbare Ausführungsgeschwindigkeit.</p></section>
+    <section class="card"><h3>Geräte und Werkzeuge</h3><p>MMIO-Geräte, Cache- und Branch-Simulatoren, visuelle Anzeigen, Statistiken, ANSI-Terminal und mehr.</p></section>
+  </div>
+
+  <h2>Empfohlener erster Lauf</h2>
+  <p>Offen <b>Datei → Beispiele</b>, wählen Sie ein Englisch <b>Lernen</b> Lesen Sie beispielsweise die Beschreibung und öffnen Sie es. Montagebeispiele können direkt zusammengestellt und ausgeführt werden. C-Beispiele deklarieren ihre minimale Compiler-Teilmenge und können mehrere Projektdateien enthalten.</p>
+
+  <div class="note"><strong>Ihre Dateien bleiben standardmäßig in Ihrem Browser.</strong> Lokale Projekte und Wiederherstellungsdaten werden nicht hochgeladen, es sei denn, Sie verwenden explizit das Cloud-Menü. Laden Sie wichtige Arbeiten regelmäßig herunter, da der Browserspeicher vom Browser oder von gelöscht werden kann <b>Einstellungen → LocalStorage löschen</b>.</div>
+
+  <h2>Nützliche Verknüpfungen</h2>
+  <table class="compact">
+    <tr><th>Aktion</th><th>Abkürzung</th></tr>
+    <tr><td>Hilfe</td><td><kbd>F1</kbd></td></tr>
+    <tr><td>Zusammenbauen</td><td><kbd>F3</kbd></td></tr>
+    <tr><td>Kompilieren Sie Mini-C</td><td><kbd>F4</kbd></td></tr>
+    <tr><td>Laufen / gehen</td><td><kbd>F5</kbd></td></tr>
+    <tr><td>Schritt</td><td><kbd>F7</kbd></td></tr>
+  </table>
+</body>
+</html>

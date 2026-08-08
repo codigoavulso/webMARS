@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chạy và gỡ lỗi</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Chạy gỡ lỗi &amp;</h1>
+  <p class="lead">Menu Chạy điều khiển một công cụ JavaScript MIPS được chia sẻ bởi các thanh ghi, chế độ xem bộ nhớ, trình gỡ lỗi và các công cụ được kết nối.</p>
+
+  <h2>Kiểm soát thực thi</h2>
+  <table>
+    <tr><th>Kiểm soát</th><th>Ý nghĩa</th></tr>
+    <tr><td>Đi</td><td>Chạy cho đến khi hoàn thành bình thường, điểm ngắt, tòa nhà đang chờ đầu vào, ngoại lệ chưa được xử lý, giới hạn, Tạm dừng hoặc Dừng.</td></tr>
+    <tr><td>Tạm dừng</td><td>Tạm dừng quá trình chạy đang hoạt động trong khi bảo quản máy để máy có thể tiếp tục.</td></tr>
+    <tr><td>Dừng lại</td><td>Chấm dứt thực thi và hủy công việc không đồng bộ đang chờ xử lý, chẳng hạn như cuộc gọi tòa nhà Ngủ dài. Một chương trình đã dừng sẽ không tiếp tục.</td></tr>
+    <tr><td>Bước</td><td>Thực hiện một lệnh. Sau khi dừng điểm dừng, Đi hoặc Bước tiếp theo sẽ vượt qua điểm dừng đó một lần, do đó, nó không dừng ngay lập tức ở cùng một địa chỉ nữa.</td></tr>
+    <tr><td>Bước lùi</td><td>Khôi phục ảnh chụp nhanh thời gian chạy đã ghi trước đó, theo độ sâu lịch sử đã định cấu hình.</td></tr>
+    <tr><td>Đặt lại</td><td>Trả chương trình đã được lắp ráp về trạng thái máy ban đầu.</td></tr>
+  </table>
+
+  <h2>Điểm dừng và theo dõi nguồn</h2>
+  <p>Chuyển đổi điểm dừng trong khung soạn thảo bên cạnh dòng nguồn thực thi. Điểm dừng được lưu trữ ở trạng thái thời gian chạy và tồn tại trong chuyến đi khứ hồi xuất/nhập thông thường. Các lệnh giả có thể mở rộng thành một số lệnh cơ bản; bước tuân theo hướng dẫn của máy được tạo trong khi việc đánh dấu nguồn vẫn được liên kết với dòng gốc.</p>
+
+  <h2>Dải tốc độ và hiệu suất</h2>
+  <p>Kiểm soát tốc độ chạy bao gồm từ tốc độ bước tương tác đến tốc độ tối đa. Ở tốc độ tối đa webMARS giảm bớt công việc đánh dấu và tự động cuộn của trình chỉnh sửa đắt tiền, nhưng các công cụ vẫn tiếp tục nhận được ảnh chụp nhanh thời gian chạy hoàn chỉnh và thông tin theo dõi.</p>
+  <p>Dải điểm chuẩn nhỏ gọn báo cáo thời gian Biên dịch, Lắp ráp và Chạy gần đây cùng với tỷ lệ phần trăm sử dụng JavaScript CPU ước tính. Các phép đo mang tính cục bộ và không ổn định: chúng nhằm mục đích so sánh khối lượng công việc và các thay đổi thuật toán, chứ không phải là thước đo quy trình của hệ điều hành.</p>
+
+  <h2>Các chi nhánh bị trì hoãn và ngoại lệ</h2>
+  <p>Khi phân nhánh bị trì hoãn được bật, lệnh theo sau nhánh hoặc bước nhảy là lệnh lưu trữ trong khe thời gian trễ và lệnh liên kết <code>PC + 8</code>. Các ngoại lệ được đưa ra trong khe trễ được đặt COP0 Gây ra bit BD và ghi địa chỉ nhánh trong EPC.</p>
+  <p>Nếu trình xử lý ngoại lệ hợp lệ tồn tại tại địa chỉ trình xử lý đã định cấu hình, việc thực thi sẽ chuyển đến địa chỉ đó và có thể trả về bằng <code>eret</code>. Nếu không, quá trình chạy sẽ dừng lại với lý do và chẩn đoán rõ ràng.</p>
+
+  <div class="note"><strong>Phạm vi bước lùi.</strong> Ảnh chụp nhanh bao gồm các thanh ghi, bộ nhớ, điểm dừng, luồng ngẫu nhiên, vị trí tệp, đầu vào đang chờ xử lý, đối số chương trình và bộ xử lý hình ảnh thiết bị. Lịch sử lớn tiêu tốn bộ nhớ, vì vậy hãy điều chỉnh giới hạn cho bài tập.</div>
+</body>
+</html>

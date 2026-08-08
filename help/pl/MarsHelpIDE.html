@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Obszar roboczy i pliki</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Pliki obszaru roboczego &amp;.</h1>
+  <p class="lead">Projekt to jednostka webMARS, którą zapisuje, kompiluje i asembluje. Może zawierać jeden lub więcej <code>.asm</code>/<code>.s</code> pliki zespołu i Mini-C <code>.c</code> pliki.</p>
+
+  <h2>Plik menu</h2>
+  <table>
+    <tr><th>Polecenie</th><th>Aktualne zachowanie</th></tr>
+    <tr><td>Nowy projekt</td><td>Tworzy pusty projekt. Po otwarciu projektu dodaj pliki źródłowe C lub zestawu z podmenu Nowy.</td></tr>
+    <tr><td>Otwórz z dysku</td><td>Importuje pliki wybrane za pomocą przeglądarki. Obsługiwane jest zaznaczanie wielu plików.</td></tr>
+    <tr><td>Otwórz z pamięci przeglądarki</td><td>Przywraca projekt zapisany w jednym z lokalnych miejsc projektu.</td></tr>
+    <tr><td>Zapisz aktywny plik / Zapisz projekt</td><td>Zapisuje aktywne źródło lub cały projekt w pamięci przeglądarki.</td></tr>
+    <tr><td>Pobierz / Pobierz jako</td><td>Eksportuje aktywną zawartość poprzez system pobierania przeglądarki.</td></tr>
+    <tr><td>Przykłady</td><td>Otwiera wyselekcjonowany katalog przykładów z możliwością przeszukiwania, pogrupowany według języka i celu uczenia się.</td></tr>
+    <tr><td>Zrzut danych we/wy</td><td>Pobiera bieżący zapis wejścia/wyjścia programu do celów diagnozy lub oceny.</td></tr>
+  </table>
+
+  <h2>Edytor i nawigacja w projekcie</h2>
+  <ul>
+    <li>Użyj zakładek źródłowych, aby przełączyć aktywny plik. Zamknięcie pliku nie powoduje zamknięcia całego projektu.</li>
+    <li>Błędy montażu i diagnostyka Mini-C identyfikują plik źródłowy i linię, jeśli są dostępne.</li>
+    <li>Kontrolowane jest podświetlanie etykiet, podświetlanie składni, rozmiar czcionki i odstępy między wierszami <b>Ustawienia → Interfejs</b>.</li>
+    <li>Wygenerowany zespół Mini-C może otworzyć się automatycznie w osobnym oknie, jeśli ta preferencja jest włączona.</li>
+  </ul>
+
+  <h2>Zbuduj model</h2>
+  <p><b>Złóż</b> buduje wybrane źródła zestawu w obraz programu. <b>Skompiluj C0</b> tłumaczy projekt C na MIPS montaż; wygenerowany zespół jest następnie składany przed wykonaniem. Wieloplikowe projekty C są łączone przez kompilator uczący w jedną jednostkę tłumaczeniową.</p>
+
+  <h2>Lokalne odzyskiwanie i projekty w chmurze</h2>
+  <p>webMARS przechowuje dane odzyskiwania w pamięci przeglądarki, dzięki czemu ponowne załadowanie może przywrócić sesję roboczą. Pięć jawnych lokalnych miejsc projektów jest oddzielonych od tej sesji odzyskiwania.</p>
+  <p>The <b>Chmura</b> menu jest opcjonalne. Logowanie, otwieranie/zapisywanie projektu, synchronizacja i odświeżanie łączą się ze skonfigurowanym serwerem w chmurze. Korzystanie z chmury nigdy nie jest wymagane do lokalnej edycji, kompilacji lub uruchamiania.</p>
+
+  <div class="warning"><strong>Pamięć przeglądarki nie jest trwałą kopią zapasową.</strong> Przeglądanie prywatne, zmniejszanie limitu, czyszczenie przeglądarki lub polecenie Wyczyść localStorage mogą go usunąć. Pobierz prace, które należy zachować.</div>
+</body>
+</html>

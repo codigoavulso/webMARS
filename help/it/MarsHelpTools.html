@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS strumenti</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Strumenti</h1>
+  <p class="lead">Apri gli strumenti dal menu Strumenti. Ciascuno strumento ha una finestra indipendente e può connettersi al runtime MIPS corrente per osservare l'istruzione, la memoria o l'attività MMIO.</p>
+
+  <div class="note"><strong>Connettiti prima di correre.</strong> Uno strumento connesso riceve istantanee di runtime complete e traccia gli eventi anche quando l'esecuzione alla massima velocità elimina l'evidenziazione dell'editor. Scollega o reimposta lo strumento quando avvii un esperimento non correlato.</div>
+
+  <h2>Architettura e prestazioni</h2>
+  <table>
+    <tr><th>Strumento</th><th>Usalo per</th></tr>
+    <tr><td>Simulatore della tabella della cronologia dei rami</td><td>Confronta gli schemi di previsione e controlla l'accuratezza della previsione dei rami.</td></tr>
+    <tr><td>Simulatore di cache di dati</td><td>Configura una cache e misura gli hit, i mancati e la località mentre un programma accede ai dati.</td></tr>
+    <tr><td>Contatore di istruzioni</td><td>Conta le istruzioni eseguite e segui il totale corrente.</td></tr>
+    <tr><td>Statistiche delle istruzioni</td><td>Raggruppare l'esecuzione per categoria di istruzioni per comprendere la composizione del carico di lavoro.</td></tr>
+    <tr><td>Visualizzazione dei riferimenti alla memoria</td><td>Visualizza modelli di accesso alla memoria spaziale e regioni calde.</td></tr>
+    <tr><td>MIPS Raggi X</td><td>Esplora i campi delle istruzioni, la decodifica e le relazioni percorso dati/controllo.</td></tr>
+  </table>
+
+  <h2>Display, terminali e dispositivi</h2>
+  <table>
+    <tr><th>Strumento</th><th>Usalo per</th></tr>
+    <tr><td>Visualizzazione bitmap</td><td>Esegue il rendering dei pixel da un framebuffer configurabile supportato dalla memoria.</td></tr>
+    <tr><td>Strumento Terminale bitmap</td><td>Utilizza un terminale di testo basato su framebuffer insieme all'input da tastiera.</td></tr>
+    <tr><td>Simulatore di tastiera e display MMIO.</td><td>Esercita il controllo del ricevitore/trasmettitore e i registri dati nell'intervallo standard MMIO.</td></tr>
+    <tr><td>TTY Dispositivo + ANSI Terminale</td><td>Esegui programmi terminali con input da tastiera, rendering ANSI e attivazione di eventi del mouse xterm.</td></tr>
+    <tr><td>Simulazione di laboratorio digitale</td><td>Guida display a sette segmenti, input da tastiera e relativo laboratorio digitale MMIO.</td></tr>
+    <tr><td>Orologio e timer del sistema</td><td>Guida un timer mappato in memoria che conta le istruzioni eseguite o i millisecondi reali e aumenta l'interruzione del timer MARS in modo che un gestore di eccezioni venga eseguito a ogni tick.</td></tr>
+    <tr><td>Marte Bot</td><td>Controlla il robot simulato attraverso la sua interfaccia mappata in memoria.</td></tr>
+  </table>
+  <div class="note"><strong>MARS-OS TTY Esempio di sistema operativo.</strong> Apri l'esempio multi-file, collega questo strumento, assembla ed esegui. Si avvia direttamente nel Program Manager in stile Windows 95; apri l'app Terminale per la shell a 46 comandi. Il menu Start, le finestre e i lanciatori di applicazioni sono disegnati interamente dall'assembly MIPS e controllati con i report del mouse xterm SGR. Il disco scrivibile RAM, l'editor, il foglio di calcolo e l'interprete BASIC rimangono disponibili; anche il cursore dell'editor e le celle del foglio di calcolo accettano i clic del mouse.</div>
+  <div class="note"><strong>Opzioni finestra per display virtuali.</strong> Visualizzazione bitmap, Strumento terminale bitmap e Dispositivo TTY + Terminale ANSI hanno ciascuno due opzioni di finestra sopra le proprie impostazioni. <em>Adatta la finestra alla visualizzazione</em> ridimensiona la finestra degli strumenti in modo che l'intero display si adatti senza barre di scorrimento e senza spazio vuoto attorno ad esso e si riapplica ogni volta che cambiano le dimensioni del display o le impostazioni; il ridimensionamento manuale della finestra la disattiva nuovamente. L'opzione di adattamento inizia selezionata e gli input di configurazione iniziano compressi sia su desktop che su dispositivo mobile. Nel layout mobile in pila l'adattamento rimane selezionato ma non è necessario alcun ridimensionamento poiché il pannello occupa già tutto lo schermo.</div>
+
+  <h2>Utilità di apprendimento</h2>
+  <table>
+    <tr><th>Strumento</th><th>Usalo per</th></tr>
+    <tr><td>Rappresentazione in virgola mobile</td><td>Converti e ispeziona IEEE 754 valori, campi e modelli di bit a precisione singola.</td></tr>
+    <tr><td>Introduzione agli strumenti</td><td>Impara il ciclo di vita standard di connessione, ripristino e interazione.</td></tr>
+    <tr><td>Caccia al tesoro</td><td>Esegui la sfida di programmazione di assembly interattivi.</td></tr>
+    <tr><td>Lente d'ingrandimento dello schermo</td><td>Ingrandisci una parte selezionata dell'area di lavoro per dimostrazioni e accessibilità.</td></tr>
+    <tr><td>Visualizzatore di stack</td><td>Segui l'intero spazio degli indirizzi e lo stack parola per parola: frame aperti da ogni chiamata, registri salvati e ripristinati, uno zoom dai blocchi di segmenti fino ai singoli bit e un registro in linguaggio semplice di ogni movimento $sp con avvisi per i classici errori di frame. Guida inoltre l'esecuzione con arresti in grado di riconoscere lo stack: corri alla chiamata successiva, passa sopra una chiamata, corri fino al ritorno del frame corrente, finché $sp non si sposta o finché non cambia una parola controllata e metti in pausa non appena viene visualizzato un avviso di stack.</td></tr>
+  </table>
+
+  <h2>Configurazione bitmap da MIPS</h2>
+  <p>Un programma può configurare uno degli strumenti Bitmap scrivendo questo blocco di controllo con versione relativo alla base attiva MMIO (normalmente <code>0xffff0000</code>). Scrivi prima tutti i campi e scrivi <code>1</code> all'ultimo comando; lo strumento cambia solo dopo il commit atomico.</p>
+  <table>
+    <tr><th>Compensazione</th><th>Valore</th></tr>
+    <tr><td><code>+0x20</code></td><td>Firma <code>0x57424d50</code> (<code>WBMP</code>)</td></tr>
+    <tr><td><code>+0x24</code></td><td>Versione del protocollo <code>1</code></td></tr>
+    <tr><td><code>+0x28</code></td><td>Obiettivo: <code>1</code> Visualizzazione, <code>2</code> terminale, <code>3</code> entrambi</td></tr>
+    <tr><td><code>+0x2c … +0x38</code></td><td>Larghezza display, altezza display, larghezza unità e altezza unità</td></tr>
+    <tr><td><code>+0x3c</code></td><td>Indirizzo di base del framebuffer</td></tr>
+    <tr><td><code>+0x40</code></td><td>Comando: <code>1</code> applicare, <code>2</code> chiara configurazione del programma</td></tr>
+  </table>
+  <p>I blocchi non validi o incompleti vengono ignorati. Il backstep, l'esportazione del runtime e il ripristino della sessione preservano la configurazione confermata. Questa è un'estensione webMARS opzionale: MARS 4.5 ignora queste parole MMIO inutilizzate, mentre lo stesso codice framebuffer continua a funzionare con le impostazioni manuali dello strumento.</p>
+
+  <h2>MMIO sicurezza</h2>
+  <p>I dispositivi MMIO sono mappati nelle vicinanze <code>0xffff0000</code>. Gli strumenti del dispositivo e il runtime condividono tali indirizzi; i programmi di polling dovrebbero rispettare i bit pronti e i programmi guidati da interrupt dovrebbero installare un gestore di eccezioni valido. Il ripristino di uno strumento ne cancella la visualizzazione o lo stato del dispositivo, non necessariamente il programma assemblato.</p>
+</body>
+</html>

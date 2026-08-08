@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini-C مرتب کرنے والا</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Mini-C</h1>
+  <p class="lead">بلٹ ان ٹیچنگ کمپائلر o32 کالنگ کنونشن کا استعمال کرتے ہوئے جان بوجھ کر بیان کردہ C سب سیٹ کو MIPS32 اسمبلی میں ترجمہ کرتا ہے۔ یہ ایک عام مقصد ISO C مرتب کرنے والا نہیں ہے۔</p>
+
+  <h2>پروفائلز</h2>
+  <table>
+    <tr><th>پروفائل</th><th>مقصد</th></tr>
+    <tr><td><code>C0-S0</code> کو <code>C0-S4</code></td><td>مجموعی تدریسی ذیلی سیٹیں، اظہار اور کنٹرول کے بہاؤ سے افعال، صفوں، پوائنٹرز، ڈھانچے، ٹائپ ڈیف، معاہدے اور لائبریریوں کی طرف بڑھ رہی ہیں۔</td></tr>
+    <tr><td><code>C1-NATIVE</code></td><td>پہلے سے طے شدہ، سب سے زیادہ قابل پروفائل: بائٹ ایڈریسڈ <code>char</code>/<code>char *</code>، مقامی تار، <code>argc/argv</code>، فنکشن پوائنٹرز اور <code>void *</code>.</td></tr>
+  </table>
+  <p>اگر کسی ماخذ کو اعلی پروفائل کی ضرورت ہوتی ہے، تو تالیف ایک فوکسڈ کو خارج کرتی ہے۔ <code>MC_SUBSET_MISMATCH</code> ثانوی غلطیوں کے جھرن کے بجائے تشخیصی۔</p>
+
+  <h2>ایک پروجیکٹ مرتب کریں۔</h2>
+  <ol class="steps">
+    <li>مطلوبہ پروفائل اور آؤٹ پٹ کے اختیارات کو منتخب کریں۔ <b>ترتیبات → Mini-C ترجیحات</b>.</li>
+    <li>ایک یا زیادہ کھولیں۔ <code>.c</code> اسی منصوبے میں فائلیں.</li>
+    <li>منتخب کریں۔ <b>چلائیں → کمپائل C0</b> یا دبائیں <kbd>F4</kbd>.</li>
+    <li>تشخیص کا جائزہ لیں اور تیار کردہ MIPS اسمبلی۔ تیار کردہ پروگرام کو عام طور پر جمع کریں اور چلائیں۔</li>
+  </ol>
+
+  <h2>کنونشن اور انٹری پوائنٹ کو کال کرنا</h2>
+  <ul>
+    <li>دلائل استعمال کرتے ہیں۔ <code>$a0</code>–<code>$a3</code>، اضافی دلائل اسٹیک کا استعمال کرتے ہیں، اور واپسی اقدار استعمال کرتے ہیں۔ <code>$v0</code> (اور <code>$v1</code> جہاں مناسب ہو)۔</li>
+    <li>کالی محفوظ شدہ رجسٹر اور اسٹیک فریم MIPS o32 توقعات پر عمل کرتے ہیں۔</li>
+    <li><code>main(void)</code> اور، C1-NATIVE میں، <code>main(int argc, char **argv)</code> حمایت کر رہے ہیں.</li>
+    <li>webMARS پروگرام کے دلائل کے لیے، <code>argv[0]</code> صارف کی طرف سے فراہم کردہ پہلا ٹوکن ہے؛ کوئی خود کار طریقے سے قابل عمل نام کا اندراج نہیں ہے۔</li>
+  </ul>
+
+  <h2>بنڈل ہیڈرز اور لائبریریاں</h2>
+  <p>
+    <span class="pill">stdio</span><span class="pill">کونیو</span><span class="pill">فائل</span>
+    <span class="pill">args</span><span class="pill">تار</span><span class="pill">string_native</span>
+    <span class="pill">تجزیہ</span><span class="pill">img</span><span class="pill">استعمال</span>
+    <span class="pill">رینڈ</span><span class="pill">قسم</span><span class="pill">stdlib</span>
+    <span class="pill">stdbool</span><span class="pill">stddef</span><span class="pill">bitmap_rect</span>
+    <span class="pill">bitmap_ascii</span><span class="pill">tty</span>
+  </p>
+  <p>یہ ہیڈرز webMARS مطابقت والی لائبریریاں ہیں جو MIPS syscalls اور آلات کے ارد گرد بنائی گئی ہیں۔ وہ اپنے دستاویزی ذیلی سیٹ کو نافذ کرتے ہیں، نہ کہ مکمل میزبان C معیاری لائبریری۔</p>
+  <p><code>#use &lt;bitmap_rect&gt;</code> بھی فراہم کرتا ہے <code>bitmap_configure_display</code>, <code>bitmap_configure_terminal</code> اور <code>bitmap_configure_all</code>، ایک C0 پروگرام کو بٹ میپ ٹولز کو اپنے ڈسپلے کا سائز، یونٹ سائز اور فریم بفر ایڈریس بھیجنے کی اجازت دیتا ہے۔</p>
+
+  <h2>اچھی شروعاتی مثالیں۔</h2>
+  <ul>
+    <li><b>ہیلو ورلڈ (سی)</b> سب سے چھوٹے مکمل پروگرام کے لیے۔</li>
+    <li><b>Mini-C C1 مقامی</b> مقامی تاروں اور موجودہ پروفائل رویے کے لیے۔</li>
+    <li><b>دلائل لائبریری ڈیمو</b> کے لیے <code>argc/argv</code>.</li>
+    <li><b>ملٹی فائل کے اعدادوشمار</b> پراجیکٹ کی وسیع تالیف اور فائلوں میں فنکشن کالز کے لیے۔</li>
+    <li><b>stdio کنسول کی بنیادی باتیں</b> اور <b>stdio فائل راؤنڈ ٹرپ</b> مطابقت کی لائبریریوں کے لیے۔</li>
+  </ul>
+
+  <div class="note">ریپوزٹری میں مرتب کرنے والا دستی معیاری، تفصیلی زبان کا حوالہ رہتا ہے۔ درون ایپ صفحہ پروفائل کو منتخب کرنے اور مثالوں کو صحیح طریقے سے چلانے کے لیے درکار رویوں کا خلاصہ کرتا ہے۔</div>
+</body>
+</html>

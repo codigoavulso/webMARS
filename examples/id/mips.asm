@@ -1,6 +1,6 @@
 #MARS-OS 1.0 - lingkungan pengoperasian TTY interaktif lengkap
 #Buka Alat > TTY Perangkat + ANSI Terminal, sambungkan ke MIPS,
-#rakit proyek ini dan ketik "desktop" untuk UI mouse atau "bantuan".
+#merakit dan menjalankan; itu membuka desktop mouse. Luncurkan Terminal untuk shell.
 #
 #File ini hanya menampung teks yang dilokalkan. Kernel itu sendiri tinggal di dalamnya
 #modul netral bahasa yang disertakan di bagian bawah:
@@ -223,8 +223,9 @@ sheet_menu: .asciiz " ESC   s save   q quit   x save and exit   c clear cell   r
 sheet_closed: .asciiz "sheet: closed "
 msg_sheet_usage: .asciiz "usage: sheet FILE   the sheet is created when it does not exist\r\n"
 
-#---- mouse desktop----
-# English ASCII fallback: the terminal font is byte-oriented.
+#---- desktop berjendela ----
+#Judul bilah menu dan entri menu. Desktop menampilkan menu dari
+#string ini, jadi terjemahan yang lebih panjang hanya membuat menu lebih luas.
 desktop_start: .asciiz "[ Start ]"
 mb_system:   .asciiz "System"
 mb_programs: .asciiz "Programs"
@@ -264,7 +265,7 @@ mi_close:      .asciiz "Close window"
 mi_close_all:  .asciiz "Close all"
 mi_keys:       .asciiz "Keyboard and mouse"
 
-# Window titles are indexed by the desktop window kind.
+#Judul jendela, diindeks berdasarkan jenis jendela.
 wt_programs: .asciiz "Program Manager"
 wt_about:    .asciiz "About"
 wt_files:    .asciiz "File Manager"

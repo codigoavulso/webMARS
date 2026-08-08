@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assembler-Makros</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Assembler-Makros</h1>
+  <p class="lead">Makros führen vor der normalen Assemblierung eine Ersetzung auf Quellebene durch. Sie erfordern die Aktivierung der erweiterten Assembler-Unterstützung.</p>
+
+  <h2>Definition und Verwendung</h2>
+  <pre>.macro print_int (%value)
+    move $a0, %value
+    li   $v0, 1
+    syscall
+.end_macro
+
+li $t0, 42
+print_int ($t0)</pre>
+  <p>Die Klammern um Parameter und Aufrufargumente sind optional. Parameter sind durch Kommas getrennte Token und werden nur als Bezeichner und nicht innerhalb von Zeichenfolgenliteralen ersetzt.</p>
+
+  <h2>Von webMARS implementierte Regeln</h2>
+  <ul>
+    <li>Ein Makro wird durch seinen Namen und seine Arität identifiziert, sodass derselbe Name Definitionen mit unterschiedlicher Parameteranzahl haben kann.</li>
+    <li>Die Definition muss vor ihrem Aufruf erscheinen. Eine Vorwärtsreferenz wird als Fehler gemeldet.</li>
+    <li>Verschachtelte Makrodefinitionen sind nicht zulässig.</li>
+    <li>Eine Definition endet mit einer Zeile, die nur enthält <code>.end_macro</code>.</li>
+    <li>Doppelte Definitionen mit demselben Namen und derselben Arität erzeugen eine Warnung und das Duplikat wird ignoriert.</li>
+    <li>Beschriftungen innerhalb einer Erweiterung werden für jeden Aufruf eindeutig gemacht, um Kollisionen zwischen Erweiterungen zu verhindern.</li>
+    <li>Die Erweiterung ist rekursiv, aber ungültige Rekursionen und fehlerhafte Aufrufe werden diagnostiziert, anstatt stillschweigend Code zu generieren.</li>
+  </ul>
+
+  <h2>Konstanten und Includes</h2>
+  <p><code>.eqv</code> Bietet Bezeichnerersatz für benannte Konstanten. <code>.include</code> ist Teil des erweiterten Assembler-Anweisungssatzes und löst die Projektquelle dort auf, wo sie vom aktuellen Browserprojekt bereitgestellt wird. Bevorzugen Sie projektbezogene Namen und behalten Sie die enthaltenen Quellen im selben Projekt bei.</p>
+
+  <h2>Makros versus Pseudoanweisungen</h2>
+  <p>Ein Pseudobefehl wird aus der Befehlsreferenz von webMARS ausgewählt und gemäß Operandenmustern erweitert. Ein Makro wird vom Programm definiert und kann eine beliebige Folge von Quellanweisungen enthalten. Beide werden vor der Ausführung erweitert und können eine Quellzeile mehreren Basisanweisungen zuordnen.</p>
+
+  <div class="warning">Makroargumente sind Token-Ersetzungen, keine typisierten Werte. Eine syntaktisch gültige Erweiterung kann immer noch einen Assembler-Typ- oder Bereichsfehler auf der Aufrufseite erzeugen.</div>
+</body>
+</html>
