@@ -169,6 +169,19 @@ async function assertRegularFile(absolutePath, label) {
   assert(info.isFile() && !info.isSymbolicLink(), `Release input is not a regular file: ${label}`);
 }
 
+async function assertRegularDirectory(absolutePath, label) {
+  let info;
+  try {
+    info = await lstat(absolutePath);
+  } catch {
+    throw new Error(`Missing required release tree: ${label}`);
+  }
+  assert(
+    info.isDirectory() && !info.isSymbolicLink(),
+    `Release input tree is not a regular directory: ${label}`
+  );
+}
+
 async function readPackageMetadata() {
   const packagePath = join(projectRoot, "package.json");
   const metadata = JSON.parse((await readFile(packagePath, "utf8")).replace(/^\uFEFF/, ""));
@@ -189,27 +202,32 @@ async function readPackageMetadata() {
   return { name: String(metadata.name || "webmars"), version };
 }
 
-async function collectTreeFiles(tree) {
+async function collectTreeFiles(tree, sourceRoot = projectRoot) {
   const allowedExtensions = new Set(tree.extensions);
   const files = [];
 
   async function visit(relativeDirectory) {
-    const absoluteDirectory = resolveInside(projectRoot, relativeDirectory);
+    const absoluteDirectory = resolveInside(sourceRoot, relativeDirectory);
+    // `readdir({ withFileTypes: true })` describes the entries below this path;
+    // it says nothing about the path itself. An allowlisted root can therefore
+    // be a junction or directory symlink unless it is checked with lstat first.
+    await assertRegularDirectory(absoluteDirectory, relativeDirectory);
     const entries = await readdir(absoluteDirectory, { withFileTypes: true });
     entries.sort((left, right) => left.name.localeCompare(right.name, "en"));
 
     for (const entry of entries) {
       const relativePath = toPosix(posix.join(relativeDirectory, entry.name));
-      assert(!entry.isSymbolicLink(), `Symlinks are not allowed in release inputs: ${relativePath}`);
+      const info = await lstat(resolveInside(sourceRoot, relativePath));
+      assert(!info.isSymbolicLink(), `Symlinks are not allowed in release inputs: ${relativePath}`);
       assert(!entry.name.startsWith("."), `Hidden release input requires an explicit decision: ${relativePath}`);
       assert(!TEMPORARY_NAME.test(entry.name), `Temporary release input found: ${relativePath}`);
 
-      if (entry.isDirectory()) {
+      if (info.isDirectory()) {
         await visit(relativePath);
         continue;
       }
 
-      assert(entry.isFile(), `Unsupported release input type: ${relativePath}`);
+      assert(info.isFile(), `Unsupported release input type: ${relativePath}`);
       assert(
         allowedExtensions.has(extname(entry.name).toLowerCase()),
         `Extension is not allowlisted for ${tree.root}: ${relativePath}`
@@ -696,6 +714,78 @@ function validateZipArchive(archive, expectedPaths) {
   );
 }
 
+async function pathExists(path) {
+  try {
+    await lstat(path);
+    return true;
+  } catch (error) {
+    if (error?.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+// A release is three public paths that must describe the same build. Renaming
+// them one by one without a rollback can leave a new directory beside an old
+// ZIP (or no checksum at all). Back up an existing complete set, publish the
+// staged set, and restore the previous set if any rename fails.
+async function publishReleaseSet(entries, operations = {}) {
+  const move = operations.rename || rename;
+  const remove = operations.rm || rm;
+  assert(entries.length > 0, "No release artifacts were supplied for publication.");
+
+  const existing = await Promise.all(entries.map((entry) => pathExists(entry.target)));
+  assert(
+    existing.every(Boolean) || existing.every((present) => !present),
+    "Existing release artifacts are incomplete; refusing to replace a partial set."
+  );
+  for (const entry of entries) {
+    assert(!await pathExists(entry.backup), `Release backup already exists: ${toPosix(entry.backup)}`);
+  }
+
+  const backedUp = [];
+  const published = [];
+  try {
+    if (existing.every(Boolean)) {
+      for (const entry of entries) {
+        await move(entry.target, entry.backup);
+        backedUp.push(entry);
+      }
+    }
+    for (const entry of entries) {
+      await move(entry.staged, entry.target);
+      published.push(entry);
+    }
+  } catch (publicationError) {
+    const rollbackErrors = [];
+    for (const entry of [...published].reverse()) {
+      try {
+        await remove(entry.target, { recursive: true, force: true });
+      } catch (error) {
+        rollbackErrors.push(error);
+      }
+    }
+    for (const entry of [...backedUp].reverse()) {
+      try {
+        await remove(entry.target, { recursive: true, force: true });
+        await move(entry.backup, entry.target);
+      } catch (error) {
+        rollbackErrors.push(error);
+      }
+    }
+    if (rollbackErrors.length) {
+      throw new AggregateError(
+        [publicationError, ...rollbackErrors],
+        "Release publication failed and the previous complete artifact set could not be fully restored."
+      );
+    }
+    throw publicationError;
+  }
+
+  for (const entry of backedUp) {
+    await remove(entry.backup, { recursive: true, force: true });
+  }
+}
+
 async function packageRelease() {
   const metadata = await readPackageMetadata();
   assert(metadata.name === "webmars", `Unexpected package name: ${metadata.name}`);
@@ -706,6 +796,9 @@ async function packageRelease() {
   const stagingDirectory = join(distRoot, `.${releaseName}.staging-${process.pid}`);
   const temporaryZipPath = join(distRoot, `.${releaseName}.zip-${process.pid}.tmp`);
   const temporaryChecksumPath = join(distRoot, `.${releaseName}.zip.sha256-${process.pid}.tmp`);
+  const backupDirectory = join(distRoot, `.${releaseName}.backup-${process.pid}`);
+  const backupZipPath = join(distRoot, `.${releaseName}.zip.backup-${process.pid}`);
+  const backupChecksumPath = join(distRoot, `.${releaseName}.zip.sha256.backup-${process.pid}`);
 
   await mkdir(distRoot, { recursive: true });
   await rm(stagingDirectory, { recursive: true, force: true });
@@ -732,12 +825,11 @@ async function packageRelease() {
       "Could not verify the generated ZIP checksum file."
     );
 
-    await rm(releaseDirectory, { recursive: true, force: true });
-    await rm(zipPath, { force: true });
-    await rm(zipChecksumPath, { force: true });
-    await rename(stagingDirectory, releaseDirectory);
-    await rename(temporaryZipPath, zipPath);
-    await rename(temporaryChecksumPath, zipChecksumPath);
+    await publishReleaseSet([
+      { staged: stagingDirectory, target: releaseDirectory, backup: backupDirectory },
+      { staged: temporaryZipPath, target: zipPath, backup: backupZipPath },
+      { staged: temporaryChecksumPath, target: zipChecksumPath, backup: backupChecksumPath }
+    ]);
 
     console.log(`[package] Release directory: ${toPosix(releaseDirectory)}`);
     console.log(`[package] ZIP archive: ${toPosix(zipPath)}`);
@@ -750,9 +842,14 @@ async function packageRelease() {
   }
 }
 
-try {
-  await packageRelease();
-} catch (error) {
-  console.error(`[package] ${error instanceof Error ? error.message : String(error)}`);
-  process.exitCode = 1;
+const invokedPath = process.argv[1] ? resolve(process.argv[1]) : "";
+if (invokedPath === fileURLToPath(import.meta.url)) {
+  try {
+    await packageRelease();
+  } catch (error) {
+    console.error(`[package] ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  }
 }
+
+export { collectTreeFiles, publishReleaseSet };

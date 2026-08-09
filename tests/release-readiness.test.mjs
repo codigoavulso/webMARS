@@ -1,18 +1,78 @@
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import test from "node:test";
-import { access, readFile, readdir } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import vm from "node:vm";
 import { collectFindings } from "../scripts/check-i18n-coverage.mjs";
+import { collectTreeFiles, publishReleaseSet } from "../scripts/package-release.mjs";
 
+const run = promisify(execFile);
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.5.5";
+const expectedReleaseVersion = "0.5.6";
 const languages = [
   "en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id",
   "de", "ja", "ko", "tr", "vi", "ur", "it", "pl", "fa", "th"
 ];
 const localizedLanguages = languages.filter((language) => language !== "en");
+
+async function writeChangelogFixture(root, pendingLanguage = null) {
+  const released = `<p class="lead">Current release.</p>\n<h2>9.8.7 &mdash; Test release</h2>\n<ul>\n  <li>Shipped.</li>\n</ul>\n`;
+  const pending = `<p class="lead">Previous release.</p>\n<h2 data-unreleased="true">Pending</h2>\n<p>The version has not been decided.</p>\n<ul>\n  <li>Work in progress.</li>\n</ul>\n<h2>9.8.6 &mdash; Previous release</h2>\n<ul>\n  <li>Earlier work.</li>\n</ul>\n`;
+  for (const language of languages) {
+    const directory = resolve(root, "help", language);
+    await mkdir(directory, { recursive: true });
+    await writeFile(
+      resolve(directory, "changelog.html"),
+      language === pendingLanguage ? pending : released,
+      "utf8"
+    );
+  }
+}
+
+const MUTATION_TARGET = "assets/js/app-modules/00-core.js";
+const MUTATION_ANCHOR = "const signExtend16 = (value) => ((Number(value) || 0) << 16) >> 16;\n";
+const ISA_SLICE = [
+  "core-regression.test.mjs",
+  "runtime-regression.test.mjs",
+  "runtime-isa-regression.test.mjs",
+  "runtime-memory-invariants.test.mjs"
+];
+
+async function writeMutationFixture(root, failingBaseline = false) {
+  const target = resolve(root, MUTATION_TARGET);
+  await mkdir(dirname(target), { recursive: true });
+  await mkdir(resolve(root, "tests"), { recursive: true });
+  await writeFile(target, MUTATION_ANCHOR, "utf8");
+
+  for (const [index, file] of ISA_SLICE.entries()) {
+    const body = failingBaseline && index === 0
+      ? `import assert from "node:assert/strict";\nimport { readFile, writeFile } from "node:fs/promises";\nimport test from "node:test";\nconst target = new URL("../${MUTATION_TARGET}", import.meta.url);\ntest("intentional broken baseline", async () => {\n  const source = await readFile(target, "utf8");\n  await writeFile(new URL("../baseline-observed.txt", import.meta.url), source, "utf8");\n  assert.fail("intentional baseline failure");\n});\n`
+      : `import test from "node:test";\ntest("passing fixture", () => {});\n`;
+    await writeFile(resolve(root, "tests", file), body, "utf8");
+  }
+}
+
+async function writeMutationScript(root, transform = (source) => source) {
+  const source = await readFile(resolve(projectRoot, "scripts", "mutation-test.mjs"), "utf8");
+  const rooted = source.replace(
+    'const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");',
+    `const projectRoot = ${JSON.stringify(root)};`
+  );
+  assert.notEqual(rooted, source, "the mutation helper must resolve its own project root");
+  const script = resolve(root, "mutation-test.mjs");
+  await writeFile(script, transform(rooted), "utf8");
+  return script;
+}
+
+function standaloneNodeEnvironment() {
+  const environment = { ...process.env };
+  delete environment.NODE_TEST_CONTEXT;
+  return environment;
+}
 
 async function exists(path) {
   try {
@@ -67,7 +127,7 @@ function placeholders(value) {
     .sort();
 }
 
-test("0.5.5 version is coherent across runtime and release metadata", async () => {
+test("0.5.6 version is coherent across runtime and release metadata", async () => {
   const packageJson = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
   const packageLock = JSON.parse(await readFile(resolve(projectRoot, "package-lock.json"), "utf8"));
   const appVersion = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");
@@ -83,14 +143,238 @@ test("0.5.5 version is coherent across runtime and release metadata", async () =
 
   for (const language of languages) {
     const changelog = await readFile(resolve(projectRoot, "help", language, "changelog.html"), "utf8");
-    const firstHeading = changelog.match(/<h2>([\s\S]*?)<\/h2>/i)?.[1] || "";
-    assert.match(firstHeading, new RegExp(`^${expectedReleaseVersion.replaceAll(".", "\\.")}\\b`), `${language} changelog`);
+    // A changelog may carry an unreleased section above the newest release. It
+    // is marked with an attribute rather than a word, because the heading text
+    // is translated into twenty languages. What must hold is that the first
+    // *released* entry names the version being shipped.
+    const headings = [...changelog.matchAll(/<h2([^>]*)>([\s\S]*?)<\/h2>/gi)];
+    const released = headings.filter((match) => !/data-unreleased/i.test(match[1]));
+    assert.ok(released.length > 0, `${language} changelog has no released entry`);
+    assert.match(
+      released[0][2],
+      new RegExp(`^${expectedReleaseVersion.replaceAll(".", "\\.")}\\b`),
+      `${language} changelog`
+    );
+    // At most one unreleased section, and only ever at the top.
+    const unreleased = headings.filter((match) => /data-unreleased/i.test(match[1]));
+    assert.ok(unreleased.length <= 1, `${language} changelog has more than one unreleased section`);
+    if (unreleased.length) {
+      assert.equal(headings[0], unreleased[0], `${language} changelog puts an unreleased section below a release`);
+    }
   }
+});
+
+test("changelog --check fails while any locale still needs to be cut", async () => {
+  const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-changelog-check-"));
+  try {
+    const source = await readFile(resolve(projectRoot, "scripts", "cut-changelog.mjs"), "utf8");
+    const patched = source.replace(
+      'const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");',
+      `const projectRoot = ${JSON.stringify(sandbox)};`
+    );
+    assert.notEqual(patched, source, "the changelog helper must resolve its own project root");
+    const script = resolve(sandbox, "cut-changelog.mjs");
+    await writeFile(script, patched, "utf8");
+
+    await writeChangelogFixture(sandbox, "es");
+    await assert.rejects(
+      () => run("node", [script, "9.8.7", "--check"]),
+      (error) => {
+        assert.equal(error.code, 1);
+        assert.match(error.stdout, /es: would cut/);
+        assert.match(error.stderr, /1 changelog\(s\) still need to be cut to 9\.8\.7/);
+        return true;
+      }
+    );
+
+    await writeChangelogFixture(sandbox);
+    const { stdout } = await run("node", [script, "9.8.7", "--check"]);
+    assert.match(stdout, /All changelogs are already cut/);
+  } finally {
+    await rm(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("mutation testing aborts on a broken baseline before writing a mutant", async () => {
+  const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-mutation-baseline-"));
+  try {
+    await writeMutationFixture(sandbox, true);
+    assert.match(
+      await readFile(resolve(sandbox, "tests", ISA_SLICE[0]), "utf8"),
+      /assert\.fail\("intentional baseline failure"\)/
+    );
+    const script = await writeMutationScript(sandbox);
+    await assert.rejects(
+      () => run(process.execPath, [script, "--id", "core-signextend-off", "--no-write"], {
+        env: standaloneNodeEnvironment()
+      }),
+      (error) => {
+        assert.equal(error.code, 1);
+        assert.match(
+          error.stderr,
+          /Baseline slice 'isa' failed before mutation; aborting without changing source/,
+          `stdout:\n${error.stdout}`
+        );
+        return true;
+      }
+    );
+    assert.equal(await readFile(resolve(sandbox, "baseline-observed.txt"), "utf8"), MUTATION_ANCHOR);
+    assert.equal(await readFile(resolve(sandbox, MUTATION_TARGET), "utf8"), MUTATION_ANCHOR);
+  } finally {
+    await rm(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("mutation testing restores the active source on termination signals", async () => {
+  const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-mutation-signal-"));
+  try {
+    await writeMutationFixture(sandbox);
+    const script = await writeMutationScript(sandbox, (source) => {
+      const needle = "    const testRun = await runSlice(SLICES[mutant.slice]);";
+      const injected = source.replace(needle, `    process.emit("SIGTERM");\n${needle}`);
+      assert.notEqual(injected, source, "the signal fixture must fire while a mutant is active");
+      return injected;
+    });
+    await assert.rejects(
+      () => run(process.execPath, [script, "--id", "core-signextend-off", "--no-write"], {
+        env: standaloneNodeEnvironment()
+      }),
+      (error) => {
+        assert.equal(error.code, 143);
+        assert.match(error.stderr, /Restored assets\/js\/app-modules\/00-core\.js after SIGTERM/);
+        return true;
+      }
+    );
+    assert.equal(await readFile(resolve(sandbox, MUTATION_TARGET), "utf8"), MUTATION_ANCHOR);
+  } finally {
+    await rm(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("release input roots reject directory links to external trees", async () => {
+  const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-package-link-"));
+  try {
+    const sourceRoot = resolve(sandbox, "source");
+    const externalRoot = resolve(sandbox, "external-assets");
+    await mkdir(sourceRoot, { recursive: true });
+    await mkdir(externalRoot, { recursive: true });
+    await writeFile(resolve(externalRoot, "outside.js"), "globalThis.external = true;\n", "utf8");
+    await symlink(externalRoot, resolve(sourceRoot, "assets"), process.platform === "win32" ? "junction" : "dir");
+
+    await assert.rejects(
+      () => collectTreeFiles({ root: "assets", extensions: [".js"] }, sourceRoot),
+      /Release input tree is not a regular directory: assets/
+    );
+  } finally {
+    await rm(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("release publication rolls back instead of leaving a partial artifact trio", async () => {
+  for (const hasPreviousRelease of [false, true]) {
+    const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-package-publish-"));
+    try {
+      const stagedDirectory = resolve(sandbox, "staged-release");
+      const stagedZip = resolve(sandbox, "staged.zip");
+      const stagedChecksum = resolve(sandbox, "staged.zip.sha256");
+      const releaseDirectory = resolve(sandbox, "webmars-9.8.7");
+      const zipPath = resolve(sandbox, "webmars-9.8.7.zip");
+      const checksumPath = resolve(sandbox, "webmars-9.8.7.zip.sha256");
+      const entries = [
+        { staged: stagedDirectory, target: releaseDirectory, backup: resolve(sandbox, ".directory.backup") },
+        { staged: stagedZip, target: zipPath, backup: resolve(sandbox, ".zip.backup") },
+        { staged: stagedChecksum, target: checksumPath, backup: resolve(sandbox, ".checksum.backup") }
+      ];
+
+      await mkdir(stagedDirectory, { recursive: true });
+      await writeFile(resolve(stagedDirectory, "marker.txt"), "new directory", "utf8");
+      await writeFile(stagedZip, "new zip", "utf8");
+      await writeFile(stagedChecksum, "new checksum", "utf8");
+      if (hasPreviousRelease) {
+        await mkdir(releaseDirectory, { recursive: true });
+        await writeFile(resolve(releaseDirectory, "marker.txt"), "old directory", "utf8");
+        await writeFile(zipPath, "old zip", "utf8");
+        await writeFile(checksumPath, "old checksum", "utf8");
+      }
+
+      await assert.rejects(
+        () => publishReleaseSet(entries, {
+          rename: async (source, target) => {
+            if (source === stagedZip) throw new Error("injected ZIP publication failure");
+            await rename(source, target);
+          }
+        }),
+        /injected ZIP publication failure/
+      );
+
+      const targetPresence = await Promise.all(entries.map((entry) => exists(entry.target)));
+      assert.deepEqual(
+        targetPresence,
+        hasPreviousRelease ? [true, true, true] : [false, false, false],
+        "publication failure must restore the complete prior state"
+      );
+      if (hasPreviousRelease) {
+        assert.equal(await readFile(resolve(releaseDirectory, "marker.txt"), "utf8"), "old directory");
+        assert.equal(await readFile(zipPath, "utf8"), "old zip");
+        assert.equal(await readFile(checksumPath, "utf8"), "old checksum");
+      }
+      assert.deepEqual(await Promise.all(entries.map((entry) => exists(entry.backup))), [false, false, false]);
+    } finally {
+      await rm(sandbox, { recursive: true, force: true });
+    }
+  }
+});
+
+test("application-version tokens are replaced inside iframe documents", async () => {
+  const source = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");
+  const attributes = new Map([["content", "webMARS __WEBMARS_APP_VERSION__"]]);
+  const foreignElement = {
+    getAttribute(name) { return attributes.has(name) ? attributes.get(name) : null; },
+    setAttribute(name, value) { attributes.set(name, value); }
+  };
+  const textNode = {
+    nodeValue: "Version __WEBMARS_APP_VERSION__",
+    parentElement: { tagName: "P" }
+  };
+  let textPending = true;
+  const foreignDocument = {
+    title: "webMARS __WEBMARS_APP_VERSION__",
+    readyState: "complete",
+    documentElement: {
+      querySelectorAll() { return [foreignElement]; }
+    },
+    defaultView: { NodeFilter: { SHOW_TEXT: 4 } },
+    createTreeWalker() {
+      return {
+        nextNode() {
+          if (!textPending) return null;
+          textPending = false;
+          return textNode;
+        }
+      };
+    }
+  };
+  const sandbox = {
+    document: foreignDocument,
+    window: {},
+    globalThis: {},
+    // Deliberately unrelated to the foreign nodes: this reproduces the
+    // separate JavaScript realm used by an iframe.
+    HTMLElement: class ParentRealmHTMLElement {},
+    NodeFilter: { SHOW_TEXT: 4 }
+  };
+
+  vm.runInNewContext(source, sandbox, { filename: "app-version.js" });
+
+  assert.equal(foreignDocument.title, `webMARS ${expectedReleaseVersion}`);
+  assert.equal(attributes.get("content"), `webMARS ${expectedReleaseVersion}`);
+  assert.equal(textNode.nodeValue, `Version ${expectedReleaseVersion}`);
 });
 
 test("release tree has no obsolete runtime or transient generated artifacts", async () => {
   const files = (await walk(projectRoot))
     .map((path) => relative(projectRoot, path).replaceAll("\\", "/"));
+  const gitignore = await readFile(resolve(projectRoot, ".gitignore"), "utf8");
 
   const forbidden = files.filter((path) => (
     path.startsWith("wasm/")
@@ -99,6 +383,8 @@ test("release tree has no obsolete runtime or transient generated artifacts", as
     || /\.(?:bak|orig|rej|tmp)$/i.test(path)
   ));
   assert.deepEqual(forbidden, []);
+  assert.match(gitignore, /^\/tmp\/$/m, "temporary work directories must stay out of commits");
+  assert.match(gitignore, /^\/hs_err_pid\*\.log$/m, "JVM crash logs must stay out of commits");
 });
 
 test("release shell and localized toolbar labels are complete", async () => {
@@ -426,14 +712,40 @@ test("release packaging and CI use the supported public commands", async () => {
     "utf8"
   );
   const packageScript = await readFile(resolve(projectRoot, "scripts", "package-release.mjs"), "utf8");
+  const validateScript = await readFile(resolve(projectRoot, "scripts", "validate.mjs"), "utf8");
 
   assert.equal(packageJson.scripts?.["package:release"], "node scripts/package-release.mjs");
   assert.match(workflow, /\brun:\s*npm ci\b/);
   assert.match(workflow, /\brun:\s*npm run validate\b/);
   assert.match(workflow, /\brun:\s*npm run package:release\b/);
   assert.match(workflow, /\buses:\s*actions\/upload-artifact@v4\b/);
+  assert.match(validateScript, /args:\s*\["test"\]/, "validate must run the complete npm test suite");
   assert.match(packageScript, /\bEXCLUDED_PUBLIC_FILES\b/);
   assert.match(packageScript, /\bvalidateZipArchive\b/);
+});
+
+test("the validation runner invokes npm safely on Windows", async () => {
+  const { resolveNpmTestCommand } = await import("../scripts/validate.mjs");
+  const npmCli = "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js";
+  const viaNpm = resolveNpmTestCommand({
+    platform: "win32",
+    execPath: "C:\\Program Files\\nodejs\\node.exe",
+    npmExecPath: npmCli
+  });
+
+  assert.equal(viaNpm.command, "C:\\Program Files\\nodejs\\node.exe");
+  assert.deepEqual(viaNpm.args, [npmCli, "test"]);
+  assert.notEqual(viaNpm.command, "npm.cmd", "Windows must not spawn a .cmd file directly");
+
+  const directNode = resolveNpmTestCommand({
+    platform: "win32",
+    execPath: "C:\\Program Files\\nodejs\\node.exe",
+    npmExecPath: ""
+  });
+  assert.deepEqual(directNode, {
+    command: "cmd.exe",
+    args: ["/d", "/s", "/c", "npm.cmd test"]
+  });
 });
 
 test("the theme follows the browser by default and resolves through shared tokens", async () => {

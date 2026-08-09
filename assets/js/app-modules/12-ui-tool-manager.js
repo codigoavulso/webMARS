@@ -301,6 +301,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop, helpSys
     { id: "mars-bot", label: "Mars Bot", script: "./tools/mars-bot.js" },
     { id: "memory-reference-visualization", label: "Memory Reference Visualization", script: "./tools/memory-reference-visualization.js" },
     { id: "mips-xray", label: "MIPS X-Ray", script: "./tools/mips-xray.js" },
+    { id: "example-register-watch", label: "Register Watch (example)", script: "./tools/example-register-watch.js" },
     { id: "pipeline-lab", label: "Pipeline Lab", script: "./tools/pipeline-lab.js" },
     { id: "scavenger-hunt", label: "ScavengerHunt", script: "./tools/scavenger-hunt.js" },
     { id: "screen-magnifier", label: "Screen Magnifier", script: "./tools/screen-magnifier.js" },

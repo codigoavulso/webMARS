@@ -8,13 +8,47 @@
 </head>
 <body>
   <h1>log perubahan</h1>
-  <p class="lead">Rilis 0.5.5 menghadirkan Laboratorium Pipeline dan memperluas seluruh lingkungan belajar menjadi dua puluh bahasa.</p>
+  <p class="lead">Rilis 0.5.6 menghubungkan Lab Pipeline ke program yang sedang berjalan: ia memutar ulang apa yang webMARS sebenarnya dieksekusi, dengan hasil cabang sebenarnya dan nilai register sebenarnya, dan kedua belah pihak dapat menjalankan instruksi lainnya pada satu waktu.</p>
 
-  <h2>0.5.5 &mdash; Laboratorium Pipeline dan dua puluh bahasa</h2>
+  <h2>0.5.6 &mdash; pipa mengikuti program</h2>
   <ul>
-    <li>Menambahkan pipeline lima tahap deterministik dengan hazard RAW, penerusan, penundaan, siklus yang dapat dibalik, metrik, dan linimasa yang skalabel.</li>
+    <li>Menambahkan aliran eksekusi yang direkam ke Pipeline Lab. Alih-alih berasumsi bagaimana suatu cabang diselesaikan, model memutar ulang urutan webMARS yang benar-benar dieksekusi, sehingga cabang yang diambil, kesalahan prediksi, dan instruksi yang dibuang adalah fakta, bukan asumsi.</li>
+    <li>Menambahkan tampilan Register: nilai setiap register pada siklus saat ini, nilai yang masih ada pada tahap sebelumnya, dan kisi setiap register terhadap siklus yang mengubahnya. Nilai hanya muncul jika runtime menyediakan nilai tersebut; aliran statis sengaja tidak menunjukkan apa pun.</li>
+    <li>Menghubungkan kedua angkutan tersebut. Satu instruksi yang dijalankan di webMARS adalah satu instruksi yang memasuki alur, dalam kedua arah: Langkah dan Langkah Belakang di jendela utama memindahkan alur, dan kontrol langkah alat itu sendiri menjalankan atau membatalkan menjalankan program ketika tahap pengambilan sudah tidak ada lagi yang perlu dibaca.</li>
+    <li>Menambahkan <kbd>F8</kbd> untuk Backstep, yang tidak memiliki pintasan sementara Step memiliki <kbd>F7</kbd>.</li>
+    <li>Buat ulang Pipeline Lab sebagai alur vertikal dengan register alur di antara setiap pasangan tahapan, di samping garis waktu, bukan di atasnya, sehingga tahapan dapat menampilkan instruksi, baris sumbernya, dan nilai yang digunakannya.</li>
+    <li>Membuat Pipeline Lab diletakkan menghadap jendelanya sendiri, bukan di layar, sehingga jendela sempit pada layar besar dapat dilipat seperti halnya ponsel, dan setiap grup kontrol dapat dibuka dan ditutup dengan tangan.</li>
+    <li>Menambahkan pembaru lokal yang ditargetkan yang hanya menerjemahkan string yang masih dijawab katalog dalam bahasa Inggris, tanpa menulis ulang entri yang sudah diperbaiki dengan tangan. Ia menolak terjemahan apa pun yang mengubah placeholder.</li>
+    <li>Menerjemahkan 872 string antarmuka yang masih ditampilkan dalam bahasa Inggris dalam tujuh belas bahasa, dan menambahkan pengujian yang gagal ketika suatu bahasa menjawab lebih banyak antarmuka dalam bahasa Inggris dibandingkan sebelumnya.</li>
+    <li>Memperbaiki Lab Pipeline yang mengabaikan Backstep di jendela utama: runtime mengirimkannya pada saluran yang tidak didengarkan oleh alat, sehingga alat terus memutar ulang instruksi yang belum dijalankan.</li>
+    <li>Memperbaiki loncatan dalam mode seluler menggantikan panel apa pun yang dipilih pembaca. Fokus yang disebabkan oleh menjalankan program tidak lagi mengubah panel yang terlihat; membuka jendela, baru atau sudah terbuka, tetap saja.</li>
+    <li>Memperbaiki Lab Pipeline yang hanya menampilkan tahap terakhir saat mengikuti program loncatan, yang membuat saluran pipa terkuras dan diisi ulang pada setiap langkah, bukannya terisi.</li>
+    <li>Memperbaiki tiga token warna antarmuka yang tidak pernah ditentukan, yang membungkam penanda kios di garis waktu dan membiarkan teks yang dibisukan tidak dibisukan di kedua tema.</li>
+    <li>Memperbaiki pemutaran ulang yang terhenti hingga kehabisan siklus saat rekaman melompat ke suatu tempat yang tidak diprediksi oleh cabang, seperti pengaturan ulang program atau penangan pengecualian.</li>
+    <li>Menambahkan <code>npm run version:set</code>, yang menulis versi ke kesebelas tempat yang mendeklarasikannya, dan memindahkan versi tersebut keluar dari halaman bantuan yang menyatakannya ke dalam token runtime.</li>
+    <li>Membangun kembali model pengaturan waktu Pipeline Lab: mengendalikan bahaya, slot penundaan yang dapat dikonfigurasi, prediksi cabang statis dan dinamis, latensi memori yang dapat dikonfigurasi, jebakan berseri, dan tujuh profil arsitektur dengan versi individual yang dapat dibandingkan secara berdampingan.</li>
+    <li>Menambahkan tampilan Arsitektur, menggambar jalur data dengan register pipa, jalur kontrol per instruksi, multiplekser, jalur penerusan langsung, dan deteksi bahaya, dengan grup sinyal yang dapat disembunyikan satu per satu.</li>
+    <li>Menambahkan tabel riwayat cabang yang dibagikan dengan Simulator BHT, sehingga kedua alat memprediksi secara identik; uji regresi mengarahkan kedua prediktor melalui rangkaian hasil yang sama dan gagal pada perbedaan apa pun.</li>
+    <li>Menambahkan ekspor JSON dan CSV yang dapat direproduksi yang membawa versi model, versi profil, konfigurasi lengkap, dan hash program, tanpa stempel waktu, sehingga pekerjaan yang sama menghasilkan file yang identik dengan byte.</li>
+    <li>Menambahkan tujuh laboratorium terpandu dengan tujuan, prasyarat, langkah prediksi sebelum Anda menjalankan, dan pertanyaan refleksi, ditambah lembar solusi terpisah, panduan penerapan guru, dan presentasi singkat. Setiap angka yang dikutip dalam lembar kerja diukur ulang oleh rangkaian pengujian.</li>
+    <li>Menambahkan rangkaian diferensial terhadap MARS 4.5 yang disematkan checksum, membandingkan kode mesin, segmen data, keluaran konsol, dan ke-32 register. Delapan dari sebelas program identik dengan byte; tiga perbedaan yang tersisa dinyatakan dengan alasan dan kasus reproduksi minimal.</li>
+    <li>Menambahkan laporan bukti yang dihasilkan untuk kompatibilitas, kesesuaian MARS, cakupan, skor mutasi, tolok ukur, dan aksesibilitas, masing-masing dibuat ulang dengan satu perintah dan diperiksa oleh rangkaian pengujian.</li>
+    <li>Menambahkan protokol benchmark yang dipublikasikan dengan pemanasan yang dinyatakan, jumlah pengulangan, dan aturan outlier, melaporkan median dengan rentang interkuartil, dan mencatat mesin dari mana setiap hasil berasal.</li>
+    <li>Menambahkan pengujian mutasi dan fuzzing deterministik terbatas pada assembler, runtime, dan importir negara.</li>
+    <li>Memperbaiki Lab Pipeline yang tidak menerima pembaruan waktu proses setelah perakitan pertama, yang disebabkan oleh alat yang melaporkan dirinya sendiri sebagai terputus.</li>
+    <li>Target cabang simbolik yang diperbaiki tidak pernah terselesaikan dalam model pengaturan waktu, sehingga setiap prediksi cabang tidak melaporkan kesalahan prediksi.</li>
+    <li>Memperbaiki kerusakan saat mengimpor status runtime tersimpan yang rusak atau tidak ada, yang menjangkau pengguna sebagai layar kosong.</li>
+    <li>Memperbaiki editor dan panel Pesan Mars yang tidak memiliki nama yang dapat diakses, dan warna teks di bawah kontras minimum WCAG dalam tema terang.</li>
+    <li>Memperbaiki kolom garis waktu yang disematkan yang terlepas dalam bahasa kanan ke kiri, dan mempertahankan diagram alur dari kiri ke kanan sehingga urutan tahapannya tetap terbaca maju.</li>
+    <li>Menambahkan palet aman penglihatan warna opsional untuk tahapan alur.</li>
+    <li>Menambahkan dokumentasi pengembang: batasan arsitektur, panduan kontribusi pertama, panduan untuk menambahkan instruksi, panggilan sistem dan perangkat, invarian waktu proses, alat berversi API dengan contoh yang berfungsi dan generator perancah, serta proses rilis.</li>
+  </ul>
+
+  <h2>0.5.5 &mdash; Pipeline Lab dan dua puluh bahasa</h2>
+  <ul>
+    <li>Menambahkan Lab Pipeline lima tahap deterministik dengan RAW bahaya, penerusan, penghentian, siklus yang dapat dibalik, metrik, dan garis waktu yang dapat diskalakan.</li>
     <li>Memperluas antarmuka, contoh, dokumentasi, dan bantuan dari sepuluh menjadi dua puluh bahasa.</li>
-    <li>Memperluas perilaku responsif alat, lokalisasi, dan cakupan regresi.</li>
+    <li>Cakupan perilaku alat responsif, lokalisasi, dan regresi yang diperluas di seluruh rilis lengkap.</li>
   </ul>
 
   <h2>0.5.4 &mdash; MARS-OS desktop, tampilan virtual, dan tema sistem</h2>

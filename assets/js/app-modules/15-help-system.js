@@ -741,6 +741,7 @@
       try {
         const doc = frame.contentDocument;
         if (!doc) return;
+        globalScope.WebMarsAppVersion?.applyVersionTokens?.(doc);
         doc.addEventListener("click", (event) => {
           const target = event.target;
           if (!(target instanceof Element)) return;

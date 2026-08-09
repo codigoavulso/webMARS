@@ -16,7 +16,10 @@
       .sc-readout { font:28px Consolas, "Courier New", monospace; color:var(--text-heading); text-align:center; line-height:1.1; }
       .sc-sub { font:11px Consolas, "Courier New", monospace; color:var(--text-muted); text-align:center; }
       .sc-bar { height:16px; border:1px solid var(--line); background:var(--surface); position:relative; overflow:hidden; }
-      .sc-bar > span { display:block; height:100%; background:var(--accent); transition:width .05s linear; }
+      .sc-bar > span { display:block; height:100%; background:var(--accent); }
+      @media (prefers-reduced-motion: no-preference) {
+        .sc-bar > span { transition:width .05s linear; }
+      }
       .sc-field { display:flex; align-items:center; gap:6px; }
       .sc-field label { min-width:104px; color:var(--text-muted); }
       .sc-field input[type="number"] { width:110px; font:12px Consolas, monospace; padding:2px 4px; border:1px solid var(--line); background:var(--surface); color:var(--text); }
@@ -182,14 +185,70 @@
       let lastRuntimeRevision = null;
       let releaseObserver = null;
       let renderScheduled = false;
-      // The simulated base derives everything from the executed instruction count, so
-      // no local counter can drift out of step with a backstep.
+      // The simulated base derives elapsed time from the executed instruction
+      // count; the local tick/log state is journalled below for exact backstep.
       let baseStep = 0;
       let baseTimeMs = Date.now();
       let lastTickIndex = 0;
       let ticks = 0;
       let interrupts = 0;
       let log = [];
+      let lastControlValue = 0;
+      let lastPeriodValue = DEFAULT_PERIOD;
+      let activeDeviceDelta = null;
+
+      function restoreDeviceDelta(delta) {
+        if (!delta) return;
+        baseStep = delta.baseStep;
+        baseTimeMs = delta.baseTimeMs;
+        lastTickIndex = delta.lastTickIndex;
+        ticks = delta.ticks;
+        interrupts = delta.interrupts;
+        lastControlValue = delta.lastControlValue;
+        lastPeriodValue = delta.lastPeriodValue;
+        if (delta.logAdded > 0) {
+          log.splice(Math.max(0, log.length - delta.logAdded), delta.logAdded);
+        }
+        if (delta.logRemoved.length > 0) log = delta.logRemoved.concat(log);
+      }
+
+      const deviceHistory = typeof ctx.createToolDeltaHistory === "function"
+        ? ctx.createToolDeltaHistory({
+            initialStep: Number(ctx.engine?.steps) || 0,
+            applyInverse: restoreDeviceDelta
+          })
+        : {
+            clear() {},
+            record() {},
+            rewind() {},
+            sync() {}
+          };
+
+      function captureDeviceDelta() {
+        return {
+          baseStep,
+          baseTimeMs,
+          lastTickIndex,
+          ticks,
+          interrupts,
+          lastControlValue,
+          lastPeriodValue,
+          logAdded: 0,
+          logRemoved: []
+        };
+      }
+
+      function deviceDeltaChanged(delta) {
+        return delta.baseStep !== baseStep
+          || delta.baseTimeMs !== baseTimeMs
+          || delta.lastTickIndex !== lastTickIndex
+          || delta.ticks !== ticks
+          || delta.interrupts !== interrupts
+          || delta.lastControlValue !== lastControlValue
+          || delta.lastPeriodValue !== lastPeriodValue
+          || delta.logAdded > 0
+          || delta.logRemoved.length > 0;
+      }
 
       function mmioBase() {
         return (ctx.engine?.memoryMap?.mmioBase ?? ctx.defaultMemoryMap?.mmioBase ?? 0xffff0000) >>> 0;
@@ -228,15 +287,18 @@
         return (control() & CONTROL_WALL_CLOCK) !== 0;
       }
 
-      function currentTicksElapsed() {
+      function currentTicksElapsed(step = Number(ctx.engine?.steps)) {
         if (usesWallClock()) return Math.max(0, Date.now() - baseTimeMs);
-        const steps = Number(ctx.engine?.steps);
-        return Math.max(0, (Number.isFinite(steps) ? steps : 0) - baseStep);
+        return Math.max(0, (Number.isFinite(step) ? step : 0) - baseStep);
       }
 
       function pushLog(text, kind = "tick") {
         log.push({ text, kind });
-        while (log.length > MAX_LOG_ROWS) log.shift();
+        if (activeDeviceDelta) activeDeviceDelta.logAdded += 1;
+        while (log.length > MAX_LOG_ROWS) {
+          const removed = log.shift();
+          if (activeDeviceDelta) activeDeviceDelta.logRemoved.push(removed);
+        }
       }
 
       function writeControlFromUi() {
@@ -244,58 +306,85 @@
         if (enableCheck.checked) value |= CONTROL_ENABLE;
         if (irqCheck.checked) value |= CONTROL_INTERRUPT_ENABLE;
         if (wallCheck.checked) value |= CONTROL_WALL_CLOCK;
+        const configuredPeriod = Math.max(1, Number.parseInt(periodInput.value, 10) || DEFAULT_PERIOD);
         poke("control", value);
-        poke("period", Math.max(1, Number.parseInt(periodInput.value, 10) || DEFAULT_PERIOD));
+        poke("period", configuredPeriod);
+        lastControlValue = value;
+        lastPeriodValue = configuredPeriod;
         restartCycle();
+        poke("counter", configuredPeriod);
+        poke("uptime", 0);
+        deviceHistory.clear(baseStep);
         scheduleRender();
       }
 
-      function restartCycle() {
-        const steps = Number(ctx.engine?.steps);
+      function restartCycle(step = Number(ctx.engine?.steps)) {
+        const steps = Number(step);
         baseStep = Number.isFinite(steps) ? steps : 0;
         baseTimeMs = Date.now();
         lastTickIndex = 0;
       }
 
       // Called from inside the engine, once per executed instruction.
-      function onInstruction() {
+      function onInstruction(detail = {}) {
         if (!connected) return;
-        const ctrl = control();
-        if ((ctrl & CONTROL_ENABLE) === 0) {
-          if (lastTickIndex !== 0) restartCycle();
-          return;
+        const observedStep = Number(detail.steps);
+        const step = Number.isFinite(observedStep)
+          ? Math.max(0, Math.trunc(observedStep))
+          : Math.max(0, Number(ctx.engine?.steps) | 0);
+        const delta = captureDeviceDelta();
+        activeDeviceDelta = delta;
+        try {
+          const ctrl = control();
+          const span = period();
+          const wasEnabled = (lastControlValue & CONTROL_ENABLE) !== 0;
+          const enabled = (ctrl & CONTROL_ENABLE) !== 0;
+          const wallClockChanged = ((lastControlValue ^ ctrl) & CONTROL_WALL_CLOCK) !== 0;
+          const periodChanged = span !== lastPeriodValue;
+
+          // Enabling starts a fresh interval. Without this transition check, an
+          // instruction that arms the timer also inherits every step spent
+          // disabled and can expire immediately.
+          if (enabled && (!wasEnabled || wallClockChanged || periodChanged)) restartCycle(step);
+          if (!enabled && wasEnabled) restartCycle(step);
+          lastControlValue = ctrl;
+          lastPeriodValue = span;
+          if (!enabled) return;
+
+          const elapsed = currentTicksElapsed(step);
+          const tickIndex = Math.floor(elapsed / span);
+          const remaining = Math.max(0, span - (elapsed % span));
+          poke("counter", remaining);
+          poke("uptime", elapsed);
+          const now = Date.now();
+          poke("timeLow", now % 0x100000000);
+          poke("timeHigh", Math.floor(now / 0x100000000));
+
+          if (tickIndex <= lastTickIndex) return;
+          lastTickIndex = tickIndex;
+          ticks += 1;
+          poke("status", peek("status") | STATUS_EXPIRED);
+          pushLog(t("tick {count} at step {step}", {
+            count: ticks,
+            step
+          }));
+
+          if ((ctrl & CONTROL_INTERRUPT_ENABLE) === 0) return;
+          if (typeof ctx.engine?.requestExternalInterrupt !== "function") return;
+          ctx.engine.requestExternalInterrupt(TIMER_INTERRUPT_CAUSE);
+          interrupts += 1;
+          pushLog(t("interrupt requested (cause {cause})", { cause: toHex32(TIMER_INTERRUPT_CAUSE) }), "irq");
+        } finally {
+          activeDeviceDelta = null;
+          deviceHistory.record(step, deviceDeltaChanged(delta) ? delta : null);
         }
-        const span = period();
-        const elapsed = currentTicksElapsed();
-        const tickIndex = Math.floor(elapsed / span);
-        const remaining = Math.max(0, span - (elapsed % span));
-        poke("counter", remaining);
-        poke("uptime", elapsed);
-        const now = Date.now();
-        poke("timeLow", now % 0x100000000);
-        poke("timeHigh", Math.floor(now / 0x100000000));
-
-        if (tickIndex <= lastTickIndex) return;
-        lastTickIndex = tickIndex;
-        ticks += 1;
-        poke("status", peek("status") | STATUS_EXPIRED);
-        pushLog(t("tick {count} at step {step}", {
-          count: ticks,
-          step: Number(ctx.engine?.steps) | 0
-        }));
-
-        if ((ctrl & CONTROL_INTERRUPT_ENABLE) === 0) return;
-        if (typeof ctx.engine?.requestExternalInterrupt !== "function") return;
-        ctx.engine.requestExternalInterrupt(TIMER_INTERRUPT_CAUSE);
-        interrupts += 1;
-        pushLog(t("interrupt requested (cause {cause})", { cause: toHex32(TIMER_INTERRUPT_CAUSE) }), "irq");
       }
 
       function installObserver() {
         if (releaseObserver || typeof ctx.engine?.registerInstructionObserver !== "function") return;
-        releaseObserver = ctx.engine.registerInstructionObserver(() => {
+        releaseObserver = ctx.engine.registerInstructionObserver((detail) => {
           try {
-            onInstruction();
+            onInstruction(detail);
           } catch {
             // A device must never interrupt the simulated program.
           }
@@ -405,10 +494,13 @@
         ticks = 0;
         interrupts = 0;
         log = [];
+        lastControlValue = control();
+        lastPeriodValue = period();
         restartCycle();
         poke("status", 0);
-        poke("counter", period());
+        poke("counter", lastPeriodValue);
         poke("uptime", 0);
+        deviceHistory.clear(baseStep);
         scheduleRender();
       }
 
@@ -426,8 +518,8 @@
         updateConnectLabel();
         if (connected) {
           installObserver();
-          resetDevice();
           poke("period", Math.max(1, Number.parseInt(periodInput.value, 10) || DEFAULT_PERIOD));
+          resetDevice();
           ctx.messagesPane.postMars(`${t("[tool] System Clock connected at {address}.", {
             address: toHex32(addressOf("control"))
           })}\n`);
@@ -483,17 +575,26 @@
           if (lastRuntimeRevision !== revision) {
             lastRuntimeRevision = revision;
             if (connected) resetDevice();
-          }
+            else deviceHistory.clear(snapshot.steps);
+          } else if (connected) deviceHistory.sync(snapshot);
           if (connected) scheduleRender();
         },
         onRuntimeBatchEnd() {
           if (connected) scheduleRender();
         },
-        onBackstep() {
-          // Everything the device shows derives from the engine step count, so a
-          // backstep only needs the cycle boundary recomputed.
+        onBackstep(event) {
           if (!connected) return;
-          lastTickIndex = Math.floor(currentTicksElapsed() / period());
+          const step = event?.stepAfter | 0;
+          deviceHistory.rewind(step);
+          // The engine has restored the MMIO words; keep transition detection
+          // aligned with that restored control state as well.
+          lastControlValue = control();
+          lastPeriodValue = period();
+          // A control change made in the tool UI is deliberately not part of
+          // CPU history. If the CPU moves behind that external action, start
+          // its still-active interval at the new head instead of retaining a
+          // base step in the future.
+          if (baseStep > step) restartCycle(step);
           scheduleRender();
         }
       };

@@ -170,7 +170,7 @@ function renderLayout(root) {
                       <div class="editor-gutter" id="editor-gutter" aria-hidden="true"><pre id="editor-gutter-lines"></pre></div>
                       <div class="editor-code-wrap">
                         <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"></pre>
-                        <textarea id="source-editor" spellcheck="false" inputmode="text" enterkeyhint="enter" autocomplete="off" autocapitalize="off" autocorrect="off"></textarea>
+                        <textarea id="source-editor" aria-label="Source editor" spellcheck="false" inputmode="text" enterkeyhint="enter" autocomplete="off" autocapitalize="off" autocorrect="off"></textarea>
                       </div>
                     </div>
                   </div>
@@ -271,7 +271,7 @@ function renderLayout(root) {
                 <div class="messages-tab-actions">
                   <button class="tool-btn messages-clear-btn" id="messages-clear-mars" type="button" title="Clear the Mars Messages area">Clear</button>
                 </div>
-                <textarea id="mars-messages" class="message-body mars" readonly spellcheck="false" wrap="off"></textarea>
+                <textarea id="mars-messages" class="message-body mars" aria-label="Mars messages" readonly spellcheck="false" wrap="off"></textarea>
               </div>
             </div>
             <div id="panel-run-io" class="subtab-panel messages-subtab-panel">
@@ -1158,10 +1158,25 @@ function createWindowManager(refs) {
     }
     entry.element.style.zIndex = `${nextZ(entry.kind)}`;
     // Stacked mode has no z-order to bring forward, so focusing a window means
-    // making it the visible panel.
-    activateMobilePanelForEntry(entry);
+    // making it the visible panel. Focus that nobody asked for skips that part:
+    // see focusForExecution.
+    if (options.keepStackedPanel !== true) activateMobilePanelForEntry(entry);
     entry.element.classList.add("window-focus");
     window.setTimeout(() => entry.element.classList.remove("window-focus"), 180);
+  }
+
+  // Raising a window because the program ran, not because anyone asked to look
+  // at it.
+  //
+  // On the desktop every window is on screen at once, so bringing the text and
+  // data segments forward is a helpful nudge and costs nothing. Stacked mode
+  // shows one panel at a time, and there the same call replaces whatever the
+  // user had chosen: stepping through a program while reading the Pipeline Lab
+  // would throw them back to the data segment on every press. A window opened
+  // by the user still takes focus -- that request is explicit, and `show`
+  // handles it.
+  function focusForExecution(windowId) {
+    focus(windowId, { keepStackedPanel: isStackedMode() });
   }
 
   // A pointer event inside an iframe never reaches this document, so a window
@@ -3237,6 +3252,7 @@ function createWindowManager(refs) {
 
   return {
     focus,
+    focusForExecution,
     pulse,
     registerWindow,
     unregisterWindow,
@@ -4398,7 +4414,7 @@ function createModeController(refs, windowManager) {
     editorHost.appendChild(editorWorkspace);
   }
 
-  function apply(nextMode) {
+  function apply(nextMode, options = {}) {
     const raw = String(nextMode || "").trim().toLowerCase();
     if (raw === "c0" || raw === "assembly") authoringMode = raw;
     mode = normalizeMode(nextMode);
@@ -4412,7 +4428,15 @@ function createModeController(refs, windowManager) {
     editorPanel?.classList.toggle("active", mode === "editor");
     executePanel?.classList.toggle("active", mode === "execute");
 
-    windowManager.focus("window-main");
+    // Clicking a mode button is a request to look at the main window. Every
+    // run command also sets the mode, and that is not: in stacked mode it
+    // replaced whatever panel the user was reading on each Step, which is the
+    // single most common way to lose your place while following a program.
+    if (options.userInitiated === true || typeof windowManager.focusForExecution !== "function") {
+      windowManager.focus("window-main");
+    } else {
+      windowManager.focusForExecution("window-main");
+    }
   }
 
   function syncForFileName(fileName, options = {}) {
@@ -4433,9 +4457,9 @@ function createModeController(refs, windowManager) {
     return target;
   }
 
-  projectButton?.addEventListener("click", () => apply("project"));
-  editorButton?.addEventListener("click", () => apply("editor"));
-  executeButton?.addEventListener("click", () => apply("execute"));
+  projectButton?.addEventListener("click", () => apply("project", { userInitiated: true }));
+  editorButton?.addEventListener("click", () => apply("editor", { userInitiated: true }));
+  executeButton?.addEventListener("click", () => apply("execute", { userInitiated: true }));
 
   apply("editor");
 
@@ -6207,6 +6231,18 @@ function injectRuntimeStyles() {
     @keyframes windowPulse {
       0% { background: linear-gradient(180deg, var(--amber-2-hi) 0%, var(--amber-2-lo) 100%); }
       100% { background: linear-gradient(180deg, var(--titlebar-hi) 0%, var(--titlebar-lo) 100%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .desktop-shared-splitter::before {
+        transition: none;
+      }
+
+      .window-activity .window-titlebar,
+      .updated-row,
+      .updated-cell {
+        animation: none;
+      }
     }
 
     #window-main .window-content,

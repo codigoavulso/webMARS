@@ -3168,11 +3168,101 @@ class MarsEngine {
     };
   }
 
-  importRuntimeState(snapshot = {}, options = {}) {
+  importRuntimeState(rawSnapshot = {}, rawOptions = {}) {
+    // State arrives from browser storage and imported files, where truncation
+    // and corruption are ordinary. Validate the stable core of the serialized
+    // shape before changing any field: treating a bad payload as `{}` would be
+    // just as destructive as accepting it, because it silently clears the
+    // assembled program and machine state.
+    const isRecord = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+    if (!isRecord(rawSnapshot)) return false;
+
+    const snapshot = rawSnapshot;
+    const options = isRecord(rawOptions) ? rawOptions : {};
     const preserveProgram = options.preserveProgram === true;
     const preserveBreakpoints = options.preserveBreakpoints === true;
     const hasSnapshotField = (field) => Object.prototype.hasOwnProperty.call(snapshot, field);
-    const registers = Array.isArray(snapshot.registers) ? snapshot.registers : [];
+    const isUint32 = (value) => Number.isSafeInteger(value) && value >= 0 && value <= 0xffffffff;
+    const isWordValue = (value) => (
+      Number.isSafeInteger(value)
+      && value >= -0x80000000
+      && value <= 0xffffffff
+    );
+    const isStepCount = (value) => Number.isSafeInteger(value) && value >= 0;
+    const isWordArray = (value, minimumLength) => (
+      Array.isArray(value)
+      && value.length >= minimumLength
+      && value.every(isWordValue)
+    );
+    const isEntryCollection = (value) => value instanceof Map || Array.isArray(value);
+
+    const registers = snapshot.registers;
+    if (
+      typeof snapshot.assembled !== "boolean"
+      || typeof snapshot.halted !== "boolean"
+      || !isUint32(snapshot.pc)
+      || !isStepCount(snapshot.steps)
+      || !isUint32(snapshot.heapPointer)
+      || !isWordArray(registers, this.registers.length)
+      || !isEntryCollection(snapshot.memoryWords)
+      || (!preserveProgram && !Array.isArray(snapshot.textRows))
+    ) return false;
+
+    const memoryEntries = snapshot.memoryWords instanceof Map
+      ? Array.from(snapshot.memoryWords.entries())
+      : snapshot.memoryWords;
+    if (memoryEntries.some((entry) => (
+      !Array.isArray(entry)
+      || entry.length < 2
+      || !isUint32(entry[0])
+      || ((entry[0] >>> 0) & 0x3) !== 0
+      || !isWordValue(entry[1])
+    ))) return false;
+
+    if (hasSnapshotField("cop0") && !isWordArray(snapshot.cop0, this.cop0Registers.length)) return false;
+    if (hasSnapshotField("cop1") && !isWordArray(snapshot.cop1, this.cop1Registers.length)) return false;
+    if (
+      hasSnapshotField("fpuFlags")
+      && (
+        !Array.isArray(snapshot.fpuFlags)
+        || snapshot.fpuFlags.length < this.fpuConditionFlags.length
+        || snapshot.fpuFlags.some((value) => value !== 0 && value !== 1 && value !== false && value !== true)
+      )
+    ) return false;
+    if (hasSnapshotField("fpuControlStatus") && !isWordValue(snapshot.fpuControlStatus)) return false;
+
+    for (const field of [
+      "delayedBranchTarget",
+      "delayedBranchAddress",
+      "llReservationAddress",
+      "lastMemoryWriteAddress"
+    ]) {
+      if (hasSnapshotField(field) && snapshot[field] !== null && !isUint32(snapshot[field])) return false;
+    }
+
+    if (hasSnapshotField("memoryMap")) {
+      if (!isRecord(snapshot.memoryMap)) return false;
+      for (const field of Object.keys(DEFAULT_MEMORY_MAP)) {
+        if (Object.prototype.hasOwnProperty.call(snapshot.memoryMap, field) && !isUint32(snapshot.memoryMap[field])) {
+          return false;
+        }
+      }
+    }
+    if (hasSnapshotField("source") && typeof snapshot.source !== "string") return false;
+    if (hasSnapshotField("labels") && !Array.isArray(snapshot.labels)) return false;
+    if (hasSnapshotField("warnings") && !Array.isArray(snapshot.warnings)) return false;
+    if (hasSnapshotField("errors") && !Array.isArray(snapshot.errors)) return false;
+    if (
+      hasSnapshotField("breakpoints")
+      && (!Array.isArray(snapshot.breakpoints) || snapshot.breakpoints.some((address) => !isUint32(address)))
+    ) return false;
+    for (const field of ["randomStreams", "openFiles", "virtualFileSystem", "imageHandles"]) {
+      if (hasSnapshotField(field) && !isEntryCollection(snapshot[field])) return false;
+    }
+    if (hasSnapshotField("argsRegistry") && !Array.isArray(snapshot.argsRegistry)) return false;
+    if (hasSnapshotField("lastProgramArguments") && !Array.isArray(snapshot.lastProgramArguments)) return false;
+    if (hasSnapshotField("stdinClosed") && typeof snapshot.stdinClosed !== "boolean") return false;
+
     const cop0 = Array.isArray(snapshot.cop0) ? snapshot.cop0 : [];
     const cop1 = Array.isArray(snapshot.cop1) ? snapshot.cop1 : [];
     const fpuFlags = Array.isArray(snapshot.fpuFlags) ? snapshot.fpuFlags : [];
@@ -3187,11 +3277,6 @@ class MarsEngine {
     const importedHeapPointer = Number.isFinite(snapshot.heapPointer)
       ? (snapshot.heapPointer >>> 0)
       : (importedMemoryMap.heapBase >>> 0);
-    const memoryEntries = snapshot.memoryWords instanceof Map
-      ? Array.from(snapshot.memoryWords.entries())
-      : Array.isArray(snapshot.memoryWords)
-        ? snapshot.memoryWords
-        : [];
     const importedMemoryBytes = new Map();
     memoryEntries.forEach((entry) => {
       if (!Array.isArray(entry) || entry.length < 2) return;
@@ -3387,6 +3472,12 @@ class MarsEngine {
     }
 
     this.forceZeroRegister();
+    // A revision is a local cache generation, not serialized machine data.
+    // Re-importing the same snapshot must still invalidate every consumer that
+    // cached the previous program or timeline, so never copy the payload's
+    // revision verbatim.
+    this.runtimeRevision = ((this.runtimeRevision ?? 0) + 1) >>> 0;
+    return true;
   }
 
   getReferenceInstructionCandidates(opcode) {
@@ -5307,7 +5398,11 @@ class MarsEngine {
       case "nop":
         return ["sll $zero, $zero, 0"];
       case "move":
-        return args.length >= 2 ? [`addu ${args[0]}, ${args[1]}, $zero`] : [statement];
+        // Operand order follows the MARS template `addu RG1, $0, RG2`, so the
+        // encoded word matches MARS 4.5 byte for byte. `addu rd, rs, $zero`
+        // computes the same value but assembles to a different instruction,
+        // which the differential suite reports as a conformance difference.
+        return args.length >= 2 ? [`addu ${args[0]}, $zero, ${args[1]}`] : [statement];
       case "not":
         return args.length >= 2 ? [`nor ${args[0]}, ${args[1]}, $zero`] : [statement];
       case "abs":

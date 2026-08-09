@@ -8,13 +8,47 @@
 </head>
 <body>
   <h1>Änderungsprotokoll</h1>
-  <p class="lead">Version 0.5.5 führt das Pipeline-Labor ein und erweitert die vollständige Lernumgebung auf zwanzig Sprachen.</p>
+  <p class="lead">Version 0.5.6 verbindet das Pipeline Lab mit dem laufenden Programm: Es gibt wieder, was webMARS tatsächlich ausgeführt hat, mit den tatsächlichen Verzweigungsergebnissen und den tatsächlichen Registerwerten, und jede Seite kann jeweils einen Befehl nach dem anderen steuern.</p>
 
-  <h2>0.5.5 &mdash; Pipeline-Labor und zwanzig Sprachen</h2>
+  <h2>0.5.6 &mdash; Die Pipeline folgt dem Programm</h2>
   <ul>
-    <li>Deterministisches fünfstufiges Pipeline-Labor mit RAW-Konflikten, Weiterleitung, Stalls, reversiblen Zyklen, Metriken und skalierbarer Zeitleiste hinzugefügt.</li>
-    <li>Oberfläche, Beispiele, Dokumentation und Hilfe von zehn auf zwanzig Sprachen erweitert.</li>
-    <li>Responsives Werkzeugverhalten, Lokalisierung und Regressionstests ausgebaut.</li>
+    <li>Dem Pipeline Lab wurde ein aufgezeichneter Ausführungsstream hinzugefügt. Anstatt davon auszugehen, wie eine Verzweigung aufgelöst wurde, spielt das Modell die tatsächlich ausgeführte Sequenz webMARS ab, sodass übernommene Verzweigungen, Fehlvorhersagen und verworfene Anweisungen eher Fakten als Annahmen sind.</li>
+    <li>Die Registeransicht wurde hinzugefügt: der Wert jedes Registers im aktuellen Zyklus, die Werte, die sich in einer früheren Phase noch im Umlauf befinden, und ein Raster aller Register im Vergleich zum Zyklus, der es geändert hat. Ein Wert erscheint nur dort, wo die Laufzeit einen Wert bereitgestellt hat. Der statische Stream zeigt absichtlich keine an.</li>
+    <li>Verknüpfte die beiden Transporte. Eine in webMARS ausgeführte Anweisung ist eine Anweisung, die in beide Richtungen in die Pipeline eintritt: „Schritt“ und „Rückschritt“ im Hauptfenster bewegen die Pipeline, und die eigenen Schrittsteuerungen des Tools führen das Programm aus oder beenden es, wenn in der Abrufphase nichts mehr zu lesen ist.</li>
+    <li><kbd>F8</kbd> für Backstep hinzugefügt, das keine Verknüpfung hatte, während Step <kbd>F7</kbd> hatte.</li>
+    <li>Das Pipeline Lab wurde als vertikale Pipeline neu gezeichnet, wobei das Pipeline-Register zwischen jedem Stufenpaar neben der Zeitleiste und nicht darüber liegt, sodass eine Stufe die Anweisung, ihre Quellzeile und die von ihr verwendeten Werte anzeigen kann.</li>
+    <li>Das Pipeline Lab wurde an einem eigenen Fenster und nicht am Bildschirm angeordnet, sodass sich ein schmales Fenster auf einem großen Display wie ein Telefon falten lässt und jede Kontrollgruppe von Hand geöffnet und geschlossen werden kann.</li>
+    <li>Es wurde ein gezielter Locale-Updater hinzugefügt, der nur die Zeichenfolgen übersetzt, die ein Katalog noch auf Englisch beantwortet, ohne bereits manuell korrigierte Einträge neu zu schreiben. Es lehnt jede Übersetzung ab, die einen Platzhalter ändert.</li>
+    <li>872 Schnittstellenzeichenfolgen, die immer noch auf Englisch angezeigt wurden, wurden in siebzehn Sprachen übersetzt und ein Test hinzugefügt, der fehlschlägt, wenn eine Sprache häufiger auf Englisch antwortet als zuvor.</li>
+    <li>Problem behoben, bei dem Pipeline Lab Backstep im Hauptfenster ignorierte: Die Laufzeit übermittelte es auf einem Kanal, den das Tool nicht abhörte, sodass das Tool weiterhin Anweisungen abspielte, die nicht ausgeführt wurden.</li>
+    <li>Problem behoben, bei dem im Mobilmodus das vom Leser ausgewählte Panel ersetzt wurde. Der durch die Ausführung des Programms verursachte Fokus ändert nicht mehr das sichtbare Panel; Das Öffnen eines neuen oder bereits geöffneten Fensters funktioniert immer noch.</li>
+    <li>Problem behoben, bei dem das Pipeline-Labor beim Befolgen eines Schrittprogramms nur die letzte Stufe anzeigte, was dazu führte, dass die Pipeline bei jedem Schritt entleerte und wieder aufgefüllt wurde, anstatt sich zu füllen.</li>
+    <li>Drei nie definierte Schnittstellen-Farbtokens wurden behoben, wodurch die Stall-Markierung in der Timeline stummgeschaltet wurde und stummgeschalteter Text in beiden Themes nicht stummgeschaltet blieb.</li>
+    <li>Es wurde ein Problem behoben, bei dem die Wiedergabe verzögert wurde, bis die Zyklen ausgingen, wenn die Aufzeichnung an einen Ort sprang, an dem kein vorhersehbarer Zweig vorhanden war, z. B. bei einem Programm-Reset oder einem Ausnahmebehandler.</li>
+    <li><code>npm run version:set</code> hinzugefügt, das die Version an alle elf Stellen schreibt, an denen sie deklariert wird, und die Version aus den Hilfeseiten, auf denen sie angegeben ist, in das Laufzeittoken verschoben.</li>
+    <li>Das Timing-Modell von Pipeline Lab wurde neu erstellt: Kontrollrisiken, konfigurierbare Verzögerungsslots, statische und dynamische Verzweigungsvorhersage, konfigurierbare Speicherlatenz, serialisierte Traps und sieben individuell versionierte Architekturprofile, die nebeneinander verglichen werden können.</li>
+    <li>Die Architekturansicht wurde hinzugefügt und zeichnet den Datenpfad mit Pipeline-Registern, befehlsbezogenen Steuerleitungen, Multiplexern, Live-Weiterleitungspfaden und Gefahrenerkennung mit Signalgruppen auf, die einzeln ausgeblendet werden können.</li>
+    <li>Es wurde eine Verzweigungsverlaufstabelle hinzugefügt, die mit dem BHT-Simulator geteilt wird, sodass beide Tools identische Vorhersagen treffen. Ein Regressionstest führt die beiden Prädiktoren durch dieselben Ergebnissequenzen und schlägt bei Abweichungen fehl.</li>
+    <li>Reproduzierbarer JSON- und CSV-Export mit der Modellversion, der Profilversion, der vollständigen Konfiguration und einem Hash des Programms ohne Zeitstempel hinzugefügt, sodass dieselbe Arbeit eine byteidentische Datei erzeugt.</li>
+    <li>Es wurden sieben geführte Labore mit Zielen, Voraussetzungen, einem „Vorhersagen vor dem Ausführen“-Schritt und Reflexionsfragen sowie separaten Lösungsblättern, einem Einführungsleitfaden für Lehrer und einer kurzen Präsentation hinzugefügt. Jede in einem Arbeitsblatt angegebene Zahl wird von der Testsuite erneut gemessen.</li>
+    <li>Eine Differenzierungssuite für ein Prüfsummen-gepinntes MARS 4.5 hinzugefügt, das Maschinencode, Datensegment, Konsolenausgabe und alle 32 Register vergleicht. Acht von elf Programmen sind byteidentisch; Die drei verbleibenden Unterschiede werden mit einem Grund und einem minimalen Reproduktionsfall deklariert.</li>
+    <li>Es wurden generierte Nachweisberichte für Kompatibilität, MARS-Konformität, Abdeckung, Mutationsbewertung, Benchmark und Zugänglichkeit hinzugefügt, die jeweils durch einen Befehl neu generiert und von der Testsuite überprüft werden.</li>
+    <li>Es wurde ein veröffentlichtes Benchmark-Protokoll mit einer erklärten Aufwärm-, Wiederholungszahl- und Ausreißerregel hinzugefügt, das Mediane mit Interquartilbereichen meldet und die Maschine aufzeichnet, von der jedes Ergebnis stammt.</li>
+    <li>Mutationstests und begrenztes deterministisches Fuzzing des Assemblers, der Laufzeit und des Statusimporters hinzugefügt.</li>
+    <li>Problem behoben, bei dem Pipeline Lab nach der ersten Montage keine Laufzeitaktualisierungen erhielt, weil das Tool sich selbst als nicht verbunden meldete.</li>
+    <li>Problem behoben, bei dem symbolische Verzweigungsziele nie im Timing-Modell aufgelöst wurden, wodurch jede Verzweigungsvorhersage keine Fehlvorhersagen meldete.</li>
+    <li>Ein Absturz beim Importieren eines beschädigten oder fehlenden gespeicherten Laufzeitstatus wurde behoben, der den Benutzer als leeren Bildschirm erreichte.</li>
+    <li>Problem behoben, bei dem der Editor und der Bereich „Mars-Nachrichten“ keinen zugänglichen Namen und eine Textfarbe hatten, die unter dem Kontrastminimum WCAG im hellen Design lag.</li>
+    <li>Das Problem, dass sich die angeheftete Zeitleistenspalte in Rechts-nach-Links-Sprachen löste, wurde behoben und das Pipeline-Diagramm wurde von links nach rechts beibehalten, sodass die Phasenreihenfolge immer noch vorwärts lautet.</li>
+    <li>Für die Pipeline-Stufen wurde eine optionale, farbsichere Farbpalette hinzugefügt.</li>
+    <li>Entwicklerdokumentation hinzugefügt: Architekturgrenzen, ein Leitfaden für Erstbeiträge, Anleitungen zum Hinzufügen von Anweisungen, Systemaufrufen und Geräten, die Laufzeitinvarianten, das versionierte Tool API mit einem funktionierenden Beispiel und einem Gerüstgenerator sowie der Veröffentlichungsprozess.</li>
+  </ul>
+
+  <h2>0.5.5 &mdash; Pipeline Lab und zwanzig Sprachen</h2>
+  <ul>
+    <li>Ein deterministisches fünfstufiges Pipeline-Labor mit RAW Gefahren, Weiterleitungen, Verzögerungen, reversiblen Zyklen, Metriken und einer skalierbaren Zeitleiste hinzugefügt.</li>
+    <li>Benutzeroberfläche, Beispiele, Dokumentation und Hilfe von zehn auf zwanzig Sprachen erweitert.</li>
+    <li>Erweitertes reaktionsfähiges Toolverhalten, Lokalisierung und Regressionsabdeckung über die gesamte Version hinweg.</li>
   </ul>
 
   <h2>0.5.4 &mdash; MARS-OS-Desktop, virtuelle Anzeigen und Systemdesign</h2>

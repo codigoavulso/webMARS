@@ -23,8 +23,8 @@
   <meta name="twitter:image" content="https://webmars.nfiles.top/assets/images/screenshot-main.png">
 
   <link rel="icon" href="./favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="./assets/css/styles.css?v=0.5.5" />
-  <script src="./assets/js/app-version.js?v=0.5.5"></script>
+  <link rel="stylesheet" href="./assets/css/styles.css?v=0.5.6" />
+  <script src="./assets/js/app-version.js?v=0.5.6"></script>
   <script>
     /*
      * Pick the theme before first paint so the splash and the interface never
@@ -94,6 +94,16 @@
       border-top-color: var(--accent);
       animation: webmarsSpin 1s linear infinite;
       flex: 0 0 auto;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .webmars-loader {
+        transition: none;
+      }
+
+      .webmars-loader-spinner {
+        animation: none;
+      }
     }
 
     .webmars-loader-title {

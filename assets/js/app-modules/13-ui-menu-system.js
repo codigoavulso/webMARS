@@ -111,7 +111,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Pause", command: "pause", enabled: () => refs.buttons?.pause?.disabled !== true },
         { label: "Stop", command: "stop", enabled: () => refs.buttons?.stop?.disabled !== true },
         { label: "Step", command: "step", shortcut: "F7", enabled: () => refs.buttons?.step?.disabled !== true },
-        { label: "Backstep", command: "backstep", enabled: () => refs.buttons?.backstep?.disabled !== true },
+        { label: "Backstep", command: "backstep", shortcut: "F8", enabled: () => refs.buttons?.backstep?.disabled !== true },
         { label: "Reset", command: "reset", enabled: () => refs.buttons?.reset?.disabled !== true }
       ],
       Settings: [

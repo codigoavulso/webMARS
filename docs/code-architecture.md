@@ -1,4 +1,4 @@
-# webMARS Code Architecture (v0.4.8)
+# webMARS Code Architecture (v0.5.6)
 
 webMARS is a static browser application built from ordered, non-ES-module
 scripts. The assembler and simulator use one JavaScript implementation; the
@@ -24,6 +24,118 @@ experimental WASM/hybrid backend is no longer part of the application.
 
 The app should be served over HTTP. Manifests, examples, help documents, tools
 and libraries are loaded as local resources at runtime.
+
+## Layer map
+
+```mermaid
+flowchart TB
+  subgraph UI["Interface"]
+    ui["10-ui.js<br/>layout, editor, panes, windows"]
+    menu["13-ui-menu-system.js<br/>menus, shortcuts"]
+    help["15-help-system.js<br/>help, About, viewer"]
+    filemgr["11-ui-file-manager.js<br/>project tree"]
+  end
+  subgraph COMP["Composition"]
+    runtime["20-app-runtime.js<br/>composition root"]
+  end
+  subgraph SVC["Services"]
+    tools["12-ui-tool-manager.js<br/>tool hosting and delivery"]
+    storage["18-runtime-browser-storage.js<br/>projects, sessions"]
+    settings["19-runtime-settings.js<br/>preferences, limits"]
+    bench["19-runtime-benchmarks.js<br/>measurements"]
+    compiler["17-mini-c-compiler.js<br/>Mini-C to MIPS"]
+  end
+  subgraph CORE["Core"]
+    engine["00-core.js<br/>assembler + runtime engine"]
+    store["00-core-store.js"]
+    i18n["00-i18n.js"]
+  end
+  subgraph PLUG["Plug-ins"]
+    toolfiles["tools/*.js"]
+  end
+
+  runtime --> ui
+  runtime --> menu
+  runtime --> help
+  runtime --> filemgr
+  runtime --> tools
+  runtime --> storage
+  runtime --> settings
+  runtime --> bench
+  runtime --> compiler
+  runtime --> engine
+  compiler --> engine
+  tools --> engine
+  tools -. "snapshots, events" .-> toolfiles
+  ui --> i18n
+  engine --> i18n
+  engine --> store
+```
+
+Dependencies point downwards only. The core never reaches upwards into the
+interface: it has no DOM access at all, which is what lets the whole engine run
+under Node in the test suite.
+
+## Boundaries
+
+Each boundary below is a rule about what may cross it, not just a picture of
+what currently does.
+
+### Assembler and runtime engine (`00-core.js`)
+
+- **Owns**: parsing, macro and pseudo expansion, encoding, the memory map,
+  registers, COP0/COP1, exceptions, syscalls, breakpoints, backstep, and
+  runtime-state import and export.
+- **Must not**: touch the DOM, read `localStorage`, or know that a browser
+  exists. Anything needing the user goes through `runtimeHooks`, which the app
+  runtime installs.
+- **Exposed as**: `createMarsEngine`.
+- **Invariants**: [runtime-invariants.md](runtime-invariants.md).
+
+### Mini-C compiler (`17-mini-c-compiler.js`)
+
+- **Owns**: detection, parsing, semantic checks and MIPS generation for
+  Mini-C/C0 and C1-NATIVE.
+- **Must not**: depend on UI state or on the engine's *runtime* state. It emits
+  assembly text; the engine assembles it like any other source.
+
+### Interface (`10-ui.js`, `11-*`, `13-*`, `15-*`)
+
+- **Owns**: layout, windows, editor, panes, dialogs, menus and help rendering.
+- **Must not**: implement ISA or assembler semantics. A rule about what an
+  instruction means belongs in the core even when it is only ever displayed.
+- **Must**: resolve every colour through the theme tokens, and route every
+  visible string through the translation catalog.
+
+### Storage (`18-runtime-browser-storage.js`)
+
+- **Owns**: browser-backed projects, sessions, files and preferences.
+- **Must**: treat a storage failure as an error path. Nothing may report a
+  successful save until storage has accepted the write, and a failed
+  transactional write must roll back.
+
+### Tools (`12-ui-tool-manager.js` and `tools/*.js`)
+
+- **Owns**: tool discovery, window hosting, and ordered delivery of snapshots
+  and runtime events.
+- **Guarantees**: a throwing tool is isolated and reported; it never interrupts
+  the runtime or the other tools.
+- **Contract**: [tool-api.md](tool-api.md), versioned as `apiVersion` in
+  `tools/tools.json`.
+
+### Composition root (`20-app-runtime.js`)
+
+- **Owns**: wiring everything above together - preferences, projects, sessions,
+  commands, the run loop, persistence, cloud adapters, tools, help, and UI
+  synchronisation.
+- **Must stay last** in the load order. Nothing may depend on it.
+
+### Pipeline Lab (`tools/pipeline-lab.js`)
+
+A tool, not part of the runtime. It reads assembled instructions and models
+timing; it never executes the program and never touches machine state. This
+separation is the reason the functional runtime can be described honestly as
+not cycle-accurate. See [pipeline-lab.md](pipeline-lab.md).
 
 ## Ordered script graph
 
@@ -99,7 +211,7 @@ should remain incremental:
 
 Names such as `core/syscalls` or `runtime/session` may be useful conceptual
 boundaries for future extraction, but they are not directories or modules in
-the v0.4.8 tree.
+the v0.5.6 tree.
 
 ## Theming
 
@@ -143,3 +255,24 @@ a device keeps looking like the hardware it emulates.
 - Keep benchmark data local and volatile.
 - Run `npm run validate` before release work; use `npm run package:release` to
   build the allowlisted release artifact.
+
+## Developer documentation
+
+| Document | Answers |
+| --- | --- |
+| [contributing-first-change.md](contributing-first-change.md) | How do I clone, run, test and land a first change? |
+| [adding-instructions.md](adding-instructions.md) | How do I add an instruction or pseudo-instruction? |
+| [adding-syscalls-and-devices.md](adding-syscalls-and-devices.md) | How do I add a syscall or a memory-mapped device? |
+| [runtime-invariants.md](runtime-invariants.md) | What may I assume about memory, snapshots and backstep? |
+| [tool-api.md](tool-api.md) | How do I write a tool for the Tools menu? |
+| [release-process.md](release-process.md) | How is a version cut, and what does it promise? |
+| [pipeline-lab.md](pipeline-lab.md) | What does the cycle-accurate model do and not do? |
+| [comparison-matrix.md](comparison-matrix.md) | What is supported, and what is the evidence? |
+| [mars-conformance.md](mars-conformance.md) | Where does webMARS behave differently from MARS 4.5, and why? |
+| [evidence.md](evidence.md) | Where is the evidence for every public claim? |
+| [technical-summary.md](technical-summary.md) | How do I describe and cite this system in a paper? |
+| [benchmark.md](benchmark.md) | How fast is it, under what protocol, on what machine? |
+| [accessibility.md](accessibility.md) | Which WCAG criteria were checked, and which were not? |
+| [portability.md](portability.md) | Which browsers and platforms has it actually been run on? |
+| [coverage-report.md](coverage-report.md) | How much of the shipped source do the tests execute? |
+| [mutation-report.md](mutation-report.md) | Would the tests notice if the code were wrong? |

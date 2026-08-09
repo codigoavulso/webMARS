@@ -1,4 +1,5 @@
 {
+    "apiVersion":  1,
     "tools":  [
                   {
                       "label":  "BHT Simulator",
@@ -64,6 +65,11 @@
                       "label":  "MIPS X-Ray",
                       "script":  "./tools/mips-xray.js",
                       "id":  "mips-xray"
+                  },
+                  {
+                      "label":  "Register Watch (example)",
+                      "script":  "./tools/example-register-watch.js",
+                      "id":  "example-register-watch"
                   },
                   {
                       "label":  "Pipeline Lab",

@@ -21,7 +21,7 @@ function sourceBetween(source, startMarker, endMarker) {
 async function loadPipelineLabCore() {
   const source = await readFile(pipelineLabPath, "utf8");
   const context = vm.createContext({});
-  vm.runInContext(source, context);
+  vm.runInContext(source, context, { filename: "tools/pipeline-lab.js" });
   assert.ok(context.MarsPipelineLabCore, "Pipeline Lab exposes its deterministic core");
   return context.MarsPipelineLabCore;
 }
@@ -110,8 +110,12 @@ test("Pipeline Lab keeps large-program timelines persistent and bounded in the U
 
   const source = await readFile(pipelineLabPath, "utf8");
   assert.match(source, /const maxVisibleInstructions = 160;/);
-  assert.match(source, /const maxVisibleCycles = 80;/);
-  assert.match(source, /simulator\.program\.length \* 4 \+ 16/);
+  assert.match(source, /const MAX_VISIBLE_CYCLES = 80;/);
+  // The cycle budget is derived from whichever instruction stream is being
+  // read, so a recorded run of a short loop is not cut off at the program
+  // length. Both branches stay bounded.
+  assert.match(source, /instructions \* 4 \+ 16/);
+  assert.match(source, /Math\.max\(simulator\.program\.length, executionRecords\.length\)/);
 });
 
 test("Pipeline Lab is present in the primary and fallback tool catalogs", async () => {
@@ -403,6 +407,11 @@ test("stateful tools use central deltas and expose active runtime consumers", as
   const clockSource = await readFile(resolve(projectRoot, "tools/system-clock.js"), "utf8");
   assert.match(clockSource, /requestExternalInterrupt\(TIMER_INTERRUPT_CAUSE\)/);
   assert.doesNotMatch(clockSource, /isExternalInterruptEnabled\(\)/);
+  assert.match(clockSource, /ctx\.createToolDeltaHistory\(\{/);
+  assert.match(clockSource, /enabled && \(!wasEnabled \|\| wallClockChanged \|\| periodChanged\)/);
+  assert.match(clockSource, /deviceHistory\.rewind\(step\)/);
+  assert.match(clockSource, /deviceHistory\.sync\(snapshot\)/);
+  assert.doesNotMatch(clockSource, /lastTickIndex = Math\.floor\(currentTicksElapsed\(\) \/ period\(\)\)/);
 
   const cacheSource = await readFile(resolve(projectRoot, "tools/cache-simulator.js"), "utf8");
   assert.doesNotMatch(cacheSource, /log:\s*String\(controls\.log\.value/);
@@ -439,6 +448,148 @@ test("high-frequency analytical tools consume decoded instruction batches", asyn
     assert.match(source, /onRuntimeEventBatch\(events/);
     assert.match(source, /event(?:\?|\.)\.opcode|event\.opcode/);
   }
+});
+
+test("System Clock starts on enable and reverses its local tick state", async () => {
+  const [clockSource, managerSource] = await Promise.all([
+    readFile(resolve(projectRoot, "tools/system-clock.js"), "utf8"),
+    readFile(managerPath, "utf8")
+  ]);
+  const listeners = new Map();
+  const element = (initial = {}) => ({
+    checked: false,
+    value: "",
+    textContent: "",
+    innerHTML: "",
+    scrollTop: 0,
+    scrollHeight: 0,
+    clientWidth: 900,
+    style: {},
+    classList: { contains: () => false, toggle() {}, add() {}, remove() {} },
+    addEventListener(type, listener) {
+      if (!listeners.has(this)) listeners.set(this, new Map());
+      const byType = listeners.get(this);
+      if (!byType.has(type)) byType.set(type, []);
+      byType.get(type).push(listener);
+    },
+    emit(type) {
+      (listeners.get(this)?.get(type) || []).forEach((listener) => listener({ type, target: this }));
+    },
+    ...initial
+  });
+  const selectors = new Map([
+    [".sc-tool", element()],
+    ["[data-sc='connect']", element()],
+    ["[data-sc='state']", element()],
+    ["[data-sc='readout']", element()],
+    ["[data-sc='epoch']", element()],
+    ["[data-sc='bar']", element()],
+    ["[data-sc='counter']", element()],
+    ["[data-sc='log']", element()],
+    ["[data-sc='note']", element()],
+    ["[data-sc='period']", element({ value: "2" })],
+    ["[data-sc='period-unit']", element()],
+    ["[data-sc='enable']", element()],
+    ["[data-sc='irq']", element()],
+    ["[data-sc='wall']", element()],
+    ["[data-sc='regs']", element()],
+    ["[data-sc='reset']", element()],
+    ["[data-sc='help']", element()],
+    ["[data-sc='close']", element()]
+  ]);
+  const root = element({ querySelector: (selector) => selectors.get(selector) ?? null });
+  let descriptor = null;
+  const document = { getElementById: () => ({}), activeElement: null };
+  const window = {
+    MarsWebTools: { register(value) { descriptor = value; } },
+    requestAnimationFrame(callback) { callback(); }
+  };
+  const context = vm.createContext({ window, document, Map, console });
+  const historySource = sourceBetween(
+    managerSource,
+    "function createToolDeltaHistory",
+    "\n\n// A virtual display"
+  );
+  vm.runInContext(historySource, context, { filename: "create-tool-delta-history.js" });
+  vm.runInContext(clockSource, context, { filename: "tools/system-clock.js" });
+  assert.ok(descriptor, "System Clock registers its tool descriptor");
+
+  const memoryWords = new Map();
+  let instructionObserver = null;
+  const engine = {
+    steps: 0,
+    memoryMap: { mmioBase: 0xffff0000, exceptionHandlerAddress: 0x80000180 },
+    memoryWords,
+    writeWord(address, value) { memoryWords.set(address >>> 0, value | 0); },
+    registerInstructionObserver(observer) {
+      instructionObserver = observer;
+      return () => { instructionObserver = null; };
+    },
+    requestExternalInterrupt() {}
+  };
+  const instance = descriptor.create({
+    engine,
+    defaultMemoryMap: engine.memoryMap,
+    createToolDeltaHistory: context.createToolDeltaHistory,
+    createToolWindowShell: () => ({
+      root,
+      open() {},
+      close() {},
+      refreshTranslations() {},
+      onResize() {}
+    }),
+    messagesPane: { postMars() {} }
+  });
+
+  // Creation renders the default memory value (1000); select the short test
+  // period afterwards, then connect and establish the runtime revision.
+  selectors.get("[data-sc='period']").value = "2";
+  selectors.get("[data-sc='connect']").emit("click");
+  instance.onSnapshot({ runtimeRevision: 1, steps: 0, backstepDepth: 0, textRows: [] });
+  assert.equal(typeof instructionObserver, "function");
+
+  const controlAddress = 0xffff0050;
+  const statusAddress = 0xffff0054;
+  for (let step = 1; step <= 5; step += 1) {
+    engine.steps = step;
+    instructionObserver({ steps: step });
+  }
+  // The instruction that enables the timer starts a fresh two-instruction
+  // interval; the five disabled instructions must not make it expire.
+  memoryWords.set(controlAddress, 1);
+  engine.steps = 6;
+  instructionObserver({ steps: 6 });
+  assert.equal(memoryWords.get(statusAddress) | 0, 0);
+  assert.match(selectors.get("[data-sc='state']").textContent, /^0 tick/);
+
+  engine.steps = 7;
+  instructionObserver({ steps: 7 });
+  const memoryBeforeTick = new Map(memoryWords);
+  engine.steps = 8;
+  instructionObserver({ steps: 8 });
+  instance.onRuntimeBatchEnd();
+  assert.equal(memoryWords.get(statusAddress) | 0, 1);
+  assert.match(selectors.get("[data-sc='state']").textContent, /^1 tick/);
+
+  // The engine normally restores MMIO before delivering onBackstep. Mirror
+  // that ordering and verify the tool reverses its own counters and log too.
+  memoryWords.clear();
+  memoryBeforeTick.forEach((value, address) => memoryWords.set(address, value));
+  engine.steps = 7;
+  instance.onBackstep({ stepAfter: 7 });
+  assert.match(selectors.get("[data-sc='state']").textContent, /^0 tick/);
+  assert.doesNotMatch(selectors.get("[data-sc='log']").innerHTML, /tick 1/);
+
+  // A new runtime revision discards history from the previous assembled run.
+  engine.steps = 8;
+  instructionObserver({ steps: 8 });
+  instance.onRuntimeBatchEnd();
+  assert.match(selectors.get("[data-sc='state']").textContent, /^1 tick/);
+  engine.steps = 0;
+  memoryWords.set(controlAddress, 0);
+  instance.onSnapshot({ runtimeRevision: 2, steps: 0, backstepDepth: 0, textRows: [] });
+  assert.match(selectors.get("[data-sc='state']").textContent, /^0 tick/);
+  assert.equal(selectors.get("[data-sc='log']").innerHTML, "");
 });
 
 test("stack visualizer decodes the instruction text the runtime actually emits", async () => {
@@ -521,6 +672,7 @@ test("stack visualizer tracks frames and rewinds through the central delta histo
 test("tools drive execution through the runtime control bridge, not the commands", async () => {
   const managerSource = await readFile(managerPath, "utf8");
   const runtimeSource = await readFile(runtimePath, "utf8");
+  const pipelineSource = await readFile(pipelineLabPath, "utf8");
 
   assert.match(managerSource, /const runtimeControlBridge = Object\.freeze\(\{/);
   assert.match(managerSource, /runtimeControls: runtimeControlBridge/);
@@ -549,6 +701,14 @@ test("tools drive execution through the runtime control bridge, not the commands
   assert.deepEqual({ ...context.observed.before }, { available: false, running: false });
   assert.deepEqual({ ...context.observed.after }, { available: true, running: true });
   assert.deepEqual([...context.observed.calls], ["step"]);
+
+  // At the head of an execution recording, Run must extend the recording via
+  // the runtime; asking the exhausted simulator to run cannot make progress.
+  assert.match(pipelineSource, /function requestRuntimeRun\(\)[\s\S]*?runtimeControls\.go\(\);/);
+  assert.match(
+    pipelineSource,
+    /runButton\.addEventListener\("click", \(\) => \{[\s\S]*?snapshot\.execution\.replayed >= snapshot\.execution\.recorded[\s\S]*?requestRuntimeRun\(\)/
+  );
 });
 
 test("stack visualizer stops execution exactly on its armed condition", async () => {

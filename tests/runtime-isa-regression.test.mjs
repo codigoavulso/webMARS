@@ -689,3 +689,36 @@ handler:
   assert.equal(budgetResult.stepsExecuted, 1);
   assert.equal(budgetEngine.getSnapshot().pc >>> 0, labelAddress(budgetEngine, "handler"));
 });
+
+// $zero is architecturally hard-wired: every write to it must be discarded, and
+// a read must return 0 even immediately after an instruction targeted it. This
+// was a surviving mutant in docs/mutation-report.md before the test existed.
+test("$zero stays zero however a program writes to it", async () => {
+  const engine = await createJavaScriptEngine({ settings: { startAtMain: true } });
+  const source = `
+.text
+main:
+  addi $zero, $zero, 7
+  add  $zero, $zero, $zero
+  lui  $zero, 0x1234
+  addi $t0, $zero, 0
+  ori  $zero, $zero, 0xffff
+  addi $t1, $zero, 0
+  jal  writer
+  addi $t2, $zero, 0
+  li   $v0, 10
+  syscall
+writer:
+  addi $zero, $ra, 100
+  jr   $ra
+`;
+  assert.equal(engine.assemble(source, { sourceName: "zero-register.s" }).ok, true);
+  const result = engine.go(200);
+  assert.equal(result.ok !== false, true);
+
+  const values = registers(engine);
+  assert.equal(values[0], 0, "$zero must read as 0 at the end of the program");
+  assert.equal(values[8], 0, "$t0 copied $zero after an addi targeted it");
+  assert.equal(values[9], 0, "$t1 copied $zero after an ori targeted it");
+  assert.equal(values[10], 0, "$t2 copied $zero after a called function targeted it");
+});

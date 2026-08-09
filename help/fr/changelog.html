@@ -8,13 +8,47 @@
 </head>
 <body>
   <h1>Journal des modifications</h1>
-  <p class="lead">La version 0.5.5 introduit le Laboratoire de pipeline et étend tout l'environnement pédagogique à vingt langues.</p>
+  <p class="lead">La version 0.5.6 connecte Pipeline Lab au programme en cours d'exécution : il rejoue ce que webMARS a réellement exécuté, avec les résultats réels des branches et les valeurs réelles des registres, et chaque côté peut piloter l'autre instruction à la fois.</p>
 
-  <h2>0.5.5 &mdash; Laboratoire de pipeline et vingt langues</h2>
+  <h2>0.5.6 &mdash; le pipeline suit le programme</h2>
   <ul>
-    <li>Ajout d'un pipeline déterministe à cinq étapes avec aléas RAW, transfert, blocages, cycles réversibles, métriques et chronologie extensible.</li>
+    <li>Ajout d'un flux d'exécution enregistré au Pipeline Lab. Au lieu de supposer comment une branche s'est résolue, le modèle relit la séquence webMARS réellement exécutée, de sorte que les branches prises, les prédictions erronées et les instructions ignorées sont des faits plutôt que des hypothèses.</li>
+    <li>Ajout de la vue Registres : la valeur de chaque registre au cycle en cours, les valeurs encore en vol dans une étape antérieure et une grille de chaque registre par rapport au cycle qui l'a modifié. Une valeur n'apparaît que là où le runtime en a fourni une ; le flux statique n’en montre délibérément aucun.</li>
+    <li>Relié les deux transports. Une instruction exécutée dans webMARS est une instruction entrant dans le pipeline, dans les deux sens : Step et Backstep dans la fenêtre principale déplacent le pipeline, et les propres contrôles d'étape de l'outil exécutent ou annulent l'exécution du programme lorsque l'étape de récupération n'a plus rien à lire.</li>
+    <li>Ajout de <kbd>F8</kbd> pour Backstep, qui n'avait pas de raccourci alors que Step avait <kbd>F7</kbd>.</li>
+    <li>Redessiner le Pipeline Lab en tant que pipeline vertical avec le registre de pipeline entre chaque paire d'étapes, à côté de la chronologie plutôt qu'au-dessus, afin qu'une étape puisse afficher l'instruction, sa ligne source et les valeurs qu'elle a utilisées.</li>
+    <li>Le Pipeline Lab s'est placé contre sa propre fenêtre plutôt que contre l'écran, de sorte qu'une fenêtre étroite sur un grand écran se plie de la même manière qu'un téléphone, et chaque groupe de contrôle peut être ouvert et fermé à la main.</li>
+    <li>Ajout d'un programme de mise à jour de paramètres régionaux ciblé qui traduit uniquement les chaînes auxquelles un catalogue répond encore en anglais, sans réécrire les entrées déjà corrigées à la main. Il refuse toute traduction modifiant un espace réservé.</li>
+    <li>Traduction de 872 chaînes d'interface qui étaient encore affichées en anglais dans dix-sept langues et ajout d'un test qui échoue lorsqu'une langue répond à davantage d'interfaces en anglais qu'auparavant.</li>
+    <li>Correction du Pipeline Lab ignorant Backstep dans la fenêtre principale : le runtime le diffuse sur un canal que l'outil n'écoutait pas, donc l'outil continuait à rejouer les instructions qui n'avaient pas été exécutées.</li>
+    <li>Correction du pas en mode mobile remplaçant le panneau choisi par le lecteur. La mise au point provoquée par l'exécution du programme ne modifie plus le panneau visible ; ouvrir une fenêtre, nouvelle ou déjà ouverte, le fait toujours.</li>
+    <li>Correction du Pipeline Lab affichant uniquement la dernière étape tout en suivant un programme pas à pas, ce qui faisait que le pipeline se vidait et se remplissait à chaque étape au lieu de se remplir.</li>
+    <li>Correction de trois jetons de couleur d'interface qui n'ont jamais été définis, ce qui faisait taire le marqueur de décrochage dans la chronologie et laissait le texte désactivé dans les deux thèmes.</li>
+    <li>Correction d'un blocage de la relecture jusqu'à épuisement des cycles lorsque l'enregistrement sautait quelque part sans branchement prévu, comme une réinitialisation de programme ou un gestionnaire d'exceptions.</li>
+    <li>Ajout de <code>npm run version:set</code>, qui écrit la version dans les onze emplacements qui la déclarent, et déplacement de la version hors des pages d'aide qui l'indiquent dans le jeton d'exécution.</li>
+    <li>Reconstruction du modèle de synchronisation de Pipeline Lab : contrôle des risques, créneaux de retard configurables, prédiction de branchement statique et dynamique, latence de mémoire configurable, interruptions sérialisées et sept profils architecturaux versionnés individuellement qui peuvent être comparés côte à côte.</li>
+    <li>Ajout de la vue Architecture, dessinant le chemin de données avec des registres de pipeline, des lignes de contrôle par instruction, des multiplexeurs, des chemins de transfert en direct et une détection des dangers, avec des groupes de signaux pouvant être masqués individuellement.</li>
+    <li>Ajout d'une table d'historique de branche partagée avec le simulateur BHT, afin que les deux outils prédisent de manière identique ; un test de régression conduit les deux prédicteurs à travers les mêmes séquences de résultats et échoue en cas de divergence.</li>
+    <li>Ajout d'une exportation reproductible JSON et CSV contenant la version du modèle, la version du profil, la configuration complète et un hachage du programme, sans horodatage, afin que le même travail produise un fichier identique en octets.</li>
+    <li>Ajout de sept laboratoires guidés avec des objectifs, des prérequis, une étape de prévision avant de courir et des questions de réflexion, ainsi que des fiches de solutions séparées, un guide d'adoption par l'enseignant et une courte présentation. Chaque nombre cité dans une feuille de calcul est remesuré par la suite de tests.</li>
+    <li>Ajout d'une suite différentielle par rapport à un MARS 4.5 épinglé par somme de contrôle, comparant le code machine, le segment de données, la sortie de la console et les 32 registres. Huit des onze programmes sont identiques en octets ; les trois différences restantes sont déclarées avec un motif et un cas de reproduction minimal.</li>
+    <li>Ajout de rapports de preuves générés pour la compatibilité, la conformité MARS, la couverture, le score de mutation, le benchmark et l'accessibilité, chacun régénéré par une commande et vérifié par la suite de tests.</li>
+    <li>Ajout d'un protocole de référence publié avec un échauffement déclaré, un nombre de répétitions et une règle aberrante, rapportant les médianes avec des plages interquartiles et enregistrant la machine d'où provient chaque résultat.</li>
+    <li>Ajout de tests de mutation et de fuzzing déterministe limité de l'assembleur, du runtime et de l'importateur d'état.</li>
+    <li>Correction du Pipeline Lab ne recevant aucune mise à jour d'exécution après le premier assemblage, en raison du fait que l'outil se signalait comme déconnecté.</li>
+    <li>Correction des cibles de branche symboliques ne se résolvant jamais dans le modèle de synchronisation, ce qui faisait que chaque prédiction de branche ne rapportait aucune erreur de prédiction.</li>
+    <li>Correction d'un crash lors de l'importation d'un état d'exécution enregistré corrompu ou absent, qui atteignait l'utilisateur sous la forme d'un écran vide.</li>
+    <li>Correction de l'éditeur et du volet Mars Messages n'ayant pas de nom accessible et une couleur de texte en dessous du contraste minimum de WCAG dans le thème clair.</li>
+    <li>Correction de la colonne de chronologie épinglée qui se détachait dans les langues de droite à gauche et maintien du diagramme de pipeline de gauche à droite afin que l'ordre des étapes soit toujours lu vers l'avant.</li>
+    <li>Ajout d'une palette facultative de sécurité des couleurs pour les étapes du pipeline.</li>
+    <li>Ajout de la documentation du développeur : limites de l'architecture, un guide de première contribution, des guides pour l'ajout d'instructions, d'appels système et de périphériques, les invariants d'exécution, l'outil versionné API avec un exemple fonctionnel et un générateur d'échafaudage, et le processus de publication.</li>
+  </ul>
+
+  <h2>0.5.5 &mdash; Pipeline Lab et vingt langues</h2>
+  <ul>
+    <li>Ajout d'un Pipeline Lab déterministe en cinq étapes avec des RAW dangers, des transferts, des blocages, des cycles réversibles, des métriques et une chronologie évolutive.</li>
     <li>Extension de l'interface, des exemples, de la documentation et de l'aide de dix à vingt langues.</li>
-    <li>Extension du comportement adaptatif des outils, de la localisation et de la couverture de régression.</li>
+    <li>Couverture étendue du comportement, de la localisation et de la régression des outils réactifs dans toute la version.</li>
   </ul>
 
   <h2>0.5.4 &mdash; MARS-Bureau OS, écrans virtuels et thème système</h2>

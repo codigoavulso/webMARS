@@ -1,0 +1,180 @@
+{
+  "schema": "webmars.pipeline-labs/1",
+  "version": "1.0.0",
+  "language": "en",
+  "model": { "id": "webmars.pipeline-lab", "version": 2 },
+  "note": "Expected metrics are regenerated and checked by tests/pipeline-labs.test.mjs. Never edit them by hand.",
+  "labs": [
+    {
+      "id": "lab01",
+      "title": "The five stages",
+      "file": "lab01-five-stages.md",
+      "minutes": 25,
+      "prerequisites": ["Assembling and stepping a MIPS program in webMARS"],
+      "objectives": [
+        "Name the five stages and say what each one does",
+        "Explain why a program of N instructions takes N+4 cycles when nothing stalls"
+      ],
+      "runs": [
+        {
+          "program": "lab01_five_stages.asm",
+          "config": { "profile": "forwarding" },
+          "expected": { "instructions": 4, "cycles": 8, "completed": 4, "stalls": 0, "flushes": 0, "structuralStalls": 0, "mispredicted": 0 }
+        }
+      ]
+    },
+    {
+      "id": "lab02",
+      "title": "Data hazards",
+      "file": "lab02-data-hazards.md",
+      "minutes": 35,
+      "prerequisites": ["lab01"],
+      "objectives": [
+        "Identify a read-after-write dependency in a listing",
+        "Predict how many cycles a dependent instruction waits without forwarding"
+      ],
+      "runs": [
+        {
+          "program": "lab02_data_hazards.asm",
+          "config": { "profile": "stall-only" },
+          "expected": { "instructions": 4, "cycles": 14, "completed": 4, "stalls": 6, "flushes": 0, "structuralStalls": 0, "mispredicted": 0 }
+        },
+        {
+          "program": "lab02_data_hazards.asm",
+          "config": { "profile": "forwarding" },
+          "expected": { "instructions": 4, "cycles": 8, "completed": 4, "stalls": 0, "flushes": 0, "structuralStalls": 0, "mispredicted": 0 }
+        }
+      ]
+    },
+    {
+      "id": "lab03",
+      "title": "Forwarding and the load-use case",
+      "file": "lab03-forwarding.md",
+      "minutes": 35,
+      "prerequisites": ["lab02"],
+      "objectives": [
+        "Explain which dependencies forwarding removes and which it cannot",
+        "Show why a load-use pair still costs exactly one bubble"
+      ],
+      "runs": [
+        {
+          "program": "lab03_forwarding.asm",
+          "config": { "profile": "stall-only" },
+          "expected": { "instructions": 4, "cycles": 14, "completed": 4, "stalls": 6, "flushes": 0, "structuralStalls": 0, "mispredicted": 0 }
+        },
+        {
+          "program": "lab03_forwarding.asm",
+          "config": { "profile": "forwarding" },
+          "expected": { "instructions": 4, "cycles": 9, "completed": 4, "stalls": 1, "flushes": 0, "structuralStalls": 0, "mispredicted": 0 }
+        }
+      ]
+    },
+    {
+      "id": "lab04",
+      "title": "Branches and discarded instructions",
+      "file": "lab04-branches.md",
+      "minutes": 40,
+      "prerequisites": ["lab03"],
+      "objectives": [
+        "Count the instructions discarded when a branch resolves the wrong way",
+        "Explain how a delay slot and earlier resolution each remove one of them"
+      ],
+      "runs": [
+        {
+          "program": "lab04_branches.asm",
+          "config": { "profile": "forwarding" },
+          "expected": { "instructions": 7, "cycles": 11, "completed": 7, "stalls": 0, "flushes": 0, "structuralStalls": 0, "mispredicted": 0 }
+        },
+        {
+          "program": "lab04_branches.asm",
+          "config": { "profile": "predict-taken" },
+          "expected": { "instructions": 7, "cycles": 13, "completed": 7, "stalls": 0, "flushes": 2, "structuralStalls": 0, "mispredicted": 1 }
+        },
+        {
+          "program": "lab04_branches.asm",
+          "config": { "profile": "predict-taken", "delaySlot": true },
+          "expected": { "instructions": 7, "cycles": 12, "completed": 7, "stalls": 0, "flushes": 1, "structuralStalls": 0, "mispredicted": 1 }
+        },
+        {
+          "program": "lab04_branches.asm",
+          "config": { "profile": "predict-taken", "branchResolution": "ID" },
+          "expected": { "instructions": 7, "cycles": 12, "completed": 7, "stalls": 0, "flushes": 1, "structuralStalls": 0, "mispredicted": 1 }
+        }
+      ]
+    },
+    {
+      "id": "lab05",
+      "title": "Static branch prediction",
+      "file": "lab05-branch-prediction.md",
+      "minutes": 30,
+      "prerequisites": ["lab04"],
+      "objectives": [
+        "Compare always-not-taken with always-taken on the same program",
+        "Explain why the wrong static policy costs cycles on every branch"
+      ],
+      "runs": [
+        {
+          "program": "lab05_prediction.asm",
+          "config": { "profile": "forwarding" },
+          "expected": { "instructions": 7, "cycles": 11, "completed": 7, "stalls": 0, "flushes": 0, "structuralStalls": 0, "mispredicted": 0 }
+        },
+        {
+          "program": "lab05_prediction.asm",
+          "config": { "profile": "predict-taken" },
+          "expected": { "instructions": 7, "cycles": 15, "completed": 7, "stalls": 0, "flushes": 4, "structuralStalls": 0, "mispredicted": 2 }
+        }
+      ]
+    },
+    {
+      "id": "lab06",
+      "title": "CPI and instruction scheduling",
+      "file": "lab06-cpi-scheduling.md",
+      "minutes": 40,
+      "prerequisites": ["lab03"],
+      "objectives": [
+        "Compute CPI from cycles and completed instructions",
+        "Reorder independent work to fill a load-use gap and measure the gain"
+      ],
+      "runs": [
+        {
+          "program": "lab06_cpi.asm",
+          "config": { "profile": "forwarding" },
+          "expected": { "instructions": 4, "cycles": 9, "completed": 4, "stalls": 1, "flushes": 0, "structuralStalls": 0, "mispredicted": 0 }
+        },
+        {
+          "program": "lab06_cpi_scheduled.asm",
+          "config": { "profile": "forwarding" },
+          "expected": { "instructions": 4, "cycles": 8, "completed": 4, "stalls": 0, "flushes": 0, "structuralStalls": 0, "mispredicted": 0 }
+        }
+      ]
+    },
+    {
+      "id": "lab07",
+      "title": "Memory latency",
+      "file": "lab07-memory-latency.md",
+      "minutes": 30,
+      "prerequisites": ["lab03"],
+      "objectives": [
+        "Distinguish a structural hazard from a data hazard",
+        "Predict the cost of raising memory latency for a given number of accesses"
+      ],
+      "runs": [
+        {
+          "program": "lab07_memory.asm",
+          "config": { "profile": "forwarding" },
+          "expected": { "instructions": 4, "cycles": 8, "completed": 4, "stalls": 0, "flushes": 0, "structuralStalls": 0, "mispredicted": 0 }
+        },
+        {
+          "program": "lab07_memory.asm",
+          "config": { "profile": "slow-memory" },
+          "expected": { "instructions": 4, "cycles": 11, "completed": 4, "stalls": 3, "flushes": 0, "structuralStalls": 3, "mispredicted": 0 }
+        },
+        {
+          "program": "lab07_memory.asm",
+          "config": { "profile": "forwarding", "memoryLatency": 3 },
+          "expected": { "instructions": 4, "cycles": 14, "completed": 4, "stalls": 6, "flushes": 0, "structuralStalls": 6, "mispredicted": 0 }
+        }
+      ]
+    }
+  ]
+}

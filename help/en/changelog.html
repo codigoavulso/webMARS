@@ -8,7 +8,41 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.5.5 introduces Pipeline Lab and expands the complete learning environment to twenty languages.</p>
+  <p class="lead">Release 0.5.6 connects the Pipeline Lab to the running program: it replays what webMARS actually executed, with the real branch outcomes and the real register values, and either side can drive the other one instruction at a time.</p>
+
+  <h2>0.5.6 &mdash; the pipeline follows the program</h2>
+  <ul>
+    <li>Added a recorded-execution stream to the Pipeline Lab. Instead of assuming how a branch resolved, the model replays the sequence webMARS really executed, so taken branches, mispredictions and discarded instructions are facts rather than assumptions.</li>
+    <li>Added the Registers view: the value of every register at the current cycle, the values still in flight in an earlier stage, and a grid of every register against the cycle that changed it. A value only appears where the runtime supplied one; the static stream deliberately shows none.</li>
+    <li>Linked the two transports. One instruction executed in webMARS is one instruction entering the pipeline, in both directions: Step and Backstep in the main window move the pipeline, and the tool's own step controls run or un-run the program when the fetch stage has nothing left to read.</li>
+    <li>Added <kbd>F8</kbd> for Backstep, which had no shortcut while Step had <kbd>F7</kbd>.</li>
+    <li>Redrew the Pipeline Lab as a vertical pipeline with the pipeline register between each pair of stages, beside the timeline rather than above it, so a stage can show the instruction, its source line and the values it used.</li>
+    <li>Made the Pipeline Lab lay itself out against its own window rather than the screen, so a narrow window on a large display folds the same way a phone does, and every control group can be opened and closed by hand.</li>
+    <li>Added a targeted locale updater that translates only the strings a catalog still answers in English, without rewriting entries already corrected by hand. It refuses any translation that changes a placeholder.</li>
+    <li>Translated 872 interface strings that were still shown in English across seventeen languages, and added a test that fails when a language answers more of the interface in English than it did before.</li>
+    <li>Fixed the Pipeline Lab ignoring Backstep in the main window: the runtime delivers it on a channel the tool was not listening to, so the tool kept replaying instructions that had been un-executed.</li>
+    <li>Fixed stepping in mobile mode replacing whatever panel the reader had chosen. Focus caused by running the program no longer changes the visible panel; opening a window, new or already open, still does.</li>
+    <li>Fixed the Pipeline Lab showing only the last stage while following a stepping program, which made the pipeline drain and refill on every step instead of filling up.</li>
+    <li>Fixed three interface colour tokens that were never defined, which silenced the stall marker in the timeline and left muted text unmuted in both themes.</li>
+    <li>Fixed a replay stalling until it ran out of cycles when the recording jumped somewhere no branch predicted, such as a program reset or an exception handler.</li>
+    <li>Added <code>npm run version:set</code>, which writes the version to all eleven places that declare it, and moved the version out of the help pages that state it into the runtime token.</li>
+    <li>Rebuilt the Pipeline Lab timing model: control hazards, configurable delay slots, static and dynamic branch prediction, configurable memory latency, serialised traps, and seven individually versioned architectural profiles that can be compared side by side.</li>
+    <li>Added the Architecture view, drawing the datapath with pipeline registers, per-instruction control lines, multiplexers, live forwarding paths and hazard detection, with signal groups that can be hidden individually.</li>
+    <li>Added a branch history table shared with the BHT Simulator, so both tools predict identically; a regression test drives the two predictors through the same outcome sequences and fails on any divergence.</li>
+    <li>Added reproducible JSON and CSV export carrying the model version, profile version, full configuration and a hash of the program, with no timestamps, so the same work produces a byte-identical file.</li>
+    <li>Added seven guided laboratories with objectives, prerequisites, a predict-before-you-run step and reflection questions, plus separate solution sheets, a teacher adoption guide and a short presentation. Every number a worksheet quotes is re-measured by the test suite.</li>
+    <li>Added a differential suite against a checksum-pinned MARS 4.5, comparing machine code, data segment, console output and all 32 registers. Eight of eleven programs are byte-identical; the three remaining differences are declared with a reason and a minimal reproduction case.</li>
+    <li>Added generated evidence reports for compatibility, MARS conformance, coverage, mutation score, benchmark and accessibility, each regenerated by one command and checked by the test suite.</li>
+    <li>Added a published benchmark protocol with a declared warm-up, repetition count and outlier rule, reporting medians with interquartile ranges and recording the machine each result came from.</li>
+    <li>Added mutation testing and bounded deterministic fuzzing of the assembler, runtime and state importer.</li>
+    <li>Fixed the Pipeline Lab receiving no runtime updates after the first assembly, caused by the tool reporting itself as disconnected.</li>
+    <li>Fixed symbolic branch targets never resolving in the timing model, which made every branch prediction report zero mispredictions.</li>
+    <li>Fixed a crash when importing a corrupted or absent saved runtime state, which reached the user as a blank screen.</li>
+    <li>Fixed the editor and the Mars Messages pane having no accessible name, and a text colour below the WCAG contrast minimum in the light theme.</li>
+    <li>Fixed the pinned timeline column detaching in right-to-left languages, and kept the pipeline diagram left to right so its stage order still reads forward.</li>
+    <li>Added an optional colour-vision-safe palette for the pipeline stages.</li>
+    <li>Added developer documentation: architecture boundaries, a first-contribution guide, guides for adding instructions, syscalls and devices, the runtime invariants, the versioned tool API with a worked example and a scaffold generator, and the release process.</li>
+  </ul>
 
   <h2>0.5.5 &mdash; Pipeline Lab and twenty languages</h2>
   <ul>

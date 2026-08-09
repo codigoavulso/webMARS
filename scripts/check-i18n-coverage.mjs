@@ -11,10 +11,11 @@
 // Run standalone for a report, or import collectFindings from the test suite.
 
 import { readFile, readdir } from "node:fs/promises";
-import { relative, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
-const projectRoot = resolve(import.meta.dirname, "..");
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const skippedDirectories = new Set(["dist", "node_modules", ".git", "i18n", "tests", "scripts", "docs", "libs", "examples", "help", "videos"]);
 
 // Helpers that translate the arguments they are given. "all" covers helpers

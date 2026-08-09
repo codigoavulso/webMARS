@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use webMARS in teaching or research, please cite it as below."
+title: "webMARS: a browser implementation of the MARS MIPS 4.5 assembler and simulator"
+abstract: >-
+  webMARS is a single-page browser implementation of the MARS MIPS 4.5 assembler
+  and simulator. It provides an editor, a MIPS32 assembler, an instruction-level
+  functional runtime, the classic MARS tool set, and the Pipeline Lab, an
+  explicitly separate and versioned five-stage cycle-accurate teaching model.
+  Compatibility claims are published as a generated matrix with per-capability
+  evidence in docs/comparison-matrix.md.
+type: software
+version: "0.5.6"
+license: MIT
+repository-code: "https://github.com/codigoavulso/webMARS"
+url: "https://webmars.nfiles.top/"
+keywords:
+  - MIPS
+  - MARS
+  - computer architecture
+  - assembler
+  - simulator
+  - pipeline
+  - computer science education
+authors:
+  # Recorded as the repository identity. Replace with legal names before
+  # minting a DOI for an archived release.
+  - name: "codigoavulso"
+    alias: "codigoavulso"
+references:
+  - type: software
+    title: "MARS: MIPS Assembler and Runtime Simulator, version 4.5"
+    notes: >-
+      webMARS targets practical compatibility with MARS 4.5. Differences are
+      documented in docs/comparison-matrix.md.
+    authors:
+      - family-names: Vollmar
+        given-names: Kenneth
+      - family-names: Sanderson
+        given-names: Pete

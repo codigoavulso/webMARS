@@ -8,13 +8,47 @@
 </head>
 <body>
   <h1>Dziennik zmian</h1>
-  <p class="lead">Wersja 0.5.5 wprowadza Laboratorium potoku i rozszerza całe środowisko nauki do dwudziestu języków.</p>
+  <p class="lead">Wersja 0.5.6 łączy Pipeline Lab z działającym programem: odtwarza to, co faktycznie wykonano webMARS, z rzeczywistymi wynikami rozgałęzień i rzeczywistymi wartościami rejestrów, a każda ze stron może sterować drugą instrukcją na raz.</p>
 
-  <h2>0.5.5 &mdash; Laboratorium potoku i dwadzieścia języków</h2>
+  <h2>0.5.6 &mdash; rurociąg jest zgodny z programem</h2>
   <ul>
-    <li>Dodano deterministyczny pięciostopniowy potok z hazardami RAW, przekazywaniem, przestojami, odwracalnymi cyklami, metrykami i skalowalną osią czasu.</li>
+    <li>Dodano strumień zarejestrowanego wykonania do Laboratorium Pipeline. Zamiast zakładać, jak rozwiązała się gałąź, model odtwarza sekwencję webMARS rzeczywiście wykonaną, więc wzięte gałęzie, błędne przewidywania i odrzucone instrukcje są raczej faktami niż założeniami.</li>
+    <li>Dodano widok Rejestrów: wartość każdego rejestru w bieżącym cyklu, wartości wciąż aktualne na wcześniejszym etapie oraz siatkę każdego rejestru względem cyklu, który go zmienił. Wartość pojawia się tylko wtedy, gdy została dostarczona przez środowisko wykonawcze; strumień statyczny celowo nie pokazuje żadnego.</li>
+    <li>Połączył oba transporty. Jedna instrukcja wykonywana w webMARS to jedna instrukcja wchodząca do potoku w obu kierunkach: Step i Backstep w głównym oknie przesuwają potok, a własne elementy sterujące krokami narzędzia uruchamiają lub cofają uruchomienie programu, gdy na etapie pobierania nie ma już nic do odczytania.</li>
+    <li>Dodano <kbd>F8</kbd> dla Backstep, który nie miał skrótu, podczas gdy Step miał <kbd>F7</kbd>.</li>
+    <li>Przerysuj Laboratorium Pipeline na pionowy potok z rejestrem potoku pomiędzy każdą parą etapów, obok osi czasu, a nie nad nią, tak aby etap mógł pokazać instrukcję, jej linię źródłową i użyte wartości.</li>
+    <li>Laboratorium Pipeline zostało ustawione naprzeciwko własnego okna, a nie ekranu, więc wąskie okno na dużym wyświetlaczu składa się w taki sam sposób, jak telefon, a każdą grupę kontrolną można otwierać i zamykać ręcznie.</li>
+    <li>Dodano ukierunkowany aktualizator ustawień regionalnych, który tłumaczy tylko ciągi znaków, na które katalog nadal odpowiada, na język angielski, bez przepisywania wpisów już poprawionych ręcznie. Odrzuca wszelkie tłumaczenia zmieniające symbol zastępczy.</li>
+    <li>Przetłumaczono 872 ciągi interfejsu, które nadal były wyświetlane w języku angielskim w siedemnastu językach, i dodano test, który kończy się niepowodzeniem, gdy język odpowiada w większej części interfejsu w języku angielskim niż wcześniej.</li>
+    <li>Naprawiono ignorowanie Backstepu przez Pipeline Lab w głównym oknie: środowisko wykonawcze dostarczało je na kanale, którego narzędzie nie nasłuchiwało, więc narzędzie odtwarzało instrukcje, które nie zostały wykonane.</li>
+    <li>Naprawiono przejście do trybu mobilnego zastępującego dowolny panel wybrany przez czytnik. Fokus wywołany uruchomieniem programu nie zmienia już widocznego panelu; otwarcie okna, nowego lub już otwartego, nadal tak robi.</li>
+    <li>Naprawiono wyświetlanie w Laboratorium Rurociągu tylko ostatniego etapu podczas wykonywania programu krokowego, co powodowało, że rurociąg opróżniał się i napełniał na każdym kroku, zamiast się napełniać.</li>
+    <li>Naprawiono trzy nigdy nie zdefiniowane tokeny kolorów interfejsu, które wyciszały znacznik przeciągnięcia na osi czasu i pozostawiały wyciszony tekst w obu motywach.</li>
+    <li>Naprawiono blokowanie odtwarzania do momentu wyczerpania się cykli, gdy nagranie przeskakiwało w miejsce, którego nie można było przewidzieć, na przykład podczas resetowania programu lub procedury obsługi wyjątków.</li>
+    <li>Dodano <code>npm run wersja:set</code>, który zapisuje wersję we wszystkich jedenastu miejscach, które ją deklarują, i przeniósł wersję ze stron pomocy, które ją podają, do tokenu środowiska wykonawczego.</li>
+    <li>Przebudowano model synchronizacji Pipeline Lab: zagrożenia kontrolne, konfigurowalne szczeliny opóźnień, przewidywanie statycznych i dynamicznych rozgałęzień, konfigurowalne opóźnienia pamięci, serializowane pułapki i siedem indywidualnie wersjonowanych profili architektonicznych, które można porównywać obok siebie.</li>
+    <li>Dodano widok architektury, rysujący ścieżkę danych z rejestrami potoków, liniami kontrolnymi dla poszczególnych instrukcji, multiplekserami, ścieżkami przesyłania na żywo i wykrywaniem zagrożeń, z grupami sygnałów, które można indywidualnie ukrywać.</li>
+    <li>Dodano tabelę historii rozgałęzień współdzieloną z symulatorem BHT, dzięki czemu oba narzędzia przewidują identycznie; test regresji prowadzi dwa predyktory przez te same sekwencje wyników i kończy się niepowodzeniem w przypadku jakiejkolwiek rozbieżności.</li>
+    <li>Dodano powtarzalny eksport JSON i CSV zawierający wersję modelu, wersję profilu, pełną konfigurację i skrót programu, bez znaczników czasu, więc ta sama praca tworzy plik o identycznej bajcie.</li>
+    <li>Dodano siedem laboratoriów z celami, wymaganiami wstępnymi, etapami przewidywania przed uruchomieniem i pytaniami do refleksji, a także osobne arkusze rozwiązań, przewodnik dotyczący wdrażania nauczycieli i krótką prezentację. Każda liczba podana w arkuszu jest ponownie mierzona przez zestaw testów.</li>
+    <li>Dodano zestaw różnicowy do przypiętej sumy kontrolnej MARS 4.5, porównujący kod maszynowy, segment danych, wyjście konsoli i wszystkie 32 rejestry. Osiem z jedenastu programów ma identyczną liczbę bajtów; trzy pozostałe różnice są deklarowane z uzasadnieniem i minimalnym przypadkiem reprodukcji.</li>
+    <li>Dodano wygenerowane raporty dowodowe dotyczące kompatybilności, MARS zgodności, zasięgu, wyniku mutacji, testu porównawczego i dostępności, każdy regenerowany za pomocą jednego polecenia i sprawdzany przez zestaw testów.</li>
+    <li>Dodano opublikowany protokół porównawczy z zadeklarowaną rozgrzewką, liczbą powtórzeń i regułą wartości odstających, raportowaniem median z zakresami międzykwartylowymi i rejestracją maszyny, z której pochodzi każdy wynik.</li>
+    <li>Dodano testowanie mutacji i ograniczone deterministyczne fuzzowanie asemblera, środowiska wykonawczego i importera stanu.</li>
+    <li>Naprawiono brak aktualizacji środowiska wykonawczego Pipeline Lab po pierwszym montażu, co było spowodowane tym, że narzędzie zgłaszało samo siebie jako rozłączone.</li>
+    <li>Naprawiono symboliczne cele gałęzi, które nigdy nie były rozpoznawane w modelu synchronizacji, co powodowało, że każda prognoza gałęzi raportowała zero błędnych przewidywań.</li>
+    <li>Naprawiono awarię podczas importowania uszkodzonego lub nieobecnego zapisanego stanu środowiska wykonawczego, który wyświetlał się użytkownikowi jako pusty ekran.</li>
+    <li>Naprawiono brak dostępnej nazwy edytora i panelu Wiadomości Marsa oraz kolor tekstu poniżej minimalnego kontrastu WCAG w jasnym motywie.</li>
+    <li>Naprawiono odłączanie przypiętej kolumny osi czasu w językach pisanych od prawej do lewej i zachowano diagram potoku od lewej do prawej, tak aby jego kolejność etapów nadal była czytana do przodu.</li>
+    <li>Dodano opcjonalną paletę bezpieczną dla widzenia kolorów dla etapów potoku.</li>
+    <li>Dodano dokumentację programisty: granice architektury, przewodnik pierwszego wkładu, przewodniki dotyczące dodawania instrukcji, wywołań systemowych i urządzeń, niezmienniki środowiska wykonawczego, narzędzie wersjonowane API z działającym przykładem i generatorem szkieletu oraz proces wydawania.</li>
+  </ul>
+
+  <h2>0.5.5 &mdash; Pipeline Lab i dwadzieścia języków</h2>
+  <ul>
+    <li>Dodano deterministyczne, pięcioetapowe laboratorium rurociągów z RAW zagrożeniami, spedycją, przeciągnięciami, cyklami odwracalnymi, metrykami i skalowalną osią czasu.</li>
     <li>Rozszerzono interfejs, przykłady, dokumentację i pomoc z dziesięciu do dwudziestu języków.</li>
-    <li>Rozszerzono responsywność narzędzi, lokalizację i pokrycie testami regresji.</li>
+    <li>Rozszerzone, responsywne zachowanie narzędzia, lokalizacja i pokrycie regresji w całej wersji.</li>
   </ul>
 
   <h2>0.5.4 &mdash; MARS – Pulpit systemu operacyjnego, wirtualne wyświetlacze i motyw systemu</h2>

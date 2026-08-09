@@ -8,7 +8,41 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">A versão 0.5.5 apresenta o Pipeline Lab e expande todo o ambiente de aprendizagem para vinte idiomas.</p>
+  <p class="lead">A versão 0.5.6 liga o Laboratório de Pipeline ao programa em execução: reproduz o que o webMARS executou de facto, com os resultados reais dos saltos e os valores reais dos registos, e qualquer um dos lados pode conduzir o outro uma instrução de cada vez.</p>
+
+  <h2>0.5.6 &mdash; o pipeline segue o programa</h2>
+  <ul>
+    <li>Acrescentado o fluxo de execução registada ao Laboratório de Pipeline. Em vez de assumir como um salto se resolveu, o modelo reproduz a sequência que o webMARS executou realmente, pelo que os saltos tomados, as previsões erradas e as instruções anuladas passam a ser factos e não hipóteses.</li>
+    <li>Acrescentada a vista de Registos: o valor de cada registo no ciclo atual, os valores que ainda estão em voo num estágio anterior, e uma grelha de cada registo ao longo dos ciclos que o alteraram. Um valor só aparece onde o runtime o forneceu; no fluxo estático não é mostrado nenhum, de propósito.</li>
+    <li>Ligados os dois transportes. Uma instrução executada no webMARS é uma instrução a entrar no pipeline, nos dois sentidos: o Passo e o Passo atrás na janela principal movem o pipeline, e os controlos de passo da própria ferramenta executam ou desfazem uma instrução quando o estágio de fetch já não tem o que ir buscar.</li>
+    <li>Acrescentado o atalho <kbd>F8</kbd> para Passo atrás, que não tinha nenhum enquanto o Passo tinha <kbd>F7</kbd>.</li>
+    <li>Redesenhado o Laboratório de Pipeline como um pipeline vertical, com o registo de pipeline entre cada par de estágios, ao lado da linha temporal em vez de por cima dela, para que cada estágio possa mostrar a instrução, a linha de código que lhe deu origem e os valores que usou.</li>
+    <li>O Laboratório de Pipeline passa a adaptar-se à largura da sua própria janela e não à do ecrã, pelo que uma janela estreita num monitor grande se comporta como um telemóvel, e cada grupo de controlos pode ser aberto e fechado à mão.</li>
+    <li>Acrescentado um atualizador de idiomas dirigido, que traduz apenas as cadeias que um catálogo ainda responde em inglês, sem reescrever entradas já corrigidas à mão. Recusa qualquer tradução que altere um marcador de substituição.</li>
+    <li>Traduzidas 872 cadeias de interface que ainda apareciam em inglês em dezassete idiomas, e acrescentado um teste que falha quando um idioma passa a responder mais interface em inglês do que respondia.</li>
+    <li>Corrigido o Laboratório de Pipeline ignorar o Passo atrás da janela principal: o runtime entrega-o num canal que a ferramenta não estava a ouvir, pelo que continuava a reproduzir instruções já desfeitas.</li>
+    <li>Corrigido o passo em modo móvel substituir o painel que o utilizador tinha escolhido. O foco causado pela execução do programa deixou de trocar de painel; abrir uma janela, nova ou já aberta, continua a dar-lhe foco.</li>
+    <li>Corrigido o Laboratório de Pipeline mostrar apenas o último estágio ao seguir um programa a passos, o que fazia o pipeline esvaziar-se e voltar a encher-se a cada passo em vez de correr.</li>
+    <li>Corrigidos três tokens de cor da interface que nunca chegaram a estar definidos, o que anulava o marcador de stall na linha temporal e deixava o texto atenuado por atenuar, nos dois temas.</li>
+    <li>Corrigida uma reprodução que ficava bloqueada até esgotar os ciclos quando o registo saltava para um sítio que nenhum salto previa, como um reinício do programa ou um tratador de exceções.</li>
+    <li>Acrescentado o <code>npm run version:set</code>, que escreve a versão nos onze locais que a declaram, e a versão saiu das páginas de ajuda que a afirmam para passar a usar o token de runtime.</li>
+    <li>Refeito o modelo temporal do Laboratório de Pipeline: hazards de controlo, delay slots configuráveis, previsão de saltos estática e dinâmica, latência de memória configurável, traps serializadas e sete perfis arquiteturais com versão própria que podem ser comparados lado a lado.</li>
+    <li>Adicionada a vista de Arquitetura, que desenha o datapath com os registos de pipeline, os sinais de controlo por instrução, os multiplexadores, os caminhos de forwarding ativos e a deteção de hazards, com grupos de sinais que podem ser ocultados individualmente.</li>
+    <li>Adicionada uma tabela de histórico de saltos partilhada com o Simulador BHT, de modo que as duas ferramentas preveem de forma idêntica; um teste de regressão percorre os dois preditores com as mesmas sequências de resultados e falha perante qualquer divergência.</li>
+    <li>Adicionada exportação reproduzível em JSON e CSV com a versão do modelo, a versão do perfil, a configuração completa e um hash do programa, sem datas, para que o mesmo trabalho produza um ficheiro idêntico byte a byte.</li>
+    <li>Adicionados sete laboratórios guiados com objetivos, pré-requisitos, um passo de previsão antes de executar e perguntas de reflexão, além de fichas de solução separadas, um guia de adoção para docentes e uma apresentação curta. Cada número citado numa ficha é remedido pela suite de testes.</li>
+    <li>Adicionada uma suite diferencial contra um MARS 4.5 fixado por checksum, que compara código-máquina, segmento de dados, output de consola e os 32 registos. Oito de onze programas são idênticos byte a byte; as três diferenças restantes estão declaradas com motivo e caso mínimo de reprodução.</li>
+    <li>Adicionados relatórios de evidência gerados para compatibilidade, conformidade com o MARS, cobertura, pontuação de mutação, desempenho e acessibilidade, cada um regenerado por um comando e verificado pela suite de testes.</li>
+    <li>Adicionado um protocolo de desempenho publicado com aquecimento, número de repetições e regra de outliers declarados, que reporta medianas com amplitude interquartil e regista a máquina de cada resultado.</li>
+    <li>Adicionados testes de mutação e fuzzing determinístico limitado ao assembler, ao runtime e à importação de estado.</li>
+    <li>Corrigido o Laboratório de Pipeline deixar de receber atualizações do runtime depois da primeira montagem, por a ferramenta se declarar desligada.</li>
+    <li>Corrigida a não resolução de destinos simbólicos de salto no modelo temporal, que fazia todas as previsões de salto reportarem zero falhas.</li>
+    <li>Corrigida uma falha ao importar um estado de execução guardado corrompido ou ausente, que chegava ao utilizador como ecrã em branco.</li>
+    <li>Corrigida a ausência de nome acessível no editor e no painel de mensagens do Mars, e uma cor de texto abaixo do contraste mínimo da WCAG no tema claro.</li>
+    <li>Corrigido o descolamento da coluna fixa da linha temporal em idiomas da direita para a esquerda, mantendo o diagrama do pipeline da esquerda para a direita para que a ordem dos estágios continue a ler-se para a frente.</li>
+    <li>Adicionada uma paleta opcional segura para daltonismo nos estágios do pipeline.</li>
+    <li>Adicionada documentação de programador: fronteiras da arquitetura, guia de primeira contribuição, guias para adicionar instruções, syscalls e dispositivos, os invariantes do runtime, a API de ferramentas versionada com um exemplo funcional e um gerador de andaimes, e o processo de release.</li>
+  </ul>
 
   <h2>0.5.5 &mdash; Pipeline Lab e vinte idiomas</h2>
   <ul>

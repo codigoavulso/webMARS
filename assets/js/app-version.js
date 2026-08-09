@@ -1,7 +1,7 @@
 (() => {
   const globalScope = typeof window !== "undefined" ? window : globalThis;
   const APP_NAME = "webMARS";
-  const APP_VERSION = "0.5.5";
+  const APP_VERSION = "0.5.6";
   const VERSION_TOKEN = "__WEBMARS_APP_VERSION__";
 
   function replaceVersionToken(value) {
@@ -17,16 +17,19 @@
   }
 
   function applyVersionTokens(rootDocument = document) {
-    if (!rootDocument || !(rootDocument.documentElement instanceof HTMLElement)) return;
+    const rootElement = rootDocument?.documentElement;
+    // Elements that belong to an iframe have a different JavaScript realm, so
+    // they fail an `instanceof HTMLElement` check made in the parent window.
+    // Use the DOM surface we need instead, which works for both documents.
+    if (!rootElement || typeof rootElement.querySelectorAll !== "function") return;
 
     if (typeof rootDocument.title === "string") {
       rootDocument.title = replaceVersionToken(rootDocument.title);
     }
 
-    const rootElement = rootDocument.documentElement;
     const attributeNames = ["content", "title", "aria-label", "value", "placeholder"];
     rootElement.querySelectorAll("*").forEach((node) => {
-      if (!(node instanceof HTMLElement)) return;
+      if (typeof node?.getAttribute !== "function" || typeof node?.setAttribute !== "function") return;
       attributeNames.forEach((attributeName) => {
         const current = node.getAttribute(attributeName);
         if (typeof current !== "string") return;
@@ -35,7 +38,11 @@
       });
     });
 
-    const walker = rootDocument.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT, null);
+    if (typeof rootDocument.createTreeWalker !== "function") return;
+    const showText = rootDocument.defaultView?.NodeFilter?.SHOW_TEXT
+      ?? globalScope.NodeFilter?.SHOW_TEXT
+      ?? 4;
+    const walker = rootDocument.createTreeWalker(rootElement, showText, null);
     let textNode = walker.nextNode();
     while (textNode) {
       const parentTag = textNode.parentElement?.tagName;

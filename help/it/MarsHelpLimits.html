@@ -19,7 +19,7 @@
     <tr><td>Passo indietro</td><td>0–1.000.000 delta inversi. La cronologia è limitata dal budget configurato e conserva sempre gli ultimi 100 passaggi completi quando è abilitato il passaggio indietro.</td></tr>
     <tr><td>Archiviazione dei file nel browser</td><td>I dati del progetto/sessione sono soggetti alla quota del browser; l'app limita i payload di archiviazione del browser dell'utente a 1 MiB ove applicabile e, se necessario, ricorre a payload di ripristino più piccoli.</td></tr>
     <tr><td>Esegui il cronometraggio</td><td>La sospensione, MIDI e i tempi dell'interfaccia utente sono pianificati dal browser e non sono accurati in base al ciclo.</td></tr>
-    <tr><td>Distribuzione</td><td>webMARS 0.5.5 è un'applicazione Web statica, non un PWA installabile/offline. Deve essere servito su HTTP dal server locale incluso o da un altro host statico.</td></tr>
+    <tr><td>Distribuzione</td><td>webMARS __WEBMARS_APP_VERSION__ è un'applicazione Web statica, non un PWA installabile/offline. Deve essere servito su HTTP dal server locale incluso o da un altro host statico.</td></tr>
   </table>
 
   <h2>Mappe della memoria</h2>
@@ -52,5 +52,6 @@
     <li>Mini-C accetta solo i suoi profili documentati; il codice che si basa sul ISO C completo, una libc host o un comportamento non definito non è portabile su di esso.</li>
     <li>Le estensioni storiche MARS che dipendono dalle classi Java o dai plug-in desktop non sono disponibili.</li>
   </ul>
+  <script src="../../assets/js/app-version.js"></script>
 </body>
 </html>

@@ -472,7 +472,12 @@
       width: 11px;
       height: 11px;
       stroke-width: 1.8;
-      transition: transform 120ms ease;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .fm-toggle .fm-glyph {
+        transition: transform 120ms ease;
+      }
     }
 
     .fm-toggle[data-fm-expanded="1"] .fm-glyph {

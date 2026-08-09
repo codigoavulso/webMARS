@@ -38,6 +38,11 @@ test("every localized in-app help page exists and uses current branding", async 
   assert.match(helpSystem, /const MARS_HELP_TITLE = "webMARS Help"/);
   assert.match(helpSystem, /label: "Mini-C"/);
   assert.match(helpSystem, /label: "Workspace"/);
+  assert.match(
+    helpSystem,
+    /WebMarsAppVersion\?\.applyVersionTokens\?\.\(doc\)/,
+    "help iframes must replace application-version tokens after loading"
+  );
 
   for (const locale of locales) {
     const helpRoot = resolve(helpBase, locale);
@@ -54,6 +59,18 @@ test("every localized in-app help page exists and uses current branding", async 
         /java\s+-jar\s+mars\.jar|J2SE Java Runtime Environment|Java Swing/i,
         `${locale}/${file} contains obsolete Java desktop instructions`
       );
+      assert.doesNotMatch(
+        html.replaceAll("__WEBMARS_APP_VERSION__", ""),
+        /APP_VERSION__/i,
+        `${locale}/${file} contains a translated or malformed application-version token`
+      );
+      if (["about-card.html", "info.html", "MarsHelpLimits.html"].includes(file)) {
+        assert.match(
+          html,
+          /__WEBMARS_APP_VERSION__/,
+          `${locale}/${file} must derive the application version at runtime`
+        );
+      }
     }
   }
 });

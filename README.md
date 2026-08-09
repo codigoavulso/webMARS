@@ -1,4 +1,4 @@
-# webMARS v0.5.5
+# webMARS v0.5.6
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -22,12 +22,14 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.5.5
+## Highlights in v0.5.6
 
-- Added Pipeline Lab with a deterministic five-stage IF/ID/EX/MEM/WB model, RAW hazard detection, configurable forwarding, stalls, reversible cycles, metrics and a virtualized instruction timeline.
-- Expanded the complete interface, examples, documentation and help from ten to twenty languages, including right-to-left support for Persian and Urdu alongside Arabic.
-- Refined virtual-display defaults, responsive tool layouts, automatic browser-aware theming and localized tool behavior.
-- Preserved the improved mouse-driven MARS-OS desktop, TTY terminal, movable/resizable windows and application suite with broader regression coverage.
+- Connected the Pipeline Lab to the running program. It replays the sequence webMARS actually executed, so branch outcomes and register values are observations rather than assumptions, and either side can drive the other one instruction at a time.
+- Added the Registers view: every register's value at the current cycle, the values still in flight in an earlier stage, and a grid of each register against the cycle that changed it.
+- Redrew the Pipeline Lab as a vertical pipeline beside the timeline, laid out against its own window rather than the screen, so a narrow window folds the same way a phone does.
+- Added <kbd>F8</kbd> for Backstep, and stopped run commands from replacing the visible panel in mobile mode.
+- Translated 872 interface strings that were still shown in English across seventeen languages, with a targeted updater that never rewrites hand-corrected entries.
+- Measured what was previously asserted: MARS 4.5 conformance, coverage, mutation score, benchmarks and accessibility are now generated reports checked by the test suite.
 
 ## Main Capabilities
 
@@ -126,7 +128,70 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 - `assets/js/app-modules/20-app-runtime.js`: runtime orchestration, commands, persistence, and integration glue.
 - `tools/`: pluggable MARS-style tool windows.
 - `help/`: built-in help, about/info pages, changelog, and reference content.
-- `tests/`: JavaScript runtime regression tests.
+- `tests/`: JavaScript runtime regression tests, differential corpus and evidence checks.
+- `docs/`: generated evidence reports, developer guides and the teaching materials.
+- `scripts/`: local server, validation, release packaging and every report generator.
+
+## Evidence and Measurement
+
+Every public claim webMARS makes about itself is backed by a reproducible report.
+[`docs/evidence.md`](docs/evidence.md) is the index: each report has one
+regeneration command, the suite checks its structure and version, and it
+regenerates the compatibility matrix byte for byte. The release gate reruns the
+measurement commands below before the version is tagged.
+
+```bash
+npm run docs:matrix                            # capability inventory with per-row evidence
+npm run fetch:mars && npm run differential      # conformance against the real MARS 4.5
+npm run coverage                                # coverage with per-module floors
+npm run mutation                                # would the tests notice if the code were wrong?
+npm run benchmark                               # performance under a published protocol
+npm run audit:a11y                              # WCAG 2.2 audit and accessibility statement
+```
+
+| Report | Answers |
+| --- | --- |
+| [comparison-matrix.md](docs/comparison-matrix.md) | What is supported, and what proves it? |
+| [mars-conformance.md](docs/mars-conformance.md) | Where does it differ from MARS 4.5, and why? |
+| [coverage-report.md](docs/coverage-report.md) | How much of the shipped source do the tests run? |
+| [mutation-report.md](docs/mutation-report.md) | Would the tests catch a defect? |
+| [benchmark.md](docs/benchmark.md) | How fast, under what protocol, on what machine? |
+| [accessibility.md](docs/accessibility.md) | Which WCAG criteria were checked, and which were not? |
+| [portability.md](docs/portability.md) | Which browsers and platforms were actually run? |
+
+The conformance suite downloads a checksum-pinned MARS 4.5 build and refuses any
+other, then assembles and runs the same programs in both simulators, comparing
+machine code, data segment, console output and all 32 registers. Differences are
+defects unless declared with a reason and a minimal reproduction case.
+
+Note that the functional runtime is **not** cycle-accurate and reports no cycle
+counts. Timing belongs exclusively to the Pipeline Lab, a separate model that
+declares its profile, version and branch-outcome assumption in every export.
+
+## Teaching Materials
+
+[`docs/labs/`](docs/labs/) holds seven guided laboratories on the five-stage
+pipeline, with objectives, prerequisites, a predict-before-you-run step and
+reflection questions, plus separate solution sheets and a teacher adoption
+guide. Every number a worksheet quotes is re-measured against the model by the
+test suite, so a sheet cannot disagree with the tool a student is using.
+
+## Contributing
+
+- [`docs/contributing-first-change.md`](docs/contributing-first-change.md) - clone to merged change.
+- [`docs/code-architecture.md`](docs/code-architecture.md) - module map, boundaries and dependency direction.
+- [`docs/adding-instructions.md`](docs/adding-instructions.md) - instructions and pseudo-instructions.
+- [`docs/adding-syscalls-and-devices.md`](docs/adding-syscalls-and-devices.md) - syscalls and MMIO devices.
+- [`docs/runtime-invariants.md`](docs/runtime-invariants.md) - what memory, snapshots and backstep guarantee.
+- [`docs/tool-api.md`](docs/tool-api.md) - writing a tool for the Tools menu.
+- [`docs/localization.md`](docs/localization.md) - adding interface strings without degrading 17 catalogs.
+- [`docs/release-process.md`](docs/release-process.md) - how a version is cut and what it promises.
+
+## Citing
+
+See [`CITATION.cff`](CITATION.cff) and
+[`docs/technical-summary.md`](docs/technical-summary.md), a citable description
+of the system with every figure linked to the report that produced it.
 
 ## Help and Documentation
 
@@ -135,6 +200,7 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 
 ## Release Line
 
+- `v0.5.6`: Pipeline Lab replaying the real execution with register values, linked step transports, vertical pipeline and responsive rework, generated conformance/coverage/mutation/benchmark/accessibility evidence, and 872 newly translated interface strings
 - `v0.5.5`: Pipeline Lab, twenty-language interface/help/examples, scalable cycle history, and expanded UI/tool regression coverage
 - `v0.5.4`: MARS-OS desktop/window overhaul, improved TTY, automatic virtual-display fitting, collapsed display settings, and browser-aware system theme
 - `v0.5.3`: browser-language bootstrap fix for fresh sessions and private windows

@@ -8,13 +8,47 @@
 </head>
 <body>
   <h1>Nhật ký thay đổi</h1>
-  <p class="lead">Bản phát hành 0.5.5 giới thiệu Phòng thí nghiệm Pipeline và mở rộng toàn bộ môi trường học tập lên hai mươi ngôn ngữ.</p>
+  <p class="lead">Bản phát hành 0.5.6 kết nối Pipeline Lab với chương trình đang chạy: nó phát lại những gì webMARS thực sự được thực thi, với kết quả nhánh thực và giá trị thanh ghi thực, đồng thời mỗi bên có thể điều khiển lệnh còn lại tại một thời điểm.</p>
 
-  <h2>0.5.5 &mdash; Phòng thí nghiệm Pipeline và hai mươi ngôn ngữ</h2>
+  <h2>0.5.6 &mdash; đường ống đi theo chương trình</h2>
   <ul>
-    <li>Thêm pipeline năm giai đoạn xác định với xung đột RAW, chuyển tiếp, dừng, chu kỳ có thể đảo ngược, số liệu và dòng thời gian có thể mở rộng.</li>
-    <li>Mở rộng giao diện, ví dụ, tài liệu và trợ giúp từ mười lên hai mươi ngôn ngữ.</li>
-    <li>Mở rộng hành vi đáp ứng của công cụ, bản địa hóa và phạm vi kiểm thử hồi quy.</li>
+    <li>Đã thêm luồng thực thi được ghi vào Phòng thí nghiệm đường ống. Thay vì giả định cách một nhánh được giải quyết, mô hình sẽ phát lại chuỗi webMARS thực sự được thực thi, do đó, các nhánh đã chọn, dự đoán sai và hướng dẫn bị loại bỏ là sự thật chứ không phải là giả định.</li>
+    <li>Đã thêm chế độ xem Đăng ký: giá trị của mọi thanh ghi ở chu kỳ hiện tại, các giá trị vẫn đang hoạt động ở giai đoạn trước đó và lưới của mọi thanh ghi theo chu kỳ đã thay đổi nó. Một giá trị chỉ xuất hiện khi thời gian chạy cung cấp một giá trị; luồng tĩnh cố tình không hiển thị.</li>
+    <li>Liên kết hai phương tiện giao thông. Một lệnh được thực thi trong webMARS là một lệnh đi vào quy trình, theo cả hai hướng: Bước và Bước lùi trong cửa sổ chính di chuyển quy trình và các điều khiển bước của chính công cụ sẽ chạy hoặc hủy chạy chương trình khi giai đoạn tìm nạp không còn gì để đọc.</li>
+    <li>Đã thêm <kbd>F8</kbd> cho Backstep, không có phím tắt trong khi Step có <kbd>F7</kbd>.</li>
+    <li>Vẽ lại Pipeline Lab dưới dạng một đường ống thẳng đứng với thanh ghi đường dẫn giữa mỗi cặp giai đoạn, bên cạnh dòng thời gian thay vì phía trên nó, để một giai đoạn có thể hiển thị hướng dẫn, dòng nguồn và các giá trị mà nó sử dụng.</li>
+    <li>Phòng thí nghiệm Pipeline được thiết kế nằm đối diện với cửa sổ của chính nó chứ không phải màn hình, do đó, một cửa sổ hẹp trên màn hình lớn có thể gập lại giống như cách điện thoại hoạt động và mọi nhóm điều khiển đều có thể được mở và đóng bằng tay.</li>
+    <li>Đã thêm trình cập nhật ngôn ngữ được nhắm mục tiêu chỉ dịch các chuỗi mà danh mục vẫn trả lời bằng tiếng Anh mà không cần viết lại các mục đã được sửa bằng tay. Nó từ chối bất kỳ bản dịch nào làm thay đổi phần giữ chỗ.</li>
+    <li>Đã dịch 872 chuỗi giao diện vẫn được hiển thị bằng tiếng Anh trên 17 ngôn ngữ và thêm một bài kiểm tra không thành công khi một ngôn ngữ trả lời nhiều giao diện bằng tiếng Anh hơn trước đây.</li>
+    <li>Đã sửa lỗi Pipeline Lab bỏ qua Backstep trong cửa sổ chính: thời gian chạy phân phối nó trên một kênh mà công cụ không nghe, do đó công cụ tiếp tục phát lại các hướng dẫn chưa được thực thi.</li>
+    <li>Đã sửa lỗi bước ở chế độ di động thay thế bất kỳ bảng nào mà người đọc đã chọn. Tiêu điểm do chạy chương trình không còn làm thay đổi bảng hiển thị; mở một cửa sổ, mới hoặc đã mở, vẫn vậy.</li>
+    <li>Đã sửa lỗi Phòng thí nghiệm đường ống chỉ hiển thị giai đoạn cuối cùng trong khi thực hiện theo chương trình từng bước, khiến đường ống thoát nước và nạp lại ở mỗi bước thay vì lấp đầy.</li>
+    <li>Đã sửa ba mã thông báo màu giao diện chưa bao giờ được xác định, làm im lặng điểm đánh dấu gian hàng trong dòng thời gian và để lại văn bản bị tắt tiếng ở cả hai chủ đề.</li>
+    <li>Đã sửa lỗi phát lại bị đình trệ cho đến khi hết chu kỳ khi bản ghi nhảy sang một nơi nào đó mà không có nhánh nào được dự đoán, chẳng hạn như đặt lại chương trình hoặc trình xử lý ngoại lệ.</li>
+    <li>Đã thêm <code>npm run version:set</code>, ghi phiên bản vào tất cả mười một nơi khai báo nó và chuyển phiên bản ra khỏi các trang trợ giúp nêu rõ phiên bản đó vào mã thông báo thời gian chạy.</li>
+    <li>Xây dựng lại mô hình định thời gian của Pipeline Lab: các mối nguy hiểm kiểm soát, các khe trễ có thể định cấu hình, dự đoán nhánh tĩnh và động, độ trễ bộ nhớ có thể định cấu hình, bẫy được tuần tự hóa và bảy cấu hình kiến trúc được phiên bản riêng lẻ có thể được so sánh cạnh nhau.</li>
+    <li>Đã thêm chế độ xem Kiến trúc, vẽ đường dẫn dữ liệu với các thanh ghi đường ống, đường điều khiển theo lệnh, bộ ghép kênh, đường dẫn chuyển tiếp trực tiếp và phát hiện mối nguy hiểm, cùng với các nhóm tín hiệu có thể được ẩn riêng lẻ.</li>
+    <li>Đã thêm bảng lịch sử nhánh được chia sẻ với Trình mô phỏng BHT, để cả hai công cụ đều dự đoán giống hệt nhau; một thử nghiệm hồi quy điều khiển hai yếu tố dự đoán thông qua các chuỗi kết quả giống nhau và không thành công ở bất kỳ sự phân kỳ nào.</li>
+    <li>Đã thêm bản xuất JSON và CSV có thể tái tạo mang phiên bản mô hình, phiên bản hồ sơ, cấu hình đầy đủ và hàm băm của chương trình, không có dấu thời gian, do đó, cùng một công việc sẽ tạo ra một tệp giống hệt byte.</li>
+    <li>Đã thêm bảy phòng thí nghiệm được hướng dẫn với các mục tiêu, điều kiện tiên quyết, bước dự đoán trước khi thực hiện và các câu hỏi phản ánh, cùng với các bảng giải pháp riêng biệt, hướng dẫn áp dụng cho giáo viên và một bản trình bày ngắn. Mỗi số trong bảng tính đều được bộ kiểm tra đo lại.</li>
+    <li>Đã thêm bộ vi sai so với MARS 4.5 được ghim tổng kiểm tra, so sánh mã máy, phân đoạn dữ liệu, đầu ra bảng điều khiển và tất cả 32 thanh ghi. Tám trong số mười một chương trình có byte giống nhau; ba điểm khác biệt còn lại được tuyên bố kèm theo lý do và trường hợp sao chép tối thiểu.</li>
+    <li>Đã thêm các báo cáo bằng chứng được tạo về khả năng tương thích, tuân thủ MARS, mức độ phù hợp, điểm đột biến, điểm chuẩn và khả năng truy cập, mỗi báo cáo được tạo lại bằng một lệnh và được bộ kiểm tra kiểm tra.</li>
+    <li>Đã thêm một giao thức điểm chuẩn đã xuất bản với quy tắc khởi động, số lần lặp lại và quy tắc ngoại lệ được công bố, báo cáo các giá trị trung bình với các phạm vi liên vùng và ghi lại từng kết quả đến từ máy.</li>
+    <li>Đã thêm thử nghiệm đột biến và làm mờ xác định giới hạn của trình biên dịch mã, thời gian chạy và trình nhập trạng thái.</li>
+    <li>Đã sửa lỗi Phòng thí nghiệm đường ống không nhận được bản cập nhật thời gian chạy sau lần lắp ráp đầu tiên, do công cụ tự báo cáo là bị ngắt kết nối.</li>
+    <li>Đã sửa lỗi các mục tiêu nhánh tượng trưng không bao giờ giải quyết được trong mô hình thời gian, điều này khiến mọi dự đoán nhánh đều báo cáo không có sai sót nào.</li>
+    <li>Đã khắc phục sự cố khi nhập trạng thái thời gian chạy đã lưu bị hỏng hoặc không được lưu, trạng thái này hiển thị với người dùng dưới dạng màn hình trống.</li>
+    <li>Đã sửa lỗi trình chỉnh sửa và khung Tin nhắn sao Hỏa không có tên có thể truy cập và màu văn bản bên dưới độ tương phản tối thiểu WCAG trong chủ đề sáng.</li>
+    <li>Đã sửa lỗi tách cột dòng thời gian được ghim bằng các ngôn ngữ từ phải sang trái và giữ sơ đồ quy trình từ trái sang phải để thứ tự giai đoạn của nó vẫn đọc tiếp.</li>
+    <li>Đã thêm bảng màu an toàn cho thị giác màu tùy chọn cho các giai đoạn quy trình.</li>
+    <li>Đã thêm tài liệu dành cho nhà phát triển: ranh giới kiến trúc, hướng dẫn đóng góp đầu tiên, hướng dẫn thêm hướng dẫn, hệ thống tòa nhà và thiết bị, bất biến thời gian chạy, công cụ đã lập phiên bản API với ví dụ hoạt động và trình tạo khung cũng như quy trình phát hành.</li>
+  </ul>
+
+  <h2>0.5.5 &mdash; Phòng thí nghiệm quy trình và 20 ngôn ngữ</h2>
+  <ul>
+    <li>Đã thêm Phòng thí nghiệm quy trình gồm năm giai đoạn xác định với các mối nguy hiểm RAW, chuyển tiếp, đình trệ, chu kỳ có thể đảo ngược, số liệu và dòng thời gian có thể mở rộng.</li>
+    <li>Mở rộng giao diện, ví dụ, tài liệu và trợ giúp từ 10 lên 20 ngôn ngữ.</li>
+    <li>Hành vi công cụ đáp ứng mở rộng, phạm vi bản địa hóa và hồi quy trong toàn bộ bản phát hành hoàn chỉnh.</li>
   </ul>
 
   <h2>0.5.4 &mdash; MARS-OS máy tính để bàn, màn hình ảo và chủ đề hệ thống</h2>

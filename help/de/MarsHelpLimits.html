@@ -19,7 +19,7 @@
     <tr><td>Rückschritt</td><td>0–1.000.000 inverse Deltas. Der Verlauf ist durch das konfigurierte Budget begrenzt und behält bei aktiviertem Backstep immer die letzten 100 abgeschlossenen Schritte bei.</td></tr>
     <tr><td>Speicherung von Browserdateien</td><td>Projekt-/Sitzungsdaten unterliegen der Browser-Quote; Die App begrenzt die Browser-Speichernutzlasten des Benutzers gegebenenfalls auf 1 MiB und greift bei Bedarf auf kleinere Wiederherstellungsnutzlasten zurück.</td></tr>
     <tr><td>Laufzeitmessung</td><td>Ruhezustand, MIDI und UI-Timing werden vom Browser geplant und sind nicht zyklusgenau.</td></tr>
-    <tr><td>Verteilung</td><td>webMARS 0.5.5 ist eine statische Webanwendung, keine installierbare/offline PWA. Es muss über HTTP vom enthaltenen lokalen Server oder einem anderen statischen Host bereitgestellt werden.</td></tr>
+    <tr><td>Verteilung</td><td>webMARS __WEBMARS_APP_VERSION__ ist eine statische Webanwendung, keine installierbare/offline PWA. Es muss über HTTP vom enthaltenen lokalen Server oder einem anderen statischen Host bereitgestellt werden.</td></tr>
   </table>
 
   <h2>Speicherkarten</h2>
@@ -52,5 +52,6 @@
     <li>Mini-C akzeptiert nur seine dokumentierten Profile; Code, der auf vollständigem ISO C, einer Host-Libc oder undefiniertem Verhalten basiert, ist nicht darauf portierbar.</li>
     <li>Historische MARS-Erweiterungen, die von Java-Klassen oder Desktop-Plug-Ins abhängen, sind nicht verfügbar.</li>
   </ul>
+  <script src="../../assets/js/app-version.js"></script>
 </body>
 </html>

@@ -8,13 +8,47 @@
 </head>
 <body>
   <h1>Değişiklik günlüğü</h1>
-  <p class="lead">Sürüm 0.5.5, İş Hattı Laboratuvarını sunar ve tüm öğrenme ortamını yirmi dile genişletir.</p>
+  <p class="lead">Sürüm 0.5.6, Pipeline Lab'ı çalışan programa bağlar: webMARS'nin gerçekte yürüttüğü işlemi gerçek dal sonuçları ve gerçek kayıt değerleriyle yeniden oynatır ve her iki taraf da diğerini aynı anda çalıştırabilir.</p>
 
-  <h2>0.5.5 &mdash; İş Hattı Laboratuvarı ve yirmi dil</h2>
+  <h2>0.5.6 &mdash; boru hattı programı takip ediyor</h2>
   <ul>
-    <li>RAW tehlikeleri, iletim, beklemeler, geri alınabilir çevrimler, metrikler ve ölçeklenebilir zaman çizelgesi içeren deterministik beş aşamalı iş hattı eklendi.</li>
+    <li>Pipeline Lab'a kayıtlı yürütme akışı eklendi. Bir dalın nasıl çözüldüğünü varsaymak yerine, model gerçekten yürütülen webMARS dizisini yeniden oynatır, dolayısıyla alınan dallar, yanlış tahminler ve atılan talimatlar varsayımlardan ziyade gerçeklerdir.</li>
+    <li>Kayıtlar görünümü eklendi: geçerli döngüdeki her kaydın değeri, daha önceki bir aşamada hala uçuş halinde olan değerler ve onu değiştiren döngüye karşı her kaydın ızgarası. Bir değer yalnızca çalışma zamanının bir değer sağladığı yerde görünür; statik akış kasıtlı olarak hiçbirini göstermiyor.</li>
+    <li>İki nakliyeyi birbirine bağladım. webMARS içinde yürütülen bir talimat, boru hattına her iki yönde giren bir talimattır: Ana penceredeki Adım ve Geri Adım, boru hattını hareket ettirir ve getirme aşamasında okunacak hiçbir şey kalmadığında aracın kendi adım kontrolleri programı çalıştırır veya çalıştırmayı iptal eder.</li>
+    <li>Step'te <kbd>F7</kbd> bulunurken kısayolu olmayan Backstep için <kbd>F8</kbd> eklendi.</li>
+    <li>Pipeline Lab'ı, her aşama çifti arasında işlem hattı kaydının zaman çizelgesinin üstünde değil yanında olacak şekilde dikey bir işlem hattı olarak yeniden çizin; böylece bir aşama, talimatı, kaynak satırını ve kullandığı değerleri gösterebilir.</li>
+    <li>Pipeline Laboratuvarı'nın ekran yerine kendi penceresine yaslanmasını sağladık, böylece geniş ekrandaki dar bir pencere bir telefonla aynı şekilde katlanabiliyor ve her kontrol grubu elle açılıp kapatılabiliyor.</li>
+    <li>Zaten elle düzeltilmiş girişleri yeniden yazmaya gerek kalmadan, yalnızca bir kataloğun yanıtladığı dizeleri İngilizce'ye çeviren hedefli bir yerel ayar güncelleyici eklendi. Yer tutucuyu değiştiren herhangi bir çeviriyi reddeder.</li>
+    <li>On yedi dilde hâlâ İngilizce olarak gösterilen 872 arayüz dizesi çevrildi ve bir dil, arayüzün daha fazlasını İngilizce olarak yanıtladığında başarısız olan bir test eklendi.</li>
+    <li>Pipeline Lab'ın ana pencerede Backstep'i yok sayması düzeltildi: çalışma zamanı bunu aracın dinlemediği bir kanala iletiyor, bu nedenle araç yürütülmemiş talimatları tekrar oynatmaya devam ediyordu.</li>
+    <li>Okuyucunun seçtiği panelin yerine mobil modda adım atılması düzeltildi. Programın çalıştırılmasının neden olduğu odaklanma artık görünen paneli değiştirmiyor; Yeni veya zaten açık bir pencere açmak yine de öyle.</li>
+    <li>Pipeline Lab'ın bir adımlama programını takip ederken yalnızca son aşamayı göstermesi düzeltildi; bu durum boru hattının dolmak yerine her adımda boşaltılıp yeniden doldurulmasını sağladı.</li>
+    <li>Hiçbir zaman tanımlanmayan, zaman çizelgesindeki duraklama işaretini susturan ve her iki temada da sessize alınan metni açık bırakan üç arayüz renk belirteci düzeltildi.</li>
+    <li>Kayıt, program sıfırlama veya istisna işleyici gibi hiçbir dalın tahmin edilmediği bir yere sıçradığında, döngü bitene kadar tekrarın durması düzeltildi.</li>
+    <li>Sürümü, onu bildiren on bir konumun tümüne yazan <code>npm run version:set</code> eklendi ve sürümü, onu belirten yardım sayfalarından çalışma zamanı belirtecine taşıdı.</li>
+    <li>Pipeline Lab zamanlama modeli yeniden oluşturuldu: kontrol tehlikeleri, yapılandırılabilir gecikme yuvaları, statik ve dinamik dallanma tahmini, yapılandırılabilir bellek gecikmesi, serileştirilmiş tuzaklar ve yan yana karşılaştırılabilecek ayrı ayrı versiyonlanmış yedi mimari profil.</li>
+    <li>Ayrı ayrı gizlenebilen sinyal gruplarıyla veri yolunu ardışık düzen kayıtları, talimat başına kontrol hatları, çoklayıcılar, canlı yönlendirme yolları ve tehlike algılamayla çizen Mimari görünümü eklendi.</li>
+    <li>BHT Simülatörüyle paylaşılan bir dal geçmişi tablosu eklendi, böylece her iki araç da aynı şekilde tahminde bulunuyor; bir regresyon testi, iki öngörücüyü aynı sonuç dizilerinden geçirir ve herhangi bir farklılıkta başarısız olur.</li>
+    <li>Programın model versiyonunu, profil versiyonunu, tam konfigürasyonunu ve karmasını zaman damgası olmadan taşıyan tekrarlanabilir JSON ve CSV dışa aktarımı eklendi, böylece aynı çalışma baytla aynı bir dosya üretir.</li>
+    <li>Hedefler, önkoşullar, koşmadan önce tahmin etme adımı ve yansıtma sorularının yanı sıra ayrı çözüm sayfaları, öğretmen benimseme kılavuzu ve kısa bir sunum içeren yedi rehberli laboratuvar eklendi. Bir çalışma sayfasında alıntılanan her sayı, test paketi tarafından yeniden ölçülür.</li>
+    <li>Sağlama toplamı sabitlenmiş MARS 4.5'e karşı makine kodunu, veri segmentini, konsol çıkışını ve 32 kaydın tamamını karşılaştıran bir diferansiyel paketi eklendi. On bir programdan sekizi baytla aynıdır; Geriye kalan üç fark ise gerekçeli ve minimal çoğaltma durumuyla birlikte beyan edilmiştir.</li>
+    <li>Uyumluluk, MARS uygunluk, kapsam, mutasyon puanı, kıyaslama ve erişilebilirlik için oluşturulan kanıt raporları eklendi; bunların her biri tek bir komutla yeniden oluşturuldu ve test paketi tarafından kontrol edildi.</li>
+    <li>Bildirilen bir ısınma, tekrar sayısı ve aykırı değer kuralı ile yayınlanmış bir kıyaslama protokolü eklendi, ortancalar çeyrekler arası aralıklarla rapor edildi ve her sonucun geldiği makine kaydedildi.</li>
+    <li>Birleştiricinin, çalışma zamanının ve durum içe aktarıcının mutasyon testi ve sınırlı deterministik bulanıklaştırması eklendi.</li>
+    <li>Aracın kendisini bağlantısız olarak bildirmesi nedeniyle Pipeline Lab'ın ilk montajdan sonra hiçbir çalışma zamanı güncellemesi almaması düzeltildi.</li>
+    <li>Zamanlama modelinde hiçbir zaman çözümlenmeyen sembolik dallanma hedefleri düzeltildi, bu da her dal tahmin raporunun sıfır yanlış tahmin yapmasını sağladı.</li>
+    <li>Bozuk veya eksik kayıtlı çalışma zamanı durumunu içe aktarırken kullanıcıya boş ekran olarak ulaşan bir kilitlenme düzeltildi.</li>
+    <li>Düzenleyicinin ve Mars Mesajları bölmesinin erişilebilir bir adı olmaması ve ışık temasındaki minimum WCAG kontrastın altında bir metin rengine sahip olması düzeltildi.</li>
+    <li>Sabitlenmiş zaman çizelgesi sütununun sağdan sola dillerde ayrılması düzeltildi ve aşama sırasının ileriye doğru okunması için boru hattı diyagramı soldan sağa tutuldu.</li>
+    <li>Boru hattı aşamaları için isteğe bağlı renkli görüş açısından güvenli bir palet eklendi.</li>
+    <li>Geliştirici belgeleri eklendi: mimari sınırlar, ilk katkı kılavuzu, talimat ekleme kılavuzları, sistem çağrıları ve cihazlar, çalışma zamanı değişmezleri, üzerinde çalışılmış bir örnek ve iskele oluşturucuyla sürümlendirilmiş araç API ve sürüm süreci.</li>
+  </ul>
+
+  <h2>0.5.5 &mdash; Pipeline Laboratuvarı ve yirmi dil</h2>
+  <ul>
+    <li>RAW tehlikeler, yönlendirme, duraklamalar, tersine çevrilebilir döngüler, ölçümler ve ölçeklenebilir bir zaman çizelgesi içeren deterministik beş aşamalı Pipeline Laboratuvarı eklendi.</li>
     <li>Arayüz, örnekler, belgeler ve yardım on dilden yirmi dile genişletildi.</li>
-    <li>Araçların duyarlı davranışı, yerelleştirme ve regresyon kapsamı genişletildi.</li>
+    <li>Tüm sürüm boyunca genişletilmiş duyarlı araç davranışı, yerelleştirme ve regresyon kapsamı.</li>
   </ul>
 
   <h2>0.5.4 &mdash; MARS-İşletim Sistemi masaüstü, sanal ekranlar ve sistem teması</h2>

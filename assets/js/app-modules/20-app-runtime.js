@@ -8442,7 +8442,7 @@ const commands = {
     runLastUiSyncAt = 0;
     backstepDepthEstimate = 0;
     clearInputPauseState();
-    windowManager.focus("window-text"); windowManager.focus("window-data");
+    windowManager.focusForExecution("window-text"); windowManager.focusForExecution("window-data");
     postMarsSystemLine("{action}: assembling {sources}", {
       action: translateText("Assemble"),
       sources: describeAssemblySources(assemblyContext)
@@ -8533,7 +8533,7 @@ const commands = {
   },
   step() {
     modeController.setMode("execute");
-    windowManager.focus("window-text"); windowManager.focus("window-data");
+    windowManager.focusForExecution("window-text"); windowManager.focusForExecution("window-data");
     const snapshot = engine.getSnapshot();
     if (!snapshot.assembled) {
       postMarsMessage("The program must be assembled before it can be run.");
@@ -8590,7 +8590,7 @@ const commands = {
     }
   },  go() {
     modeController.setMode("execute");
-    windowManager.focus("window-text"); windowManager.focus("window-data");
+    windowManager.focusForExecution("window-text"); windowManager.focusForExecution("window-data");
     if (runActive) return;
     const snapshot = engine.getSnapshot();
     if (!snapshot.assembled) {
@@ -8660,7 +8660,7 @@ const commands = {
     runStepCarry = 0;
     runLastUiSyncAt = 0;
     clearInputPauseState();
-    windowManager.focus("window-text"); windowManager.focus("window-data");
+    windowManager.focusForExecution("window-text"); windowManager.focusForExecution("window-data");
     const snapshot = engine.getSnapshot();
     if (!snapshotHasProgramRows(snapshot)) {
       refreshRuntimeControls(snapshot);
@@ -9697,6 +9697,10 @@ window.addEventListener("keydown", async (event) => {
   if (event.key === "F4") { event.preventDefault(); void commands.compileC0(); }
   if (event.key === "F5") { event.preventDefault(); void commands.go(); }
   if (event.key === "F7") { event.preventDefault(); void commands.step(); }
+  // Backstep had no shortcut while its forward counterpart did, so stepping
+  // through a program meant reaching for the mouse the moment you went one
+  // instruction too far. F8 is the key MARS binds it to.
+  if (event.key === "F8") { event.preventDefault(); void commands.backstep(); }
   if (event.key === "Escape") {
     menuSystem.hide();
   }

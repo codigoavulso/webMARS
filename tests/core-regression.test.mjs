@@ -638,3 +638,35 @@ test("Registers owns its scroll area when the mobile viewport becomes short", as
     /\.desktop\.desktop-stacked #window-registers \.window-content \{\s*touch-action: pan-x pan-y;/
   );
 });
+
+// An unrecognised directive must be rejected, not silently skipped: a typo like
+// `.wrod` would otherwise assemble into a program with missing data. This was a
+// surviving mutant in docs/mutation-report.md before the test existed.
+test("the assembler rejects directives it does not recognise", async () => {
+  const engine = await createJavaScriptEngine({ settings: { startAtMain: true } });
+
+  const rejected = engine.assemble(`
+.data
+value: .wrod 42
+.text
+main:
+  li $v0, 10
+  syscall
+`, { sourceName: "unknown-directive.s" });
+  assert.equal(rejected.ok, false, "an unknown directive must fail assembly");
+  const diagnostics = (rejected.errors || []).map((entry) => entry.message).join(" | ");
+  assert.match(diagnostics, /\.wrod/, "the diagnostic must name the offending directive");
+  assert.equal(rejected.errors[0].line, 3, "the diagnostic must point at the offending line");
+
+  // The same program with the directive spelled correctly still assembles, so
+  // the check rejects the typo rather than the surrounding syntax.
+  const accepted = await createJavaScriptEngine({ settings: { startAtMain: true } });
+  assert.equal(accepted.assemble(`
+.data
+value: .word 42
+.text
+main:
+  li $v0, 10
+  syscall
+`, { sourceName: "known-directive.s" }).ok, true);
+});

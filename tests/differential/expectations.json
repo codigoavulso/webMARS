@@ -1,0 +1,36 @@
+{
+  "schema": "webmars.differential-expectations/2",
+  "note": "Each encoding exception names the exact offset and the exact MARS/webMARS words it may excuse. Register, data, output, text length, undeclared offsets, and unexpected words always fail.",
+  "programs": {
+    "function_calls.asm": [
+      {
+        "id": "ble-immediate-cannot-overflow",
+        "textWords": [
+          { "offset": 48, "mars": "2081ffff", "web": "24010001" },
+          { "offset": 52, "mars": "28210001", "web": "0024082a" },
+          { "offset": 56, "mars": "14200004", "web": "10200004" }
+        ]
+      }
+    ],
+    "logic_shifts.asm": [
+      {
+        "id": "li-32bit-preserves-at",
+        "textWords": [
+          { "offset": 0, "mars": "3c01f0f0", "web": "3c08f0f0" },
+          { "offset": 4, "mars": "3428f0f0", "web": "3508f0f0" },
+          { "offset": 8, "mars": "3c010ff0", "web": "3c090ff0" },
+          { "offset": 12, "mars": "34290ff0", "web": "35290ff0" }
+        ]
+      }
+    ],
+    "pseudo_instructions.asm": [
+      {
+        "id": "li-32bit-preserves-at",
+        "textWords": [
+          { "offset": 4, "mars": "3c011234", "web": "3c091234" },
+          { "offset": 8, "mars": "34295678", "web": "35295678" }
+        ]
+      }
+    ]
+  }
+}
