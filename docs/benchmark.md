@@ -9,12 +9,13 @@ A number without its protocol cannot be compared to anything. This one is:
 
 | Parameter | Value |
 | --- | --- |
-| Protocol version | 1 |
+| Protocol version | 2 |
 | Warm-up runs (discarded) | 3 |
 | Measured repetitions | 7 |
 | Outlier handling | discard the single fastest and single slowest measurement, then report the median and interquartile range of the rest |
 | Statistic reported | median with interquartile range (IQR) |
 | Timer | process.hrtime.bigint(), nanosecond resolution |
+| Timed window | operation under test only; engine creation and per-sample reset/assembly are excluded unless assembly is the operation under test |
 
 Medians and interquartile ranges are reported rather than means. On a machine
 with other work running, a mean over a handful of runs describes the scheduler
@@ -26,14 +27,14 @@ machine.
 
 | Field | Value |
 | --- | --- |
-| webMARS | 0.5.6 (`1410dca`) |
+| webMARS | 0.5.6 (`a05f053`) |
 | Engine | Node.js v24.18.0 (V8 13.6.233.17-node.50) |
 | Operating system | win32 10.0.19044 |
 | Architecture | x64 |
 | CPU | AMD Ryzen 7 5700X 8-Core Processor |
 | Logical processors | 16 |
 | Total memory | 15.93 GiB |
-| Free memory at start | 6.46 GiB |
+| Free memory at start | 8.51 GiB |
 
 These numbers describe **this machine**. They are not a specification, and
 they are not comparable to a run on different hardware. Compare like with like:
@@ -45,19 +46,19 @@ same protocol version, same engine family, same machine.
 - **`assemble-large`** (assembly) - Whether assembly scales linearly. A quadratic pass shows up here and nowhere else.
 - **`execute-tight-loop`** (execution) - Steady-state interpreter throughput on register-only work.
 - **`execute-memory-bound`** (execution) - Throughput when every iteration touches memory, which exercises the slower path.
-- **`execute-with-tool`** (tools) - What a connected tool costs: the same execution with a snapshot read periodically.
+- **`execute-with-tool`** (tools) - Cost of a real instruction-observer integration: the same execution with a snapshot read every 64 retired instructions.
 - **`compile-mini-c`** (compilation) - Cost of compiling Mini-C to MIPS, the step before assembly in the C workflow.
 
 ## Results
 
 | Workload | Phase | Median | IQR | Samples used | Work measured | Throughput |
 | --- | --- | --- | --- | --- | --- | --- |
-| `assemble-small` | assembly | 1.678 ms | 0.105 ms | 5 of 7 | 42 instructions assembled | 25,034/s |
-| `assemble-large` | assembly | 230.7 ms | 2.604 ms | 5 of 7 | 8,002 instructions assembled | 34,692/s |
-| `execute-tight-loop` | execution | 1402.9 ms | 10.979 ms | 5 of 7 | 80,005 instructions executed | 57,028/s |
-| `execute-memory-bound` | execution | 1900.8 ms | 4.627 ms | 5 of 7 | 56,006 instructions executed | 29,465/s |
-| `execute-with-tool` | tools | 717.2 ms | 2.796 ms | 5 of 7 | 40,005 instructions executed | 55,776/s |
-| `compile-mini-c` | compilation | 0.597 ms | 0.044 ms | 5 of 7 | - | - |
+| `assemble-small` | assembly | 1.690 ms | 0.081 ms | 5 of 7 | 42 instructions assembled | 24,856/s |
+| `assemble-large` | assembly | 232.0 ms | 2.575 ms | 5 of 7 | 8,002 instructions assembled | 34,491/s |
+| `execute-tight-loop` | execution | 1390.4 ms | 3.543 ms | 5 of 7 | 80,005 instructions executed | 57,542/s |
+| `execute-memory-bound` | execution | 1892.0 ms | 4.859 ms | 5 of 7 | 56,006 instructions executed | 29,602/s |
+| `execute-with-tool` | tools | 1404.3 ms | 1.430 ms | 5 of 7 | 80,005 instructions executed | 56,973/s |
+| `compile-mini-c` | compilation | 0.592 ms | 0.041 ms | 5 of 7 | - | - |
 
 Throughput is derived from the median and the work the run actually reported -
 instructions assembled or instructions retired, measured rather than declared.
@@ -69,10 +70,10 @@ simulates MIPS instructions, not how fast a MIPS processor would run them.
 The last ten runs, newest first. Kept so a regression shows up as a change in
 the median rather than as a subjective impression.
 
-| webMARS | Commit | Engine | Medians (ms) |
-| --- | --- | --- | --- |
-| 0.5.6 | 1410dca | Node.js v24.18.0 | assemble-small 1.678, assemble-large 230.7, execute-tight-loop 1402.9, execute-memory-bound 1900.8, execute-with-tool 717.2, compile-mini-c 0.597 |
-| 0.5.5 | 1410dca | Node.js v24.18.0 | assemble-small 1.807, assemble-large 239.6, execute-tight-loop 1428.2, execute-memory-bound 1921.3, execute-with-tool 722.2, compile-mini-c 0.602 |
+| webMARS | Commit | Protocol | Engine | Medians (ms) |
+| --- | --- | --- | --- | --- |
+| 0.5.6 | a05f053 | v2, n=7 | Node.js v24.18.0 | assemble-small 1.690, assemble-large 232.0, execute-tight-loop 1390.4, execute-memory-bound 1892.0, execute-with-tool 1404.3, compile-mini-c 0.592 |
+| 0.5.5 | 1410dca | v1, n=? | Node.js v24.18.0 | assemble-small 1.807, assemble-large 239.6, execute-tight-loop 1428.2, execute-memory-bound 1921.3, execute-with-tool 722.2, compile-mini-c 0.602 |
 
 Full history, including every retained sample, is in
 [benchmark-history.json](benchmark-history.json).

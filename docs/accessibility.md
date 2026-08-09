@@ -27,7 +27,7 @@ What that means precisely:
 | 1.4.1 | Use of Color | A | Checks that pipeline stages, hazards and discarded instructions carry a text label, not only a colour. |
 | 1.4.4 | Resize Text | AA | Checks that no layout dimension that carries text is expressed in a unit that ignores the user's font size. |
 | 2.1.1 | Keyboard | A | Checks that every element with a click handler is either natively focusable or given tabindex and a key handler. |
-| 2.3.3 | Animation from Interactions | AAA | Checks that animated or transitioned properties are wrapped in a prefers-reduced-motion query. |
+| 2.3.3 | Animation from Interactions | AAA | Checks stylesheets, inline startup CSS, tool CSS and injected UI CSS for a prefers-reduced-motion guard or override. |
 | 4.1.2 | Name, Role, Value | A | Checks that interactive controls built from non-semantic elements declare a role and an accessible name. |
 | 3.1.1 | Language of Page | A | Checks that the document declares a language and that it follows the selected interface language. |
 
@@ -104,9 +104,9 @@ Body text needs 4.5:1; large text and non-text indicators need 3:1.
   in every cell, discarded instructions are labelled "discarded" as well as
   struck through, and dependency rows are labelled "produces an operand".
   Bubbles state their reason in words.
-- **Reduced motion.** Transitions in the datapath are inside a
-  `prefers-reduced-motion: no-preference` query, so a user who asks for less
-  motion gets none.
+- **Reduced motion.** The startup loader, desktop feedback and tool animations
+  either run only under `prefers-reduced-motion: no-preference` or are disabled
+  by a `prefers-reduced-motion: reduce` override.
 - **Themes.** Light and dark themes declare the same token set, and the theme
   follows the browser preference by default.
 - **Language.** The interface is translated into twenty languages, including

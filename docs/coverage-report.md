@@ -37,10 +37,10 @@ down.
 
 | Metric | Result |
 | --- | --- |
-| Line coverage | 64.62% (6476 of 10022) |
-| Block (branch) coverage | 52.58% (1378 of 2621) |
-| Function coverage | 75.76% (547 of 722) |
-| Files measured | 6 |
+| Line coverage | 65.61% (6969 of 10622) |
+| Block (branch) coverage | 51.83% (1416 of 2732) |
+| Function coverage | 75.98% (598 of 787) |
+| Files measured | 7 |
 
 ## Per file
 
@@ -51,11 +51,12 @@ them. A dash means the file has no threshold yet.
 | File | Lines | Branches | Functions | Executable lines | Threshold |
 | --- | --- | --- | --- | --- | --- |
 | `assets/js/app-modules/00-core-store.js` | 34.78% | 0.00% | 66.67% | 23 | 34/0/66 |
-| `assets/js/app-modules/00-core.js` | 61.20% | 49.38% | 73.40% | 8444 | 60/48/72 |
+| `assets/js/app-modules/00-core.js` | 61.51% | 49.13% | 73.84% | 8517 | 60/48/72 |
 | `assets/js/app-modules/00-i18n.js` | 56.91% | 13.79% | 54.17% | 181 | 55/12/53 |
 | `tools/bht-simulator.js` | 75.00% | 100.00% | 62.50% | 20 | - |
 | `tools/example-register-watch.js` | 100.00% | 52.00% | 100.00% | 41 | 22/50/65 |
 | `tools/pipeline-lab.js` | 86.90% | 72.98% | 87.42% | 1313 | 85/71/86 |
+| `tools/system-clock.js` | 80.08% | 35.37% | 75.00% | 527 | - |
 
 ## Threshold status
 
@@ -96,7 +97,6 @@ are not thereby uncovered - they are unmeasured.**
 - `tools/scavenger-hunt.js`
 - `tools/screen-magnifier.js`
 - `tools/stack-visualizer.js`
-- `tools/system-clock.js`
 - `tools/tty-ansi-terminal.js`
 
 Closing this gap means loading these modules as whole scripts with a

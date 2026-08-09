@@ -54,10 +54,11 @@
       ]
     },
     {
-      "recordedAt": "2026-08-08",
-      "protocolVersion": 1,
+      "recordedAt": "2026-08-09",
+      "protocolVersion": 2,
+      "repetitions": 7,
       "webMarsVersion": "0.5.6",
-      "commit": "1410dca",
+      "commit": "a05f053",
       "engine": "Node.js v24.18.0",
       "v8": "13.6.233.17-node.50",
       "platform": "win32 10.0.19044",
@@ -65,42 +66,42 @@
       "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
       "cpuCount": 16,
       "totalMemoryGiB": 15.93,
-      "freeMemoryGiB": 6.46,
+      "freeMemoryGiB": 8.51,
       "results": [
         {
           "id": "assemble-small",
-          "median": 1.6777,
-          "iqr": 0.10529999999999995,
-          "throughput": 25034
+          "median": 1.6897,
+          "iqr": 0.08079999999999998,
+          "throughput": 24856
         },
         {
           "id": "assemble-large",
-          "median": 230.6566,
-          "iqr": 2.6040999999999883,
-          "throughput": 34692
+          "median": 232.0031,
+          "iqr": 2.5746000000000038,
+          "throughput": 34491
         },
         {
           "id": "execute-tight-loop",
-          "median": 1402.9169,
-          "iqr": 10.97889999999984,
-          "throughput": 57028
+          "median": 1390.3739,
+          "iqr": 3.54320000000007,
+          "throughput": 57542
         },
         {
           "id": "execute-memory-bound",
-          "median": 1900.7577,
-          "iqr": 4.626700000000028,
-          "throughput": 29465
+          "median": 1891.9932,
+          "iqr": 4.859300000000076,
+          "throughput": 29602
         },
         {
           "id": "execute-with-tool",
-          "median": 717.2414,
-          "iqr": 2.796199999999999,
-          "throughput": 55776
+          "median": 1404.2586,
+          "iqr": 1.4295999999999367,
+          "throughput": 56973
         },
         {
           "id": "compile-mini-c",
-          "median": 0.5966,
-          "iqr": 0.044199999999999906,
+          "median": 0.5923,
+          "iqr": 0.041000000000000036,
           "throughput": null
         }
       ]
