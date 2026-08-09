@@ -105,6 +105,59 @@
           "throughput": null
         }
       ]
+    },
+    {
+      "recordedAt": "2026-08-09",
+      "protocolVersion": 2,
+      "repetitions": 7,
+      "webMarsVersion": "0.5.6",
+      "commit": "e794ef3",
+      "engine": "Node.js v24.18.0",
+      "v8": "13.6.233.17-node.50",
+      "platform": "win32 10.0.19044",
+      "arch": "x64",
+      "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+      "cpuCount": 16,
+      "totalMemoryGiB": 15.93,
+      "freeMemoryGiB": 8.58,
+      "results": [
+        {
+          "id": "assemble-small",
+          "median": 1.7646,
+          "iqr": 0.14300000000000002,
+          "throughput": 23801
+        },
+        {
+          "id": "assemble-large",
+          "median": 233.0147,
+          "iqr": 1.233600000000024,
+          "throughput": 34341
+        },
+        {
+          "id": "execute-tight-loop",
+          "median": 1384.4266,
+          "iqr": 4.894999999999982,
+          "throughput": 57789
+        },
+        {
+          "id": "execute-memory-bound",
+          "median": 1890.4086,
+          "iqr": 5.372900000000072,
+          "throughput": 29626
+        },
+        {
+          "id": "execute-with-tool",
+          "median": 1410.1142,
+          "iqr": 1.7379000000000815,
+          "throughput": 56737
+        },
+        {
+          "id": "compile-mini-c",
+          "median": 0.5975,
+          "iqr": 0.03049999999999997,
+          "throughput": null
+        }
+      ]
     }
   ]
 }

@@ -27,14 +27,14 @@ machine.
 
 | Field | Value |
 | --- | --- |
-| webMARS | 0.5.6 (`a05f053`) |
+| webMARS | 0.5.6 (`e794ef3`) |
 | Engine | Node.js v24.18.0 (V8 13.6.233.17-node.50) |
 | Operating system | win32 10.0.19044 |
 | Architecture | x64 |
 | CPU | AMD Ryzen 7 5700X 8-Core Processor |
 | Logical processors | 16 |
 | Total memory | 15.93 GiB |
-| Free memory at start | 8.51 GiB |
+| Free memory at start | 8.58 GiB |
 
 These numbers describe **this machine**. They are not a specification, and
 they are not comparable to a run on different hardware. Compare like with like:
@@ -53,12 +53,12 @@ same protocol version, same engine family, same machine.
 
 | Workload | Phase | Median | IQR | Samples used | Work measured | Throughput |
 | --- | --- | --- | --- | --- | --- | --- |
-| `assemble-small` | assembly | 1.690 ms | 0.081 ms | 5 of 7 | 42 instructions assembled | 24,856/s |
-| `assemble-large` | assembly | 232.0 ms | 2.575 ms | 5 of 7 | 8,002 instructions assembled | 34,491/s |
-| `execute-tight-loop` | execution | 1390.4 ms | 3.543 ms | 5 of 7 | 80,005 instructions executed | 57,542/s |
-| `execute-memory-bound` | execution | 1892.0 ms | 4.859 ms | 5 of 7 | 56,006 instructions executed | 29,602/s |
-| `execute-with-tool` | tools | 1404.3 ms | 1.430 ms | 5 of 7 | 80,005 instructions executed | 56,973/s |
-| `compile-mini-c` | compilation | 0.592 ms | 0.041 ms | 5 of 7 | - | - |
+| `assemble-small` | assembly | 1.765 ms | 0.143 ms | 5 of 7 | 42 instructions assembled | 23,801/s |
+| `assemble-large` | assembly | 233.0 ms | 1.234 ms | 5 of 7 | 8,002 instructions assembled | 34,341/s |
+| `execute-tight-loop` | execution | 1384.4 ms | 4.895 ms | 5 of 7 | 80,005 instructions executed | 57,789/s |
+| `execute-memory-bound` | execution | 1890.4 ms | 5.373 ms | 5 of 7 | 56,006 instructions executed | 29,626/s |
+| `execute-with-tool` | tools | 1410.1 ms | 1.738 ms | 5 of 7 | 80,005 instructions executed | 56,737/s |
+| `compile-mini-c` | compilation | 0.598 ms | 0.030 ms | 5 of 7 | - | - |
 
 Throughput is derived from the median and the work the run actually reported -
 instructions assembled or instructions retired, measured rather than declared.
@@ -72,6 +72,7 @@ the median rather than as a subjective impression.
 
 | webMARS | Commit | Protocol | Engine | Medians (ms) |
 | --- | --- | --- | --- | --- |
+| 0.5.6 | e794ef3 | v2, n=7 | Node.js v24.18.0 | assemble-small 1.765, assemble-large 233.0, execute-tight-loop 1384.4, execute-memory-bound 1890.4, execute-with-tool 1410.1, compile-mini-c 0.598 |
 | 0.5.6 | a05f053 | v2, n=7 | Node.js v24.18.0 | assemble-small 1.690, assemble-large 232.0, execute-tight-loop 1390.4, execute-memory-bound 1892.0, execute-with-tool 1404.3, compile-mini-c 0.592 |
 | 0.5.5 | 1410dca | v1, n=? | Node.js v24.18.0 | assemble-small 1.807, assemble-large 239.6, execute-tight-loop 1428.2, execute-memory-bound 1921.3, execute-with-tool 722.2, compile-mini-c 0.602 |
 
