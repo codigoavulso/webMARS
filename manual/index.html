@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fdfcf9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#191713" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Manual completo, independente e pesquisável do webMARS: Assembly MIPS32, Mini-C, depuração, ferramentas, pipeline, Cloud e referência.">
+  <title>Manual do webMARS · v0.1</title>
+  <link rel="icon" href="./assets/favicon.ico">
+  <link rel="stylesheet" href="./assets/manual.css">
+  <script src="./manual-config.js"></script>
+  <script>
+    try {
+      const stored = localStorage.getItem("webmars-manual-theme");
+      if (stored === "light" || stored === "dark") document.documentElement.dataset.theme = stored;
+    } catch { /* armazenamento indisponível: fica o tema do sistema */ }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#texto">Saltar para o conteúdo</a>
+
+  <div class="book" id="book">
+    <header class="running-head">
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Abrir o índice" aria-expanded="false" aria-controls="book-nav">
+        <span aria-hidden="true">☰</span>
+      </button>
+
+      <a class="head-brand" href="#/inicio">
+        <span class="brand-title">Manual do webMARS</span>
+        <span class="brand-edition">Ed. 0.1</span>
+      </a>
+
+      <p class="running-recto" id="running-recto"></p>
+
+      <div class="head-tools">
+        <button class="head-button" id="search-trigger" type="button" aria-haspopup="dialog">
+          <span class="glyph" aria-hidden="true">⌕</span>
+          <span class="label">Índice remissivo</span>
+          <kbd>Ctrl K</kbd>
+        </button>
+        <button class="head-button icon-only" id="theme-toggle" type="button" aria-label="Alternar tema">
+          <span class="glyph" id="theme-glyph" aria-hidden="true">◐</span>
+        </button>
+        <a class="head-button head-app-link" id="webmars-app-link" href="../" target="_blank" rel="noopener noreferrer">
+          <span class="label">Abrir webMARS</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+
+      <div class="reading-rule" aria-hidden="true"><span id="reading-progress"></span></div>
+    </header>
+
+    <aside class="book-nav" id="book-nav" aria-label="Índice do manual">
+      <p class="nav-heading">Índice</p>
+      <nav id="chapter-navigation"></nav>
+      <div class="nav-appendix">
+        <a href="#/sobre-o-manual">Sobre esta edição</a>
+        <a href="#/cobertura">Cobertura funcional</a>
+        <a href="#/changelog">Changelog</a>
+        <a id="manual-support-link" href="" target="_blank" rel="noopener noreferrer" hidden>Suporte desta instalação</a>
+      </div>
+    </aside>
+
+    <div class="nav-scrim" id="nav-scrim" hidden></div>
+
+    <main class="book-main" id="texto" tabindex="-1">
+      <article class="page" id="chapter-content"></article>
+    </main>
+  </div>
+
+  <p class="sr-only" id="route-announcer" role="status" aria-live="polite"></p>
+
+  <dialog class="search-dialog" id="search-dialog" aria-labelledby="search-title">
+    <form method="dialog" class="search-dialog-head">
+      <div>
+        <p class="eyebrow">Pesquisa integral</p>
+        <h2 id="search-title">Índice remissivo</h2>
+      </div>
+      <button value="cancel" type="submit" aria-label="Fechar pesquisa">×</button>
+    </form>
+    <label class="search-field">
+      <span class="sr-only">Termo de pesquisa</span>
+      <span aria-hidden="true">⌕</span>
+      <input id="search-input" type="search" autocomplete="off" spellcheck="false" placeholder="Ex.: breakpoint, syscall, cache, guardar projeto…">
+    </label>
+    <p class="search-hint" id="search-hint">Pesquise em capítulos, procedimentos, ferramentas, instruções e glossário.</p>
+    <div class="search-results" id="search-results" role="listbox" aria-label="Resultados da pesquisa"></div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script type="module" src="./assets/manual.js"></script>
+</body>
+</html>

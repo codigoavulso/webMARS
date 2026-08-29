@@ -1,0 +1,105 @@
+{
+  "apiVersion": 1,
+  "tools": [
+    {
+      "label": "BHT Simulator",
+      "script": "./tools/bht-simulator.js",
+      "id": "bht-simulator"
+    },
+    {
+      "label": "Bitmap Display",
+      "script": "./tools/bitmap-display.js",
+      "id": "bitmap-display"
+    },
+    {
+      "label": "Bitmap Terminal Tool",
+      "script": "./tools/bitmap-terminal-tool.js",
+      "id": "bitmap-terminal-tool"
+    },
+    {
+      "label": "Data Cache Simulator",
+      "script": "./tools/cache-simulator.js",
+      "id": "cache-simulator"
+    },
+    {
+      "label": "Digital Lab Sim",
+      "script": "./tools/digital-lab-sim.js",
+      "id": "digital-lab-sim"
+    },
+    {
+      "label": "Floating Point Representation",
+      "script": "./tools/float-representation.js",
+      "id": "float-representation"
+    },
+    {
+      "label": "Instruction Counter",
+      "script": "./tools/instruction-counter.js",
+      "id": "instruction-counter"
+    },
+    {
+      "label": "Instruction Statistics",
+      "script": "./tools/instruction-statistics.js",
+      "id": "instruction-statistics"
+    },
+    {
+      "label": "Introduction to Tools",
+      "script": "./tools/intro-to-tools.js",
+      "id": "intro-to-tools"
+    },
+    {
+      "label": "Keyboard and Display MMIO Simulator",
+      "script": "./tools/keyboard-display-mmio.js",
+      "id": "keyboard-display-mmio"
+    },
+    {
+      "label": "Mars Bot",
+      "script": "./tools/mars-bot.js",
+      "id": "mars-bot"
+    },
+    {
+      "label": "Memory Reference Visualization",
+      "script": "./tools/memory-reference-visualization.js",
+      "id": "memory-reference-visualization"
+    },
+    {
+      "label": "MIPS X-Ray",
+      "script": "./tools/mips-xray.js",
+      "id": "mips-xray"
+    },
+    {
+      "label": "Register Watch (example)",
+      "script": "./tools/example-register-watch.js",
+      "id": "example-register-watch"
+    },
+    {
+      "label": "Pipeline Lab",
+      "script": "./tools/pipeline-lab.js",
+      "id": "pipeline-lab"
+    },
+    {
+      "label": "ScavengerHunt",
+      "script": "./tools/scavenger-hunt.js",
+      "id": "scavenger-hunt"
+    },
+    {
+      "label": "Screen Magnifier",
+      "script": "./tools/screen-magnifier.js",
+      "id": "screen-magnifier"
+    },
+    {
+      "label": "Stack Visualizer",
+      "script": "./tools/stack-visualizer.js",
+      "id": "stack-visualizer"
+    },
+    {
+      "label": "System Clock and Timer",
+      "script": "./tools/system-clock.js",
+      "id": "system-clock"
+    },
+    {
+      "label": "TTY Device + ANSI Terminal",
+      "script": "./tools/tty-ansi-terminal.js",
+      "id": "tty-ansi-terminal"
+    }
+  ]
+}

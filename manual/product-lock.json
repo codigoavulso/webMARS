@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "manual": {
+    "name": "webmars-manual",
+    "version": "0.1.0"
+  },
+  "product": {
+    "name": "webmars",
+    "version": "0.6.0",
+    "verificationStatus": "verified",
+    "verifiedCommit": "06715a735664bfb1e2846c1ee3475ee1858ac960",
+    "verifiedAt": "2026-08-29"
+  },
+  "catalogs": {
+    "helpReference": {
+      "file": "data/help-reference.json",
+      "source": "help/pt/help-reference.json",
+      "sha256": "0562dc01dc65511e5757a4ffc9f150d652d874821811075219f88b903c3e0bf6",
+      "counts": {
+        "basicInstructions": 157,
+        "extendedInstructions": 388,
+        "directives": 20
+      }
+    },
+    "syscalls": {
+      "file": "data/syscalls.json",
+      "source": "assets/js/reference/syscalls.generated.js",
+      "sha256": "70eaed1585356a5de96aceb3d9bde00eed84ed5480f5c39109327e1416a383c0",
+      "counts": {
+        "entries": 39
+      }
+    },
+    "toolManifest": {
+      "file": "data/tool-manifest.json",
+      "source": "tools/tools.json",
+      "sha256": "7993e4f9d6c77ee23642431ae5ac0858285e91ff6402bab85f781a84da567c39",
+      "counts": {
+        "tools": 20
+      }
+    }
+  }
+}

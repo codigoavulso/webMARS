@@ -1,0 +1,21 @@
+ATIVIDADE COM REVISÃO FIXA
+
+Exercício: [URL WEBMARS COMPLETO /p/nome@revisão]
+Versão de referência: webMARS [VERSÃO]; revisão [N]
+Objetivo: [RESULTADO DE APRENDIZAGEM]
+Input: [INPUT]
+Entrega: fonte .s/.asm e [OUTPUT / EXPLICAÇÃO / SCREENSHOT]
+Prazo: [DATA E FUSO HORÁRIO]
+Sem rede: use o ficheiro anexado e escolha Ficheiro → Abrir do disco.
+
+DEMONSTRAÇÃO ATUALIZÁVEL
+
+Exemplo: [URL WEBMARS COMPLETO /p/nome]
+Este URL acompanha a revisão mais recente. Para citar resultados, indique a
+revisão fixa que aparece em Biblioteca → As minhas publicações.
+
+PRIVACIDADE
+
+Não é necessária conta para editar ou executar localmente. A conta é usada
+apenas para Cloud, recuperação por email e publicação. A instalação desta
+turma é [HOSTNAME], operada por [ENTIDADE], suporte: [CONTACTO].

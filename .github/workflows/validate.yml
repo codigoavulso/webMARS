@@ -45,3 +45,35 @@ jobs:
             dist/webmars-*.zip.sha256
           if-no-files-found: error
           retention-days: 14
+
+  manual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: manual
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: manual/package-lock.json
+
+      - name: Install exact Manual dependencies
+        run: npm ci
+
+      - name: Build and validate the independent Manual
+        run: npm run validate
+
+      - name: Upload Manual site
+        uses: actions/upload-artifact@v4
+        with:
+          name: webmars-manual-${{ github.sha }}
+          path: manual/dist/
+          if-no-files-found: error
+          retention-days: 14
