@@ -8,7 +8,11 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import vm from "node:vm";
 import { collectFindings } from "../scripts/check-i18n-coverage.mjs";
-import { collectTreeFiles, publishReleaseSet } from "../scripts/package-release.mjs";
+import {
+  collectTreeFiles,
+  publishReleaseSet,
+  validateDocumentReferences
+} from "../scripts/package-release.mjs";
 
 const run = promisify(execFile);
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -264,6 +268,36 @@ test("release input roots reject directory links to external trees", async () =>
     await assert.rejects(
       () => collectTreeFiles({ root: "assets", extensions: [".js"] }, sourceRoot),
       /Release input tree is not a regular directory: assets/
+    );
+  } finally {
+    await rm(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("release reference validation treats the HTML base as routing metadata", async () => {
+  const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-package-base-"));
+  try {
+    await mkdir(resolve(sandbox, "assets"), { recursive: true });
+    await writeFile(
+      resolve(sandbox, "index.html"),
+      '<!doctype html><base href="/lab/"><link rel="stylesheet" href="./assets/app.css"><script src="./assets/app.js"></script>\n',
+      "utf8"
+    );
+    await writeFile(resolve(sandbox, "assets", "app.css"), "body { color: black; }\n", "utf8");
+    await writeFile(resolve(sandbox, "assets", "app.js"), "globalThis.appLoaded = true;\n", "utf8");
+
+    await assert.doesNotReject(
+      () => validateDocumentReferences(sandbox, ["index.html", "assets/app.css", "assets/app.js"])
+    );
+
+    await writeFile(
+      resolve(sandbox, "index.html"),
+      '<!doctype html><base href="/lab/"><script src="./assets/missing.js"></script>\n',
+      "utf8"
+    );
+    await assert.rejects(
+      () => validateDocumentReferences(sandbox, ["index.html", "assets/app.css", "assets/app.js"]),
+      /Broken packaged reference in index\.html: \.\/assets\/missing\.js/
     );
   } finally {
     await rm(sandbox, { recursive: true, force: true });

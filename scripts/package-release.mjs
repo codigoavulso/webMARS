@@ -368,6 +368,12 @@ function assertPackagedReference(fileSet, owner, rawReference) {
   assert(fileSet.has(normalized), `Broken packaged reference in ${owner}: ${rawReference}`);
 }
 
+function withoutHtmlBaseElements(source) {
+  // A <base> href establishes how the browser resolves every other URL;
+  // it is routing metadata, not a packaged file reference of its own.
+  return String(source).replace(/<base\b[^>]*>/gi, "");
+}
+
 async function validateDocumentReferences(targetRoot, generatedFiles) {
   const fileSet = new Set(generatedFiles);
   for (const relativePath of generatedFiles) {
@@ -376,7 +382,8 @@ async function validateDocumentReferences(targetRoot, generatedFiles) {
     const source = await readFile(resolveInside(targetRoot, relativePath), "utf8");
 
     if (extension === ".html") {
-      for (const match of source.matchAll(/\b(?:href|src)\s*=\s*["']([^"']+)["']/gi)) {
+      const referenceSource = withoutHtmlBaseElements(source);
+      for (const match of referenceSource.matchAll(/\b(?:href|src)\s*=\s*["']([^"']+)["']/gi)) {
         assertPackagedReference(fileSet, relativePath, match[1]);
       }
     } else {
@@ -530,7 +537,7 @@ async function validateManifestReferences(targetRoot, generatedFiles) {
 async function validateRuntimeReferences(targetRoot, generatedFiles) {
   const fileSet = new Set(generatedFiles);
   const indexSource = await readFile(resolveInside(targetRoot, "index.html"), "utf8");
-  for (const match of indexSource.matchAll(/\b(?:href|src)\s*=\s*["']([^"']+)["']/gi)) {
+  for (const match of withoutHtmlBaseElements(indexSource).matchAll(/\b(?:href|src)\s*=\s*["']([^"']+)["']/gi)) {
     assertPackagedReference(fileSet, "index.html", match[1]);
   }
 
@@ -856,4 +863,4 @@ if (invokedPath === fileURLToPath(import.meta.url)) {
   }
 }
 
-export { collectTreeFiles, publishReleaseSet };
+export { collectTreeFiles, publishReleaseSet, validateDocumentReferences };
