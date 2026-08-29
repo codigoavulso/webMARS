@@ -1,6 +1,6 @@
 # webMARS: a browser MIPS assembler, simulator and pipeline teaching model
 
-**Technical summary for academic use — webMARS 0.5.6**
+**Technical summary for academic use — webMARS 0.6.0**
 
 A short, citable description of what the system is, how it was built and what
 has been measured about it. Intended for inclusion in a paper, a thesis chapter
@@ -13,8 +13,10 @@ webMARS is a browser implementation of the MARS 4.5 MIPS assembler and runtime
 simulator. It provides an editor, a MIPS32 assembler, an instruction-level
 functional runtime, the classic MARS tool set, a Mini-C compiler, and the
 Pipeline Lab: an explicitly separate five-stage cycle-accurate model for
-teaching microarchitecture. The system runs entirely client-side as static
-files, with no backend, no install and no runtime dependencies. Compatibility
+teaching microarchitecture. Editing, compilation and simulation run entirely
+client-side from static files, with no install or runtime dependencies. An
+optional per-installation BackMars service provides accounts, Cloud projects,
+email recovery and a versioned public teaching library. Compatibility
 with MARS 4.5 is measured rather than asserted, by assembling and running the
 same programs in both simulators and comparing machine code, memory, registers
 and console output.
@@ -24,7 +26,7 @@ and console output.
 | Property | Value |
 | --- | --- |
 | Implementation | JavaScript, no build step, no runtime dependencies |
-| Delivery | Static files over HTTP; no backend, no database, no accounts |
+| Delivery | Static web application; optional Flask/SQLite BackMars for accounts and sharing |
 | Architecture simulated | MIPS32, MARS 4.5 dialect |
 | Assembler | Two-pass, with macros, pseudo-instructions and MARS directives |
 | Runtime | Instruction-level interpreter with backstep, breakpoints, COP0/COP1 and exceptions |
@@ -169,7 +171,7 @@ There is no hidden configuration and no external service.
 ## Citation
 
 See [CITATION.cff](../CITATION.cff). Cite the version, not the repository: every
-figure in this summary is anchored to webMARS 0.5.6, and
+figure in this summary is anchored to webMARS 0.6.0, and
 [release-process.md](release-process.md) records what a version bump promises.
 
 ## Related work

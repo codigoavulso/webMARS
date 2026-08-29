@@ -8,7 +8,23 @@
 </head>
 <body>
   <h1>Nhật ký thay đổi</h1>
-  <p class="lead">Bản phát hành 0.5.6 kết nối Pipeline Lab với chương trình đang chạy: nó phát lại những gì webMARS thực sự được thực thi, với kết quả nhánh thực và giá trị thanh ghi thực, đồng thời mỗi bên có thể điều khiển lệnh còn lại tại một thời điểm.</p>
+  <p class="lead">Bản phát hành 0.6.0 giúp webMARS sẵn sàng cho việc áp dụng lâu dài trong lớp học: liên kết ổn định, thư viện giảng dạy công cộng, tài khoản có thể phục hồi, cấu hình do triển khai sở hữu và sổ tay hướng dẫn độc lập.</p>
+
+  <h2>0.6.0 &mdash; lớp học ổn định và thư viện công cộng</h2>
+  <ul>
+    <li>Đã thêm các liên kết trực tiếp cố định cho mọi ví dụ tích hợp sẵn. ID ổn định tồn tại trong sổ đăng ký chuyên dụng và không bao giờ bị xóa hoặc sử dụng lại; các mục đã ngừng hoạt động vẫn ở dạng bia mộ hoặc chuyển hướng rõ ràng.</li>
+    <li>Đã thêm xuất bản dự án công khai thông qua BackMars. Mỗi ấn bản đều nhận được một tên công khai duy nhất trên toàn cầu trong quá trình triển khai đó, trên cơ sở ai đến trước và mở thông qua liên kết <code>/p/name</code> ngắn.</li>
+    <li>Làm cho các bản sửa đổi đã xuất bản trở nên bất biến. Liên kết đã được bỏ ghim theo sau bản sửa đổi hoạt động mới nhất, trong khi <code>/p/name@N</code> tiếp tục mở ảnh chụp nhanh lịch sử chính xác ngay cả sau khi lưu trữ thông thường.</li>
+    <li>Đã thêm trình duyệt Thư viện công cộng với tính năng tìm kiếm, phân trang và xem trước chỉ đọc. Việc mở một ấn phẩm sẽ tạo ra một bản sao cục bộ sạch sẽ, do đó tài liệu công khai không bao giờ âm thầm thay đổi dự án của tác giả hoặc đi vào bộ lưu trữ Cloud.</li>
+    <li>Phiên bản và vệ sinh định dạng trao đổi công cộng. Các ấn phẩm chỉ chứa các tệp dự án và siêu dữ liệu giảng dạy an toàn, với các giới hạn nghiêm ngặt được thực thi độc lập bởi trình duyệt và BackMars.</li>
+    <li>Đã thêm khôi phục mật khẩu qua email bằng mã sử dụng một lần hết hạn. Việc đặt lại thành công sẽ vô hiệu hóa các phiên hiện có và các yêu cầu không tiết lộ liệu địa chỉ đã được đăng ký hay chưa.</li>
+    <li>Đã thêm quy trình xác minh email và gửi lại. Quá trình triển khai có thể yêu cầu địa chỉ được xác minh trước khi xuất bản trong khi vẫn duy trì tính năng chỉnh sửa cục bộ, ví dụ và mô phỏng mà không cần có tài khoản.</li>
+    <li>Đã chuyển tên, đường dẫn cơ sở, công khai URL, BackMars điểm cuối, hướng dẫn sử dụng và các liên kết hỗ trợ vào <code>webmars-config.js</code>, để các trường đại học có thể triển khai các phiên bản độc lập mà không cần chỉnh sửa mã ứng dụng.</li>
+    <li>Đã thay thế cửa sổ Giới thiệu tự động chạy lần đầu bằng cửa sổ Chào mừng được hướng dẫn, trong khi vẫn giữ Giới thiệu trong Trợ giúp và ưu tiên các liên kết xuất bản hoặc ví dụ trực tiếp.</li>
+    <li>Đã thêm Bộ công cụ dành cho giáo viên bao gồm quá trình di chuyển từ MARS, văn bản hạng nhất, LMS, xuất bản liên kết ổn định, các giải pháp và quyết định tự lưu trữ/quyền riêng tư.</li>
+    <li>Bắt đầu Hướng dẫn sử dụng webMARS phiên bản độc lập ở v0.1, với các chương chi tiết, ảnh chụp màn hình chủ đề ánh sáng và xác minh rõ ràng về bản phát hành webMARS.</li>
+    <li>Đã thêm hướng dẫn sản xuất và cấu hình tuyến đường cho các URL ổn định, bộ nhớ cơ sở dữ liệu riêng tư, sao lưu, di chuyển, Gmail SMTP và kiểm tra khói sau triển khai.</li>
+  </ul>
 
   <h2>0.5.6 &mdash; đường ống đi theo chương trình</h2>
   <ul>

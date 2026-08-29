@@ -1,8 +1,8 @@
 // Turns the "unreleased" changelog section into a numbered release, in every
 // language.
 //
-//   node scripts/cut-changelog.mjs 0.5.6
-//   node scripts/cut-changelog.mjs 0.5.6 --check
+//   node scripts/cut-changelog.mjs 0.6.0
+//   node scripts/cut-changelog.mjs 0.6.0 --check
 //
 // The changelog lives in twenty separate HTML files. Cutting a release means
 // the same three edits in each: rewrite the lead sentence, replace the
@@ -41,7 +41,7 @@ const languages = [
   { id: "th", translate: "th" }
 ];
 
-const technicalTokenSource = /\b(?:webMARS|MARS|MIPS32?|Mini-C|JavaScript|WASM|COP1|TTY|MMIO|ANSI|C0-S[0-4]|C1-NATIVE|[A-Z][A-Z0-9_]{2,})\b|\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9]+|0x[0-9A-Fa-f]+|https?:\/\/[^\s<]+|mailto:[^\s<]+|&(?:[A-Za-z]+|#\d+|#x[0-9A-Fa-f]+);|`[^`\r\n]+`|<\/?[a-z]+>/.source;
+const technicalTokenSource = /\b(?:webMARS|BackMars|Cloud|MARS|MIPS32?|Mini-C|JavaScript|WASM|COP1|TTY|MMIO|ANSI|C0-S[0-4]|C1-NATIVE|[A-Z][A-Z0-9_]{2,})\b|\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9]+|0x[0-9A-Fa-f]+|https?:\/\/[^\s<]+|mailto:[^\s<]+|&(?:[A-Za-z]+|#\d+|#x[0-9A-Fa-f]+);|`[^`\r\n]+`|<\/?[a-z]+>/.source;
 
 const delay = (milliseconds) => new Promise((done) => setTimeout(done, milliseconds));
 
@@ -69,26 +69,47 @@ function unmaskTechnicalText(text, tokens) {
   return String(text).replace(/\[{1,4}\s*WMTOKEN(\d{4})\s*\]{1,4}/g, (match, index) => tokens[Number(index)] ?? match);
 }
 
+function translatedPayload(response) {
+  if (Array.isArray(response) && response.every((entry) => typeof entry === "string")) {
+    return response.join("");
+  }
+  if (!Array.isArray(response?.[0])) return "";
+  return response[0].map((entry) => String(entry?.[0] ?? "")).join("");
+}
+
+let primaryThrottledUntil = 0;
+
 async function requestTranslation(text, target, attempt = 0) {
-  const url = new URL("https://translate.googleapis.com/translate_a/single");
-  url.searchParams.set("client", "gtx");
+  const useAlternate = Date.now() < primaryThrottledUntil || attempt % 2 === 1;
+  const url = new URL(useAlternate
+    ? "https://clients5.google.com/translate_a/t"
+    : "https://translate.googleapis.com/translate_a/single");
+  url.searchParams.set("client", useAlternate ? "dict-chrome-ex" : "gtx");
   url.searchParams.set("sl", "en");
   url.searchParams.set("tl", target);
-  url.searchParams.set("dt", "t");
+  if (!useAlternate) url.searchParams.set("dt", "t");
   url.searchParams.set("q", text);
   try {
     const response = await fetch(url, { headers: { "User-Agent": "webMARS locale generator" } });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const payload = await response.json();
-    const translated = Array.isArray(payload?.[0])
-      ? payload[0].map((entry) => String(entry?.[0] ?? "")).join("")
-      : "";
+    if (!response.ok) {
+      if (!useAlternate && response.status === 429) {
+        primaryThrottledUntil = Date.now() + 10 * 60 * 1000;
+      }
+      const error = new Error(`HTTP ${response.status}`);
+      error.retryAfterMs = Math.max(0, Number(response.headers.get("retry-after") || 0) * 1000);
+      throw error;
+    }
+    const translated = translatedPayload(await response.json());
     if (!translated) throw new Error("empty translation response");
-    await delay(70);
+    await delay(600);
     return translated;
   } catch (error) {
     if (attempt >= 5) throw error;
-    await delay(500 * (2 ** attempt));
+    const switchingEndpoint = !useAlternate && /^HTTP 429$/.test(String(error?.message || ""));
+    const retryDelay = switchingEndpoint
+      ? 250
+      : (error?.retryAfterMs || Math.min(30_000, 2_000 * (2 ** attempt)));
+    await delay(retryDelay);
     return requestTranslation(text, target, attempt + 1);
   }
 }
@@ -126,13 +147,21 @@ const handTranslation = [];
 for (const language of languages) {
   if (language.id === "en") continue;
   const path = pathFor(language.id);
-  const source = await readFile(path, "utf8");
+  let source = await readFile(path, "utf8");
 
   if (source.includes(`<h2>${version} &mdash;`)) {
     console.log(`${language.id}: already cut`);
     continue;
   }
-  const unreleased = source.match(/<h2 data-unreleased="true">([\s\S]*?)<\/h2>\s*<p>[\s\S]*?<\/p>\s*<ul>([\s\S]*?)<\/ul>/);
+  let unreleased = source.match(/<h2 data-unreleased="true">([\s\S]*?)<\/h2>\s*<p>[\s\S]*?<\/p>\s*<ul>([\s\S]*?)<\/ul>/);
+  if (!unreleased) {
+    const firstRelease = source.search(/<h2(?:\s[^>]*)?>/i);
+    if (firstRelease >= 0) {
+      const placeholder = '<h2 data-unreleased="true">Next release</h2>\n  <p>Release number not assigned yet.</p>\n  <ul></ul>\n\n  ';
+      source = `${source.slice(0, firstRelease)}${placeholder}${source.slice(firstRelease)}`;
+      unreleased = source.match(/<h2 data-unreleased="true">([\s\S]*?)<\/h2>\s*<p>[\s\S]*?<\/p>\s*<ul>([\s\S]*?)<\/ul>/);
+    }
+  }
   if (!unreleased) {
     pending.push(`${language.id}: no unreleased section found`);
     continue;

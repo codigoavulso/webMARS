@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kit docente de webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Kit docente</h1>
+  <p class="lead">Una ruta práctica de MARS MIPS a webMARS, con enlaces estables, revisiones reproducibles y alternativa sin red.</p>
+  <h2>Migración en 15 minutos</h2>
+  <ol>
+    <li>Abra un archivo <code>.s</code>, <code>.asm</code> o <code>.mips</code> existente desde <strong>Archivo → Abrir desde disco</strong>.</li>
+    <li>Ensamble con <kbd>F3</kbd>, ejecute con <kbd>F5</kbd>, avance con <kbd>F7</kbd> y retroceda con <kbd>F8</kbd>.</li>
+    <li>Active la compatibilidad estricta MARS 4.5 cuando el ejercicio dependa del comportamiento histórico.</li>
+    <li>Pruebe entrada, salida, syscalls, mapa de memoria y herramientas necesarias.</li>
+  </ol>
+  <h2>Enlaces estables</h2>
+  <ul>
+    <li><code>/e/&lt;id&gt;</code>: ejemplo integrado con identificador estable.</li>
+    <li><code>/p/&lt;nombre&gt;</code>: última revisión publicada.</li>
+    <li><code>/p/&lt;nombre&gt;@&lt;revisión&gt;</code>: revisión inmutable recomendada para evaluaciones.</li>
+  </ul>
+  <p>Los nombres se asignan por orden de llegada y son permanentes dentro de cada BackMars. Comparta siempre la URL completa de la instalación.</p>
+  <h2>Publicación</h2>
+  <ol>
+    <li>Pruebe el proyecto, inicie sesión y verifique el correo.</li>
+    <li>Use <strong>Biblioteca → Publicar proyecto activo</strong>.</li>
+    <li>Comparta una revisión fija para actividades evaluadas.</li>
+    <li>Publique una revisión nueva para corregir; las anteriores no cambian.</li>
+  </ol>
+  <h2>Texto para el LMS</h2>
+  <pre>Ejercicio: [URL WEBMARS FIJA]
+Versión: webMARS [VERSIÓN], revisión [REVISIÓN]
+Entrega: fuente .s/.asm y resultado solicitado.
+Sin red: abra desde disco la fuente descargada.</pre>
+  <h2>Privacidad y despliegue propio</h2>
+  <p>La edición y ejecución son locales por defecto. Cloud, recuperación de cuenta y biblioteca usan el BackMars de esta instalación. Las credenciales SMTP solo se guardan en el entorno protegido de BackMars, nunca en el cliente web.</p>
+  <script src="../../assets/js/app-version.js"></script>
+</body>
+</html>

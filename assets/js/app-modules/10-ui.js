@@ -88,6 +88,7 @@ function renderLayout(root) {
         <span class="menu-logo" aria-hidden="true">&#128640;</span>
         <button class="menu-item" type="button" data-menu="File">File</button>
         <button class="menu-item" type="button" data-menu="Cloud">Cloud</button>
+        <button class="menu-item" type="button" data-menu="Library">Library</button>
         <button class="menu-item" type="button" data-menu="Edit">Edit</button>
         <button class="menu-item" type="button" data-menu="View">View</button>
         <button class="menu-item" type="button" data-menu="Run">Run</button>

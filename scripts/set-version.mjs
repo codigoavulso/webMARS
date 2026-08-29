@@ -1,7 +1,7 @@
 // Sets the application version everywhere it is declared, from one argument.
 //
-//   node scripts/set-version.mjs 0.5.6
-//   node scripts/set-version.mjs 0.5.6 --check
+//   node scripts/set-version.mjs 0.6.0
+//   node scripts/set-version.mjs 0.6.0 --check
 //
 // The version lives in eleven declarations. `tests/release-readiness.test.mjs` already
 // fails when they disagree, but detecting a mismatch after the fact is not the

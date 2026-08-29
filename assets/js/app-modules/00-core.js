@@ -1,6 +1,6 @@
 const DEFAULT_SETTINGS = {
   version: "4.5",
-  cloudApiBase: "https://backmars.nfiles.top/api",
+  cloudApiBase: "",
   extendedAssembler: true,
   bareMachine: false,
   assembleOnOpen: false,

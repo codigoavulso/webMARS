@@ -28,6 +28,7 @@ const mimeTypes = new Map([
   [".js", "text/javascript; charset=utf-8"],
   [".json", "application/json; charset=utf-8"],
   [".md", "text/markdown; charset=utf-8"],
+  [".mjs", "text/javascript; charset=utf-8"],
   [".pdf", "application/pdf"],
   [".png", "image/png"],
   [".s", "text/plain; charset=utf-8"],
@@ -40,12 +41,17 @@ function sendText(response, status, message) {
   response.end(message);
 }
 
-function resolveRequestPath(requestUrl) {
+export function resolveRequestPath(requestUrl) {
   const requestPath = decodeURIComponent(new URL(requestUrl || "/", "http://localhost").pathname);
   const relativePath = requestPath.replace(/^[/\\]+/, "") || "index.html";
   const target = resolve(projectRoot, relativePath);
   if (target !== projectRoot && !target.startsWith(rootPrefix)) return null;
   return target;
+}
+
+export function isStableAppRoute(requestUrl) {
+  const pathname = decodeURIComponent(new URL(requestUrl || "/", "http://localhost").pathname);
+  return /^\/(?:e\/[a-z0-9][a-z0-9-]{0,79}|p\/[a-z0-9]+(?:-[a-z0-9]+)*(?:@[1-9]\d*)?)\/?$/.test(pathname);
 }
 
 const server = createServer(async (request, response) => {
@@ -61,7 +67,9 @@ const server = createServer(async (request, response) => {
 
   let target;
   try {
-    target = resolveRequestPath(request.url);
+    target = isStableAppRoute(request.url)
+      ? resolve(projectRoot, "index.html")
+      : resolveRequestPath(request.url);
   } catch {
     sendText(response, 400, "Invalid request path");
     return;
@@ -103,6 +111,8 @@ server.on("error", (error) => {
   process.exitCode = 1;
 });
 
-server.listen(port, host, () => {
-  console.log(`[serve] webMARS: http://${host}:${port}`);
-});
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  server.listen(port, host, () => {
+    console.log(`[serve] webMARS: http://${host}:${port}`);
+  });
+}

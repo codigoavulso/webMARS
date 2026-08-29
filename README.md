@@ -1,4 +1,4 @@
-# webMARS v0.5.6
+# webMARS v0.6.0
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -16,20 +16,33 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
 ## Current Status
 
-- Active project, still evolving.
+- Feature-complete product line; normal development is now limited to bug fixes, compatibility work and documentation.
 - Main target is practical compatibility with Java MARS 4.5 behavior inside the browser.
 - Some edge cases can still differ from desktop Java MARS.
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
 - This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
 
-## Highlights in v0.5.6
+## Manual do webMARS
 
-- Connected the Pipeline Lab to the running program. It replays the sequence webMARS actually executed, so branch outcomes and register values are observations rather than assumptions, and either side can drive the other one instruction at a time.
-- Added the Registers view: every register's value at the current cycle, the values still in flight in an earlier stage, and a grid of each register against the cycle that changed it.
-- Redrew the Pipeline Lab as a vertical pipeline beside the timeline, laid out against its own window rather than the screen, so a narrow window folds the same way a phone does.
-- Added <kbd>F8</kbd> for Backstep, and stopped run commands from replacing the visible panel in mobile mode.
-- Translated 872 interface strings that were still shown in English across seventeen languages, with a targeted updater that never rewrites hand-corrected entries.
-- Measured what was previously asserted: MARS 4.5 conformance, coverage, mutation score, benchmarks and accessibility are now generated reports checked by the test suite.
+[`manual/`](manual/README.md) is the independent, Portuguese-language webMARS
+manual. It has its own semantic version (`0.1.0`), changelog, static build and
+test suite. This edition targets webMARS `0.6.0` and includes
+searchable reference data plus real light-theme screenshots for every tool.
+
+```bash
+cd manual
+npm run validate
+npm run serve
+```
+
+## Highlights in v0.6.0
+
+- Added stable direct links for every built-in example (`/e/<id>`) with a permanent ID registry.
+- Added the per-installation Public Library: first-come permanent names, anonymous browsing, sanitized local copies, mutable latest links and immutable pinned revisions (`/p/name@N`).
+- Added email verification and password recovery through short-lived, one-use codes; password reset revokes older sessions.
+- Replaced the first-run About popup with a Welcome flow while retaining About under Help.
+- Added an independent Manual v0.1 and Teacher Kit for migration from MARS, first classes, LMS links, assessment, privacy and self-hosting.
+- Added deployment identity through `webmars-config.js`, safe stable-route fallbacks and explicit URL-retention/self-hosting contracts.
 
 ## Main Capabilities
 
@@ -45,6 +58,7 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 - On a fresh session, the interface follows the first supported language reported by `navigator.languages` (for example, `pt-PT` selects Portuguese); unsupported languages fall back to English, and an explicit saved choice always takes priority.
 - Browser storage for source files with virtual folders and quota management.
 - Project/editor/runtime workflow with persistent preferences and recoverable session state.
+- Optional per-installation BackMars accounts, Cloud projects, public examples/exercises and email-based account recovery.
 
 ## Run Locally
 
@@ -125,9 +139,11 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 - `assets/css/styles.css`: theme tokens for the light and dark themes plus the base component styles.
 - `assets/js/app-modules/10-ui.js`: windowing/layout/UI foundation.
 - `assets/js/app-modules/19-runtime-benchmarks.js`: local timing, JS-utilization, and throughput collector.
+- `assets/js/app-modules/19-public-library.js`: deployment identity, stable route parsing and public BackMars requests.
 - `assets/js/app-modules/20-app-runtime.js`: runtime orchestration, commands, persistence, and integration glue.
 - `tools/`: pluggable MARS-style tool windows.
 - `help/`: built-in help, about/info pages, changelog, and reference content.
+- `manual/`: independently versioned user manual, static site and screenshot set.
 - `tests/`: JavaScript runtime regression tests, differential corpus and evidence checks.
 - `docs/`: generated evidence reports, developer guides and the teaching materials.
 - `scripts/`: local server, validation, release packaging and every report generator.
@@ -200,6 +216,7 @@ of the system with every figure linked to the report that produced it.
 
 ## Release Line
 
+- `v0.6.0`: permanent example links, versioned public project publishing, account recovery and verification, deployment-owned configuration, first-run welcome, Teacher Kit, and the independent Manual v0.1
 - `v0.5.6`: Pipeline Lab replaying the real execution with register values, linked step transports, vertical pipeline and responsive rework, generated conformance/coverage/mutation/benchmark/accessibility evidence, and 872 newly translated interface strings
 - `v0.5.5`: Pipeline Lab, twenty-language interface/help/examples, scalable cycle history, and expanded UI/tool regression coverage
 - `v0.5.4`: MARS-OS desktop/window overhaul, improved TTY, automatic virtual-display fitting, collapsed display settings, and browser-aware system theme

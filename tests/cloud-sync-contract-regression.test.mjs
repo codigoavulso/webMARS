@@ -62,3 +62,12 @@ test("cloud project identity follows the client's case-insensitive project keys"
   assert.doesNotMatch(source, /remoteByName\.get\(localProject\.rootPath\)/);
   assert.match(source, /remoteProjectsByName\.get\(normalizeProjectRootKey\(projectName\)\)/);
 });
+
+test("the Cloud Save command uploads the active project", async () => {
+  const source = await readFile(runtimePath, "utf8");
+  assert.match(
+    source,
+    /async cloudSaveProject\(\) \{\s*return saveActiveProjectToCloud\(\);\s*\}/,
+    "Cloud > Save Project must not call the local-only workspace save command"
+  );
+});

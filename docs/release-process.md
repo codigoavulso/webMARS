@@ -43,8 +43,8 @@ previous version wrote.
 ### 1. Set the version everywhere
 
 ```bash
-npm run version:set -- 0.5.6
-npm run version:set -- 0.5.6 --check   # verify without writing
+npm run version:set -- 0.6.0
+npm run version:set -- 0.6.0 --check   # verify without writing
 ```
 
 The version is declared in eleven places: `package.json`, `package-lock.json`
@@ -109,8 +109,8 @@ When cutting a release, write the English section first — the lead sentence,
 the heading and the new bullets — then propagate it:
 
 ```bash
-npm run changelog:cut -- 0.5.6
-npm run changelog:cut -- 0.5.6 --check
+npm run changelog:cut -- 0.6.0
+npm run changelog:cut -- 0.6.0 --check
 ```
 
 This replaces the `data-unreleased` heading with the version in all nineteen

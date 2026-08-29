@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kit para docentes do webMARS</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Kit para docentes</h1>
+  <p class="lead">Um percurso prático do MARS MIPS para o webMARS, com ligações estáveis, revisões reproduzíveis e alternativa sem rede.</p>
+
+  <h2>Migração em 15 minutos</h2>
+  <ol>
+    <li>Abra um ficheiro <code>.s</code>, <code>.asm</code> ou <code>.mips</code> existente em <strong>Ficheiro → Abrir do disco</strong>.</li>
+    <li>Monte com <kbd>F3</kbd>, execute com <kbd>F5</kbd>, avance com <kbd>F7</kbd> e recue com <kbd>F8</kbd>.</li>
+    <li>Ative <strong>Definições → Compatibilidade estrita MARS 4.5</strong> quando o exercício depender do comportamento histórico.</li>
+    <li>Teste input, output, syscalls, mapa de memória e as Ferramentas necessárias.</li>
+    <li>Guarde o download original junto dos materiais como alternativa sem rede.</li>
+  </ol>
+
+  <h2>Ligações estáveis</h2>
+  <ul>
+    <li><code>/e/&lt;id&gt;</code> abre um exemplo incorporado cujo identificador é protegido por testes de release.</li>
+    <li><code>/p/&lt;nome-público&gt;</code> acompanha a revisão publicada mais recente.</li>
+    <li><code>/p/&lt;nome-público&gt;@&lt;revisão&gt;</code> fixa uma revisão imutável e é a forma recomendada para avaliações.</li>
+  </ul>
+  <p>Os nomes públicos são atribuídos por ordem de chegada e são permanentes dentro de uma instalação BackMars. Arquivar esconde o projeto, mas nunca liberta o nome. Copie sempre o URL completo: outra universidade pode ter uma instalação diferente com o mesmo nome público.</p>
+
+  <h2>Publicar um exercício</h2>
+  <ol>
+    <li>Abra e teste o projeto localmente; depois inicie sessão e confirme o email da conta.</li>
+    <li>Escolha <strong>Biblioteca → Publicar projeto ativo</strong> e defina nome permanente, título, tipo, dificuldade e licença.</li>
+    <li>Use a revisão fixa em fichas e avaliações. Use o URL da revisão mais recente para material que deve evoluir.</li>
+    <li>Para corrigir, escolha <strong>Biblioteca → As minhas publicações → Publicar projeto ativo como nova revisão</strong>. As revisões anteriores não mudam.</li>
+  </ol>
+
+  <h2>Texto pronto para Moodle, Canvas ou email</h2>
+  <pre>Abra o exercício: [URL WEBMARS COM REVISÃO FIXA]
+Versão necessária: webMARS [VERSÃO], revisão [REVISÃO]
+Entrega: ficheiro .s/.asm e o output ou explicação solicitados.
+Sem rede: descarregue a fonte fornecida e abra-a do disco.</pre>
+
+  <h2>Privacidade e instalação própria</h2>
+  <p>A edição e a execução são locais por omissão. Projetos Cloud, recuperação de conta e publicação pública usam o BackMars desta instalação. Uma universidade ou docente pode instalar ambos os componentes e controlar retenção, SMTP, origens permitidas e suporte. As credenciais SMTP nunca pertencem aos ficheiros públicos do webMARS: ficam apenas no ambiente protegido do servidor BackMars.</p>
+
+  <h2>Checklist da primeira aula</h2>
+  <ul>
+    <li>Teste o URL exato num browser sem sessão iniciada.</li>
+    <li>Registe o hostname completo, a versão webMARS e a revisão fixa.</li>
+    <li>Disponibilize o download da fonte e o input esperado como alternativa.</li>
+    <li>Indique se os alunos podem usar Cloud; não é necessário para trabalho local.</li>
+    <li>Explique que abrir material público cria uma cópia local independente.</li>
+  </ul>
+  <script src="../../assets/js/app-version.js"></script>
+</body>
+</html>

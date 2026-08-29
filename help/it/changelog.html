@@ -8,7 +8,23 @@
 </head>
 <body>
   <h1>Registro delle modifiche</h1>
-  <p class="lead">La versione 0.5.6 collega Pipeline Lab al programma in esecuzione: riproduce ciò che webMARS ha effettivamente eseguito, con i risultati reali del ramo e i valori reali del registro, e ciascun lato può guidare l'altro un'istruzione alla volta.</p>
+  <p class="lead">La versione 0.6.0 rende webMARS pronto per un'adozione duratura in classe: collegamenti stabili, una biblioteca didattica pubblica, account recuperabili, configurazione di proprietà della distribuzione e un manuale indipendente.</p>
+
+  <h2>0.6.0 &mdash; aule stabili e una biblioteca pubblica</h2>
+  <ul>
+    <li>Aggiunti collegamenti diretti permanenti per ogni esempio integrato. Gli ID stabili risiedono in un registro dedicato e non vengono mai rimossi o riutilizzati; le voci ritirate rimangono come rimozione definitiva o reindirizzamenti espliciti.</li>
+    <li>Aggiunta la pubblicazione pubblica del progetto tramite BackMars. Ogni pubblicazione riceve un nome pubblico univoco a livello globale in tale distribuzione, in base all'ordine di arrivo, e si apre tramite un breve collegamento <code>/p/name</code>.</li>
+    <li>Rese immutabili le revisioni pubblicate. Il collegamento sbloccato segue la revisione attiva più recente, mentre <code>/p/name@N</code> continua ad aprire l'esatta istantanea cronologica anche dopo un archivio ordinario.</li>
+    <li>Aggiunto un browser della Biblioteca pubblica con ricerca, paginazione e anteprime di sola lettura. L'apertura di una pubblicazione crea una copia locale pulita, quindi il materiale pubblico non modifica mai silenziosamente il progetto dell'autore né entra nell'archivio Cloud.</li>
+    <li>Versionato e ripulito il formato di interscambio pubblico. Le pubblicazioni contengono solo i file di progetto e i metadati didattici sicuri, con limiti rigorosi applicati in modo indipendente dal browser e da BackMars.</li>
+    <li>Aggiunto recupero password via email utilizzando codici monouso in scadenza. Un ripristino riuscito invalida le sessioni esistenti e le richieste non rivelano se un indirizzo è registrato.</li>
+    <li>Aggiunta la verifica della posta elettronica e i flussi di reinvio. Le distribuzioni potrebbero richiedere un indirizzo verificato prima della pubblicazione mantenendo la modifica locale, gli esempi e la simulazione disponibili senza un account.</li>
+    <li>Spostati il ​​nome, il percorso di base, i collegamenti pubblici URL, BackMars endpoint, il manuale e i collegamenti di supporto di ciascuna installazione in <code>webmars-config.js</code>, in modo che le università possano distribuire istanze indipendenti senza modificare il codice dell'applicazione.</li>
+    <li>Sostituita la finestra Informazioni automatica di primo avvio con una finestra di benvenuto guidata, mantenendo Informazioni in Guida e dando priorità ai collegamenti diretti ad esempi o pubblicazioni.</li>
+    <li>Aggiunto un kit per insegnanti che copre la migrazione da MARS, una prima classe, testo LMS, pubblicazione di collegamenti stabili, soluzioni e decisioni di self-hosting/privacy.</li>
+    <li>Avviato il manuale webMARS con versione indipendente alla v0.1, con capitoli dettagliati, screenshot del tema chiaro e verifica esplicita rispetto a una versione webMARS.</li>
+    <li>Aggiunte indicazioni di produzione e configurazioni del percorso per URL stabili, archiviazione di database privati, backup, migrazioni, Gmail SMTP e test del fumo post-distribuzione.</li>
+  </ul>
 
   <h2>0.5.6 &mdash; la pipeline segue il programma</h2>
   <ul>

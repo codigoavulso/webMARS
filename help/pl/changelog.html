@@ -8,7 +8,23 @@
 </head>
 <body>
   <h1>Dziennik zmian</h1>
-  <p class="lead">Wersja 0.5.6 łączy Pipeline Lab z działającym programem: odtwarza to, co faktycznie wykonano webMARS, z rzeczywistymi wynikami rozgałęzień i rzeczywistymi wartościami rejestrów, a każda ze stron może sterować drugą instrukcją na raz.</p>
+  <p class="lead">Wersja 0.6.0 sprawia, że ​​webMARS jest gotowy do trwałego zastosowania w klasie: stabilne łącza, publiczna biblioteka dydaktyczna, konta do odzyskania, konfiguracja należąca do wdrożenia i niezależny podręcznik.</p>
+
+  <h2>0.6.0 &mdash; stabilne sale lekcyjne i biblioteka publiczna</h2>
+  <ul>
+    <li>Dodano stałe bezpośrednie linki do każdego wbudowanego przykładu. Stabilne identyfikatory znajdują się w dedykowanym rejestrze i nigdy nie są usuwane ani ponownie wykorzystywane; wycofane wpisy pozostają jako nagrobki lub wyraźne przekierowania.</li>
+    <li>Dodano publiczne publikowanie projektów poprzez BackMars. Każda publikacja w ramach danego wdrożenia otrzymuje w pierwszej kolejności unikalną na całym świecie nazwę publiczną i otwiera się poprzez krótki link <code>/p/nazwa</code>.</li>
+    <li>Opublikowane wersje stały się niezmienne. Nieprzypięty link podąża za najnowszą aktywną wersją, podczas gdy <code>/p/nazwa@N</code> otwiera dokładną migawkę historyczną nawet po zwykłym archiwum.</li>
+    <li>Dodano przeglądarkę Biblioteki Publicznej z możliwością wyszukiwania, stronicowania i podglądem tylko do odczytu. Otwarcie publikacji powoduje utworzenie czystej kopii lokalnej, więc materiały publiczne nigdy nie zmieniają po cichu projektu autora ani nie trafiają do magazynu Cloud.</li>
+    <li>Wersjonowano i oczyszczano format publicznej wymiany danych. Publikacje zawierają wyłącznie pliki projektu i bezpieczne metadane dydaktyczne, z zachowaniem ścisłych limitów narzucanych niezależnie przez przeglądarkę i BackMars.</li>
+    <li>Dodano odzyskiwanie hasła e-mailem przy użyciu wygasających kodów jednorazowych. Pomyślny reset unieważnia istniejące sesje, a żądania nie ujawniają, czy adres jest zarejestrowany.</li>
+    <li>Dodano weryfikację e-mailową i przepływy ponownego wysyłania. Wdrożenia mogą wymagać zweryfikowania adresu przed publikacją, przy jednoczesnym zachowaniu możliwości edycji lokalnej, przykładów i symulacji bez konta.</li>
+    <li>Przeniesiono nazwę każdej instalacji, ścieżkę podstawową, publiczny URL, BackMars punkt końcowy, linki do instrukcji i pomocy technicznej do <code>webmars-config.js</code>, aby uniwersytety mogły wdrażać niezależne instancje bez edytowania kodu aplikacji.</li>
+    <li>Zastąpiono automatyczne okno Informacje wyświetlane po pierwszym uruchomieniu oknem powitalnym z przewodnikiem, zachowując opcję Informacje w sekcji Pomoc i nadając priorytet bezpośrednim linkom do przykładów lub publikacji.</li>
+    <li>Dodano zestaw nauczyciela obejmujący migrację z MARS, pierwszą klasę, tekst LMS, publikowanie za pomocą stabilnych łączy, rozwiązania i decyzje dotyczące samodzielnego hostingu/prywatności.</li>
+    <li>Rozpoczęto niezależnie wersjonowaną wersję podręcznika webMARS w wersji 0.1, zawierającą szczegółowe rozdziały, zrzuty ekranu z jasnymi motywami i wyraźną weryfikację względem wydania webMARS.</li>
+    <li>Dodano wskazówki produkcyjne i konfiguracje tras dla stabilnych adresów URL, prywatnego przechowywania baz danych, kopii zapasowych, migracji, Gmaila SMTP i testów dymnych po wdrożeniu.</li>
+  </ul>
 
   <h2>0.5.6 &mdash; rurociąg jest zgodny z programem</h2>
   <ul>

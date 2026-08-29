@@ -14,6 +14,7 @@
 //   node scripts/translate-new-keys.mjs              # report only
 //   node scripts/translate-new-keys.mjs --apply      # translate and write
 //   node scripts/translate-new-keys.mjs --apply --language de
+//   node scripts/translate-new-keys.mjs --apply --missing-only
 //
 // The translation endpoint is the same one `generate-locales.mjs` uses, and
 // the same masking protects placeholders, register names and product names
@@ -55,16 +56,20 @@ const generatedLocales = [
 // Kept identical to generate-locales.mjs on purpose: the two must agree about
 // what counts as a technical token, or the same string would be masked
 // differently depending on which script last touched it.
-const technicalTokenSource = /\b(?:webMARS|MARS|MIPS32?|Mini-C|JavaScript|WASM|COP1|TTY|MMIO|ANSI|C0-S[0-4]|C1-NATIVE|[A-Z][A-Z0-9_]{2,})\b|\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9]+|0x[0-9A-Fa-f]+|https?:\/\/[^\s<]+|mailto:[^\s<]+|&(?:[A-Za-z]+|#\d+|#x[0-9A-Fa-f]+);|`[^`\r\n]+`/.source;
+const technicalTokenSource = /\b(?:webMARS|BackMars|Cloud|MARS|MIPS32?|Mini-C|JavaScript|WASM|COP1|TTY|MMIO|ANSI|C0-S[0-4]|C1-NATIVE|[A-Z][A-Z0-9_]{2,})\b|\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9]+|0x[0-9A-Fa-f]+|https?:\/\/[^\s<]+|mailto:[^\s<]+|&(?:[A-Za-z]+|#\d+|#x[0-9A-Fa-f]+);|`[^`\r\n]+`/.source;
 
 const delay = (milliseconds) => new Promise((done) => setTimeout(done, milliseconds));
 
 function parseArguments(argv) {
-  const options = { apply: false, languages: null, limit: Infinity };
+  const options = { apply: false, languages: null, limit: Infinity, missingOnly: false };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === "--apply") {
       options.apply = true;
+      continue;
+    }
+    if (argument === "--missing-only") {
+      options.missingOnly = true;
       continue;
     }
     if (argument === "--language") {
@@ -142,27 +147,49 @@ function unmaskTechnicalText(text, tokens) {
 }
 
 function translatedPayload(response) {
+  if (Array.isArray(response) && response.every((entry) => typeof entry === "string")) {
+    return response.join("");
+  }
   if (!Array.isArray(response?.[0])) return "";
   return response[0].map((entry) => String(entry?.[0] ?? "")).join("");
 }
 
+let primaryThrottledUntil = 0;
+
 async function requestTranslation(text, target, attempt = 0) {
-  const url = new URL("https://translate.googleapis.com/translate_a/single");
-  url.searchParams.set("client", "gtx");
+  const useAlternate = Date.now() < primaryThrottledUntil || attempt % 2 === 1;
+  const url = new URL(useAlternate
+    ? "https://clients5.google.com/translate_a/t"
+    : "https://translate.googleapis.com/translate_a/single");
+  url.searchParams.set("client", useAlternate ? "dict-chrome-ex" : "gtx");
   url.searchParams.set("sl", sourceLanguage);
   url.searchParams.set("tl", target);
-  url.searchParams.set("dt", "t");
+  if (!useAlternate) url.searchParams.set("dt", "t");
   url.searchParams.set("q", text);
   try {
     const response = await fetch(url, { headers: { "User-Agent": "webMARS locale generator" } });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      if (!useAlternate && response.status === 429) {
+        primaryThrottledUntil = Date.now() + 10 * 60 * 1000;
+      }
+      const error = new Error(`HTTP ${response.status}`);
+      error.retryAfterMs = Math.max(0, Number(response.headers.get("retry-after") || 0) * 1000);
+      throw error;
+    }
     const translated = translatedPayload(await response.json());
     if (!translated) throw new Error("empty translation response");
-    await delay(70);
+    // The public endpoint throttles bursts even when the aggregate request
+    // volume is small. A modest pause keeps release-time catalogue updates
+    // reliable without changing the translation provider or requiring a key.
+    await delay(1_000);
     return translated;
   } catch (error) {
     if (attempt >= 5) throw error;
-    await delay(500 * (2 ** attempt));
+    const switchingEndpoint = !useAlternate && /^HTTP 429$/.test(String(error?.message || ""));
+    const retryDelay = switchingEndpoint
+      ? 250
+      : (error?.retryAfterMs || Math.min(30_000, 2_000 * (2 ** attempt)));
+    await delay(retryDelay);
     return requestTranslation(text, target, attempt + 1);
   }
 }
@@ -206,7 +233,9 @@ async function translateBatch(items, target) {
   // the wrong key, which is worse than leaving them all in English.
   if (!parts) {
     if (items.length === 1) {
-      throw new Error("Translation endpoint changed or dropped a protected token");
+      throw new Error(
+        `Translation endpoint changed or dropped a protected token for ${JSON.stringify(items[0])}`
+      );
     }
     const output = [];
     for (const item of items) output.push(...await translateBatch([item], target));
@@ -234,6 +263,30 @@ export function replaceEntry(source, key, value) {
   return source.replace(pattern, (_match, indentation, comma) => (
     `${indentation}"${escapeForSource(key)}": "${escapeForSource(value)}"${comma}`
   ));
+}
+
+// Adds a key that does not exist in an older generated catalogue. This is
+// deliberately separate from replaceEntry: existing hand-reviewed lines stay
+// byte-identical, while a newly introduced English key can be translated and
+// appended without regenerating the entire language file.
+export function appendEntry(source, key, value) {
+  const closingPattern = /(\r?\n)([ \t]*)\}\);[ \t]*(\r?\n)\}\)\(\);[ \t]*(?:\r?\n)?$/;
+  const closing = closingPattern.exec(source);
+  if (!closing || closing.index === undefined) return null;
+
+  const body = source.slice(0, closing.index);
+  const entryPattern = /^([ \t]*"(?:[^"\\]|\\.)*"[ \t]*:[ \t]*"(?:[^"\\]|\\.)*")([ \t]*)(,?)[ \t]*$/gm;
+  const entries = [...body.matchAll(entryPattern)];
+  const last = entries.at(-1);
+  if (!last || last.index === undefined) return null;
+
+  const lastEnd = last.index + last[0].length;
+  const withComma = last[3]
+    ? body
+    : `${body.slice(0, last.index)}${last[1]},${last[2]}${body.slice(lastEnd)}`;
+  const indentation = /^([ \t]*)/.exec(last[0])?.[1] || "    ";
+  const entry = `${indentation}"${escapeForSource(key)}": "${escapeForSource(value)}"`;
+  return `${withComma}${closing[1]}${entry}${source.slice(closing.index)}`;
 }
 
 export async function atomicWriteCatalog(path, source) {
@@ -286,7 +339,10 @@ export async function main(argv = process.argv.slice(2)) {
 
   for (const locale of targets) {
     const catalog = await loadCatalog(locale.id, english);
-    const pending = untranslatedKeys(catalog, english).slice(0, options.limit);
+    const pending = (options.missingOnly
+      ? Object.keys(english).filter((key) => typeof catalog[key] !== "string")
+      : untranslatedKeys(catalog, english)
+    ).slice(0, options.limit);
     totalPending += pending.length;
     if (!pending.length) {
       console.log(`${locale.id}: up to date`);
@@ -307,7 +363,7 @@ export async function main(argv = process.argv.slice(2)) {
       while (cursor < pending.length) {
         const candidate = english[pending[cursor]];
         const added = candidate.length + 32;
-        if (batch.length && characters + added > 3200) break;
+        if (batch.length && characters + added > 3000) break;
         batch.push(pending[cursor]);
         characters += added;
         cursor += 1;
@@ -328,9 +384,9 @@ export async function main(argv = process.argv.slice(2)) {
         skipped.push(`${locale.id}: placeholders changed for ${JSON.stringify(key)}`);
         continue;
       }
-      const next = replaceEntry(source, key, value);
+      const next = replaceEntry(source, key, value) ?? appendEntry(source, key, value);
       if (next === null) {
-        skipped.push(`${locale.id}: no entry line found for ${JSON.stringify(key)}`);
+        skipped.push(`${locale.id}: could not update catalogue entry for ${JSON.stringify(key)}`);
         continue;
       }
       source = next;

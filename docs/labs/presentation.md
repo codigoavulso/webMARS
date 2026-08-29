@@ -161,7 +161,7 @@ solution sheet with common misconceptions.
 
 ## Slide 11 — Practicalities
 
-- Runs in a browser. No install, no JVM, no account, no backend.
+- Runs in a browser. No install or JVM; no account or BackMars is required for local work.
 - Interface in twenty languages, including four written right to left.
 - Keyboard operable; colour is never the only channel; an optional
   colour-vision-safe palette.

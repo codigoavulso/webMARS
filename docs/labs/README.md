@@ -4,7 +4,7 @@
 
 Seven guided labs on the classic five-stage MIPS pipeline, built for the
 webMARS Pipeline Lab. Everything runs in a browser: no install, no JVM, no
-account, no backend.
+account or BackMars for the local runtime; account-backed Cloud and publishing remain optional.
 
 ## What is in this folder
 

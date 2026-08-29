@@ -8,7 +8,23 @@
 </head>
 <body>
   <h1>Değişiklik günlüğü</h1>
-  <p class="lead">Sürüm 0.5.6, Pipeline Lab'ı çalışan programa bağlar: webMARS'nin gerçekte yürüttüğü işlemi gerçek dal sonuçları ve gerçek kayıt değerleriyle yeniden oynatır ve her iki taraf da diğerini aynı anda çalıştırabilir.</p>
+  <p class="lead">0.6.0 Sürümü, webMARS'i kalıcı sınıf benimsemeye hazır hale getirir: kararlı bağlantılar, halka açık bir öğretim kitaplığı, kurtarılabilir hesaplar, dağıtımın sahip olduğu yapılandırma ve bağımsız bir kılavuz.</p>
+
+  <h2>0.6.0 &mdash; istikrarlı sınıflar ve bir halk kütüphanesi</h2>
+  <ul>
+    <li>Her yerleşik örnek için kalıcı doğrudan bağlantılar eklendi. Kararlı kimlikler özel bir kayıt defterinde bulunur ve hiçbir zaman kaldırılmaz veya yeniden kullanılmaz; Kullanımdan kaldırılan girişler, mezar taşları veya açık yönlendirmeler olarak kalır.</li>
+    <li>BackMars aracılığıyla genel proje yayınlama eklendi. Her yayın, bu dağıtımda ilk gelene göre küresel olarak benzersiz bir genel ad alır ve kısa bir <code>/p/name</code> bağlantısı aracılığıyla açılır.</li>
+    <li>Yayınlanan revizyonları değiştirilemez hale getirdi. Sabitlenmemiş bağlantı en yeni etkin revizyonu takip ederken, <code>/p/name@N</code> sıradan bir arşivden sonra bile tam geçmiş anlık görüntüyü açmaya devam eder.</li>
+    <li>Arama, sayfalama ve salt okunur önizlemelere sahip bir Halk Kütüphanesi tarayıcısı eklendi. Bir yayının açılması temiz bir yerel kopya oluşturur, böylece genel materyal asla yazarın projesini sessizce değiştirmez veya Cloud depolama alanına girmez.</li>
+    <li>Kamu değişim formatının sürümü düzenlendi ve sterilize edildi. Yayınlar, tarayıcı ve BackMars tarafından bağımsız olarak uygulanan katı sınırlamalarla yalnızca proje dosyalarını ve güvenli öğretim meta verilerini içerir.</li>
+    <li>Süresi dolmuş tek kullanımlık kodlar kullanılarak e-posta yoluyla şifre kurtarma eklendi. Başarılı bir sıfırlama, mevcut oturumları geçersiz kılar ve istekler, bir adresin kayıtlı olup olmadığını göstermez.</li>
+    <li>E-posta doğrulama ve yeniden gönderme akışları eklendi. Dağıtımlar, yerel düzenlemeyi, örnekleri ve simülasyonu hesap olmadan kullanılabilir durumda tutarken yayınlamadan önce doğrulanmış bir adres gerektirebilir.</li>
+    <li>Her kurulumun adı, temel yolu, genel URL, BackMars uç noktası, kılavuz ve destek bağlantıları <code>webmars-config.js</code>'e taşındı, böylece üniversiteler uygulama kodunu düzenlemeden bağımsız örnekleri dağıtabilir.</li>
+    <li>Otomatik ilk çalıştırma Hakkında penceresini rehberli bir Hoş Geldiniz penceresiyle değiştirdik; Hakkında'yı Yardım altında tuttuk ve doğrudan örnek veya yayın bağlantılarına öncelik verdik.</li>
+    <li>MARS'dan geçiş, birinci sınıf, LMS metin, sabit bağlantı yayınlama, çözümler ve kendi kendine barındırma/gizlilik kararlarını kapsayan bir Öğretmen Kiti eklendi.</li>
+    <li>Ayrıntılı bölümler, açık temalı ekran görüntüleri ve webMARS sürümüne karşı açık doğrulama içeren, bağımsız olarak sürümlendirilmiş webMARS Kılavuzu v0.1'de başlatıldı.</li>
+    <li>Kararlı URL'ler, özel veritabanı depolaması, yedeklemeler, geçişler, Gmail SMTP ve dağıtım sonrası duman testleri için üretim kılavuzu ve rota yapılandırmaları eklendi.</li>
+  </ul>
 
   <h2>0.5.6 &mdash; boru hattı programı takip ediyor</h2>
   <ul>

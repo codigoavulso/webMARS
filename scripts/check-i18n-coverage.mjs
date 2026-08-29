@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 import vm from "node:vm";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const skippedDirectories = new Set(["dist", "node_modules", ".git", "i18n", "tests", "scripts", "docs", "libs", "examples", "help", "videos"]);
+const skippedDirectories = new Set(["dist", "node_modules", ".git", "i18n", "tests", "scripts", "docs", "manual", "libs", "examples", "help", "videos"]);
 
 // Helpers that translate the arguments they are given. "all" covers helpers
 // whose every string argument is prose; a list pins the prose positions for

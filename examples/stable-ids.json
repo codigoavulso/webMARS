@@ -1,0 +1,296 @@
+{
+  "version": 1,
+  "policy": "Stable IDs are never removed or reused. Retired examples remain as tombstones and may redirect to a replacement ID.",
+  "entries": [
+    {
+      "id": "lesson01-registers",
+      "path": "lesson01_registers.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson02-twos-complement",
+      "path": "lesson02_twos_complement.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson03-logic-gates",
+      "path": "lesson03_logic_gates.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson04-shifts",
+      "path": "lesson04_shifts.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson05-comparator",
+      "path": "lesson05_comparator.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson06-loop-counter",
+      "path": "lesson06_loop_counter.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson07-memory-words",
+      "path": "lesson07_memory_words.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson08-bytes-endianness",
+      "path": "lesson08_bytes_endianness.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson09-array-indexing",
+      "path": "lesson09_array_indexing.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson10-stack",
+      "path": "lesson10_stack.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson11-function-call",
+      "path": "lesson11_function_call.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson12-recursion",
+      "path": "lesson12_recursion.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson13-instruction-encoding",
+      "path": "lesson13_instruction_encoding.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson14-ieee754",
+      "path": "lesson14_ieee754.asm",
+      "status": "active"
+    },
+    {
+      "id": "lesson15-memory-hierarchy",
+      "path": "lesson15_memory_hierarchy.asm",
+      "status": "active"
+    },
+    {
+      "id": "hello-world-runio",
+      "path": "hello_world_runio.asm",
+      "status": "active"
+    },
+    {
+      "id": "test-pseudo-ops-lowering",
+      "path": "test_pseudo_ops_lowering.asm",
+      "status": "active"
+    },
+    {
+      "id": "string-strlen-strcpy",
+      "path": "string_strlen_strcpy.asm",
+      "status": "active"
+    },
+    {
+      "id": "guess-number",
+      "path": "guess_number.asm",
+      "status": "active"
+    },
+    {
+      "id": "test-program-arguments",
+      "path": "test_program_arguments.asm",
+      "status": "active"
+    },
+    {
+      "id": "learn-multi-file-number-analyzer-main",
+      "path": "learn/multi_file_number_analyzer/main.asm",
+      "status": "active"
+    },
+    {
+      "id": "factorial-recursive",
+      "path": "factorial_recursive.asm",
+      "status": "active"
+    },
+    {
+      "id": "fibonacci-iterative",
+      "path": "fibonacci_iterative.asm",
+      "status": "active"
+    },
+    {
+      "id": "bubble-sort-array",
+      "path": "bubble_sort_array.asm",
+      "status": "active"
+    },
+    {
+      "id": "matrix-mul-3x3",
+      "path": "matrix_mul_3x3.asm",
+      "status": "active"
+    },
+    {
+      "id": "c-compiled-style-sum",
+      "path": "c_compiled_style_sum.asm",
+      "status": "active"
+    },
+    {
+      "id": "floating-point-demo",
+      "path": "floating_point_demo.asm",
+      "status": "active"
+    },
+    {
+      "id": "cop1-arithmetic-demo",
+      "path": "cop1_arithmetic_demo.asm",
+      "status": "active"
+    },
+    {
+      "id": "hello-world",
+      "path": "hello_world.c",
+      "status": "active"
+    },
+    {
+      "id": "stdio-console-basics",
+      "path": "stdio_console_basics.c",
+      "status": "active"
+    },
+    {
+      "id": "stdio-line-parse",
+      "path": "stdio_line_parse.c",
+      "status": "active"
+    },
+    {
+      "id": "stdio-file-roundtrip",
+      "path": "stdio_file_roundtrip.c",
+      "status": "active"
+    },
+    {
+      "id": "args-library-demo",
+      "path": "args_library_demo.c",
+      "status": "active"
+    },
+    {
+      "id": "abi-stack-heap-demo",
+      "path": "abi_stack_heap_demo.c",
+      "status": "active"
+    },
+    {
+      "id": "learn-c-multi-file-stats-main",
+      "path": "learn/c_multi_file_stats/main.c",
+      "status": "active"
+    },
+    {
+      "id": "compiler-subset-s2-loops",
+      "path": "compiler_subset_s2_loops.c",
+      "status": "active"
+    },
+    {
+      "id": "compiler-subset-s3-arrays",
+      "path": "compiler_subset_s3_arrays.c",
+      "status": "active"
+    },
+    {
+      "id": "compiler-subset-s4-strings",
+      "path": "compiler_subset_s4_strings.c",
+      "status": "active"
+    },
+    {
+      "id": "compiler-full-c0-core",
+      "path": "compiler_full_c0_core.c",
+      "status": "active"
+    },
+    {
+      "id": "compiler-c0-libraries",
+      "path": "compiler_c0_libraries.c",
+      "status": "active"
+    },
+    {
+      "id": "compiler-c1-native",
+      "path": "compiler_c1_native.c",
+      "status": "active"
+    },
+    {
+      "id": "keyboard-display-mmio-echo",
+      "path": "keyboard_display_mmio_echo.asm",
+      "status": "active"
+    },
+    {
+      "id": "tty-sum-repl",
+      "path": "tty_sum_repl.asm",
+      "status": "active"
+    },
+    {
+      "id": "tty-ansi-demo",
+      "path": "tty_ansi_demo.c",
+      "status": "active"
+    },
+    {
+      "id": "tty-calculator",
+      "path": "tty_calculator.c",
+      "status": "active"
+    },
+    {
+      "id": "bitmap-display-bars",
+      "path": "bitmap_display_bars.asm",
+      "status": "active"
+    },
+    {
+      "id": "bitmap-ascii",
+      "path": "bitmap_ascii.c",
+      "status": "active"
+    },
+    {
+      "id": "bitmap-rectangles",
+      "path": "bitmap_rectangles.c",
+      "status": "active"
+    },
+    {
+      "id": "digital-lab-sim-demo",
+      "path": "digital_lab_sim_demo.asm",
+      "status": "active"
+    },
+    {
+      "id": "mars-bot-game",
+      "path": "mars_bot_game.asm",
+      "status": "active"
+    },
+    {
+      "id": "scavenger-hunt-player",
+      "path": "scavenger_hunt_player.asm",
+      "status": "active"
+    },
+    {
+      "id": "timer-interrupt-demo",
+      "path": "timer_interrupt_demo.asm",
+      "status": "active"
+    },
+    {
+      "id": "exception-handler-recovery",
+      "path": "exception_handler_recovery.asm",
+      "status": "active"
+    },
+    {
+      "id": "test-unaligned-memory-exception",
+      "path": "test_unaligned_memory_exception.asm",
+      "status": "active"
+    },
+    {
+      "id": "test-delay-slot-exception",
+      "path": "test_delay_slot_exception.asm",
+      "status": "active"
+    },
+    {
+      "id": "cache-stride-benchmark",
+      "path": "cache_stride_benchmark.asm",
+      "status": "active"
+    },
+    {
+      "id": "branch-predictor-bht-demo",
+      "path": "branch_predictor_bht_demo.asm",
+      "status": "active"
+    },
+    {
+      "id": "mips",
+      "path": "mips.asm",
+      "status": "active"
+    }
+  ]
+}

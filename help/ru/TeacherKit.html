@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webMARS teacher kit</title>
+  <link rel="stylesheet" href="../en/webmars-help.css">
+</head>
+<body>
+  <h1>Teacher kit</h1>
+  <p class="lead">A practical route from MARS MIPS to webMARS, with stable exercise links, reproducible revisions and a no-network fallback.</p>
+
+  <h2>A 15-minute migration</h2>
+  <ol>
+    <li>Open one existing <code>.s</code>, <code>.asm</code> or <code>.mips</code> file with <strong>File → Open from Disk</strong>.</li>
+    <li>Assemble with <kbd>F3</kbd>, run with <kbd>F5</kbd>, step with <kbd>F7</kbd> and backstep with <kbd>F8</kbd>.</li>
+    <li>Check <strong>Settings → Strict MARS 4.5 compatibility</strong> when an exercise depends on historical behaviour.</li>
+    <li>Test input, output, syscalls, memory map and any required Tools.</li>
+    <li>Keep the original download beside the course material as the offline fallback.</li>
+  </ol>
+
+  <h2>Stable links</h2>
+  <ul>
+    <li><code>/e/&lt;id&gt;</code> opens a built-in example whose ID is release-tested.</li>
+    <li><code>/p/&lt;public-name&gt;</code> follows the latest published revision.</li>
+    <li><code>/p/&lt;public-name&gt;@&lt;revision&gt;</code> pins an immutable revision and is the recommended assessment link.</li>
+  </ul>
+  <p>Public names are first-come and permanent within one BackMars installation. Archiving hides a project but never releases its name. Always copy the complete URL, because another university can run a different installation with the same public name.</p>
+
+  <h2>Publishing an exercise</h2>
+  <ol>
+    <li>Open and test the project locally, then sign in and confirm the account email.</li>
+    <li>Choose <strong>Library → Publish Active Project</strong>, select a permanent public name, title, kind, difficulty and license.</li>
+    <li>Share the pinned revision in worksheets and graded activities. Use the latest-revision URL for material that should evolve.</li>
+    <li>For a correction, choose <strong>Library → My Publications → Publish active project as new revision</strong>. Earlier revisions remain unchanged.</li>
+  </ol>
+
+  <h2>Ready-to-paste LMS text</h2>
+  <pre>Open the exercise: [PINNED WEBMARS URL]
+Required version: webMARS [VERSION], revision [REVISION]
+Submit: your .s/.asm source plus the requested output or explanation.
+If the network is unavailable, download the supplied source and open it from disk.</pre>
+
+  <h2>Privacy and self-hosting</h2>
+  <p>Editing and execution are local by default. Cloud projects, account recovery and public publication use the BackMars selected by this installation. A university or teacher may deploy both components and control retention, SMTP, allowed origins and support policy. Never place SMTP credentials in the webMARS files: they belong only in the protected BackMars server environment.</p>
+
+  <h2>First-class checklist</h2>
+  <ul>
+    <li>Test the exact shared URL in a signed-out browser.</li>
+    <li>Record the full hostname, webMARS version and pinned revision.</li>
+    <li>Provide the source download and expected input as a fallback.</li>
+    <li>State whether students may use Cloud; it is never required for local work.</li>
+    <li>Explain that opening public material creates an independent local copy.</li>
+  </ul>
+  <script src="../../assets/js/app-version.js"></script>
+</body>
+</html>

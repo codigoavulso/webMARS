@@ -67,10 +67,7 @@ try {
     $safePath = $requestPath.Replace('/', [System.IO.Path]::DirectorySeparatorChar)
     $fullPath = [System.IO.Path]::GetFullPath((Join-Path $root $safePath))
 
-    if (
-      $fullPath -ne $root
-      -and -not $fullPath.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)
-    ) {
+    if ($fullPath -ne $root -and -not $fullPath.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
       $response.StatusCode = 403
       $buffer = [System.Text.Encoding]::UTF8.GetBytes("403 Forbidden")
       $response.OutputStream.Write($buffer, 0, $buffer.Length)

@@ -34,6 +34,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
     const hasOpenProject = state?.project?.isOpen === true;
     const hasActiveFile = Array.isArray(state?.files) && state.files.length > 0;
     const cloudAuthenticated = state?.cloud?.authenticated === true;
+    const cloudEmailVerified = state?.cloud?.user?.emailVerified === true;
     const cloudUserName = String(state?.cloud?.user?.username || "").trim();
     const examples = typeof handlers.getExampleMenuItems === "function" ? handlers.getExampleMenuItems() : [];
     const exampleItems = examples.length ? examples : [{ label: "(no examples)", enabled: () => false }];
@@ -54,19 +55,24 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
     const cloudMenuItems = [
       {
         label: () => (cloudAuthenticated
-          ? `Signed in as ${cloudUserName || "user"}`
+          ? translateText("Signed in as {name}", { name: cloudUserName || "user" })
           : "Not signed in"),
         enabled: () => false
       },
       {
         label: () => (cloudAuthenticated
-          ? `Logout${cloudUserName ? ` (${cloudUserName})` : ""}`
+          ? translateText("Logout ({name})", { name: cloudUserName || "user" })
           : "Login..."),
         command: cloudAuthenticated ? "cloudLogout" : "cloudLogin"
       }
     ];
     if (!cloudAuthenticated) {
-      cloudMenuItems.push({ label: "Create User...", command: "cloudRegister" });
+      cloudMenuItems.push(
+        { label: "Create User...", command: "cloudRegister" },
+        { label: "Forgot Password...", command: "cloudPasswordReset" }
+      );
+    } else if (!cloudEmailVerified) {
+      cloudMenuItems.push({ label: "Verify Email...", command: "cloudVerifyEmail" });
     }
     cloudMenuItems.push(
       "-",
@@ -94,6 +100,14 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Dump Run I/O", command: "dumpRunIo" }
       ],
       Cloud: cloudMenuItems,
+      Library: [
+        { label: "Browse Public Library...", command: "publicBrowse" },
+        { label: "Open Public Link...", command: "publicOpenLink" },
+        { label: "Copy Built-in Example Link...", command: "publicCopyExampleLink" },
+        "-",
+        { label: "Publish Active Project...", command: "publicPublish", enabled: () => hasOpenProject },
+        { label: "My Publications...", command: "publicManage", enabled: () => cloudAuthenticated }
+      ],
       Edit: [
         { label: "Undo", command: "undo", shortcut: "Ctrl+Z" },
         { label: "Redo", command: "redo", shortcut: "Ctrl+Y" },
@@ -149,6 +163,8 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
       })),
       Help: [
         { label: "Help", command: "helpHub", shortcut: "F1" },
+        { label: "Welcome...", command: "helpWelcome" },
+        { label: "Teacher Kit...", command: "helpTeacherKit" },
         { label: "MIPS Reference PDF", command: "helpMipsPdf" },
         "-",
         { label: "About ...", command: "helpAbout" }
@@ -352,9 +368,6 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
 
   return { hide };
 }
-
-
-
 
 
 

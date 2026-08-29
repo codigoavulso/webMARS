@@ -46,7 +46,7 @@ const uiOverrides = {
   th: { Run: "รัน", Bench: "ทดสอบประสิทธิภาพ", Assemble: "แอสเซมเบิล", Go: "ทำงานต่อ", Step: "ทีละขั้น", Backstep: "ย้อนกลับหนึ่งขั้น" }
 };
 
-const technicalTokenSource = /\b(?:webMARS|MARS|MIPS32?|Mini-C|JavaScript|WASM|COP1|TTY|MMIO|ANSI|C0-S[0-4]|C1-NATIVE|[A-Z][A-Z0-9_]{2,})\b|\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9]+|0x[0-9A-Fa-f]+|https?:\/\/[^\s<]+|mailto:[^\s<]+|&(?:[A-Za-z]+|#\d+|#x[0-9A-Fa-f]+);|`[^`\r\n]+`/.source;
+const technicalTokenSource = /\b(?:webMARS|BackMars|Cloud|MARS|MIPS32?|Mini-C|JavaScript|WASM|COP1|TTY|MMIO|ANSI|C0-S[0-4]|C1-NATIVE|[A-Z][A-Z0-9_]{2,})\b|\{[A-Za-z0-9_]+\}|\$[A-Za-z0-9]+|0x[0-9A-Fa-f]+|https?:\/\/[^\s<]+|mailto:[^\s<]+|&(?:[A-Za-z]+|#\d+|#x[0-9A-Fa-f]+);|`[^`\r\n]+`/.source;
 const protectedTechnicalText = new RegExp(technicalTokenSource);
 
 const cachePath = join(tmpdir(), "webmars-generated-locales-cache.json");

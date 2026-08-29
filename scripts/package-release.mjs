@@ -21,6 +21,7 @@ const distRoot = join(projectRoot, "dist");
 // files at the repository root are never copied implicitly.
 const PUBLIC_ROOT_FILES = Object.freeze([
   "index.html",
+  "webmars-config.js",
   "favicon.ico",
   "robots.txt",
   "LICENSE"
@@ -473,6 +474,7 @@ async function validateManifestReferences(targetRoot, generatedFiles) {
     "MarsHelpSettings.html",
     "MarsHelpTools.html",
     "SyscallHelp.html",
+    "TeacherKit.html",
     "about-card.html",
     "changelog.html",
     "help-reference.json",
@@ -557,6 +559,7 @@ async function validateIsolatedRelease(targetRoot, sourceFiles) {
   const generatedFiles = await validateCopyIntegrity(sourceFiles, targetRoot);
   const requiredFiles = [
     "index.html",
+    "webmars-config.js",
     "favicon.ico",
     "robots.txt",
     "LICENSE",
@@ -568,6 +571,7 @@ async function validateIsolatedRelease(targetRoot, sourceFiles) {
     "assets/js/app-modules/20-app-runtime.js",
     "assets/js/i18n/languages.json",
     "examples/examples.json",
+    "examples/stable-ids.json",
     "help/languages.json",
     "help/help-reference.json",
     "help/mipsref.pdf",

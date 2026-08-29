@@ -12,7 +12,7 @@ import { collectTreeFiles, publishReleaseSet } from "../scripts/package-release.
 
 const run = promisify(execFile);
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.5.6";
+const expectedReleaseVersion = "0.6.0";
 const languages = [
   "en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id",
   "de", "ja", "ko", "tr", "vi", "ur", "it", "pl", "fa", "th"
@@ -127,7 +127,7 @@ function placeholders(value) {
     .sort();
 }
 
-test("0.5.6 version is coherent across runtime and release metadata", async () => {
+test("the release version is coherent across runtime and release metadata", async () => {
   const packageJson = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
   const packageLock = JSON.parse(await readFile(resolve(projectRoot, "package-lock.json"), "utf8"));
   const appVersion = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");
@@ -451,6 +451,16 @@ test("release shell and localized toolbar labels are complete", async () => {
   }
 });
 
+test("the Public Library is reachable from the main menu", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "10-ui.js"), "utf8");
+  const menus = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "13-ui-menu-system.js"), "utf8");
+
+  assert.match(ui, /data-menu="Library">Library<\/button>/);
+  assert.match(menus, /Library:\s*\[/);
+  assert.match(menus, /command:\s*"publicBrowse"/);
+  assert.match(menus, /command:\s*"publicPublish"/);
+});
+
 test("no i18n catalog declares the same key twice", async () => {
   // A repeated key is silently dropped by the object literal, so a translation
   // can be edited in the file and still never reach the UI.
@@ -663,7 +673,7 @@ test("fresh UI preferences preserve the language detected during bootstrap", asy
   assert.doesNotMatch(runtimeSource, /applyLanguagePreference\(preferences\.language\s*\|\|\s*"en"\)/);
 });
 
-test("cloud authentication is restored automatically after a page reload", async () => {
+test("direct links and Welcome run before cloud authentication is restored after reload", async () => {
   const source = await readFile(
     resolve(projectRoot, "assets", "js", "app-modules", "20-app-runtime.js"),
     "utf8"
@@ -672,8 +682,9 @@ test("cloud authentication is restored automatically after a page reload", async
   assert.match(source, /credentials:\s*"include"/);
   assert.match(
     source,
-    /showAboutOnFirstVisit\(\);\s*void refreshCloudSession\(\{\s*silent:\s*true,\s*syncProjects:\s*true,\s*postSyncStatus:\s*false,\s*syncReason:\s*"startup"\s*\}\);/
+    /void handleLaunchRoute\(\)\.then\(\(handled\) => \{\s*if \(!handled\) showWelcomeOnFirstVisit\(\);\s*\}\);[\s\S]*?void refreshCloudSession\(\{\s*silent:\s*true,\s*syncProjects:\s*true,\s*postSyncStatus:\s*false,\s*syncReason:\s*"startup"\s*\}\);/
   );
+  assert.match(source, /window\.addEventListener\("hashchange",/);
 });
 
 test("tool, library and language manifests are unique and resolvable", async () => {
@@ -844,7 +855,7 @@ test("every translatable runtime message has a catalog entry in all languages", 
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       const full = resolve(directory, entry.name);
       if (entry.isDirectory()) {
-        if (["dist", "node_modules", ".git", "i18n", "tests", "scripts", "docs"].includes(entry.name)) continue;
+        if (["dist", "node_modules", ".git", "i18n", "tests", "scripts", "docs", "manual"].includes(entry.name)) continue;
         await collectSources(full, found);
       } else if (entry.name.endsWith(".js")) {
         found.push(full);

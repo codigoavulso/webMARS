@@ -20,7 +20,7 @@ import { promisify } from "node:util";
 import vm from "node:vm";
 import { resolve } from "node:path";
 import { projectRoot } from "./helpers/engines.mjs";
-import { replaceEntry, validateTranslatedBatch } from "../scripts/translate-new-keys.mjs";
+import { appendEntry, replaceEntry, validateTranslatedBatch } from "../scripts/translate-new-keys.mjs";
 
 const run = promisify(execFile);
 
@@ -153,6 +153,19 @@ test("catalog replacement treats translation dollar signs and controls as data",
   let catalog = null;
   vm.runInNewContext(`catalog = ({\n${replaced}});`, { set catalog(value) { catalog = value; } });
   assert.equal(catalog.Example, value);
+});
+
+test("targeted translator appends new keys without rewriting reviewed entries", () => {
+  const source = '(function () {\n  window.WebMarsI18n.registerLanguage("fr", {\n    "Existing": "Révisé"\n  });\n})();\n';
+  const appended = appendEntry(source, "New key", "Nouvelle valeur");
+  assert.ok(appended);
+  assert.match(appended, /"Existing": "Révisé",\n    "New key": "Nouvelle valeur"/);
+
+  let catalog = null;
+  const i18n = { registerLanguage: (_id, value) => { catalog = value; } };
+  vm.runInNewContext(appended, { window: { WebMarsI18n: i18n } });
+  assert.equal(catalog.Existing, "Révisé");
+  assert.equal(catalog["New key"], "Nouvelle valeur");
 });
 
 test("translated batches preserve separator identity and every protected token", () => {

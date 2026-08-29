@@ -1,4 +1,4 @@
-# webMARS Code Architecture (v0.5.6)
+# webMARS Code Architecture (v0.6.0)
 
 webMARS is a static browser application built from ordered, non-ES-module
 scripts. The assembler and simulator use one JavaScript implementation; the
@@ -43,6 +43,7 @@ flowchart TB
     storage["18-runtime-browser-storage.js<br/>projects, sessions"]
     settings["19-runtime-settings.js<br/>preferences, limits"]
     bench["19-runtime-benchmarks.js<br/>measurements"]
+    library["19-public-library.js<br/>stable public examples"]
     compiler["17-mini-c-compiler.js<br/>Mini-C to MIPS"]
   end
   subgraph CORE["Core"]
@@ -62,6 +63,7 @@ flowchart TB
   runtime --> storage
   runtime --> settings
   runtime --> bench
+  runtime --> library
   runtime --> compiler
   runtime --> engine
   compiler --> engine
@@ -151,14 +153,16 @@ The current bootstrap order is:
 8. `assets/js/app-modules/05-layout-config.js`
 9. `assets/js/app-modules/09-ui-translation.js`
 10. `assets/js/app-modules/10-ui.js`
-11. `assets/js/app-modules/12-ui-tool-manager.js`
-12. `assets/js/app-modules/13-ui-menu-system.js`
-13. `assets/js/app-modules/15-help-system.js`
-14. `assets/js/app-modules/17-mini-c-compiler.js`
-15. `assets/js/app-modules/18-runtime-browser-storage.js`
-16. `assets/js/app-modules/19-runtime-settings.js`
-17. `assets/js/app-modules/19-runtime-benchmarks.js`
-18. `assets/js/app-modules/20-app-runtime.js`
+11. `assets/js/app-modules/11-ui-file-manager.js`
+12. `assets/js/app-modules/12-ui-tool-manager.js`
+13. `assets/js/app-modules/13-ui-menu-system.js`
+14. `assets/js/app-modules/15-help-system.js`
+15. `assets/js/app-modules/17-mini-c-compiler.js`
+16. `assets/js/app-modules/18-runtime-browser-storage.js`
+17. `assets/js/app-modules/19-runtime-settings.js`
+18. `assets/js/app-modules/19-runtime-benchmarks.js`
+19. `assets/js/app-modules/19-public-library.js`
+20. `assets/js/app-modules/20-app-runtime.js`
 
 ## Current modules
 
@@ -170,6 +174,7 @@ The current bootstrap order is:
 | `05-layout-config.js` | Shared compact and stacked layout breakpoints through `WebMarsLayoutConfig`. |
 | `09-ui-translation.js` | Static DOM-tree translation helper used by the main UI and auxiliary windows. |
 | `10-ui.js` | File-kind classification, application layout, editor and execution panes, window management, dialogs and UI rendering helpers. |
+| `11-ui-file-manager.js` | Project-tree rendering, folder and file operations, drag-and-drop imports and selection workflows. |
 | `12-ui-tool-manager.js` | Tool manifest loading, script registration, tool-window hosting and ordered delivery of runtime snapshots. |
 | `13-ui-menu-system.js` | Menu definitions, popup/submenu behavior, checks, shortcuts and command dispatch. |
 | `15-help-system.js` | Localized in-app help, About window and internal document viewer. |
@@ -177,6 +182,7 @@ The current bootstrap order is:
 | `18-runtime-browser-storage.js` | Browser source-folder storage and the related file, preference, memory-map and example-loading workflows consumed by the app runtime. |
 | `19-runtime-settings.js` | Runtime preference validation, memory/backstep limits, address parsing, language-preference and theme-preference helpers. |
 | `19-runtime-benchmarks.js` | In-memory compile, assemble and run measurements, including duration, estimated instrumented JavaScript utilization and throughput. |
+| `19-public-library.js` | Stable built-in-example and public-publication routes, public-library browsing, publication and immutable revision links. |
 | `20-app-runtime.js` | Final composition root: preferences, projects and sessions, compiler/assembler commands, run loop, persistence, cloud adapters, tools, help and UI synchronization. |
 
 The files under `assets/js/reference/` are generated data consumed by the core
@@ -211,7 +217,7 @@ should remain incremental:
 
 Names such as `core/syscalls` or `runtime/session` may be useful conceptual
 boundaries for future extraction, but they are not directories or modules in
-the v0.5.6 tree.
+the v0.6.0 tree.
 
 ## Theming
 

@@ -38,6 +38,8 @@ for (const relativePath of relativeFiles) {
 
 for (const required of [
   "index.html",
+  "webmars-config.js",
+  "examples/stable-ids.json",
   "assets/js/app.bundle.js",
   "assets/js/app-modules/00-core.js"
 ]) {

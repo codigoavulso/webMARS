@@ -8,7 +8,23 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">A versão 0.5.6 liga o Laboratório de Pipeline ao programa em execução: reproduz o que o webMARS executou de facto, com os resultados reais dos saltos e os valores reais dos registos, e qualquer um dos lados pode conduzir o outro uma instrução de cada vez.</p>
+  <p class="lead">A versão 0.6.0 prepara o webMARS para uma adoção duradoura nas aulas: ligações estáveis, biblioteca educativa pública, contas recuperáveis, configuração própria de cada instalação e um manual independente.</p>
+
+  <h2>0.6.0 &mdash; aulas estáveis e biblioteca pública</h2>
+  <ul>
+    <li>Adicionadas ligações diretas permanentes para todos os exemplos incluídos. Os identificadores estáveis vivem num registo dedicado e nunca são removidos nem reutilizados; as entradas retiradas permanecem como marcadores ou redirecionamentos explícitos.</li>
+    <li>Adicionada a publicação de projetos através do BackMars. Cada publicação recebe um nome público único nessa instalação, por ordem de chegada, e abre através de uma ligação curta <code>/p/nome</code>.</li>
+    <li>As revisões publicadas passam a ser imutáveis. A ligação sem versão segue a revisão ativa mais recente, enquanto <code>/p/nome@N</code> continua a abrir a fotografia histórica exata mesmo depois de um arquivo normal.</li>
+    <li>Adicionado um navegador da Biblioteca pública com pesquisa, paginação e pré-visualizações só de leitura. Abrir uma publicação cria uma cópia local limpa, pelo que o material público nunca altera silenciosamente o projeto do autor nem entra na Cloud.</li>
+    <li>Versionado e higienizado o formato público de intercâmbio. As publicações contêm apenas os ficheiros do projeto e metadados educativos seguros, com limites rigorosos aplicados independentemente pelo browser e pelo BackMars.</li>
+    <li>Adicionada a recuperação da palavra-passe por email através de códigos temporários de utilização única. Uma reposição bem-sucedida invalida as sessões existentes e os pedidos não revelam se um endereço está registado.</li>
+    <li>Adicionados os fluxos de verificação de email e reenvio. Uma instalação pode exigir um endereço verificado para publicar, mantendo a edição local, os exemplos e a simulação disponíveis sem conta.</li>
+    <li>O nome, caminho base, URL público, endpoint do BackMars e ligações para manual e suporte de cada instalação passam para <code>webmars-config.js</code>, permitindo às universidades publicar instâncias independentes sem editar o código.</li>
+    <li>Substituída a janela Sobre automática da primeira utilização por uma janela de Boas-vindas guiada, mantendo Sobre na Ajuda e dando prioridade às ligações diretas de exemplos ou publicações.</li>
+    <li>Adicionado um Kit para docentes com migração do MARS, primeira aula, texto para LMS, publicação por ligações estáveis, soluções e decisões de alojamento próprio e privacidade.</li>
+    <li>Iniciado o Manual do webMARS, com versionamento independente v0.1, capítulos detalhados, capturas no tema claro e verificação explícita contra uma versão do webMARS.</li>
+    <li>Adicionadas orientações de produção e configurações de rotas para URLs estáveis, base de dados privada, cópias de segurança, migrações, SMTP do Gmail e testes após a publicação.</li>
+  </ul>
 
   <h2>0.5.6 &mdash; o pipeline segue o programa</h2>
   <ul>

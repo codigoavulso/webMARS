@@ -1,6 +1,6 @@
 # webMARS portability matrix
 
-**webMARS 0.5.6.** Maintained by hand, per release. Unlike the generated
+**webMARS 0.6.0.** Maintained by hand, per release. Unlike the generated
 reports in [evidence.md](evidence.md), this one records what a person actually
 ran, so it cannot be produced by a script.
 
@@ -46,12 +46,13 @@ Features whose portability is not simply "it is HTML".
 | Theme tokens with `color-mix()` | Supported in all current engines; older Safari lacked it | **verified** on Chrome/Windows |
 | Sticky table headers | Long-standing engine differences | **verified** on Chrome/Windows |
 | Pipeline Lab SVG datapath | Inline SVG with CSS custom properties | **verified** on Chrome/Windows |
-| Report export (JSON/CSV) | `Blob` plus an anchor download | **verified**, and works with no backend - see below |
+| Report export (JSON/CSV) | `Blob` plus an anchor download | **verified**, and works without BackMars - see below |
+| Accounts, Cloud and public library | Cookies, CORS, SMTP and the operator's BackMars availability | optional; verified separately from the local runtime |
 | Bitmap, TTY and MMIO device tools | Canvas and timing behaviour | **verified** on Chrome/Windows |
 | Mobile stacked layout | Viewport units and virtual keyboards differ sharply between Android and iOS | **verified** in Chrome at 375x812; not tested on a device |
 | Right-to-left layout | Mirrored layout must not mirror the pipeline diagram | **verified** in Arabic on Chrome/Windows |
 
-## Exported reports work without a backend
+## Core work and exported reports work without BackMars
 
 Every export is produced entirely in the browser and needs no server:
 
@@ -60,8 +61,9 @@ Every export is produced entirely in the browser and needs no server:
 - Reports contain no timestamps and no personal data, so the same program under
   the same configuration produces a byte-identical file. That is what makes them
   usable for assessment.
-- The whole application is static files. `npm start` is a convenience server;
-  any static host works, and nothing in the application calls an API of its own.
+- The IDE/runtime is static and continues to work when BackMars is unreachable.
+  On startup it may check the configured `/me` session, and account, Cloud,
+  recovery and Public Library actions call the per-installation BackMars API.
 
 This is enforced rather than asserted: `tests/pipeline-lab-microarchitecture.test.mjs`
 builds the same reports outside a browser entirely, with no network available.
@@ -71,7 +73,7 @@ builds the same reports outside a browser entirely, with no network available.
 The roadmap asks whether an offline or PWA mode is worth adding. Assessment for
 this release:
 
-**In favour.** The application is already a static bundle with no backend. A
+**In favour.** The application shell and MIPS runtime are already a static bundle. A
 service worker caching the shell would make it usable without a network, which
 matters in a teaching lab with restricted connectivity.
 

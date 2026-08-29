@@ -48,7 +48,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson01-registers"
         },
         {
             "label": "02 - Two's complement",
@@ -75,7 +76,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson02-twos-complement"
         },
         {
             "label": "03 - Logic gates over 32 bits",
@@ -102,7 +104,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson03-logic-gates"
         },
         {
             "label": "04 - Shifts and powers of two",
@@ -129,7 +132,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson04-shifts"
         },
         {
             "label": "05 - Comparator and branch",
@@ -156,7 +160,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson05-comparator"
         },
         {
             "label": "06 - Loop as a counter",
@@ -183,7 +188,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson06-loop-counter"
         },
         {
             "label": "07 - Words in memory",
@@ -210,7 +216,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson07-memory-words"
         },
         {
             "label": "08 - Bytes and byte order",
@@ -237,7 +244,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson08-bytes-endianness"
         },
         {
             "label": "09 - Indexing an array",
@@ -264,7 +272,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson09-array-indexing"
         },
         {
             "label": "10 - The stack",
@@ -291,7 +300,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson10-stack"
         },
         {
             "label": "11 - Calling a function",
@@ -318,7 +328,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson11-function-call"
         },
         {
             "label": "12 - Recursion and frames",
@@ -345,7 +356,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson12-recursion"
         },
         {
             "label": "13 - An instruction is a number",
@@ -372,7 +384,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson13-instruction-encoding"
         },
         {
             "label": "14 - Real numbers in 32 bits",
@@ -399,7 +412,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson14-ieee754"
         },
         {
             "label": "15 - Why stride changes the speed",
@@ -426,7 +440,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "lesson15-memory-hierarchy"
         },
         {
             "label": "Hello world in Assembly",
@@ -453,7 +468,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "hello-world-runio"
         },
         {
             "label": "Pseudo-instructions become real instructions",
@@ -480,7 +496,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "test-pseudo-ops-lowering"
         },
         {
             "label": "Strings: length and copy",
@@ -507,7 +524,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "string-strlen-strcpy"
         },
         {
             "label": "Guess the number: input and branches",
@@ -534,7 +552,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "guess-number"
         },
         {
             "label": "Program arguments",
@@ -561,7 +580,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "test-program-arguments"
         },
         {
             "label": "One program split across files",
@@ -600,7 +620,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "learn-multi-file-number-analyzer-main"
         },
         {
             "label": "Factorial with recursion",
@@ -627,7 +648,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "factorial-recursive"
         },
         {
             "label": "Fibonacci with a loop",
@@ -654,7 +676,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "fibonacci-iterative"
         },
         {
             "label": "Bubble sort on an array",
@@ -681,7 +704,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "bubble-sort-array"
         },
         {
             "label": "3x3 matrix multiplication",
@@ -708,7 +732,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "matrix-mul-3x3"
         },
         {
             "label": "A sum the way a compiler writes it",
@@ -735,7 +760,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "c-compiled-style-sum"
         },
         {
             "label": "Floating point on the FPU",
@@ -762,7 +788,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "floating-point-demo"
         },
         {
             "label": "Coprocessor 1 arithmetic",
@@ -789,7 +816,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "cop1-arithmetic-demo"
         },
         {
             "label": "Hello world in C",
@@ -817,7 +845,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "hello-world"
         },
         {
             "label": "Console input and output in C",
@@ -845,7 +874,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "stdio-console-basics"
         },
         {
             "label": "Reading and parsing a line",
@@ -873,7 +903,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "stdio-line-parse"
         },
         {
             "label": "Writing and reading a file",
@@ -901,7 +932,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "stdio-file-roundtrip"
         },
         {
             "label": "Command line arguments in C",
@@ -929,7 +961,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "args-library-demo"
         },
         {
             "label": "Stack, heap and the calling convention",
@@ -957,7 +990,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "abi-stack-heap-demo"
         },
         {
             "label": "A C project with several files",
@@ -997,7 +1031,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "learn-c-multi-file-stats-main"
         },
         {
             "label": "C subset: loops",
@@ -1025,7 +1060,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "compiler-subset-s2-loops"
         },
         {
             "label": "C subset: arrays",
@@ -1053,7 +1089,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "compiler-subset-s3-arrays"
         },
         {
             "label": "C subset: strings",
@@ -1081,7 +1118,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "compiler-subset-s4-strings"
         },
         {
             "label": "The complete C0 language",
@@ -1109,7 +1147,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "compiler-full-c0-core"
         },
         {
             "label": "The C0 standard library",
@@ -1137,7 +1176,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "compiler-c0-libraries"
         },
         {
             "label": "The native C1 profile",
@@ -1165,7 +1205,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "compiler-c1-native"
         },
         {
             "label": "Keyboard and display through MMIO",
@@ -1192,7 +1233,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "keyboard-display-mmio-echo"
         },
         {
             "label": "A terminal that adds numbers",
@@ -1219,7 +1261,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "tty-sum-repl"
         },
         {
             "label": "ANSI colours on the terminal",
@@ -1247,7 +1290,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "tty-ansi-demo"
         },
         {
             "label": "A calculator on the terminal",
@@ -1275,7 +1319,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "tty-calculator"
         },
         {
             "label": "Bars on the bitmap display",
@@ -1302,7 +1347,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "bitmap-display-bars"
         },
         {
             "label": "ASCII art on the bitmap display",
@@ -1330,7 +1376,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "bitmap-ascii"
         },
         {
             "label": "Rectangles on the bitmap display",
@@ -1358,7 +1405,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "bitmap-rectangles"
         },
         {
             "label": "Seven segments and a keypad",
@@ -1385,7 +1433,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "digital-lab-sim-demo"
         },
         {
             "label": "Driving the Mars Bot",
@@ -1412,7 +1461,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "mars-bot-game"
         },
         {
             "label": "The scavenger hunt challenge",
@@ -1439,7 +1489,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "scavenger-hunt-player"
         },
         {
             "label": "A timer that interrupts the program",
@@ -1466,7 +1517,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "timer-interrupt-demo"
         },
         {
             "label": "Handling an exception and recovering",
@@ -1493,7 +1545,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "exception-handler-recovery"
         },
         {
             "label": "An unaligned access raises an exception",
@@ -1520,7 +1573,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "test-unaligned-memory-exception"
         },
         {
             "label": "The delay slot after a branch",
@@ -1547,7 +1601,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "test-delay-slot-exception"
         },
         {
             "label": "Cache: how stride changes the time",
@@ -1574,7 +1629,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "cache-stride-benchmark"
         },
         {
             "label": "Branch prediction in action",
@@ -1601,7 +1657,8 @@
                 "pl",
                 "fa",
                 "th"
-            ]
+            ],
+            "id": "branch-predictor-bht-demo"
         },
         {
             "label": "MARS-OS TTY Operating System",
@@ -1666,7 +1723,8 @@
                     "path": "mips_os_kernel.asm",
                     "shared": true
                 }
-            ]
+            ],
+            "id": "mips"
         }
     ]
 }

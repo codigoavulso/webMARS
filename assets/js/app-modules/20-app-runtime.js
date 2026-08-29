@@ -7,6 +7,7 @@ const moduleRegistry = (typeof window !== "undefined" ? window.WebMarsModules : 
 const runtimeCoreStoreModule = moduleRegistry.coreStore;
 const runtimeSettingsModule = moduleRegistry.runtimeSettings;
 const runtimeBenchmarksModule = moduleRegistry.runtimeBenchmarks;
+const publicLibraryModule = moduleRegistry.publicLibrary;
 const miniCCompilerModule = moduleRegistry.miniCCompiler;
 const fileKindsModule = moduleRegistry.fileKinds;
 
@@ -23,6 +24,11 @@ if (
 }
 if (!runtimeBenchmarksModule || typeof runtimeBenchmarksModule.createBenchmarkCollector !== "function") {
   throw new Error("[mars-web] runtimeBenchmarks module was not loaded before app runtime.");
+}
+if (!publicLibraryModule
+  || typeof publicLibraryModule.parseLaunchRoute !== "function"
+  || typeof publicLibraryModule.requestJson !== "function") {
+  throw new Error("[mars-web] publicLibrary module was not loaded before app runtime.");
 }
 if (!miniCCompilerModule
   || typeof miniCCompilerModule.compile !== "function"
@@ -283,6 +289,8 @@ const cloudProjectVersionTokens = new Map();
 let cloudServerClockSkewMs = 0;
 
 function resolveDefaultCloudApiBase() {
+  const instanceDefault = normalizeCloudApiBase(publicLibraryModule?.config?.backMarsApiBase || "");
+  if (instanceDefault) return instanceDefault;
   const configuredDefault = normalizeCloudApiBase(DEFAULT_SETTINGS?.cloudApiBase || "");
   if (typeof window === "undefined" || !window.location) return configuredDefault || CLOUD_LOCAL_DEV_API_BASE;
   const host = String(window.location.hostname || "").trim().toLowerCase();
@@ -300,8 +308,11 @@ function resolveCloudApiBase(preferenceState = preferences) {
   const scope = typeof window !== "undefined" ? window : globalThis;
   const config = (scope && typeof scope.WebMarsCloudConfig === "object" && scope.WebMarsCloudConfig) || {};
   const preferred = normalizeCloudApiBase(preferenceState?.cloudApiBase || "");
-  const configured = normalizeCloudApiBase(config.baseUrl || "");
-  const selected = preferred || configured || resolveDefaultCloudApiBase();
+  const configured = normalizeCloudApiBase(publicLibraryModule?.config?.backMarsApiBase || config.baseUrl || "");
+  const allowsOverride = publicLibraryModule?.config?.allowBackMarsOverride === true;
+  const selected = allowsOverride
+    ? (preferred || configured || resolveDefaultCloudApiBase())
+    : (configured || resolveDefaultCloudApiBase());
   return normalizeCloudApiBase(selected);
 }
 
@@ -358,7 +369,8 @@ function buildCloudStoreState() {
       ? {
         id: Number(cloudUser.id) || 0,
         username: String(cloudUser.username || ""),
-        email: String(cloudUser.email || "")
+        email: String(cloudUser.email || ""),
+        emailVerified: cloudUser.emailVerified === true
       }
       : null,
     syncInFlight: cloudSyncInFlight === true,
@@ -368,14 +380,19 @@ function buildCloudStoreState() {
 }
 
 
-function showAboutOnFirstVisit() {
+function showWelcomeOnFirstVisit() {
+  let visited = false;
   try {
-    const visited = window.localStorage.getItem(ABOUT_VISITED_KEY);
-    if (visited === "1") return;
-    helpSystem.openAbout();
+    visited = window.localStorage.getItem(ABOUT_VISITED_KEY) === "1";
+  } catch {
+    // Storage can be disabled; the welcome window should still be usable.
+  }
+  if (visited) return;
+  void openWelcomeDialog();
+  try {
     window.localStorage.setItem(ABOUT_VISITED_KEY, "1");
   } catch {
-    // Ignore localStorage failures and continue without first-visit persistence.
+    // Continue without first-visit persistence.
   }
 }
 
@@ -2331,7 +2348,244 @@ async function openCloudRegisterDialog() {
   return result?.value === true;
 }
 
+async function openPasswordResetConfirmDialog(emailAddress) {
+  const email = String(emailAddress || "").trim().toLowerCase();
+  const result = await runDialogForm({
+    title: translateText("Enter Temporary Code"),
+    message: translateText("Enter the six-digit code from the email and choose a new password."),
+    confirmLabel: translateText("Reset Password"),
+    cancelLabel: translateText("Cancel"),
+    width: "500px",
+    height: "390px",
+    sections: [{
+      title: translateText("Password recovery"),
+      layout: "table",
+      fields: [
+        {
+          name: "code",
+          label: translateText("Temporary code"),
+          type: "text",
+          inputMode: "numeric",
+          autocomplete: "one-time-code",
+          value: ""
+        },
+        {
+          name: "password",
+          label: translateText("New Password"),
+          type: "password",
+          autocomplete: "new-password",
+          value: ""
+        },
+        {
+          name: "repeatPassword",
+          label: translateText("Repeat Password"),
+          type: "password",
+          autocomplete: "new-password",
+          value: ""
+        }
+      ]
+    }],
+    beforeResolve: async (values, dialog) => {
+      const code = String(values?.code || "").trim();
+      const password = String(values?.password || "");
+      const repeatPassword = String(values?.repeatPassword || "");
+      if (!/^\d{6}$/.test(code)) {
+        dialog.setMessage(translateText("Enter the six-digit temporary code."), "error");
+        return { close: false };
+      }
+      if (password.length < 8 || password !== repeatPassword) {
+        dialog.setMessage(translateText("Passwords must match and contain at least eight characters."), "error");
+        return { close: false };
+      }
+      dialog.setBusy(true);
+      try {
+        const payload = await cloudRequestJson("/password-reset/confirm", {
+          method: "POST",
+          body: { email, code, password }
+        });
+        setCloudSessionState("authenticated", payload?.user || { email }, "");
+        postMarsMessage("Password reset completed. You are signed in.");
+      } catch (error) {
+        dialog.setBusy(false);
+        dialog.setMessage(describeCloudError(error, translateText("Password reset failed.")), "error");
+        return { close: false };
+      }
+      return undefined;
+    }
+  }, {
+    windowIdPrefix: "window-password-reset-confirm",
+    left: "245px",
+    top: "125px",
+    width: "500px",
+    height: "390px"
+  });
+  return result?.ok === true;
+}
+
+async function openCloudPasswordResetDialog() {
+  const result = await runDialogForm({
+    title: translateText("Forgot Password"),
+    message: translateText("Request a temporary code by email, or continue with a code you already received. The answer is deliberately the same whether or not an account exists."),
+    confirmLabel: translateText("Continue"),
+    cancelLabel: translateText("Cancel"),
+    width: "500px",
+    height: "285px",
+    sections: [{
+      title: translateText("Account email"),
+      layout: "table",
+      fields: [
+        {
+          name: "email",
+          label: translateText("Email"),
+          type: "text",
+          inputMode: "email",
+          autocomplete: "email",
+          value: ""
+        },
+        {
+          name: "alreadyHaveCode",
+          label: translateText("I already have a temporary code"),
+          type: "checkbox",
+          value: false
+        }
+      ]
+    }],
+    beforeResolve: async (values, dialog) => {
+      const email = String(values?.email || "").trim().toLowerCase();
+      if (!email || !email.includes("@")) {
+        dialog.setMessage(translateText("Enter a valid email address."), "error");
+        return { close: false };
+      }
+      if (values?.alreadyHaveCode) return undefined;
+      dialog.setBusy(true);
+      try {
+        await cloudRequestJson("/password-reset/request", {
+          method: "POST",
+          body: { email }
+        });
+      } catch (error) {
+        dialog.setBusy(false);
+        dialog.setMessage(describeCloudError(error, translateText("Could not request a temporary code.")), "error");
+        return { close: false };
+      }
+      return undefined;
+    }
+  }, {
+    windowIdPrefix: "window-password-reset-request",
+    left: "245px",
+    top: "135px",
+    width: "500px",
+    height: "285px"
+  });
+  if (!result?.ok) return false;
+  const email = String(result.value?.email || "").trim().toLowerCase();
+  return openPasswordResetConfirmDialog(email);
+}
+
+async function openCloudEmailVerificationDialog() {
+  if (!await ensureCloudAuthenticated("verifying the account email")) return false;
+  if (cloudUser?.emailVerified === true) {
+    postMarsMessage("Email address is already verified.");
+    return true;
+  }
+  const requestChoice = await runDialogForm({
+    title: translateText("Verify Email"),
+    message: translateText("Use the code you already received, or request a new one. Requesting a new code invalidates the previous code."),
+    confirmLabel: translateText("Continue"),
+    cancelLabel: translateText("Cancel"),
+    width: "500px",
+    height: "260px",
+    sections: [{
+      title: translateText("Temporary code"),
+      fields: [{
+        name: "sendNewCode",
+        label: translateText("Send me a new code"),
+        type: "checkbox",
+        value: false
+      }]
+    }],
+    beforeResolve: async (values, dialog) => {
+      if (!values?.sendNewCode) return undefined;
+      dialog.setBusy(true);
+      try {
+        await cloudRequestJson("/email-verification/request", { method: "POST", body: {} });
+      } catch (error) {
+        dialog.setBusy(false);
+        dialog.setMessage(describeCloudError(error, translateText("Could not request an email verification code.")), "error");
+        return { close: false };
+      }
+      return undefined;
+    }
+  }, {
+    windowIdPrefix: "window-email-verification-request",
+    left: "235px",
+    top: "145px",
+    width: "500px",
+    height: "260px"
+  });
+  if (!requestChoice?.ok) return false;
+  const result = await runDialogForm({
+    title: translateText("Verify Email"),
+    message: translateText("Enter the six-digit code sent to your account email."),
+    confirmLabel: translateText("Verify"),
+    cancelLabel: translateText("Cancel"),
+    width: "460px",
+    height: "285px",
+    sections: [{
+      title: translateText("Email verification"),
+      layout: "table",
+      fields: [{
+        name: "code",
+        label: translateText("Temporary code"),
+        type: "text",
+        inputMode: "numeric",
+        autocomplete: "one-time-code",
+        value: ""
+      }]
+    }],
+    beforeResolve: async (values, dialog) => {
+      const code = String(values?.code || "").trim();
+      if (!/^\d{6}$/.test(code)) {
+        dialog.setMessage(translateText("Enter the six-digit temporary code."), "error");
+        return { close: false };
+      }
+      dialog.setBusy(true);
+      try {
+        const payload = await cloudRequestJson("/email-verification/confirm", {
+          method: "POST",
+          body: { code }
+        });
+        setCloudSessionState("authenticated", payload?.user || cloudUser, "");
+        postMarsMessage("Email address verified.");
+      } catch (error) {
+        dialog.setBusy(false);
+        dialog.setMessage(describeCloudError(error, translateText("Email verification failed.")), "error");
+        return { close: false };
+      }
+      return undefined;
+    }
+  }, {
+    windowIdPrefix: "window-email-verification",
+    left: "255px",
+    top: "135px",
+    width: "460px",
+    height: "285px"
+  });
+  return result?.ok === true;
+}
+
 async function openCloudServerPreferencesDialog() {
+  if (publicLibraryModule?.config?.allowBackMarsOverride !== true) {
+    await runDialogConfirm({
+      title: translateText("BackMars for this installation"),
+      message: translateText("This installation fixes Cloud, account recovery and the public library to one BackMars service: {url}", {
+        url: publicLibraryModule?.config?.backMarsApiBase || cloudApiBase
+      }),
+      confirmLabel: translateText("OK"),
+      cancelLabel: translateText("Close")
+    }, { windowIdPrefix: "window-cloud-server-fixed" });
+    return;
+  }
   const current = store.getState().preferences || preferences;
   const defaultApiBase = resolveDefaultCloudApiBase();
   const currentApiBase = normalizeCloudApiBase(current.cloudApiBase || "");
@@ -7396,7 +7650,7 @@ async function discoverExampleFiles() {
   }
 }
 
-void discoverExampleFiles();
+const exampleManifestReady = discoverExampleFiles();
 void ensureMiniCGlobalLibrariesLoaded();
 const fileInput = document.createElement("input");
 fileInput.type = "file";
@@ -8099,6 +8353,752 @@ function hideMiniCCompilerWindow(options = {}) {
   if (typeof windowManager.hide === "function") windowManager.hide("window-mini-c");
 }
 
+function describePublicLibraryError(error, fallback = "Public library request failed.") {
+  return describeCloudError(error, fallback);
+}
+
+async function copyPublicUrl(url, successMessage = "Link copied to the clipboard.") {
+  const value = String(url || "").trim();
+  if (!value) return false;
+  try {
+    await navigator.clipboard.writeText(value);
+    postMarsMessage(successMessage);
+    return true;
+  } catch {
+    await runDialogPrompt({
+      title: translateText("Copy Link"),
+      message: translateText("Copy this stable URL:"),
+      defaultValue: value,
+      confirmLabel: translateText("Close"),
+      cancelLabel: translateText("Close"),
+      inputMode: "url",
+      autocomplete: "url"
+    }, { windowIdPrefix: "window-public-link" });
+    return false;
+  }
+}
+
+function validateIncomingPublicPath(pathValue) {
+  const raw = String(pathValue || "").trim();
+  if (!raw || raw.startsWith("/") || raw.startsWith("\\") || /^[a-z]:/i.test(raw)) return "";
+  if (raw.includes("\u0000") || /[\u0000-\u001f]/.test(raw)) return "";
+  const normalized = raw.replace(/\\/g, "/");
+  const segments = normalized.split("/");
+  if (segments.length > 8 || segments.some((segment) => !segment || segment === "." || segment === "..")) return "";
+  if (normalized.length > 256) return "";
+  return normalized;
+}
+
+function materializePublicProject(publication) {
+  const payload = publication?.project;
+  if (!payload || typeof payload !== "object"
+    || String(payload.kind || "") !== "webmars-public-project"
+    || Number(payload.version) !== 1) {
+    throw new Error(translateText("This publication does not contain a supported public project."));
+  }
+  const rawFiles = Array.isArray(payload.files) ? payload.files : [];
+  if (!rawFiles.length || rawFiles.length > 128) {
+    throw new Error(translateText("This publication contains an invalid number of files."));
+  }
+  const usedPaths = new Set();
+  let totalBytes = 0;
+  const files = rawFiles.map((entry, index) => {
+    if (!entry || typeof entry !== "object") throw new Error(translateText("This publication contains an invalid file."));
+    const path = validateIncomingPublicPath(entry.path);
+    const source = String(entry.source ?? "");
+    const classification = classifyProjectFileContent(path, source);
+    const pathKey = path.toLowerCase();
+    if (!path || !classification.ok || usedPaths.has(pathKey)) {
+      throw new Error(translateText("This publication contains an unsafe or unsupported file."));
+    }
+    usedPaths.add(pathKey);
+    const bytes = textEncoder ? textEncoder.encode(source).byteLength : source.length;
+    if (bytes > 512 * 1024) throw new Error(translateText("A published file is too large to open safely."));
+    totalBytes += bytes;
+    if (totalBytes > ONLINE_SOURCE_MAX_BYTES) {
+      throw new Error(translateText("This publication is larger than the local project limit."));
+    }
+    return {
+      id: `public-copy-${Date.now()}-${index + 1}`,
+      path,
+      source,
+      savedSource: source,
+      updatedAt: Date.now()
+    };
+  });
+  const requestedActivePath = validateIncomingPublicPath(payload.activeFilePath);
+  const activeIndex = Math.max(0, files.findIndex((file) => file.path.toLowerCase() === requestedActivePath.toLowerCase()));
+  const seedName = normalizeProjectName(publication?.slug || payload.name || "public-project").replace(/\.p$/i, "");
+  const uniqueName = resolveUniqueProjectName(seedName);
+  const project = createDefaultProjectData({
+    name: uniqueName,
+    description: String(payload.description || publication?.description || "").slice(0, 2000),
+    rootPath: `${uniqueName}.p`,
+    files,
+    activeFileId: files[activeIndex]?.id || files[0].id,
+    settings: {},
+    layout: null
+  });
+  flushPendingLocalPersistence();
+  if (!openProjectWorkspace(project, { applySettings: false, applyLayout: false })) {
+    throw new Error(translateText("The public project could not be saved as a local copy."));
+  }
+  postMarsMessage("Opened public project '{name}' as an independent local copy.", { name: project.rootPath });
+  return project;
+}
+
+function serializeProjectForPublication(project) {
+  const normalized = normalizeProjectData(project);
+  if (!normalized) throw new Error(translateText("Active project is not valid."));
+  const files = normalizeProjectFiles(normalized.files).map((file) => {
+    const path = validateIncomingPublicPath(file.path);
+    const source = String(file.source ?? "");
+    const classification = classifyProjectFileContent(path, source);
+    if (!path || !classification.ok) {
+      throw new Error(translateText("The active project contains an unsafe or unsupported file."));
+    }
+    return { path, source };
+  });
+  if (!files.length) throw new Error(translateText("The active project has no files to publish."));
+  const activeFile = normalized.files.find((file) => String(file.id) === String(normalized.activeFileId));
+  return {
+    kind: "webmars-public-project",
+    version: 1,
+    name: normalized.name,
+    description: normalized.description,
+    files,
+    activeFilePath: validateIncomingPublicPath(activeFile?.path) || files[0].path
+  };
+}
+
+async function previewPublicPublication(publication) {
+  if (!publication || typeof publication !== "object") return false;
+  const revision = Number(publication.revision || publication.latestRevision) || 1;
+  const url = publicLibraryModule.buildPublicationUrl(publication.slug, publication.revision || null);
+  const details = [
+    String(publication.title || publication.slug || "Public project"),
+    `${translateText("Author")}: ${String(publication.author?.username || "unknown")}`,
+    `${translateText("Revision")}: ${revision}`,
+    `${translateText("License")}: ${String(publication.license || "unspecified")}`,
+    String(publication.description || ""),
+    String(publication.instructions || ""),
+    url
+  ].filter(Boolean).join("\n\n");
+  const open = await runDialogConfirm({
+    title: translateText("Public Project"),
+    message: details,
+    confirmLabel: translateText("Open as Local Copy"),
+    cancelLabel: translateText("Cancel")
+  }, {
+    windowIdPrefix: "window-public-preview",
+    left: "190px",
+    top: "90px",
+    width: "620px",
+    height: "480px"
+  });
+  if (!open) return false;
+  try {
+    materializePublicProject(publication);
+    return true;
+  } catch (error) {
+    postMarsMessage("[error] Could not open the public project: {message}", {
+      message: describePublicLibraryError(error, "Invalid public project.")
+    });
+    return false;
+  }
+}
+
+async function loadAndPreviewPublication(slug, revision = null) {
+  const path = publicLibraryModule.publicationApiPath(slug, revision);
+  if (!path) throw new Error(translateText("Invalid public project link."));
+  const payload = await publicLibraryModule.requestJson(path, { authenticated: false });
+  return previewPublicPublication(payload?.publication);
+}
+
+async function browsePublicLibrary() {
+  const search = await runDialogPrompt({
+    title: translateText("Search Public Library"),
+    message: translateText("Search by public name, title, description or tag. Leave blank to browse everything."),
+    defaultValue: "",
+    confirmLabel: translateText("Browse"),
+    cancelLabel: translateText("Cancel"),
+    autocomplete: "off"
+  }, { windowIdPrefix: "window-public-search" });
+  if (!search?.ok) return false;
+  const query = String(search.value || "").trim();
+  let offset = 0;
+  const pageSize = 50;
+  try {
+    while (true) {
+      const params = new URLSearchParams({ limit: String(pageSize), offset: String(offset) });
+      if (query) params.set("q", query);
+      const payload = await publicLibraryModule.requestJson(`/publications?${params}`, { authenticated: false });
+      const publications = Array.isArray(payload?.publications) ? payload.publications : [];
+      if (!publications.length) {
+        await runDialogConfirm({
+          title: translateText("Public Library"),
+          message: translateText(offset > 0
+            ? "There are no more public projects."
+            : query
+              ? "No public projects match this search."
+              : "This BackMars installation has no public projects yet."),
+          confirmLabel: translateText("OK"),
+          cancelLabel: translateText("Close")
+        }, { windowIdPrefix: "window-public-empty" });
+        if (offset > 0) {
+          offset = Math.max(0, offset - pageSize);
+          continue;
+        }
+        return false;
+      }
+      const options = publications.map((entry) => ({
+        value: String(entry.slug || ""),
+        label: `${String(entry.title || entry.slug || "")}${entry.author?.username ? ` — ${entry.author.username}` : ""}`
+      }));
+      if (offset > 0) options.unshift({ value: "__previous__", label: `← ${translateText("Previous page")}` });
+      if (publications.length === pageSize) options.push({ value: "__next__", label: `${translateText("Next page")} →` });
+      const result = await runDialogForm({
+        title: translateText("Public Library"),
+        message: translateText("Choose a public example or exercise from this BackMars installation."),
+        confirmLabel: translateText("Preview"),
+        cancelLabel: translateText("Cancel"),
+        width: "620px",
+        height: "320px",
+        sections: [{
+          title: translateText("Published projects"),
+          fields: [{
+            name: "slug",
+            label: translateText("Project"),
+            type: "select",
+            value: options[0].value,
+            options
+          }]
+        }]
+      }, { windowIdPrefix: "window-public-browser", left: "190px", top: "110px", width: "620px", height: "320px" });
+      if (!result?.ok) return false;
+      const selected = String(result.value?.slug || "");
+      if (selected === "__previous__") {
+        offset = Math.max(0, offset - pageSize);
+        continue;
+      }
+      if (selected === "__next__") {
+        offset += pageSize;
+        continue;
+      }
+      return loadAndPreviewPublication(selected);
+    }
+  } catch (error) {
+    postMarsMessage("[error] Public library request failed: {message}", {
+      message: describePublicLibraryError(error)
+    });
+    return false;
+  }
+}
+
+async function openPublicLinkDialog() {
+  const result = await runDialogPrompt({
+    title: translateText("Open Public Link"),
+    message: translateText("Paste a /p/ link or enter its public name."),
+    defaultValue: "",
+    confirmLabel: translateText("Open"),
+    cancelLabel: translateText("Cancel"),
+    inputMode: "url",
+    autocomplete: "url"
+  }, { windowIdPrefix: "window-public-open-link" });
+  if (!result?.ok) return false;
+  const raw = String(result.value || "").trim();
+  let route = null;
+  try {
+    if (/^https?:\/\//i.test(raw)) {
+      const supplied = new URL(raw);
+      const configured = new URL(publicLibraryModule.config.publicBaseUrl);
+      if (supplied.origin !== configured.origin) {
+        postMarsMessage("[warn] This public link belongs to another webMARS installation.");
+        return false;
+      }
+      route = publicLibraryModule.parseLaunchRoute(supplied);
+    } else {
+      const token = raw.replace(/^#?\/?p\//i, "");
+      const parsed = publicLibraryModule.parsePublicationToken(token);
+      route = parsed ? { kind: "publication", ...parsed } : null;
+    }
+  } catch {
+    route = null;
+  }
+  if (!route || route.kind !== "publication" || !route.slug) {
+    postMarsMessage("[warn] Invalid public project link.");
+    return false;
+  }
+  try {
+    return await loadAndPreviewPublication(route.slug, route.revision);
+  } catch (error) {
+    postMarsMessage("[error] Could not open public link: {message}", {
+      message: describePublicLibraryError(error)
+    });
+    return false;
+  }
+}
+
+async function copyBuiltInExampleLink() {
+  await exampleManifestReady;
+  if (!runtimeExampleFiles.length) return false;
+  const result = await runDialogForm({
+    title: translateText("Built-in Example Link"),
+    message: translateText("Choose an example and copy its stable link."),
+    confirmLabel: translateText("Copy Link"),
+    cancelLabel: translateText("Cancel"),
+    width: "610px",
+    height: "320px",
+    sections: [{
+      title: translateText("Examples"),
+      fields: [{
+        name: "exampleId",
+        label: translateText("Example"),
+        type: "select",
+        value: runtimeExampleFiles[0].id,
+        options: runtimeExampleFiles.map((example) => ({ value: example.id, label: example.label }))
+      }]
+    }]
+  }, { windowIdPrefix: "window-example-link", left: "195px", top: "110px", width: "610px", height: "320px" });
+  if (!result?.ok) return false;
+  return copyPublicUrl(publicLibraryModule.buildExampleUrl(result.value?.exampleId));
+}
+
+async function publishActiveProject() {
+  if (!ensureProjectOpenForAction("publishing the active project")) return false;
+  if (!await ensureCloudAuthenticated("publishing a public project")) return false;
+  if (cloudUser?.emailVerified !== true && !await openCloudEmailVerificationDialog()) return false;
+  syncProjectFromEditor(true);
+  flushPendingLocalPersistence();
+  let publicProject;
+  try {
+    publicProject = serializeProjectForPublication(projectState);
+  } catch (error) {
+    postMarsMessage("[error] Project cannot be published: {message}", {
+      message: describePublicLibraryError(error)
+    });
+    return false;
+  }
+  const baseName = String(projectState?.name || "project")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "project";
+  const result = await runDialogForm({
+    title: translateText("Publish Project"),
+    message: translateText("The public name is first-come, permanent and unique inside this BackMars installation."),
+    confirmLabel: translateText("Publish"),
+    cancelLabel: translateText("Cancel"),
+    width: "620px",
+    height: "560px",
+    sections: [{
+      title: translateText("Public details"),
+      layout: "table",
+      fields: [
+        { name: "slug", label: translateText("Public name"), type: "text", value: baseName, autocomplete: "off" },
+        { name: "title", label: translateText("Title"), type: "text", value: projectState?.name || baseName },
+        { name: "description", label: translateText("Description"), type: "text", value: projectState?.description || "" },
+        { name: "tags", label: translateText("Tags (comma separated)"), type: "text", value: "mips" },
+        {
+          name: "kind", label: translateText("Kind"), type: "select", value: "example",
+          options: [
+            { value: "example", label: translateText("Example") },
+            { value: "exercise", label: translateText("Exercise") },
+            { value: "solution", label: translateText("Solution") },
+            { value: "lab", label: translateText("Lab") },
+            { value: "library", label: translateText("Library") }
+          ]
+        },
+        {
+          name: "difficulty", label: translateText("Difficulty"), type: "select", value: "beginner",
+          options: [
+            { value: "beginner", label: translateText("Beginner") },
+            { value: "intermediate", label: translateText("Intermediate") },
+            { value: "advanced", label: translateText("Advanced") },
+            { value: "mixed", label: translateText("Mixed") }
+          ]
+        },
+        { name: "license", label: translateText("License"), type: "text", value: "CC BY 4.0" },
+        { name: "unlisted", label: translateText("Unlisted (available only through its link)"), type: "checkbox", value: false }
+      ]
+    }]
+  }, { windowIdPrefix: "window-public-publish", left: "185px", top: "65px", width: "620px", height: "560px" });
+  if (!result?.ok) return false;
+  const values = result.value || {};
+  const body = {
+    slug: String(values.slug || "").trim().toLowerCase(),
+    title: String(values.title || "").trim(),
+    description: String(values.description || "").trim(),
+    instructions: "",
+    tags: String(values.tags || "").split(",").map((tag) => tag.trim()).filter(Boolean),
+    language: getCurrentExampleLanguage(),
+    difficulty: String(values.difficulty || "beginner"),
+    kind: String(values.kind || "example"),
+    license: String(values.license || "unspecified").trim() || "unspecified",
+    status: values.unlisted === true ? "unlisted" : "published",
+    webmarsVersion: String(window.WebMarsAppVersion?.version || ""),
+    project: publicProject
+  };
+  try {
+    const payload = await publicLibraryModule.requestJson("/publications", { method: "POST", body });
+    const publication = payload?.publication;
+    const latestUrl = publicLibraryModule.buildPublicationUrl(publication?.slug);
+    const pinnedUrl = publicLibraryModule.buildPublicationUrl(publication?.slug, publication?.revision || 1);
+    await copyPublicUrl(latestUrl, "Public project link copied to the clipboard.");
+    await runDialogConfirm({
+      title: translateText("Project Published"),
+      message: `${translateText("Latest revision URL")}: ${latestUrl}\n\n${translateText("Pinned revision URL")}: ${pinnedUrl}`,
+      confirmLabel: translateText("OK"),
+      cancelLabel: translateText("Close")
+    }, { windowIdPrefix: "window-public-published", width: "620px", height: "300px" });
+    return true;
+  } catch (error) {
+    const message = Number(error?.status) === 409
+      ? translateText("That public name has already been claimed. Choose another name.")
+      : describePublicLibraryError(error, "Project publication failed.");
+    postMarsMessage("[error] Project publication failed: {message}", { message });
+    return false;
+  }
+}
+
+async function editOwnPublication(publication) {
+  if (!publication || !publication.slug) return false;
+  if (cloudUser?.emailVerified !== true && !await openCloudEmailVerificationDialog()) return false;
+  const result = await runDialogForm({
+    title: translateText("Edit Publication"),
+    message: translateText("The public name and existing revisions cannot be changed. Saving a published or unlisted status also restores an archived publication."),
+    confirmLabel: translateText("Save Changes"),
+    cancelLabel: translateText("Cancel"),
+    width: "650px",
+    height: "590px",
+    sections: [{
+      title: `${translateText("Public details")} — ${publication.slug}`,
+      layout: "table",
+      fields: [
+        { name: "title", label: translateText("Title"), type: "text", value: publication.title || publication.slug },
+        { name: "description", label: translateText("Description"), type: "text", value: publication.description || "" },
+        { name: "instructions", label: translateText("Instructions"), type: "text", value: publication.instructions || "" },
+        { name: "tags", label: translateText("Tags (comma separated)"), type: "text", value: Array.isArray(publication.tags) ? publication.tags.join(", ") : "" },
+        {
+          name: "kind", label: translateText("Kind"), type: "select", value: publication.kind || "example",
+          options: [
+            { value: "example", label: translateText("Example") },
+            { value: "exercise", label: translateText("Exercise") },
+            { value: "solution", label: translateText("Solution") },
+            { value: "lab", label: translateText("Lab") },
+            { value: "library", label: translateText("Library") }
+          ]
+        },
+        {
+          name: "difficulty", label: translateText("Difficulty"), type: "select", value: publication.difficulty || "beginner",
+          options: [
+            { value: "beginner", label: translateText("Beginner") },
+            { value: "intermediate", label: translateText("Intermediate") },
+            { value: "advanced", label: translateText("Advanced") },
+            { value: "mixed", label: translateText("Mixed") }
+          ]
+        },
+        { name: "license", label: translateText("License"), type: "text", value: publication.license || "unspecified" },
+        {
+          name: "status", label: translateText("Visibility"), type: "select",
+          value: publication.status === "unlisted" ? "unlisted" : "published",
+          options: [
+            { value: "published", label: translateText("Published (listed in the Public Library)") },
+            { value: "unlisted", label: translateText("Unlisted (available only through its link)") }
+          ]
+        }
+      ]
+    }]
+  }, { windowIdPrefix: "window-public-edit", left: "170px", top: "50px", width: "650px", height: "590px" });
+  if (!result?.ok) return false;
+  const values = result.value || {};
+  await publicLibraryModule.requestJson(`/publications/${encodeURIComponent(publication.slug)}`, {
+    method: "PUT",
+    body: {
+      slug: publication.slug,
+      title: String(values.title || "").trim(),
+      description: String(values.description || "").trim(),
+      instructions: String(values.instructions || "").trim(),
+      tags: String(values.tags || "").split(",").map((tag) => tag.trim()).filter(Boolean),
+      language: String(publication.language || getCurrentExampleLanguage()),
+      difficulty: String(values.difficulty || "beginner"),
+      kind: String(values.kind || "example"),
+      license: String(values.license || "unspecified").trim() || "unspecified",
+      status: String(values.status || "published")
+    }
+  });
+  postMarsMessage("Publication '{slug}' updated.", { slug: publication.slug });
+  return true;
+}
+
+function publicationStatusLabel(status) {
+  const normalized = String(status || "published").toLowerCase();
+  if (normalized === "archived") return translateText("Archived");
+  if (normalized === "unlisted") return translateText("Unlisted");
+  return translateText("Published");
+}
+
+async function chooseOwnPublicationAction() {
+  let offset = 0;
+  const pageSize = 50;
+  while (true) {
+    const params = new URLSearchParams({ limit: String(pageSize), offset: String(offset) });
+    const payload = await publicLibraryModule.requestJson(`/publications/mine?${params}`);
+    const publications = Array.isArray(payload?.publications) ? payload.publications : [];
+    if (!publications.length) {
+      if (offset > 0) {
+        offset = Math.max(0, offset - pageSize);
+        continue;
+      }
+      postMarsMessage("[info] This account has no publications on this BackMars installation.");
+      return null;
+    }
+    const publicationOptions = publications.map((entry) => ({
+      value: entry.slug,
+      label: `${entry.title} (${entry.slug}, r${entry.latestRevision}, ${publicationStatusLabel(entry.status)})`
+    }));
+    if (offset > 0) publicationOptions.unshift({ value: "__previous__", label: `← ${translateText("Previous page")}` });
+    if (payload?.hasMore === true) publicationOptions.push({ value: "__next__", label: `${translateText("Next page")} →` });
+    const result = await runDialogForm({
+      title: translateText("My Publications"),
+      message: translateText("Manage a public name or publish the active project as a new immutable revision."),
+      confirmLabel: translateText("Continue"),
+      cancelLabel: translateText("Cancel"),
+      width: "640px",
+      height: "390px",
+      sections: [{
+        title: translateText("Publication"),
+        layout: "table",
+        fields: [
+          {
+            name: "slug", label: translateText("Public project"), type: "select", value: publicationOptions[0].value,
+            options: publicationOptions
+          },
+          {
+            name: "action", label: translateText("Action"), type: "select", value: "copy-latest",
+            options: [
+              { value: "copy-latest", label: translateText("Copy latest URL") },
+              { value: "copy-pinned", label: translateText("Copy pinned revision URL") },
+              { value: "open", label: translateText("Preview and open") },
+              { value: "edit", label: translateText("Edit details and visibility") },
+              { value: "revision", label: translateText("Publish active project as new revision") },
+              { value: "archive", label: translateText("Archive publication") }
+            ]
+          }
+        ]
+      }]
+    }, { windowIdPrefix: "window-public-manage", left: "185px", top: "95px", width: "640px", height: "390px" });
+    if (!result?.ok) return null;
+    const selected = String(result.value?.slug || "");
+    if (selected === "__previous__") {
+      offset = Math.max(0, offset - pageSize);
+      continue;
+    }
+    if (selected === "__next__") {
+      offset += pageSize;
+      continue;
+    }
+    const publication = publications.find((entry) => entry.slug === selected);
+    return publication ? { publication, action: String(result.value?.action || "") } : null;
+  }
+}
+
+async function manageOwnPublications() {
+  if (!await ensureCloudAuthenticated("managing public projects")) return false;
+  try {
+    const selection = await chooseOwnPublicationAction();
+    if (!selection) return false;
+    const { publication, action } = selection;
+    if (action === "copy-latest") {
+      if (publication.status === "archived") {
+        postMarsMessage("[warn] The latest link is unavailable while this publication is archived. Copy its pinned revision or restore it first.");
+        return false;
+      }
+      return copyPublicUrl(publicLibraryModule.buildPublicationUrl(publication.slug));
+    }
+    if (action === "copy-pinned") return copyPublicUrl(publicLibraryModule.buildPublicationUrl(publication.slug, publication.latestRevision));
+    if (action === "open") return loadAndPreviewPublication(
+      publication.slug,
+      publication.status === "archived" ? publication.latestRevision : null
+    );
+    if (action === "edit") return editOwnPublication(publication);
+    if (action === "archive") {
+      if (publication.status === "archived") {
+        postMarsMessage("[info] This publication is already archived. Use Edit details and visibility to restore it.");
+        return false;
+      }
+      const confirmed = await requestConfirmDialog("Archive Publication", "Archive this publication? Its public name will never be reusable.", {
+        confirmLabel: "Archive", cancelLabel: "Cancel"
+      });
+      if (!confirmed) return false;
+      await publicLibraryModule.requestJson(`/publications/${encodeURIComponent(publication.slug)}`, { method: "DELETE" });
+      postMarsMessage("Publication archived. Its public name remains reserved permanently.");
+      return true;
+    }
+    if (action === "revision") {
+      if (publication.status === "archived") {
+        postMarsMessage("[warn] Restore this publication before adding a revision.");
+        return false;
+      }
+      if (cloudUser?.emailVerified !== true && !await openCloudEmailVerificationDialog()) return false;
+      if (!ensureProjectOpenForAction("publishing a new revision")) return false;
+      syncProjectFromEditor(true);
+      const project = serializeProjectForPublication(projectState);
+      const created = await publicLibraryModule.requestJson(`/publications/${encodeURIComponent(publication.slug)}/revisions`, {
+        method: "POST",
+        body: { project, webmarsVersion: String(window.WebMarsAppVersion?.version || "") }
+      });
+      const revision = created?.publication?.revision;
+      const url = publicLibraryModule.buildPublicationUrl(publication.slug, revision);
+      await copyPublicUrl(url, "Pinned revision link copied to the clipboard.");
+      postMarsMessage("Published immutable revision {revision} of '{slug}'.", { revision, slug: publication.slug });
+      return true;
+    }
+  } catch (error) {
+    postMarsMessage("[error] Could not manage publications: {message}", {
+      message: describePublicLibraryError(error)
+    });
+  }
+  return false;
+}
+
+async function previewAndOpenStableExample(example) {
+  if (!example) return false;
+  const accepted = await runDialogConfirm({
+    title: translateText("Built-in Example"),
+    message: `${String(example.label || example.id)}\n\n${publicLibraryModule.buildExampleUrl(example.id)}`,
+    confirmLabel: translateText("Open as New Project"),
+    cancelLabel: translateText("Cancel")
+  }, { windowIdPrefix: "window-example-preview", width: "580px", height: "280px" });
+  if (!accepted) return false;
+  try {
+    const variant = await loadLocalizedExample(example);
+    const files = variant.files.map((file, index) => ({
+      id: `example-copy-${Date.now()}-${index + 1}`,
+      path: validateIncomingPublicPath(file.logicalPath || file.name) || `example_${index + 1}.s`,
+      source: String(file.source || ""),
+      savedSource: String(file.source || ""),
+      updatedAt: Date.now()
+    }));
+    const mainIndex = Math.max(0, variant.files.findIndex((file) => file.main === true));
+    const name = resolveUniqueProjectName(example.id || "example");
+    const project = createDefaultProjectData({
+      name,
+      rootPath: `${name}.p`,
+      files,
+      activeFileId: files[mainIndex]?.id || files[0]?.id,
+      settings: {},
+      layout: null
+    });
+    flushPendingLocalPersistence();
+    return openProjectWorkspace(project, { applySettings: false, applyLayout: false });
+  } catch (error) {
+    postMarsMessage("[error] Failed to load example: {message}", {
+      message: describePublicLibraryError(error, "Failed to load file.")
+    });
+    return false;
+  }
+}
+
+async function handleLaunchRoute(route = publicLibraryModule.parseLaunchRoute(window.location)) {
+  if (!route) return false;
+  if (route.kind === "invalid") {
+    postMarsMessage("[warn] Invalid stable webMARS link.");
+    return true;
+  }
+  if (route.kind === "example") {
+    await exampleManifestReady;
+    const example = runtimeExampleFiles.find((entry) => String(entry.id || "").toLowerCase() === route.id);
+    if (!example) {
+      postMarsMessage("[warn] Built-in example link not found: {id}.", { id: route.id });
+      return true;
+    }
+    await previewAndOpenStableExample(example);
+    return true;
+  }
+  if (route.kind === "publication") {
+    try {
+      await loadAndPreviewPublication(route.slug, route.revision);
+    } catch (error) {
+      postMarsMessage("[error] Public project link failed: {message}", {
+        message: describePublicLibraryError(error, "Publication not found.")
+      });
+    }
+    return true;
+  }
+  return false;
+}
+
+function openTeacherKitDocument() {
+  const language = getCurrentExampleLanguage();
+  const localized = ["pt", "es", "en"].includes(language) ? language : "en";
+  helpSystem.openDocument(`./help/${localized}/TeacherKit.html`, translateText("Teacher Kit"));
+}
+
+async function openWelcomeDialog() {
+  const instanceName = String(publicLibraryModule?.config?.instanceName || "webMARS");
+  const result = await runDialogForm({
+    title: translateText("Welcome to webMARS"),
+    message: translateText("MARS in the browser, without Java. Files stay on this device unless you explicitly use Cloud or publish to this installation's public library. Accounts and public names belong to {instance}.", {
+      instance: instanceName
+    }),
+    confirmLabel: translateText("Continue"),
+    cancelLabel: translateText("Close"),
+    width: "620px",
+    height: "390px",
+    sections: [{
+      title: translateText("Start here"),
+      description: translateText("Choose what you want to do first."),
+      fields: [{
+        name: "action",
+        label: translateText("Action"),
+        type: "select",
+        value: "first-example",
+        options: [
+          { value: "first-example", label: translateText("Open the first example") },
+          { value: "open-file", label: translateText("Open a MARS file") },
+          { value: "new-project", label: translateText("Create a project") },
+          { value: "teachers", label: translateText("For teachers") },
+          { value: "manual", label: translateText("Open the Manual") },
+          { value: "continue", label: translateText("Continue to webMARS") }
+        ]
+      }]
+    }]
+  }, {
+    windowIdPrefix: "window-help-welcome",
+    left: "190px",
+    top: "95px",
+    width: "620px",
+    height: "390px"
+  });
+  if (!result?.ok) return false;
+  const action = String(result.value?.action || "continue");
+  if (action === "first-example") {
+    await exampleManifestReady;
+    return previewAndOpenStableExample(
+      runtimeExampleFiles.find((example) => example.id === "lesson01-registers") || runtimeExampleFiles[0]
+    );
+  }
+  if (action === "open-file") {
+    commands.openFileFromDisk();
+    return true;
+  }
+  if (action === "new-project") {
+    await commands.newProject();
+    return true;
+  }
+  if (action === "teachers") {
+    openTeacherKitDocument();
+    return true;
+  }
+  if (action === "manual") {
+    const manualUrl = String(publicLibraryModule?.config?.manualUrl || "").trim();
+    if (manualUrl) window.open(manualUrl, "_blank", "noopener,noreferrer");
+    else openTeacherKitDocument();
+    return true;
+  }
+  return true;
+}
+
 const commands = {
   newFile() {
     if (!projectIsOpen()) {
@@ -8259,6 +9259,14 @@ const commands = {
     return openCloudRegisterDialog();
   },
 
+  async cloudPasswordReset() {
+    return openCloudPasswordResetDialog();
+  },
+
+  async cloudVerifyEmail() {
+    return openCloudEmailVerificationDialog();
+  },
+
   async cloudLogout() {
     if (cloudAuthState !== "authenticated") {
       postMarsMessage("[info] Cloud session is not signed in.");
@@ -8282,11 +9290,31 @@ const commands = {
   },
 
   async cloudSaveProject() {
-    return commands.saveProjectWorkspace();
+    return saveActiveProjectToCloud();
   },
 
   async cloudSyncAllProjects() {
     return syncAllProjectsWithCloud();
+  },
+
+  async publicBrowse() {
+    return browsePublicLibrary();
+  },
+
+  async publicOpenLink() {
+    return openPublicLinkDialog();
+  },
+
+  async publicCopyExampleLink() {
+    return copyBuiltInExampleLink();
+  },
+
+  async publicPublish() {
+    return publishActiveProject();
+  },
+
+  async publicManage() {
+    return manageOwnPublications();
   },
 
   async closeFile() {
@@ -9185,6 +10213,8 @@ const commands = {
 
 
   helpHub() { helpSystem.open("mips", "basic"); },
+  helpWelcome() { return openWelcomeDialog(); },
+  helpTeacherKit() { openTeacherKitDocument(); },
   helpMipsPdf() { helpSystem.openDocument("./help/mipsref.pdf", "MIPS Reference PDF"); },
   helpAbout() { helpSystem.openAbout(); }
 };
@@ -9882,7 +10912,15 @@ if (restoredSession && store.getState().preferences.assembleOnOpen) {
 }
 persistWorkspaceSession();
 persistProjectNow({ syncFromEditor: projectIsOpen() });
-showAboutOnFirstVisit();
+void handleLaunchRoute().then((handled) => {
+  if (!handled) showWelcomeOnFirstVisit();
+});
+window.addEventListener("popstate", () => {
+  void handleLaunchRoute();
+});
+window.addEventListener("hashchange", () => {
+  void handleLaunchRoute();
+});
 void refreshCloudSession({
   silent: true,
   syncProjects: true,

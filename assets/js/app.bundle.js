@@ -25,6 +25,7 @@
     "./assets/js/app-modules/18-runtime-browser-storage.js",
     "./assets/js/app-modules/19-runtime-settings.js",
     "./assets/js/app-modules/19-runtime-benchmarks.js",
+    "./assets/js/app-modules/19-public-library.js",
     "./assets/js/app-modules/20-app-runtime.js"
   ];
   const LANGUAGE_MANIFEST_PATH = "./assets/js/i18n/languages.json";
