@@ -8,7 +8,17 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.6.0 makes webMARS ready for lasting classroom adoption: stable links, a public teaching library, recoverable accounts, deployment-owned configuration and an independent manual.</p>
+  <p class="lead">Release 0.6.1 hardens the classroom release: its deployment package is complete, stable links fail closed, pagination is exact and both themes meet the checked accessibility criteria.</p>
+
+  <h2>0.6.1 &mdash; complete packages and hardened stable links</h2>
+  <ul>
+    <li>Bundled the independently versioned Manual and Teacher Kit in the deployment ZIP, eliminating the dead <code>/manual/</code> link in fresh installations.</li>
+    <li>Made the permanent example-ID registry authoritative: valid redirects still resolve, while tombstones, unknown IDs and redirect loops fail closed.</li>
+    <li>Made Public Library pagination follow BackMars's explicit <code>hasMore</code> result while retaining compatibility with older installations.</li>
+    <li>Corrected light and dark theme contrast in the application and Manual, and gave dialog messages an accessible name.</li>
+    <li>Extended release validation to the bundled Manual, its product-lock hashes, JavaScript modules and internal links.</li>
+    <li>Corrected localized product information to report the 20 tools actually shipped.</li>
+  </ul>
 
   <h2>0.6.0 &mdash; stable classrooms and a public library</h2>
   <ul>

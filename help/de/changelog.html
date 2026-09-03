@@ -8,7 +8,17 @@
 </head>
 <body>
   <h1>Änderungsprotokoll</h1>
-  <p class="lead">Release 0.6.0 macht webMARS bereit für die dauerhafte Einführung im Klassenzimmer: stabile Links, eine öffentliche Lehrbibliothek, wiederherstellbare Konten, einsatzeigene Konfiguration und ein unabhängiges Handbuch.</p>
+  <p class="lead">Version 0.6.1 stärkt die Klassenzimmerversion: Das Bereitstellungspaket ist vollständig, stabile Links werden nicht geschlossen, die Paginierung ist präzise und beide Themen erfüllen die überprüften Barrierefreiheitskriterien.</p>
+
+  <h2>0.6.1 &mdash; Komplettpakete und gehärtete stabile Verbindungen</h2>
+  <ul>
+    <li>Das unabhängig versionierte Handbuch und das Lehrer-Kit wurden in der Bereitstellung ZIP gebündelt, wodurch der tote Link <code>/manual/</code> in Neuinstallationen entfernt wurde.</li>
+    <li>Die permanente Beispiel-ID-Registrierung wurde autorisierend: Gültige Weiterleitungen werden weiterhin aufgelöst, während Tombstones, unbekannte IDs und Weiterleitungsschleifen nicht geschlossen werden können.</li>
+    <li>Die Paginierung der öffentlichen Bibliothek folgt dem expliziten Ergebnis <code>hasMore</code> von BackMars, während die Kompatibilität mit älteren Installationen gewahrt bleibt.</li>
+    <li>Der Kontrast zwischen hellen und dunklen Themen in der Anwendung und im Handbuch wurde korrigiert und den Dialogmeldungen einen verständlichen Namen gegeben.</li>
+    <li>Erweiterte Release-Validierung für das mitgelieferte Handbuch, seine Produktsperr-Hashes, JavaScript-Module und interne Links.</li>
+    <li>Die lokalisierten Produktinformationen wurden korrigiert, um die 20 tatsächlich gelieferten Werkzeuge anzugeben.</li>
+  </ul>
 
   <h2>0.6.0 &mdash; stabile Klassenzimmer und eine öffentliche Bibliothek</h2>
   <ul>

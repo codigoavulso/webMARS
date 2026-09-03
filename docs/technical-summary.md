@@ -1,6 +1,6 @@
 # webMARS: a browser MIPS assembler, simulator and pipeline teaching model
 
-**Technical summary for academic use — webMARS 0.6.0**
+**Technical summary for academic use — webMARS 0.6.1**
 
 A short, citable description of what the system is, how it was built and what
 has been measured about it. Intended for inclusion in a paper, a thesis chapter
@@ -171,7 +171,7 @@ There is no hidden configuration and no external service.
 ## Citation
 
 See [CITATION.cff](../CITATION.cff). Cite the version, not the repository: every
-figure in this summary is anchored to webMARS 0.6.0, and
+figure in this summary is anchored to webMARS 0.6.1, and
 [release-process.md](release-process.md) records what a version bump promises.
 
 ## Related work

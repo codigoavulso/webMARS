@@ -8,7 +8,17 @@
 </head>
 <body>
   <h1>Journal des modifications</h1>
-  <p class="lead">La version 0.6.0 prépare webMARS à une adoption durable en classe : des liens stables, une bibliothèque pédagogique publique, des comptes récupérables, une configuration appartenant au déploiement et un manuel indépendant.</p>
+  <p class="lead">La version 0.6.1 renforce la version salle de classe : son package de déploiement est complet, les liens stables échouent, la pagination est exacte et les deux thèmes répondent aux critères d'accessibilité vérifiés.</p>
+
+  <h2>0.6.1 &mdash; packages complets et liens stables renforcés</h2>
+  <ul>
+    <li>Intégration du manuel et du kit de l'enseignant versionnés indépendamment dans le déploiement ZIP, éliminant ainsi le lien mort <code>/manual/</code> dans les nouvelles installations.</li>
+    <li>Le registre permanent d'exemples d'ID fait autorité : les redirections valides sont toujours résolues, tandis que les pierres tombales, les ID inconnus et les boucles de redirection échouent.</li>
+    <li>La pagination de la bibliothèque publique doit suivre le résultat explicite <code>hasMore</code> de BackMars tout en conservant la compatibilité avec les anciennes installations.</li>
+    <li>Correction du contraste des thèmes clairs et sombres dans l'application et le manuel, et attribution d'un nom accessible aux messages de dialogue.</li>
+    <li>Validation de version étendue au manuel fourni, à ses hachages de verrouillage de produit, aux modules JavaScript et aux liens internes.</li>
+    <li>Correction des informations localisées sur le produit pour signaler les 20 outils réellement expédiés.</li>
+  </ul>
 
   <h2>0.6.0 &mdash; des salles de classe stables et une bibliothèque publique</h2>
   <ul>

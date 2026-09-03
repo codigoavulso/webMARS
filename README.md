@@ -1,4 +1,4 @@
-# webMARS v0.6.0
+# webMARS v0.6.1
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -35,14 +35,14 @@ npm run validate
 npm run serve
 ```
 
-## Highlights in v0.6.0
+## Highlights in v0.6.1
 
-- Added stable direct links for every built-in example (`/e/<id>`) with a permanent ID registry.
-- Added the per-installation Public Library: first-come permanent names, anonymous browsing, sanitized local copies, mutable latest links and immutable pinned revisions (`/p/name@N`).
-- Added email verification and password recovery through short-lived, one-use codes; password reset revokes older sessions.
-- Replaced the first-run About popup with a Welcome flow while retaining About under Help.
-- Added an independent Manual v0.1 and Teacher Kit for migration from MARS, first classes, LMS links, assessment, privacy and self-hosting.
-- Added deployment identity through `webmars-config.js`, safe stable-route fallbacks and explicit URL-retention/self-hosting contracts.
+- Bundled the independently versioned Manual and Teacher Kit in the deployment ZIP, eliminating the dead `/manual/` link in fresh installations.
+- Made the permanent example-ID registry authoritative: redirects still resolve, while tombstones, unknown IDs and redirect loops fail closed.
+- Made Public Library pagination follow BackMars's explicit `hasMore` result while retaining compatibility with older installations.
+- Corrected light/dark contrast in the application and Manual, and gave dialog messages an accessible name.
+- Extended release validation to the bundled Manual, its product-lock hashes, JavaScript modules and internal links.
+- Corrected localized product information to report the 20 tools actually shipped.
 
 ## Main Capabilities
 
@@ -216,6 +216,7 @@ of the system with every figure linked to the report that produced it.
 
 ## Release Line
 
+- `v0.6.1`: complete deployment package with Manual and Teacher Kit, authoritative stable-ID tombstones, exact Public Library pagination, accessibility corrections and stricter release validation
 - `v0.6.0`: permanent example links, versioned public project publishing, account recovery and verification, deployment-owned configuration, first-run welcome, Teacher Kit, and the independent Manual v0.1
 - `v0.5.6`: Pipeline Lab replaying the real execution with register values, linked step transports, vertical pipeline and responsive rework, generated conformance/coverage/mutation/benchmark/accessibility evidence, and 872 newly translated interface strings
 - `v0.5.5`: Pipeline Lab, twenty-language interface/help/examples, scalable cycle history, and expanded UI/tool regression coverage
