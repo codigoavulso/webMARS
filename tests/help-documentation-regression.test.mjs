@@ -150,6 +150,17 @@ test("localized syscall help covers standard and webMARS library services", asyn
   }
 });
 
+test("localized product information derives its tool count from the shipped manifest", async () => {
+  const manifest = JSON.parse(await readFile(resolve(projectRoot, "tools", "tools.json"), "utf8"));
+  const expectedCount = manifest.tools.length;
+  for (const locale of locales) {
+    const html = await readFile(resolve(helpBase, locale, "info.html"), "utf8");
+    const declared = html.match(/data-tool-count="(\d+)"/);
+    assert.ok(declared, `${locale}/info.html must expose its claimed tool count`);
+    assert.equal(Number(declared[1]), expectedCount, `${locale}/info.html has a stale tool count`);
+  }
+});
+
 test("localized help labels are integrated into every UI catalog", async () => {
   const expected = {
     es: ["Ayuda de webMARS", "Espacio de trabajo", "Primeros pasos", "Ejecutar y depurar", "Límites y compatibilidad", "Soporte"],

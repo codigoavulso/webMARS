@@ -26,7 +26,7 @@
   --paper-raised: #ffffff;
   --ink: #1b1a17;
   --ink-muted: #55514a;
-  --ink-faint: #857f75;
+  --ink-faint: #706a61;
   --rule: #ddd8cd;
   --rule-strong: #beb7a9;
   --accent: #9c3a24;
@@ -36,8 +36,8 @@
   --tok-directive: #7a5a12;
   --tok-register: #8f3f2c;
   --tok-string: #3f6152;
-  --tok-comment: #857f75;
-  --tok-punct: #857f75;
+  --tok-comment: #706a61;
+  --tok-punct: #706a61;
 
   --focus: #185f86;
   --marker: #f0dca6;
@@ -50,7 +50,7 @@
   --paper-raised: #201d18;
   --ink: #eae4d8;
   --ink-muted: #a9a193;
-  --ink-faint: #837c6f;
+  --ink-faint: #8e877a;
   --rule: #34302a;
   --rule-strong: #4d483f;
   --accent: #e28268;
@@ -60,8 +60,8 @@
   --tok-directive: #d8b169;
   --tok-register: #e59079;
   --tok-string: #90bba5;
-  --tok-comment: #837c6f;
-  --tok-punct: #837c6f;
+  --tok-comment: #8e877a;
+  --tok-punct: #8e877a;
 
   --focus: #6db4dd;
   --marker: #5e4a1c;
@@ -75,7 +75,7 @@
     --paper-raised: #201d18;
     --ink: #eae4d8;
     --ink-muted: #a9a193;
-    --ink-faint: #837c6f;
+    --ink-faint: #8e877a;
     --rule: #34302a;
     --rule-strong: #4d483f;
     --accent: #e28268;
@@ -85,8 +85,8 @@
     --tok-directive: #d8b169;
     --tok-register: #e59079;
     --tok-string: #90bba5;
-    --tok-comment: #837c6f;
-    --tok-punct: #837c6f;
+    --tok-comment: #8e877a;
+    --tok-punct: #8e877a;
 
     --focus: #6db4dd;
     --marker: #5e4a1c;
@@ -205,7 +205,7 @@ img { max-width: 100%; }
   color: var(--ink);
   font-weight: 600;
 }
-.running-recto .recto-sep { color: var(--rule-strong); padding: 0 0.45rem; }
+.running-recto .recto-sep { color: var(--ink-faint); padding: 0 0.45rem; }
 
 .head-tools { display: flex; align-items: center; gap: 0.4rem; }
 
@@ -294,7 +294,7 @@ img { max-width: 100%; }
   text-transform: uppercase;
 }
 .nav-part-label .part-numeral {
-  color: var(--rule-strong);
+  color: var(--ink-faint);
   font-variant-numeric: tabular-nums;
 }
 .nav-part ul { margin: 0; padding: 0; list-style: none; }
@@ -1031,7 +1031,7 @@ pre code { padding: 0; background: none; }
   text-transform: uppercase;
 }
 .workflow-step strong { font-size: 0.85rem; font-weight: 600; }
-.workflow-arrow { color: var(--rule-strong); }
+.workflow-arrow { color: var(--ink-faint); }
 
 /* Procedimentos numerados */
 .steps {
@@ -1123,7 +1123,7 @@ pre code { padding: 0; background: none; }
   margin-left: 0.3rem;
   font-size: 0.9em;
   font-variant-numeric: tabular-nums;
-  opacity: 0.7;
+  opacity: 1;
 }
 .reference-tabs button:hover { color: var(--ink); }
 .reference-tabs button.active {

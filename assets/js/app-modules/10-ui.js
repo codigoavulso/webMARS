@@ -3913,6 +3913,9 @@ function createDialogSystem(windowManager, desktop, options = {}) {
   const queue = [];
   let active = null;
   const fieldIdPrefix = `dialog-field-${windowId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  const dialogTitleId = `${fieldIdPrefix}-title`;
+  titleNode.id = dialogTitleId;
+  messageNode.setAttribute("aria-labelledby", dialogTitleId);
   const defaultSize = {
     width: win.style.width || "460px",
     height: win.style.height || "200px"
@@ -5554,7 +5557,7 @@ function injectRuntimeStyles() {
     .editor-gutter {
       border-right: 1px solid var(--line-soft);
       background: var(--surface-sunken);
-      color: var(--text-soft);
+      color: var(--text-muted);
       text-align: right;
       min-width: 28px;
       user-select: none;

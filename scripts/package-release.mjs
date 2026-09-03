@@ -24,7 +24,19 @@ const PUBLIC_ROOT_FILES = Object.freeze([
   "webmars-config.js",
   "favicon.ico",
   "robots.txt",
-  "LICENSE"
+  "LICENSE",
+  // The application configuration shipped below points at /manual/.  Keep the
+  // independently versioned Manual as an explicit public payload instead of
+  // publishing a self-described standalone ZIP with a guaranteed dead link.
+  "manual/index.html",
+  "manual/manual-config.js",
+  "manual/LICENSE",
+  "manual/README.md",
+  "manual/CHANGELOG.md",
+  "manual/CONTRIBUTING.md",
+  "manual/SCREENSHOTS.md",
+  "manual/VERSION",
+  "manual/product-lock.json"
 ]);
 
 const PUBLIC_TREES = Object.freeze([
@@ -47,6 +59,22 @@ const PUBLIC_TREES = Object.freeze([
   {
     root: "tools",
     extensions: [".js", ".json"]
+  },
+  {
+    root: "manual/assets",
+    extensions: [".css", ".ico", ".js", ".png"]
+  },
+  {
+    root: "manual/content",
+    extensions: [".mjs"]
+  },
+  {
+    root: "manual/data",
+    extensions: [".json"]
+  },
+  {
+    root: "manual/teacher-kit",
+    extensions: [".md", ".txt"]
   }
 ]);
 
@@ -365,7 +393,14 @@ function normalizeLocalReference(owner, rawReference) {
 function assertPackagedReference(fileSet, owner, rawReference) {
   const normalized = normalizeLocalReference(owner, rawReference);
   if (!normalized) return;
-  assert(fileSet.has(normalized), `Broken packaged reference in ${owner}: ${rawReference}`);
+  const pathOnly = String(rawReference || "").trim().split(/[?#]/, 1)[0].replaceAll("\\", "/");
+  const directoryIndex = normalized === "."
+    ? "index.html"
+    : (pathOnly.endsWith("/") ? posix.join(normalized, "index.html") : "");
+  assert(
+    fileSet.has(normalized) || (directoryIndex && fileSet.has(directoryIndex)),
+    `Broken packaged reference in ${owner}: ${rawReference}`
+  );
 }
 
 function withoutHtmlBaseElements(source) {
@@ -416,7 +451,7 @@ async function validateJsonFiles(targetRoot, generatedFiles) {
 
 function validateJavaScriptFiles(targetRoot, generatedFiles) {
   for (const relativePath of generatedFiles) {
-    if (extname(relativePath).toLowerCase() !== ".js") continue;
+    if (![".js", ".mjs"].includes(extname(relativePath).toLowerCase())) continue;
     const checked = spawnSync(
       process.execPath,
       ["--check", resolveInside(targetRoot, relativePath)],
@@ -558,6 +593,49 @@ async function validateRuntimeReferences(targetRoot, generatedFiles) {
   }
 }
 
+async function validateBundledManual(targetRoot, generatedFiles) {
+  const fileSet = new Set(generatedFiles);
+  const requiredFiles = [
+    "manual/index.html",
+    "manual/manual-config.js",
+    "manual/LICENSE",
+    "manual/VERSION",
+    "manual/product-lock.json",
+    "manual/assets/manual.css",
+    "manual/assets/manual.js",
+    "manual/assets/favicon.ico",
+    "manual/content/index.mjs",
+    "manual/data/help-reference.json",
+    "manual/data/syscalls.json",
+    "manual/data/tool-manifest.json",
+    "manual/teacher-kit/README.md"
+  ];
+  for (const requiredFile of requiredFiles) requireExactFile(fileSet, requiredFile, "Manual release validator");
+
+  const lock = await readReleaseJson(targetRoot, "manual/product-lock.json");
+  const manualVersion = (await readFile(resolveInside(targetRoot, "manual/VERSION"), "utf8")).trim();
+  assert(lock?.manual?.version === manualVersion, "Bundled Manual VERSION and product lock disagree.");
+  assert(lock?.product?.version, "Bundled Manual product lock does not name a webMARS version.");
+  for (const catalog of Object.values(lock.catalogs || {})) {
+    const relativePath = `manual/${manifestPath(catalog?.file, "Manual product lock")}`;
+    requireExactFile(fileSet, relativePath, "Manual product lock");
+    const content = await readFile(resolveInside(targetRoot, relativePath));
+    assert(sha256(content) === catalog.sha256, `Bundled Manual catalog hash mismatch: ${relativePath}`);
+  }
+
+  // Chapter HTML is authored inside JavaScript template strings and resolves
+  // relative to manual/index.html when rendered.  Validate its static links at
+  // that document boundary, rather than relative to each module file.
+  for (const relativePath of generatedFiles) {
+    if (!relativePath.startsWith("manual/content/") || extname(relativePath).toLowerCase() !== ".mjs") continue;
+    const source = await readFile(resolveInside(targetRoot, relativePath), "utf8");
+    for (const match of source.matchAll(/\b(?:href|src)\s*=\s*["']([^"']+)["']/gi)) {
+      if (match[1].includes("${")) continue;
+      assertPackagedReference(fileSet, "manual/index.html", match[1]);
+    }
+  }
+}
+
 function requireExactFile(fileSet, relativePath, owner) {
   assert(fileSet.has(relativePath), `${owner} references a file absent from the package: ${relativePath}`);
 }
@@ -583,7 +661,12 @@ async function validateIsolatedRelease(targetRoot, sourceFiles) {
     "help/help-reference.json",
     "help/mipsref.pdf",
     "libs/manifest.json",
-    "tools/tools.json"
+    "tools/tools.json",
+    "manual/index.html",
+    "manual/assets/manual.js",
+    "manual/content/index.mjs",
+    "manual/product-lock.json",
+    "manual/teacher-kit/README.md"
   ];
   const fileSet = new Set(generatedFiles);
   for (const requiredFile of requiredFiles) requireExactFile(fileSet, requiredFile, "release validator");
@@ -593,6 +676,7 @@ async function validateIsolatedRelease(targetRoot, sourceFiles) {
   await validateDocumentReferences(targetRoot, generatedFiles);
   await validateManifestReferences(targetRoot, generatedFiles);
   await validateRuntimeReferences(targetRoot, generatedFiles);
+  await validateBundledManual(targetRoot, generatedFiles);
   return generatedFiles;
 }
 
@@ -863,4 +947,4 @@ if (invokedPath === fileURLToPath(import.meta.url)) {
   }
 }
 
-export { collectTreeFiles, publishReleaseSet, validateDocumentReferences };
+export { collectReleaseInputs, collectTreeFiles, publishReleaseSet, validateDocumentReferences };

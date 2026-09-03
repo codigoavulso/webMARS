@@ -57,6 +57,25 @@ test("every measured contrast pair clears its WCAG threshold", async () => {
   assert.ok(result.measurements.some((entry) => entry.theme === "dark"));
 });
 
+test("the editor gutter clears text contrast and dialog messages have an accessible name", async () => {
+  const css = await readFile(resolve(projectRoot, "assets/css/styles.css"), "utf8");
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const light = readTokens(css, ":root {");
+  const dark = readTokens(css, ':root[data-theme="dark"]');
+
+  assert.match(ui, /\.editor-gutter\s*\{[\s\S]*?color:\s*var\(--text-muted\)/);
+  for (const [theme, tokens] of [["light", light], ["dark", dark]]) {
+    const ratio = contrastRatio(tokens["--text-muted"], tokens["--surface-sunken"]);
+    assert.ok(ratio >= 4.5, `${theme} editor gutter contrast is ${ratio?.toFixed(2)}:1`);
+    for (const accent of ["--accent", "--accent-2"]) {
+      const accentRatio = contrastRatio(tokens["--text-on-accent"], tokens[accent]);
+      assert.ok(accentRatio >= 4.5, `${theme} ${accent} button contrast is ${accentRatio?.toFixed(2)}:1`);
+    }
+  }
+  assert.match(ui, /titleNode\.id = dialogTitleId;/);
+  assert.match(ui, /messageNode\.setAttribute\("aria-labelledby", dialogTitleId\);/);
+});
+
 test("the statement claims an initial audit and names what it did not check", async () => {
   const statement = await readFile(statementPath, "utf8");
   const version = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8")).version;

@@ -27,7 +27,9 @@ if (!runtimeBenchmarksModule || typeof runtimeBenchmarksModule.createBenchmarkCo
 }
 if (!publicLibraryModule
   || typeof publicLibraryModule.parseLaunchRoute !== "function"
-  || typeof publicLibraryModule.requestJson !== "function") {
+  || typeof publicLibraryModule.requestJson !== "function"
+  || typeof publicLibraryModule.resolveExampleRegistryId !== "function"
+  || typeof publicLibraryModule.hasNextPublicationPage !== "function") {
   throw new Error("[mars-web] publicLibrary module was not loaded before app runtime.");
 }
 if (!miniCCompilerModule
@@ -7609,6 +7611,7 @@ function normalizeExampleEntry(entry) {
 const runtimeExampleFiles = EXAMPLE_FILES
   .map((entry) => normalizeExampleEntry(entry))
   .filter(Boolean);
+let stableExampleRegistryEntries = [];
 
 function mergeExampleEntries(entries) {
   entries.forEach((entry) => {
@@ -7647,6 +7650,14 @@ async function discoverExampleFiles() {
     }
   } catch {
     // Optional manifest file.
+  }
+  try {
+    const registryText = await loadTextResource("./examples/stable-ids.json");
+    stableExampleRegistryEntries = publicLibraryModule.normalizeExampleRegistry(JSON.parse(registryText));
+  } catch {
+    // The registry was introduced after the examples manifest. Existing
+    // deployments without it can still open active examples from that manifest.
+    stableExampleRegistryEntries = [];
   }
 }
 
@@ -8556,7 +8567,9 @@ async function browsePublicLibrary() {
         label: `${String(entry.title || entry.slug || "")}${entry.author?.username ? ` — ${entry.author.username}` : ""}`
       }));
       if (offset > 0) options.unshift({ value: "__previous__", label: `← ${translateText("Previous page")}` });
-      if (publications.length === pageSize) options.push({ value: "__next__", label: `${translateText("Next page")} →` });
+      if (publicLibraryModule.hasNextPublicationPage(payload, pageSize)) {
+        options.push({ value: "__next__", label: `${translateText("Next page")} →` });
+      }
       const result = await runDialogForm({
         title: translateText("Public Library"),
         message: translateText("Choose a public example or exercise from this BackMars installation."),
@@ -9007,7 +9020,16 @@ async function handleLaunchRoute(route = publicLibraryModule.parseLaunchRoute(wi
   }
   if (route.kind === "example") {
     await exampleManifestReady;
-    const example = runtimeExampleFiles.find((entry) => String(entry.id || "").toLowerCase() === route.id);
+    let resolvedId = route.id;
+    if (stableExampleRegistryEntries.length) {
+      const registryResolution = publicLibraryModule.resolveExampleRegistryId(route.id, stableExampleRegistryEntries);
+      if (registryResolution.status !== "active") {
+        postMarsMessage("[warn] Built-in example link not found: {id}.", { id: route.id });
+        return true;
+      }
+      resolvedId = registryResolution.id;
+    }
+    const example = runtimeExampleFiles.find((entry) => String(entry.id || "").toLowerCase() === resolvedId);
     if (!example) {
       postMarsMessage("[warn] Built-in example link not found: {id}.", { id: route.id });
       return true;

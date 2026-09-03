@@ -92,6 +92,58 @@ test("pinned links keep the documented @N delimiter and reject invalid tokens", 
   assert.equal(library.publicationApiPath("first-lab", 3), "/publications/first-lab/revisions/3");
 });
 
+test("public browse pagination trusts an explicit hasMore result", async () => {
+  const library = await loadPublicLibraryModule();
+  const fullPage = { publications: Array.from({ length: 50 }, (_, index) => ({ slug: `item-${index}` })) };
+
+  assert.equal(library.hasNextPublicationPage({ ...fullPage, hasMore: false }, 50), false);
+  assert.equal(library.hasNextPublicationPage({ ...fullPage, hasMore: true }, 50), true);
+  assert.equal(library.hasNextPublicationPage(fullPage, 50), true, "old BackMars remains navigable");
+  assert.equal(library.hasNextPublicationPage({ publications: fullPage.publications.slice(0, 49) }, 50), false);
+});
+
+test("retired stable example IDs resolve through redirects without loops", async () => {
+  const library = await loadPublicLibraryModule();
+  const registry = {
+    entries: [
+      { id: "old-lab", status: "retired", redirectTo: "middle-lab" },
+      { id: "middle-lab", status: "retired", redirectTo: "current-lab" },
+      { id: "current-lab", status: "active" },
+      { id: "gone-lab", status: "retired" },
+      { id: "loop-a", status: "retired", redirectTo: "loop-b" },
+      { id: "loop-b", status: "retired", redirectTo: "loop-a" }
+    ]
+  };
+
+  assert.deepEqual(
+    plain(library.resolveExampleRegistryId("OLD-LAB", registry)),
+    { status: "active", id: "current-lab", redirected: true }
+  );
+  assert.deepEqual(plain(library.resolveExampleRegistryId("current-lab", registry)), {
+    status: "active", id: "current-lab", redirected: false
+  });
+  assert.deepEqual(plain(library.resolveExampleRegistryId("gone-lab", registry)), {
+    status: "retired", id: "gone-lab"
+  });
+  assert.deepEqual(plain(library.resolveExampleRegistryId("loop-a", registry)), {
+    status: "retired", id: "loop-a"
+  });
+  assert.deepEqual(plain(library.resolveExampleRegistryId("unknown-lab", registry)), {
+    status: "unknown", id: "unknown-lab"
+  });
+});
+
+test("the runtime does not reopen tombstoned examples left in an old manifest", async () => {
+  const runtime = await readFile(
+    resolve(projectRoot, "assets", "js", "app-modules", "20-app-runtime.js"),
+    "utf8"
+  );
+  const routeHandler = runtime.slice(runtime.indexOf("async function handleLaunchRoute"));
+  assert.match(routeHandler, /if \(stableExampleRegistryEntries\.length\)/);
+  assert.match(routeHandler, /registryResolution\.status !== "active"/);
+  assert.match(routeHandler, /registryResolution\.status !== "active"[\s\S]*?return true;/);
+});
+
 test("the development server falls back only for valid stable application routes", () => {
   assert.equal(isStableAppRoute("/e/lesson01-registers"), true);
   assert.equal(isStableAppRoute("/p/first-lab@3"), true);

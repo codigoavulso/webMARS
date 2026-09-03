@@ -17,6 +17,24 @@ function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
 
+function relativeLuminance(hex) {
+  const channels = hex.match(/[0-9a-f]{2}/gi).map((value) => Number.parseInt(value, 16) / 255);
+  const linear = channels.map((value) => (
+    value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+  ));
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+
+function contrastRatio(foreground, background) {
+  const light = Math.max(relativeLuminance(foreground), relativeLuminance(background));
+  const dark = Math.min(relativeLuminance(foreground), relativeLuminance(background));
+  return (light + 0.05) / (dark + 0.05);
+}
+
+function cssTokens(block) {
+  return new Map([...block.matchAll(/--([a-z-]+):\s*(#[0-9a-f]{6})\s*;/gi)].map((match) => [match[1], match[2]]));
+}
+
 async function listFiles(root, current = root) {
   const entries = await readdir(current, { withFileTypes: true });
   const files = [];
@@ -206,6 +224,41 @@ test("the standalone distribution contains metadata, configuration and accessibl
   assert.equal(version.verificationStatus, lock.product.verificationStatus);
   assert.equal(version.verifiedCommit, lock.product.verifiedCommit);
   assert.equal(version.reference.tools, 20);
+});
+
+test("light and dark Manual text tokens meet WCAG AA contrast on every paper surface", async () => {
+  const css = await readFile(join(manualRoot, "assets", "manual.css"), "utf8");
+  const lightBlock = css.match(/:root\s*\{([\s\S]*?)\n\}/)?.[1] || "";
+  const darkBlock = css.match(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/)?.[1] || "";
+  const palettes = [
+    { name: "light", tokens: cssTokens(lightBlock) },
+    { name: "dark", tokens: cssTokens(darkBlock) }
+  ];
+  const foregrounds = [
+    "ink", "ink-muted", "ink-faint", "accent", "flag",
+    "tok-directive", "tok-register", "tok-string", "tok-comment", "tok-punct"
+  ];
+  const backgrounds = ["paper", "paper-sunk", "paper-raised"];
+  for (const { name, tokens } of palettes) {
+    for (const foregroundName of foregrounds) {
+      for (const backgroundName of backgrounds) {
+        const foreground = tokens.get(foregroundName);
+        const background = tokens.get(backgroundName);
+        assert.ok(foreground && background, `${name} palette is missing ${foregroundName}/${backgroundName}`);
+        const ratio = contrastRatio(foreground, background);
+        assert.ok(
+          ratio >= 4.5,
+          `${name} ${foregroundName} on ${backgroundName} is ${ratio.toFixed(2)}:1; expected at least 4.5:1`
+        );
+      }
+    }
+  }
+  assert.doesNotMatch(css, /(?<![-\w])color:\s*var\(--rule(?:-strong)?\)/, "border-rule tokens must not be used as text colours");
+  assert.match(
+    css,
+    /\.reference-tabs button span\s*\{[\s\S]*?opacity:\s*1\s*;/,
+    "reference tab counts must not dilute an already contrast-tested text token"
+  );
 });
 
 test("copied source trees and release metadata are byte-for-byte identical in dist", async () => {

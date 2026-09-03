@@ -9,6 +9,7 @@ import { promisify } from "node:util";
 import vm from "node:vm";
 import { collectFindings } from "../scripts/check-i18n-coverage.mjs";
 import {
+  collectReleaseInputs,
   collectTreeFiles,
   publishReleaseSet,
   validateDocumentReferences
@@ -283,11 +284,17 @@ test("release reference validation treats the HTML base as routing metadata", as
       '<!doctype html><base href="/lab/"><link rel="stylesheet" href="./assets/app.css"><script src="./assets/app.js"></script>\n',
       "utf8"
     );
+    await mkdir(resolve(sandbox, "manual"), { recursive: true });
+    await writeFile(
+      resolve(sandbox, "manual", "index.html"),
+      '<!doctype html><a href="../">Back to the application</a>\n',
+      "utf8"
+    );
     await writeFile(resolve(sandbox, "assets", "app.css"), "body { color: black; }\n", "utf8");
     await writeFile(resolve(sandbox, "assets", "app.js"), "globalThis.appLoaded = true;\n", "utf8");
 
     await assert.doesNotReject(
-      () => validateDocumentReferences(sandbox, ["index.html", "assets/app.css", "assets/app.js"])
+      () => validateDocumentReferences(sandbox, ["index.html", "assets/app.css", "assets/app.js", "manual/index.html"])
     );
 
     await writeFile(
@@ -767,6 +774,28 @@ test("release packaging and CI use the supported public commands", async () => {
   assert.match(validateScript, /args:\s*\["test"\]/, "validate must run the complete npm test suite");
   assert.match(packageScript, /\bEXCLUDED_PUBLIC_FILES\b/);
   assert.match(packageScript, /\bvalidateZipArchive\b/);
+});
+
+test("the deployment package carries the independently versioned Manual it links to", async () => {
+  const releaseFiles = new Set(await collectReleaseInputs());
+  for (const path of [
+    "manual/index.html",
+    "manual/manual-config.js",
+    "manual/assets/manual.js",
+    "manual/content/index.mjs",
+    "manual/data/tool-manifest.json",
+    "manual/product-lock.json",
+    "manual/teacher-kit/README.md"
+  ]) {
+    assert.ok(releaseFiles.has(path), `deployment package is missing ${path}`);
+  }
+  for (const privatePath of [
+    "manual/package.json",
+    "manual/scripts/build.mjs",
+    "manual/tests/manual.test.mjs"
+  ]) {
+    assert.equal(releaseFiles.has(privatePath), false, `development-only file leaked: ${privatePath}`);
+  }
 });
 
 test("the validation runner invokes npm safely on Windows", async () => {

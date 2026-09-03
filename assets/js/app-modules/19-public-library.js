@@ -130,6 +130,55 @@
     return parsed.revision ? `${base}/revisions/${parsed.revision}` : base;
   }
 
+  function normalizeExampleRegistry(value) {
+    const entries = Array.isArray(value) ? value : value?.entries;
+    if (!Array.isArray(entries)) return [];
+    const seen = new Set();
+    return entries.flatMap((entry) => {
+      if (!entry || typeof entry !== "object") return [];
+      const id = String(entry.id || "").trim().toLowerCase();
+      const status = String(entry.status || "").trim().toLowerCase();
+      const redirectTo = String(entry.redirectTo || "").trim().toLowerCase();
+      if (!exampleIdPattern.test(id) || seen.has(id) || !["active", "retired"].includes(status)) return [];
+      seen.add(id);
+      return [{
+        id,
+        status,
+        redirectTo: status === "retired" && exampleIdPattern.test(redirectTo) ? redirectTo : ""
+      }];
+    });
+  }
+
+  function resolveExampleRegistryId(value, registryValue) {
+    const requestedId = String(value || "").trim().toLowerCase();
+    if (!exampleIdPattern.test(requestedId)) return { status: "unknown", id: requestedId };
+    const entries = normalizeExampleRegistry(registryValue);
+    const byId = new Map(entries.map((entry) => [entry.id, entry]));
+    if (!byId.has(requestedId)) return { status: "unknown", id: requestedId };
+
+    const visited = new Set();
+    let currentId = requestedId;
+    while (!visited.has(currentId)) {
+      visited.add(currentId);
+      const entry = byId.get(currentId);
+      if (!entry) return { status: "retired", id: requestedId };
+      if (entry.status === "active") {
+        return { status: "active", id: currentId, redirected: currentId !== requestedId };
+      }
+      if (!entry.redirectTo) return { status: "retired", id: requestedId };
+      currentId = entry.redirectTo;
+    }
+    return { status: "retired", id: requestedId };
+  }
+
+  function hasNextPublicationPage(payload, pageSize) {
+    if (payload && Object.prototype.hasOwnProperty.call(payload, "hasMore")) {
+      return payload.hasMore === true;
+    }
+    const publications = Array.isArray(payload?.publications) ? payload.publications : [];
+    return publications.length === pageSize;
+  }
+
   async function requestJson(path, options = {}) {
     const method = String(options.method || "GET").trim().toUpperCase() || "GET";
     const relative = String(path || "").trim();
@@ -190,6 +239,9 @@
     buildExampleUrl,
     buildPublicationUrl,
     publicationApiPath,
+    normalizeExampleRegistry,
+    resolveExampleRegistryId,
+    hasNextPublicationPage,
     requestJson
   });
 })();
