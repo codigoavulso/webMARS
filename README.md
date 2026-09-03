@@ -25,8 +25,8 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 ## Manual do webMARS
 
 [`manual/`](manual/README.md) is the independent, Portuguese-language webMARS
-manual. It has its own semantic version (`0.1.0`), changelog, static build and
-test suite. This edition targets webMARS `0.6.0` and includes
+manual. It has its own semantic version (`0.1.1`), changelog, static build and
+test suite. This edition targets webMARS `0.6.1` and includes
 searchable reference data plus real light-theme screenshots for every tool.
 
 ```bash

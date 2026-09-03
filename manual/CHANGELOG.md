@@ -3,6 +3,25 @@
 Todas as alterações relevantes deste subprojeto são registadas aqui. O formato
 segue *Keep a Changelog* e o manual usa versionamento semântico próprio.
 
+## [0.1.1] — 2026-09-03
+
+### Corrigido
+
+- contraste WCAG AA dos textos atenuados nos temas claro e escuro;
+- contraste das contagens nos separadores da referência pesquisável;
+- testes automáticos para todas as combinações de tokens de texto e superfícies
+  de papel usadas pelo Manual.
+
+### Alterado
+
+- fotografia verificável atualizada para o webMARS 0.6.1, commit
+  `9835baae3f8d83cd7b522ab798a9f0b7b75483fc`;
+- integração da distribuição autónoma no ZIP oficial do webMARS, incluindo o
+  Kit Docente, hashes do product lock, módulos e ligações internas;
+- referências correntes de comportamento atualizadas para a aplicação 0.6.1;
+- mantidas as capturas reais do webMARS 0.6.0 porque esta correção não alterou
+  a estrutura nem os fluxos retratados.
+
 ## [0.1.0] — 2026-08-29
 
 ### Adicionado
@@ -25,4 +44,5 @@ segue *Keep a Changelog* e o manual usa versionamento semântico próprio.
 - recuperação de password e verificação de email por código temporário;
 - Kit Docente e guia completo de self-hosting/Gmail para webMARS 0.6.0.
 
+[0.1.1]: https://github.com/codigoavulso/webMARS/releases/tag/manual-v0.1.1
 [0.1.0]: https://github.com/codigoavulso/webMARS/releases/tag/manual-v0.1.0

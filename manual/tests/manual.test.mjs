@@ -338,7 +338,7 @@ test("editorial metadata and screenshot protocol stay aligned", async () => {
   assert.match(changelog, new RegExp(`\\[${MANUAL.version.replaceAll(".", "\\.")}\\]`));
   assert.match(changelog, new RegExp(`manual-v${MANUAL.version.replaceAll(".", "\\.")}`));
   assert.match(readme, /prefixo de tag `manual-v`/);
-  assert.match(readme, /webMARS `0\.6\.0`/);
+  assert.match(readme, new RegExp(`webMARS \`${MANUAL.webmarsVersion.replaceAll(".", "\\.")}\``));
   assert.match(screenshots, /tema: \*\*Claro\*\*/);
   assert.match(screenshots, /35 capturas/);
   assert.match(screenshots, /1280 × 720/);

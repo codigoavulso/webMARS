@@ -30,7 +30,7 @@ export const TOOL_DATA = [
     name: "Bitmap Terminal Tool",
     group: "Ecrãs e dispositivos",
     purpose: "Combinar um terminal de texto desenhado num framebuffer com uma fila de teclado acessível ao programa.",
-    example: "Não há exemplo dedicado na 0.6.0; derive <code>bitmap_ascii.c</code> e use <code>bitmap_configure_terminal</code> em vez de <code>bitmap_configure_display</code>.",
+    example: "Não há exemplo dedicado na 0.6.1; derive <code>bitmap_ascii.c</code> e use <code>bitmap_configure_terminal</code> em vez de <code>bitmap_configure_display</code>.",
     connect: "Configure geometria/base, ligue e dê foco à área de teclado antes de executar o fixture.",
     controls: "Configuração recolhível, endereço e dimensões, teclado, Connect, Reset e Fit Window.",
     interpretation: "O framebuffer mostra células/píxeis; teclas introduzidas entram na fila MMIO consumida pelo programa.",

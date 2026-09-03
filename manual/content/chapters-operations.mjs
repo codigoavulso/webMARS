@@ -323,7 +323,7 @@ export const operationChapters = [
             ["C and compilation", "13", "Mini-C, bibliotecas, ABI, perfis e projetos."],
             ["Devices and system", "17", "MMIO, terminais, bitmap, interrupções, cache, BHT e MARS-OS."]
           ])}
-          <p>Abra em <strong>Ficheiro → Exemplos → categoria → exemplo</strong>. O menu é hierárquico e não tem pesquisa na 0.6.0; use esta página ou a pesquisa do manual para escolher.</p>
+          <p>Abra em <strong>Ficheiro → Exemplos → categoria → exemplo</strong>. O menu é hierárquico e não tem pesquisa na 0.6.1; use esta página ou a pesquisa do manual para escolher.</p>
           ${screenshot("./assets/screenshots/help-menu-light.png", "Menu Ajuda aberto sobre o ambiente de execução do webMARS", "A ajuda incorporada, o PDF de referência MIPS e a informação da versão continuam disponíveis na aplicação; este manual constitui a documentação independente e versionada.")}
         `
       },
@@ -568,7 +568,7 @@ export const operationChapters = [
         content: html`
           <p>Inclua versão, browser/OS, passos mínimos, fonte pequena, input, opções relevantes, mensagem completa e resultado esperado/real. Para pipeline/tool, anexe export/configuração; para Cloud, não envie password, cookie, token ou projeto privado.</p>
           ${table(["Incluir", "Evitar"], [
-            ["webMARS 0.6.0 e URL/local", "“Não funciona” sem fase"],
+            ["webMARS 0.6.1 e URL/local", "“Não funciona” sem fase"],
             ["Exemplo ou fonte mínima", "Projeto inteiro com dados pessoais"],
             ["Primeiro diagnóstico completo", "Screenshot ilegível sem texto"],
             ["Mapa, delayed branch, strict, backsteps", "Credenciais, IPs, cookies ou tokens"],
@@ -904,6 +904,21 @@ export const operationChapters = [
     sources: ["manual/CHANGELOG.md"],
     sections: [
       {
+        id: "v0-1-1",
+        title: "0.1.1 — 3 de setembro de 2026",
+        content: html`
+          <h3>Corrigido</h3>
+          <ul>
+            <li>Contraste WCAG AA dos textos atenuados nos temas claro e escuro.</li>
+            <li>Contraste das contagens nos separadores da referência pesquisável.</li>
+            <li>Validação automatizada das combinações de texto e superfícies do Manual.</li>
+            <li>Inclusão integral do Manual e do Kit Docente no ZIP de instalação do webMARS.</li>
+          </ul>
+          <h3>Produto documentado</h3>
+          <p>webMARS <code>${MANUAL.webmarsVersion}</code>, commit <code>${MANUAL.verifiedCommit.slice(0, 12)}</code>, verificado em ${MANUAL.verifiedAt}.</p>
+        `
+      },
+      {
         id: "v0-1-0",
         title: "0.1.0 — 29 de agosto de 2026",
         content: html`
@@ -923,7 +938,7 @@ export const operationChapters = [
             <li>Build autónomo, testes editoriais, impressão e protocolo de screenshots.</li>
           </ul>
           <h3>Produto documentado</h3>
-          <p>webMARS <code>${MANUAL.webmarsVersion}</code>, commit <code>${MANUAL.verifiedCommit.slice(0, 12)}</code>, verificado em ${MANUAL.verifiedAt}.</p>
+          <p>webMARS <code>0.6.0</code>, commit <code>e15ce68b3b90</code>, verificado em 2026-08-29.</p>
         `
       },
       {
