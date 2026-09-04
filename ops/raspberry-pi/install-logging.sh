@@ -6,7 +6,7 @@ SITE_CONFIG=/etc/nginx/sites-available/nextcloud
 STAMP=$(date +%Y%m%d-%H%M%S)
 SITE_BACKUP="${SITE_CONFIG}.bak-webmars-logging-${STAMP}"
 
-for source_file in nginx-webmars-logging.conf logrotate-webmars webmars-visits.py; do
+for source_file in nginx-webmars-logging.conf logrotate-webmars webmars-visits.py webmars-analytics.py; do
     if [[ ! -f "${SCRIPT_DIR}/${source_file}" ]]; then
         echo "Missing ${SCRIPT_DIR}/${source_file}" >&2
         exit 1
@@ -25,6 +25,9 @@ sudo install -o root -g root -m 0644 \
 sudo install -o root -g root -m 0755 \
     "${SCRIPT_DIR}/webmars-visits.py" \
     /usr/local/bin/webmars-visits
+sudo install -o root -g root -m 0755 \
+    "${SCRIPT_DIR}/webmars-analytics.py" \
+    /usr/local/bin/webmars-analytics
 
 if sudo grep -Fq 'access_log /var/log/nginx/webmars_access.log;' "$SITE_CONFIG"; then
     sudo sed -i \
@@ -71,4 +74,5 @@ sudo chmod -R u=rwX,g=rX,o= /var/log/nginx/webmars/legacy
 sudo /usr/sbin/logrotate --debug /etc/logrotate.d/webmars >/dev/null
 
 echo "webMARS structured logging installed."
+echo "Run 'sudo webmars-analytics --days 30' for the privacy-conscious report."
 echo "Nginx backup: ${SITE_BACKUP}"

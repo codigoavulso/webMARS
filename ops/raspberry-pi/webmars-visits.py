@@ -18,7 +18,11 @@ LOG_ROOT = Path("/var/log/nginx/webmars")
 BOT_PATTERN = re.compile(
     r"bot|crawler|spider|slurp|bingpreview|facebookexternalhit|facebookcatalog|"
     r"twitterbot|linkedinbot|whatsapp|telegrambot|discordbot|googleother|curl|"
-    r"wget|python-requests|go-http-client|headless|uptimerobot|statuscake|monitoring",
+    r"wget|python(?:-requests|/)|aiohttp|go-http-client|headless|uptimerobot|"
+    r"statuscake|monitoring|agenticsearch|hnreader|readyou|link.?check|checker|"
+    r"palo alto|cortex-xpanse|censys|leakix|l9scan|marginalia|netcraft|"
+    r"internetmeasurement|scanner|scan/|vuln_|cms-|productSnap|research|"
+    r"surveyagent|(?:^|\s)node(?:$|\s)|bun/|got \(",
     re.IGNORECASE,
 )
 LEGACY_PATTERN = re.compile(
