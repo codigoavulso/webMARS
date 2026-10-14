@@ -6,6 +6,7 @@ from contextlib import closing
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import hashlib
 from pathlib import Path
 import re
 import sqlite3
@@ -57,6 +58,10 @@ def initialize(database):
         db.execute("""CREATE TABLE IF NOT EXISTS heartbeats (
             day TEXT NOT NULL, active_minutes INTEGER NOT NULL, pings INTEGER NOT NULL,
             PRIMARY KEY (day, active_minutes))""")
+        db.execute("""CREATE TABLE IF NOT EXISTS heartbeat_sessions (
+            session_hash TEXT PRIMARY KEY, first_seen INTEGER NOT NULL, last_seen INTEGER NOT NULL,
+            active_seconds INTEGER NOT NULL, pings INTEGER NOT NULL, registered INTEGER NOT NULL)""")
+        db.execute("CREATE INDEX IF NOT EXISTS heartbeat_sessions_last_seen ON heartbeat_sessions(last_seen)")
 
 
 def prune(database, now=None):
@@ -65,6 +70,7 @@ def prune(database, now=None):
         db.execute("DELETE FROM events WHERE received < ?", (int(now or time.time()) - RETENTION_SECONDS,))
         cutoff = datetime.fromtimestamp(int(now or time.time()) - RETENTION_SECONDS, timezone.utc).strftime("%Y-%m-%d")
         db.execute("DELETE FROM heartbeats WHERE day < ?", (cutoff,))
+        db.execute("DELETE FROM heartbeat_sessions WHERE last_seen < ?", (int(now or time.time()) - RETENTION_SECONDS,))
         db.commit()
         db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
@@ -80,19 +86,32 @@ def record(database, data, now=None):
 
 
 def validate_heartbeat(data):
-    return (isinstance(data, dict) and set(data) == {"active_seconds"}
+    return (isinstance(data, dict) and set(data) == {"active_seconds", "session", "registered"}
             and type(data["active_seconds"]) is int
-            and 1 <= data["active_seconds"] <= 31536000)
+            and 1 <= data["active_seconds"] <= 31536000
+            and isinstance(data["session"], str) and re.fullmatch(r"[a-f0-9]{32}", data["session"])
+            and type(data["registered"]) is bool)
 
 
 def record_heartbeat(database, data, now=None):
     if not validate_heartbeat(data):
         raise ValueError("Invalid heartbeat")
     day = datetime.fromtimestamp(int(now or time.time()), timezone.utc).strftime("%Y-%m-%d")
+    received = int(now or time.time())
+    session_hash = hashlib.sha256(data["session"].encode("ascii")).hexdigest()
     with closing(sqlite3.connect(database)) as db, db:
         db.execute("""INSERT INTO heartbeats (day, active_minutes, pings) VALUES (?, ?, 1)
             ON CONFLICT(day, active_minutes) DO UPDATE SET pings = pings + 1""",
                    (day, data["active_seconds"] // 60))
+        db.execute("""INSERT INTO heartbeat_sessions
+            (session_hash, first_seen, last_seen, active_seconds, pings, registered)
+            VALUES (?, ?, ?, ?, 1, ?)
+            ON CONFLICT(session_hash) DO UPDATE SET
+              last_seen = excluded.last_seen,
+              active_seconds = MAX(heartbeat_sessions.active_seconds, excluded.active_seconds),
+              pings = heartbeat_sessions.pings + 1,
+              registered = MAX(heartbeat_sessions.registered, excluded.registered)""",
+                   (session_hash, received, received, data["active_seconds"], int(data["registered"])))
 
 
 def report(database, days=30, now=None):
@@ -105,6 +124,7 @@ def report(database, days=30, now=None):
         start_day = datetime.fromtimestamp(now - (days - 1) * 86400, timezone.utc).strftime("%Y-%m-%d")
         end_day = datetime.fromtimestamp(now, timezone.utc).strftime("%Y-%m-%d")
         heartbeat_rows = db.execute("SELECT day, active_minutes, pings FROM heartbeats WHERE day >= ? AND day <= ? ORDER BY day, active_minutes", (start_day, end_day)).fetchall()
+        presence_rows = db.execute("SELECT first_seen, last_seen, active_seconds, pings, registered FROM heartbeat_sessions WHERE last_seen >= ? ORDER BY last_seen", (now - 300,)).fetchall()
     sessions = {}
     for row in rows:
         sid = row["session"]
@@ -134,7 +154,15 @@ def report(database, days=30, now=None):
             "utc_calendar_days": {"from": start_day, "through": end_day},
             "pings": sum(row["pings"] for row in heartbeat_rows),
             "daily_minute_buckets": [dict(row) for row in heartbeat_rows],
-            "interpretation": "Cumulative active-duration samples, not users, sessions or total time. Repeated pings cannot be deduplicated; longer visits produce more samples."
+            "interpretation": "Historical cumulative active-duration samples. Live presence below counts ephemeral browser sessions, not people."
+        },
+        "live_presence": {
+            "window_seconds": 300,
+            "active_sessions_estimated": len(presence_rows),
+            "registered_sessions_estimated": sum(row["registered"] for row in presence_rows),
+            "anonymous_sessions_estimated": sum(not row["registered"] for row in presence_rows),
+            "sessions": [{"first_seen": row["first_seen"], "last_seen": row["last_seen"], "active_seconds": row["active_seconds"], "pings": row["pings"], "registered": bool(row["registered"])} for row in presence_rows],
+            "precision_note": "Best-effort session presence; browser suspension, network loss and blocked requests can make this an underestimate."
         },
         "generated_at": datetime.fromtimestamp(now, timezone.utc).isoformat(),
         "consenting_tab_sessions": len(sessions),

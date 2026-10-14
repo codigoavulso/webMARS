@@ -1,4 +1,4 @@
-/* Duration-only heartbeat: no identity, storage, UI, or runtime/program data. */
+/* Ephemeral session heartbeat: no account identity, storage, UI, or runtime/program data. */
 (() => {
   "use strict";
   const config = window.WebMarsConfig?.heartbeat;
@@ -11,6 +11,15 @@
 
   const now = () => window.performance.now();
   const isActive = () => document.visibilityState === "visible";
+  const newSessionId = () => {
+    try {
+      const bytes = new Uint8Array(16);
+      window.crypto?.getRandomValues?.(bytes);
+      return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    } catch { return ""; }
+  };
+  const sessionId = newSessionId();
+  if (!/^[a-f0-9]{32}$/.test(sessionId)) return;
   let lastSample = now();
   let lastPing = lastSample;
   let active = isActive();
@@ -35,11 +44,12 @@
     try {
       // CORS mode retains Origin with no-referrer. The destination is strictly
       // same-origin, redirects are rejected, and cookies are never attached.
+      const registered = window.WebMarsPresence?.isRegistered?.() === true;
       Promise.resolve(window.fetch(endpoint.href, {
         method: "POST", mode: "cors", credentials: "omit", redirect: "error",
         referrerPolicy: "no-referrer", cache: "no-store", keepalive: true,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ active_seconds: activeSeconds })
+        body: JSON.stringify({ active_seconds: activeSeconds, session: sessionId, registered })
       })).catch(() => {});
     } catch { /* A failed metric must never affect the simulator. */ }
   }

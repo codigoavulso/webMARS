@@ -3,7 +3,7 @@
 ## Automatic duration-only heartbeat
 
 The official installation is configured to send one background POST to
-`/_metrics/heartbeat` every 60 seconds while the app is visible, including when another tab or window has focus.
+`/_metrics/heartbeat` every 60 seconds while the app is visible, including when another tab or window has focus. Each page load receives a random, memory-only session token; the collector stores only its one-way hash.
 The JSON body has exactly one field: `{"active_seconds":60}`. Subsequent
 values are cumulative active seconds since this page load. No user/session
 identifier, event name, language, source, code or account data is included.
@@ -157,3 +157,5 @@ First verify endpoint delivery with consent, then compare weekly cohorts of
 sessions using consistent report windows. Keep access-log counts separate:
 opt-in telemetry has selection bias and is not a denominator for all visitors.
 Do not infer educational improvement from runtime activation alone.
+- Live presence counts sessions whose last heartbeat was within five minutes. It is an estimate, not a guaranteed count of people: suspended browsers, offline devices and blocked requests can cause under-counting.
+- The heartbeat includes only cumulative seconds, an ephemeral random session token and a boolean registered classification. No account ID, email, IP address or browser fingerprint is stored by the collector.

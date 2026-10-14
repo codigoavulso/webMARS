@@ -15,6 +15,8 @@ function browser(options = {}) {
     location: new URL("https://webmars.test/"), performance: { now: () => time },
     WebMarsConfig: { heartbeat: { enabled: options.enabled ?? true, endpoint: options.endpoint || "/_metrics/heartbeat" } },
     addEventListener, setInterval: (fn, delay) => timers.push({ fn, delay }),
+    crypto: { getRandomValues(bytes) { bytes.fill(7); return bytes; } },
+    WebMarsPresence: { isRegistered: () => options.registered === true },
     fetch: (url, request) => { sent.push({ url, request }); return options.offline ? Promise.reject(Error("offline")) : Promise.resolve({ ok: true }); }
   };
   Object.defineProperties(window, {
@@ -36,7 +38,7 @@ test("heartbeat sends only cumulative seconds every 60 seconds, without storage 
   assert.equal(env.sent.length, 0);
   env.run(5);
   env.run(60);
-  assert.deepEqual(env.sent.map(({ request }) => JSON.parse(request.body)), [{ active_seconds: 60 }, { active_seconds: 120 }]);
+  assert.deepEqual(env.sent.map(({ request }) => JSON.parse(request.body).active_seconds), [60, 120]);
   for (const { url, request } of env.sent) {
     assert.equal(url, "https://webmars.test/_metrics/heartbeat");
     assert.equal(request.credentials, "omit");
@@ -44,7 +46,18 @@ test("heartbeat sends only cumulative seconds every 60 seconds, without storage 
     assert.equal(request.redirect, "error");
     assert.equal(request.mode, "cors");
     assert.deepEqual(Object.keys(request.headers), ["Content-Type"]);
+    assert.match(request.body, /"session":"07070707070707070707070707070707"/);
+    assert.match(request.body, /"registered":false/);
   }
+});
+
+test("heartbeat reports only an ephemeral session and registration classification", () => {
+  const env = browser({ registered: true });
+  env.run(60);
+  const body = JSON.parse(env.sent[0].request.body);
+  assert.deepEqual(Object.keys(body).sort(), ["active_seconds", "registered", "session"]);
+  assert.equal(body.registered, true);
+  assert.equal(body.session.length, 32);
 });
 
 test("hidden pages do not accrue active time; visible background tabs continue", () => {
@@ -57,7 +70,7 @@ test("hidden pages do not accrue active time; visible background tabs continue",
   env.document.visibilityState = "visible";
   env.emit("visibilitychange");
   env.run(5);
-  assert.deepEqual(JSON.parse(env.sent[0].request.body), { active_seconds: 35 });
+  assert.equal(JSON.parse(env.sent[0].request.body).active_seconds, 35);
 });
 
 test("refresh resets counters; suspension and back-forward cache cannot inflate duration", () => {
