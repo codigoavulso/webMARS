@@ -3,7 +3,7 @@
 ## Automatic duration-only heartbeat
 
 The official installation is configured to send one background POST to
-`/_metrics/heartbeat` every 60 seconds while the app is visible and focused.
+`/_metrics/heartbeat` every 60 seconds while the app is visible, including when another tab or window has focus.
 The JSON body has exactly one field: `{"active_seconds":60}`. Subsequent
 values are cumulative active seconds since this page load. No user/session
 identifier, event name, language, source, code or account data is included.
@@ -11,7 +11,7 @@ There is no consent control or notification for this duration-only mode.
 The earlier, richer opt-in metrics below remain disabled by default.
 
 The counter is memory-only, resets on refresh, and continues while reading
-without typing. Hidden/unfocused time is excluded. Five-second sampling caps
+without typing. Hidden time is excluded; visible background tabs count. Five-second sampling caps
 long timer gaps so browser/OS suspension does not inflate the duration.
 Browser scheduling may delay a ping. There is no retry queue or final unload
 ping, so visits under a minute and the final partial minute may be unobserved.
@@ -89,7 +89,7 @@ actions by session and use the maximum cumulative active time per session.
   approximate, not exact counts of tabs or people.
 - The device-local last-visit timestamp yields a coarse return category. This
   measures self-reported returning sessions, not longitudinal cohort retention.
-- Active time requires a visible, focused page and interaction in the last 60
+- Active time requires a visible page and interaction in the last 60
   seconds. It is sampled every five seconds and sent every 30 active seconds
   and on hide/exit when possible. Long timer gaps are capped; event loss is
   tolerated rather than interfering with the app.

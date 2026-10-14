@@ -204,7 +204,7 @@ webMARS is local-first. Source files, settings, virtual files, recovery state, a
 
 Optional first-party usage metrics are disabled in the distributed configuration and require visitor acceptance when an operator enables them. They record general product actions and approximate active time, never source code or account data. See `docs/usage-metrics.md` and the public privacy pages for the exact schema, retention and limitations. Hosting access logs are separate.
 
-A separate automatic heartbeat for the official installation sends only cumulative active seconds every 60 seconds while the app is visible and focused. It has no identifier, cookie or browser storage and does not display a prompt. The collector aggregates duration samples by UTC day and minute bucket; it cannot count unique visitors or measure completed-session duration from these samples.
+A separate automatic heartbeat for the official installation sends only cumulative active seconds every 60 seconds while the app is visible, including when another tab or window has focus. It has no identifier, cookie or browser storage and does not display a prompt. The collector aggregates duration samples by UTC day and minute bucket; it cannot count unique visitors or measure completed-session duration from these samples.
 
 Institutions can deploy it as a static site on an internal server or public host. The application does not require a database for local use. Optional cloud project features communicate only with the server configured for that purpose.
 

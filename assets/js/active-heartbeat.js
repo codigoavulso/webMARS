@@ -10,14 +10,15 @@
   } catch { return; }
 
   const now = () => window.performance.now();
-  const isActive = () => document.visibilityState === "visible" && document.hasFocus();
+  const isActive = () => document.visibilityState === "visible";
   let lastSample = now();
   let lastPing = lastSample;
   let active = isActive();
   let activeMs = 0;
   let running = true;
   // Sampling also bounds time counted across browser/OS suspension. Reading
-  // without typing counts; hidden or unfocused tabs do not.
+  // without typing counts; hidden tabs do not. A visible background tab still
+  // contributes time, even when another window or tab has focus.
   function sample() {
     const time = now();
     if (running && active) activeMs += Math.max(0, Math.min(5000, time - lastSample));
@@ -43,8 +44,6 @@
     } catch { /* A failed metric must never affect the simulator. */ }
   }
   document.addEventListener("visibilitychange", sample);
-  window.addEventListener("focus", sample);
-  window.addEventListener("blur", sample);
   window.addEventListener("pagehide", () => { sample(); running = false; active = false; });
   window.addEventListener("pageshow", () => {
     running = true;

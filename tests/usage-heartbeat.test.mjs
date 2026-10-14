@@ -10,7 +10,7 @@ function browser(options = {}) {
   const listeners = new Map();
   const timers = [];
   const addEventListener = (name, fn) => listeners.set(name, fn);
-  const document = { visibilityState: "visible", focused: true, hasFocus: () => document.focused, addEventListener };
+  const document = { visibilityState: "visible", addEventListener };
   const window = {
     location: new URL("https://webmars.test/"), performance: { now: () => time },
     WebMarsConfig: { heartbeat: { enabled: options.enabled ?? true, endpoint: options.endpoint || "/_metrics/heartbeat" } },
@@ -47,7 +47,7 @@ test("heartbeat sends only cumulative seconds every 60 seconds, without storage 
   }
 });
 
-test("hidden and unfocused pages do not accrue active time or send pings", () => {
+test("hidden pages do not accrue active time; visible background tabs continue", () => {
   const env = browser();
   env.run(30);
   env.document.visibilityState = "hidden";
@@ -55,12 +55,7 @@ test("hidden and unfocused pages do not accrue active time or send pings", () =>
   env.run(120);
   assert.equal(env.sent.length, 0);
   env.document.visibilityState = "visible";
-  env.document.focused = false;
   env.emit("visibilitychange");
-  env.run(60);
-  assert.equal(env.sent.length, 0);
-  env.document.focused = true;
-  env.emit("focus");
   env.run(5);
   assert.deepEqual(JSON.parse(env.sent[0].request.body), { active_seconds: 35 });
 });
