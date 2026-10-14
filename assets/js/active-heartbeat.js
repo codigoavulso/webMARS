@@ -44,7 +44,8 @@
     try {
       // CORS mode retains Origin with no-referrer. The destination is strictly
       // same-origin, redirects are rejected, and cookies are never attached.
-      const registered = window.WebMarsPresence?.isRegistered?.() === true;
+      const registered = window.WebMarsPresence?.isRegistered?.() === true
+        || window.WebMarsCloudBridge?.getState?.().authenticated === true;
       Promise.resolve(window.fetch(endpoint.href, {
         method: "POST", mode: "cors", credentials: "omit", redirect: "error",
         referrerPolicy: "no-referrer", cache: "no-store", keepalive: true,
