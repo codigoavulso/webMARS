@@ -20,6 +20,12 @@
       : (official ? "https://backmars.nfiles.top/api" : `${origin}/api`),
     allowBackMarsOverride: false,
     manualUrl: `${origin}/manual/`,
-    supportUrl: ""
+    supportUrl: "",
+    // Enable only after installing ops/raspberry-pi/install-metrics.sh.
+    // Visitors must additionally opt in; custom deployments collect nothing.
+    metrics: Object.freeze({ enabled: false, endpoint: `${origin}/_metrics/events` }),
+    // Automatic duration-only ping on the official installation. Install the
+    // collector and Nginx snippet before deploying this configuration there.
+    heartbeat: Object.freeze({ enabled: official, endpoint: `${origin}/_metrics/heartbeat` })
   });
 })(window);

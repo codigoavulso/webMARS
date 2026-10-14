@@ -1,6 +1,13 @@
-# webMARS v0.6.1
+# webMARS v0.6.2
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
+
+Public learning pages: [English](https://webmars.nfiles.top/discover/) ·
+[Português](https://webmars.nfiles.top/discover/pt/). They cover getting started,
+teaching, stack/recursion, pipeline and Mini-C without requiring JavaScript.
+Regenerate them with `npm run docs:public` after updating the product version.
+See [optional usage metrics](docs/usage-metrics.md) for the opt-in measurement
+schema and the separate Raspberry Pi collector installation.
 
 ![webMARS main window](assets/images/screenshot-main.png)
 
@@ -26,7 +33,7 @@ Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
 [`manual/`](manual/README.md) is the independent, Portuguese-language webMARS
 manual. It has its own semantic version (`0.1.1`), changelog, static build and
-test suite. This edition targets webMARS `0.6.1` and includes
+test suite. This edition targets webMARS `0.6.2` and includes
 searchable reference data plus real light-theme screenshots for every tool.
 
 ```bash
@@ -35,7 +42,7 @@ npm run validate
 npm run serve
 ```
 
-## Highlights in v0.6.1
+## Highlights in v0.6.2
 
 - Bundled the independently versioned Manual and Teacher Kit in the deployment ZIP, eliminating the dead `/manual/` link in fresh installations.
 - Made the permanent example-ID registry authoritative: redirects still resolve, while tombstones, unknown IDs and redirect loops fail closed.
@@ -216,6 +223,7 @@ of the system with every figure linked to the report that produced it.
 
 ## Release Line
 
+- `v0.6.2`: public English and Portuguese discovery pages, duration-only active-time heartbeat, aggregate Raspberry Pi collector, privacy documentation and expanded release validation
 - `v0.6.1`: complete deployment package with Manual and Teacher Kit, authoritative stable-ID tombstones, exact Public Library pagination, accessibility corrections and stricter release validation
 - `v0.6.0`: permanent example links, versioned public project publishing, account recovery and verification, deployment-owned configuration, first-run welcome, Teacher Kit, and the independent Manual v0.1
 - `v0.5.6`: Pipeline Lab replaying the real execution with register values, linked step transports, vertical pipeline and responsive rework, generated conformance/coverage/mutation/benchmark/accessibility evidence, and 872 newly translated interface strings

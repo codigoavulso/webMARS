@@ -1,0 +1,124 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
+const base = "https://webmars.nfiles.top";
+const version = JSON.parse(await readFile(resolve(root, "package.json"), "utf8")).version;
+const toolCount = JSON.parse(await readFile(resolve(root, "tools/tools.json"), "utf8")).tools.length;
+const languageCount = JSON.parse(await readFile(resolve(root, "assets/js/i18n/languages.json"), "utf8")).languages.length;
+const escape = (value) => String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+const pages = {
+  overview: {
+    en: ["See what your code makes the machine do.", "A free MIPS learning environment in your browser. Write assembly, inspect registers and memory, step backwards and explore Mini-C — without installing Java.", "Open webMARS", "lesson01-registers", "Try the first lesson", [
+      ["One workspace, from source to execution", "Assemble MIPS, run a program and inspect the state it changes. Use the same environment for your first instructions and multi-file projects."],
+      ["Make the invisible visible", "Explore the stack, memory, devices and a separate five-stage Pipeline Lab. Functional execution and pipeline timing are distinct models."],
+      ["Ready to teach, easy to share", "Share permanent example links and versioned publications. Students can edit, execute and download locally without creating an account."]]],
+    pt: ["Veja o que o seu código faz à máquina.", "Um ambiente gratuito para aprender MIPS no browser. Escreva assembly, observe registos e memória, recue na execução e explore Mini-C — sem instalar Java.", "Abrir webMARS", "lesson01-registers", "Experimentar a primeira lição", [
+      ["Do código à execução, no mesmo espaço", "Monte MIPS, execute um programa e observe o estado que ele altera. Use o mesmo ambiente nas primeiras instruções e em projetos com vários ficheiros."],
+      ["Torne visível o que acontece por dentro", "Explore a stack, a memória, os dispositivos e um Pipeline Lab separado com cinco estágios. A execução funcional e o timing do pipeline são modelos distintos."],
+      ["Preparado para ensinar e partilhar", "Partilhe links permanentes de exemplos e publicações com revisão fixa. Os alunos podem editar, executar e descarregar localmente sem criar conta."]]]
+  },
+  learn: {
+    en: ["Learn MIPS. One instruction at a time.", "Start with registers, then move through conditions, loops, memory and function calls. The introductory sequence contains 15 lessons you can open directly in the simulator.", "Open the registers lesson", "lesson01-registers", "Explore loops next", [
+      ["1. Open and assemble", "Open the registers lesson as a new project. Press F3 to assemble it and inspect the generated instructions."],
+      ["2. Step and compare", "Press F7 to execute one instruction. Compare the register values before and after it, then use F8 to step backwards."],
+      ["3. Change and predict", "Change a constant, assemble again and predict the result before running. Continue with branches, loops, arrays and the stack."]]],
+    pt: ["Aprenda MIPS. Uma instrução de cada vez.", "Comece pelos registos e avance para condições, ciclos, memória e chamadas de funções. A sequência introdutória tem 15 lições que pode abrir diretamente no simulador.", "Abrir a lição dos registos", "lesson01-registers", "Explorar ciclos a seguir", [
+      ["1. Abra e monte", "Abra a lição dos registos como novo projeto. Prima F3 para montar o programa e observe as instruções geradas."],
+      ["2. Avance e compare", "Prima F7 para executar uma instrução. Compare os registos antes e depois, e use F8 para recuar."],
+      ["3. Altere e preveja", "Altere uma constante, monte novamente e preveja o resultado antes de executar. Continue com saltos, ciclos, arrays e a stack."]]]
+  },
+  teach: {
+    en: ["Start the class with MIPS, not installation.", "Give students one link to a MARS-style environment. Local work needs no account; the Teacher Kit covers migration, the first class, stable links and self-hosting.", "Open a classroom example", "lesson01-registers", "Read the Teacher Kit", [
+      ["Prepare a repeatable activity", "Test your existing MARS sources, inputs and expected outputs. Practical MARS 4.5 compatibility is the target; check the published limitations for edge cases."],
+      ["Share the exact activity", "Use a permanent built-in example link or a fixed revision of a public project. Each student opens an independent local copy."],
+      ["Keep your teaching workflow", "Use your LMS for instructions and submissions. Public exercises are shareable projects; webMARS does not currently provide automatic grading or a class progress dashboard."]]],
+    pt: ["Comece a aula com MIPS, sem instalações.", "Dê aos alunos um link para um ambiente ao estilo MARS. O trabalho local dispensa conta; o kit para docentes cobre migração, primeira aula, links permanentes e alojamento próprio.", "Abrir um exemplo para a aula", "lesson01-registers", "Consultar o kit para docentes", [
+      ["Prepare uma atividade reproduzível", "Teste os seus ficheiros MARS, entradas e saídas esperadas. O objetivo é a compatibilidade prática com MARS 4.5; consulte as limitações publicadas para casos particulares."],
+      ["Partilhe a atividade exata", "Use o link permanente de um exemplo ou uma revisão fixa de um projeto público. Cada aluno abre uma cópia local independente."],
+      ["Mantenha o seu fluxo de ensino", "Use o LMS para enunciados e entregas. Os exercícios públicos são projetos partilháveis; o webMARS ainda não disponibiliza correção automática nem um painel de progresso da turma."]]]
+  },
+  stack: {
+    en: ["Follow a function into the stack.", "See how MIPS programs save values, call functions and return. Combine the introductory stack and recursion examples with step, backstep and the Stack Visualizer.", "Open the stack lesson", "lesson10-stack", "Try recursive factorial", [
+      ["Watch the stack pointer", "Follow changes to $sp and inspect the words stored in memory. Relate each store and load to the corresponding instruction."],
+      ["Trace a call and its return", "Watch $ra during a function call. Step through the code that preserves registers and restores the caller's state."],
+      ["Explore recursion", "Open the recursive factorial example. In Tools, open Stack Visualizer to inspect the stack while stepping through nested calls."]]],
+    pt: ["Acompanhe uma função até à stack.", "Veja como um programa MIPS guarda valores, chama funções e regressa. Combine os exemplos de stack e recursão com Step, Backstep e o Stack Visualizer.", "Abrir a lição da stack", "lesson10-stack", "Experimentar o fatorial recursivo", [
+      ["Observe o apontador da stack", "Acompanhe as alterações a $sp e inspecione as palavras guardadas na memória. Relacione cada escrita e leitura com a instrução correspondente."],
+      ["Siga uma chamada e o seu retorno", "Observe $ra durante uma chamada de função. Avance pelo código que preserva registos e repõe o estado de quem chamou."],
+      ["Explore a recursão", "Abra o exemplo de fatorial recursivo. Em Tools, abra o Stack Visualizer para inspecionar a stack enquanto avança por chamadas aninhadas."]]]
+  },
+  pipeline: {
+    en: ["Understand why a pipeline waits.", "Explore IF, ID, EX, MEM and WB in the Pipeline Lab. Compare hazards, stalls, forwarding and branch settings with a model designed for teaching.", "Open a program to explore", "lesson06-loop-counter", "Pipeline Lab guide (Portuguese)", [
+      ["Start from a real execution", "Assemble and run a small program, then open Pipeline Lab from Tools. Its execution trace can connect the timing view to the instructions and register values."],
+      ["Change one assumption", "Compare forwarding settings or branch behavior. Identify which dependencies produce stalls and how the result changes with the selected profile."],
+      ["Keep the models distinct", "Pipeline timing belongs to this separate educational model. The normal MIPS runtime is functional, not cycle-accurate; these figures are not predictions for a physical processor."]]],
+    pt: ["Perceba porque é que um pipeline espera.", "Explore IF, ID, EX, MEM e WB no Pipeline Lab. Compare hazards, stalls, forwarding e configurações de saltos num modelo pensado para ensinar.", "Abrir um programa para explorar", "lesson06-loop-counter", "Consultar o guia do Pipeline Lab", [
+      ["Parta de uma execução real", "Monte e execute um programa pequeno e abra o Pipeline Lab em Tools. O rasto de execução permite relacionar o timing com as instruções e os valores dos registos."],
+      ["Altere uma hipótese de cada vez", "Compare configurações de forwarding ou de saltos. Identifique as dependências que provocam stalls e o que muda com o perfil selecionado."],
+      ["Distinga os modelos", "O timing pertence a este modelo educativo separado. O runtime MIPS normal é funcional, sem precisão de ciclos; estes valores não preveem o desempenho de um processador físico."]]]
+  },
+  minic: {
+    en: ["From Mini-C to MIPS you can inspect.", "Connect structured code to machine-level execution. Compile the documented teaching subset of C, inspect the generated assembly and debug it in the same workspace.", "Open webMARS", "lesson01-registers", "Read the Mini-C guide", [
+      ["Write a small program", "Create a C source file and use the documented Mini-C profiles. Start with arithmetic, loops and functions before exploring pointers and structures."],
+      ["Inspect the translation", "Use Compile C0 and inspect the generated MIPS. Find how a condition becomes a branch and how a function uses the calling convention."],
+      ["Know the boundaries", "Mini-C supports C0 teaching profiles and a focused C1-NATIVE profile. It is not a full ISO C compiler or a replacement for a native C toolchain."]]],
+    pt: ["De Mini-C a MIPS que pode inspecionar.", "Relacione código estruturado com a execução ao nível da máquina. Compile o subconjunto didático de C, observe o assembly gerado e depure no mesmo espaço.", "Abrir webMARS", "lesson01-registers", "Consultar o guia de Mini-C", [
+      ["Escreva um programa pequeno", "Crie um ficheiro C e use os perfis documentados de Mini-C. Comece com aritmética, ciclos e funções antes de explorar apontadores e estruturas."],
+      ["Observe a tradução", "Use Compile C0 e inspecione o MIPS gerado. Descubra como uma condição se transforma num salto e como uma função usa a convenção de chamada."],
+      ["Conheça os limites", "O Mini-C suporta perfis didáticos C0 e um perfil C1-NATIVE delimitado. Não é um compilador ISO C completo nem substitui as ferramentas nativas de C."]]]
+  },
+  privacy: {
+    en: ["Your code stays out of usage statistics.", "Optional usage metrics help the operator understand whether visitors can start and use webMARS. They are off until you accept and can be turned off at any time.", "Open webMARS", "lesson01-registers", "View the source", [
+      ["What optional metrics contain", "A random tab-session ID, a page category, general actions such as assembly or successful execution, a built-in lesson number, approximate active seconds, interface language, touch/pointer input category and a broad source category (direct, search, social, internal or other). No source code, inputs, output, project names, account IDs, full URLs or raw referrers are included."],
+      ["What is stored on this browser", "Your yes/no choice is saved locally. After accepting, a session ID is stored for this tab and expires after 30 minutes without measured activity. A last-visit timestamp supplies a coarse return category: same day, 1–6 days, 7–30 days or older. There is no persistent visitor ID. Turning collection off clears that session and timestamp; clearing site data resets the choice. Do Not Track and Global Privacy Control disable collection."],
+      ["Time and retention", "Active time is approximate: only a visible, focused page with interaction in the last minute is counted, with updates roughly every 30 active seconds. Network failures and blockers can lose events. The supplied collector keeps events for 35 days and sends them to this installation only. Revoking consent stops new events; existing records expire with retention."],
+      ["Server logs and Cloud are separate", "The host receives your IP address to serve requests. The supplied metrics endpoint does not store it, cookies or raw browser headers. Ordinary access logs may contain IP addresses and browser information; the documented Raspberry Pi logging policy retains those logs for up to 370 days. Cloud sign-in, synchronization and publication are optional and transmit the data required for those operations to the configured BackMars server."],
+      ["How to choose", "When the operator enables metrics, use the permanent Usage statistics control on the public pages or in the simulator. If that control is absent, optional usage metrics are disabled for this installation. The app works without accepting. Metrics cover consenting tab sessions, not all visitors, unique people or verified learning outcomes."]]],
+    pt: ["O seu código fica fora das estatísticas.", "As métricas opcionais ajudam o operador a perceber se os visitantes conseguem começar e usar o webMARS. Estão desligadas até aceitar e podem ser desligadas a qualquer momento.", "Abrir webMARS", "lesson01-registers", "Consultar o código", [
+      ["O que contêm as métricas opcionais", "Um identificador aleatório da sessão do separador, a categoria da página, ações gerais como montagem ou execução bem-sucedida, o número de uma lição integrada, segundos ativos aproximados, idioma da interface, categoria de interação tátil/apontador e origem geral (direta, pesquisa, redes sociais, interna ou outra). Não incluem código, entradas, saídas, nomes de projetos, identificadores de conta, URLs completos nem referências de origem completas."],
+      ["O que fica neste browser", "A escolha sim/não é guardada localmente. Depois de aceitar, o identificador de sessão fica neste separador e expira após 30 minutos sem atividade medida. A data da última visita permite indicar um regresso no mesmo dia, em 1–6 dias, em 7–30 dias ou mais tarde. Não existe um identificador permanente de visitante. Desligar apaga essa sessão e data; limpar os dados do site repõe a escolha. Do Not Track e Global Privacy Control desativam a recolha."],
+      ["Tempo e conservação", "O tempo ativo é aproximado: só conta uma página visível, em foco e com interação no último minuto, com envio a cada cerca de 30 segundos ativos. Falhas de rede e bloqueadores podem perder eventos. O coletor fornecido conserva eventos durante 35 dias e recebe-os apenas nesta instalação. Retirar a aceitação interrompe novos envios; os registos existentes expiram com a retenção."],
+      ["Logs do servidor e Cloud são separados", "O alojamento recebe o endereço IP para servir pedidos. O endpoint de métricas fornecido não o guarda, nem cookies ou cabeçalhos completos do browser. Os logs normais de acesso podem conter IP e informação do browser; a política documentada do Raspberry Pi conserva esses logs até 370 dias. O início de sessão, sincronização e publicação Cloud são opcionais e enviam os dados necessários ao servidor BackMars configurado."],
+      ["Como escolher", "Quando o operador ativa as métricas, use o controlo permanente Estatísticas de utilização nas páginas públicas ou no simulador. Se esse controlo não existir, as métricas opcionais estão desativadas nesta instalação. A aplicação funciona sem aceitar. As métricas abrangem sessões de separadores com aceitação, não todos os visitantes, pessoas únicas ou resultados de aprendizagem comprovados."]]]
+  }
+};
+pages.privacy.en[5].unshift(["Automatic duration-only heartbeat", "On the official installation, a separate background ping sends only cumulative active seconds every 60 seconds while the app is visible and focused. It uses no identifier, cookies or browser storage and resets on refresh. The supplied endpoint does not log IP addresses and aggregates samples by UTC day and minute of duration. Network transport still exposes an IP address to the host. These samples cannot count unique visitors or be summed as total usage time. This mode has no consent prompt and is separate from the optional events described below."]);
+pages.privacy.pt[5].unshift(["Ping automático apenas com a duração", "Na instalação oficial, um ping separado envia apenas os segundos ativos acumulados a cada 60 segundos, enquanto a app está visível e em foco. Não usa identificadores, cookies ou armazenamento no browser e recomeça ao atualizar a página. O endpoint fornecido não regista IPs e agrega as amostras por dia UTC e minuto de duração. O transporte de rede continua a expor um IP ao alojamento. Estas amostras não permitem contar visitantes únicos nem somar o tempo total de utilização. Este modo não apresenta uma janela de consentimento e é separado dos eventos opcionais descritos abaixo."]);
+const nav = { en: ["Explore", "Learn MIPS", "For teachers", "Stack", "Pipeline", "Mini-C"], pt: ["Explorar", "Aprender MIPS", "Para docentes", "Stack", "Pipeline", "Mini-C"] };
+const url = (key, lang) => `/discover/${lang === "pt" ? "pt/" : ""}${key === "overview" ? "" : `${key}/`}`;
+const sitemap = [`${base}/`];
+for (const lang of ["en", "pt"]) {
+  for (const [key, translations] of Object.entries(pages)) {
+    const [title, description, cta, example, secondary, sections] = translations[lang];
+    const path = url(key, lang);
+    const appLink = ["overview", "minic", "privacy"].includes(key) ? "/" : `/e/${example}`;
+    const guide = key === "teach" ? `/help/${lang}/TeacherKit.html` : key === "pipeline" ? (lang === "pt" ? "/manual/#/pipeline-lab" : "https://github.com/codigoavulso/webMARS/blob/main/docs/pipeline-lab.md") : key === "minic" ? `/help/${lang}/MarsHelpIDE.html` : key === "privacy" ? "https://github.com/codigoavulso/webMARS" : `/e/${key === "stack" ? "factorial-recursive" : key === "learn" ? "lesson06-loop-counter" : "lesson01-registers"}`;
+    const relativeRoot = "../".repeat(path.split("/").filter(Boolean).length);
+    const localLink = (href) => href.startsWith("/") ? `${relativeRoot}${href.slice(1)}` : href;
+    const schema = { "@context": "https://schema.org", "@type": "WebPage", name: title, description, url: base + path, inLanguage: lang, isPartOf: { "@type": "WebSite", name: "webMARS", url: base + "/", creator: { "@type": "Person", name: "Nelson Ferreira" } } };
+    const html = `<!doctype html>
+<html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escape(title)} | webMARS</title><meta name="description" content="${escape(description)}"><meta name="author" content="Nelson Ferreira"><meta name="webmars-surface" content="${key}">
+<link rel="canonical" href="${base + path}"><link rel="alternate" hreflang="en" href="${base + url(key, "en")}"><link rel="alternate" hreflang="pt" href="${base + url(key, "pt")}"><link rel="alternate" hreflang="x-default" href="${base + url(key, "en")}">
+<meta property="og:title" content="${escape(title)} | webMARS"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="website"><meta property="og:url" content="${base + path}"><meta property="og:image" content="${base}/assets/images/screenshot-main.png"><meta name="twitter:card" content="summary_large_image">
+<meta name="referrer" content="strict-origin-when-cross-origin"><link rel="icon" href="${relativeRoot}favicon.ico"><link rel="stylesheet" href="${relativeRoot}assets/css/discover.css"><link rel="stylesheet" href="${relativeRoot}assets/css/usage-metrics.css">
+<script type="application/ld+json">${JSON.stringify(schema).replaceAll("<", "\\u003c")}</script><script src="${relativeRoot}webmars-config.js"></script><script defer src="${relativeRoot}assets/js/usage-metrics.js"></script></head>
+<body><a class="skip" href="#main">${lang === "pt" ? "Saltar para o conteúdo" : "Skip to content"}</a>
+<header><a class="brand" href="${localLink(url("overview", lang))}">web<span>MARS</span><small>MIPS / ${version}</small></a><nav aria-label="${lang === "pt" ? "Navegação principal" : "Main navigation"}">${Object.keys(pages).filter((item) => item !== "privacy").map((item, i) => `<a href="${localLink(url(item, lang))}"${item === key ? ' aria-current="page"' : ""}>${nav[lang][i]}</a>`).join("")}</nav><a class="language" href="${localLink(url(key, lang === "en" ? "pt" : "en"))}" lang="${lang === "en" ? "pt" : "en"}">${lang === "en" ? "Português" : "English"}</a></header>
+<main id="main"><section class="hero"><div><p class="eyebrow">${lang === "pt" ? "Abra. Execute. Compreenda." : "Open. Run. Understand."}</p><h1>${escape(title)}</h1><p class="lead">${escape(description)}</p><div class="actions"><a class="primary" data-launch-app href="${localLink(appLink)}">${escape(cta)} <span aria-hidden="true">↗</span></a><a class="secondary" ${guide.startsWith("/e/") ? "data-launch-app" : ""} href="${localLink(guide)}">${escape(secondary)} →</a></div><p class="caption">${lang === "pt" ? "Gratuito e open source · Trabalho local sem conta" : "Free and open source · Local work without an account"}</p></div>${key === "overview" ? `<figure><img src="${relativeRoot}assets/images/screenshot-main.png" alt="${lang === "pt" ? "Interface do webMARS com editor, registos e memória" : "webMARS interface showing the editor, registers and memory"}" width="1280" height="800"><figcaption>${lang === "pt" ? "O estado da máquina, junto do código." : "The state of the machine, alongside your code."}</figcaption></figure>` : `<aside class="topic-note"><span>webMARS</span><strong>${nav[lang][Object.keys(pages).indexOf(key)] || (lang === "pt" ? "Privacidade" : "Privacy")}</strong><p>${lang === "pt" ? "MIPS32 · MARS 4.5<br>20 ferramentas · 20 idiomas" : "MIPS32 · MARS 4.5<br>20 tools · 20 languages"}</p></aside>`}</section>
+<section class="sections" aria-label="${lang === "pt" ? "Saiba mais" : "Learn more"}">${sections.map(([heading, body], i) => `<article><span class="number">${String(i + 1).padStart(2, "0")}</span><div><h2>${escape(heading)}</h2><p>${escape(body)}</p></div></article>`).join("")}</section>
+${key === "overview" ? `<section class="paths"><h2>${lang === "pt" ? "Escolha por onde começar" : "Choose where to begin"}</h2>${Object.keys(pages).filter((item) => !["overview", "privacy"].includes(item)).map((item) => `<a href="${localLink(url(item, lang))}"><strong>${escape(pages[item][lang][0])}</strong><span aria-hidden="true">↗</span></a>`).join("")}</section>` : ""}
+</main><footer><p>webMARS · Nelson Ferreira · ${version}<br>${lang === "pt" ? "Implementação independente para o browser, inspirada no MARS de Pete Sanderson, Kenneth Vollmar e colaboradores." : "An independent browser implementation inspired by MARS by Pete Sanderson, Kenneth Vollmar and contributors."}</p><div><a href="${relativeRoot}manual/">${lang === "pt" ? "Manual (português)" : "Manual (Portuguese)"}</a><a href="https://github.com/codigoavulso/webMARS">GitHub</a><a href="${localLink(url("privacy", lang))}">${lang === "pt" ? "Privacidade e métricas" : "Privacy and metrics"}</a><a data-launch-app href="${relativeRoot}">${lang === "pt" ? "Abrir simulador" : "Open simulator"}</a></div></footer></body></html>
+`;
+    const directory = resolve(root, path.slice(1));
+    await mkdir(directory, { recursive: true });
+    await writeFile(resolve(directory, "index.html"), html
+      .replaceAll("20 ferramentas · 20 idiomas", `${toolCount} ferramentas · ${languageCount} idiomas`)
+      .replaceAll("20 tools · 20 languages", `${toolCount} tools · ${languageCount} languages`));
+    sitemap.push(base + path);
+  }
+}
+await writeFile(resolve(root, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemap.map((loc) => `  <url><loc>${loc}</loc></url>`).join("\n")}\n</urlset>\n`);
+console.log(`[public] Generated ${sitemap.length - 1} public pages and sitemap for ${version}.`);

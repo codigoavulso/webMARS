@@ -5586,12 +5586,15 @@ function postExecutionSuccess(actionLabel, haltReason = "exit") {
     return;
   }
 
+  // A normal runtime exit is activation, not a verified exercise solution.
+  window.WebMarsUsage?.track("run_success");
   postMarsSystemLine("{action}: execution completed successfully.", { action: actionLabel });
   postRunSystemLine("-- program is finished running --");
   messagesPane.selectRunTab?.();
 }
 
 function postExecutionError(actionLabel, message) {
+  window.WebMarsUsage?.track("run_error");
   if (message) {
     postMarsRaw("{message}\n", {
       message: formatDiagnosticMessage("error", { line: 0, message })
@@ -7786,7 +7789,7 @@ function buildAssemblyContext(options = {}) {
 }
 
 function runBenchmarkedAssembly(assemblyContext, trigger = "assemble") {
-  return benchmarkCollector.measure("assemble", () => engine.assemble(assemblyContext.source, {
+  const result = benchmarkCollector.measure("assemble", () => engine.assemble(assemblyContext.source, {
     sourceName: assemblyContext.sourceName,
     includeMap: assemblyContext.includeMap,
     programArgumentsEnabled: runtimeSettings.programArguments,
@@ -7797,6 +7800,8 @@ function runBenchmarkedAssembly(assemblyContext, trigger = "assemble") {
     sourceCharacters: String(assemblyContext.source || "").length,
     fileCount: Number(assemblyContext.fileCount) || 1
   });
+  window.WebMarsUsage?.track(result?.ok ? "assemble_success" : "assemble_error");
+  return result;
 }
 
 function assembleFromEditor(options = {}) {
@@ -9003,7 +9008,9 @@ async function previewAndOpenStableExample(example) {
       layout: null
     });
     flushPendingLocalPersistence();
-    return openProjectWorkspace(project, { applySettings: false, applyLayout: false });
+    const opened = openProjectWorkspace(project, { applySettings: false, applyLayout: false });
+    if (opened) window.WebMarsUsage?.exampleOpened(example.id);
+    return opened;
   } catch (error) {
     postMarsMessage("[error] Failed to load example: {message}", {
       message: describePublicLibraryError(error, "Failed to load file.")
@@ -10219,6 +10226,7 @@ const commands = {
       windowManager.focus("window-editor");
       editor.focus();
       postMarsMessage("Opened example '{name}'.", { name: opened.name });
+      window.WebMarsUsage?.exampleOpened(example.id);
       syncProjectFromEditor(true);
       scheduleProjectPersist({ syncFromEditor: true });
       maybeAssembleAfterOpen();

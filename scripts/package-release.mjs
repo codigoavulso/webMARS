@@ -24,6 +24,7 @@ const PUBLIC_ROOT_FILES = Object.freeze([
   "webmars-config.js",
   "favicon.ico",
   "robots.txt",
+  "sitemap.xml",
   "LICENSE",
   // The application configuration shipped below points at /manual/.  Keep the
   // independently versioned Manual as an explicit public payload instead of
@@ -40,6 +41,7 @@ const PUBLIC_ROOT_FILES = Object.freeze([
 ]);
 
 const PUBLIC_TREES = Object.freeze([
+  { root: "discover", extensions: [".html"] },
   {
     root: "assets",
     extensions: [".css", ".gif", ".ico", ".jpg", ".js", ".json", ".png"]
@@ -390,7 +392,7 @@ function normalizeLocalReference(owner, rawReference) {
   return normalized;
 }
 
-function assertPackagedReference(fileSet, owner, rawReference) {
+function assertPackagedReference(fileSet, owner, rawReference, appRoutes = new Set()) {
   const normalized = normalizeLocalReference(owner, rawReference);
   if (!normalized) return;
   const pathOnly = String(rawReference || "").trim().split(/[?#]/, 1)[0].replaceAll("\\", "/");
@@ -398,7 +400,7 @@ function assertPackagedReference(fileSet, owner, rawReference) {
     ? "index.html"
     : (pathOnly.endsWith("/") ? posix.join(normalized, "index.html") : "");
   assert(
-    fileSet.has(normalized) || (directoryIndex && fileSet.has(directoryIndex)),
+    fileSet.has(normalized) || (directoryIndex && fileSet.has(directoryIndex)) || appRoutes.has(normalized.replace(/\/$/, "")),
     `Broken packaged reference in ${owner}: ${rawReference}`
   );
 }
@@ -411,6 +413,15 @@ function withoutHtmlBaseElements(source) {
 
 async function validateDocumentReferences(targetRoot, generatedFiles) {
   const fileSet = new Set(generatedFiles);
+  const appRoutes = new Set();
+  if (fileSet.has("index.html") && fileSet.has("examples/stable-ids.json")) {
+    const registry = await readReleaseJson(targetRoot, "examples/stable-ids.json");
+    for (const entry of registry.entries || []) {
+      // A pretty URL is a runtime route, not a file. Only known active built-in
+      // IDs qualify; this must not turn arbitrary missing assets into passes.
+      if (entry.status === "active" && /^[a-z0-9][a-z0-9-]{0,79}$/.test(entry.id)) appRoutes.add(`e/${entry.id}`);
+    }
+  }
   for (const relativePath of generatedFiles) {
     const extension = extname(relativePath).toLowerCase();
     if (extension !== ".html" && extension !== ".css") continue;
@@ -419,7 +430,7 @@ async function validateDocumentReferences(targetRoot, generatedFiles) {
     if (extension === ".html") {
       const referenceSource = withoutHtmlBaseElements(source);
       for (const match of referenceSource.matchAll(/\b(?:href|src)\s*=\s*["']([^"']+)["']/gi)) {
-        assertPackagedReference(fileSet, relativePath, match[1]);
+        assertPackagedReference(fileSet, relativePath, match[1], appRoutes);
       }
     } else {
       for (const match of source.matchAll(/\burl\(\s*["']?([^"')]+)["']?\s*\)/gi)) {

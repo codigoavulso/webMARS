@@ -8,7 +8,16 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.6.1 hardens the classroom release: its deployment package is complete, stable links fail closed, pagination is exact and both themes meet the checked accessibility criteria.</p>
+  <p class="lead">Release 0.6.2 improves discovery and adoption: public learning pages, clearer product documentation and privacy-conscious duration metrics are ready for deployment.</p>
+
+  <h2>0.6.2 &mdash; public learning pages and duration metrics</h2>
+  <ul>
+    <li>Added public English and Portuguese discovery pages for the product overview, learning path, teaching, stack, pipeline, Mini-C and privacy.</li>
+    <li>Added a duration-only background heartbeat that reports cumulative active seconds without identifiers, cookies or stored session data.</li>
+    <li>Added the Raspberry Pi aggregate collector and deployment configuration for the heartbeat, with access logging disabled for its endpoint.</li>
+    <li>Documented the public pages, metric interpretation, retention and deployment order, while keeping richer event metrics disabled by default.</li>
+    <li>Extended release validation and packaging to cover the new pages, heartbeat and collector tests.</li>
+  </ul>
 
   <h2>0.6.1 &mdash; complete packages and hardened stable links</h2>
   <ul>

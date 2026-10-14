@@ -9,7 +9,7 @@ abstract: >-
   Compatibility claims are published as a generated matrix with per-capability
   evidence in docs/comparison-matrix.md.
 type: software
-version: "0.6.1"
+version: "0.6.2"
 license: MIT
 repository-code: "https://github.com/codigoavulso/webMARS"
 url: "https://webmars.nfiles.top/"

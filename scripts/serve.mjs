@@ -33,7 +33,8 @@ const mimeTypes = new Map([
   [".png", "image/png"],
   [".s", "text/plain; charset=utf-8"],
   [".svg", "image/svg+xml"],
-  [".txt", "text/plain; charset=utf-8"]
+  [".txt", "text/plain; charset=utf-8"],
+  [".xml", "application/xml; charset=utf-8"]
 ]);
 
 function sendText(response, status, message) {

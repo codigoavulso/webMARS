@@ -57,7 +57,7 @@ webMARS moves the learning environment to the browser while retaining the visibi
 
 ### Interactive tools and devices
 
-webMARS currently includes 18 browser-native tools:
+webMARS currently includes 20 browser-native tools:
 
 - BHT Simulator
 - Bitmap Display
@@ -72,6 +72,8 @@ webMARS currently includes 18 browser-native tools:
 - Mars Bot
 - Memory Reference Visualization
 - MIPS X-Ray
+- Register Watch (example)
+- Pipeline Lab
 - Scavenger Hunt
 - Screen Magnifier
 - Stack Visualizer
@@ -82,9 +84,9 @@ The device model includes external interrupts for the timer, keyboard, display, 
 
 ### Learning content
 
-- 58 curated examples across lessons, fundamentals, algorithms, C compilation, devices, and systems topics.
+- Curated examples across lessons, fundamentals, algorithms, C compilation, devices, and systems topics; see the shipped catalog for the current inventory.
 - A 15-part introductory sequence covering registers, two's complement, logic, shifts, branches, loops, memory, endianness, arrays, stack frames, function calls, recursion, instruction encoding, IEEE 754, and memory hierarchy.
-- Example variants and explanatory comments in English, Portuguese, and Spanish.
+- Localized examples and help in twenty languages, including English, Portuguese, and Spanish.
 - Integrated help for the IDE, assembler, debugger, syscalls, tools, Mini-C profiles, settings, limits, and compatibility.
 
 ### Projects and accessibility
@@ -94,7 +96,8 @@ The device model includes external interrupts for the timer, keyboard, display, 
 - Import and download through standard browser file controls.
 - Optional cloud accounts and project synchronization; cloud access is not required for local work.
 - Light and dark themes.
-- English, Portuguese, and Spanish interface, help, diagnostics, and learning material.
+- Twenty-language interface, help, diagnostics, and examples, with right-to-left support for Arabic, Urdu and Persian. The independent Manual is in Portuguese; public discovery pages are in English and Portuguese.
+- Permanent example links, versioned public project publishing and a Teacher Kit.
 - Responsive desktop, tablet, and phone layouts.
 - Android keyboard-aware terminal and editor sizing.
 - No Java or WebAssembly runtime requirement.
@@ -110,7 +113,7 @@ The original MARS 4.5 remains an important and stable Java desktop teaching appl
 | Mobile use | Desktop-oriented interface | Dedicated stacked mobile interface with touch and Android keyboard handling |
 | High-level language | Assembly-focused | Integrated Mini-C/C0 and C1-NATIVE teaching compiler targeting MIPS |
 | Projects | Local desktop files and command-line multi-file assembly | Browser project workspace, virtual folders, recovery, local slots, and optional cloud synchronization |
-| Languages | Primarily English | English, Portuguese, and Spanish UI, help, diagnostics, lessons, and examples |
+| Languages | Primarily English | Twenty-language UI, help, diagnostics and examples; Portuguese independent Manual |
 | Runtime state | Forward/backward interactive debugging | Bounded inverse-delta backstep plus broader runtime and tool-state restoration |
 | New tools | Classic MARS tool ecosystem | Adds tools such as Stack Visualizer, System Clock and Timer, and ANSI TTY with mouse input |
 | Deployment | Java runtime on each machine | Static hosting, suitable for classroom servers and centrally managed environments |
@@ -135,7 +138,7 @@ MARS-OS is an educational demonstration, not a general-purpose operating system.
 
 Clear limits strengthen the product message and help educators choose it for the right purpose.
 
-- It is not a cycle-accurate processor, pipeline, cache, or board emulator.
+- The normal runtime is functional, not cycle-accurate. Pipeline Lab is a separate educational timing model with explicit profiles and assumptions, not a predictor of physical processor performance.
 - It is not a replacement for FPGA tools, hardware debuggers, JTAG, or a production embedded toolchain.
 - It does not run Linux or arbitrary MIPS operating-system binaries.
 - Mini-C is not a complete ISO C compiler, full preprocessor, native libc, or general desktop C environment.
@@ -192,12 +195,16 @@ webMARS is not positioned for production firmware validation, performance predic
 - **Compiler:** teaching-focused Mini-C/C0 and C1-NATIVE profiles generating MIPS assembly with the o32 calling convention.
 - **Tool architecture:** dynamically registered browser tools receive compact runtime event batches and synchronized snapshots.
 - **Persistence:** local browser storage by default, with optional configurable cloud synchronization.
-- **Quality controls:** more than 200 automated regression tests covering the assembler, runtime, instruction behavior, memory invariants, interrupts, compiler, tools, examples, help, and release readiness.
+- **Quality controls:** automated regression suites and reproducible conformance, coverage, mutation, benchmark and accessibility evidence. See `docs/evidence.md` for current measurements and limitations.
 - **Distribution:** MIT-licensed project distributed as static files; historical MARS material retains its original attribution and licensing.
 
 ## Privacy and deployment message
 
 webMARS is local-first. Source files, settings, virtual files, recovery state, and benchmark measurements remain on the device unless the user explicitly invokes cloud functionality. The product contains no advertising.
+
+Optional first-party usage metrics are disabled in the distributed configuration and require visitor acceptance when an operator enables them. They record general product actions and approximate active time, never source code or account data. See `docs/usage-metrics.md` and the public privacy pages for the exact schema, retention and limitations. Hosting access logs are separate.
+
+A separate automatic heartbeat for the official installation sends only cumulative active seconds every 60 seconds while the app is visible and focused. It has no identifier, cookie or browser storage and does not display a prompt. The collector aggregates duration samples by UTC day and minute bucket; it cannot count unique visitors or measure completed-session duration from these samples.
 
 Institutions can deploy it as a static site on an internal server or public host. The application does not require a database for local use. Optional cloud project features communicate only with the server configured for that purpose.
 
@@ -223,7 +230,7 @@ Use multi-file projects, interrupts, MMIO devices, tools, and MARS-OS to connect
 
 ### 5. Teach anywhere
 
-Use the same environment on desktop computers, tablets, phones, and managed classroom devices, in three supported languages.
+Use the same environment on desktop computers, tablets, phones, and managed classroom devices, with an interface in twenty supported languages.
 
 ## Ready-to-use marketing copy
 
@@ -238,7 +245,7 @@ Write, assemble, run, and debug MIPS32 programs directly in your browser. Explor
 
 ### Short product description
 
-webMARS is a free, open-source, browser-native MIPS32 learning environment inspired by MARS 4.5. It combines an assembler, JavaScript simulator, debugger, Mini-C compiler, 18 interactive tools, 58 curated examples, multilingual documentation, persistent projects, and responsive desktop/mobile workflows in one accessible application.
+webMARS is a free, open-source, browser-native MIPS32 learning environment inspired by MARS 4.5. It combines an assembler, JavaScript simulator, debugger, Mini-C compiler, 20 interactive tools, curated examples, twenty-language interface and help, persistent projects, and responsive desktop/mobile workflows. Permanent links, versioned publications and a Teacher Kit support classroom use.
 
 ### Institutional description
 
@@ -287,7 +294,7 @@ Yes. The interface has a dedicated stacked mobile layout, touch-friendly control
 
 ### Can it replace hardware simulation?
 
-No. webMARS models the architectural behavior needed for teaching and software experiments. It is not cycle-accurate and does not predict the timing, pipeline, caches, or electrical behavior of a physical processor.
+No. The normal runtime models functional architectural behavior. Pipeline Lab separately models educational pipeline timing under explicit assumptions; it does not predict the performance or electrical behavior of a physical processor.
 
 ### Can instructors host it themselves?
 
@@ -320,15 +327,14 @@ Prefer:
 - “teaching-focused Mini-C compiler”
 - “architectural simulator”
 - “local-first with optional cloud synchronization”
-- “more than 200 automated regression tests”
+- “reproducible evidence with documented scope and limitations”
 
 Avoid:
 
 - “100% MARS compatible”
 - “full MIPS hardware emulator”
 - “full C/C1 compiler”
-- “cycle-accurate”
+- “cycle-accurate” without explicitly identifying the separate Pipeline Lab model and its assumptions
 - “works fully offline”
 - “permanent browser backup”
 - “the first MIPS debugger with backstep or tools”
-

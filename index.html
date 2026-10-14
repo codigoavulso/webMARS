@@ -10,6 +10,8 @@
   <meta name="description" content="webMARS is a browser-based MIPS assembler and simulator inspired by MARS 4.5. Write, assemble and run MIPS code directly in your browser.">
   <meta name="keywords" content="MIPS simulator, MIPS assembler, MARS MIPS, MIPS online, MIPS IDE, MIPS assembly simulator">
   <meta name="author" content="codigoavulso">
+  <meta name="webmars-surface" content="app">
+  <link rel="canonical" href="https://webmars.nfiles.top/">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -25,9 +27,12 @@
   <meta name="twitter:image" content="https://webmars.nfiles.top/assets/images/screenshot-main.png">
 
   <link rel="icon" href="./favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="./assets/css/styles.css?v=0.6.1" />
+  <link rel="stylesheet" href="./assets/css/styles.css?v=0.6.2" />
   <script src="./webmars-config.js"></script>
-  <script src="./assets/js/app-version.js?v=0.6.1"></script>
+  <link rel="stylesheet" href="./assets/css/usage-metrics.css">
+  <script defer src="./assets/js/usage-metrics.js"></script>
+  <script defer src="./assets/js/active-heartbeat.js"></script>
+  <script src="./assets/js/app-version.js?v=0.6.2"></script>
   <script>
     /*
      * Pick the theme before first paint so the splash and the interface never
@@ -129,6 +134,13 @@
   </style>
 </head>
 <body>
+  <noscript><style>#webmars-loader{display:none}</style></noscript>
+  <section id="webmars-public-intro" style="padding:24px;max-width:900px;margin:auto;font:16px/1.6 system-ui">
+    <h1>webMARS — MIPS simulator and assembler in your browser</h1>
+    <p>Learn MIPS32 with an editor, assembler, debugger, Mini-C compiler and interactive tools. Free and open source, by Nelson Ferreira. Local work needs no account or Java installation.</p>
+    <nav aria-label="Explore webMARS"><a href="./discover/">Explore webMARS</a> · <a href="./discover/learn/">Learn MIPS</a> · <a href="./discover/teach/">For teachers</a> · <a href="./discover/pt/">Português</a> · <a href="./discover/privacy/">Privacy and metrics</a></nav>
+    <noscript><p>The simulator requires JavaScript. The learning pages above work without it.</p></noscript>
+  </section>
   <div id="webmars-loader" class="webmars-loader" aria-live="polite" aria-busy="true">
     <div class="webmars-loader-card">
       <div class="webmars-loader-head">
@@ -169,6 +181,7 @@
       function hideLoader() {
         if (loaderHidden || !(loader instanceof HTMLElement)) return;
         loaderHidden = true;
+        document.getElementById("webmars-public-intro")?.remove();
         if (splashTimer !== null) {
           window.clearTimeout(splashTimer);
           splashTimer = null;

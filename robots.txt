@@ -1,2 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /_metrics/
+
+Sitemap: https://webmars.nfiles.top/sitemap.xml

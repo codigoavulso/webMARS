@@ -1,0 +1,21 @@
+[Unit]
+Description=webMARS opt-in usage metrics
+After=network.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+StateDirectory=webmars-metrics
+StateDirectoryMode=0700
+ExecStart=/usr/bin/python3 /usr/local/bin/webmars-metrics --origin https://webmars.nfiles.top
+Restart=on-failure
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_INET AF_UNIX
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
