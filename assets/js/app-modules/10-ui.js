@@ -3287,7 +3287,6 @@ function setupEditor(refs, store, options = {}) {
   let lastActiveFileChangeKey = "";
   let textMeasureContext = null;
   let textMeasureFont = "";
-  const codeWrap = editor?.closest(".editor-code-wrap");
   let completionPopup = null;
   let completionItems = [];
   let completionIndex = 0;
@@ -3413,13 +3412,26 @@ function setupEditor(refs, store, options = {}) {
   }
 
   function positionCompletionPopup(context) {
-    if (!(completionPopup instanceof HTMLElement) || !codeWrap) return;
+    if (!(completionPopup instanceof HTMLElement)) return;
     const computed = window.getComputedStyle(editor);
     const lineHeight = Number.parseFloat(computed.lineHeight) || 15;
     const prefix = editor.value.slice(context.lineStart, context.tokenStart);
-    const x = Math.min(Math.max(6, 8 + measureEditorTextWidth(prefix) - (editor.scrollLeft || 0)), Math.max(6, codeWrap.clientWidth - 260));
+    const editorRect = editor.getBoundingClientRect();
+    const popupWidth = Math.max(250, Math.min(520, completionPopup.offsetWidth || 260));
+    const rawX = editorRect.left + 8 + measureEditorTextWidth(prefix) - (editor.scrollLeft || 0);
+    const x = Math.max(6, Math.min(rawX, window.innerWidth - popupWidth - 6));
     const line = editor.value.slice(0, context.tokenStart).split("\n").length - 1;
-    const y = Math.max(4, 8 + line * lineHeight - (editor.scrollTop || 0) + lineHeight + 2);
+    const downY = editorRect.top + 8 + line * lineHeight - (editor.scrollTop || 0) + lineHeight + 2;
+    const popupHeight = completionPopup.offsetHeight || 0;
+    const upY = editorRect.top + 8 + line * lineHeight - (editor.scrollTop || 0) - popupHeight - 4;
+    const editorTop = Math.max(6, editorRect.top + 4);
+    const editorBottom = Math.min(window.innerHeight - 6, editorRect.bottom - 4);
+    const fittedUpY = Math.min(upY, editorBottom - popupHeight);
+    const y = downY + popupHeight <= editorBottom
+      ? downY
+      : fittedUpY >= editorTop
+      ? fittedUpY
+      : Math.max(6, Math.min(downY, window.innerHeight - popupHeight - 6));
     completionPopup.style.left = `${Math.round(x)}px`;
     completionPopup.style.top = `${Math.round(y)}px`;
   }
@@ -3447,7 +3459,7 @@ function setupEditor(refs, store, options = {}) {
 
   function renderCompletion(context, candidates) {
     hideCompletion();
-    if (!candidates.length || !codeWrap) return;
+    if (!candidates.length || !document.body) return;
     completionItems = candidates;
     completionPopup = document.createElement("div");
     completionPopup.className = "editor-completion-popup";
@@ -3470,7 +3482,7 @@ function setupEditor(refs, store, options = {}) {
       button.addEventListener("click", () => selectCompletion(index));
       completionPopup.appendChild(button);
     });
-    codeWrap.appendChild(completionPopup);
+    document.body.appendChild(completionPopup);
     completionIndex = 0;
     positionCompletionPopup(context);
   }
@@ -3878,6 +3890,9 @@ function setupEditor(refs, store, options = {}) {
   editor.addEventListener("select", updateStatus);
   editor.addEventListener("scroll", () => {
     syncEditorScroll();
+    if (completionPopup?.context) positionCompletionPopup(completionPopup.context);
+  });
+  window.addEventListener("resize", () => {
     if (completionPopup?.context) positionCompletionPopup(completionPopup.context);
   });
   editor.addEventListener("keydown", (event) => {
@@ -5826,10 +5841,10 @@ function injectRuntimeStyles() {
     }
 
     .editor-completion-popup {
-      position: absolute;
-      z-index: 8;
+      position: fixed;
+      z-index: 10000;
       min-width: 250px;
-      max-width: min(520px, calc(100% - 12px));
+      max-width: min(520px, calc(100vw - 12px));
       max-height: 210px;
       overflow: auto;
       padding: 3px;
