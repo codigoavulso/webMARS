@@ -3287,6 +3287,164 @@ function setupEditor(refs, store, options = {}) {
   let lastActiveFileChangeKey = "";
   let textMeasureContext = null;
   let textMeasureFont = "";
+  const codeWrap = editor?.closest(".editor-code-wrap");
+  let completionPopup = null;
+  let completionItems = [];
+  let completionIndex = 0;
+  const directiveDescriptions = new Map([
+    [".text", "switch to the text segment"], [".data", "switch to the data segment"],
+    [".ktext", "switch to the kernel text segment"], [".kdata", "switch to the kernel data segment"],
+    [".byte", "allocate byte values"], [".half", "allocate halfword values"],
+    [".word", "allocate word values"], [".float", "allocate single-precision values"],
+    [".double", "allocate double-precision values"], [".ascii", "allocate a string"],
+    [".asciiz", "allocate a null-terminated string"], [".align", "align the data address"],
+    [".space", "reserve bytes of space"], [".extern", "declare an external label"],
+    [".globl", "declare a global label"], [".set", "set an assembler option"],
+    [".eqv", "define a symbolic substitution"], [".macro", "begin a macro definition"],
+    [".end_macro", "end a macro definition"], [".include", "include another source file"]
+  ]);
+
+  function completionLanguageEnabled() {
+    const active = ensureState().active;
+    return /\.(?:s|asm|mips)$/i.test(String(active?.name || ""));
+  }
+
+  function completionCandidates(prefix, directive, exact = false) {
+    const normalized = String(prefix || "").toLowerCase();
+    if (directive) {
+      return Array.from(directiveDescriptions, ([opcode, description]) => ({ opcode, example: opcode, description }))
+        .filter((entry) => exact ? entry.opcode === normalized : entry.opcode.startsWith(normalized));
+    }
+    const reference = (typeof window !== "undefined" ? window.WebMarsReferenceData : globalThis.WebMarsReferenceData) || {};
+    const candidates = new Map();
+    const add = (opcode, example, description) => {
+      const key = String(opcode || "").toLowerCase();
+      if (!key || !(exact ? key === normalized : key.startsWith(normalized))) return;
+      const candidateKey = exact ? `${key}\u0000${String(example || key)}` : key;
+      if (candidates.has(candidateKey)) return;
+      candidates.set(candidateKey, { opcode: key, example: String(example || key), description: String(description || "") });
+    };
+    (Array.isArray(reference.basicInstructions) ? reference.basicInstructions : []).forEach((entry) => {
+      const example = String(entry?.example || "").trim();
+      add(example.split(/\s+/)[0], example, entry?.description);
+    });
+    const extended = store.getState()?.preferences?.extendedAssembler !== false;
+    if (extended) {
+      (Array.isArray(reference.pseudoOps) ? reference.pseudoOps : []).forEach((entry) => {
+        const opcode = String(entry?.op || "").trim();
+        add(opcode, entry?.source || opcode, entry?.description);
+      });
+    }
+    return Array.from(candidates.values()).sort((left, right) => (
+      left.opcode.localeCompare(right.opcode) || left.example.localeCompare(right.example)
+    ));
+  }
+
+  function completionLineContext() {
+    const cursor = editor.selectionStart ?? 0;
+    const source = String(editor.value || "");
+    const lineStart = source.lastIndexOf("\n", Math.max(0, cursor - 1)) + 1;
+    const lineEnd = source.indexOf("\n", cursor);
+    const line = source.slice(lineStart, lineEnd < 0 ? source.length : lineEnd);
+    const beforeCursor = line.slice(0, Math.max(0, cursor - lineStart));
+    const code = beforeCursor.split("#", 1)[0];
+    const label = /^\s*[A-Za-z_.$][\w.$]*:\s*/.exec(code);
+    const withoutLabel = label ? code.slice(label[0].length) : code;
+    if (!withoutLabel) return null;
+    const trimmed = withoutLabel.trim();
+    const firstToken = /^(\S+)/.exec(trimmed)?.[1] || "";
+    const firstTokenOffset = withoutLabel.indexOf(firstToken);
+    const hasOperandArea = firstToken && /^\s*\S+\s/.test(withoutLabel);
+    if (firstToken && (hasOperandArea || /\s/.test(trimmed))) {
+      return {
+        token: firstToken,
+        tokenStart: lineStart + (label ? label[0].length : 0) + firstTokenOffset,
+        tokenEnd: lineStart + (label ? label[0].length : 0) + firstTokenOffset + firstToken.length,
+        lineStart,
+        mode: "help"
+      };
+    }
+    const match = /(^|\s)(\S*)$/.exec(withoutLabel);
+    if (!match || !match[2]) return null;
+    const token = match[2];
+    const tokenStart = lineStart + (label ? label[0].length : 0) + match.index + match[1].length;
+    return { token, tokenStart, tokenEnd: cursor, lineStart, mode: "completion" };
+  }
+
+  function positionCompletionPopup(context) {
+    if (!(completionPopup instanceof HTMLElement) || !codeWrap) return;
+    const computed = window.getComputedStyle(editor);
+    const lineHeight = Number.parseFloat(computed.lineHeight) || 15;
+    const prefix = editor.value.slice(context.lineStart, context.tokenStart);
+    const x = Math.min(Math.max(6, 8 + measureEditorTextWidth(prefix) - (editor.scrollLeft || 0)), Math.max(6, codeWrap.clientWidth - 260));
+    const line = editor.value.slice(0, context.tokenStart).split("\n").length - 1;
+    const y = Math.max(4, 8 + line * lineHeight - (editor.scrollTop || 0) + lineHeight + 2);
+    completionPopup.style.left = `${Math.round(x)}px`;
+    completionPopup.style.top = `${Math.round(y)}px`;
+  }
+
+  function hideCompletion() {
+    completionPopup?.remove();
+    completionPopup = null;
+    completionItems = [];
+    completionIndex = 0;
+  }
+
+  function selectCompletion(index = completionIndex) {
+    const item = completionItems[index];
+    const context = completionPopup?.context;
+    if (!item || !context || context.mode !== "completion") {
+      hideCompletion();
+      return;
+    }
+    editor.focus();
+    editor.setSelectionRange(context.tokenStart, context.tokenEnd);
+    editor.setRangeText(`${item.opcode} `, context.tokenStart, context.tokenEnd, "end");
+    hideCompletion();
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  function renderCompletion(context, candidates) {
+    hideCompletion();
+    if (!candidates.length || !codeWrap) return;
+    completionItems = candidates;
+    completionPopup = document.createElement("div");
+    completionPopup.className = "editor-completion-popup";
+    completionPopup.setAttribute("role", "listbox");
+    completionPopup.context = context;
+    candidates.forEach((item, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "editor-completion-item";
+      button.setAttribute("role", "option");
+      button.setAttribute("aria-selected", index === 0 ? "true" : "false");
+      const example = document.createElement("span");
+      example.className = "editor-completion-example";
+      example.textContent = item.example;
+      const description = document.createElement("span");
+      description.className = "editor-completion-description";
+      description.textContent = item.description;
+      button.append(example, description);
+      button.addEventListener("mousedown", (event) => event.preventDefault());
+      button.addEventListener("click", () => selectCompletion(index));
+      completionPopup.appendChild(button);
+    });
+    codeWrap.appendChild(completionPopup);
+    completionIndex = 0;
+    positionCompletionPopup(context);
+  }
+
+  function refreshCompletion() {
+    if (!completionLanguageEnabled() || editor.readOnly) return hideCompletion();
+    const context = completionLineContext();
+    if (!context) return hideCompletion();
+    const directive = context.token.startsWith(".");
+    if (context.mode === "help") {
+      return renderCompletion(context, completionCandidates(context.token, directive, true));
+    }
+    if (!directive && context.token.length < 2) return hideCompletion();
+    renderCompletion(context, completionCandidates(context.token, directive));
+  }
 
   function copyExtraFileFields(file) {
     const extra = {};
@@ -3663,11 +3821,43 @@ function setupEditor(refs, store, options = {}) {
     if (suppressInput) return;
     updateActiveSource(editor.value, { pushHistory: true });
     updateStatus();
+    refreshCompletion();
   });
-  editor.addEventListener("click", updateStatus);
+  editor.addEventListener("click", () => { updateStatus(); refreshCompletion(); });
   editor.addEventListener("keyup", updateStatus);
   editor.addEventListener("select", updateStatus);
-  editor.addEventListener("scroll", syncEditorScroll);
+  editor.addEventListener("scroll", () => {
+    syncEditorScroll();
+    if (completionPopup?.context) positionCompletionPopup(completionPopup.context);
+  });
+  editor.addEventListener("keydown", (event) => {
+    if (!completionPopup || !completionItems.length) return;
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      completionIndex = event.key === "ArrowDown"
+        ? (completionIndex + 1) % completionItems.length
+        : (completionIndex + completionItems.length - 1) % completionItems.length;
+      completionPopup.querySelectorAll(".editor-completion-item").forEach((item, index) => {
+        item.setAttribute("aria-selected", index === completionIndex ? "true" : "false");
+      });
+      completionPopup.querySelectorAll(".editor-completion-item")[completionIndex]?.scrollIntoView({ block: "nearest" });
+      return;
+    }
+    if (event.key === "Tab" || event.key === "Enter") {
+      if (completionPopup.context?.mode === "completion") {
+        event.preventDefault();
+        selectCompletion();
+      } else {
+        hideCompletion();
+      }
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      hideCompletion();
+    }
+  });
+  editor.addEventListener("blur", () => window.setTimeout(hideCompletion, 120));
 
   editorTabs?.addEventListener("click", (event) => {
     const target = event.target;
@@ -5578,6 +5768,43 @@ function injectRuntimeStyles() {
       overflow: hidden;
       background: var(--surface-muted);
     }
+
+    .editor-completion-popup {
+      position: absolute;
+      z-index: 8;
+      min-width: 250px;
+      max-width: min(520px, calc(100% - 12px));
+      max-height: 210px;
+      overflow: auto;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      background: var(--surface);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+      font-family: "Cascadia Code", "Consolas", "Lucida Console", monospace;
+      font-size: 11px;
+    }
+
+    .editor-completion-item {
+      display: block;
+      width: 100%;
+      padding: 4px 6px;
+      border: 0;
+      border-radius: 2px;
+      background: transparent;
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .editor-completion-item:hover,
+    .editor-completion-item[aria-selected="true"] {
+      background: var(--selection);
+    }
+
+    .editor-completion-example { color: var(--text); white-space: nowrap; }
+    .editor-completion-description { color: var(--text-muted); margin-left: 10px; font-family: inherit; }
     .editor-highlight {
       position: absolute;
       top: 0;
