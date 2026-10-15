@@ -3291,6 +3291,8 @@ function setupEditor(refs, store, options = {}) {
   let completionPopup = null;
   let completionItems = [];
   let completionIndex = 0;
+  const localizedReferenceCache = new Map();
+  const localizedReferencePending = new Map();
   const directiveDescriptions = new Map([
     [".text", "switch to the text segment"], [".data", "switch to the data segment"],
     [".ktext", "switch to the kernel text segment"], [".kdata", "switch to the kernel data segment"],
@@ -3304,15 +3306,52 @@ function setupEditor(refs, store, options = {}) {
     [".end_macro", "end a macro definition"], [".include", "include another source file"]
   ]);
 
+  function currentCompletionLanguage() {
+    const i18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+    return String(i18n?.getLanguage?.() || "en").trim().toLowerCase().split("-")[0] || "en";
+  }
+
+  function localizedReferenceUrl(language) {
+    const path = `./help/${language}/help-reference.json`;
+    return window.WebMarsAppVersion?.withVersion?.(path) || path;
+  }
+
+  function ensureLocalizedReference(language) {
+    const key = String(language || "en").trim().toLowerCase();
+    if (localizedReferenceCache.has(key)) return Promise.resolve(localizedReferenceCache.get(key));
+    if (localizedReferencePending.has(key)) return localizedReferencePending.get(key);
+    const pending = fetch(localizedReferenceUrl(key), { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((reference) => {
+        if (reference && typeof reference === "object") localizedReferenceCache.set(key, reference);
+        return reference;
+      })
+      .catch(() => null)
+      .finally(() => localizedReferencePending.delete(key));
+    localizedReferencePending.set(key, pending);
+    return pending;
+  }
+
+  function localizedDescription(language, category, matchValue, fallback) {
+    const reference = localizedReferenceCache.get(language);
+    const entries = Array.isArray(reference?.[category]) ? reference[category] : [];
+    const match = entries.find((entry) => String(entry?.example || entry?.name || "") === String(matchValue || ""));
+    return String(match?.description || fallback || "");
+  }
+
   function completionLanguageEnabled() {
     const active = ensureState().active;
     return /\.(?:s|asm|mips)$/i.test(String(active?.name || ""));
   }
 
-  function completionCandidates(prefix, directive, exact = false) {
+  function completionCandidates(prefix, directive, exact = false, language = currentCompletionLanguage()) {
     const normalized = String(prefix || "").toLowerCase();
     if (directive) {
-      return Array.from(directiveDescriptions, ([opcode, description]) => ({ opcode, example: opcode, description }))
+      const localizedDirectives = localizedReferenceCache.get(language)?.directives;
+      const source = Array.isArray(localizedDirectives) && localizedDirectives.length
+        ? localizedDirectives.map((entry) => [String(entry?.name || ""), String(entry?.description || "")])
+        : Array.from(directiveDescriptions, ([opcode, description]) => [opcode, description]);
+      return source.map(([opcode, description]) => ({ opcode, example: opcode, description }))
         .filter((entry) => exact ? entry.opcode === normalized : entry.opcode.startsWith(normalized));
     }
     const reference = (typeof window !== "undefined" ? window.WebMarsReferenceData : globalThis.WebMarsReferenceData) || {};
@@ -3322,17 +3361,19 @@ function setupEditor(refs, store, options = {}) {
       if (!key || !(exact ? key === normalized : key.startsWith(normalized))) return;
       const candidateKey = exact ? `${key}\u0000${String(example || key)}` : key;
       if (candidates.has(candidateKey)) return;
-      candidates.set(candidateKey, { opcode: key, example: String(example || key), description: String(description || "") });
+      const exampleText = String(example || key);
+      candidates.set(candidateKey, { opcode: key, example: exampleText, description: String(description || "") });
     };
     (Array.isArray(reference.basicInstructions) ? reference.basicInstructions : []).forEach((entry) => {
       const example = String(entry?.example || "").trim();
-      add(example.split(/\s+/)[0], example, entry?.description);
+      add(example.split(/\s+/)[0], example, localizedDescription(language, "basicInstructions", example, entry?.description));
     });
     const extended = store.getState()?.preferences?.extendedAssembler !== false;
     if (extended) {
       (Array.isArray(reference.pseudoOps) ? reference.pseudoOps : []).forEach((entry) => {
         const opcode = String(entry?.op || "").trim();
-        add(opcode, entry?.source || opcode, entry?.description);
+        const example = entry?.source || opcode;
+        add(opcode, example, localizedDescription(language, "extendedInstructions", example, entry?.description));
       });
     }
     return Array.from(candidates.values()).sort((left, right) => (
@@ -3438,12 +3479,18 @@ function setupEditor(refs, store, options = {}) {
     if (!completionLanguageEnabled() || editor.readOnly) return hideCompletion();
     const context = completionLineContext();
     if (!context) return hideCompletion();
+    const language = currentCompletionLanguage();
+    if (!localizedReferenceCache.has(language)) {
+      void ensureLocalizedReference(language).then(() => {
+        if (currentCompletionLanguage() === language) refreshCompletion();
+      });
+    }
     const directive = context.token.startsWith(".");
     if (context.mode === "help") {
-      return renderCompletion(context, completionCandidates(context.token, directive, true));
+      return renderCompletion(context, completionCandidates(context.token, directive, true, language));
     }
     if (!directive && context.token.length < 2) return hideCompletion();
-    renderCompletion(context, completionCandidates(context.token, directive));
+    renderCompletion(context, completionCandidates(context.token, directive, false, language));
   }
 
   function copyExtraFileFields(file) {
@@ -3858,6 +3905,12 @@ function setupEditor(refs, store, options = {}) {
     }
   });
   editor.addEventListener("blur", () => window.setTimeout(hideCompletion, 120));
+
+  const completionI18n = typeof window !== "undefined" ? window.WebMarsI18n : globalThis.WebMarsI18n;
+  completionI18n?.subscribe?.(() => {
+    hideCompletion();
+    refreshCompletion();
+  });
 
   editorTabs?.addEventListener("click", (event) => {
     const target = event.target;
