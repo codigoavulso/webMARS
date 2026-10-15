@@ -19,6 +19,7 @@ RETURNS = {"new", "same_day", "days_1_6", "days_7_30", "older"}
 LANGUAGES = set("en pt es zh hi ar fr bn ru id de ja ko tr vi ur it pl fa th other".split())
 FIELDS = {"v", "session", "event", "surface", "detail", "seconds", "returning", "source", "device", "language"}
 RETENTION_SECONDS = 35 * 86400
+HEARTBEAT_INTERVAL_CAP = 90
 
 
 def validate_event(data):
@@ -100,18 +101,24 @@ def record_heartbeat(database, data, now=None):
     received = int(now or time.time())
     session_hash = hashlib.sha256(data["session"].encode("ascii")).hexdigest()
     with closing(sqlite3.connect(database)) as db, db:
-        db.execute("""INSERT INTO heartbeats (day, active_minutes, pings) VALUES (?, ?, 1)
-            ON CONFLICT(day, active_minutes) DO UPDATE SET pings = pings + 1""",
-                   (day, data["active_seconds"] // 60))
+        previous = db.execute("SELECT last_seen, active_seconds FROM heartbeat_sessions WHERE session_hash = ?", (session_hash,)).fetchone()
+        # The browser-reported duration is untrusted. Count only elapsed time
+        # between server receipt timestamps, capped to tolerate timer/network
+        # jitter without allowing a delayed/replayed request to inflate usage.
+        elapsed = 0 if previous is None else min(HEARTBEAT_INTERVAL_CAP, max(0, received - previous[0]))
+        server_active_seconds = (previous[1] if previous else 0) + elapsed
         db.execute("""INSERT INTO heartbeat_sessions
             (session_hash, first_seen, last_seen, active_seconds, pings, registered)
             VALUES (?, ?, ?, ?, 1, ?)
             ON CONFLICT(session_hash) DO UPDATE SET
               last_seen = excluded.last_seen,
-              active_seconds = MAX(heartbeat_sessions.active_seconds, excluded.active_seconds),
+              active_seconds = excluded.active_seconds,
               pings = heartbeat_sessions.pings + 1,
               registered = MAX(heartbeat_sessions.registered, excluded.registered)""",
-                   (session_hash, received, received, data["active_seconds"], int(data["registered"])))
+                   (session_hash, received, received, server_active_seconds, int(data["registered"])))
+        db.execute("""INSERT INTO heartbeats (day, active_minutes, pings) VALUES (?, ?, 1)
+            ON CONFLICT(day, active_minutes) DO UPDATE SET pings = pings + 1""",
+                   (day, server_active_seconds // 60))
 
 
 def report(database, days=30, now=None):
@@ -154,7 +161,7 @@ def report(database, days=30, now=None):
             "utc_calendar_days": {"from": start_day, "through": end_day},
             "pings": sum(row["pings"] for row in heartbeat_rows),
             "daily_minute_buckets": [dict(row) for row in heartbeat_rows],
-            "interpretation": "Historical cumulative active-duration samples. Live presence below counts ephemeral browser sessions, not people."
+            "interpretation": "Historical server-timed cumulative active-duration samples. Live presence below counts ephemeral browser sessions, not people."
         },
         "live_presence": {
             "window_seconds": 300,

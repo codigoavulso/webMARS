@@ -76,17 +76,19 @@ class MetricsTests(unittest.TestCase):
                      {"active_seconds": "60"}, {"active_seconds": 31536001}]:
             self.assertFalse(metrics.validate_heartbeat(data))
         now = 1788600000
-        for seconds in [60, 60, 120]:
-            metrics.record_heartbeat(self.database, {"active_seconds": seconds, "session": "a" * 32, "registered": False}, now=now)
+        for seconds, at in [(60, now), (31536000, now + 60), (1, now + 120)]:
+            metrics.record_heartbeat(self.database, {"active_seconds": seconds, "session": "a" * 32, "registered": False}, now=at)
         metrics.record_heartbeat(self.database, {"active_seconds": 180, "session": "b" * 32, "registered": True}, now=now - 36 * 86400)
         metrics.prune(self.database, now=now)
         result = metrics.report(self.database, now=now)
         heartbeat = result["duration_only_heartbeats"]
         self.assertEqual(heartbeat["pings"], 3)
-        self.assertEqual([row["pings"] for row in heartbeat["daily_minute_buckets"]], [2, 1])
+        self.assertEqual([row["pings"] for row in heartbeat["daily_minute_buckets"]], [1, 1, 1])
         self.assertEqual(result["consenting_tab_sessions"], 0)
         self.assertEqual(result["live_presence"]["active_sessions_estimated"], 1)
         self.assertEqual(result["live_presence"]["registered_sessions_estimated"], 0)
+        with contextlib.closing(sqlite3.connect(self.database)) as db:
+            self.assertEqual(db.execute("SELECT active_seconds FROM heartbeat_sessions WHERE registered = 0").fetchone()[0], 120)
         self.assertEqual(result["approx_active_seconds"]["total"], 0)
         with contextlib.closing(sqlite3.connect(self.database)) as db:
             self.assertEqual([row[1] for row in db.execute("PRAGMA table_info(heartbeats)")], ["day", "active_minutes", "pings"])
