@@ -3870,7 +3870,10 @@ function setupEditor(refs, store, options = {}) {
     updateStatus();
     refreshCompletion();
   });
-  editor.addEventListener("click", () => { updateStatus(); refreshCompletion(); });
+  editor.addEventListener("click", () => {
+    updateStatus();
+    hideCompletion();
+  });
   editor.addEventListener("keyup", updateStatus);
   editor.addEventListener("select", updateStatus);
   editor.addEventListener("scroll", () => {
