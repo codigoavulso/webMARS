@@ -6771,6 +6771,11 @@ function injectRuntimeStyles() {
       gap: 8px;
     }
 
+    .dialog-form-section-compact {
+      align-content: start;
+      gap: 6px;
+    }
+
     .dialog-form-section-title {
       margin: 0;
       font-size: 12px;

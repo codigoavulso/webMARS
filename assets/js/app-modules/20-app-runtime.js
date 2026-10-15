@@ -9073,8 +9073,9 @@ async function openWelcomeDialog() {
     confirmLabel: translateText("Continue"),
     cancelLabel: translateText("Close"),
     width: "620px",
-    height: "390px",
+    height: "300px",
     sections: [{
+      className: "dialog-form-section-compact",
       title: translateText("Start here"),
       description: translateText("Choose what you want to do first."),
       fields: [{
@@ -9097,7 +9098,7 @@ async function openWelcomeDialog() {
     left: "190px",
     top: "95px",
     width: "620px",
-    height: "390px"
+    height: "300px"
   });
   if (!result?.ok) return false;
   const action = String(result.value?.action || "continue");
