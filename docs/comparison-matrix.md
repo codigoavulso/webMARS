@@ -51,6 +51,7 @@ every accepted divergence with the reason it is accepted.
 | Execution host | Browser, no JVM, no local install | Desktop Java application |
 | Tool API | JavaScript tools loaded from `tools/tools.json` | Java classes on the classpath |
 | File syscalls | Backed by browser storage, not the host file system | Backed by the host file system |
+| MIDI sound | Web Audio synthesis approximates the requested General MIDI family | `javax.sound.midi` uses the host synthesizer and its soundbank |
 | Pipeline timing | Modelled only inside the Pipeline Lab, opt-in and versioned | Not modelled |
 | Persistence | Projects live in browser storage and exported archives | Plain files on disk |
 
@@ -356,9 +357,9 @@ _None._
 | 16 | `Close` | complete | fs | `tests/runtime-regression.test.mjs` |
 | 17 | `Exit2` | partial | control | _no direct evidence_ |
 | 30 | `Time` | partial | runtime | _no direct evidence_ |
-| 31 | `MidiOut` | partial | runtime | _no direct evidence_ |
+| 31 | `MidiOut` | partial | runtime | `tests/runtime-regression.test.mjs` |
 | 32 | `Sleep` | partial | runtime | _no direct evidence_ |
-| 33 | `MidiOutSync` | partial | runtime | _no direct evidence_ |
+| 33 | `MidiOutSync` | partial | runtime | `tests/runtime-regression.test.mjs` |
 | 34 | `PrintIntHex` | partial | io | _no direct evidence_ |
 | 35 | `PrintIntBinary` | partial | io | _no direct evidence_ |
 | 36 | `PrintIntUnsigned` | partial | io | _no direct evidence_ |

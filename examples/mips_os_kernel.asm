@@ -1,5 +1,5 @@
 # ============================================================
-# MARS-OS 1.0 - boot, shell and system services
+# MARS-OS 1.3 - boot, shell and system services
 #
 # This module is included by mips.asm after every other kernel
 # module.  It expects the localized strings, command names and
@@ -58,6 +58,7 @@ command_table:
   .word cmd_sleep,     command_sleep
   .word cmd_life,      command_life
   .word cmd_guess,     command_guess
+  .word cmd_daw,       command_daw
   .word cmd_basic,     command_basic
   .word cmd_desktop,   command_desktop
   .word cmd_exit,      command_exit
@@ -109,6 +110,8 @@ shell_loop:
   li    $a1, LINE_CAP
   jal   tty_read_line
   nop
+  bne   $v1, $zero, shell_line_too_long
+  nop
   beq   $v0, $zero, shell_loop
   nop
 
@@ -148,6 +151,13 @@ shell_invoke:
   nop
   lw    $t0, shell_exit_requested
   bne   $t0, $zero, shell_session_done
+  nop
+  b     shell_loop
+  nop
+
+shell_line_too_long:
+  la    $a0, msg_line_too_long
+  jal   tty_puts
   nop
   b     shell_loop
   nop
@@ -225,6 +235,11 @@ os_boot:
   nop
   jal   boot_report_disk
   nop
+  la    $a0, msg_disk_volatile
+  jal   tty_puts
+  nop
+  jal   tty_crlf
+  nop
   la    $a0, esc_dim
   jal   tty_puts
   nop
@@ -288,6 +303,12 @@ command_help:
   jal   tty_puts
   nop
   la    $a0, desktop_help_text
+  jal   tty_puts
+  nop
+  la    $a0, msg_disk_volatile
+  jal   tty_puts
+  nop
+  la    $a0, help_limits
   jal   tty_puts
   nop
   lw    $ra, 0($sp)

@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "Szczelina opóźnienia po odgałęzieniu",
   "Cache: how stride changes the time": "Pamięć podręczna: jak krok zmienia czas",
   "Branch prediction in action": "Przewidywanie oddziałów w akcji",
+  "MIPS Piano": "Pianino MIPS",
   "MARS-OS TTY Shell": "MARS-OS TTY Powłoka",
   "Fundamentals": "Podstawy",
   "Algorithms": "Algorytmy",

@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "분기 후 지연 슬롯",
   "Cache: how stride changes the time": "캐시: 보폭이 시간을 어떻게 변화시키는가",
   "Branch prediction in action": "실행 중인 분기 예측",
+  "MIPS Piano": "MIPS 피아노",
   "MARS-OS TTY Shell": "MARS-OS TTY 쉘",
   "Fundamentals": "기초",
   "Algorithms": "알고리즘",

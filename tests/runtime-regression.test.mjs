@@ -6,6 +6,42 @@ function registers(engine) {
   return engine.exportRuntimeState({ includeProgram: false }).registers;
 }
 
+test("MIDI syscalls forward all voice parameters and preserve sync timing", async () => {
+  const engine = await createJavaScriptEngine();
+  const tones = [];
+  engine.setRuntimeHooks({ midi: (tone) => tones.push({ ...tone }) });
+
+  engine.registers[2] = 31;
+  engine.registers[4] = 60;
+  engine.registers[5] = 240;
+  engine.registers[6] = 40;
+  engine.registers[7] = 96;
+  const asynchronous = engine.executeSyscall();
+  assert.equal(asynchronous.sleepMs || 0, 0);
+  assert.deepEqual(tones[0], {
+    service: 31,
+    pitch: 60,
+    duration: 240,
+    instrument: 40,
+    volume: 96
+  });
+
+  engine.registers[2] = 33;
+  engine.registers[4] = -1;
+  engine.registers[5] = -1;
+  engine.registers[6] = 128;
+  engine.registers[7] = 128;
+  const synchronous = engine.executeSyscall();
+  assert.equal(synchronous.sleepMs, 1000);
+  assert.deepEqual(tones[1], {
+    service: 33,
+    pitch: 60,
+    duration: 1000,
+    instrument: 0,
+    volume: 100
+  });
+});
+
 test("runtime snapshots identify each fresh machine lifecycle", async () => {
   const engine = await createJavaScriptEngine({ settings: { startAtMain: true } });
   const initialRevision = engine.getSnapshot().runtimeRevision;

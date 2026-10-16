@@ -1,5 +1,5 @@
 # ============================================================
-# MARS-OS 1.0 - kernel library
+# MARS-OS 1.3 - kernel library
 #
 # Language neutral services shared by every other module:
 # the cooperative TTY driver, ANSI cursor control, the command
@@ -39,6 +39,7 @@ scratch_buf:    .space LINE_CAP
 digit_buf:      .space 16
 history_buf:    .space 1024
 history_count:  .word 0
+line_overflow:  .word 0
 key_pending:    .word -1
 key_skip_lf:    .word 0
 mouse_button:   .word 0
@@ -268,6 +269,54 @@ ansi_inverse:
   nop
   lw    $ra, 0($sp)
   addiu $sp, $sp, 4
+  jr    $ra
+  nop
+
+# a0 = columns. Relative cursor movement is enough for the shell's
+# single visible input row and avoids destructive backspace semantics.
+ansi_cursor_left:
+  blez  $a0, ansi_cursor_left_done
+  nop
+  addiu $sp, $sp, -8
+  sw    $ra, 4($sp)
+  sw    $s7, 0($sp)
+  move  $s7, $a0
+  la    $a0, esc_bracket
+  jal   tty_puts
+  nop
+  move  $a0, $s7
+  jal   tty_put_uint
+  nop
+  li    $a0, 'D'
+  jal   tty_putc
+  nop
+  lw    $s7, 0($sp)
+  lw    $ra, 4($sp)
+  addiu $sp, $sp, 8
+ansi_cursor_left_done:
+  jr    $ra
+  nop
+
+ansi_cursor_right:
+  blez  $a0, ansi_cursor_right_done
+  nop
+  addiu $sp, $sp, -8
+  sw    $ra, 4($sp)
+  sw    $s7, 0($sp)
+  move  $s7, $a0
+  la    $a0, esc_bracket
+  jal   tty_puts
+  nop
+  move  $a0, $s7
+  jal   tty_put_uint
+  nop
+  li    $a0, 'C'
+  jal   tty_putc
+  nop
+  lw    $s7, 0($sp)
+  lw    $ra, 4($sp)
+  addiu $sp, $sp, 8
+ansi_cursor_right_done:
   jr    $ra
   nop
 
@@ -514,7 +563,9 @@ tty_read_line:
   move  $s1, $a0
   move  $s2, $a1
   move  $s3, $zero
+  move  $s5, $zero
   move  $s6, $zero
+  sw    $zero, line_overflow
   sb    $zero, 0($s1)
 tty_read_line_loop:
   jal   tty_getkey
@@ -527,10 +578,10 @@ tty_read_line_loop:
   beq   $s4, $t0, tty_read_line_next
   nop
   li    $t0, KEY_LEFT
-  beq   $s4, $t0, tty_read_line_loop
+  beq   $s4, $t0, tty_read_line_left
   nop
   li    $t0, KEY_RIGHT
-  beq   $s4, $t0, tty_read_line_loop
+  beq   $s4, $t0, tty_read_line_right
   nop
   li    $t0, KEY_ESCAPE
   beq   $s4, $t0, tty_read_line_kill
@@ -560,11 +611,37 @@ tty_read_line_loop:
   nop
   addiu $t0, $s2, -1
   slt   $t1, $s3, $t0
-  beq   $t1, $zero, tty_read_line_loop
+  beq   $t1, $zero, tty_read_line_overflow
   nop
+  beq   $s5, $s3, tty_read_line_append
+  nop
+
+  # Insert at the cursor, move the tail including its terminator, redraw the
+  # changed suffix and then return the hardware cursor after the new byte.
+  addu  $a1, $s1, $s5
+  addiu $a0, $a1, 1
+  subu  $a2, $s3, $s5
+  addiu $a2, $a2, 1
+  jal   mem_move
+  nop
+  addu  $t2, $s1, $s5
+  sb    $s4, 0($t2)
+  addiu $s3, $s3, 1
+  addiu $s5, $s5, 1
+  addiu $a0, $t2, 0
+  jal   tty_puts
+  nop
+  subu  $a0, $s3, $s5
+  jal   ansi_cursor_left
+  nop
+  b     tty_read_line_loop
+  nop
+
+tty_read_line_append:
   addu  $t2, $s1, $s3
   sb    $s4, 0($t2)
   addiu $s3, $s3, 1
+  move  $s5, $s3
   addu  $t2, $s1, $s3
   sb    $zero, 0($t2)
   move  $a0, $s4
@@ -573,24 +650,66 @@ tty_read_line_loop:
   b     tty_read_line_loop
   nop
 
+tty_read_line_overflow:
+  li    $t0, 1
+  sw    $t0, line_overflow
+  b     tty_read_line_loop
+  nop
+
+tty_read_line_left:
+  blez  $s5, tty_read_line_loop
+  nop
+  li    $a0, 1
+  jal   ansi_cursor_left
+  nop
+  addiu $s5, $s5, -1
+  b     tty_read_line_loop
+  nop
+
+tty_read_line_right:
+  slt   $t0, $s5, $s3
+  beq   $t0, $zero, tty_read_line_loop
+  nop
+  li    $a0, 1
+  jal   ansi_cursor_right
+  nop
+  addiu $s5, $s5, 1
+  b     tty_read_line_loop
+  nop
+
 tty_read_line_backspace:
-  beq   $s3, $zero, tty_read_line_loop
+  beq   $s5, $zero, tty_read_line_loop
+  nop
+  li    $a0, 1
+  jal   ansi_cursor_left
+  nop
+  addiu $s5, $s5, -1
+  addu  $a0, $s1, $s5
+  addiu $a1, $a0, 1
+  subu  $a2, $s3, $s5
+  jal   mem_move
   nop
   addiu $s3, $s3, -1
-  addu  $t0, $s1, $s3
-  sb    $zero, 0($t0)
-  jal   tty_erase_one
+  addu  $a0, $s1, $s5
+  jal   tty_puts
   nop
+  jal   ansi_clear_eol
+  nop
+  subu  $a0, $s3, $s5
+  jal   ansi_cursor_left
+  nop
+  sw    $zero, line_overflow
   b     tty_read_line_loop
   nop
 
 tty_read_line_kill:
-  beq   $s3, $zero, tty_read_line_loop
+  jal   tty_read_line_erase
   nop
-  addiu $s3, $s3, -1
-  jal   tty_erase_one
-  nop
-  b     tty_read_line_kill
+  move  $s3, $zero
+  move  $s5, $zero
+  sb    $zero, 0($s1)
+  sw    $zero, line_overflow
+  b     tty_read_line_loop
   nop
 
 tty_read_line_prev:
@@ -618,7 +737,9 @@ tty_read_line_next:
   jal   tty_read_line_erase
   nop
   move  $s3, $zero
+  move  $s5, $zero
   sb    $zero, 0($s1)
+  sw    $zero, line_overflow
   b     tty_read_line_loop
   nop
 
@@ -636,30 +757,26 @@ tty_read_line_recall:
   jal   str_copy_n
   nop
   move  $s3, $v0
+  move  $s5, $s3
+  sw    $zero, line_overflow
   move  $a0, $s1
   jal   tty_puts
   nop
   b     tty_read_line_loop
   nop
 
-# Erases s3 characters from the screen without touching the buffer.
+# Clears the complete visible line without touching the buffer.
 tty_read_line_erase:
-  addiu $sp, $sp, -8
-  sw    $ra, 4($sp)
-  sw    $s5, 0($sp)
-  move  $s5, $s3
-tty_read_line_erase_loop:
-  blez  $s5, tty_read_line_erase_done
+  addiu $sp, $sp, -4
+  sw    $ra, 0($sp)
+  move  $a0, $s5
+  jal   ansi_cursor_left
   nop
-  jal   tty_erase_one
-  nop
-  addiu $s5, $s5, -1
-  b     tty_read_line_erase_loop
+  jal   ansi_clear_eol
   nop
 tty_read_line_erase_done:
-  lw    $s5, 0($sp)
-  lw    $ra, 4($sp)
-  addiu $sp, $sp, 8
+  lw    $ra, 0($sp)
+  addiu $sp, $sp, 4
   jr    $ra
   nop
 
@@ -686,6 +803,7 @@ tty_read_line_term:
   jal   tty_crlf
   nop
   move  $v0, $s3
+  lw    $v1, line_overflow
   lw    $s6, 0($sp)
   lw    $s5, 4($sp)
   lw    $s4, 8($sp)

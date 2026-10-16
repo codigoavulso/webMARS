@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "สล็อตล่าช้าหลังสาขา",
   "Cache: how stride changes the time": "แคช: การก้าวย่างเปลี่ยนแปลงเวลาอย่างไร",
   "Branch prediction in action": "การทำนายสาขาในการดำเนินการ",
+  "MIPS Piano": "เปียโน MIPS",
   "MARS-OS TTY Shell": "MARS-OS TTY เชลล์",
   "Fundamentals": "ความรู้พื้นฐาน",
   "Algorithms": "อัลกอริทึม",

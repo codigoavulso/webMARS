@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "Слот задержки после ветвления",
   "Cache: how stride changes the time": "Кэш: как шаг меняет время",
   "Branch prediction in action": "Прогнозирование ветвей в действии",
+  "MIPS Piano": "Пианино MIPS",
   "MARS-OS TTY Shell": "MARS-OS TTY Оболочка",
   "Fundamentals": "Основы",
   "Algorithms": "Алгоритмы",

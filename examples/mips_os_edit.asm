@@ -1,5 +1,5 @@
 # ============================================================
-# MARS-OS 1.0 - full screen text editor
+# MARS-OS 1.3 - full screen text editor
 #
 # The document is a single flat byte buffer with bare newline
 # separators; there is no line table, so an insertion is just a
@@ -27,6 +27,7 @@ ed_cur:      .word 0
 ed_top:      .word 0
 ed_file:     .word 0
 ed_dirty:    .word 0
+ed_notice:   .word 0
 ed_running:  .word 0
 
 .text
@@ -146,8 +147,13 @@ ed_insert:
   lw    $t0, ed_len
   li    $t1, EDIT_CAP-1
   slt   $t2, $t0, $t1
-  beq   $t2, $zero, ed_insert_done
+  bne   $t2, $zero, ed_insert_store
   nop
+  la    $t3, edit_buffer_full
+  sw    $t3, ed_notice
+  b     ed_insert_done
+  nop
+ed_insert_store:
   lw    $t3, ed_cur
   subu  $a2, $t0, $t3
   la    $t4, ed_buf
@@ -347,6 +353,18 @@ ed_render_status:
   nop
   move  $s5, $v0
   move  $s6, $v1
+  lw    $t0, ed_notice
+  beq   $t0, $zero, ed_render_status_details
+  nop
+  sw    $zero, ed_notice
+  move  $a0, $t0
+  jal   tty_puts
+  nop
+  jal   ansi_clear_eol
+  nop
+  b     ed_render_help
+  nop
+ed_render_status_details:
   la    $a0, edit_line_label
   jal   tty_puts
   nop
@@ -374,6 +392,7 @@ ed_render_status:
   jal   ansi_clear_eol
   nop
 
+ed_render_help:
   li    $a0, EDIT_HELP_ROW
   li    $a1, 1
   jal   ansi_goto
@@ -580,7 +599,17 @@ ed_save:
   lw    $a2, ed_len
   jal   fs_write
   nop
+  bltz  $v0, ed_save_failed
+  nop
   sw    $zero, ed_dirty
+  li    $v0, 1
+  b     ed_save_done
+  nop
+ed_save_failed:
+  la    $t0, msg_file_too_large
+  sw    $t0, ed_notice
+  move  $v0, $zero
+ed_save_done:
   lw    $ra, 0($sp)
   addiu $sp, $sp, 4
   jr    $ra
@@ -633,6 +662,7 @@ command_edit_copy:
   sw    $zero, ed_cur
   sw    $zero, ed_top
   sw    $zero, ed_dirty
+  sw    $zero, ed_notice
   li    $t0, 1
   sw    $t0, ed_running
 
@@ -820,6 +850,10 @@ command_edit_key_ctrl_q:
   li    $t0, 17
   bne   $s6, $t0, command_edit_key_ctrl_x
   nop
+  jal   ed_confirm_quit
+  nop
+  beq   $v0, $zero, command_edit_loop
+  nop
   b     command_edit_exit
   nop
 command_edit_key_ctrl_x:
@@ -827,6 +861,8 @@ command_edit_key_ctrl_x:
   bne   $s6, $t0, command_edit_key_printable
   nop
   jal   ed_save
+  nop
+  beq   $v0, $zero, command_edit_loop
   nop
   b     command_edit_exit
   nop
@@ -862,7 +898,10 @@ command_edit_exit:
   la    $a0, edit_closed_tail
   jal   tty_puts
   nop
-  lw    $a0, ed_len
+  lw    $a0, ed_file
+  jal   fs_size
+  nop
+  move  $a0, $v0
   jal   tty_put_uint
   nop
   la    $a0, bytes_suffix
@@ -874,8 +913,8 @@ command_edit_exit:
   nop
 
 command_edit_full:
-  la    $a0, msg_disk_full
-  jal   tty_puts
+  move  $a0, $v0
+  jal   fs_report_open_error
   nop
   b     command_edit_done
   nop
@@ -928,6 +967,10 @@ ed_menu_quit:
   li    $t0, 'Q'
   bne   $s7, $t0, ed_menu_exit
   nop
+  jal   ed_confirm_quit
+  nop
+  beq   $v0, $zero, ed_menu_done
+  nop
   sw    $zero, ed_running
   b     ed_menu_done
   nop
@@ -936,6 +979,8 @@ ed_menu_exit:
   bne   $s7, $t0, ed_menu_delete
   nop
   jal   ed_save
+  nop
+  beq   $v0, $zero, ed_menu_done
   nop
   sw    $zero, ed_running
   b     ed_menu_done
@@ -963,6 +1008,56 @@ ed_menu_bottom:
   lw    $t1, ed_len
   sw    $t1, ed_cur
 ed_menu_done:
+  lw    $s7, 0($sp)
+  lw    $ra, 4($sp)
+  addiu $sp, $sp, 8
+  jr    $ra
+  nop
+
+# v0 = 1 when the caller may close, 0 when editing must continue.
+ed_confirm_quit:
+  addiu $sp, $sp, -8
+  sw    $ra, 4($sp)
+  sw    $s7, 0($sp)
+  lw    $t0, ed_dirty
+  beq   $t0, $zero, ed_confirm_quit_yes
+  nop
+  li    $a0, EDIT_STATUS_ROW
+  li    $a1, 1
+  jal   ansi_goto
+  nop
+  jal   ansi_inverse
+  nop
+  la    $a0, edit_unsaved
+  jal   tty_puts
+  nop
+  jal   ansi_clear_eol
+  nop
+  jal   ansi_normal
+  nop
+  jal   tty_getkey
+  nop
+  move  $a0, $v0
+  jal   char_upper_key
+  nop
+  move  $s7, $v0
+  li    $t0, 'S'
+  bne   $s7, $t0, ed_confirm_quit_discard
+  nop
+  jal   ed_save
+  nop
+  b     ed_confirm_quit_done
+  nop
+ed_confirm_quit_discard:
+  li    $t0, 'D'
+  beq   $s7, $t0, ed_confirm_quit_yes
+  nop
+  move  $v0, $zero
+  b     ed_confirm_quit_done
+  nop
+ed_confirm_quit_yes:
+  li    $v0, 1
+ed_confirm_quit_done:
   lw    $s7, 0($sp)
   lw    $ra, 4($sp)
   addiu $sp, $sp, 8

@@ -5605,6 +5605,31 @@ function postExecutionError(actionLabel, message) {
 }
 
 let audioContext = null;
+const MIDI_MAX_ACTIVE_VOICES = 32;
+const activeMidiVoices = [];
+
+// General MIDI groups instruments in sixteen families of eight patches. Web
+// Audio does not ship a SoundFont, so each family gets a small subtractive
+// synthesis voice instead of pretending every patch is the same sine wave.
+// The patch within a family also changes detune and filter colour slightly.
+const MIDI_FAMILY_PROFILES = Object.freeze([
+  { waves: ["triangle", "sine"], harmonic: 2, mix: [0.78, 0.22], attack: 0.004, decay: 0.18, sustain: 0.28, release: 0.16, cutoff: 5200 }, // Piano
+  { waves: ["sine", "triangle"], harmonic: 3, mix: [0.68, 0.32], attack: 0.002, decay: 0.12, sustain: 0.18, release: 0.22, cutoff: 7600 }, // Chromatic percussion
+  { waves: ["square", "sine"], harmonic: 2, mix: [0.30, 0.70], attack: 0.025, decay: 0.08, sustain: 0.78, release: 0.18, cutoff: 4200 }, // Organ
+  { waves: ["triangle", "sawtooth"], harmonic: 2, mix: [0.72, 0.28], attack: 0.003, decay: 0.15, sustain: 0.30, release: 0.12, cutoff: 3600 }, // Guitar
+  { waves: ["square", "triangle"], harmonic: 0.5, mix: [0.34, 0.66], attack: 0.008, decay: 0.12, sustain: 0.62, release: 0.12, cutoff: 1500 }, // Bass
+  { waves: ["sawtooth", "triangle"], harmonic: 1, mix: [0.46, 0.54], attack: 0.12, decay: 0.14, sustain: 0.72, release: 0.34, cutoff: 4300, spread: 7 }, // Strings
+  { waves: ["sawtooth", "sine"], harmonic: 1, mix: [0.42, 0.58], attack: 0.09, decay: 0.16, sustain: 0.70, release: 0.38, cutoff: 5000, spread: 5 }, // Ensemble
+  { waves: ["sawtooth", "square"], harmonic: 1, mix: [0.66, 0.34], attack: 0.035, decay: 0.10, sustain: 0.68, release: 0.20, cutoff: 2800 }, // Brass
+  { waves: ["square", "triangle"], harmonic: 2, mix: [0.64, 0.36], attack: 0.018, decay: 0.08, sustain: 0.64, release: 0.16, cutoff: 3300 }, // Reed
+  { waves: ["sine", "triangle"], harmonic: 2, mix: [0.76, 0.24], attack: 0.035, decay: 0.06, sustain: 0.76, release: 0.22, cutoff: 6800 }, // Pipe
+  { waves: ["sawtooth", "square"], harmonic: 2, mix: [0.62, 0.38], attack: 0.006, decay: 0.08, sustain: 0.66, release: 0.12, cutoff: 7200, spread: 4 }, // Synth lead
+  { waves: ["sawtooth", "triangle"], harmonic: 1, mix: [0.38, 0.62], attack: 0.22, decay: 0.20, sustain: 0.68, release: 0.55, cutoff: 3900, spread: 10 }, // Synth pad
+  { waves: ["sine", "sawtooth"], harmonic: 1.5, mix: [0.55, 0.45], attack: 0.05, decay: 0.18, sustain: 0.46, release: 0.45, cutoff: 6200, spread: 14 }, // Synth effects
+  { waves: ["triangle", "square"], harmonic: 2, mix: [0.74, 0.26], attack: 0.004, decay: 0.14, sustain: 0.32, release: 0.18, cutoff: 4700 }, // Ethnic
+  { waves: ["triangle", "sine"], harmonic: 4, mix: [0.58, 0.42], attack: 0.001, decay: 0.08, sustain: 0.12, release: 0.10, cutoff: 8000 }, // Percussive
+  { waves: ["square", "sawtooth"], harmonic: 1.25, mix: [0.50, 0.50], attack: 0.012, decay: 0.12, sustain: 0.48, release: 0.30, cutoff: 6000, spread: 18 } // Sound effects
+]);
 
 function ensureAudioContext() {
   if (audioContext) return audioContext;
@@ -5619,33 +5644,102 @@ function ensureAudioContext() {
   return audioContext;
 }
 
-function playMidiTone(payload) {
+function unlockMidiAudio() {
   const context = ensureAudioContext();
+  if (context?.state === "suspended" && typeof context.resume === "function") {
+    context.resume().catch(() => {});
+  }
+  return context;
+}
+
+function stopOldestMidiVoice(context) {
+  while (activeMidiVoices.length && activeMidiVoices[0].stopAt <= context.currentTime) {
+    activeMidiVoices.shift();
+  }
+  if (activeMidiVoices.length < MIDI_MAX_ACTIVE_VOICES) return;
+  const oldest = activeMidiVoices.shift();
+  oldest?.oscillators?.forEach((oscillator) => {
+    try { oscillator.stop(context.currentTime + 0.005); } catch { /* already stopped */ }
+  });
+}
+
+function playMidiTone(payload) {
+  const context = unlockMidiAudio();
   if (!context) return;
 
   const pitch = payload.pitch | 0;
+  const instrument = Math.max(0, Math.min(127, payload.instrument | 0));
   const durationMs = Math.max(16, payload.duration | 0);
   const volume = Math.max(0, Math.min(127, payload.volume | 0)) / 127;
   const frequency = 440 * Math.pow(2, (pitch - 69) / 12);
 
   if (!Number.isFinite(frequency) || frequency <= 0) return;
 
-  if (context.state === "suspended") {
-    context.resume().catch(() => {});
+  stopOldestMidiVoice(context);
+  const profile = MIDI_FAMILY_PROFILES[Math.floor(instrument / 8)] || MIDI_FAMILY_PROFILES[0];
+  const patchVariant = instrument & 7;
+  const duration = durationMs / 1000;
+  const startAt = context.currentTime + 0.003;
+  const stopAt = startAt + duration;
+  const attackEnd = Math.min(stopAt, startAt + Math.min(profile.attack, duration * 0.35));
+  const decayEnd = Math.min(stopAt, attackEnd + Math.min(profile.decay, duration * 0.35));
+  const releaseStart = Math.max(decayEnd, stopAt - Math.min(profile.release, duration * 0.40));
+  const peak = volume * 0.22;
+  const sustain = peak * profile.sustain;
+
+  const output = context.createGain();
+  output.gain.setValueAtTime(0, startAt);
+  output.gain.linearRampToValueAtTime(peak, attackEnd);
+  output.gain.linearRampToValueAtTime(sustain, decayEnd);
+  output.gain.setValueAtTime(sustain, releaseStart);
+  output.gain.linearRampToValueAtTime(0, stopAt);
+
+  let destination = context.destination;
+  let filter = null;
+  if (typeof context.createBiquadFilter === "function") {
+    filter = context.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(
+      Math.max(240, Math.min(18000, profile.cutoff * (0.86 + patchVariant * 0.04))),
+      startAt
+    );
+    filter.Q.setValueAtTime(0.7 + patchVariant * 0.12, startAt);
+    filter.connect(destination);
+    destination = filter;
   }
+  output.connect(destination);
 
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
-  oscillator.type = "sine";
-  oscillator.frequency.value = frequency;
-  gain.gain.value = volume;
-  oscillator.connect(gain);
-  gain.connect(context.destination);
+  const oscillators = profile.waves.map((wave, index) => {
+    const oscillator = context.createOscillator();
+    const voiceGain = context.createGain();
+    const ratio = index === 0 ? 1 : profile.harmonic;
+    oscillator.type = wave;
+    oscillator.frequency.setValueAtTime(frequency * ratio, startAt);
+    if (oscillator.detune) {
+      const spread = Number(profile.spread) || 0;
+      oscillator.detune.setValueAtTime(index === 0 ? -spread : spread + (patchVariant - 3.5), startAt);
+    }
+    voiceGain.gain.setValueAtTime(profile.mix[index] ?? 0.5, startAt);
+    oscillator.connect(voiceGain);
+    voiceGain.connect(output);
+    oscillator.start(startAt);
+    oscillator.stop(stopAt + 0.01);
+    return oscillator;
+  });
 
-  const startAt = context.currentTime;
-  const stopAt = startAt + (durationMs / 1000);
-  oscillator.start(startAt);
-  oscillator.stop(stopAt);
+  const voice = { oscillators, output, filter, stopAt: stopAt + 0.01 };
+  activeMidiVoices.push(voice);
+  let ended = 0;
+  oscillators.forEach((oscillator) => {
+    oscillator.addEventListener("ended", () => {
+      ended += 1;
+      if (ended < oscillators.length) return;
+      const index = activeMidiVoices.indexOf(voice);
+      if (index >= 0) activeMidiVoices.splice(index, 1);
+      try { output.disconnect(); } catch { /* already disconnected */ }
+      try { filter?.disconnect(); } catch { /* already disconnected */ }
+    }, { once: true });
+  });
 }
 
 function parseConfirmChoice(value, fallback = 2) {
@@ -7071,6 +7165,12 @@ async function openInterfacePreferencesPanel() {
             max: 2.2,
             step: 0.05,
             value: String(current.editorLineHeight ?? 1.25)
+          },
+          {
+            name: "editorAutoIndent",
+            label: ["Auto-indent", "on Enter"].join(" "),
+            type: "checkbox",
+            value: current.editorAutoIndent !== false
           }
         ]
       },
@@ -7129,6 +7229,7 @@ async function openInterfacePreferencesPanel() {
     showBenchmarkPanel: parseBooleanPreferenceToken(values.showBenchmarkPanel, current.showBenchmarkPanel),
     editorFontSize: Math.max(9, Math.min(22, parsedFont)),
     editorLineHeight: Math.max(1, Math.min(2.2, parsedLineHeight)),
+    editorAutoIndent: parseBooleanPreferenceToken(values.editorAutoIndent, current.editorAutoIndent !== false),
     highlightTextUpdates: parseBooleanPreferenceToken(values.highlightTextUpdates, current.highlightTextUpdates),
     highlightDataUpdates: parseBooleanPreferenceToken(values.highlightDataUpdates, current.highlightDataUpdates),
     highlightRegisterUpdates: parseBooleanPreferenceToken(values.highlightRegisterUpdates, current.highlightRegisterUpdates)
@@ -9471,6 +9572,24 @@ const commands = {
     return commands.saveFileToDiskAs();
   },
 
+  dumpMemory() {
+    const snapshot = engine.getSnapshot({ includeProgram: false });
+    const words = Array.isArray(snapshot?.memoryWords) ? snapshot.memoryWords.slice() : [];
+    words.sort((left, right) => Number(left?.[0] || 0) - Number(right?.[0] || 0));
+    const lines = [
+      `# webMARS memory dump (${new Date().toISOString()})`,
+      `# words: ${words.length}`,
+      "# address        hex         signed",
+      ...words.map(([address, value]) => {
+        const addr = (Number(address) >>> 0).toString(16).padStart(8, "0");
+        const hex = (Number(value) >>> 0).toString(16).padStart(8, "0");
+        return `0x${addr}  0x${hex}  ${Number(value) | 0}`;
+      })
+    ];
+    downloadText("memory-dump.txt", `${lines.join("\n")}\n`);
+    postMarsMessage(`Memory dumped to file (${words.length} word(s)).`);
+  },
+
   dumpRunIo() {
     downloadText("run-io.txt", refs.messages.run.value || refs.messages.run.textContent || "");
     postMarsMessage("Run I/O dumped to file.");
@@ -9590,6 +9709,9 @@ const commands = {
     }
   },
   step() {
+    // Creating/resuming the context inside the click gesture avoids a second
+    // browser permission gesture when the stepped instruction later emits MIDI.
+    unlockMidiAudio();
     modeController.setMode("execute");
     windowManager.focusForExecution("window-text"); windowManager.focusForExecution("window-data");
     const snapshot = engine.getSnapshot();
@@ -9647,6 +9769,9 @@ const commands = {
       }
     }
   },  go() {
+    // Browsers only allow audio to start from a user gesture. Prime the native
+    // context on Run so syscall 31/33 can sound later with no extra dialog.
+    unlockMidiAudio();
     modeController.setMode("execute");
     windowManager.focusForExecution("window-text"); windowManager.focusForExecution("window-data");
     if (runActive) return;
@@ -9787,6 +9912,19 @@ const commands = {
 
     syncSnapshot(engine.getSnapshot());
   },
+  clearBreakpoints() {
+    engine.clearBreakpoints?.();
+    syncSnapshot(engine.getSnapshot());
+    postMarsMessage(translateText("Breakpoint {state}: {address}.", { state: "cleared", address: "all" }));
+  },
+  toggleAllBreakpoints() {
+    const enabled = engine.toggleAllBreakpoints?.() !== false;
+    syncSnapshot(engine.getSnapshot());
+    postMarsMessage(translateText("Breakpoint {state}: {address}.", {
+      state: enabled ? "enabled" : "disabled",
+      address: "all"
+    }));
+  },
   undo() {
     modeController.setMode("edit");
     if (editor.undo()) editor.focus();
@@ -9903,6 +10041,7 @@ const commands = {
     });
   },
   togglePopupSyscallInput() { togglePreference("popupSyscallInput", "Popup dialog for input syscalls"); },
+  toggleEditorAutoIndent() { togglePreference("editorAutoIndent", "Auto-indent on Enter"); },
   toggleSplitMessagesRunIo() { togglePreference("splitMessagesRunIo", "Separate Mars Messages from Run I/O"); },
   toggleAddressDisplayBase() { togglePreference("displayAddressesHex", "Addresses displayed in hexadecimal"); },
   toggleValueDisplayBase() { togglePreference("displayValuesHex", "Values displayed in hexadecimal"); },
@@ -10739,6 +10878,9 @@ window.addEventListener("keydown", async (event) => {
     if (key === "s" && !event.shiftKey) { event.preventDefault(); void commands.saveFile(); }
     if (key === "f") { event.preventDefault(); void commands.find(); }
     if (key === "a") { event.preventDefault(); void commands.selectAll(); }
+    if (key === "d") { event.preventDefault(); void commands.dumpMemory(); }
+    if (key === "k") { event.preventDefault(); void commands.clearBreakpoints(); }
+    if (key === "t") { event.preventDefault(); void commands.toggleAllBreakpoints(); }
     if (key === "z" && !event.shiftKey) { event.preventDefault(); void commands.undo(); }
     if (key === "y" || (key === "z" && event.shiftKey)) { event.preventDefault(); void commands.redo(); }
     if (key === "r") {
@@ -10762,6 +10904,9 @@ window.addEventListener("keydown", async (event) => {
   // through a program meant reaching for the mouse the moment you went one
   // instruction too far. F8 is the key MARS binds it to.
   if (event.key === "F8") { event.preventDefault(); void commands.backstep(); }
+  if (event.key === "F9") { event.preventDefault(); void commands.pause(); }
+  if (event.key === "F11") { event.preventDefault(); void commands.stop(); }
+  if (event.key === "F12") { event.preventDefault(); void commands.reset(); }
   if (event.key === "Escape") {
     menuSystem.hide();
   }

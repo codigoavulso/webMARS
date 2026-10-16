@@ -1,5 +1,5 @@
 # ============================================================
-# MARS-OS 1.0 - writable RAM filesystem
+# MARS-OS 1.3 - writable RAM filesystem
 #
 # The disk is a flat directory of fixed size slots carved out of
 # the data segment.  Nothing is persisted to the host: the disk is
@@ -160,6 +160,20 @@ fs_alloc:
   sw    $s6, 4($sp)
   sw    $s7, 0($sp)
   move  $s5, $a0
+  move  $t8, $a0
+  move  $t9, $zero
+fs_alloc_name_check:
+  lbu   $t0, 0($t8)
+  beq   $t0, $zero, fs_alloc_name_ready
+  nop
+  addiu $t9, $t9, 1
+  li    $t0, FS_NAME_CAP
+  beq   $t9, $t0, fs_alloc_name_long
+  nop
+  addiu $t8, $t8, 1
+  b     fs_alloc_name_check
+  nop
+fs_alloc_name_ready:
   move  $s6, $zero
 fs_alloc_loop:
   li    $t0, FS_MAX_FILES
@@ -194,6 +208,10 @@ fs_alloc_claim:
   nop
 fs_alloc_full:
   li    $v0, -1
+  b     fs_alloc_done
+  nop
+fs_alloc_name_long:
+  li    $v0, -2
 fs_alloc_done:
   lw    $s7, 0($sp)
   lw    $s6, 4($sp)
@@ -220,6 +238,28 @@ fs_open_or_create_done:
   lw    $s7, 0($sp)
   lw    $ra, 4($sp)
   addiu $sp, $sp, 8
+  jr    $ra
+  nop
+
+# a0 = negative result returned by fs_open_or_create.
+fs_report_open_error:
+  addiu $sp, $sp, -4
+  sw    $ra, 0($sp)
+  li    $t0, -2
+  bne   $a0, $t0, fs_report_open_error_full
+  nop
+  la    $a0, msg_name_too_long
+  jal   tty_puts
+  nop
+  b     fs_report_open_error_done
+  nop
+fs_report_open_error_full:
+  la    $a0, msg_disk_full
+  jal   tty_puts
+  nop
+fs_report_open_error_done:
+  lw    $ra, 0($sp)
+  addiu $sp, $sp, 4
   jr    $ra
   nop
 
@@ -254,9 +294,8 @@ fs_write:
   move  $s7, $a2
   li    $t0, FS_FILE_CAP-1
   slt   $t1, $t0, $s7
-  beq   $t1, $zero, fs_write_store
+  bne   $t1, $zero, fs_write_too_large
   nop
-  move  $s7, $t0
 fs_write_store:
   move  $a0, $s5
   jal   fs_data_ptr
@@ -276,6 +315,11 @@ fs_write_store:
   jal   fs_set_size
   nop
   move  $v0, $s7
+  b     fs_write_done
+  nop
+fs_write_too_large:
+  li    $v0, -1
+fs_write_done:
   lw    $s7, 0($sp)
   lw    $s6, 4($sp)
   lw    $s5, 8($sp)
@@ -302,9 +346,8 @@ fs_append:
   li    $t0, FS_FILE_CAP-1
   subu  $t0, $t0, $s4
   slt   $t1, $t0, $s7
-  beq   $t1, $zero, fs_append_store
+  bne   $t1, $zero, fs_append_too_large
   nop
-  move  $s7, $t0
 fs_append_store:
   blez  $s7, fs_append_none
   nop
@@ -332,6 +375,10 @@ fs_append_store:
   nop
 fs_append_none:
   move  $v0, $zero
+  b     fs_append_done
+  nop
+fs_append_too_large:
+  li    $v0, -1
 fs_append_done:
   lw    $s7, 4($sp)
   lw    $s6, 8($sp)
@@ -425,13 +472,15 @@ fs_print_block_done:
 # Line iteration
 #
 # a0 = cursor, a1 = end of buffer, a2 = destination, a3 = capacity
-# v0 = cursor after the newline, v1 = copied length, a2 preserved.
+# v0 = cursor after the newline, v1 = copied length, a2 preserved,
+# a3 = 1 when the source line did not fit in the destination.
 # ------------------------------------------------------------
 
 line_take:
   move  $t0, $a0
   move  $t1, $a2
   move  $v1, $zero
+  move  $t6, $zero
 line_take_loop:
   sltu  $t2, $t0, $a1
   beq   $t2, $zero, line_take_end
@@ -445,8 +494,12 @@ line_take_loop:
   nop
   addiu $t4, $a3, -1
   slt   $t5, $v1, $t4
-  beq   $t5, $zero, line_take_loop
+  bne   $t5, $zero, line_take_store
   nop
+  li    $t6, 1
+  b     line_take_loop
+  nop
+line_take_store:
   sb    $t3, 0($t1)
   addiu $t1, $t1, 1
   addiu $v1, $v1, 1
@@ -457,6 +510,7 @@ line_take_end:
 line_take_done:
   sb    $zero, 0($t1)
   move  $v0, $t0
+  move  $a3, $t6
   jr    $ra
   nop
 
@@ -612,8 +666,8 @@ command_touch:
   b     command_touch_done
   nop
 command_touch_full:
-  la    $a0, msg_disk_full
-  jal   tty_puts
+  move  $a0, $v0
+  jal   fs_report_open_error
   nop
   b     command_touch_done
   nop
@@ -685,13 +739,21 @@ command_cp:
   move  $a2, $s6
   jal   fs_write
   nop
+  bltz  $v0, command_cp_too_large
+  nop
   la    $a0, msg_ok
   jal   tty_puts
   nop
   b     command_cp_done
   nop
 command_cp_full:
-  la    $a0, msg_disk_full
+  move  $a0, $v0
+  jal   fs_report_open_error
+  nop
+  b     command_cp_done
+  nop
+command_cp_too_large:
+  la    $a0, msg_file_too_large
   jal   tty_puts
   nop
   b     command_cp_done
@@ -730,6 +792,13 @@ command_mv:
   nop
   move  $s7, $v0
   move  $a0, $s6
+  jal   str_len
+  nop
+  li    $t0, FS_NAME_CAP
+  slt   $t1, $v0, $t0
+  beq   $t1, $zero, command_mv_name_long
+  nop
+  move  $a0, $s6
   jal   fs_find
   nop
   bltz  $v0, command_mv_rename
@@ -757,6 +826,12 @@ command_mv_usage:
   la    $a0, msg_move_usage
   jal   tty_puts
   nop
+  b     command_mv_done
+  nop
+command_mv_name_long:
+  la    $a0, msg_name_too_long
+  jal   tty_puts
+  nop
 command_mv_done:
   lw    $s7, 0($sp)
   lw    $s6, 4($sp)
@@ -775,8 +850,9 @@ command_append:
   li    $t8, 1
 
 write_common:
-  addiu $sp, $sp, -20
-  sw    $ra, 16($sp)
+  addiu $sp, $sp, -24
+  sw    $ra, 20($sp)
+  sw    $s3, 16($sp)
   sw    $s4, 12($sp)
   sw    $s5, 8($sp)
   sw    $s6, 4($sp)
@@ -799,27 +875,37 @@ write_common:
   move  $a0, $s6
   jal   str_len
   nop
-  move  $a2, $v0
+  move  $s3, $v0
+  li    $t0, LINE_CAP-1
+  slt   $t1, $s3, $t0
+  beq   $t1, $zero, write_too_large
+  nop
+  la    $a0, scratch_buf
   move  $a1, $s6
+  move  $a2, $s3
+  jal   mem_move
+  nop
+  la    $t0, scratch_buf
+  addu  $t0, $t0, $s3
+  li    $t1, 10
+  sb    $t1, 0($t0)
+  addiu $s3, $s3, 1
+  addu  $t0, $t0, 1
+  sb    $zero, 0($t0)
   move  $a0, $s7
+  la    $a1, scratch_buf
+  move  $a2, $s3
   bne   $s4, $zero, write_append_call
   nop
   jal   fs_write
   nop
-  b     write_newline
+  b     write_check
   nop
 write_append_call:
   jal   fs_append
   nop
-write_newline:
-  li    $t0, 10
-  la    $t1, scratch_buf
-  sb    $t0, 0($t1)
-  sb    $zero, 1($t1)
-  move  $a0, $s7
-  la    $a1, scratch_buf
-  li    $a2, 1
-  jal   fs_append
+write_check:
+  bltz  $v0, write_too_large
   nop
   la    $a0, msg_ok
   jal   tty_puts
@@ -827,7 +913,13 @@ write_newline:
   b     write_done
   nop
 write_full:
-  la    $a0, msg_disk_full
+  move  $a0, $v0
+  jal   fs_report_open_error
+  nop
+  b     write_done
+  nop
+write_too_large:
+  la    $a0, msg_file_too_large
   jal   tty_puts
   nop
   b     write_done
@@ -841,8 +933,9 @@ write_done:
   lw    $s6, 4($sp)
   lw    $s5, 8($sp)
   lw    $s4, 12($sp)
-  lw    $ra, 16($sp)
-  addiu $sp, $sp, 20
+  lw    $s3, 16($sp)
+  lw    $ra, 20($sp)
+  addiu $sp, $sp, 24
   jr    $ra
   nop
 
@@ -1004,6 +1097,8 @@ head_tail_loop:
   jal   line_take
   nop
   move  $s5, $v0
+  bne   $a3, $zero, head_tail_line_too_long
+  nop
   slt   $t0, $s4, $s3
   bne   $t0, $zero, head_tail_next
   nop
@@ -1019,6 +1114,10 @@ head_tail_loop:
 head_tail_next:
   addiu $s4, $s4, 1
   b     head_tail_loop
+  nop
+head_tail_line_too_long:
+  la    $a0, msg_line_too_long
+  jal   tty_puts
   nop
 head_tail_done:
   lw    $s7, 0($sp)
@@ -1077,6 +1176,8 @@ command_grep_loop:
   jal   line_take
   nop
   move  $s5, $v0
+  bne   $a3, $zero, command_grep_line_too_long
+  nop
   addiu $s7, $s7, 1
   la    $a0, scratch_buf
   move  $a1, $s3
@@ -1103,6 +1204,12 @@ command_grep_report:
   nop
 command_grep_usage:
   la    $a0, msg_grep_usage
+  jal   tty_puts
+  nop
+  b     command_grep_done
+  nop
+command_grep_line_too_long:
+  la    $a0, msg_line_too_long
   jal   tty_puts
   nop
 command_grep_done:
@@ -1145,7 +1252,7 @@ command_sort_load:
   beq   $t0, $zero, command_sort_run
   nop
   li    $t0, SORT_MAX_LINES
-  beq   $s4, $t0, command_sort_run
+  beq   $s4, $t0, command_sort_too_large
   nop
   li    $t0, SORT_LINE_CAP
   mul   $t0, $s4, $t0
@@ -1157,6 +1264,8 @@ command_sort_load:
   jal   line_take
   nop
   move  $s5, $v0
+  bne   $a3, $zero, command_sort_too_large
+  nop
   addiu $s4, $s4, 1
   b     command_sort_load
   nop
@@ -1225,6 +1334,10 @@ command_sort_print_loop:
   nop
   addiu $s3, $s3, 1
   b     command_sort_print_loop
+  nop
+command_sort_too_large:
+  la    $a0, msg_sort_too_large
+  jal   tty_puts
   nop
 command_sort_done:
   lw    $s7, 0($sp)

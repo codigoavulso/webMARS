@@ -1661,6 +1661,41 @@
             "id": "branch-predictor-bht-demo"
         },
         {
+            "label": "MIPS Piano",
+            "path": "mips_piano.asm",
+            "category": "Devices and system",
+            "languages": [
+                "en",
+                "es",
+                "pt",
+                "zh",
+                "hi",
+                "ar",
+                "fr",
+                "bn",
+                "ru",
+                "id",
+                "de",
+                "ja",
+                "ko",
+                "tr",
+                "vi",
+                "ur",
+                "it",
+                "pl",
+                "fa",
+                "th"
+            ],
+            "files": [
+                {
+                    "path": "mips_piano.asm",
+                    "main": true,
+                    "shared": true
+                }
+            ],
+            "id": "mips-piano"
+        },
+        {
             "label": "MARS-OS TTY Operating System",
             "path": "mips.asm",
             "category": "Devices and system",
@@ -1713,6 +1748,10 @@
                 },
                 {
                     "path": "mips_os_basic.asm",
+                    "shared": true
+                },
+                {
+                    "path": "mips_os_daw.asm",
                     "shared": true
                 },
                 {

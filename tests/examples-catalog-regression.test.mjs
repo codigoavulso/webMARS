@@ -370,8 +370,9 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
 
   assert.equal(tty.remainingInput, 0);
   assert.ok(steps < 700_000, "The shell session used unexpectedly many instructions.");
-  assert.match(tty.output, /MARS-OS 1\.0/);
+  assert.match(tty.output, /MARS-OS 1\.3/);
   assert.match(tty.output, /RAM disk mounted: 5 files, \d+ bytes/);
+  assert.match(tty.output, /RAM disk is volatile; reboot\/reset erases changes/);
   assert.match(tty.output, /result: 54 \(0x00000036\)/);
   assert.match(tty.output, /Learn the machine by building the machine\./);
   assert.match(tty.output, /\x1b\[93mguest@webmars:\/\$ /);
@@ -381,7 +382,7 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
   assert.match(tty.output, /timer device: inactive/);
   assert.match(tty.output, /uptime: \d+ ms/);
   assert.match(tty.output, /commands executed: 5/);
-  assert.match(tty.output, /commands installed: 46/);
+  assert.match(tty.output, /commands installed: 47/);
   assert.match(tty.output, /1  calc 0x20 \+ 22/);
   assert.match(tty.output, /6  history/);
   assert.match(tty.output, /System halted/);
@@ -404,8 +405,110 @@ test("MARS-OS TTY shell executes commands, history, ANSI state and clean shutdow
     assert.match(mainSource, /cmd_sheet:\s*\.asciiz "sheet"/);
     assert.match(mainSource, /cmd_basic:\s*\.asciiz "basic"/);
     assert.match(mainSource, /cmd_exit:\s*\.asciiz "exit"/);
+    assert.match(mainSource, /MARS-OS 1\.3/);
+    assert.doesNotMatch(mainSource, /MARS-OS 1\.[012]/);
     assert.doesNotMatch(mainSource, /Bitmap Display|framebuffer/i);
   }
+});
+
+test("MARS-OS Mini-DAW plays a polyphonic bar through the native MIDI syscalls", async () => {
+  const engine = await assembleMarsOs("en");
+  const tones = [];
+  engine.setRuntimeHooks({ midi: (tone) => tones.push({ ...tone }) });
+  const tty = attachTtyHarness(
+    engine,
+    "tdaw\r" + clickAt(5, 5) + "pqshutdown\r"
+  );
+  runMarsOs(engine, 1_500_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /MARS-OS Mini-DAW/);
+  assert.match(tty.output, /C5 \x1b\[7m X/);
+  assert.match(tty.output, /B4 /);
+  assert.doesNotMatch(tty.output, /Instrument 0\s+Patch 0/);
+  assert.ok(tones.length >= 8, "The bundled demo should contain at least eight notes.");
+  assert.ok(tones.every((tone) => tone.service === 31));
+  assert.ok(tones.some((tone) => tone.pitch === 72));
+  assert.ok(tones.some((tone) => tone.pitch === 60));
+});
+
+test("MARS-OS shell edits within a command and rejects overlong input and names", async () => {
+  const engine = await assembleMarsOs("en");
+  const longInput = "x".repeat(128);
+  const longName = "12345678901234567890";
+  const tty = attachTtyHarness(
+    engine,
+    `techo helo\x1b[Dl\r${longInput}\rtouch ${longName}\rls\rshutdown\r`
+  );
+  runMarsOs(engine, 1_500_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /hello\r\n/);
+  assert.match(tty.output, /error: line exceeds the supported limit/);
+  assert.match(tty.output, /error: file name exceeds 19 characters/);
+  assert.equal(
+    (tty.output.match(new RegExp(longName, "g")) || []).length,
+    1,
+    "The rejected name must only occur in the echoed command, not in the directory listing."
+  );
+});
+
+test("MARS-OS append is atomic when the file capacity would be exceeded", async () => {
+  const engine = await assembleMarsOs("en");
+  const payload = "a".repeat(110);
+  const appends = Array.from({ length: 10 }, () => `append big.txt ${payload}`).join("\r");
+  const tty = attachTtyHarness(engine, `t${appends}\rwc big.txt\rshutdown\r`);
+  runMarsOs(engine, 2_500_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /operation would exceed the 1023-byte file limit/);
+  assert.match(tty.output, /lines: 9  words: 9  bytes: 999/);
+});
+
+test("MARS-OS editor and spreadsheet confirm dirty exits", async () => {
+  const editorEngine = await assembleMarsOs("en");
+  const editorTty = attachTtyHarness(
+    editorEngine,
+    "tedit draft.txt\rX\x11c\x11dshutdown\r"
+  );
+  runMarsOs(editorEngine, 3_000_000);
+  editorTty.detach();
+  assert.equal(editorTty.remainingInput, 0);
+  assert.ok((editorTty.output.match(/Unsaved changes:/g) || []).length >= 2);
+  assert.match(editorTty.output, /edit: closed draft\.txt, 0 bytes/);
+
+  const sheetEngine = await assembleMarsOs("en");
+  const sheetTty = attachTtyHarness(
+    sheetEngine,
+    "tsheet formulas.sht\r=1+2junk\r\x11c\x11dshutdown\r"
+  );
+  runMarsOs(sheetEngine, 5_000_000);
+  sheetTty.detach();
+  assert.equal(sheetTty.remainingInput, 0);
+  assert.match(sheetTty.output, /#ERR/);
+  assert.ok((sheetTty.output.match(/Unsaved changes:/g) || []).length >= 2);
+});
+
+test("MARS-OS BASIC rejects statements beyond its line capacity", async () => {
+  const engine = await assembleMarsOs("en");
+  const statement = "X".repeat(64);
+  const tty = attachTtyHarness(
+    engine,
+    `tbasic\r10 ${statement}\rLIST\rBYE\rshutdown\r`
+  );
+  runMarsOs(engine, 1_500_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /\?LINE TOO LONG ERROR/);
+  assert.equal(
+    (tty.output.match(new RegExp(statement, "g")) || []).length,
+    1,
+    "The rejected statement must not be stored and listed."
+  );
 });
 
 // The desktop composes into a cell buffer before it writes anything, so the
@@ -618,6 +721,17 @@ test("MARS-OS desktop launches applications and repaints on return", async () =>
   assert.match(tty.output, /System halted/);
 });
 
+test("MARS-OS desktop launches the Mini-DAW from its D shortcut", async () => {
+  const engine = await assembleMarsOs("en");
+  const tty = attachTtyHarness(engine, "dqtshutdown\r");
+  runMarsOs(engine, 1_500_000);
+  tty.detach();
+
+  assert.equal(tty.remainingInput, 0);
+  assert.match(tty.output, /MARS-OS Mini-DAW/);
+  assert.match(tty.output, /System halted/);
+});
+
 test("MARS-OS boots from the lowest text address without the start-at-main shortcut", async () => {
   // The app does not force execution to begin at main, so the reset vector has
   // to be the first instruction the assembler emits.
@@ -757,7 +871,7 @@ test("MARS-OS BASIC reports errors and can be interrupted with Ctrl-C", async ()
   const engine = await assembleMarsOs("en");
   const tty = attachTtyHarness(
     engine,
-    "tbasic\rPRINT 1/0\rGOTO 999\r10 PRINT \"X\"\r20 GOTO 10\rRUN\r\x03LIST\rBYE\rshutdown\r"
+    "tbasic\rPRINT 1/0\rGOTO 999\r10 PRINT \"X\"\r20 GOTO 10\rRUN\r\x03LIST\rBYE\rDshutdown\r"
   );
   runMarsOs(engine, 2_000_000);
   tty.detach();
@@ -768,6 +882,7 @@ test("MARS-OS BASIC reports errors and can be interrupted with Ctrl-C", async ()
   // Ctrl-C leaves the run loop without losing the program.
   assert.match(tty.output, /BREAK/);
   assert.match(tty.output, /10 PRINT "X"\r\n {3}20 GOTO 10/);
+  assert.match(tty.output, /Unsaved program:/);
   assert.match(tty.output, /basic: back to the shell/);
 });
 
@@ -1064,6 +1179,17 @@ int main(void) {
 });
 
 test("new Assembly examples execute their defining behavior", async () => {
+  const pianoPath = await resolveExampleFile("en", "mips_piano.asm");
+  const piano = await assembleSource(await readFile(pianoPath, "utf8"), "mips_piano.asm");
+  const tones = [];
+  piano.setRuntimeHooks({ midi: (tone) => tones.push({ ...tone }) });
+  const pianoOutput = runToHalt(piano);
+  assert.match(pianoOutput, /MIPS Piano/);
+  assert.equal(tones.length, 18);
+  assert.deepEqual(tones.slice(-3).map((tone) => tone.pitch), [60, 64, 67]);
+  assert.ok(tones.slice(0, -3).every((tone) => tone.service === 33 && tone.instrument === 0));
+  assert.ok(tones.slice(-3).every((tone) => tone.service === 31));
+
   const cop1Path = await resolveExampleFile("en", "cop1_arithmetic_demo.asm");
   const cop1 = await assembleSource(await readFile(cop1Path, "utf8"), "cop1_arithmetic_demo.asm");
   const cop1Output = runToHalt(cop1);

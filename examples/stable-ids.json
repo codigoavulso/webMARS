@@ -288,6 +288,11 @@
       "status": "active"
     },
     {
+      "id": "mips-piano",
+      "path": "mips_piano.asm",
+      "status": "active"
+    },
+    {
       "id": "mips",
       "path": "mips.asm",
       "status": "active"

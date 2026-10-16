@@ -2683,6 +2683,7 @@ class MarsEngine {
     this.memoryWords = new Map();
     this.reservedHeapMappedBytes = 0;
     this.breakpoints = new Set();
+    this.breakpointsEnabled = true;
     this.decodedInstructionCache = new Map();
     this.executionHistory = new BackstepJournalBuffer();
     this.executionHistoryBytes = 0;
@@ -3163,7 +3164,10 @@ class MarsEngine {
       warnings: includeProgram ? this.program.warnings.map((entry) => ({ ...entry })) : [],
       errors: includeProgram ? this.program.errors.map((entry) => ({ ...entry })) : [],
       ...(includeBreakpoints
-        ? { breakpoints: Array.from(this.breakpoints, (address) => address >>> 0) }
+        ? {
+          breakpoints: Array.from(this.breakpoints, (address) => address >>> 0),
+          breakpointsEnabled: this.breakpointsEnabled !== false
+        }
         : {})
     };
   }
@@ -3469,6 +3473,9 @@ class MarsEngine {
       this.breakpoints = new Set(
         snapshot.breakpoints.map((address) => Number(address) >>> 0)
       );
+    }
+    if (!preserveBreakpoints && Object.prototype.hasOwnProperty.call(snapshot, "breakpointsEnabled")) {
+      this.breakpointsEnabled = snapshot.breakpointsEnabled !== false;
     }
 
     this.forceZeroRegister();
@@ -6880,6 +6887,17 @@ class MarsEngine {
     return true;
   }
 
+  clearBreakpoints() {
+    this.breakpoints.clear();
+    this.breakpointResumeAddress = null;
+  }
+
+  toggleAllBreakpoints() {
+    this.breakpointsEnabled = !this.breakpointsEnabled;
+    if (!this.breakpointsEnabled) this.breakpointResumeAddress = null;
+    return this.breakpointsEnabled;
+  }
+
   stop() {
     if (!this.assembled) {
       return { ok: false, message: translateText("Program is not assembled.") };
@@ -6939,7 +6957,7 @@ class MarsEngine {
       this.breakpointResumeAddress = null;
     }
 
-    if (this.breakpoints.has(currentPc) && !resumingPastBreakpoint) {
+    if (this.breakpointsEnabled !== false && this.breakpoints.has(currentPc) && !resumingPastBreakpoint) {
       this.breakpointResumeAddress = currentPc;
       return attachSnapshot({
         ok: true,

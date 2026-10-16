@@ -1,4 +1,4 @@
-# MARS-OS 1.0 - entorno operativo TTY interactivo y completo
+# MARS-OS 1.3 - entorno operativo TTY interactivo y completo
 # Abre Herramientas > TTY Device + ANSI Terminal, conectala a
 # MIPS, ensambla y ejecuta; se abre el escritorio. Terminal muestra la shell.
 #
@@ -19,7 +19,7 @@
 .data
 
 # ---- arranque ----
-banner: .asciiz "+----------------------------------------------------------+\r\n| MARS-OS 1.0 | Entorno TTY interactivo para MIPS32        |\r\n+----------------------------------------------------------+\r\n"
+banner: .asciiz "+----------------------------------------------------------+\r\n| MARS-OS 1.3 | Entorno TTY interactivo para MIPS32        |\r\n+----------------------------------------------------------+\r\n"
 msg_boot: .asciiz "[ ok ] Consola MMIO, shell, disco RAM y servicios activos."
 msg_disk_ready: .asciiz "[ ok ] Disco RAM montado: "
 msg_disk_files: .asciiz " ficheros, "
@@ -82,7 +82,7 @@ about_text: .asciiz "MARS-OS es un pequeno kernel educativo escrito integramente
 msg_unknown: .asciiz "comando no encontrado: "
 
 # ---- informes del sistema ----
-sysinfo_header: .asciiz "kernel: MARS-OS 1.0\r\ncpu: MIPS32 little-endian, runtime JavaScript\r\nconsola: TTY ANSI en MMIO 0xFFFF0000\r\nscheduler: esperas cooperativas de dispositivos\r\n"
+sysinfo_header: .asciiz "kernel: MARS-OS 1.3\r\ncpu: MIPS32 little-endian, runtime JavaScript\r\nconsola: TTY ANSI en MMIO 0xFFFF0000\r\nscheduler: esperas cooperativas de dispositivos\r\n"
 sysinfo_commands: .asciiz "comandos ejecutados: "
 sysinfo_installed: .asciiz "comandos instalados: "
 uptime_prefix: .asciiz "tiempo activo: "
@@ -143,6 +143,18 @@ ls_header: .asciiz "NOMBRE               TAM.  LINEAS\r\n"
 ls_empty: .asciiz "el disco esta vacio\r\n"
 msg_file_missing: .asciiz "fichero no encontrado\r\n"
 msg_need_name: .asciiz "hace falta un nombre de fichero\r\n"
+msg_disk_volatile: .asciiz "[ aviso ] El disco RAM es volatil; reiniciar borra los cambios.\r\n"
+msg_line_too_long: .asciiz "error: la linea supera el limite admitido\r\n"
+msg_name_too_long: .asciiz "error: el nombre del archivo supera 19 caracteres\r\n"
+msg_file_too_large: .asciiz "error: la operacion superaria el limite de 1023 bytes\r\n"
+msg_sort_too_large: .asciiz "sort: mas de 48 lineas o 63 caracteres por linea\r\n"
+edit_buffer_full: .asciiz "buffer lleno: guarda o reduce el documento"
+edit_unsaved: .asciiz " Cambios sin guardar: s guardar+salir  d descartar  otra tecla cancela "
+sheet_cell_too_long: .asciiz "limite de celda: 11 caracteres; el valor no cambio"
+sheet_unsaved: .asciiz " Cambios sin guardar: s guardar+salir  d descartar  otra tecla cancela "
+basic_unsaved: .asciiz "Programa sin guardar: D descartar, otra tecla cancela (usa SAVE nombre)\r\n"
+basic_err_line_long: .asciiz "LINEA DEMASIADO LARGA"
+help_limits: .asciiz "\r\nlimites: nombres 19 car.; archivos/editor 1023 bytes; celdas 11 car.; BASIC 64 lineas x 63 car.\r\n"
 msg_disk_full: .asciiz "el disco esta lleno\r\n"
 msg_exists: .asciiz "el destino ya existe\r\n"
 msg_ok: .asciiz "ok\r\n"
@@ -282,7 +294,7 @@ commands_header: .asciiz "PULSA PARA EJECUTAR"
 taskbar_hint:    .asciiz "arrastra el titulo | # redimensiona"
 press_any_key:   .asciiz "-- pulsa una tecla para volver al escritorio --"
 
-sys_line_kernel:  .asciiz "kernel   MARS-OS 1.2"
+sys_line_kernel:  .asciiz "kernel   MARS-OS 1.3"
 sys_line_cpu:     .asciiz "cpu      MIPS32 little-endian"
 sys_line_console: .asciiz "consola  TTY ANSI en 0xFFFF0000"
 sys_label_commands: .asciiz "comandos del shell"
@@ -348,5 +360,6 @@ rom_table:
 .include "mips_os_edit.asm"
 .include "mips_os_sheet.asm"
 .include "mips_os_basic.asm"
+.include "mips_os_daw.asm"
 .include "mips_os_desktop.asm"
 .include "mips_os_kernel.asm"

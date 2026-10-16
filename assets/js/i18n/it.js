@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "Lo slot di ritardo dopo un ramo",
   "Cache: how stride changes the time": "Cache: come il passo cambia il tempo",
   "Branch prediction in action": "Previsione dei rami in azione",
+  "MIPS Piano": "Pianoforte MIPS",
   "MARS-OS TTY Shell": "MARS-OS TTY Shell",
   "Fundamentals": "Fondamenti",
   "Algorithms": "Algoritmi",

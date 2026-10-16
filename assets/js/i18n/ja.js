@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "分岐後の遅延スロット",
   "Cache: how stride changes the time": "キャッシュ: ストライドが時間をどのように変化させるか",
   "Branch prediction in action": "分岐予測の動作",
+  "MIPS Piano": "MIPSピアノ",
   "MARS-OS TTY Shell": "MARS-OS TTY シェル",
   "Fundamentals": "基本",
   "Algorithms": "アルゴリズム",

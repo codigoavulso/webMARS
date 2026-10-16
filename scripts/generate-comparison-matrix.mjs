@@ -237,7 +237,11 @@ async function build() {
     const evidence = syscallEvidenceFor(Number(entry.number), sources, 2);
     const status = !entry.implementedInWeb
       ? "not supported"
-      : (evidence.length ? "complete" : "partial");
+      // The browser deliberately synthesizes General MIDI families rather
+      // than using the host JVM synthesizer and its installed soundbank.
+      // Keep that visible as a compatibility difference even when the
+      // syscall contract itself is thoroughly tested.
+      : (entry.capabilities?.usesMidi ? "partial" : (evidence.length ? "complete" : "partial"));
     return [
       String(entry.number),
       `\`${entry.name}\``,
@@ -304,6 +308,7 @@ every accepted divergence with the reason it is accepted.
 | Execution host | Browser, no JVM, no local install | Desktop Java application |
 | Tool API | JavaScript tools loaded from \`tools/tools.json\` | Java classes on the classpath |
 | File syscalls | Backed by browser storage, not the host file system | Backed by the host file system |
+| MIDI sound | Web Audio synthesis approximates the requested General MIDI family | \`javax.sound.midi\` uses the host synthesizer and its soundbank |
 | Pipeline timing | Modelled only inside the Pipeline Lab, opt-in and versioned | Not modelled |
 | Persistence | Projects live in browser storage and exported archives | Plain files on disk |
 

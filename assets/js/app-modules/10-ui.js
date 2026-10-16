@@ -3876,15 +3876,247 @@ function setupEditor(refs, store, options = {}) {
     if (!applied) return;
   }
 
+  // MARS' editor is not a plain single-line input: Tab inserts a tab,
+  // Enter carries indentation forward, Insert toggles overwrite mode and
+  // Ctrl+Enter arms a repeat count.  Keep these behaviours local to the
+  // source editor so browser shortcuts elsewhere remain untouched.
+  let overwriteMode = false;
+  let rectangularSelection = false;
+  let repeatArmed = false;
+  let repeatCount = 0;
+
+  function syncEditorModes() {
+    editor.dataset.overwriteMode = overwriteMode ? "true" : "false";
+    editor.dataset.rectangularSelection = rectangularSelection ? "true" : "false";
+    editor.setAttribute("aria-keyshortcuts", "Insert Ctrl+\\ Ctrl+Enter");
+    editorSurface?.classList.toggle("editor-overwrite-mode", overwriteMode);
+    editorSurface?.classList.toggle("editor-rectangular-selection", rectangularSelection);
+  }
+
+  function consumeRepeat() {
+    const count = repeatArmed ? Math.max(1, Math.min(10000, repeatCount || 1)) : 1;
+    repeatArmed = false;
+    repeatCount = 0;
+    return count;
+  }
+
+  function ensureEditorCaretVisible() {
+    if (!(editor instanceof HTMLTextAreaElement)) return;
+    const source = String(editor.value || "");
+    const caret = Math.max(0, Math.min(source.length, editor.selectionEnd ?? 0));
+    const line = source.slice(0, caret).split("\n").length - 1;
+    const computed = window.getComputedStyle(editor);
+    const lineHeight = Number.parseFloat(computed.lineHeight) || 15;
+    const paddingTop = Number.parseFloat(computed.paddingTop) || 0;
+    const paddingBottom = Number.parseFloat(computed.paddingBottom) || 0;
+    const caretTop = paddingTop + line * lineHeight;
+    const caretBottom = caretTop + lineHeight;
+    const visibleTop = editor.scrollTop;
+    const visibleBottom = visibleTop + editor.clientHeight - paddingBottom;
+
+    if (caretTop < visibleTop + paddingTop) {
+      editor.scrollTop = Math.max(0, caretTop - paddingTop);
+    } else if (caretBottom > visibleBottom) {
+      editor.scrollTop = Math.max(0, caretBottom - editor.clientHeight + paddingBottom);
+    }
+  }
+
+  function dispatchEditorInput() {
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+    ensureEditorCaretVisible();
+  }
+
+  function currentLineIndent(position) {
+    const source = String(editor.value || "");
+    const safePosition = Math.max(0, Math.min(source.length, Number(position) || 0));
+    const lineStart = source.lastIndexOf("\n", Math.max(0, safePosition - 1)) + 1;
+    return /^\s*/.exec(source.slice(lineStart, safePosition))?.[0] || "";
+  }
+
+  function lineColumnAt(source, offset) {
+    const safeOffset = Math.max(0, Math.min(source.length, Number(offset) || 0));
+    const lineStart = source.lastIndexOf("\n", Math.max(0, safeOffset - 1)) + 1;
+    return {
+      line: source.slice(0, safeOffset).split("\n").length - 1,
+      column: safeOffset - lineStart
+    };
+  }
+
+  function rectangularRanges(source, start, end) {
+    const first = lineColumnAt(source, Math.min(start, end));
+    const last = lineColumnAt(source, Math.max(start, end));
+    const left = Math.min(first.column, last.column);
+    const right = Math.max(first.column, last.column);
+    const lines = source.split("\n");
+    const ranges = [];
+    let lineStart = 0;
+    lines.forEach((line, lineIndex) => {
+      if (lineIndex >= first.line && lineIndex <= last.line) {
+        const from = Math.min(left, line.length);
+        const to = Math.min(right, line.length);
+        ranges.push({ start: lineStart + from, end: lineStart + Math.max(from, to) });
+      }
+      lineStart += line.length + 1;
+    });
+    return ranges;
+  }
+
+  function rectangularText(source, start, end) {
+    return rectangularRanges(source, start, end)
+      .map((range) => source.slice(range.start, range.end))
+      .join("\n");
+  }
+
+  function replaceEditorSelection(text, options = {}) {
+    const repetitions = Math.max(1, Number(options.repetitions) || 1);
+    const source = String(editor.value || "");
+    const start = Math.max(0, editor.selectionStart ?? 0);
+    const end = Math.max(start, editor.selectionEnd ?? start);
+    let replacement = "";
+    for (let index = 0; index < repetitions; index += 1) replacement += String(text ?? "");
+
+    if (rectangularSelection && start !== end && !/[\r\n]/.test(replacement)) {
+      const ranges = rectangularRanges(source, start, end);
+      let nextSource = source;
+      ranges.slice().reverse().forEach((range) => {
+        nextSource = `${nextSource.slice(0, range.start)}${replacement}${nextSource.slice(range.end)}`;
+      });
+      editor.value = nextSource;
+      const lastRange = ranges[ranges.length - 1] || { start, end };
+      const caret = lastRange.start + replacement.length;
+      editor.setSelectionRange(caret, caret);
+      dispatchEditorInput();
+      return;
+    }
+
+    let replaceEnd = end;
+    if (overwriteMode && start === end && replacement && !/[\r\n\t]/.test(replacement)) {
+      replaceEnd = Math.min(source.length, start + replacement.length);
+    }
+    editor.setRangeText(replacement, start, replaceEnd, "end");
+    dispatchEditorInput();
+  }
+
+  function deleteEditorBackward(repetitions = 1) {
+    let changed = false;
+    for (let index = 0; index < repetitions; index += 1) {
+      const start = editor.selectionStart ?? 0;
+      const end = editor.selectionEnd ?? start;
+      if (start !== end) {
+        editor.setRangeText("", start, end, "start");
+        changed = true;
+      } else if (start > 0) {
+        editor.setRangeText("", start - 1, start, "start");
+        changed = true;
+      }
+    }
+    if (changed) dispatchEditorInput();
+  }
+
+  function deleteEditorForward(repetitions = 1) {
+    let changed = false;
+    for (let index = 0; index < repetitions; index += 1) {
+      const start = editor.selectionStart ?? 0;
+      const end = editor.selectionEnd ?? start;
+      if (start !== end) {
+        editor.setRangeText("", start, end, "start");
+        changed = true;
+      } else if (start < editor.value.length) {
+        editor.setRangeText("", start, start + 1, "start");
+        changed = true;
+      }
+    }
+    if (changed) dispatchEditorInput();
+  }
+
+  function moveEditorCaret(key, repetitions = 1, extend = false) {
+    const source = String(editor.value || "");
+    const anchor = editor.selectionStart ?? 0;
+    const focus = editor.selectionEnd ?? anchor;
+    const origin = key === "ArrowLeft" || key === "ArrowUp" ? anchor : focus;
+    let target = origin;
+    if (key === "ArrowLeft") target = Math.max(0, origin - repetitions);
+    if (key === "ArrowRight") target = Math.min(source.length, origin + repetitions);
+    if (key === "ArrowUp" || key === "ArrowDown") {
+      const lines = source.split("\n");
+      let line = source.slice(0, origin).split("\n").length - 1;
+      const column = origin - (source.lastIndexOf("\n", Math.max(0, origin - 1)) + 1);
+      line += key === "ArrowUp" ? -repetitions : repetitions;
+      line = Math.max(0, Math.min(lines.length - 1, line));
+      const lineStart = lines.slice(0, line).reduce((sum, value) => sum + value.length + 1, 0);
+      target = lineStart + Math.min(column, lines[line].length);
+    }
+    if (extend) editor.setSelectionRange(anchor, target);
+    else editor.setSelectionRange(target, target);
+  }
+
   editor.addEventListener("input", () => {
     if (suppressInput) return;
     updateActiveSource(editor.value, { pushHistory: true });
     updateStatus();
     refreshCompletion();
   });
-  editor.addEventListener("click", () => {
+  editor.addEventListener("click", (event) => {
+    const source = String(editor.value || "");
+    const caret = editor.selectionStart ?? 0;
+    if (event.detail >= 3) {
+      const lineStart = source.lastIndexOf("\n", Math.max(0, caret - 1)) + 1;
+      const lineBreak = source.indexOf("\n", caret);
+      editor.setSelectionRange(lineStart, lineBreak < 0 ? source.length : lineBreak);
+    } else if (event.detail === 2) {
+      const candidate = source[caret] || source[Math.max(0, caret - 1)] || "";
+      const pairs = { "(": ")", "[": "]", "{": "}" };
+      const closing = { ")": "(", "]": "[", "}": "{" };
+      const at = source[caret] === candidate ? caret : Math.max(0, caret - 1);
+      if (pairs[candidate]) {
+        let depth = 0;
+        for (let index = at; index < source.length; index += 1) {
+          if (source[index] === candidate) depth += 1;
+          if (source[index] === pairs[candidate] && --depth === 0) {
+            editor.setSelectionRange(at, index + 1);
+            break;
+          }
+        }
+      } else if (closing[candidate]) {
+        let depth = 0;
+        for (let index = at; index >= 0; index -= 1) {
+          if (source[index] === candidate) depth += 1;
+          if (source[index] === closing[candidate] && --depth === 0) {
+            editor.setSelectionRange(index, at + 1);
+            break;
+          }
+        }
+      }
+    }
     updateStatus();
     hideCompletion();
+  });
+  editor.addEventListener("mousedown", (event) => {
+    if (event.ctrlKey || event.metaKey) {
+      rectangularSelection = true;
+      syncEditorModes();
+    }
+  });
+  editor.addEventListener("copy", (event) => {
+    if (!rectangularSelection || editor.selectionStart === editor.selectionEnd) return;
+    const text = rectangularText(String(editor.value || ""), editor.selectionStart ?? 0, editor.selectionEnd ?? 0);
+    event.preventDefault();
+    event.clipboardData?.setData("text/plain", text);
+  });
+  editor.addEventListener("cut", (event) => {
+    if (!rectangularSelection || editor.selectionStart === editor.selectionEnd) return;
+    if (editor.readOnly) return;
+    const source = String(editor.value || "");
+    const start = editor.selectionStart ?? 0;
+    const end = editor.selectionEnd ?? start;
+    const text = rectangularText(source, start, end);
+    event.preventDefault();
+    event.clipboardData?.setData("text/plain", text);
+    const ranges = rectangularRanges(source, start, end);
+    ranges.slice().reverse().forEach((range) => {
+      editor.setRangeText("", range.start, range.end, "start");
+    });
+    dispatchEditorInput();
   });
   editor.addEventListener("keyup", updateStatus);
   editor.addEventListener("select", updateStatus);
@@ -3896,30 +4128,116 @@ function setupEditor(refs, store, options = {}) {
     if (completionPopup?.context) positionCompletionPopup(completionPopup.context);
   });
   editor.addEventListener("keydown", (event) => {
-    if (!completionPopup || !completionItems.length) return;
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-      completionIndex = event.key === "ArrowDown"
-        ? (completionIndex + 1) % completionItems.length
-        : (completionIndex + completionItems.length - 1) % completionItems.length;
-      completionPopup.querySelectorAll(".editor-completion-item").forEach((item, index) => {
-        item.setAttribute("aria-selected", index === completionIndex ? "true" : "false");
-      });
-      completionPopup.querySelectorAll(".editor-completion-item")[completionIndex]?.scrollIntoView({ block: "nearest" });
-      return;
-    }
-    if (event.key === "Tab" || event.key === "Enter") {
-      if (completionPopup.context?.mode === "completion") {
+    if (completionPopup && completionItems.length) {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
-        selectCompletion();
-      } else {
-        hideCompletion();
+        completionIndex = event.key === "ArrowDown"
+          ? (completionIndex + 1) % completionItems.length
+          : (completionIndex + completionItems.length - 1) % completionItems.length;
+        completionPopup.querySelectorAll(".editor-completion-item").forEach((item, index) => {
+          item.setAttribute("aria-selected", index === completionIndex ? "true" : "false");
+        });
+        completionPopup.querySelectorAll(".editor-completion-item")[completionIndex]?.scrollIntoView({ block: "nearest" });
+        return;
       }
+      if (event.key === "Tab" || event.key === "Enter") {
+        if (completionPopup.context?.mode === "completion") {
+          event.preventDefault();
+          selectCompletion();
+        } else {
+          hideCompletion();
+        }
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        hideCompletion();
+        return;
+      }
+    }
+
+    if (editor.readOnly) return;
+
+    const hasCommandModifier = event.ctrlKey || event.metaKey;
+    const hasOtherModifier = event.altKey;
+
+    if (hasCommandModifier && event.key === "Enter") {
+      event.preventDefault();
+      repeatArmed = true;
+      repeatCount = 0;
       return;
     }
-    if (event.key === "Escape") {
+
+    if (repeatArmed && !hasCommandModifier && !hasOtherModifier && /^[0-9]$/.test(event.key)) {
       event.preventDefault();
-      hideCompletion();
+      repeatCount = Math.min(10000, repeatCount * 10 + Number(event.key));
+      return;
+    }
+
+    if (hasCommandModifier && event.key === "\\") {
+      event.preventDefault();
+      rectangularSelection = !rectangularSelection;
+      syncEditorModes();
+      return;
+    }
+
+    if (event.key === "Escape" && repeatArmed) {
+      event.preventDefault();
+      consumeRepeat();
+      return;
+    }
+
+    if (!hasCommandModifier && !hasOtherModifier && event.key === "Insert") {
+      event.preventDefault();
+      overwriteMode = !overwriteMode;
+      syncEditorModes();
+      return;
+    }
+
+    if (hasCommandModifier || hasOtherModifier) return;
+
+    if (event.key === "Tab") {
+      event.preventDefault();
+      const repetitions = consumeRepeat();
+      replaceEditorSelection("\t", { repetitions });
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const repetitions = consumeRepeat();
+      const indent = store.getState()?.preferences?.editorAutoIndent === false
+        ? ""
+        : currentLineIndent(editor.selectionStart ?? 0);
+      replaceEditorSelection(`\n${indent}`, { repetitions });
+      return;
+    }
+
+    if (event.key === "Backspace" && repeatArmed) {
+      event.preventDefault();
+      deleteEditorBackward(consumeRepeat());
+      return;
+    }
+
+    if (event.key === "Delete" && repeatArmed) {
+      event.preventDefault();
+      deleteEditorForward(consumeRepeat());
+      return;
+    }
+
+    if (repeatArmed && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+      event.preventDefault();
+      moveEditorCaret(event.key, consumeRepeat(), event.shiftKey);
+      updateStatus();
+      return;
+    }
+
+    if (event.key.length === 1 && !event.isComposing && !event.repeat) {
+      const repetitions = consumeRepeat();
+      if (overwriteMode || repetitions > 1) {
+        event.preventDefault();
+        replaceEditorSelection(event.key, { repetitions });
+      }
     }
   });
   editor.addEventListener("blur", () => window.setTimeout(hideCompletion, 120));
@@ -3941,6 +4259,7 @@ function setupEditor(refs, store, options = {}) {
   ensureState();
   renderTabs();
   syncEditorFromActive();
+  syncEditorModes();
 
   return {
     setSource(source) {
@@ -5708,6 +6027,7 @@ const DEFAULT_PREFERENCES = {
   selfModifyingCode: false,
   splitMessagesRunIo: false,
   programArgumentsText: "",
+  editorAutoIndent: true,
   editorFontSize: 12,
   editorLineHeight: 1.25,
   highlightTextUpdates: true,
@@ -5814,6 +6134,8 @@ function injectRuntimeStyles() {
       font-size: 12px;
       line-height: 1.25;
     }
+    .editor-surface.editor-overwrite-mode { box-shadow: inset 0 0 0 1px var(--accent); }
+    .editor-surface.editor-rectangular-selection { box-shadow: inset 0 0 0 1px var(--warning, var(--accent)); }
 
     .editor-gutter {
       border-right: 1px solid var(--line-soft);
@@ -5851,7 +6173,7 @@ function injectRuntimeStyles() {
       border: 1px solid var(--line);
       border-radius: 3px;
       background: var(--surface);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+      box-shadow: var(--shadow-popup);
       font-family: "Cascadia Code", "Consolas", "Lucida Console", monospace;
       font-size: 11px;
     }
@@ -5883,6 +6205,7 @@ function injectRuntimeStyles() {
       margin: 0;
       padding: 8px;
       white-space: pre;
+      tab-size: 8;
       transform: translate(0, 0);
       pointer-events: none;
       color: var(--text);
@@ -5906,6 +6229,7 @@ function injectRuntimeStyles() {
       font-size: 12px;
       line-height: 1.25;
       font-family: "Cascadia Code", "Consolas", "Lucida Console", monospace;
+      tab-size: 8;
       z-index: 2;
       overflow: auto;
     }

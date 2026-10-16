@@ -1,5 +1,5 @@
 # ============================================================
-# MARS-OS 1.0 - full screen spreadsheet
+# MARS-OS 1.3 - full screen spreadsheet
 #
 # An 8 by 12 grid of short cells.  A cell holds literal text, a
 # decimal or hexadecimal integer, or a formula introduced by '='.
@@ -40,6 +40,8 @@ sh_col:     .word 0
 sh_row:     .word 0
 sh_file:    .word 0
 sh_dirty:   .word 0
+sh_notice:  .word 0
+sh_prompt_overflow: .word 0
 sh_running: .word 0
 sh_sum_low_col:  .word 0
 sh_sum_high_col: .word 0
@@ -579,6 +581,12 @@ sh_recalc_content:
   beq   $a2, $zero, sh_recalc_error
   nop
   move  $t8, $v0
+  move  $a0, $v1
+  jal   skip_spaces
+  nop
+  lbu   $t0, 0($v0)
+  bne   $t0, $zero, sh_recalc_error
+  nop
   move  $a0, $s6
   move  $a1, $t8
   jal   sh_value_set
@@ -814,6 +822,14 @@ sh_render_info:
   li    $a1, 1
   jal   ansi_goto
   nop
+  lw    $t0, sh_notice
+  beq   $t0, $zero, sh_render_notice_done
+  nop
+  sw    $zero, sh_notice
+  move  $a0, $t0
+  jal   tty_puts
+  nop
+sh_render_notice_done:
   jal   ansi_clear_eol
   nop
 
@@ -905,6 +921,7 @@ sh_prompt:
   move  $s4, $a0
   la    $s5, sh_input
   move  $s6, $zero
+  sw    $zero, sh_prompt_overflow
   sb    $zero, 0($s5)
   bne   $s4, $zero, sh_prompt_seed
   nop
@@ -971,7 +988,7 @@ sh_prompt_loop:
   nop
   li    $t0, SH_TEXT_CAP-1
   slt   $t1, $s6, $t0
-  beq   $t1, $zero, sh_prompt_loop
+  beq   $t1, $zero, sh_prompt_full
   nop
   addu  $t2, $s5, $s6
   sb    $s7, 0($t2)
@@ -980,16 +997,25 @@ sh_prompt_loop:
   sb    $zero, 0($t2)
   b     sh_prompt_draw
   nop
+sh_prompt_full:
+  li    $t0, 1
+  sw    $t0, sh_prompt_overflow
+  b     sh_prompt_loop
+  nop
 sh_prompt_erase:
   blez  $s6, sh_prompt_loop
   nop
   addiu $s6, $s6, -1
   addu  $t2, $s5, $s6
   sb    $zero, 0($t2)
+  sw    $zero, sh_prompt_overflow
   b     sh_prompt_draw
   nop
 
 sh_prompt_commit:
+  lw    $t0, sh_prompt_overflow
+  bne   $t0, $zero, sh_prompt_too_long
+  nop
   lw    $a0, sh_col
   lw    $a1, sh_row
   jal   sh_index
@@ -1007,6 +1033,12 @@ sh_prompt_commit:
   jal   sh_recalc
   nop
   li    $v0, 1
+  b     sh_prompt_done
+  nop
+sh_prompt_too_long:
+  la    $t0, sheet_cell_too_long
+  sw    $t0, sh_notice
+  move  $v0, $zero
   b     sh_prompt_done
   nop
 sh_prompt_cancel:
@@ -1046,17 +1078,26 @@ sh_save_loop:
   lbu   $t0, 0($s4)
   beq   $t0, $zero, sh_save_next
   nop
-  # "REF=text" plus the newline must still fit.
-  li    $t0, FS_FILE_CAP-24
-  slt   $t1, $s6, $t0
-  beq   $t1, $zero, sh_save_write
-  nop
   li    $t0, SH_COLS
   divu  $s7, $t0
   mflo  $a1
   mfhi  $a0
   la    $a2, sh_ref_buf
   jal   sh_write_ref
+  nop
+  la    $a0, sh_ref_buf
+  jal   str_len
+  nop
+  move  $t8, $v0
+  move  $a0, $s4
+  jal   str_len
+  nop
+  addu  $t8, $t8, $v0
+  addiu $t8, $t8, 2          # ':' and newline
+  addu  $t8, $t8, $s6
+  li    $t0, FS_FILE_CAP
+  slt   $t1, $t8, $t0
+  beq   $t1, $zero, sh_save_too_large
   nop
   addu  $a0, $s5, $s6
   la    $a1, sh_ref_buf
@@ -1090,7 +1131,17 @@ sh_save_write:
   move  $a2, $s6
   jal   fs_write
   nop
+  bltz  $v0, sh_save_too_large
+  nop
   sw    $zero, sh_dirty
+  li    $v0, 1
+  b     sh_save_done
+  nop
+sh_save_too_large:
+  la    $t0, msg_file_too_large
+  sw    $t0, sh_notice
+  move  $v0, $zero
+sh_save_done:
   lw    $s7, 0($sp)
   lw    $s6, 4($sp)
   lw    $s5, 8($sp)
@@ -1132,6 +1183,8 @@ sh_load_loop:
   jal   line_take
   nop
   move  $s5, $v0
+  bne   $a3, $zero, sh_load_line_too_long
+  nop
   la    $a0, scratch_buf
   jal   sh_parse_ref
   nop
@@ -1144,6 +1197,13 @@ sh_load_loop:
   bne   $t0, $t1, sh_load_loop
   nop
   addiu $s7, $s7, 1
+  move  $a0, $s7
+  jal   str_len
+  nop
+  li    $t0, SH_TEXT_CAP
+  slt   $t1, $v0, $t0
+  beq   $t1, $zero, sh_load_cell_too_long
+  nop
   move  $a0, $s4
   jal   sh_text_ptr
   nop
@@ -1152,6 +1212,16 @@ sh_load_loop:
   li    $a2, SH_TEXT_CAP-1
   jal   str_copy_n
   nop
+  b     sh_load_loop
+  nop
+sh_load_line_too_long:
+  la    $t0, msg_line_too_long
+  sw    $t0, sh_notice
+  b     sh_load_loop
+  nop
+sh_load_cell_too_long:
+  la    $t0, sheet_cell_too_long
+  sw    $t0, sh_notice
   b     sh_load_loop
   nop
 sh_load_done:
@@ -1175,6 +1245,7 @@ command_sheet:
   addiu $sp, $sp, -8
   sw    $ra, 4($sp)
   sw    $s7, 0($sp)
+  sw    $zero, sh_notice
   lbu   $t0, 0($s2)
   beq   $t0, $zero, command_sheet_usage
   nop
@@ -1343,6 +1414,10 @@ command_sheet_ctrl_q:
   li    $t0, 17
   bne   $s7, $t0, command_sheet_ctrl_x
   nop
+  jal   sh_confirm_quit
+  nop
+  beq   $v0, $zero, command_sheet_loop
+  nop
   b     command_sheet_exit
   nop
 command_sheet_ctrl_x:
@@ -1350,6 +1425,8 @@ command_sheet_ctrl_x:
   bne   $s7, $t0, command_sheet_typing
   nop
   jal   sh_save
+  nop
+  beq   $v0, $zero, command_sheet_loop
   nop
   b     command_sheet_exit
   nop
@@ -1387,8 +1464,8 @@ command_sheet_exit:
   b     command_sheet_done
   nop
 command_sheet_full:
-  la    $a0, msg_disk_full
-  jal   tty_puts
+  move  $a0, $v0
+  jal   fs_report_open_error
   nop
   b     command_sheet_done
   nop
@@ -1458,6 +1535,10 @@ sh_menu_quit:
   li    $t0, 'Q'
   bne   $s7, $t0, sh_menu_exit
   nop
+  jal   sh_confirm_quit
+  nop
+  beq   $v0, $zero, sh_menu_done
+  nop
   sw    $zero, sh_running
   b     sh_menu_done
   nop
@@ -1466,6 +1547,8 @@ sh_menu_exit:
   bne   $s7, $t0, sh_menu_clear
   nop
   jal   sh_save
+  nop
+  beq   $v0, $zero, sh_menu_done
   nop
   sw    $zero, sh_running
   b     sh_menu_done
@@ -1488,5 +1571,52 @@ sh_menu_done:
   lw    $s7, 0($sp)
   lw    $ra, 4($sp)
   addiu $sp, $sp, 8
+  jr    $ra
+  nop
+
+# v0 = 1 when it is safe to close, 0 when the close was cancelled.
+sh_confirm_quit:
+  addiu $sp, $sp, -4
+  sw    $ra, 0($sp)
+  lw    $t0, sh_dirty
+  beq   $t0, $zero, sh_confirm_quit_yes
+  nop
+  li    $a0, SH_INPUT_ROW
+  li    $a1, 1
+  jal   ansi_goto
+  nop
+  jal   ansi_inverse
+  nop
+  la    $a0, sheet_unsaved
+  jal   tty_puts
+  nop
+  jal   ansi_clear_eol
+  nop
+  jal   ansi_normal
+  nop
+  jal   tty_getkey
+  nop
+  move  $a0, $v0
+  jal   char_upper_key
+  nop
+  li    $t0, 'S'
+  beq   $v0, $t0, sh_confirm_quit_save
+  nop
+  li    $t0, 'D'
+  beq   $v0, $t0, sh_confirm_quit_yes
+  nop
+  move  $v0, $zero
+  b     sh_confirm_quit_done
+  nop
+sh_confirm_quit_save:
+  jal   sh_save
+  nop
+  b     sh_confirm_quit_done
+  nop
+sh_confirm_quit_yes:
+  li    $v0, 1
+sh_confirm_quit_done:
+  lw    $ra, 0($sp)
+  addiu $sp, $sp, 4
   jr    $ra
   nop

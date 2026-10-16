@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "分支后的延迟槽",
   "Cache: how stride changes the time": "缓存：步幅如何改变时间",
   "Branch prediction in action": "分支预测的实际应用",
+  "MIPS Piano": "MIPS 钢琴",
   "MARS-OS TTY Shell": "MARS-操作系统 TTY 外壳",
   "Fundamentals": "基础知识",
   "Algorithms": "算法",

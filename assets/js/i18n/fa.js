@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "شکاف تاخیر بعد از انشعاب",
   "Cache: how stride changes the time": "حافظه پنهان: چگونه گام برداشتن زمان را تغییر می دهد",
   "Branch prediction in action": "پیش بینی شاخه در عمل",
+  "MIPS Piano": "پیانوی MIPS",
   "MARS-OS TTY Shell": "MARS-OS TTY پوسته",
   "Fundamentals": "مبانی",
   "Algorithms": "الگوریتم ها",

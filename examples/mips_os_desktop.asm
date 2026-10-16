@@ -1,5 +1,5 @@
 # ============================================================
-# MARS-OS 1.2 - windowed desktop with a text mode compositor
+# MARS-OS 1.3 - windowed desktop with a text mode compositor
 #
 # The previous desktop painted straight at the terminal, so two
 # overlapping windows simply corrupted each other. Everything now
@@ -75,6 +75,7 @@
 .eqv ACT_FIB       27
 .eqv ACT_MEMORY    28
 .eqv ACT_DISK      29
+.eqv ACT_DAW       30
 
 .data
 .align 2
@@ -221,6 +222,7 @@ items_utils:
   .word mi_banner,  ACT_BANNER,  0
   .word mi_primes,  ACT_PRIMES,  0
   .word mi_fib,     ACT_FIB,     0
+  .word daw_menu_label, ACT_DAW, 0
   .word 0, 0, 0
 
 items_windows:
@@ -245,6 +247,7 @@ icon_table:
   .word ic_editor,   mi_editor,    ACT_EDITOR
   .word ic_sheet,    mi_sheet,     ACT_SHEET
   .word ic_basic,    mi_basic,     ACT_BASIC
+  .word daw_icon,    daw_menu_label, ACT_DAW
   .word ic_files,    mi_files,     ACT_FILES
   .word ic_command,  mi_commands,  ACT_COMMANDS
   .word 0, 0, 0
@@ -3971,11 +3974,21 @@ desk_action_memory:
   nop
 desk_action_disk:
   li    $t0, ACT_DISK
-  bne   $s7, $t0, desk_action_ascii
+  bne   $s7, $t0, desk_action_daw
   nop
   la    $a0, command_df
   la    $a1, desktop_empty
   jal   desk_console
+  nop
+  b     desk_action_done
+  nop
+desk_action_daw:
+  li    $t0, ACT_DAW
+  bne   $s7, $t0, desk_action_ascii
+  nop
+  la    $a0, command_daw
+  la    $a1, desktop_empty
+  jal   desk_launch
   nop
   b     desk_action_done
   nop
@@ -4156,9 +4169,16 @@ desk_key_w:
   nop
 desk_key_b:
   li    $t0, 'B'
-  bne   $s7, $t0, desk_key_f
+  bne   $s7, $t0, desk_key_d
   nop
   li    $v0, ACT_BASIC
+  b     desk_key_done
+  nop
+desk_key_d:
+  li    $t0, 'D'
+  bne   $s7, $t0, desk_key_f
+  nop
+  li    $v0, ACT_DAW
   b     desk_key_done
   nop
 desk_key_f:

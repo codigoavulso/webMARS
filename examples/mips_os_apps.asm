@@ -1,5 +1,5 @@
 # ============================================================
-# MARS-OS 1.0 - userland applications
+# MARS-OS 1.3 - userland applications
 #
 # Everything here is an ordinary shell command: the integer
 # calculator, base conversion, the ASCII table, a 5x5 bitmap
@@ -1231,6 +1231,14 @@ command_guess_loop:
   li    $a1, LINE_CAP
   jal   tty_read_line
   nop
+  beq   $v1, $zero, command_guess_parse
+  nop
+  la    $a0, msg_line_too_long
+  jal   tty_puts
+  nop
+  b     command_guess_loop
+  nop
+command_guess_parse:
   la    $a0, scratch_buf
   jal   parse_number
   nop

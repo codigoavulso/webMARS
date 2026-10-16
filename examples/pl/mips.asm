@@ -1,4 +1,4 @@
-#MARS-OS 1.0 - kompletne interaktywne środowisko operacyjne TTY
+#MARS-OS 1.3 - kompletne interaktywne środowisko operacyjne TTY
 #Otwórz Narzędzia > TTY Urządzenie + ANSI Terminal, połącz się z MIPS,
 #zmontuj i uruchom; otwiera pulpit myszy. Uruchom Terminal dla powłoki.
 #
@@ -16,7 +16,7 @@
 .data
 
 #---- rozruch ----
-banner: .asciiz "+----------------------------------------------------------+\r\n| MARS-OS 1.0 | Interactive TTY environment for MIPS32     |\r\n+----------------------------------------------------------+\r\n"
+banner: .asciiz "+----------------------------------------------------------+\r\n| MARS-OS 1.3 | Interactive TTY environment for MIPS32     |\r\n+----------------------------------------------------------+\r\n"
 msg_boot: .asciiz "[ ok ] MMIO console, shell, RAM disk and services online."
 msg_disk_ready: .asciiz "[ ok ] RAM disk mounted: "
 msg_disk_files: .asciiz " files, "
@@ -79,7 +79,7 @@ about_text: .asciiz "MARS-OS is a small teaching kernel written entirely in MIPS
 msg_unknown: .asciiz "command not found: "
 
 #---- Raportowanie systemowe ----
-sysinfo_header: .asciiz "kernel: MARS-OS 1.0\r\ncpu: MIPS32 little-endian, JavaScript runtime\r\nconsole: ANSI TTY on MMIO 0xFFFF0000\r\nscheduler: cooperative device waits\r\n"
+sysinfo_header: .asciiz "kernel: MARS-OS 1.3\r\ncpu: MIPS32 little-endian, JavaScript runtime\r\nconsole: ANSI TTY on MMIO 0xFFFF0000\r\nscheduler: cooperative device waits\r\n"
 sysinfo_commands: .asciiz "commands executed: "
 sysinfo_installed: .asciiz "commands installed: "
 uptime_prefix: .asciiz "uptime: "
@@ -140,6 +140,18 @@ ls_header: .asciiz "NAME                  SIZE  LINES\r\n"
 ls_empty: .asciiz "the disk is empty\r\n"
 msg_file_missing: .asciiz "file not found\r\n"
 msg_need_name: .asciiz "a file name is required\r\n"
+msg_disk_volatile: .asciiz "[ warn ] RAM disk is volatile; reboot/reset erases changes.\r\n"
+msg_line_too_long: .asciiz "error: line exceeds the supported limit\r\n"
+msg_name_too_long: .asciiz "error: file name exceeds 19 characters\r\n"
+msg_file_too_large: .asciiz "error: operation would exceed the 1023-byte file limit\r\n"
+msg_sort_too_large: .asciiz "sort: input exceeds 48 lines or 63 characters per line\r\n"
+edit_buffer_full: .asciiz "buffer full: save or shorten the document"
+edit_unsaved: .asciiz " Unsaved changes: s save+exit  d discard  any other key cancels "
+sheet_cell_too_long: .asciiz "cell limit: 11 characters; value was not changed"
+sheet_unsaved: .asciiz " Unsaved changes: s save+exit  d discard  any other key cancels "
+basic_unsaved: .asciiz "Unsaved program: D discard, any other key cancels (SAVE name first)\r\n"
+basic_err_line_long: .asciiz "LINE TOO LONG"
+help_limits: .asciiz "\r\nlimits: names 19 chars; files/editor 1023 bytes; sheet cells 11 chars; BASIC 64 lines x 63 chars\r\n"
 msg_disk_full: .asciiz "the disk is full\r\n"
 msg_exists: .asciiz "the target already exists\r\n"
 msg_ok: .asciiz "ok\r\n"
@@ -278,7 +290,7 @@ commands_header: .asciiz "CLICK TO RUN"
 taskbar_hint:    .asciiz "drag title | drag # to resize"
 press_any_key:   .asciiz "-- press any key to return to the desktop --"
 
-sys_line_kernel:  .asciiz "kernel   MARS-OS 1.2"
+sys_line_kernel:  .asciiz "kernel   MARS-OS 1.3"
 sys_line_cpu:     .asciiz "cpu      MIPS32 little-endian"
 sys_line_console: .asciiz "console  ANSI TTY at 0xFFFF0000"
 sys_label_commands: .asciiz "shell commands"
@@ -344,5 +356,6 @@ rom_table:
 .include "mips_os_edit.asm"
 .include "mips_os_sheet.asm"
 .include "mips_os_basic.asm"
+.include "mips_os_daw.asm"
 .include "mips_os_desktop.asm"
 .include "mips_os_kernel.asm"

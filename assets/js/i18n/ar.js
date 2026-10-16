@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "فتحة التأخير بعد الفرع",
   "Cache: how stride changes the time": "ذاكرة التخزين المؤقت: كيف تغير الخطوة الوقت",
   "Branch prediction in action": "التنبؤ فرع في العمل",
+  "MIPS Piano": "بيانو MIPS",
   "MARS-OS TTY Shell": "MARS-OS TTY Shell",
   "Fundamentals": "الأساسيات",
   "Algorithms": "الخوارزميات",

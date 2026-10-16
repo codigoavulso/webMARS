@@ -26,6 +26,70 @@ async function loadPipelineLabCore() {
   return context.MarsPipelineLabCore;
 }
 
+test("browser MIDI synthesis uses the requested General MIDI family", async () => {
+  const source = await readFile(runtimePath, "utf8");
+  const midiSource = sourceBetween(
+    source,
+    "let audioContext = null;",
+    "function parseConfirmChoice"
+  );
+  const createdOscillators = [];
+
+  class FakeParam {
+    setValueAtTime(value) { this.value = value; }
+    linearRampToValueAtTime(value) { this.value = value; }
+  }
+  class FakeNode {
+    connect() {}
+    disconnect() {}
+  }
+  class FakeOscillator extends FakeNode {
+    constructor() {
+      super();
+      this.frequency = new FakeParam();
+      this.detune = new FakeParam();
+      createdOscillators.push(this);
+    }
+    start() {}
+    stop() {}
+    addEventListener() {}
+  }
+  class FakeAudioContext {
+    constructor() {
+      this.state = "running";
+      this.currentTime = 0;
+      this.destination = new FakeNode();
+    }
+    resume() { return Promise.resolve(); }
+    createOscillator() { return new FakeOscillator(); }
+    createGain() {
+      const node = new FakeNode();
+      node.gain = new FakeParam();
+      return node;
+    }
+    createBiquadFilter() {
+      const node = new FakeNode();
+      node.frequency = new FakeParam();
+      node.Q = new FakeParam();
+      return node;
+    }
+  }
+
+  const context = vm.createContext({ window: { AudioContext: FakeAudioContext } });
+  vm.runInContext(
+    `${midiSource}\nglobalThis.play = playMidiTone; globalThis.voices = activeMidiVoices;`,
+    context,
+    { filename: "midi-runtime.js" }
+  );
+  context.play({ pitch: 60, duration: 250, instrument: 0, volume: 100 });
+  context.play({ pitch: 60, duration: 250, instrument: 40, volume: 100 });
+
+  assert.deepEqual(createdOscillators.map((oscillator) => oscillator.type), [
+    "triangle", "sine", "sawtooth", "triangle"
+  ]);
+  assert.equal(context.voices.length, 2);
+});
+
 test("Pipeline Lab decodes load dependencies", async () => {
   const core = await loadPipelineLabCore();
   const instruction = core.decodeInstruction({ basic: "lw $t0, 8($t1)", address: 0x00400000 });

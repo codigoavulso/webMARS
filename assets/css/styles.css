@@ -187,58 +187,63 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg-top: #1b2129;
-  --bg: #161b22;
-  --bg-deep: #10141a;
-  --panel: #1e242c;
-  --panel-2: #191f26;
-  --desktop-top: #141a20;
-  --desktop-bottom: #0f141a;
+  /*
+   * Keep the same visual roles as the light theme, but use a softer
+   * blue-grey range instead of near-black surfaces.  This preserves the
+   * familiar panel / inset / raised hierarchy when users switch themes.
+   */
+  --bg-top: #2b3542;
+  --bg: #222c37;
+  --bg-deep: #1a232d;
+  --panel: #303c4a;
+  --panel-2: #283441;
+  --desktop-top: #202b36;
+  --desktop-bottom: #1b252f;
 
-  --surface: #171d24;
-  --surface-raised: #1e2530;
-  --surface-muted: #1b222a;
-  --surface-sunken: #1a2028;
-  --surface-inset: #222a34;
-  --surface-strong: #27303b;
-  --code-bg: #13181f;
+  --surface: #202a35;
+  --surface-raised: #2b3744;
+  --surface-muted: #26323e;
+  --surface-sunken: #1d2732;
+  --surface-inset: #344252;
+  --surface-strong: #3d4c5d;
+  --code-bg: #1b2530;
 
-  --line: #3b4757;
-  --line-strong: #4e5f74;
-  --line-hover: #63809c;
-  --line-soft: #333d4a;
-  --line-subtle: #2a323c;
+  --line: #56697c;
+  --line-strong: #6f8499;
+  --line-hover: #8aa4ba;
+  --line-soft: #46586a;
+  --line-subtle: #394a5a;
 
-  --text: #d6dfe9;
-  --text-strong: #f2f6fa;
-  --text-heading: #cfdae7;
-  --text-muted: #a3b1c1;
-  --text-soft: #93a2b4;
-  --text-faint: #7c8b9c;
+  --text: #e2e9f0;
+  --text-strong: #f7fafc;
+  --text-heading: #e6edf4;
+  --text-muted: #b7c4d1;
+  --text-soft: #9eafc0;
+  --text-faint: #879bad;
   --text-on-accent: #ffffff;
 
-  --accent: #3977b3;
-  --accent-2: #326ca4;
-  --accent-strong: #7fbaf0;
-  --accent-soft: #1e3c58;
-  --accent-soft-2: #24425f;
-  --accent-active: #2a4b6b;
-  --accent-line: #3f6d99;
+  --accent: #4d91ce;
+  --accent-2: #3d7db5;
+  --accent-strong: #8cc5f5;
+  --accent-soft: #234869;
+  --accent-soft-2: #2b557a;
+  --accent-active: #315c83;
+  --accent-line: #5b8ab2;
   --selection: rgba(100, 149, 237, 0.32);
 
-  --btn-face: #262d36;
-  --btn-hi: #2a323c;
-  --btn-lo: #1f262f;
-  --btn-lo-hover: #2c3949;
+  --btn-face: #303c49;
+  --btn-hi: #394756;
+  --btn-lo: #26313d;
+  --btn-lo-hover: #405267;
 
-  --track-hi: #39434f;
-  --track-lo: #2c3541;
-  --splitter-mid: #2f3a47;
-  --bar-hi: #4d7fc4;
-  --bar-lo: #35619f;
+  --track-hi: #526476;
+  --track-lo: #3e4e5f;
+  --splitter-mid: #46596b;
+  --bar-hi: #6699d0;
+  --bar-lo: #4678b4;
 
-  --table-line: #2b333d;
-  --table-head: #232a33;
+  --table-line: #40505f;
+  --table-head: #2d3946;
   --row-good: #1d3d24;
   --row-bad: #452424;
   --row-active-ring: #b8912a;
@@ -274,40 +279,40 @@
   --amber-2-text: #f7e8b8;
   --amber-meta: #d8c48a;
 
-  --titlebar-hi: #2b3542;
-  --titlebar-lo: #1d242d;
-  --titlebar-text: #d3dde9;
-  --titlebar-line: #3d4a5a;
-  --window-bg: #1a2029;
-  --window-line: #3a4655;
+  --titlebar-hi: #3a4654;
+  --titlebar-lo: #27333f;
+  --titlebar-text: #e1e8f0;
+  --titlebar-line: #566a7f;
+  --window-bg: #222d38;
+  --window-line: #53687c;
 
-  --flat-face: #23272c;
-  --flat-face-2: #1f2226;
-  --flat-field-ro: #1c1f23;
-  --flat-hi: #2e3339;
-  --flat-lo: #22262b;
-  --flat-title-hi: #2b3037;
-  --flat-title-lo: #1e2226;
-  --flat-splitter-hi: #2b3037;
-  --flat-splitter-lo: #191c20;
-  --flat-hi-edge: #3a4046;
-  --flat-line: #4a5057;
-  --flat-line-soft: #3d4349;
-  --flat-line-mid: #494f56;
-  --flat-line-strong: #555c64;
-  --flat-line-dim: #6a7178;
-  --flat-text: #e8ebee;
-  --flat-text-dim: #8a9098;
+  --flat-face: #30363d;
+  --flat-face-2: #2a3036;
+  --flat-field-ro: #252b31;
+  --flat-hi: #3b424a;
+  --flat-lo: #2b3239;
+  --flat-title-hi: #384049;
+  --flat-title-lo: #262d34;
+  --flat-splitter-hi: #384049;
+  --flat-splitter-lo: #22282e;
+  --flat-hi-edge: #4b5661;
+  --flat-line: #5a6672;
+  --flat-line-soft: #4b5661;
+  --flat-line-mid: #56616d;
+  --flat-line-strong: #66727f;
+  --flat-line-dim: #7b8794;
+  --flat-text: #f0f3f6;
+  --flat-text-dim: #aeb9c5;
 
-  --classic-face: #262a30;
-  --classic-btn-lo: #2b3037;
-  --classic-btn-press-hi: #1d2126;
-  --classic-btn-hi-2: #2e3238;
-  --classic-btn-lo-2: #23272c;
-  --classic-strip-hi: #2c3037;
-  --classic-strip-lo: #21252b;
-  --classic-strip-line-top: #454a52;
-  --classic-strip-line-bottom: #2b2f35;
+  --classic-face: #30363e;
+  --classic-btn-lo: #353c44;
+  --classic-btn-press-hi: #242b32;
+  --classic-btn-hi-2: #3b424a;
+  --classic-btn-lo-2: #2b3239;
+  --classic-strip-hi: #384049;
+  --classic-strip-lo: #293038;
+  --classic-strip-line-top: #53606d;
+  --classic-strip-line-bottom: #343d46;
   --remark-bg: #223318;
   --remark-line: #4c6b32;
 
@@ -329,10 +334,10 @@
   --cop-on-line: #7ba33a;
   --cop-on-text: #eaf5d8;
 
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
-  --shadow-window: 0 2px 6px rgba(0, 0, 0, 0.5);
-  --shadow-popup: 0 8px 20px rgba(0, 0, 0, 0.6);
-  --overlay: rgba(4, 7, 11, 0.62);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-window: 0 2px 6px rgba(0, 0, 0, 0.38);
+  --shadow-popup: 0 8px 20px rgba(0, 0, 0, 0.48);
+  --overlay: rgba(4, 7, 11, 0.56);
   --sheen: rgba(255, 255, 255, 0.05);
   --inset-hi: rgba(255, 255, 255, 0.06);
   --inset-hi-soft: rgba(255, 255, 255, 0.05);

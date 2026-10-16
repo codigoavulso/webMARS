@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "Khe trễ sau một nhánh",
   "Cache: how stride changes the time": "Bộ nhớ đệm: bước tiến thay đổi thời gian như thế nào",
   "Branch prediction in action": "Dự đoán chi nhánh đang hoạt động",
+  "MIPS Piano": "Đàn piano MIPS",
   "MARS-OS TTY Shell": "MARS-OS TTY Shell",
   "Fundamentals": "Nguyên tắc cơ bản",
   "Algorithms": "Thuật toán",

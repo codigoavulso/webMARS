@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "Dallanmadan sonraki gecikme yuvası",
   "Cache: how stride changes the time": "Önbellek: adım zamanı nasıl değiştirir?",
   "Branch prediction in action": "Şube tahmini iş başında",
+  "MIPS Piano": "MIPS Piyano",
   "MARS-OS TTY Shell": "MARS-OS TTY Kabuk",
   "Fundamentals": "Temeller",
   "Algorithms": "Algoritmalar",

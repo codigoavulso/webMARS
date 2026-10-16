@@ -1274,6 +1274,7 @@
     "The delay slot after a branch": "O delay slot depois de um desvio",
     "Cache: how stride changes the time": "Cache: como o passo muda o tempo",
     "Branch prediction in action": "Previsão de desvios em ação",
+    "MIPS Piano": "Piano MIPS",
     "MARS-OS TTY Shell": "MARS-OS TTY Shell",
     "Fundamentals": "Fundamentos",
     "Algorithms": "Algoritmos",

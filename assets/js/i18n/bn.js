@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "একটি শাখার পরে বিলম্ব স্লট",
   "Cache: how stride changes the time": "ক্যাশে: কিভাবে স্ট্রাইড সময় পরিবর্তন করে",
   "Branch prediction in action": "কর্ম শাখা ভবিষ্যদ্বাণী",
+  "MIPS Piano": "MIPS পিয়ানো",
   "MARS-OS TTY Shell": "MARS-OS TTY শেল",
   "Fundamentals": "মৌলিক",
   "Algorithms": "অ্যালগরিদম",

@@ -1,5 +1,5 @@
 # ============================================================
-# MARS-OS 1.1 - integer BASIC interpreter
+# MARS-OS 1.3 - integer BASIC interpreter
 #
 # A line numbered BASIC in the Tiny BASIC tradition: one
 # statement per line, 26 integer variables A..Z, and a program
@@ -31,6 +31,7 @@
 bas_numbers:   .space 256       # BAS_MAX_LINES words
 bas_text:      .space 4096      # BAS_MAX_LINES * BAS_LINE_CAP
 bas_count:     .word 0
+bas_dirty:     .word 0
 bas_vars:      .space 104       # 26 words, one per variable
 bas_pc:        .word 0
 bas_jumped:    .word 0
@@ -151,6 +152,29 @@ bas_store_line:
   sw    $s7, 0($sp)
   move  $s3, $a0
   move  $s4, $a1
+  # Reject an overlong statement before moving or replacing anything.
+  # BAS_LINE_CAP includes the terminating zero, so 63 bytes is the limit.
+  move  $t0, $s4
+  move  $t1, $zero
+bas_store_line_size:
+  lbu   $t2, 0($t0)
+  beq   $t2, $zero, bas_store_line_size_ok
+  nop
+  li    $t3, BAS_LINE_CAP-1
+  slt   $t4, $t1, $t3
+  beq   $t4, $zero, bas_store_line_too_long
+  nop
+  addiu $t0, $t0, 1
+  addiu $t1, $t1, 1
+  b     bas_store_line_size
+  nop
+bas_store_line_too_long:
+  la    $a0, basic_err_line_long
+  jal   bas_error
+  nop
+  b     bas_store_line_done
+  nop
+bas_store_line_size_ok:
   jal   bas_find_line
   nop
   move  $s5, $v0              # insertion index
@@ -188,6 +212,8 @@ bas_store_line_shrink:
   lw    $t0, bas_count
   addiu $t0, $t0, -1
   sw    $t0, bas_count
+  li    $t0, 1
+  sw    $t0, bas_dirty
   b     bas_store_line_done
   nop
 
@@ -243,6 +269,8 @@ bas_store_line_write:
   li    $a2, BAS_LINE_CAP-1
   jal   str_copy_n
   nop
+  li    $t0, 1
+  sw    $t0, bas_dirty
 bas_store_line_done:
   lw    $s7, 0($sp)
   lw    $s6, 4($sp)
@@ -1506,6 +1534,8 @@ bas_stmt_input_read:
   jal   tty_read_line
   nop
   sw    $zero, bas_column
+  bne   $v1, $zero, bas_stmt_input_overflow
+  nop
   la    $a0, bas_line_buf
   jal   parse_number
   nop
@@ -1513,6 +1543,12 @@ bas_stmt_input_read:
   nop
   la    $a0, basic_input_again
   jal   bas_puts
+  nop
+  b     bas_stmt_input_read
+  nop
+bas_stmt_input_overflow:
+  la    $a0, msg_line_too_long
+  jal   tty_puts
   nop
   b     bas_stmt_input_read
   nop
@@ -2044,9 +2080,27 @@ bas_save_loop:
   slt   $t1, $s7, $t0
   beq   $t1, $zero, bas_save_write
   nop
-  li    $t0, 1024-80
-  slt   $t1, $s6, $t0
-  beq   $t1, $zero, bas_save_write
+  # Calculate the exact serialized size before writing into bas_out.
+  move  $a0, $s7
+  jal   bas_line_number
+  nop
+  la    $a0, digit_buf
+  move  $a1, $v0
+  jal   uint_to_text
+  nop
+  move  $t8, $v0
+  move  $a0, $s7
+  jal   bas_line_ptr
+  nop
+  move  $a0, $v0
+  jal   str_len
+  nop
+  addu  $t8, $t8, $v0
+  addiu $t8, $t8, 2          # separating space and newline
+  addu  $t8, $t8, $s6
+  li    $t0, FS_FILE_CAP
+  slt   $t1, $t8, $t0
+  beq   $t1, $zero, bas_save_too_large
   nop
   move  $a0, $s7
   jal   bas_line_number
@@ -2084,6 +2138,9 @@ bas_save_write:
   move  $a2, $s6
   jal   fs_write
   nop
+  bltz  $v0, bas_save_too_large
+  nop
+  sw    $zero, bas_dirty
   la    $a0, basic_saved
   jal   tty_puts
   nop
@@ -2092,18 +2149,28 @@ bas_save_write:
   nop
   jal   tty_crlf
   nop
+  li    $v0, 1
   b     bas_save_done
   nop
 bas_save_full:
-  la    $a0, msg_disk_full
+  move  $a0, $v0
+  jal   fs_report_open_error
+  nop
+  move  $v0, $zero
+  b     bas_save_done
+  nop
+bas_save_too_large:
+  la    $a0, msg_file_too_large
   jal   tty_puts
   nop
+  move  $v0, $zero
   b     bas_save_done
   nop
 bas_save_name:
   la    $a0, msg_need_name
   jal   tty_puts
   nop
+  move  $v0, $zero
 bas_save_done:
   lw    $s7, 0($sp)
   lw    $s6, 4($sp)
@@ -2192,6 +2259,8 @@ bas_load_loop:
   jal   line_take
   nop
   move  $s5, $v0
+  bne   $a3, $zero, bas_load_line_long
+  nop
   la    $a0, bas_line_buf
   jal   parse_number
   nop
@@ -2208,9 +2277,10 @@ bas_load_loop:
   lw    $t0, bas_err_msg
   beq   $t0, $zero, bas_load_loop
   nop
-  jal   bas_clear_error
+  b     bas_load_failed
   nop
 bas_load_report:
+  sw    $zero, bas_dirty
   la    $a0, basic_loaded
   jal   tty_puts
   nop
@@ -2222,12 +2292,38 @@ bas_load_report:
   nop
   jal   tty_crlf
   nop
+  li    $v0, 1
+  b     bas_load_done
+  nop
+bas_load_line_long:
+  la    $a0, basic_err_line_long
+  jal   bas_error
+  nop
+bas_load_failed:
+  la    $a0, basic_err_prefix
+  jal   tty_puts
+  nop
+  lw    $a0, bas_err_msg
+  jal   tty_puts
+  nop
+  la    $a0, basic_err_suffix
+  jal   tty_puts
+  nop
+  jal   tty_crlf
+  nop
+  jal   bas_clear_error
+  nop
+  jal   bas_new
+  nop
+  sw    $zero, bas_dirty
+  move  $v0, $zero
   b     bas_load_done
   nop
 bas_load_name:
   la    $a0, msg_need_name
   jal   tty_puts
   nop
+  move  $v0, $zero
 bas_load_done:
   lw    $s7, 0($sp)
   lw    $s6, 4($sp)
@@ -2244,8 +2340,9 @@ bas_load_done:
 
 # a0 = typed line
 bas_immediate:
-  addiu $sp, $sp, -8
-  sw    $ra, 4($sp)
+  addiu $sp, $sp, -12
+  sw    $ra, 8($sp)
+  sw    $s6, 4($sp)
   sw    $s7, 0($sp)
   jal   skip_spaces
   nop
@@ -2279,10 +2376,15 @@ bas_immediate_new:
   nop
   beq   $v0, $zero, bas_immediate_save
   nop
+  jal   bas_confirm_discard
+  nop
+  beq   $v0, $zero, bas_immediate_done
+  nop
   jal   bas_new
   nop
   jal   bas_clear_vars
   nop
+  sw    $zero, bas_dirty
   b     bas_immediate_done
   nop
 bas_immediate_save:
@@ -2307,7 +2409,12 @@ bas_immediate_load:
   nop
   beq   $v0, $zero, bas_immediate_bye
   nop
-  move  $a0, $v1
+  move  $s6, $v1
+  jal   bas_confirm_discard
+  nop
+  beq   $v0, $zero, bas_immediate_done
+  nop
+  move  $a0, $s6
   jal   skip_spaces
   nop
   move  $a0, $v0
@@ -2321,6 +2428,10 @@ bas_immediate_bye:
   jal   bas_match
   nop
   beq   $v0, $zero, bas_immediate_statement
+  nop
+  jal   bas_confirm_discard
+  nop
+  beq   $v0, $zero, bas_immediate_done
   nop
   li    $t0, 1
   sw    $t0, bas_leaving
@@ -2359,8 +2470,44 @@ bas_immediate_error:
   nop
 bas_immediate_done:
   lw    $s7, 0($sp)
-  lw    $ra, 4($sp)
-  addiu $sp, $sp, 8
+  lw    $s6, 4($sp)
+  lw    $ra, 8($sp)
+  addiu $sp, $sp, 12
+  jr    $ra
+  nop
+
+# v0 = 1 when there is nothing unsaved or the user explicitly discards it.
+bas_confirm_discard:
+  addiu $sp, $sp, -4
+  sw    $ra, 0($sp)
+  lw    $t0, bas_dirty
+  beq   $t0, $zero, bas_confirm_discard_yes
+  nop
+  la    $a0, basic_unsaved
+  jal   tty_puts
+  nop
+  jal   tty_getkey
+  nop
+  move  $a0, $v0
+  jal   char_upper
+  nop
+  li    $t0, 'D'
+  bne   $v0, $t0, bas_confirm_discard_no
+  nop
+  jal   tty_crlf
+  nop
+  sw    $zero, bas_dirty
+bas_confirm_discard_yes:
+  li    $v0, 1
+  b     bas_confirm_discard_done
+  nop
+bas_confirm_discard_no:
+  jal   tty_crlf
+  nop
+  move  $v0, $zero
+bas_confirm_discard_done:
+  lw    $ra, 0($sp)
+  addiu $sp, $sp, 4
   jr    $ra
   nop
 
@@ -2406,6 +2553,8 @@ bas_shell_loop:
   jal   tty_read_line
   nop
   sw    $zero, bas_column
+  bne   $v1, $zero, bas_shell_line_too_long
+  nop
   beq   $v0, $zero, bas_shell_loop
   nop
 
@@ -2450,6 +2599,13 @@ bas_shell_loop:
   jal   tty_crlf
   nop
   jal   bas_clear_error
+  nop
+  b     bas_shell_loop
+  nop
+
+bas_shell_line_too_long:
+  la    $a0, msg_line_too_long
+  jal   tty_puts
   nop
   b     bas_shell_loop
   nop

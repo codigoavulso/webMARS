@@ -97,6 +97,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         "-",
         { label: "Examples", submenu: exampleItems },
         "-",
+        { label: () => "Dump Memory...", command: "dumpMemory", shortcut: "Ctrl+D" },
         { label: "Dump Run I/O", command: "dumpRunIo" }
       ],
       Cloud: cloudMenuItems,
@@ -122,16 +123,19 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Compile C0", command: "compileC0", shortcut: "F4", enabled: () => refs.buttons?.compileC0?.disabled !== true },
         { label: "Assemble", command: "assemble", shortcut: "F3", enabled: () => refs.buttons?.assemble?.disabled !== true },
         { label: "Go", command: "go", shortcut: "F5", enabled: () => refs.buttons?.go?.disabled !== true },
-        { label: "Pause", command: "pause", enabled: () => refs.buttons?.pause?.disabled !== true },
-        { label: "Stop", command: "stop", enabled: () => refs.buttons?.stop?.disabled !== true },
+        { label: "Pause", command: "pause", shortcut: "F9", enabled: () => refs.buttons?.pause?.disabled !== true },
+        { label: "Stop", command: "stop", shortcut: "F11", enabled: () => refs.buttons?.stop?.disabled !== true },
         { label: "Step", command: "step", shortcut: "F7", enabled: () => refs.buttons?.step?.disabled !== true },
         { label: "Backstep", command: "backstep", shortcut: "F8", enabled: () => refs.buttons?.backstep?.disabled !== true },
-        { label: "Reset", command: "reset", enabled: () => refs.buttons?.reset?.disabled !== true }
+        { label: "Reset", command: "reset", shortcut: "F12", enabled: () => refs.buttons?.reset?.disabled !== true },
+        { label: () => "Clear all breakpoints", command: "clearBreakpoints", shortcut: "Ctrl+K" },
+        { label: () => `Toggle all breakpoints`, command: "toggleAllBreakpoints", shortcut: "Ctrl+T" }
       ],
       Settings: [
         { label: "Show Labels Window (symbol table)", command: "toggleShowLabelsWindow", check: (st) => st.preferences.showLabelsWindow },
         { label: "Program arguments provided to MIPS program", command: "toggleProgramArguments", check: (st) => st.preferences.programArguments },
         { label: "Popup dialog for input syscalls", command: "togglePopupSyscallInput", check: (st) => st.preferences.popupSyscallInput },
+        { label: () => "Auto-indent on Enter", command: "toggleEditorAutoIndent", check: (st) => st.preferences.editorAutoIndent },
         { label: "Separate Mars Messages from Run I/O", command: "toggleSplitMessagesRunIo", check: (st) => st.preferences.splitMessagesRunIo },
         { label: "Addresses displayed in hexadecimal", command: "toggleAddressDisplayBase", check: (st) => st.preferences.displayAddressesHex },
         { label: "Values displayed in hexadecimal", command: "toggleValueDisplayBase", check: (st) => st.preferences.displayValuesHex },
@@ -353,6 +357,25 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
       }
       open(menuName, button);
     });
+  });
+
+  // Swing exposes File/Edit/Run/Settings/Help mnemonics through Alt+letter.
+  // Browsers may reserve some of these combinations, but registering them on
+  // the page gives the same behaviour whenever the key event reaches us.
+  const menuAccessKeys = { file: "f", edit: "e", run: "r", settings: "s", help: "h" };
+  refs.root.querySelectorAll(".menu-item").forEach((button) => {
+    const key = menuAccessKeys[String(button.dataset.menu || "").toLowerCase()];
+    if (key) button.setAttribute("accesskey", key);
+  });
+  window.addEventListener("keydown", (event) => {
+    if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    const key = String(event.key || "").toLowerCase();
+    const menuName = Object.entries(menuAccessKeys).find(([, value]) => value === key)?.[0];
+    if (!menuName) return;
+    const button = refs.root.querySelector(`.menu-item[data-menu="${menuName[0].toUpperCase()}${menuName.slice(1)}"]`);
+    if (!(button instanceof HTMLElement)) return;
+    event.preventDefault();
+    button.click();
   });
 
   document.addEventListener("click", (event) => {

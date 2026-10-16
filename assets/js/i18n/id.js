@@ -1220,6 +1220,7 @@
   "The delay slot after a branch": "Slot penundaan setelah cabang",
   "Cache: how stride changes the time": "Cache: bagaimana langkah mengubah waktu",
   "Branch prediction in action": "Prediksi cabang sedang beraksi",
+  "MIPS Piano": "Piano MIPS",
   "MARS-OS TTY Shell": "MARS-OS TTY Cangkang",
   "Fundamentals": "Dasar-dasar",
   "Algorithms": "Algoritma",
