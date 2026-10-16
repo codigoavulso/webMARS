@@ -8,7 +8,6 @@ The JSON body has exactly one field: `{"active_seconds":60}`. Subsequent
 values are cumulative active seconds since this page load. No user/session
 identifier, event name, language, source, code or account data is included.
 There is no consent control or notification for this duration-only mode.
-The earlier, richer opt-in metrics below remain disabled by default.
 
 The counter is memory-only, resets on refresh, and continues while reading
 without typing. Hidden time is excluded; visible background tabs count. Five-second sampling caps
@@ -41,9 +40,11 @@ deployment. Test with `npm run test:metrics`.
 ## Optional richer events
 
 This complements the access-log reports in `raspberry-pi-analytics.md`. Logs
-measure HTTP requests; this opt-in collector measures selected product actions.
-It is disabled in the shipped `webmars-config.js`. Enabling it is an operator
-deployment step, and each visitor must additionally accept collection.
+measure HTTP requests; this first-party collector measures selected product
+actions. The official webMARS installation enables it by default. Visitors can
+disable it at any time in **Settings → Interface Preferences → Usage
+statistics**. Self-hosted installations remain disabled until their operator
+sets `metrics.enabled` deliberately.
 
 ## Scope and interpretation
 
@@ -70,9 +71,9 @@ actions by session and use the maximum cumulative active time per session.
 
 ## Privacy boundary
 
-- No event is sent before acceptance; no retrospective queue is uploaded.
-- Disabled configuration, Do Not Track and Global Privacy Control suppress
-  collection. Revocation clears the tab ID and last-visit timestamp.
+- Disabled configuration, an in-app opt-out, Do Not Track and Global Privacy
+  Control suppress collection. Opting out clears the tab ID and last-visit
+  timestamp; no retrospective queue is uploaded.
 - Only first-party same-origin POST requests are allowed, with no credentials,
   referrer, URL parameters, third-party dependencies or retry queue.
   Fetch uses CORS mode to retain the Origin header with `no-referrer`, as
@@ -129,7 +130,8 @@ to accommodate classroom networks sharing one address.
 Only then set `metrics.enabled: true` in the installation's public
 `webmars-config.js`. Leave the endpoint on the same origin. For installations
 under a subdirectory, adjust the endpoint location and `appBasePath` together.
-Accept via the permanent Usage statistics control and execute a small program.
+Open the simulator and execute a small program; the Interface Preferences
+checkbox must remain enabled for richer events to be sent.
 
 ```bash
 sudo webmars-metrics --report --days 30
@@ -153,9 +155,9 @@ databases and an ephemeral loopback port; no test writes production events.
 
 ## Rollout
 
-First verify endpoint delivery with consent, then compare weekly cohorts of
-sessions using consistent report windows. Keep access-log counts separate:
-opt-in telemetry has selection bias and is not a denominator for all visitors.
+First verify endpoint delivery, then compare weekly cohorts of sessions using
+consistent report windows. Keep access-log counts separate: product telemetry
+is not a denominator for all visitors, because users may opt out or block it.
 Do not infer educational improvement from runtime activation alone.
 - Live presence counts sessions whose last heartbeat was within five minutes. It is an estimate, not a guaranteed count of people: suspended browsers, offline devices and blocked requests can cause under-counting.
 - The heartbeat includes only cumulative seconds, an ephemeral random session token and a boolean registered classification. No account ID, email, IP address or browser fingerprint is stored by the collector.

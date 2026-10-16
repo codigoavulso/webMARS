@@ -45,19 +45,26 @@ function harness(options = {}) {
   };
 }
 
-test("disabled, unaccepted and cross-origin configurations send nothing", () => {
-  for (const options of [{}, { enabled: false }, { endpoint: "https://other.example/events" }]) {
+test("disabled and cross-origin configurations send nothing", () => {
+  for (const options of [{ enabled: false }, { endpoint: "https://other.example/events" }]) {
     const env = harness(options);
     env.api.track("run_success");
     env.advance(30000);
     assert.equal(env.sent.length, 0);
     assert.equal(env.sessionStorage.data.size, 0);
-    if (options.enabled === false || options.endpoint) {
-      env.api.setConsent(true);
-      env.api.track("run_success");
-      assert.equal(env.sent.length, 0);
-    }
+    env.api.setConsent(true);
+    env.api.track("run_success");
+    assert.equal(env.sent.length, 0);
   }
+});
+
+test("collection starts enabled and a saved opt-out stops it", () => {
+  const env = harness();
+  env.api.track("run_success");
+  assert.equal(env.sent.at(-1).body.event, "run_success");
+  env.api.setConsent(false);
+  env.api.track("run_success");
+  assert.equal(env.sent.filter((entry) => entry.body.event === "run_success").length, 1);
 });
 
 test("consent sends only allowlisted data and revocation stops subsequent events", () => {

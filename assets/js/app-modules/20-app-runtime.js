@@ -7091,7 +7091,7 @@ async function openInterfacePreferencesPanel() {
     confirmLabel: translateText("OK"),
     cancelLabel: translateText("Cancel"),
     width: "540px",
-    height: "570px",
+    height: "620px",
     sections: [
       {
         title: translateText("Appearance"),
@@ -7197,14 +7197,24 @@ async function openInterfacePreferencesPanel() {
             value: current.highlightRegisterUpdates === true
           }
         ]
-      }
+      },
+      ...(window.WebMarsUsage?.available?.() ? [{
+        title: current.language === "pt" ? "Estatísticas" : "Usage statistics",
+        layout: "table",
+        fields: [{
+          name: "usageMetricsEnabled",
+          label: current.language === "pt" ? "Partilhar estatísticas anónimas de utilização" : "Share anonymous usage statistics",
+          type: "checkbox",
+          value: window.WebMarsUsage.allowed?.() === true
+        }]
+      }] : [])
     ]
   }, {
     windowIdPrefix: "window-interface-preferences",
     left: "120px",
     top: "90px",
     width: "540px",
-    height: "570px"
+    height: "620px"
   });
   if (!result?.ok) return;
 
@@ -7234,6 +7244,9 @@ async function openInterfacePreferencesPanel() {
     highlightDataUpdates: parseBooleanPreferenceToken(values.highlightDataUpdates, current.highlightDataUpdates),
     highlightRegisterUpdates: parseBooleanPreferenceToken(values.highlightRegisterUpdates, current.highlightRegisterUpdates)
   }, "Interface preferences updated.");
+  if (window.WebMarsUsage?.available?.()) {
+    window.WebMarsUsage.setConsent(parseBooleanPreferenceToken(values.usageMetricsEnabled, window.WebMarsUsage.allowed?.() === true));
+  }
 }
 
 function resolveRuntimeMemoryPreferenceSelection(values = {}, context = {}) {

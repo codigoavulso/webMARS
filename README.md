@@ -6,7 +6,7 @@ Public learning pages: [English](https://webmars.nfiles.top/discover/) ·
 [Português](https://webmars.nfiles.top/discover/pt/). They cover getting started,
 teaching, stack/recursion, pipeline and Mini-C without requiring JavaScript.
 Regenerate them with `npm run docs:public` after updating the product version.
-See [optional usage metrics](docs/usage-metrics.md) for the opt-in measurement
+See [optional usage metrics](docs/usage-metrics.md) for the anonymous product-use measurement
 schema and the separate Raspberry Pi collector installation.
 
 ![webMARS main window](assets/images/screenshot-main.png)

@@ -70,5 +70,5 @@ test("public files ship in release allowlist and root exposes learning links wit
   assert.match(index, /href="\.\/discover\/learn\/"/);
   assert.match(index, /<noscript>/);
   const config = await readFile(resolve(root, "webmars-config.js"), "utf8");
-  assert.match(config, /metrics: Object.freeze\(\{ enabled: false/);
+  assert.match(config, /metrics: Object.freeze\(\{ enabled: official/);
 });

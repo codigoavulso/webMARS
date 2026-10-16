@@ -28,8 +28,16 @@
   function storage(name) { try { return scope[name]; } catch { return null; } }
   const local = storage("localStorage");
   const tab = storage("sessionStorage");
+  const localReadable = (() => {
+    try { return Boolean(local) && typeof local.getItem === "function" && (local.getItem(CONSENT_KEY), true); }
+    catch { return false; }
+  })();
   function blocked() { return scope.navigator.globalPrivacyControl === true || scope.navigator.doNotTrack === "1"; }
-  function allowed() { return Boolean(endpoint) && !blocked() && read(local, CONSENT_KEY) === "yes"; }
+  // The official instance starts with anonymous product signals enabled.  A
+  // stored "no" is an immediate, persistent opt-out; browser privacy signals
+  // always win over either choice.
+  function allowed() { return Boolean(endpoint) && localReadable && !blocked() && read(local, CONSENT_KEY) !== "no"; }
+  function available() { return Boolean(endpoint) && localReadable && !blocked(); }
   function sourceCategory() {
     try {
       const host = new URL(document.referrer).hostname.toLowerCase();
@@ -123,51 +131,10 @@
       track(surface === "app" && ready ? "app_ready" : "page_view");
     }
   }
-  scope.WebMarsUsage = Object.freeze({ track, exampleOpened, setConsent, allowed });
-  // The permanent choice control also makes revocation discoverable in the IDE.
-  function mountChoice() {
-    if (!endpoint) return;
-    const initialLanguage = surface === "app"
-      ? (scope.WebMarsI18n?.getLanguage?.() || scope.navigator.language)
-      : document.documentElement.lang;
-    const pt = String(initialLanguage || "en").startsWith("pt");
-    const wrap = document.createElement("details");
-    wrap.className = "usage-choice";
-    const summary = document.createElement("summary");
-    summary.textContent = pt ? "Estatísticas de utilização" : "Usage statistics";
-    const description = document.createElement("p");
-    description.textContent = pt
-      ? "Ajude a melhorar o webMARS partilhando ações gerais e tempo ativo aproximado. Sem código nem dados de conta. A recolha está desligada até aceitar."
-      : "Help improve webMARS by sharing general actions and approximate active time. No code or account data. Collection stays off until you accept.";
-    const state = document.createElement("p");
-    state.setAttribute("role", "status");
-    function update() { state.textContent = allowed() ? (pt ? "Recolha ativada." : "Collection enabled.") : (pt ? "Recolha desligada." : "Collection off."); }
-    for (const yes of [true, false]) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = yes ? (pt ? "Aceitar" : "Accept") : (pt ? "Desligar" : "Turn off");
-      button.disabled = yes && blocked();
-      button.addEventListener("click", () => { setConsent(yes); update(); });
-      wrap.appendChild(button);
-    }
-    const link = document.createElement("a");
-    link.href = `${scope.WebMarsConfig.appBasePath || "/"}discover/${pt ? "pt/" : ""}privacy/`;
-    link.textContent = pt ? "O que é recolhido" : "What is collected";
-    wrap.prepend(summary, description, state);
-    wrap.appendChild(link);
-    document.body.appendChild(wrap);
-    update();
-    scope.addEventListener("storage", (event) => {
-      if (event.key === CONSENT_KEY || event.key === null) {
-        if (!allowed()) { session = null; remove(tab, SESSION_KEY); }
-        update();
-      }
-    });
-  }
+  scope.WebMarsUsage = Object.freeze({ track, exampleOpened, setConsent, allowed, available });
   function init() {
     if (!endpoint) return;
     if (blocked()) { remove(tab, SESSION_KEY); remove(local, VISIT_KEY); }
-    mountChoice();
     if (surface !== "app") track("page_view");
     for (const name of ["pointerdown", "keydown", "scroll", "focus"]) {
       scope.addEventListener(name, () => { lastInteraction = Date.now(); }, { passive: true });
