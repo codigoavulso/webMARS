@@ -21,9 +21,8 @@
     allowBackMarsOverride: false,
     manualUrl: `${origin}/manual/`,
     supportUrl: "",
-    // The official installation collects anonymous product-use signals.  A
-    // visitor can turn this off at any time in Interface Preferences; custom
-    // deployments stay disabled until their operator deliberately enables it.
+    // Automatic first-party statistics, documented in Help/About privacy.
+    // Custom deployments explicitly configure their own collector.
     metrics: Object.freeze({ enabled: official, endpoint: `${origin}/_metrics/events` }),
     // Automatic duration-only ping on the official installation. Install the
     // collector and Nginx snippet before deploying this configuration there.

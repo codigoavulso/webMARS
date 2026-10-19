@@ -1,10 +1,12 @@
-/* Optional first-party product metrics. Never pass editor/runtime data here. */
+/* Automatic first-party statistics. Never pass editor/runtime data here. */
 (function installUsageMetrics(scope) {
   "use strict";
   const config = scope.WebMarsConfig?.metrics;
-  const EVENTS = new Set(["page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "run_success", "run_error", "active_time"]);
+  const EVENTS = new Set(["page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "tool_open", "feature_use"]);
+  // Only shipped product resource identifiers may leave this boundary.
+  const TOOLS = new Set(["bht-simulator", "bitmap-display", "bitmap-terminal-tool", "cache-simulator", "digital-lab-sim", "float-representation", "instruction-counter", "instruction-statistics", "intro-to-tools", "keyboard-display-mmio", "mars-bot", "memory-reference-visualization", "mips-xray", "example-register-watch", "pipeline-lab", "scavenger-hunt", "screen-magnifier", "stack-visualizer", "system-clock", "tty-ansi-terminal"]);
+  const FEATURES = new Set(["step", "backstep", "run", "project_save", "project_import", "cloud_save", "cloud_load", "help", "teacher_kit"]);
   const SURFACES = new Set(["overview", "learn", "teach", "stack", "pipeline", "minic", "privacy", "app"]);
-  const CONSENT_KEY = "webmars-metrics-choice-v1";
   const SESSION_KEY = "webmars-metrics-session-v1";
   const VISIT_KEY = "webmars-metrics-last-visit-v1";
   const DAY = 86400000;
@@ -14,7 +16,7 @@
   let lastTick = Date.now();
   let lastInteraction = lastTick;
   let lastSentSeconds = 0;
-  let ready = false;
+  const usedResources = new Set();
   let endpoint = null;
   try {
     const candidate = new URL(config?.endpoint || "", scope.location.href);
@@ -24,20 +26,12 @@
   const surface = SURFACES.has(surfaceValue) ? surfaceValue : "app";
   function read(storage, key) { try { return storage.getItem(key); } catch { return null; } }
   function write(storage, key, value) { try { storage.setItem(key, value); } catch { /* Memory-only session is sufficient. */ } }
-  function remove(storage, key) { try { storage.removeItem(key); } catch { /* Storage may be unavailable. */ } }
   function storage(name) { try { return scope[name]; } catch { return null; } }
   const local = storage("localStorage");
   const tab = storage("sessionStorage");
-  const localReadable = (() => {
-    try { return Boolean(local) && typeof local.getItem === "function" && (local.getItem(CONSENT_KEY), true); }
-    catch { return false; }
-  })();
-  function blocked() { return scope.navigator.globalPrivacyControl === true || scope.navigator.doNotTrack === "1"; }
-  // The official instance starts with anonymous product signals enabled.  A
-  // stored "no" is an immediate, persistent opt-out; browser privacy signals
-  // always win over either choice.
-  function allowed() { return Boolean(endpoint) && localReadable && !blocked() && read(local, CONSENT_KEY) !== "no"; }
-  function available() { return Boolean(endpoint) && localReadable && !blocked(); }
+  // Installation configuration controls the destination. UI preferences,
+  // storage availability and browser signals do not gate statistical events.
+  function allowed() { return Boolean(endpoint); }
   function sourceCategory() {
     try {
       const host = new URL(document.referrer).hostname.toLowerCase();
@@ -69,6 +63,7 @@
       };
       write(local, VISIT_KEY, String(now));
       lastSentSeconds = 0;
+      usedResources.clear();
     }
     session.touched = now;
     session.seconds = Math.max(0, Math.min(86400, Number(session.seconds) || 0));
@@ -80,8 +75,18 @@
     let current;
     try { current = getSession(); } catch { return false; }
     if (!current) return false;
-    // Only lesson numbers or the category "other" may cross this boundary.
-    const safeDetail = event === "example_open" ? (/^lesson(?:0[1-9]|1[0-5])$/.test(detail) ? detail : "other") : "none";
+    let safeDetail = "none";
+    if (event === "tool_open" || event === "feature_use") {
+      if (!(event === "tool_open" ? TOOLS : FEATURES).has(detail)) return false;
+      safeDetail = detail;
+      // Rank resource adoption once per visit; repeated stepping must not
+      // create one request per instruction or dominate the statistics.
+      const key = `${event}:${detail}`;
+      if (usedResources.has(key)) return false;
+      usedResources.add(key);
+    } else if (event === "example_open") {
+      safeDetail = /^lesson(?:0[1-9]|1[0-5])$/.test(detail) ? detail : "other";
+    }
     const language = String(scope.WebMarsI18n?.getLanguage?.() || document.documentElement.lang || "en").split("-")[0];
     const payload = {
       v: 1, session: current.id, event, surface, detail: safeDetail,
@@ -120,22 +125,10 @@
     write(tab, SESSION_KEY, JSON.stringify(current));
     if (current.seconds - lastSentSeconds >= 30) flush();
   }
-  function setConsent(yes) {
-    write(local, CONSENT_KEY, yes ? "yes" : "no");
-    if (!yes || blocked()) {
-      session = null;
-      remove(tab, SESSION_KEY);
-      remove(local, VISIT_KEY);
-    } else {
-      lastInteraction = lastTick = Date.now();
-      track(surface === "app" && ready ? "app_ready" : "page_view");
-    }
-  }
-  scope.WebMarsUsage = Object.freeze({ track, exampleOpened, setConsent, allowed, available });
+  scope.WebMarsUsage = Object.freeze({ track, exampleOpened });
   function init() {
     if (!endpoint) return;
-    if (blocked()) { remove(tab, SESSION_KEY); remove(local, VISIT_KEY); }
-    if (surface !== "app") track("page_view");
+    track("page_view");
     for (const name of ["pointerdown", "keydown", "scroll", "focus"]) {
       scope.addEventListener(name, () => { lastInteraction = Date.now(); }, { passive: true });
     }
@@ -150,7 +143,7 @@
     scope.setInterval(tick, 5000);
   }
   scope.addEventListener("webmars:scripts-loaded", (event) => {
-    if (event.detail?.ok === true) { ready = true; track("app_ready"); }
+    if (event.detail?.ok === true) track("app_ready");
   });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
   else init();

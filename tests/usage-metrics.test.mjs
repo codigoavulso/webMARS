@@ -52,24 +52,26 @@ test("disabled and cross-origin configurations send nothing", () => {
     env.advance(30000);
     assert.equal(env.sent.length, 0);
     assert.equal(env.sessionStorage.data.size, 0);
-    env.api.setConsent(true);
     env.api.track("run_success");
     assert.equal(env.sent.length, 0);
   }
 });
 
-test("collection starts enabled and a saved opt-out stops it", () => {
-  const env = harness();
-  env.api.track("run_success");
-  assert.equal(env.sent.at(-1).body.event, "run_success");
-  env.api.setConsent(false);
-  env.api.track("run_success");
-  assert.equal(env.sent.filter((entry) => entry.body.event === "run_success").length, 1);
+test("automatic collection ignores old preference choices and browser signals", () => {
+  for (const navigator of [{}, { doNotTrack: "1" }, { globalPrivacyControl: true }]) {
+    const localStorage = memoryStorage();
+    localStorage.setItem("webmars-metrics-choice-v1", "no");
+    const env = harness({ navigator, localStorage });
+    assert.equal(env.sent[0].body.event, "page_view");
+    env.api.track("run_success");
+    assert.equal(env.sent.at(-1).body.event, "run_success");
+    assert.equal(env.api.setConsent, undefined);
+    assert.equal(env.api.available, undefined);
+  }
 });
 
-test("consent sends only allowlisted data and revocation stops subsequent events", () => {
+test("automatic events send only allowlisted data without visitor content", () => {
   const env = harness({ referrer: "https://www.google.com/search?q=private-query" });
-  env.api.setConsent(true);
   env.emit("webmars:scripts-loaded", { detail: { ok: true } });
   env.api.exampleOpened("lesson02-twos-complement");
   env.api.exampleOpened("private-project-name");
@@ -86,27 +88,29 @@ test("consent sends only allowlisted data and revocation stops subsequent events
     assert.equal(url, "https://webmars.test/_metrics/events");
     assert.doesNotMatch(request.body, /private|secret|search\?q/);
   }
-  const count = env.sent.length;
-  env.api.setConsent(false);
-  env.api.track("run_success");
-  env.advance(30000);
-  assert.equal(env.sent.length, count);
-  assert.equal(env.sessionStorage.data.size, 0);
-  assert.equal(env.localStorage.getItem("webmars-metrics-last-visit-v1"), null);
 });
 
-test("browser privacy signals override saved acceptance", () => {
-  for (const navigator of [{ doNotTrack: "1" }, { globalPrivacyControl: true }]) {
-    const env = harness({ navigator });
-    env.api.setConsent(true);
-    env.api.track("app_ready");
-    assert.equal(env.sent.length, 0);
+test("resource adoption accepts shipped IDs and deduplicates rapid repeated actions", async () => {
+  const env = harness();
+  const manifest = JSON.parse(await readFile(new URL("../tools/tools.json", import.meta.url), "utf8"));
+  for (const tool of manifest.tools) {
+    assert.equal(env.api.track("tool_open", tool.id), true, tool.id);
+    assert.equal(env.api.track("tool_open", tool.id), false);
   }
+  for (const feature of ["step", "backstep", "run", "project_save", "project_import", "cloud_save", "cloud_load", "help", "teacher_kit"]) {
+    assert.equal(env.api.track("feature_use", feature), true);
+    assert.equal(env.api.track("feature_use", feature), false);
+  }
+  const count = env.sent.length;
+  env.api.track("tool_open", "private-project.asm");
+  env.api.track("feature_use", "my-account@example.org");
+  assert.equal(env.sent.length, count);
+  env.advance(31 * 60000);
+  assert.equal(env.api.track("tool_open", "pipeline-lab"), true);
 });
 
 test("active time excludes hidden, unfocused, idle pages and long timer suspension", () => {
   const env = harness();
-  env.api.setConsent(true);
   for (let i = 0; i < 6; i++) env.advance(5000);
   assert.equal(env.sent.at(-1).body.event, "active_time");
   assert.equal(env.sent.at(-1).body.seconds, 30);
@@ -127,7 +131,6 @@ test("active time excludes hidden, unfocused, idle pages and long timer suspensi
 
 test("session survives same-tab navigation and rotates after inactivity with coarse return category", () => {
   const first = harness();
-  first.api.setConsent(true);
   const id = first.sent.at(-1).body.session;
   const next = harness({ localStorage: first.localStorage, sessionStorage: first.sessionStorage });
   next.api.track("app_ready");
@@ -149,13 +152,25 @@ test("malformed stored sessions cannot leak arbitrary strings", () => {
 
 test("network and storage failures do not interrupt the app", async () => {
   const env = harness({ failFetch: true });
-  env.api.setConsent(true);
   assert.doesNotThrow(() => env.api.track("run_success"));
   await Promise.resolve();
   const badStorage = { getItem() { throw Error("blocked"); }, setItem() { throw Error("blocked"); }, removeItem() { throw Error("blocked"); } };
   const blocked = harness({ localStorage: badStorage, sessionStorage: badStorage });
-  assert.doesNotThrow(() => blocked.api.setConsent(true));
-  assert.equal(blocked.sent.length, 0);
+  assert.equal(blocked.sent[0].body.event, "page_view");
+  const id = blocked.sent[0].body.session;
+  assert.doesNotThrow(() => blocked.api.track("run_success"));
+  assert.equal(blocked.sent.at(-1).body.session, id);
+  const newPage = harness({ localStorage: badStorage, sessionStorage: badStorage });
+  assert.notEqual(newPage.sent[0].body.session, id);
+});
+
+test("metrics explanation is absent from Interface preferences and resource hooks are connected", async () => {
+  const runtime = await readFile(new URL("../assets/js/app-modules/20-app-runtime.js", import.meta.url), "utf8");
+  const panel = runtime.slice(runtime.indexOf("async function openInterfacePreferencesPanel("), runtime.indexOf("function resolveRuntimeMemoryPreferenceSelection("));
+  assert.doesNotMatch(panel, /WebMarsUsage|usageMetricsEnabled|Usage statistics|Estatísticas/);
+  const manager = await readFile(new URL("../assets/js/app-modules/12-ui-tool-manager.js", import.meta.url), "utf8");
+  assert.match(manager, /tool\.open\(\);\s*window\.WebMarsUsage\?\.track\("tool_open", toolId\)/);
+  assert.match(runtime, /WebMarsUsage\?\.track\(ok \? "compile_success" : "compile_error"\)/);
 });
 
 test("assembly and execution hooks do not count pauses or fall-through as success", async () => {

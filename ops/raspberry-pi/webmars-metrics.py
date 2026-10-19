@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""First-party opt-in metrics. Standard library only; no IP/header/body logging."""
+"""Automatic first-party statistics. Standard library only; no IP/header/body logging."""
 import argparse
 from collections import Counter
 from contextlib import closing
@@ -12,7 +12,9 @@ import re
 import sqlite3
 import time
 
-EVENTS = {"page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "run_success", "run_error", "active_time"}
+EVENTS = {"page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "tool_open", "feature_use"}
+TOOLS = set("bht-simulator bitmap-display bitmap-terminal-tool cache-simulator digital-lab-sim float-representation instruction-counter instruction-statistics intro-to-tools keyboard-display-mmio mars-bot memory-reference-visualization mips-xray example-register-watch pipeline-lab scavenger-hunt screen-magnifier stack-visualizer system-clock tty-ansi-terminal".split())
+FEATURES = {"step", "backstep", "run", "project_save", "project_import", "cloud_save", "cloud_load", "help", "teacher_kit"}
 SURFACES = {"overview", "learn", "teach", "stack", "pipeline", "minic", "privacy", "app"}
 SOURCES = {"direct", "search", "social", "internal", "other"}
 RETURNS = {"new", "same_day", "days_1_6", "days_7_30", "older"}
@@ -41,6 +43,10 @@ def validate_event(data):
         return False
     if data["event"] == "example_open":
         return bool(re.fullmatch(r"lesson(?:0[1-9]|1[0-5])|other", data["detail"]))
+    if data["event"] == "tool_open":
+        return data["detail"] in TOOLS
+    if data["event"] == "feature_use":
+        return data["detail"] in FEATURES
     return data["detail"] == "none"
 
 
@@ -131,7 +137,11 @@ def report(database, days=30, now=None):
         start_day = datetime.fromtimestamp(now - (days - 1) * 86400, timezone.utc).strftime("%Y-%m-%d")
         end_day = datetime.fromtimestamp(now, timezone.utc).strftime("%Y-%m-%d")
         heartbeat_rows = db.execute("SELECT day, active_minutes, pings FROM heartbeats WHERE day >= ? AND day <= ? ORDER BY day, active_minutes", (start_day, end_day)).fetchall()
-        presence_rows = db.execute("SELECT first_seen, last_seen, active_seconds, pings, registered FROM heartbeat_sessions WHERE last_seen >= ? ORDER BY last_seen", (now - 300,)).fetchall()
+        presence_rows = db.execute("SELECT first_seen, last_seen, active_seconds, pings, registered FROM heartbeat_sessions WHERE last_seen >= ? AND last_seen <= ? ORDER BY last_seen", (now - 300, now)).fetchall()
+        # Include only history in the report window; never sum cumulative
+        # heartbeat buckets as time or describe legacy samples as sessions.
+        heartbeat_visits = db.execute("SELECT first_seen, last_seen, active_seconds, pings FROM heartbeat_sessions WHERE last_seen >= ? AND last_seen <= ?", (now - days * 86400, now)).fetchall()
+        baseline = dict(db.execute("SELECT session, MAX(seconds) FROM events WHERE received < ? GROUP BY session", (now - days * 86400,)).fetchall())
     sessions = {}
     for row in rows:
         sid = row["session"]
@@ -150,18 +160,50 @@ def report(database, days=30, now=None):
     activated = sum("run_success" in item["events"] for item in ready)
     durations = sorted(item["seconds"] for item in sessions.values())
     first_runs = sorted(item["success"] - item["ready"] for item in ready if item["success"] is not None and item["success"] >= item["ready"])
+    daily = {}
+    resources = {}
+    last_seconds = baseline
+    for row in rows:
+        day = datetime.fromtimestamp(row["received"], timezone.utc).strftime("%Y-%m-%d")
+        item = daily.setdefault(day, {"sessions": set(), "events": Counter(), "active_seconds_observed": 0})
+        item["sessions"].add(row["session"])
+        item["events"][row["event"]] += 1
+        previous = last_seconds.get(row["session"], 0)
+        item["active_seconds_observed"] += max(0, row["seconds"] - previous)
+        last_seconds[row["session"]] = max(previous, row["seconds"])
+        if row["event"] in {"tool_open", "feature_use", "example_open"}:
+            resource = resources.setdefault((row["event"], row["detail"]), {"sessions": set(), "events": 0})
+            resource["sessions"].add(row["session"])
+            resource["events"] += 1
     def median(values):
         if not values:
             return None
         middle = len(values) // 2
         return values[middle] if len(values) % 2 else (values[middle - 1] + values[middle]) / 2
+    def duration_summary(values):
+        values = sorted(values)
+        return {"sessions": len(values), "median_seconds": median(values),
+                "p90_seconds": values[int((len(values) - 1) * .9)] if values else None,
+                "max_seconds": max(values) if values else None,
+                "buckets": {name: sum(lower <= value < upper for value in values)
+                            for name, lower, upper in [("under_1m", 0, 60), ("1m_to_5m", 60, 300),
+                                                       ("5m_to_15m", 300, 900), ("15m_to_1h", 900, 3600),
+                                                       ("1h_plus", 3600, float("inf"))]}}
     return {
         "window_days": days,
+        "event_window_utc": {"from": datetime.fromtimestamp(now - days * 86400, timezone.utc).isoformat(),
+                             "through": datetime.fromtimestamp(now, timezone.utc).isoformat()},
         "duration_only_heartbeats": {
             "utc_calendar_days": {"from": start_day, "through": end_day},
             "pings": sum(row["pings"] for row in heartbeat_rows),
             "daily_minute_buckets": [dict(row) for row in heartbeat_rows],
-            "interpretation": "Historical server-timed cumulative active-duration samples. Live presence below counts ephemeral browser sessions, not people."
+            "interpretation": "Historical cumulative-duration samples; collection methods changed over time. Pings are not users and cumulative bucket values must not be summed as time."
+        },
+        "heartbeat_visits": {
+            **duration_summary([row["active_seconds"] for row in heartbeat_visits]),
+            "pings": sum(row["pings"] for row in heartbeat_visits),
+            "crossing_window_start": sum(row["first_seen"] < now - days * 86400 for row in heartbeat_visits),
+            "note": "Memory-only page sessions seen in this window; duration is lifetime server-observed elapsed time capped at 90 seconds per interval. Reloads create new sessions; visits under one minute are absent. This is not exact attention or a count of people."
         },
         "live_presence": {
             "window_seconds": 300,
@@ -172,8 +214,15 @@ def report(database, days=30, now=None):
             "precision_note": "Best-effort session presence; browser suspension, network loss and blocked requests can make this an underestimate."
         },
         "generated_at": datetime.fromtimestamp(now, timezone.utc).isoformat(),
-        "consenting_tab_sessions": len(sessions),
+        "measured_tab_sessions": len(sessions),
+        "daily_usage": [{"day_utc": day, "sessions_seen": len(item["sessions"]),
+                         "events": dict(item["events"]), "active_seconds_observed": item["active_seconds_observed"]}
+                        for day, item in sorted(daily.items())],
+        "resource_usage": [{"kind": key[0], "resource": key[1], "sessions": len(item["sessions"]), "events": item["events"]}
+                           for key, item in sorted(resources.items(), key=lambda pair: (-len(pair[1]["sessions"]), pair[0]))],
+        "session_durations": duration_summary(durations),
         "sessions_by_event": {event: count(event) for event in sorted(EVENTS)},
+        "event_counts": dict(Counter(row["event"] for row in rows)),
         "activation": {"ready_sessions": len(ready), "ready_sessions_with_successful_run": activated, "percent": round(100 * activated / len(ready), 1) if ready else None},
         "sessions_opening_two_distinct_lessons": sum(len(item["lessons"]) >= 2 for item in sessions.values()),
         "approx_active_seconds": {"total": sum(durations), "median": median(durations)},
@@ -189,7 +238,9 @@ def report(database, days=30, now=None):
         "input_devices": dict(Counter(item["device"] for item in sessions.values())),
         "languages": dict(Counter(item["language"] for item in sessions.values())),
         "limitations": [
-            "Consenting tab sessions only; not unique people or all visitors.",
+            "Automatically measured browser sessions, not unique people. Blocked requests, disabled installation collectors and network loss cause undercounting.",
+            "Historical opt-in/opt-out events and automatic events share this report; do not interpret them as consent records or compare collection regimes as audience growth.",
+            "Daily sessions are distinct within each UTC day; summing days can count a visit twice. Daily active seconds are positive observed cumulative increments, not attention.",
             "Successful execution means a normal runtime exit, not a correct solution or completed exercise.",
             "Opening two lessons does not prove either lesson was completed.",
             "Return categories use a local last-visit timestamp, not longitudinal cohort retention.",
@@ -198,6 +249,33 @@ def report(database, days=30, now=None):
             "Events are client-reported and can be blocked or forged; this is not an assessment system."
         ]
     }
+
+
+def summary(data):
+    """Human-readable aggregate report, without tokens or individual visits."""
+    lines = [f"webMARS statistics — last {data['window_days']} days",
+             f"UTC: {data['event_window_utc']['from']} to {data['event_window_utc']['through']}",
+             f"Measured tab visits: {data['measured_tab_sessions']}",
+             f"Recent heartbeat sessions (5 min): {data['live_presence']['active_sessions_estimated']}",
+             f"Ready visits with successful execution: {data['activation']['ready_sessions_with_successful_run']} / {data['activation']['ready_sessions']}",
+             "", "UTC day       Visits   Interaction seconds observed"]
+    for day in data["daily_usage"]:
+        lines.append(f"{day['day_utc']} {day['sessions_seen']:>8} {day['active_seconds_observed']:>30}")
+    lines.extend(["", "Resource adoption (visits, not clicks)"])
+    for resource in data["resource_usage"]:
+        lines.append(f"{resource['kind']:<13} {resource['resource']:<32} {resource['sessions']:>6}")
+    lines.extend(["", "Actions (received events / distinct visits)"])
+    for event, visits in data["sessions_by_event"].items():
+        if visits:
+            lines.append(f"{event:<24} {data['event_counts'].get(event, 0):>7} / {visits}")
+    for key, label in [("sources", "Acquisition"), ("languages", "Languages"), ("input_devices", "Input devices")]:
+        lines.extend(["", label + ": " + ", ".join(f"{name}={count}" for name, count in sorted(data[key].items(), key=lambda pair: -pair[1]))])
+    for key, label in [("session_durations", "Interaction time per visit"), ("heartbeat_visits", "Observed presence per page session")]:
+        durations = data[key]
+        lines.extend(["", f"{label}: median={durations['median_seconds']}s, p90={durations['p90_seconds']}s, max={durations['max_seconds']}s",
+                      ", ".join(f"{name}={count}" for name, count in durations["buckets"].items())])
+    lines.extend(["", "Visits are not unique people. Historical collection rules differ; higher collection coverage is not audience growth."])
+    return "\n".join(lines)
 
 
 def make_handler(database, origin):
@@ -256,10 +334,14 @@ def main():
     parser.add_argument("--origin", default="https://webmars.nfiles.top")
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--report", action="store_true")
+    parser.add_argument("--summary", action="store_true", help="Print an aggregate readable report (with --report)")
     parser.add_argument("--days", type=int, choices=range(1, 36), default=30)
     args = parser.parse_args()
+    if args.summary and not args.report:
+        parser.error("--summary requires --report")
     if args.report:
-        print(json.dumps(report(args.database, args.days), indent=2, ensure_ascii=False))
+        data = report(args.database, args.days)
+        print(summary(data) if args.summary else json.dumps(data, indent=2, ensure_ascii=False))
         return
     initialize(args.database)
     prune(args.database)

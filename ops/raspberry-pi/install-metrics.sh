@@ -14,4 +14,4 @@ echo '1. Include /etc/nginx/snippets/webmars-metrics.conf inside the webMARS HTT
 echo '2. Validate and reload Nginx; confirm the endpoint rejects invalid events.'
 echo '3. Deploy the frontend: heartbeat.enabled selects the official hostname automatically.'
 echo '4. Verify duration_only_heartbeats in: sudo webmars-metrics --report --days 30'
-echo 'Optional richer events remain off unless metrics.enabled is explicitly enabled.'
+echo 'Product statistics are automatic on the official hostname; other operators configure metrics.enabled.'

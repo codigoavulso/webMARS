@@ -2678,6 +2678,7 @@ async function saveActiveProjectToCloud(options = {}) {
     const remoteProjects = await listCloudProjects({ includeDocuments: true });
     const remoteByName = chooseLatestRemoteProjectByName(remoteProjects);
     const result = await saveProjectToCloud(localProject, remoteByName);
+    window.WebMarsUsage?.track("feature_use", "cloud_save");
     setCloudSyncState(false, "", { updateTimestamp: true });
     renderProjectTree(true);
     if (options.silentSuccess !== true) {
@@ -2729,6 +2730,7 @@ async function openProjectFromCloud() {
     setCloudProjectSyncDocument(imported.rootPath, imported, projectRecord?.etag);
     setCloudSyncState(false, "", { updateTimestamp: true });
     renderProjectTree(true);
+    window.WebMarsUsage?.track("feature_use", "cloud_load");
     postMarsMessage("Cloud project opened: {name}.", { name: imported.rootPath });
     return { ok: true, name: imported.rootPath };
   } catch (error) {
@@ -7197,17 +7199,7 @@ async function openInterfacePreferencesPanel() {
             value: current.highlightRegisterUpdates === true
           }
         ]
-      },
-      ...(window.WebMarsUsage?.available?.() ? [{
-        title: current.language === "pt" ? "Estatísticas" : "Usage statistics",
-        layout: "table",
-        fields: [{
-          name: "usageMetricsEnabled",
-          label: current.language === "pt" ? "Partilhar estatísticas anónimas de utilização" : "Share anonymous usage statistics",
-          type: "checkbox",
-          value: window.WebMarsUsage.allowed?.() === true
-        }]
-      }] : [])
+      }
     ]
   }, {
     windowIdPrefix: "window-interface-preferences",
@@ -7244,9 +7236,6 @@ async function openInterfacePreferencesPanel() {
     highlightDataUpdates: parseBooleanPreferenceToken(values.highlightDataUpdates, current.highlightDataUpdates),
     highlightRegisterUpdates: parseBooleanPreferenceToken(values.highlightRegisterUpdates, current.highlightRegisterUpdates)
   }, "Interface preferences updated.");
-  if (window.WebMarsUsage?.available?.()) {
-    window.WebMarsUsage.setConsent(parseBooleanPreferenceToken(values.usageMetricsEnabled, window.WebMarsUsage.allowed?.() === true));
-  }
 }
 
 function resolveRuntimeMemoryPreferenceSelection(values = {}, context = {}) {
@@ -8404,6 +8393,7 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences, opt
 
   const normalized = compileResult && typeof compileResult === "object" ? compileResult : {};
   const ok = normalized.ok === true;
+  window.WebMarsUsage?.track(ok ? "compile_success" : "compile_error");
   const warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
   const errors = Array.isArray(normalized.errors) ? normalized.errors : [];
   const logLines = [];
@@ -9577,6 +9567,7 @@ const commands = {
     editor.markProjectOwnedSaved?.();
     const finalizedProjectSave = persistOpenProjectLocally();
     if (!finalizedProjectSave.ok) return { ok: false, message: "quota" };
+    window.WebMarsUsage?.track("feature_use", "project_save");
     postMarsMessage("Project saved: {name}.", { name: projectState.rootPath });
     return { ok: true, name: projectState.rootPath };
   },
@@ -9764,6 +9755,7 @@ const commands = {
       toolManager.onRuntimeEventBatch([result.runtimeEvent]);
     }
     const nextSnapshot = resolveStableRuntimeSnapshot(result.snapshot, { expectBackstep: true });
+    window.WebMarsUsage?.track("feature_use", "step");
     syncSnapshot(nextSnapshot, {
       force: result.runIo === true || result.waitingForInput === true
     });
@@ -9798,6 +9790,7 @@ const commands = {
       return;
     }
     clearInputPauseState();
+    window.WebMarsUsage?.track("feature_use", "run");
     runStopRequested = false;
     runActive = true;
     runLastTickAt = performance.now();
@@ -9872,6 +9865,7 @@ const commands = {
       postMarsMessage("[warn] {message}", { message: result.message });
       return;
     }
+    window.WebMarsUsage?.track("feature_use", "backstep");
     decrementBackstepEstimate(1);
     scheduleRuntimeControlRecovery();
     if (result.runtimeEvent && typeof toolManager.onBackstep === "function") {
@@ -10395,9 +10389,9 @@ const commands = {
   toggleFullScreen() { void toggleFullScreen(); },
 
 
-  helpHub() { helpSystem.open("mips", "basic"); },
+  helpHub() { helpSystem.open("mips", "basic"); window.WebMarsUsage?.track("feature_use", "help"); },
   helpWelcome() { return openWelcomeDialog(); },
-  helpTeacherKit() { openTeacherKitDocument(); },
+  helpTeacherKit() { openTeacherKitDocument(); window.WebMarsUsage?.track("feature_use", "teacher_kit"); },
   helpMipsPdf() { helpSystem.openDocument("./help/mipsref.pdf", "MIPS Reference PDF"); },
   helpAbout() { helpSystem.openAbout(); }
 };
@@ -10780,6 +10774,7 @@ fileInput.addEventListener("change", async (event) => {
       applyLayout: true
     });
     if (opened) {
+      window.WebMarsUsage?.track("feature_use", "project_import");
       postMarsMessage("Project loaded: {name}.", { name: importedProject.rootPath });
       target.value = "";
       return;

@@ -922,6 +922,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop, helpSys
           }
         }
         tool.open();
+        window.WebMarsUsage?.track("tool_open", toolId);
       });
     },
     onSnapshot(snapshot, options = {}) {

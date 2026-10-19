@@ -202,7 +202,7 @@ webMARS is not positioned for production firmware validation, performance predic
 
 webMARS is local-first. Source files, settings, virtual files, recovery state, and benchmark measurements remain on the device unless the user explicitly invokes cloud functionality. The product contains no advertising.
 
-Optional first-party usage metrics are disabled in the distributed configuration and require visitor acceptance when an operator enables them. They record general product actions and approximate active time, never source code or account data. See `docs/usage-metrics.md` and the public privacy pages for the exact schema, retention and limitations. Hosting access logs are separate.
+First-party statistics are collected automatically on the official installation, independently of interface preferences. They measure visits, product resources and approximate active time, excluding source code and account identifiers. Their explanation is in the Help/About privacy area and public privacy pages. See `docs/usage-metrics.md` for the schema, retention and limitations. Hosting access logs are separate.
 
 A separate automatic heartbeat for the official installation sends only cumulative active seconds every 60 seconds while the app is visible, including when another tab or window has focus. It has no identifier, cookie or browser storage and does not display a prompt. The collector aggregates duration samples by UTC day and minute bucket; it cannot count unique visitors or measure completed-session duration from these samples.
 

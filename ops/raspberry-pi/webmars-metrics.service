@@ -1,5 +1,5 @@
 [Unit]
-Description=webMARS opt-in usage metrics
+Description=webMARS statistical usage metrics
 After=network.target
 
 [Service]
