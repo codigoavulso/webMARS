@@ -8,6 +8,7 @@ const runtimeCoreStoreModule = moduleRegistry.coreStore;
 const runtimeSettingsModule = moduleRegistry.runtimeSettings;
 const runtimeBenchmarksModule = moduleRegistry.runtimeBenchmarks;
 const publicLibraryModule = moduleRegistry.publicLibrary;
+const usageStatisticsModule = moduleRegistry.usageStatistics;
 const miniCCompilerModule = moduleRegistry.miniCCompiler;
 const fileKindsModule = moduleRegistry.fileKinds;
 
@@ -31,6 +32,9 @@ if (!publicLibraryModule
   || typeof publicLibraryModule.resolveExampleRegistryId !== "function"
   || typeof publicLibraryModule.hasNextPublicationPage !== "function") {
   throw new Error("[mars-web] publicLibrary module was not loaded before app runtime.");
+}
+if (!usageStatisticsModule || typeof usageStatisticsModule.createUsageStatisticsWindow !== "function") {
+  throw new Error("[mars-web] usageStatistics module was not loaded before app runtime.");
 }
 if (!miniCCompilerModule
   || typeof miniCCompilerModule.compile !== "function"
@@ -9375,6 +9379,14 @@ async function openWelcomeDialog() {
   return true;
 }
 
+let usageStatisticsWindow = null;
+function openUsageStatistics() {
+  if (!usageStatisticsWindow) {
+    usageStatisticsWindow = usageStatisticsModule.createUsageStatisticsWindow(refs, windowManager, translateText);
+  }
+  usageStatisticsWindow.open();
+}
+
 const commands = {
   newFile() {
     if (!projectIsOpen()) {
@@ -10535,6 +10547,7 @@ const commands = {
   helpWelcome() { return openWelcomeDialog(); },
   helpTeacherKit() { openTeacherKitDocument(); window.WebMarsUsage?.track("feature_use", "teacher_kit"); },
   helpMipsPdf() { helpSystem.openDocument("./help/mipsref.pdf", "MIPS Reference PDF"); },
+  helpUsageStatistics() { openUsageStatistics(); },
   helpAbout() { helpSystem.openAbout(); }
 };
 
@@ -10689,6 +10702,7 @@ getI18nApi()?.subscribe?.(() => {
   helpSystem.refreshTranslations?.();
   browserStorageManager.refreshTranslations?.();
   publicLibraryBrowser?.refreshTranslations();
+  usageStatisticsWindow?.refreshTranslations();
   updateRunSpeedLabel();
   renderBenchmarkStatus();
   menuSystem.hide();

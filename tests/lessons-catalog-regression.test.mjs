@@ -87,11 +87,17 @@ test("the manifest declares exactly the localizations that exist on disk", async
     const actual = languages.filter((language) => present[language].has(main.path));
     const declared = Array.isArray(entry.languages) ? entry.languages : [];
 
-    assert.deepEqual(
-      declared,
-      actual,
-      `'${entry.label}' declares ${JSON.stringify(declared)} but the tree holds ${JSON.stringify(actual)}.`
-    );
+    if (main.shared === true) {
+      await access(resolve(examplesRoot, main.path));
+      assert.deepEqual(actual, [], `'${entry.label}' has localized copies but marks its main file shared.`);
+      assert.deepEqual(declared, languages, `'${entry.label}' has a shared main file but is not available in every language.`);
+    } else {
+      assert.deepEqual(
+        declared,
+        actual,
+        `'${entry.label}' declares ${JSON.stringify(declared)} but the tree holds ${JSON.stringify(actual)}.`
+      );
+    }
 
     for (const spec of specs) {
       if (spec.main === true) continue;

@@ -170,6 +170,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Welcome...", command: "helpWelcome" },
         { label: "Teacher Kit...", command: "helpTeacherKit" },
         { label: "MIPS Reference PDF", command: "helpMipsPdf" },
+        { label: "Usage statistics", command: "helpUsageStatistics" },
         "-",
         { label: "About ...", command: "helpAbout" }
       ]

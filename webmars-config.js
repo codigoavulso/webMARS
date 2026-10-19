@@ -23,7 +23,7 @@
     supportUrl: "",
     // Automatic first-party statistics, documented in Help/About privacy.
     // Custom deployments explicitly configure their own collector.
-    metrics: Object.freeze({ enabled: official, endpoint: `${origin}/_metrics/events` }),
+    metrics: Object.freeze({ enabled: official, endpoint: `${origin}/_metrics/events`, publicEndpoint: `${origin}/_metrics/public` }),
     // Automatic duration-only ping on the official installation. Install the
     // collector and Nginx snippet before deploying this configuration there.
     heartbeat: Object.freeze({ enabled: official, endpoint: `${origin}/_metrics/heartbeat` })

@@ -166,8 +166,9 @@ checksums. A difference means something non-deterministic reached the package.
 ### 7. Tag and publish
 
 Commit, tag the release, and publish the packaged tree. The archive is
-self-contained: it needs an HTTP server and nothing else. No backend, no
-database, no build step at the destination.
+self-contained for the simulator: it needs an HTTP server and no build step at
+the destination. The public usage-statistics panel requires the separately
+deployed same-origin metrics collector and database.
 
 ## Release checklist
 

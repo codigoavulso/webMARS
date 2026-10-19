@@ -86,9 +86,28 @@ not be summed because they use different timing rules.
 
 Historical minute buckets are repeated cumulative samples, including older
 collection methods. Never sum them as total time or interpret ping medians as
-visit medians. `heartbeat_visits` provides tracked page-session distributions.
+visit medians. `event_heartbeat_visits` describes current event samples;
+`heartbeat_visits` retains the older separate-endpoint sessions.
 
 ## Reading reports
+
+The public dashboard is available inside the simulator at **Help → Usage statistics**.
+Its read-only `GET /_metrics/public?window=60m|24h|30d` endpoint publishes
+only aggregates: 5-minute, hourly or daily trend buckets; event and resource
+counts; coarse source, return, device, language and page categories; activation;
+and separate interaction/presence durations. It exposes no session tokens,
+account data, IP addresses or individual event rows. The window offers column
+and line charts plus local filters for metric, breakdown, measure, text and
+number of categories. A session may appear in multiple trend buckets, and
+session counts are never unique-person counts. The endpoint uses a 30-second
+server cache and the window refreshes once per minute while open. Historical
+legacy duration-only pings have only day-level aggregates and are not merged
+into the current event charts.
+
+Interaction seconds and heartbeat seconds represent different clocks. Public
+charts derive their increments independently; they must not be added. The
+current event heartbeat has no authenticated-account classification, so the
+dashboard does not infer registered users.
 
 Run `sudo webmars-metrics --report --days 14`:
 
@@ -107,7 +126,9 @@ JSON: `sudo webmars-metrics --report --days 14 --summary`.
   and maximum. Zero includes short/unmeasured visits.
 - `sources`, `activation_by_source`, `languages`, `input_devices`,
   `sessions_by_surface`: broad audience and entry-point breakdowns.
-- `heartbeat_visits`: page sessions seen in the window, lifetime observed
+- `event_heartbeat_visits`: current page sessions with heartbeat events and
+  their browser-reported cumulative visible-presence distribution.
+- `heartbeat_visits`: older separate-endpoint page sessions with server-observed
   duration distribution and a boundary-crossing count.
 - `live_presence`: recent session estimates; `duration_only_heartbeats` keeps
   the historical sample histogram for compatibility.
@@ -125,7 +146,7 @@ its private state directory. Records expire after 35 days with hourly pruning.
 No historical data need deleting: `consenting_tab_sessions` is renamed to
 `measured_tab_sessions`; downstream scripts must adopt the new name.
 
-Both Nginx telemetry routes disable access/error logging, forward no IP,
+The Nginx telemetry routes disable access/error logging, forward no IP,
 cookies or raw browser headers and limit request rates. Only Origin,
 Content-Type and fixed proxy Host are forwarded. HTTP still exposes a network
 IP to the host. Ordinary site logs are a separate system.
@@ -136,7 +157,8 @@ IP to the host. Ordinary site logs are a separate system.
    `ops/raspberry-pi/install-metrics.sh` before the frontend, so it accepts the
    new event types. No BackMars API/database change is needed.
 2. Include `/etc/nginx/snippets/webmars-metrics.conf` in the HTTPS server,
-   validate Nginx and reload it.
+   validate Nginx and reload it. The snippet serves the aggregate public GET
+   endpoint as well as the event POST endpoint.
 3. Deploy the frontend with the configured same-origin endpoints.
 4. Verify valid events return 204, unknown resources/details 400 and other
    origins 403. Use an isolated database for synthetic tests.

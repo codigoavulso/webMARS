@@ -222,8 +222,8 @@
   --text-faint: #879bad;
   --text-on-accent: #ffffff;
 
-  --accent: #4d91ce;
-  --accent-2: #3d7db5;
+  --accent: #2f6ea9;
+  --accent-2: #275b8b;
   --accent-strong: #8cc5f5;
   --accent-soft: #234869;
   --accent-soft-2: #2b557a;
@@ -757,4 +757,114 @@ th {
 @media (max-width: 700px) {
   .public-library-search { flex-wrap: wrap; }
   .public-library-search label { width: 100%; }
+}
+
+/* Public statistics dashboard lives inside the existing desktop window manager. */
+.tool-window.usage-stats-window .window-content {
+  display: block;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+.usage-stats-controls,
+.usage-stats-panel-head {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.usage-stats-controls label {
+  display: grid;
+  gap: 3px;
+  min-width: 110px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.usage-stats-controls select,
+.usage-stats-controls input {
+  min-height: 28px;
+  min-width: 110px;
+  max-width: 220px;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.usage-stats-controls .tool-btn { min-height: 28px; }
+.usage-stats-status {
+  min-height: 18px;
+  margin: 9px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.usage-stats-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.usage-stats-kpi {
+  display: grid;
+  gap: 4px;
+  min-height: 54px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.usage-stats-kpi strong {
+  color: var(--accent-strong);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.usage-stats-panel {
+  margin-bottom: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.tool-window.usage-stats-window .usage-stats-panel h3 {
+  margin: 0 0 6px;
+  color: var(--text-heading);
+  font-size: 13px;
+  text-align: start;
+}
+.usage-stats-panel-head { justify-content: space-between; }
+.usage-stats-breakdown-controls { margin: 0 0 6px; }
+.usage-stats-breakdown-controls label { min-width: 95px; }
+.usage-stats-breakdown-controls select,
+.usage-stats-breakdown-controls input { max-width: 160px; }
+.usage-stats-chart {
+  display: block;
+  width: 100%;
+  min-height: 185px;
+  max-height: 260px;
+  overflow: visible;
+}
+.usage-stats-grid { stroke: var(--line-soft); stroke-width: 1; }
+.usage-stats-axis-label { fill: var(--text-muted); font-size: 10px; }
+.usage-stats-bar { fill: var(--accent); }
+.usage-stats-line { fill: none; stroke: var(--accent-strong); stroke-width: 2.5; stroke-linejoin: round; }
+.usage-stats-point { fill: var(--accent-strong); }
+.usage-stats-panel details { margin-top: 4px; }
+.usage-stats-panel summary { cursor: pointer; color: var(--accent-strong); font-size: 11px; }
+.usage-stats-table-wrap { max-height: 170px; overflow: auto; margin-top: 5px; }
+.usage-stats-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.usage-stats-table th,
+.usage-stats-table td { padding: 4px 7px; border-bottom: 1px solid var(--line-soft); text-align: start; }
+.usage-stats-table th:last-child,
+.usage-stats-table td:last-child { text-align: end; font-variant-numeric: tabular-nums; }
+.usage-stats-table th { position: sticky; top: 0; background: var(--surface-strong); }
+.usage-stats-note { margin: 2px 0 0; color: var(--text-muted); font-size: 11px; }
+@media (max-width: 700px) {
+  .tool-window.usage-stats-window .window-content { padding: 8px; }
+  .usage-stats-controls label { flex: 1 1 135px; }
+  .usage-stats-controls select,
+  .usage-stats-controls input { width: 100%; max-width: none; }
+  .usage-stats-chart { min-height: 160px; }
 }

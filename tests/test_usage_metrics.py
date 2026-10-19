@@ -57,6 +57,72 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(result["sessions_opening_two_distinct_lessons"], 1)
         self.assertNotIn("a" * 32, json.dumps(result))
 
+    def test_public_statistics_separate_interaction_from_presence_and_hide_sessions(self):
+        now = 1788600000
+        start = now - 3600
+        metrics.record(self.database, event(event="active_time", seconds=20), now=start - 10)
+        metrics.record(self.database, event(event="heartbeat", seconds=60), now=start - 5)
+        metrics.record(self.database, event(event="heartbeat", seconds=120), now=start + 10)
+        metrics.record(self.database, event(event="active_time", seconds=30), now=start + 20)
+        metrics.record(self.database, event(event="tool_open", detail="tty-ansi-terminal", seconds=35), now=start + 25)
+        metrics.record(self.database, event(session="b" * 32, event="page_view"), now=start + 40)
+        metrics.record(self.database, event(session="b" * 32, event="app_ready"), now=start + 41)
+        metrics.record(self.database, event(session="b" * 32, event="heartbeat", seconds=60), now=start + 120)
+        metrics.record(self.database, event(session="b" * 32, event="run_success", seconds=90), now=start + 130)
+        result = metrics.public_statistics(self.database, "60m", now=now)
+        self.assertEqual(result["totals"]["sessions"], 2)
+        self.assertEqual(result["totals"]["new_sessions"], 1)
+        self.assertEqual(result["totals"]["interaction_seconds"], 105)
+        self.assertEqual(result["totals"]["presence_seconds"], 120)
+        self.assertEqual(result["totals"]["ready_with_successful_run"], 1)
+        self.assertEqual(len(result["timeline"]), 12)
+        self.assertEqual(sum(row["interaction_seconds"] for row in result["timeline"]), 105)
+        self.assertEqual(result["breakdowns"]["resources"][0]["key"], "tty-ansi-terminal")
+        self.assertNotIn("a" * 32, json.dumps(result))
+        self.assertNotIn("b" * 32, json.dumps(result))
+        self.assertEqual(len(metrics.public_statistics(self.database, "24h", now=now)["timeline"]), 24)
+        self.assertEqual(len(metrics.public_statistics(self.database, "30d", now=now)["timeline"]), 30)
+        with self.assertRaises(ValueError):
+            metrics.public_statistics(self.database, "all", now=now)
+
+    def test_cli_report_keeps_event_heartbeat_out_of_interaction_time(self):
+        now = 1788600000
+        metrics.record(self.database, event(event="app_ready", seconds=0), now=now - 90)
+        metrics.record(self.database, event(event="active_time", seconds=25), now=now - 80)
+        metrics.record(self.database, event(event="heartbeat", seconds=60), now=now - 60)
+        metrics.record(self.database, event(event="heartbeat", seconds=120), now=now - 10)
+        result = metrics.report(self.database, days=1, now=now)
+        self.assertEqual(result["approx_active_seconds"]["total"], 25)
+        self.assertEqual(sum(day["active_seconds_observed"] for day in result["daily_usage"]), 25)
+        self.assertEqual(result["event_heartbeat_visits"]["sessions"], 1)
+        self.assertEqual(result["event_heartbeat_visits"]["pings"], 2)
+        self.assertEqual(result["live_presence"]["active_sessions_estimated"], 1)
+        self.assertEqual(result["live_presence"]["unclassified_sessions_estimated"], 1)
+
+    def test_public_http_endpoint_returns_only_fixed_aggregate_windows(self):
+        now = 1788600000
+        metrics.record(self.database, event(), now=now)
+        server = HTTPServer(("127.0.0.1", 0), metrics.make_handler(self.database, "https://webmars.test"))
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            for path, expected in [("/public?window=60m", 200), ("/public?window=24h", 200),
+                                   ("/public?window=30d", 200), ("/public?window=all", 400),
+                                   ("/public?window=60m&session=private", 400), ("/private", 404)]:
+                connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=3)
+                connection.request("GET", path)
+                response = connection.getresponse()
+                body = response.read()
+                self.assertEqual(response.status, expected, path)
+                if expected == 200:
+                    self.assertEqual(response.getheader("Content-Type"), "application/json; charset=utf-8")
+                    self.assertNotIn(b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", body)
+                connection.close()
+        finally:
+            server.shutdown()
+            thread.join(timeout=2)
+            server.server_close()
+
     def test_empty_and_expired_data(self):
         now = 1788600000
         metrics.record(self.database, event(), now=now - 36 * 86400)

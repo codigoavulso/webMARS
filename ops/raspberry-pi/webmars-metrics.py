@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """Automatic first-party statistics. Standard library only; no IP/header/body logging."""
 import argparse
-from collections import Counter
+from collections import Counter, defaultdict
 from contextlib import closing
 from datetime import datetime, timezone
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import hashlib
 from pathlib import Path
 import re
 import sqlite3
 import time
+import threading
+from urllib.parse import parse_qs, urlsplit
 
 EVENTS = {"page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "heartbeat", "tool_open", "feature_use"}
 TOOLS = set("bht-simulator bitmap-display bitmap-terminal-tool cache-simulator digital-lab-sim float-representation instruction-counter instruction-statistics intro-to-tools keyboard-display-mmio mars-bot memory-reference-visualization mips-xray example-register-watch pipeline-lab scavenger-hunt screen-magnifier stack-visualizer system-clock tty-ansi-terminal".split())
@@ -22,6 +24,7 @@ LANGUAGES = set("en pt es zh hi ar fr bn ru id de ja ko tr vi ur it pl fa th oth
 FIELDS = {"v", "session", "event", "surface", "detail", "seconds", "returning", "source", "device", "language"}
 RETENTION_SECONDS = 35 * 86400
 HEARTBEAT_INTERVAL_CAP = 90
+PUBLIC_WINDOWS = {"60m": (3600, 300), "24h": (86400, 3600), "30d": (30 * 86400, 86400)}
 
 
 def validate_event(data):
@@ -127,6 +130,114 @@ def record_heartbeat(database, data, now=None):
                    (day, server_active_seconds // 60))
 
 
+def public_statistics(database, window="60m", now=None):
+    """Publish fixed, aggregate windows without session tokens or individual records."""
+    if window not in PUBLIC_WINDOWS:
+        raise ValueError("Invalid statistics window")
+    now = int(now or time.time())
+    duration, step = PUBLIC_WINDOWS[window]
+    start = now - duration
+    uri = Path(database).resolve().as_uri() + "?mode=ro"
+    with closing(sqlite3.connect(uri, uri=True)) as db:
+        db.row_factory = sqlite3.Row
+        rows = db.execute("SELECT * FROM events WHERE received >= ? AND received <= ? ORDER BY received", (start, now)).fetchall()
+        earlier = {row[0] for row in db.execute("SELECT DISTINCT session FROM events WHERE received < ?", (start,))}
+        interaction_baseline = dict(db.execute(
+            "SELECT session, MAX(seconds) FROM events WHERE received < ? AND event != 'heartbeat' GROUP BY session", (start,)))
+        presence_baseline = dict(db.execute(
+            "SELECT session, MAX(seconds) FROM events WHERE received < ? AND event = 'heartbeat' GROUP BY session", (start,)))
+
+    buckets = [{"from": start + index * step, "through": min(now, start + (index + 1) * step),
+                "sessions": set(), "new_sessions": 0, "events": 0, "interaction_seconds": 0,
+                "presence_seconds": 0, "event_counts": Counter()}
+               for index in range(duration // step)]
+    sessions = {}
+    event_sessions = defaultdict(set)
+    resources = defaultdict(lambda: {"events": 0, "sessions": set()})
+    facets = {name: defaultdict(set) for name in ("source", "returning", "device", "language", "surface")}
+    interaction_by_session = Counter()
+    presence_by_session = Counter()
+    recent_presence = set()
+    for row in rows:
+        sid = row["session"]
+        index = min(len(buckets) - 1, (row["received"] - start) // step)
+        bucket = buckets[index]
+        bucket["sessions"].add(sid)
+        bucket["events"] += 1
+        bucket["event_counts"][row["event"]] += 1
+        if sid not in sessions:
+            sessions[sid] = {"events": set()}
+            if sid not in earlier:
+                bucket["new_sessions"] += 1
+            for name, value in (("source", row["source"]), ("returning", row["return_bucket"]),
+                                ("device", row["device"]), ("language", row["language"])):
+                facets[name][value].add(sid)
+        sessions[sid]["events"].add(row["event"])
+        facets["surface"][row["surface"]].add(sid)
+        event_sessions[row["event"]].add(sid)
+        if row["event"] in {"tool_open", "feature_use", "example_open"}:
+            resource = resources[(row["event"], row["detail"])]
+            resource["events"] += 1
+            resource["sessions"].add(sid)
+        if row["event"] == "heartbeat":
+            previous = presence_baseline.get(sid, 0)
+            increment = max(0, row["seconds"] - previous)
+            # A first sample after the boundary may include earlier presence.
+            if sid not in presence_baseline:
+                increment = min(increment, row["received"] - start)
+            presence_baseline[sid] = max(previous, row["seconds"])
+            bucket["presence_seconds"] += increment
+            presence_by_session[sid] += increment
+            if row["received"] >= now - 300:
+                recent_presence.add(sid)
+        else:
+            previous = interaction_baseline.get(sid, 0)
+            increment = max(0, row["seconds"] - previous)
+            interaction_baseline[sid] = max(previous, row["seconds"])
+            bucket["interaction_seconds"] += increment
+            interaction_by_session[sid] += increment
+
+    def duration_distribution(values):
+        values = sorted(values)
+        if not values:
+            return {"median_seconds": None, "p90_seconds": None, "max_seconds": None}
+        mid = len(values) // 2
+        median = values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2
+        return {"median_seconds": median, "p90_seconds": values[int((len(values) - 1) * .9)], "max_seconds": values[-1]}
+
+    event_counts = Counter(row["event"] for row in rows)
+    ready = {sid for sid, item in sessions.items() if "app_ready" in item["events"]}
+    activated = sum("run_success" in sessions[sid]["events"] for sid in ready)
+    iso = lambda timestamp: datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
+    return {
+        "window": window, "from": iso(start), "through": iso(now), "bucket_seconds": step,
+        "totals": {
+            "sessions": len(sessions), "new_sessions": len(sessions.keys() - earlier),
+            "events": len(rows), "interaction_seconds": sum(interaction_by_session.values()),
+            "presence_seconds": sum(presence_by_session.values()), "recent_presence_sessions": len(recent_presence),
+            "ready_sessions": len(ready), "ready_with_successful_run": activated,
+            "interaction_distribution": duration_distribution(interaction_by_session.values()),
+            "presence_distribution": duration_distribution(presence_by_session.values())
+        },
+        "timeline": [{"from": iso(bucket["from"]), "through": iso(bucket["through"]),
+                      "sessions": len(bucket["sessions"]), "new_sessions": bucket["new_sessions"],
+                      "events": bucket["events"], "interaction_seconds": bucket["interaction_seconds"],
+                      "presence_seconds": bucket["presence_seconds"], "event_counts": dict(bucket["event_counts"])}
+                     for bucket in buckets],
+        "breakdowns": {
+            "events": [{"key": event, "events": count, "sessions": len(event_sessions[event])}
+                       for event, count in sorted(event_counts.items(), key=lambda entry: (-entry[1], entry[0]))],
+            "resources": [{"kind": kind, "key": detail, "events": value["events"],
+                           "sessions": len(value["sessions"])}
+                          for (kind, detail), value in sorted(resources.items(),
+                              key=lambda entry: (-len(entry[1]["sessions"]), entry[0]))],
+            **{name: [{"key": value, "sessions": len(sids)} for value, sids in sorted(groups.items(),
+                key=lambda entry: (-len(entry[1]), entry[0]))] for name, groups in facets.items()}
+        },
+        "note": "Sessions are temporary page tokens, not people. Buckets can repeat a session. Interaction and visible presence are different measurements and must not be added."
+    }
+
+
 def report(database, days=30, now=None):
     now = int(now or time.time())
     # Read-only connection: asking for a report must not create an empty database.
@@ -137,18 +248,19 @@ def report(database, days=30, now=None):
         start_day = datetime.fromtimestamp(now - (days - 1) * 86400, timezone.utc).strftime("%Y-%m-%d")
         end_day = datetime.fromtimestamp(now, timezone.utc).strftime("%Y-%m-%d")
         heartbeat_rows = db.execute("SELECT day, active_minutes, pings FROM heartbeats WHERE day >= ? AND day <= ? ORDER BY day, active_minutes", (start_day, end_day)).fetchall()
-        presence_rows = db.execute("SELECT first_seen, last_seen, active_seconds, pings, registered FROM heartbeat_sessions WHERE last_seen >= ? AND last_seen <= ? ORDER BY last_seen", (now - 300, now)).fetchall()
+        presence_rows = db.execute("SELECT session_hash, first_seen, last_seen, active_seconds, pings, registered FROM heartbeat_sessions WHERE last_seen >= ? AND last_seen <= ? ORDER BY last_seen", (now - 300, now)).fetchall()
         # Include only history in the report window; never sum cumulative
         # heartbeat buckets as time or describe legacy samples as sessions.
         heartbeat_visits = db.execute("SELECT first_seen, last_seen, active_seconds, pings FROM heartbeat_sessions WHERE last_seen >= ? AND last_seen <= ?", (now - days * 86400, now)).fetchall()
-        baseline = dict(db.execute("SELECT session, MAX(seconds) FROM events WHERE received < ? GROUP BY session", (now - days * 86400,)).fetchall())
+        baseline = dict(db.execute("SELECT session, MAX(seconds) FROM events WHERE received < ? AND event != 'heartbeat' GROUP BY session", (now - days * 86400,)).fetchall())
     sessions = {}
     for row in rows:
         sid = row["session"]
         current = sessions.setdefault(sid, {"events": set(), "surfaces": set(), "lessons": set(), "seconds": 0, "returning": row["return_bucket"], "source": row["source"], "device": row["device"], "language": row["language"], "first": row["received"], "ready": None, "success": None})
         current["events"].add(row["event"])
         current["surfaces"].add(row["surface"])
-        current["seconds"] = max(current["seconds"], row["seconds"])
+        if row["event"] != "heartbeat":
+            current["seconds"] = max(current["seconds"], row["seconds"])
         if row["event"] == "example_open" and row["detail"].startswith("lesson"):
             current["lessons"].add(row["detail"])
         if row["event"] == "app_ready" and current["ready"] is None:
@@ -168,9 +280,10 @@ def report(database, days=30, now=None):
         item = daily.setdefault(day, {"sessions": set(), "events": Counter(), "active_seconds_observed": 0})
         item["sessions"].add(row["session"])
         item["events"][row["event"]] += 1
-        previous = last_seconds.get(row["session"], 0)
-        item["active_seconds_observed"] += max(0, row["seconds"] - previous)
-        last_seconds[row["session"]] = max(previous, row["seconds"])
+        if row["event"] != "heartbeat":
+            previous = last_seconds.get(row["session"], 0)
+            item["active_seconds_observed"] += max(0, row["seconds"] - previous)
+            last_seconds[row["session"]] = max(previous, row["seconds"])
         if row["event"] in {"tool_open", "feature_use", "example_open"}:
             resource = resources.setdefault((row["event"], row["detail"]), {"sessions": set(), "events": 0})
             resource["sessions"].add(row["session"])
@@ -189,6 +302,16 @@ def report(database, days=30, now=None):
                             for name, lower, upper in [("under_1m", 0, 60), ("1m_to_5m", 60, 300),
                                                        ("5m_to_15m", 300, 900), ("15m_to_1h", 900, 3600),
                                                        ("1h_plus", 3600, float("inf"))]}}
+    event_heartbeat = {}
+    for row in rows:
+        if row["event"] != "heartbeat":
+            continue
+        visit = event_heartbeat.setdefault(row["session"], {"seconds": 0, "pings": 0})
+        visit["seconds"] = max(visit["seconds"], row["seconds"])
+        visit["pings"] += 1
+    event_recent_hashes = {hashlib.sha256(row["session"].encode("ascii")).hexdigest()
+                           for row in rows if row["event"] == "heartbeat" and row["received"] >= now - 300}
+    legacy_recent_hashes = {row["session_hash"] for row in presence_rows}
     return {
         "window_days": days,
         "event_window_utc": {"from": datetime.fromtimestamp(now - days * 86400, timezone.utc).isoformat(),
@@ -205,11 +328,19 @@ def report(database, days=30, now=None):
             "crossing_window_start": sum(row["first_seen"] < now - days * 86400 for row in heartbeat_visits),
             "note": "Memory-only page sessions seen in this window; duration is lifetime server-observed elapsed time capped at 90 seconds per interval. Reloads create new sessions; visits under one minute are absent. This is not exact attention or a count of people."
         },
+        "event_heartbeat_visits": {
+            **duration_summary([item["seconds"] for item in event_heartbeat.values()]),
+            "pings": sum(item["pings"] for item in event_heartbeat.values()),
+            "note": "Current heartbeat events; cumulative browser-reported visible seconds, separate from interaction time. Legacy endpoint sessions are reported in heartbeat_visits."
+        },
         "live_presence": {
             "window_seconds": 300,
-            "active_sessions_estimated": len(presence_rows),
+            "active_sessions_estimated": len(event_recent_hashes | legacy_recent_hashes),
+            "event_sessions_estimated": len(event_recent_hashes),
+            "legacy_sessions_estimated": len(legacy_recent_hashes),
             "registered_sessions_estimated": sum(row["registered"] for row in presence_rows),
             "anonymous_sessions_estimated": sum(not row["registered"] for row in presence_rows),
+            "unclassified_sessions_estimated": len(event_recent_hashes - legacy_recent_hashes),
             "sessions": [{"first_seen": row["first_seen"], "last_seen": row["last_seen"], "active_seconds": row["active_seconds"], "pings": row["pings"], "registered": bool(row["registered"])} for row in presence_rows],
             "precision_note": "Best-effort session presence; browser suspension, network loss and blocked requests can make this an underestimate."
         },
@@ -244,7 +375,7 @@ def report(database, days=30, now=None):
             "Successful execution means a normal runtime exit, not a correct solution or completed exercise.",
             "Opening two lessons does not prove either lesson was completed.",
             "Return categories use a local last-visit timestamp, not longitudinal cohort retention.",
-            "Approximate active time excludes hidden, unfocused and idle pages; delivery is best effort.",
+            "Approximate interaction time excludes hidden, unfocused and idle pages; heartbeat presence uses a separate clock and must not be added to it.",
             "Sessions crossing the report boundary may be partial; active time is a cumulative session estimate.",
             "Events are client-reported and can be blocked or forged; this is not an assessment system."
         ]
@@ -270,7 +401,12 @@ def summary(data):
             lines.append(f"{event:<24} {data['event_counts'].get(event, 0):>7} / {visits}")
     for key, label in [("sources", "Acquisition"), ("languages", "Languages"), ("input_devices", "Input devices")]:
         lines.extend(["", label + ": " + ", ".join(f"{name}={count}" for name, count in sorted(data[key].items(), key=lambda pair: -pair[1]))])
-    for key, label in [("session_durations", "Interaction time per visit"), ("heartbeat_visits", "Observed presence per page session")]:
+    sections = [("session_durations", "Interaction time per visit")]
+    if data["event_heartbeat_visits"]["sessions"]:
+        sections.append(("event_heartbeat_visits", "Event heartbeat visible presence per page session"))
+    if data["heartbeat_visits"]["sessions"]:
+        sections.append(("heartbeat_visits", "Legacy ping observed presence per page session"))
+    for key, label in sections:
         durations = data[key]
         lines.extend(["", f"{label}: median={durations['median_seconds']}s, p90={durations['p90_seconds']}s, max={durations['max_seconds']}s",
                       ", ".join(f"{name}={count}" for name, count in durations["buckets"].items())])
@@ -279,6 +415,9 @@ def summary(data):
 
 
 def make_handler(database, origin):
+    public_cache = {}
+    public_cache_lock = threading.Lock()
+
     class Handler(BaseHTTPRequestHandler):
         # Do not log request URLs, IP addresses, payloads or headers.
         def log_message(self, *args):
@@ -323,7 +462,30 @@ def make_handler(database, origin):
             self.reply(204)
 
         def do_GET(self):
-            self.reply(405)
+            parsed = urlsplit(self.path)
+            if parsed.path != "/public":
+                return self.reply(404)
+            params = parse_qs(parsed.query, keep_blank_values=True)
+            if set(params) != {"window"} or len(params["window"]) != 1 or params["window"][0] not in PUBLIC_WINDOWS:
+                return self.reply(400)
+            window = params["window"][0]
+            try:
+                with public_cache_lock:
+                    cached = public_cache.get(window)
+                    if cached and time.monotonic() - cached[0] < 30:
+                        body = cached[1]
+                    else:
+                        body = json.dumps(public_statistics(database, window), separators=(",", ":")).encode("utf-8")
+                        public_cache[window] = (time.monotonic(), body)
+            except sqlite3.Error:
+                return self.reply(503)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
 
     return Handler
 
@@ -345,8 +507,9 @@ def main():
         return
     initialize(args.database)
     prune(args.database)
-    class Server(HTTPServer):
+    class Server(ThreadingHTTPServer):
         last_prune = time.monotonic()
+        daemon_threads = True
 
         def service_actions(self):
             if time.monotonic() - self.last_prune >= 3600:

@@ -1,4 +1,4 @@
-# webMARS v0.6.2
+# webMARS v0.6.3
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -27,13 +27,14 @@ schema and the separate Raspberry Pi collector installation.
 - Main target is practical compatibility with Java MARS 4.5 behavior inside the browser.
 - Some edge cases can still differ from desktop Java MARS.
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
-- This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host.
+- This release is a static web application, not an installable/offline PWA; serve it over HTTP using the included local server or a static host. The public statistics panel requires the optional same-origin Raspberry Pi metrics endpoint.
 
 ## Manual do webMARS
 
 [`manual/`](manual/README.md) is the independent, Portuguese-language webMARS
 manual. It has its own semantic version (`0.1.1`), changelog, static build and
-test suite. This edition targets webMARS `0.6.2` and includes
+test suite. This edition was authored for webMARS `0.6.2`, remains bundled with
+`0.6.3`, and includes
 searchable reference data plus real light-theme screenshots for every tool.
 
 ```bash
@@ -42,14 +43,12 @@ npm run validate
 npm run serve
 ```
 
-## Highlights in v0.6.2
+## Highlights in v0.6.3
 
-- Bundled the independently versioned Manual and Teacher Kit in the deployment ZIP, eliminating the dead `/manual/` link in fresh installations.
-- Made the permanent example-ID registry authoritative: redirects still resolve, while tombstones, unknown IDs and redirect loops fail closed.
-- Made Public Library pagination follow BackMars's explicit `hasMore` result while retaining compatibility with older installations.
-- Corrected light/dark contrast in the application and Manual, and gave dialog messages an accessible name.
-- Extended release validation to the bundled Manual, its product-lock hashes, JavaScript modules and internal links.
-- Corrected localized product information to report the 20 tools actually shipped.
+- Added an integrated Help > Usage statistics window with public aggregate charts for the last 60 minutes, 24 hours and 30 days, including filters and exact-value tables.
+- Added a public, aggregate-only Raspberry Pi statistics endpoint. It separates interaction time from visible presence and exposes no session identifiers.
+- Replaced the Public Library selection dialog with a searchable, paginated details view of published projects.
+- Expanded automatic usage events and linked heartbeat samples to the same temporary session as other events.
 
 ## Main Capabilities
 
@@ -223,6 +222,7 @@ of the system with every figure linked to the report that produced it.
 
 ## Release Line
 
+- `v0.6.3`: public usage-statistics charts and aggregate endpoint, searchable paginated Public Library, expanded session-linked metrics
 - `v0.6.2`: public English and Portuguese discovery pages, duration-only active-time heartbeat, aggregate Raspberry Pi collector, privacy documentation and expanded release validation
 - `v0.6.1`: complete deployment package with Manual and Teacher Kit, authoritative stable-ID tombstones, exact Public Library pagination, accessibility corrections and stricter release validation
 - `v0.6.0`: permanent example links, versioned public project publishing, account recovery and verification, deployment-owned configuration, first-run welcome, Teacher Kit, and the independent Manual v0.1

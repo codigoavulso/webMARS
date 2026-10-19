@@ -1,4 +1,4 @@
-# webMARS Code Architecture (v0.6.2)
+# webMARS Code Architecture (v0.6.3)
 
 webMARS is a static browser application built from ordered, non-ES-module
 scripts. The assembler and simulator use one JavaScript implementation; the
@@ -44,6 +44,7 @@ flowchart TB
     settings["19-runtime-settings.js<br/>preferences, limits"]
     bench["19-runtime-benchmarks.js<br/>measurements"]
     library["19-public-library.js<br/>stable public examples"]
+    statistics["19-usage-statistics.js<br/>public aggregate charts"]
     compiler["17-mini-c-compiler.js<br/>Mini-C to MIPS"]
   end
   subgraph CORE["Core"]
@@ -64,6 +65,7 @@ flowchart TB
   runtime --> settings
   runtime --> bench
   runtime --> library
+  runtime --> statistics
   runtime --> compiler
   runtime --> engine
   compiler --> engine
@@ -162,7 +164,8 @@ The current bootstrap order is:
 17. `assets/js/app-modules/19-runtime-settings.js`
 18. `assets/js/app-modules/19-runtime-benchmarks.js`
 19. `assets/js/app-modules/19-public-library.js`
-20. `assets/js/app-modules/20-app-runtime.js`
+20. `assets/js/app-modules/19-usage-statistics.js`
+21. `assets/js/app-modules/20-app-runtime.js`
 
 ## Current modules
 
@@ -183,6 +186,7 @@ The current bootstrap order is:
 | `19-runtime-settings.js` | Runtime preference validation, memory/backstep limits, address parsing, language-preference and theme-preference helpers. |
 | `19-runtime-benchmarks.js` | In-memory compile, assemble and run measurements, including duration, estimated instrumented JavaScript utilization and throughput. |
 | `19-public-library.js` | Stable built-in-example and public-publication routes, public-library browsing, publication and immutable revision links. |
+| `19-usage-statistics.js` | Help-menu statistics window with aggregate charts, filters, exact-value tables and localized labels. |
 | `20-app-runtime.js` | Final composition root: preferences, projects and sessions, compiler/assembler commands, run loop, persistence, cloud adapters, tools, help and UI synchronization. |
 
 The files under `assets/js/reference/` are generated data consumed by the core
@@ -217,7 +221,7 @@ should remain incremental:
 
 Names such as `core/syscalls` or `runtime/session` may be useful conceptual
 boundaries for future extraction, but they are not directories or modules in
-the v0.6.2 tree.
+the v0.6.3 tree.
 
 ## Theming
 

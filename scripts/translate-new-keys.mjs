@@ -15,6 +15,7 @@
 //   node scripts/translate-new-keys.mjs --apply      # translate and write
 //   node scripts/translate-new-keys.mjs --apply --language de
 //   node scripts/translate-new-keys.mjs --apply --missing-only
+//   node scripts/translate-new-keys.mjs --apply --from-key "Usage statistics" --through-key "Example"
 //
 // The translation endpoint is the same one `generate-locales.mjs` uses, and
 // the same masking protects placeholders, register names and product names
@@ -61,7 +62,7 @@ const technicalTokenSource = /\b(?:webMARS|BackMars|Cloud|MARS|MIPS32?|Mini-C|Ja
 const delay = (milliseconds) => new Promise((done) => setTimeout(done, milliseconds));
 
 function parseArguments(argv) {
-  const options = { apply: false, languages: null, limit: Infinity, missingOnly: false };
+  const options = { apply: false, languages: null, limit: Infinity, missingOnly: false, fromKey: null, throughKey: null };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
     if (argument === "--apply") {
@@ -70,6 +71,13 @@ function parseArguments(argv) {
     }
     if (argument === "--missing-only") {
       options.missingOnly = true;
+      continue;
+    }
+    if (argument === "--from-key" || argument === "--through-key") {
+      const value = argv[index + 1];
+      if (!value || value.startsWith("--")) throw new TypeError(`${argument} requires a value`);
+      options[argument === "--from-key" ? "fromKey" : "throughKey"] = value;
+      index += 1;
       continue;
     }
     if (argument === "--language") {
@@ -312,6 +320,14 @@ export async function atomicWriteCatalog(path, source) {
 export async function main(argv = process.argv.slice(2)) {
   const options = parseArguments(argv);
   const english = await loadCatalog("en");
+  const englishKeys = Object.keys(english);
+  let selectedKeys = englishKeys;
+  if (options.fromKey !== null || options.throughKey !== null) {
+    const first = englishKeys.indexOf(options.fromKey);
+    const last = englishKeys.indexOf(options.throughKey);
+    if (first < 0 || last < first) throw new TypeError("--from-key and --through-key must name an ordered catalog range");
+    selectedKeys = englishKeys.slice(first, last + 1);
+  }
   const targets = generatedLocales.filter((locale) => (
     !handMaintained.has(locale.id)
     && (!options.languages || options.languages.includes(locale.id))
@@ -340,8 +356,8 @@ export async function main(argv = process.argv.slice(2)) {
   for (const locale of targets) {
     const catalog = await loadCatalog(locale.id, english);
     const pending = (options.missingOnly
-      ? Object.keys(english).filter((key) => typeof catalog[key] !== "string")
-      : untranslatedKeys(catalog, english)
+      ? selectedKeys.filter((key) => typeof catalog[key] !== "string")
+      : untranslatedKeys(catalog, english).filter((key) => selectedKeys.includes(key))
     ).slice(0, options.limit);
     totalPending += pending.length;
     if (!pending.length) {

@@ -317,6 +317,112 @@
           "throughput": null
         }
       ]
+    },
+    {
+      "recordedAt": "2026-10-19",
+      "protocolVersion": 2,
+      "repetitions": 7,
+      "webMarsVersion": "0.6.3",
+      "commit": "16544c4-dirty",
+      "engine": "Node.js v24.18.0",
+      "v8": "13.6.233.17-node.50",
+      "platform": "win32 10.0.19044",
+      "arch": "x64",
+      "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+      "cpuCount": 16,
+      "totalMemoryGiB": 15.93,
+      "freeMemoryGiB": 7.31,
+      "results": [
+        {
+          "id": "assemble-small",
+          "median": 1.7046,
+          "iqr": 0.10350000000000015,
+          "throughput": 24639
+        },
+        {
+          "id": "assemble-large",
+          "median": 242.6264,
+          "iqr": 9.125399999999985,
+          "throughput": 32981
+        },
+        {
+          "id": "execute-tight-loop",
+          "median": 1433.971,
+          "iqr": 44.374000000000024,
+          "throughput": 55793
+        },
+        {
+          "id": "execute-memory-bound",
+          "median": 1907.2679,
+          "iqr": 8.559299999999894,
+          "throughput": 29365
+        },
+        {
+          "id": "execute-with-tool",
+          "median": 1450.9589,
+          "iqr": 8.7804000000001,
+          "throughput": 55139
+        },
+        {
+          "id": "compile-mini-c",
+          "median": 0.6019,
+          "iqr": 0.04370000000000007,
+          "throughput": null
+        }
+      ]
+    },
+    {
+      "recordedAt": "2026-10-19",
+      "protocolVersion": 2,
+      "repetitions": 7,
+      "webMarsVersion": "0.6.3",
+      "commit": "16544c4-dirty",
+      "engine": "Node.js v24.18.0",
+      "v8": "13.6.233.17-node.50",
+      "platform": "win32 10.0.19044",
+      "arch": "x64",
+      "cpu": "AMD Ryzen 7 5700X 8-Core Processor",
+      "cpuCount": 16,
+      "totalMemoryGiB": 15.93,
+      "freeMemoryGiB": 6.97,
+      "results": [
+        {
+          "id": "assemble-small",
+          "median": 1.7896,
+          "iqr": 0.17189999999999994,
+          "throughput": 23469
+        },
+        {
+          "id": "assemble-large",
+          "median": 231.6517,
+          "iqr": 1.296199999999999,
+          "throughput": 34543
+        },
+        {
+          "id": "execute-tight-loop",
+          "median": 1409.848,
+          "iqr": 5.115500000000111,
+          "throughput": 56747
+        },
+        {
+          "id": "execute-memory-bound",
+          "median": 1893.8426,
+          "iqr": 4.781500000000051,
+          "throughput": 29573
+        },
+        {
+          "id": "execute-with-tool",
+          "median": 1391.7207,
+          "iqr": 0.6299999999998818,
+          "throughput": 57486
+        },
+        {
+          "id": "compile-mini-c",
+          "median": 0.5954,
+          "iqr": 0.042199999999999904,
+          "throughput": null
+        }
+      ]
     }
   ]
 }
