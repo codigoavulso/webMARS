@@ -44,6 +44,7 @@ Values are allowlisted on both sides.
 | `tool_open` | Shipped tool opened, identified by manifest ID |
 | `feature_use` | Step, Backstep, Run, project save/import, Cloud save/load, help or Teacher Kit |
 | `active_time` | Approximate cumulative interaction seconds |
+| `heartbeat` | Cumulative visible presence sample, sent with the page-session token |
 
 Tool/feature adoption sends once per resource per page/visit. Reports
 deduplicate by visit token; repeated stepping cannot dominate adoption ranks.
@@ -69,7 +70,8 @@ completed lesson.
 
 The separate `/_metrics/heartbeat` sends every 60 seconds while visible,
 including without focus. Its exact keys are `active_seconds`, `session` and
-`registered`. The random token is memory-only and resets on reload;
+`registered`; the same page-session token is also included in the `heartbeat`
+event sent to `/_metrics/events`. The random token is memory-only and resets on reload;
 `registered` is the authenticated/not-authenticated classification, never an
 account ID. The collector stores the token's SHA-256 hash.
 
@@ -77,8 +79,9 @@ The collector estimates time from receipt intervals, capped at 90 seconds.
 The first ping adds zero seconds. This is observed presence, not exact
 attention: hidden gaps can contribute up to the cap. Visits under a minute
 and the final partial interval are absent. Live presence counts sessions seen
-within five minutes, not simultaneous people. Event and heartbeat tokens have
-different lifetimes and cannot be joined or summed.
+within five minutes, not simultaneous people. Event and heartbeat records can be
+joined within a page visit through the temporary token, but their durations must
+not be summed because they use different timing rules.
 
 Historical minute buckets are repeated cumulative samples, including older
 collection methods. Never sum them as total time or interpret ping medians as

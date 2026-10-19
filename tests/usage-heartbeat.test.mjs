@@ -17,6 +17,7 @@ function browser(options = {}) {
     addEventListener, setInterval: (fn, delay) => timers.push({ fn, delay }),
     crypto: { getRandomValues(bytes) { bytes.fill(7); return bytes; } },
     WebMarsPresence: { isRegistered: () => options.registered === true },
+    WebMarsUsage: options.usage || undefined,
     fetch: (url, request) => { sent.push({ url, request }); return options.offline ? Promise.reject(Error("offline")) : Promise.resolve({ ok: true }); }
   };
   Object.defineProperties(window, {
@@ -49,6 +50,17 @@ test("heartbeat sends only cumulative seconds every 60 seconds, without storage 
     assert.match(request.body, /"session":"07070707070707070707070707070707"/);
     assert.match(request.body, /"registered":false/);
   }
+});
+
+test("heartbeat can share the event session and emits a matching heartbeat event", () => {
+  const eventSessions = [];
+  const env = browser({ usage: {
+    getSessionId: () => "abababababababababababababababab",
+    trackHeartbeat: (seconds) => { eventSessions.push({ seconds, session: "abababababababababababababababab" }); }
+  }});
+  env.run(60);
+  assert.deepEqual(eventSessions, [{ seconds: 60, session: "abababababababababababababababab" }]);
+  assert.match(env.sent[0].request.body, /"session":"abababababababababababababababab"/);
 });
 
 test("heartbeat reports only an ephemeral session and registration classification", () => {

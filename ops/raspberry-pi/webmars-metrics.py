@@ -12,7 +12,7 @@ import re
 import sqlite3
 import time
 
-EVENTS = {"page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "tool_open", "feature_use"}
+EVENTS = {"page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "heartbeat", "tool_open", "feature_use"}
 TOOLS = set("bht-simulator bitmap-display bitmap-terminal-tool cache-simulator digital-lab-sim float-representation instruction-counter instruction-statistics intro-to-tools keyboard-display-mmio mars-bot memory-reference-visualization mips-xray example-register-watch pipeline-lab scavenger-hunt screen-magnifier stack-visualizer system-clock tty-ansi-terminal".split())
 FEATURES = {"step", "backstep", "run", "project_save", "project_import", "cloud_save", "cloud_load", "help", "teacher_kit"}
 SURFACES = {"overview", "learn", "teach", "stack", "pipeline", "minic", "privacy", "app"}

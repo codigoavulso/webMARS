@@ -90,6 +90,18 @@ test("automatic events send only allowlisted data without visitor content", () =
   }
 });
 
+test("heartbeat events reuse the visit session and carry cumulative seconds", () => {
+  const env = harness();
+  const visitSession = env.sent[0].body.session;
+  assert.equal(env.api.getSessionId(), visitSession);
+  assert.equal(env.api.trackHeartbeat(60), true);
+  const heartbeat = env.sent.at(-1).body;
+  assert.equal(heartbeat.event, "heartbeat");
+  assert.equal(heartbeat.session, visitSession);
+  assert.equal(heartbeat.seconds, 60);
+  assert.equal(heartbeat.detail, "none");
+});
+
 test("resource adoption accepts shipped IDs and deduplicates rapid repeated actions", async () => {
   const env = harness();
   const manifest = JSON.parse(await readFile(new URL("../tools/tools.json", import.meta.url), "utf8"));

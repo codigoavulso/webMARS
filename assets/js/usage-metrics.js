@@ -2,7 +2,7 @@
 (function installUsageMetrics(scope) {
   "use strict";
   const config = scope.WebMarsConfig?.metrics;
-  const EVENTS = new Set(["page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "tool_open", "feature_use"]);
+  const EVENTS = new Set(["page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "heartbeat", "tool_open", "feature_use"]);
   // Only shipped product resource identifiers may leave this boundary.
   const TOOLS = new Set(["bht-simulator", "bitmap-display", "bitmap-terminal-tool", "cache-simulator", "digital-lab-sim", "float-representation", "instruction-counter", "instruction-statistics", "intro-to-tools", "keyboard-display-mmio", "mars-bot", "memory-reference-visualization", "mips-xray", "example-register-watch", "pipeline-lab", "scavenger-hunt", "screen-magnifier", "stack-visualizer", "system-clock", "tty-ansi-terminal"]);
   const FEATURES = new Set(["step", "backstep", "run", "project_save", "project_import", "cloud_save", "cloud_load", "help", "teacher_kit"]);
@@ -70,7 +70,7 @@
     write(tab, SESSION_KEY, JSON.stringify(session));
     return session;
   }
-  function track(event, detail = "none") {
+  function send(event, detail = "none", secondsOverride = null) {
     if (!allowed() || !EVENTS.has(event)) return false;
     let current;
     try { current = getSession(); } catch { return false; }
@@ -90,7 +90,7 @@
     const language = String(scope.WebMarsI18n?.getLanguage?.() || document.documentElement.lang || "en").split("-")[0];
     const payload = {
       v: 1, session: current.id, event, surface, detail: safeDetail,
-      seconds: Math.floor(current.seconds), returning: current.returning, source: current.source,
+      seconds: Number.isInteger(secondsOverride) ? secondsOverride : Math.floor(current.seconds), returning: current.returning, source: current.source,
       device: scope.matchMedia?.("(pointer: coarse)").matches ? "touch" : "pointer",
       language: /^(en|pt|es|zh|hi|ar|fr|bn|ru|id|de|ja|ko|tr|vi|ur|it|pl|fa|th)$/.test(language) ? language : "other"
     };
@@ -105,6 +105,13 @@
       })).catch(() => {});
     } catch { /* Metrics must never interrupt learning. */ }
     return true;
+  }
+  function track(event, detail = "none") { return send(event, detail); }
+  function trackHeartbeat(seconds) {
+    return Number.isInteger(seconds) && seconds > 0 ? send("heartbeat", "none", Math.min(31536000, seconds)) : false;
+  }
+  function getSessionId() {
+    try { return getSession()?.id || null; } catch { return null; }
   }
   function exampleOpened(id) {
     const lesson = /^lesson(0[1-9]|1[0-5])(?:-|$)/.exec(String(id));
@@ -125,7 +132,7 @@
     write(tab, SESSION_KEY, JSON.stringify(current));
     if (current.seconds - lastSentSeconds >= 30) flush();
   }
-  scope.WebMarsUsage = Object.freeze({ track, exampleOpened });
+  scope.WebMarsUsage = Object.freeze({ track, trackHeartbeat, getSessionId, exampleOpened });
   function init() {
     if (!endpoint) return;
     track("page_view");

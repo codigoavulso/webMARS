@@ -18,7 +18,9 @@
       return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
     } catch { return ""; }
   };
-  const sessionId = newSessionId();
+  // The normal event stream owns the visit token. Keep a fallback so an
+  // independently cached heartbeat script remains harmless during rollout.
+  const sessionId = window.WebMarsUsage?.getSessionId?.() || newSessionId();
   if (!/^[a-f0-9]{32}$/.test(sessionId)) return;
   let lastSample = now();
   let lastPing = lastSample;
@@ -41,6 +43,7 @@
     lastPing = time;
     const activeSeconds = Math.min(31536000, Math.floor(activeMs / 1000));
     if (!activeSeconds) return;
+    window.WebMarsUsage?.trackHeartbeat?.(activeSeconds);
     try {
       // CORS mode retains Origin with no-referrer. The destination is strictly
       // same-origin, redirects are rejected, and cookies are never attached.
