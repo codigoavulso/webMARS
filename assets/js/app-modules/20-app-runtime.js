@@ -8635,86 +8635,228 @@ async function loadAndPreviewPublication(slug, revision = null) {
   return previewPublicPublication(payload?.publication);
 }
 
-async function browsePublicLibrary() {
-  const search = await runDialogPrompt({
-    title: translateText("Search Public Library"),
-    message: translateText("Search by public name, title, description or tag. Leave blank to browse everything."),
-    defaultValue: "",
-    confirmLabel: translateText("Browse"),
-    cancelLabel: translateText("Cancel"),
-    autocomplete: "off"
-  }, { windowIdPrefix: "window-public-search" });
-  if (!search?.ok) return false;
-  const query = String(search.value || "").trim();
-  let offset = 0;
-  const pageSize = 50;
-  try {
-    while (true) {
-      const params = new URLSearchParams({ limit: String(pageSize), offset: String(offset) });
-      if (query) params.set("q", query);
-      const payload = await publicLibraryModule.requestJson(`/publications?${params}`, { authenticated: false });
-      const publications = Array.isArray(payload?.publications) ? payload.publications : [];
-      if (!publications.length) {
-        await runDialogConfirm({
-          title: translateText("Public Library"),
-          message: translateText(offset > 0
-            ? "There are no more public projects."
-            : query
-              ? "No public projects match this search."
-              : "This BackMars installation has no public projects yet."),
-          confirmLabel: translateText("OK"),
-          cancelLabel: translateText("Close")
-        }, { windowIdPrefix: "window-public-empty" });
-        if (offset > 0) {
-          offset = Math.max(0, offset - pageSize);
-          continue;
-        }
-        return false;
-      }
-      const options = publications.map((entry) => ({
-        value: String(entry.slug || ""),
-        label: `${String(entry.title || entry.slug || "")}${entry.author?.username ? ` — ${entry.author.username}` : ""}`
-      }));
-      if (offset > 0) options.unshift({ value: "__previous__", label: `← ${translateText("Previous page")}` });
-      if (publicLibraryModule.hasNextPublicationPage(payload, pageSize)) {
-        options.push({ value: "__next__", label: `${translateText("Next page")} →` });
-      }
-      const result = await runDialogForm({
-        title: translateText("Public Library"),
-        message: translateText("Choose a public example or exercise from this BackMars installation."),
-        confirmLabel: translateText("Preview"),
-        cancelLabel: translateText("Cancel"),
-        width: "620px",
-        height: "320px",
-        sections: [{
-          title: translateText("Published projects"),
-          fields: [{
-            name: "slug",
-            label: translateText("Project"),
-            type: "select",
-            value: options[0].value,
-            options
-          }]
-        }]
-      }, { windowIdPrefix: "window-public-browser", left: "190px", top: "110px", width: "620px", height: "320px" });
-      if (!result?.ok) return false;
-      const selected = String(result.value?.slug || "");
-      if (selected === "__previous__") {
-        offset = Math.max(0, offset - pageSize);
-        continue;
-      }
-      if (selected === "__next__") {
-        offset += pageSize;
-        continue;
-      }
-      return loadAndPreviewPublication(selected);
-    }
-  } catch (error) {
-    postMarsMessage("[error] Public library request failed: {message}", {
-      message: describePublicLibraryError(error)
-    });
-    return false;
+let publicLibraryBrowser = null;
+function createPublicLibraryBrowser() {
+  const pageSize = 25;
+  const win = document.createElement("section");
+  win.id = "window-public-browser";
+  win.className = "desktop-window window-hidden tool-window dialog-window mobile-panel-window public-library-window";
+  Object.assign(win.style, { left: "120px", top: "65px", width: "900px", height: "570px", minWidth: "360px", minHeight: "340px" });
+  win.innerHTML = `
+    <div class="window-titlebar">
+      <span class="window-title" data-public-role="title"></span>
+      <div class="window-controls"><button class="win-btn win-btn-close" data-win-action="close" type="button">x</button></div>
+    </div>
+    <div class="window-content public-library-browser">
+      <form class="public-library-search" role="search">
+        <label for="public-library-query" data-public-role="search-label"></label>
+        <input id="public-library-query" class="run-io-input" type="search" maxlength="120" autocomplete="off">
+        <button class="tool-btn" type="submit" data-public-role="search-button"></button>
+      </form>
+      <div class="public-library-table-wrap">
+        <table class="public-library-table" role="grid" aria-label="Public Library">
+          <thead><tr>
+            <th data-public-role="column-title"></th><th data-public-role="column-name"></th>
+            <th data-public-role="column-author"></th>
+            <th data-public-role="column-kind"></th><th data-public-role="column-difficulty"></th>
+            <th data-public-role="column-language"></th><th data-public-role="column-updated"></th>
+          </tr></thead>
+          <tbody data-public-role="rows"></tbody>
+        </table>
+        <p class="public-library-empty" data-public-role="empty" hidden></p>
+      </div>
+      <div class="public-library-details" data-public-role="details" aria-live="polite"></div>
+      <div class="public-library-footer">
+        <span data-public-role="status" aria-live="polite"></span>
+        <span class="public-library-footer-actions">
+          <button class="tool-btn" type="button" data-public-role="previous"></button>
+          <span data-public-role="page"></span>
+          <button class="tool-btn" type="button" data-public-role="next"></button>
+          <button class="tool-btn primary" type="button" data-public-role="preview"></button>
+        </span>
+      </div>
+    </div>`;
+  refs.windows.desktop.appendChild(win);
+  windowManager.registerWindow(win);
+  const node = (role) => win.querySelector(`[data-public-role="${role}"]`);
+  const state = { query: "", offset: 0, publications: [], selected: "", hasMore: false, loading: false, previewing: false, request: 0, controller: null };
+  let searchTimer = null;
+
+  function refreshLabels() {
+    const labels = {
+      title: "Public Library", "search-label": "Search Public Library",
+      "search-button": "Browse", "column-title": "Title", "column-name": "Public name", "column-author": "Author",
+      "column-kind": "Kind", "column-difficulty": "Difficulty", "column-language": "Language",
+      "column-updated": "Modified", previous: "Previous page", next: "Next page", preview: "Preview"
+    };
+    for (const [role, label] of Object.entries(labels)) node(role).textContent = translateText(label);
+    node("page").textContent = `# ${state.offset / pageSize + 1}`;
+    node("previous").disabled = state.loading || state.offset === 0;
+    node("next").disabled = state.loading || !state.hasMore;
+    node("preview").disabled = state.loading || state.previewing || !state.selected;
   }
+
+  function select(slug) {
+    state.selected = slug;
+    for (const row of node("rows").querySelectorAll("tr")) {
+      row.setAttribute("aria-selected", String(row.dataset.slug === slug));
+    }
+    const publication = state.publications.find((entry) => entry.slug === slug);
+    const details = node("details");
+    details.replaceChildren();
+    if (publication) {
+      const description = document.createElement("span");
+      description.textContent = String(publication.description || publication.slug || "");
+      const tags = document.createElement("span");
+      tags.textContent = [
+        `${translateText("Revision")}: ${Number(publication.latestRevision) || 1}`,
+        `${translateText("License")}: ${String(publication.license || "—")}`,
+        ...(Array.isArray(publication.tags) && publication.tags.length ? [publication.tags.join(", ")] : [])
+      ].join(" · ");
+      details.append(description, tags);
+    }
+    refreshLabels();
+  }
+
+  function render() {
+    const rows = node("rows");
+    rows.replaceChildren();
+    const language = window.WebMarsI18n?.getLanguage?.() || document.documentElement.lang || "en";
+    for (const publication of state.publications) {
+      const row = document.createElement("tr");
+      row.dataset.slug = String(publication.slug || "");
+      row.tabIndex = 0;
+      row.setAttribute("aria-selected", String(publication.slug === state.selected));
+      const updated = Date.parse(String(publication.updatedAt || publication.createdAt || ""));
+      const cells = [
+        publication.title || publication.slug || "", publication.slug || "—", publication.author?.username || "—",
+        translateText(String(publication.kind || "—").replace(/^./, (letter) => letter.toUpperCase())),
+        translateText(String(publication.difficulty || "—").replace(/^./, (letter) => letter.toUpperCase())),
+        publication.language || "—",
+        Number.isFinite(updated) ? new Intl.DateTimeFormat(language, { dateStyle: "medium" }).format(updated) : "—"
+      ];
+      for (const value of cells) {
+        const cell = document.createElement("td");
+        cell.textContent = String(value);
+        cell.title = String(value);
+        row.appendChild(cell);
+      }
+      row.addEventListener("click", () => select(row.dataset.slug));
+      row.addEventListener("dblclick", () => { select(row.dataset.slug); void preview(); });
+      row.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") { event.preventDefault(); select(row.dataset.slug); void preview(); }
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+          event.preventDefault();
+          const sibling = event.key === "ArrowDown" ? row.nextElementSibling : row.previousElementSibling;
+          if (sibling instanceof HTMLElement) { select(sibling.dataset.slug); sibling.focus(); }
+        }
+      });
+      rows.appendChild(row);
+    }
+    const empty = node("empty");
+    empty.hidden = state.publications.length > 0 || state.loading;
+    empty.textContent = translateText(state.query
+      ? "No public projects match this search."
+      : "This BackMars installation has no public projects yet.");
+    select(state.selected);
+    node("status").textContent = state.loading ? translateText("Loading...")
+      : `${state.offset + (state.publications.length ? 1 : 0)}–${state.offset + state.publications.length}`;
+  }
+
+  async function load() {
+    state.request += 1;
+    const request = state.request;
+    state.controller?.abort();
+    state.controller = new AbortController();
+    state.loading = true;
+    state.publications = [];
+    state.selected = "";
+    node("rows").replaceChildren();
+    node("details").replaceChildren();
+    refreshLabels();
+    node("empty").hidden = true;
+    node("status").textContent = translateText("Loading...");
+    const params = new URLSearchParams({ limit: String(pageSize), offset: String(state.offset) });
+    if (state.query) params.set("q", state.query);
+    try {
+      const payload = await publicLibraryModule.requestJson(`/publications?${params}`, {
+        authenticated: false, signal: state.controller.signal
+      });
+      if (request !== state.request) return;
+      state.publications = Array.isArray(payload?.publications) ? payload.publications : [];
+      state.hasMore = publicLibraryModule.hasNextPublicationPage(payload, pageSize);
+      state.selected = "";
+      state.loading = false;
+      if (!state.publications.length && state.offset > 0) {
+        state.offset = Math.max(0, state.offset - pageSize);
+        void load();
+        return;
+      }
+      render();
+    } catch (error) {
+      if (request !== state.request) return;
+      state.loading = false;
+      state.publications = [];
+      state.hasMore = false;
+      render();
+      node("empty").hidden = false;
+      node("empty").textContent = describePublicLibraryError(error);
+    }
+  }
+
+  async function preview() {
+    const slug = state.selected;
+    if (!slug || state.loading || state.previewing) return;
+    state.previewing = true;
+    refreshLabels();
+    try {
+      const opened = await loadAndPreviewPublication(slug);
+      if (opened) windowManager.hide(win.id);
+    } catch (error) {
+      postMarsMessage("[error] Public library request failed: {message}", {
+        message: describePublicLibraryError(error)
+      });
+    } finally { state.previewing = false; refreshLabels(); }
+  }
+
+  win.querySelector("form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (searchTimer !== null) clearTimeout(searchTimer);
+    const query = String(win.querySelector("#public-library-query").value || "").trim();
+    state.query = query;
+    state.offset = 0;
+    void load();
+  });
+  win.querySelector("#public-library-query").addEventListener("input", () => {
+    if (searchTimer !== null) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => win.querySelector("form").requestSubmit(), 300);
+  });
+  node("previous").addEventListener("click", () => { if (state.offset > 0) { state.offset -= pageSize; void load(); } });
+  node("next").addEventListener("click", () => { if (state.hasMore) { state.offset += pageSize; void load(); } });
+  node("preview").addEventListener("click", () => { void preview(); });
+  win.querySelector('[data-win-action="close"]').addEventListener("click", () => {
+    state.request += 1;
+    state.controller?.abort();
+    if (searchTimer !== null) clearTimeout(searchTimer);
+  });
+  return {
+    open() {
+      windowManager.show(win.id);
+      refreshLabels();
+      void load();
+      win.querySelector("#public-library-query").focus();
+    },
+    refreshTranslations() {
+      refreshLabels();
+      if (!win.classList.contains("window-hidden")) render();
+    }
+  };
+}
+
+function browsePublicLibrary() {
+  if (!publicLibraryBrowser) publicLibraryBrowser = createPublicLibraryBrowser();
+  publicLibraryBrowser.open();
+  return true;
 }
 
 async function openPublicLinkDialog() {
@@ -10546,6 +10688,7 @@ getI18nApi()?.subscribe?.(() => {
   transientDialogSystems.forEach((dialog) => dialog.refreshTranslations?.());
   helpSystem.refreshTranslations?.();
   browserStorageManager.refreshTranslations?.();
+  publicLibraryBrowser?.refreshTranslations();
   updateRunSpeedLabel();
   renderBenchmarkStatus();
   menuSystem.hide();
