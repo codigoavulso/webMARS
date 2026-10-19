@@ -770,7 +770,9 @@ test("release packaging and CI use the supported public commands", async () => {
   assert.match(workflow, /\brun:\s*npm ci\b/);
   assert.match(workflow, /\brun:\s*npm run validate\b/);
   assert.match(workflow, /\brun:\s*npm run package:release\b/);
-  assert.match(workflow, /\buses:\s*actions\/upload-artifact@v4\b/);
+  assert.match(workflow, /\buses:\s*actions\/upload-artifact@v7\b/);
+  assert.match(workflow, /\buses:\s*actions\/setup-node@v7\b/);
+  assert.match(workflow, /\bnode-version:\s*24\b/);
   assert.match(validateScript, /args:\s*\["test"\]/, "validate must run the complete npm test suite");
   assert.match(packageScript, /\bEXCLUDED_PUBLIC_FILES\b/);
   assert.match(packageScript, /\bvalidateZipArchive\b/);
