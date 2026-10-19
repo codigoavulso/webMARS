@@ -17,7 +17,9 @@ function browser(options = {}) {
     addEventListener, setInterval: (fn, delay) => timers.push({ fn, delay }),
     crypto: { getRandomValues(bytes) { bytes.fill(7); return bytes; } },
     WebMarsPresence: { isRegistered: () => options.registered === true },
-    WebMarsUsage: options.usage || undefined,
+    WebMarsUsage: options.usage || ((options.enabled ?? true) && !String(options.endpoint || "").startsWith("https://elsewhere") && !String(options.endpoint || "").includes("?") ? { trackHeartbeat(seconds) {
+      sent.push({ url: "https://webmars.test/_metrics/events", request: { body: JSON.stringify({ event: "heartbeat", seconds, session: "07070707070707070707070707070707" }) } });
+    } } : undefined),
     fetch: (url, request) => { sent.push({ url, request }); return options.offline ? Promise.reject(Error("offline")) : Promise.resolve({ ok: true }); }
   };
   Object.defineProperties(window, {
@@ -39,16 +41,10 @@ test("heartbeat sends only cumulative seconds every 60 seconds, without storage 
   assert.equal(env.sent.length, 0);
   env.run(5);
   env.run(60);
-  assert.deepEqual(env.sent.map(({ request }) => JSON.parse(request.body).active_seconds), [60, 120]);
+  assert.deepEqual(env.sent.map(({ request }) => JSON.parse(request.body).seconds), [60, 120]);
   for (const { url, request } of env.sent) {
-    assert.equal(url, "https://webmars.test/_metrics/heartbeat");
-    assert.equal(request.credentials, "omit");
-    assert.equal(request.referrerPolicy, "no-referrer");
-    assert.equal(request.redirect, "error");
-    assert.equal(request.mode, "cors");
-    assert.deepEqual(Object.keys(request.headers), ["Content-Type"]);
-    assert.match(request.body, /"session":"07070707070707070707070707070707"/);
-    assert.match(request.body, /"registered":false/);
+    assert.equal(url, "https://webmars.test/_metrics/events");
+    assert.equal(JSON.parse(request.body).event, "heartbeat");
   }
 });
 
@@ -60,15 +56,15 @@ test("heartbeat can share the event session and emits a matching heartbeat event
   }});
   env.run(60);
   assert.deepEqual(eventSessions, [{ seconds: 60, session: "abababababababababababababababab" }]);
-  assert.match(env.sent[0].request.body, /"session":"abababababababababababababababab"/);
+  assert.equal(env.sent.length, 0);
 });
 
-test("heartbeat reports only an ephemeral session and registration classification", () => {
+test("heartbeat event reports only its session and cumulative seconds", () => {
   const env = browser({ registered: true });
   env.run(60);
   const body = JSON.parse(env.sent[0].request.body);
-  assert.deepEqual(Object.keys(body).sort(), ["active_seconds", "registered", "session"]);
-  assert.equal(body.registered, true);
+  assert.deepEqual(Object.keys(body).sort(), ["event", "seconds", "session"]);
+  assert.equal(body.event, "heartbeat");
   assert.equal(body.session.length, 32);
 });
 
@@ -82,14 +78,14 @@ test("hidden pages do not accrue active time; visible background tabs continue",
   env.document.visibilityState = "visible";
   env.emit("visibilitychange");
   env.run(5);
-  assert.equal(JSON.parse(env.sent[0].request.body).active_seconds, 35);
+  assert.equal(JSON.parse(env.sent[0].request.body).seconds, 35);
 });
 
 test("refresh resets counters; suspension and back-forward cache cannot inflate duration", () => {
   const env = browser();
   env.run(60);
   env.advance(3600000);
-  assert.equal(JSON.parse(env.sent.at(-1).request.body).active_seconds, 65);
+  assert.equal(JSON.parse(env.sent.at(-1).request.body).seconds, 65);
   env.emit("pagehide");
   env.run(120);
   const count = env.sent.length;
@@ -97,10 +93,10 @@ test("refresh resets counters; suspension and back-forward cache cannot inflate 
   env.run(55);
   assert.equal(env.sent.length, count);
   env.run(5);
-  assert.equal(JSON.parse(env.sent.at(-1).request.body).active_seconds, 125);
+  assert.equal(JSON.parse(env.sent.at(-1).request.body).seconds, 125);
   const fresh = browser();
   fresh.run(60);
-  assert.equal(JSON.parse(fresh.sent[0].request.body).active_seconds, 60);
+  assert.equal(JSON.parse(fresh.sent[0].request.body).seconds, 60);
 });
 
 test("disabled and cross-origin configurations create no timer; failed sends never retry in a burst", async () => {

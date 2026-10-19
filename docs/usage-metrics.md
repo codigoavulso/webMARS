@@ -68,10 +68,11 @@ completed lesson.
 
 ## Presence heartbeat
 
-The separate `/_metrics/heartbeat` sends every 60 seconds while visible,
-including without focus. Its exact keys are `active_seconds`, `session` and
-`registered`; the same page-session token is also included in the `heartbeat`
-event sent to `/_metrics/events`. The random token is memory-only and resets on reload;
+The `heartbeat` event is sent every 60 seconds while visible, including without
+focus, through `/_metrics/events`. It carries the same page-session token as
+the other events and its cumulative seconds. The legacy `/_metrics/heartbeat`
+collector remains available for rollout compatibility but is no longer called
+by the frontend. The random token is memory-only and resets on reload;
 `registered` is the authenticated/not-authenticated classification, never an
 account ID. The collector stores the token's SHA-256 hash.
 
