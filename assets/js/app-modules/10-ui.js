@@ -4649,7 +4649,8 @@ function createDialogSystem(windowManager, desktop, options = {}) {
           `;
         }
         if (type === "button") {
-          return `<button class="tool-btn" type="button" data-dialog-action="${escapeHtml(String(field.name))}">${label}</button>`;
+          const googleIcon = field.icon === "google";
+          return `<button class="tool-btn${googleIcon ? " dialog-google-button" : ""}" type="button" data-dialog-action="${escapeHtml(String(field.name))}">${googleIcon ? '<img src="assets/google-sign-in.png" width="20" height="20" alt="" aria-hidden="true">' : ""}<span>${label}</span></button>`;
         }
         const min = Number.isFinite(field?.min) ? ` min="${field.min}"` : "";
         const max = Number.isFinite(field?.max) ? ` max="${field.max}"` : "";
@@ -7473,6 +7474,47 @@ function injectRuntimeStyles() {
     .dialog-form-section-table {
       padding: 7px 8px;
       gap: 6px;
+    }
+
+    .cloud-auth-section {
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .cloud-auth-section .dialog-form-fields {
+      align-content: center;
+      gap: 8px;
+    }
+
+    /* Official Google mark: https://developers.google.com/identity/branding-guidelines */
+    .tool-window .tool-btn.dialog-google-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      justify-self: center;
+      gap: 8px;
+      min-height: 30px;
+      max-width: 100%;
+      padding: 4px 12px;
+      border: 1px solid #747775;
+      border-radius: 4px;
+      background: #fff;
+      color: #1f1f1f;
+      font: 500 12px/20px Arial, sans-serif;
+    }
+
+    .dialog-google-button img {
+      flex: 0 0 20px;
+      object-fit: contain;
+    }
+
+    .tool-window .tool-btn.dialog-google-button:hover:not(:disabled) {
+      background: #f2f2f2;
+      color: #1f1f1f;
+    }
+
+    .tool-window .tool-btn.dialog-google-button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
 
     .dialog-form-check {

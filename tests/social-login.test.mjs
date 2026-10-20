@@ -50,6 +50,7 @@ test("popup denial, cancellation, untrusted destinations and missing sessions do
 
 test("provider discovery builds native dialog actions only for supported providers",async()=>{
   const h=harness();const sections=await h.env.cloudSocialSections();
-  assert.equal(sections.length,1);assert.equal(sections[0].fields.length,2);
+  assert.equal(sections.length,1);assert.equal(sections[0].fields.length,1);
+  assert.equal(sections[0].fields[0].name,"social-google");
   assert(sections[0].fields.every(f=>f.type==="button"&&typeof f.onClick==="function"));
 });

@@ -2138,11 +2138,11 @@ async function cloudSocialSections(intent = "login") {
   let configured;
   try { configured = await cloudRequestJson("/auth/providers", { signal: AbortSignal.timeout(3000) }); }
   catch { return []; }
-  const providers = (configured?.providers || []).filter((name) => ["google", "facebook"].includes(name));
+  const providers = (configured?.providers || []).filter((name) => name === "google");
   if (!providers.length) return [];
   const providerNames = { google: "Google", facebook: "Facebook" };
   return [{ title: translateText(intent === "link" ? "Linked sign-in methods" : "Continue with an existing account"),
-    fields: providers.map((provider) => ({ type: "button", name: `social-${provider}`,
+    fields: providers.map((provider) => ({ type: "button", name: `social-${provider}`, icon: "google",
       label: translateText(intent === "link" ? "Link {provider}" : "Continue with {provider}", { provider: providerNames[provider] }),
       onClick: (dialog) => startCloudSocialLogin(provider, intent, dialog)
     })) }];
@@ -2204,13 +2204,14 @@ async function openCloudLoginDialog() {
     confirmLabel: translateText("Login"),
     cancelLabel: translateText("Cancel"),
     width: "460px",
-    height: socialSections.length ? "400px" : "300px",
+    height: "260px",
     sections: [
-      ...socialSections,
       {
         title: translateText("Credentials"),
         layout: "table",
+        className: socialSections.length ? "cloud-auth-section" : "",
         fields: [
+          ...socialSections.flatMap((section) => section.fields),
           {
             name: "username",
             label: translateText("Username"),
@@ -2285,7 +2286,7 @@ async function openCloudLoginDialog() {
     left: "250px",
     top: "130px",
     width: "460px",
-    height: "300px"
+    height: "260px"
   });
   return result?.value === true;
 }
@@ -2298,13 +2299,14 @@ async function openCloudRegisterDialog() {
     confirmLabel: translateText("Create User"),
     cancelLabel: translateText("Cancel"),
     width: "500px",
-    height: socialSections.length ? "490px" : "390px",
+    height: "350px",
     sections: [
-      ...socialSections,
       {
         title: translateText("Account"),
         layout: "table",
+        className: socialSections.length ? "cloud-auth-section" : "",
         fields: [
+          ...socialSections.flatMap((section) => section.fields),
           {
             name: "username",
             label: translateText("Username"),
@@ -2423,7 +2425,7 @@ async function openCloudRegisterDialog() {
     left: "250px",
     top: "130px",
     width: "500px",
-    height: "390px"
+    height: "350px"
   });
   return result?.value === true;
 }
