@@ -1,10 +1,10 @@
 export const MANUAL = Object.freeze({
   title: "Manual do webMARS",
-  version: "0.1.1",
-  displayVersion: "v0.1",
-  webmarsVersion: "0.6.1",
-  verifiedCommit: "9835baae3f8d83cd7b522ab798a9f0b7b75483fc",
-  verifiedAt: "2026-09-03",
+  version: "0.2.0",
+  displayVersion: "v0.2",
+  webmarsVersion: "0.6.4",
+  verifiedCommit: "09afa3008c95b21e2f988e7b3708335d35d16a4f",
+  verifiedAt: "2026-10-20",
   locale: "pt-PT"
 });
 
@@ -64,7 +64,7 @@ export const MENU_ATLAS = [
   ["Executar", "Compilar Mini-C; Montar; Executar; Pausar; Parar; Passo; Passo atrás; Reiniciar"],
   ["Definições", "Apresentação; assembler; Mini-C; armazenamento; Cloud; interface; runtime e memória"],
   ["Ferramentas", "Vinte ferramentas educativas, de arquitetura, desempenho e dispositivos"],
-  ["Ajuda", "Centro de ajuda; boas-vindas; kit docente; referência MIPS em PDF; informação e créditos"]
+  ["Ajuda", "Centro de ajuda; boas-vindas; kit docente; estatísticas de utilização; referência MIPS em PDF; informação e créditos"]
 ];
 
 export const MEMORY_MAP = [
@@ -119,5 +119,6 @@ export const FEATURE_FAMILIES = [
   ["Mapas de memória", 3, "Cobertos"],
   ["Idiomas da aplicação", 20, "Descritos"],
   ["Categorias de exemplos", 5, "Cobertas"],
-  ["Lições Assembly", 15, "Percurso documentado"]
+  ["Lições Assembly", 15, "Percurso documentado"],
+  ["Medições de utilização", 12, "Resumo, gráficos e limites documentados"]
 ];

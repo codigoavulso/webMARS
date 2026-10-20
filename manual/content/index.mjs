@@ -4,6 +4,7 @@ import { toolChapters, TOOL_DATA } from "./chapters-tools.mjs";
 import { operationChapters } from "./chapters-operations.mjs";
 import { teacherChapters } from "./chapters-teachers.mjs";
 import { libraryChapters } from "./chapters-library.mjs";
+import { statisticsChapters } from "./chapters-statistics.mjs";
 
 export { MANUAL } from "./shared.mjs";
 export { TOOL_DATA };
@@ -30,6 +31,7 @@ export const CHAPTER_ORDER = Object.freeze([
   "resolucao-problemas",
   "kit-docente",
   "administrar-estender",
+  "estatisticas-utilizacao",
   "apendices",
   "cobertura",
   "changelog"
@@ -41,7 +43,8 @@ const chapterSources = [
   ...toolChapters,
   ...operationChapters,
   ...teacherChapters,
-  ...libraryChapters
+  ...libraryChapters,
+  ...statisticsChapters
 ];
 
 const chaptersById = new Map(chapterSources.map((chapter) => [chapter.id, chapter]));

@@ -19,3 +19,6 @@ PRIVACIDADE
 Não é necessária conta para editar ou executar localmente. A conta é usada
 apenas para Cloud, recuperação por email e publicação. A instalação desta
 turma é [HOSTNAME], operada por [ENTIDADE], suporte: [CONTACTO].
+Consulte a área de privacidade em Ajuda/Sobre para conhecer as estatísticas
+configuradas por esta instalação. Na instalação oficial, a recolha é automática;
+os gráficos públicos apresentam apenas agregados, sem fontes ou dados de conta.

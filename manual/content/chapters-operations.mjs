@@ -108,6 +108,7 @@ export const operationChapters = [
         id: "conta",
         title: "Criar conta, iniciar e terminar sessão",
         content: html`
+          <p>Se o administrador tiver configurado os fornecedores, as janelas de entrada e registo apresentam <strong>Continuar com Google</strong> e <strong>Continuar com Facebook</strong>. A confirmação abre na janela do fornecedor e regressa à mesma conta Cloud, sem pedir uma nova password. Para associar um fornecedor a uma conta que já existe, entre primeiro nessa conta e escolha <strong>Cloud → Métodos de entrada associados</strong>; os projetos mantêm o mesmo proprietário. A criação por Google usa identificador e email verificado. No Facebook, o email recebido continua sujeito à verificação da instalação; se não for fornecido, crie uma conta por email e associe-a depois.</p>
           ${steps([
             "Abra <strong>Cloud</strong> e escolha <strong>Criar utilizador…</strong>.",
             "Preencha username, email, password e repetição. A validação local impede campos vazios e passwords diferentes; o servidor aplica regras adicionais.",
@@ -323,8 +324,8 @@ export const operationChapters = [
             ["C and compilation", "13", "Mini-C, bibliotecas, ABI, perfis e projetos."],
             ["Devices and system", "17", "MMIO, terminais, bitmap, interrupções, cache, BHT e MARS-OS."]
           ])}
-          <p>Abra em <strong>Ficheiro → Exemplos → categoria → exemplo</strong>. O menu é hierárquico e não tem pesquisa na 0.6.1; use esta página ou a pesquisa do manual para escolher.</p>
-          ${screenshot("./assets/screenshots/help-menu-light.png", "Menu Ajuda aberto sobre o ambiente de execução do webMARS", "A ajuda incorporada, o PDF de referência MIPS e a informação da versão continuam disponíveis na aplicação; este manual constitui a documentação independente e versionada.")}
+          <p>Abra em <strong>Ficheiro → Exemplos → categoria → exemplo</strong>. O menu é hierárquico e não tem pesquisa na 0.6.3; use esta página ou a pesquisa do manual para escolher. A pesquisa da <a href="#/biblioteca-publica/explorar">Biblioteca pública</a> é um fluxo separado.</p>
+          ${screenshot("./assets/screenshots/help-menu-light.png", "Menu Ajuda do webMARS 0.6.3 com a entrada Estatísticas de utilização", "O menu reúne ajuda, documentação, Boas-vindas, Kit Docente, estatísticas públicas e informação da aplicação.")}
         `
       },
       {
@@ -568,7 +569,7 @@ export const operationChapters = [
         content: html`
           <p>Inclua versão, browser/OS, passos mínimos, fonte pequena, input, opções relevantes, mensagem completa e resultado esperado/real. Para pipeline/tool, anexe export/configuração; para Cloud, não envie password, cookie, token ou projeto privado.</p>
           ${table(["Incluir", "Evitar"], [
-            ["webMARS 0.6.1 e URL/local", "“Não funciona” sem fase"],
+            ["webMARS 0.6.3 e URL/local", "“Não funciona” sem fase"],
             ["Exemplo ou fonte mínima", "Projeto inteiro com dados pessoais"],
             ["Primeiro diagnóstico completo", "Screenshot ilegível sem texto"],
             ["Mapa, delayed branch, strict, backsteps", "Credenciais, IPs, cookies ou tokens"],
@@ -614,6 +615,27 @@ export const operationChapters = [
             "Só depois atualize ligações/documentação pública."
           ])}
           <p>A configuração Nginx de referência está em <code>ops/raspberry-pi/nginx-webmars-routes.conf</code>. Num deployment em subpasta, prefixe as rotas e o path de <code>index.html</code>; um catch-all indiscriminado pode esconder uma release incompleta ao devolver HTML no lugar de JavaScript.</p>
+        `
+      },
+      {
+        id: "estatisticas",
+        title: "Instalar e manter as estatísticas",
+        content: html`
+          <p>O painel de <strong>Ajuda → Estatísticas de utilização</strong> é público e independente do BackMars. O ZIP estático contém a interface; a recolha e os agregados exigem um serviço separado na mesma origem. A instalação oficial ativa-o automaticamente; noutra instalação, a configuração pertence ao operador.</p>
+          ${table(["Configuração", "Função"], [
+            ["metrics.enabled", "Ativa a recolha desta instalação"],
+            ["metrics.endpoint", "Destino dos eventos, incluindo heartbeat; normalmente <code>/_metrics/events</code>"],
+            ["metrics.publicEndpoint", "Leitura agregada; normalmente <code>/_metrics/public</code>"]
+          ])}
+          ${steps([
+            "Instale o coletor e os snippets através de <code>ops/raspberry-pi/install-metrics.sh</code> antes de publicar o frontend que os usa.",
+            "Mantenha Python/SQLite em loopback e a base de métricas privada, separada da base de contas/projetos do BackMars.",
+            "Inclua o snippet de métricas no servidor HTTPS, valide Nginx e confirme os limites de pedidos e a política de logs.",
+            "Verifique a leitura pública para <code>?window=60m</code>, <code>24h</code> e <code>30d</code>, sem sessões ou linhas individuais na resposta.",
+            "Use uma base de dados isolada para eventos sintéticos; confirme o painel e a atualização sem poluir os dados públicos.",
+            "Registe a data de alteração da política de recolha e conserve essa referência ao comparar tendências."
+          ])}
+          <p>O coletor conserva registos durante 35 dias, elimina os expirados periodicamente e disponibiliza agregados com cache de 30 segundos. Os eventos e o heartbeat atual partilham o mesmo fluxo; o antigo endpoint separado mantém compatibilidade com clientes anteriores. O guia técnico é <code>docs/usage-metrics.md</code>. O <a href="#/estatisticas-utilizacao">capítulo de estatísticas</a> explica o que cada medida permite concluir.</p>
         `
       },
       {
@@ -815,10 +837,14 @@ export const operationChapters = [
             ["Estado de sessão", "Endpoint Cloud", "Pedido <code>/me</code> no arranque"],
             ["Username/email/password", "Endpoint Cloud", "Registo/login"],
             ["Documento de projeto", "Endpoint Cloud", "Abrir/sincronizar"],
+            ["Eventos, categorias e sessão temporária", "Coletor da instalação", "Automaticamente na instalação oficial; sem conteúdo de fontes ou identificadores de conta"],
+            ["Interação e presença visível", "Mesmo fluxo de eventos estatísticos", "Amostras de interação e heartbeat de presença a cada 60 segundos"],
+            ["Gráficos públicos", "Endpoint de agregados da instalação", "Ao abrir/atualizar as estatísticas; sem registos individuais"],
             ["Bench", "Só memória/UI local", "Compilar/montar/executar"],
             ["Manual: pesquisa", "Só browser", "Ao escrever nesta pesquisa"]
           ])}
-          <p>Os logs do servidor web podem registar pedidos e endereços conforme a política do operador. Não inclua credenciais ou dados pessoais em screenshots, exports ou relatórios públicos.</p>
+          <p>A área de privacidade de Ajuda/Sobre e as páginas públicas explicam a recolha automática. As preferências de interface não controlam o envio. O token temporário liga eventos de uma visita, mas não é publicado no painel; <a href="#/estatisticas-utilizacao/o-que-e-enviado">Que informação alimenta os gráficos</a> descreve os campos e exclusões.</p>
+          <p>Os logs do servidor web podem registar pedidos e endereços conforme a política do operador; são separados da base de métricas. O coletor de referência não guarda IP, cookies ou cabeçalhos completos, e expira os seus registos após 35 dias. Não inclua credenciais ou dados pessoais em screenshots, exports ou relatórios públicos.</p>
         `
       },
       {
@@ -835,12 +861,12 @@ export const operationChapters = [
     id: "cobertura",
     number: "",
     part: "Apêndices",
-    title: "Cobertura funcional da v0.1",
+    title: "Cobertura funcional da v0.2",
     summary: "Matriz auditável das famílias que esta edição se compromete a documentar.",
     intro: "Cobertura não significa que todas as linhas de implementação são reproduzidas; significa que cada superfície do utilizador tem uma explicação, procedimento, referência ou limite explícito.",
     level: "Meta",
     readingMinutes: 8,
-    keywords: ["cobertura", "matriz", "audit", "feature ids", "manual v0.1"],
+    keywords: ["cobertura", "matriz", "audit", "feature ids", "manual v0.2"],
     sources: ["manual/content/*.mjs", "tools/tools.json", "help/pt/help-reference.json", "examples/examples.json"],
     sections: [
       {
@@ -865,6 +891,9 @@ export const operationChapters = [
             <li>Backstep usa deltas inversos, não snapshots integrais.</li>
             <li>Cloud → Guardar projeto envia o projeto ativo; Sync compara a coleção completa.</li>
             <li>Importação <code>.p</code> existe sem exportação de projeto equivalente identificada.</li>
+            <li>Biblioteca pública em tabela, com pesquisa no servidor e páginas de 25 resultados.</li>
+            <li>Estatísticas públicas em Ajuda, com seis indicadores imediatos e 12 medições disponíveis.</li>
+            <li>Sessões de utilização não equivalem a pessoas únicas nem a contas Cloud.</li>
           </ul>
         `
       },
@@ -872,16 +901,16 @@ export const operationChapters = [
         id: "imagens",
         title: "Estado das capturas",
         content: html`
-          <p>A edição v0.1 integra <strong>35 capturas reais em tema claro</strong>: 15 estados gerais da aplicação — incluindo Boas-vindas, Cloud, Biblioteca pública, recuperação e verificação de email — e uma captura isolada de cada uma das 20 ferramentas. O conjunto e os fixtures reproduzíveis estão definidos em <code>SCREENSHOTS.md</code>; mockups nunca substituem evidência visual do produto.</p>
+          <p>A edição v0.2 integra <strong>36 capturas reais em tema claro</strong>: 16 estados gerais e uma captura isolada de cada uma das 20 ferramentas. Biblioteca pública, menu Ajuda e estatísticas foram capturados no webMARS 0.6.3; as 33 imagens restantes mantêm a proveniência 0.6.0 indicada no protocolo. O conjunto e os fixtures estão definidos em <code>SCREENSHOTS.md</code>; mockups nunca substituem evidência visual do produto.</p>
           ${callout("note", "Critério de publicação", "<p>Cada captura tem de indicar versão, tema, idioma, viewport, exemplo e estado. A ausência de uma imagem nunca remove os passos em texto.</p>")}
         `
       },
       {
         id: "proximas-versoes",
-        title: "Critérios para v0.2",
+        title: "Critérios para as próximas edições",
         content: html`
           <ul>
-            <li>Manter as 35 capturas verificadas e acrescentar estados apenas quando novos fluxos o justificarem.</li>
+            <li>Manter as 36 capturas, recapturando cada estado quando a interface correspondente mudar.</li>
             <li>Separar páginas profundas por ferramenta sem quebrar slugs.</li>
             <li>Gerar edição PDF completa e índice remissivo.</li>
             <li>Adicionar manifesto automatizado de features → capítulos → screenshots → testes.</li>
@@ -900,9 +929,24 @@ export const operationChapters = [
     intro: "A versão do manual muda quando o conteúdo, cobertura ou formato editorial muda — não apenas quando o webMARS lança uma versão.",
     level: "Meta",
     readingMinutes: 4,
-    keywords: ["changelog", "histórico", "versão 0.1"],
+    keywords: ["changelog", "histórico", "versão 0.2"],
     sources: ["manual/CHANGELOG.md"],
     sections: [
+      {
+        id: "v0-2-0",
+        title: "0.2.0 — 20 de outubro de 2026",
+        content: html`
+          <h3>Adicionado e atualizado</h3>
+          <ul>
+            <li>Capítulo de estatísticas: períodos, resumo, medições completas, filtros, tabelas e limites de interpretação.</li>
+            <li>Biblioteca em vista de detalhe, pesquisa no servidor, paginação de 25 resultados e navegação por teclado.</li>
+            <li>Mapa de dados, informação sobre recolha automática e instruções do coletor no guia do operador e no Kit Docente.</li>
+            <li>Três capturas atuais dos fluxos novos ou alterados; 36 imagens no total.</li>
+            <li>Catálogos auditados contra o webMARS 0.6.3 e referências de versão atualizadas.</li>
+          </ul>
+          <p>webMARS <code>${MANUAL.webmarsVersion}</code>, commit <code>${MANUAL.verifiedCommit.slice(0, 12)}</code>, verificado em ${MANUAL.verifiedAt}.</p>
+        `
+      },
       {
         id: "v0-1-1",
         title: "0.1.1 — 3 de setembro de 2026",
@@ -915,7 +959,7 @@ export const operationChapters = [
             <li>Inclusão integral do Manual e do Kit Docente no ZIP de instalação do webMARS.</li>
           </ul>
           <h3>Produto documentado</h3>
-          <p>webMARS <code>${MANUAL.webmarsVersion}</code>, commit <code>${MANUAL.verifiedCommit.slice(0, 12)}</code>, verificado em ${MANUAL.verifiedAt}.</p>
+          <p>webMARS <code>0.6.1</code>, commit <code>9835baae3f8d</code>, verificado em 2026-09-03.</p>
         `
       },
       {

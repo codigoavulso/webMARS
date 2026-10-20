@@ -72,7 +72,7 @@ export const coreChapters = [
         id: "cobertura-edicao",
         title: "O que esta edição cobre",
         content: html`
-          <p>A versão ${MANUAL.displayVersion} documenta o <strong>webMARS ${MANUAL.webmarsVersion}</strong>. Cobre o ambiente de trabalho, a árvore de projetos, a montagem MIPS32, o runtime funcional, Mini-C, Cloud, Biblioteca pública, ligações estáveis, todas as ferramentas incluídas, o Pipeline Lab, o Kit Docente, acessibilidade, formatos de dados, privacidade e administração.</p>
+          <p>A versão ${MANUAL.displayVersion} documenta o <strong>webMARS ${MANUAL.webmarsVersion}</strong>. Cobre o ambiente de trabalho, a árvore de projetos, a montagem MIPS32, o runtime funcional, Mini-C, Cloud, Biblioteca pública, estatísticas de utilização, ligações estáveis, todas as ferramentas incluídas, o Pipeline Lab, o Kit Docente, acessibilidade, formatos de dados, privacidade e administração.</p>
           <div class="stat-strip" aria-label="Cobertura da edição">
             <div class="stat"><strong>20</strong><span>capítulos numerados</span></div>
             <div class="stat"><strong>20</strong><span>ferramentas descritas</span></div>
@@ -179,7 +179,7 @@ export const coreChapters = [
         title: "Privacidade deste manual",
         content: html`
           <p>O manual é uma aplicação estática. A pesquisa ocorre no seu browser e não envia termos para um servidor. Não define cookies, não recolhe métricas e não carrega tipos de letra, scripts ou imagens de terceiros.</p>
-          <p>A ligação “Abrir webMARS” conduz, num novo separador, à aplicação configurada pelo responsável desta edição do manual. Pode apontar para a instalação oficial, para a instalação de uma universidade ou para um deployment local. A política de rede da aplicação — incluindo o pedido de estado de sessão Cloud — é descrita separadamente no capítulo <a href="#/cloud">Cloud e sincronização</a>.</p>
+          <p>A ligação “Abrir webMARS” conduz, num novo separador, à aplicação configurada pelo responsável desta edição do manual. Pode apontar para a instalação oficial, para uma universidade ou para um deployment local. A aplicação tem uma política própria: consulte <a href="#/cloud">Cloud e sincronização</a> para contas/projetos e <a href="#/estatisticas-utilizacao/o-que-e-enviado">Estatísticas de utilização</a> para a recolha automática da instalação oficial.</p>
         `
       }
     ]
@@ -236,7 +236,7 @@ export const coreChapters = [
             "Mantenha o processo ativo enquanto utiliza a aplicação. Terminar o servidor não apaga dados já guardados no browser."
           ])}
           ${codeBlock("npm start", "Terminal")}
-          <p>Também pode alojar uma release em qualquer servidor HTTP estático que conserve caminhos, tipos MIME e os ficheiros de exemplos, ajuda, bibliotecas, ferramentas e vendor.</p>
+          <p>Também pode alojar uma release em qualquer servidor HTTP estático que conserve caminhos, tipos MIME e os ficheiros de exemplos, ajuda, bibliotecas, ferramentas e Manual. A referência Java em <code>vendor/</code> só serve os testes de desenvolvimento e não é necessária no alojamento.</p>
         `
       },
       {

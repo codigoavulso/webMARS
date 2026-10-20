@@ -3,7 +3,7 @@
 ![Área de trabalho do webMARS no tema claro](./assets/screenshots/workspace-overview-light.png)
 
 O Manual do webMARS é um subprojeto editorial autónomo, com versão e ciclo de
-lançamento próprios. A versão `0.1.1` documenta o webMARS `0.6.1` em português
+lançamento próprios. A versão `0.2.0` documenta o webMARS `0.6.4` em português
 e foi concebida para poder ser publicada tanto em `/manual/` juntamente com a
 aplicação como num alojamento estático independente.
 
@@ -17,9 +17,15 @@ aplicação como num alojamento estático independente.
 - manter procedimentos reproduzíveis e imagens reais no tema claro;
 - funcionar sem frameworks, serviços externos, cookies ou telemetria.
 
-A edição contém 20 capítulos numerados, apêndices e páginas editoriais, além de
-35 capturas reais: 15 estados gerais da aplicação e uma captura para cada uma
+A edição contém 21 capítulos numerados, apêndices e páginas editoriais, além de
+36 capturas reais: 16 estados gerais da aplicação e uma captura para cada uma
 das 20 ferramentas.
+
+Esta edição inclui o painel público de estatísticas, os seus períodos, filtros,
+12 medições e limites de interpretação, além da Biblioteca pública em tabela,
+com pesquisa no servidor e páginas de 25 resultados. A informação de privacidade
+e os procedimentos do operador/Kit Docente acompanham a recolha automática da
+instalação oficial. O Manual mantém pesquisa local e não envia telemetria.
 
 ## Estrutura
 
@@ -71,7 +77,7 @@ O manual usa versionamento semântico independente da aplicação:
 - **major** — reorganização incompatível de URLs, formato ou público-alvo.
 
 As releases usam o prefixo de tag `manual-v`, por exemplo
-`manual-v0.1.1`, para não colidirem com as tags da aplicação.
+`manual-v0.2.0`, para não colidirem com as tags da aplicação.
 
 A versão compatível da aplicação é sempre mostrada no cabeçalho e registada no
 changelog. Uma nova versão do webMARS não muda automaticamente a versão do

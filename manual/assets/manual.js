@@ -28,6 +28,9 @@ const searchHint = document.querySelector("#search-hint");
 const toast = document.querySelector("#toast");
 const appLink = document.querySelector("#webmars-app-link");
 const supportLink = document.querySelector("#manual-support-link");
+const brandEdition = document.querySelector(".brand-edition");
+
+if (brandEdition) brandEdition.textContent = `Ed. ${MANUAL.displayVersion.replace(/^v/, "")}`;
 
 if (appLink) {
   appLink.href = String(window.WebMarsManualConfig?.appUrl || "../");

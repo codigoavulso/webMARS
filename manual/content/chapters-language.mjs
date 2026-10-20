@@ -257,7 +257,7 @@ igual:`)}
             "Prima <kbd>F7</kbd> ou <kbd>F5</kbd> para atravessar esse breakpoint uma vez; o motor evita parar imediatamente no mesmo ponto sem progresso.",
             "Desmarque a caixa para remover a paragem."
           ])}
-          ${callout("note", "Local correto", "<p>Na versão 0.6.1, breakpoints são caixas da tabela do segmento de texto. Não existe um gutter de breakpoints na margem do editor.</p>")}
+          ${callout("note", "Local correto", "<p>Na versão 0.6.3, breakpoints são caixas da tabela do segmento de texto. Não existe um gutter de breakpoints na margem do editor.</p>")}
           ${screenshot("./assets/screenshots/workspace-run-light.png", "Programa Mini-C executado no webMARS, com linha corrente, registos alterados e o separador Run I/O no tema claro", "Após a execução, os registos alterados ficam realçados; neste exemplo, $t1 contém 120, o resultado de fact(5).")}
         `
       },
@@ -562,7 +562,7 @@ int main(int argc, char **argv) {
             <li>O VFS não é o sistema de ficheiros do host.</li>
             <li>Representações C0 e C1-NATIVE não devem ser misturadas sem uma API explícita.</li>
             <li>Temporização, MIDI e dispositivos continuam a ser os do runtime no browser.</li>
-            <li>O manual detalhado antigo do Mini-C pode mencionar uma revisão anterior; esta página foi auditada contra 0.6.1.</li>
+            <li>O manual detalhado antigo do Mini-C pode mencionar uma revisão anterior; esta página descreve a implementação da versão 0.6.3.</li>
           </ul>
         `
       }
@@ -739,7 +739,7 @@ syscall`)}
         id: "portabilidade",
         title: "Portabilidade da referência",
         content: html`
-          <p>Entradas “básicas” e “pseudo” refletem a implementação webMARS 0.6.1 e a sua linhagem MARS 4.5. Extensões de protocolo, Mini-C e serviços 60–103 podem não existir noutro simulador.</p>
+          <p>Entradas “básicas” e “pseudo” refletem a implementação webMARS 0.6.3 e a sua linhagem MARS 4.5. Extensões de protocolo, Mini-C e serviços 60–103 podem não existir noutro simulador.</p>
           ${callout("compat", "Confirme no destino", "<p>Para material que precisa de correr no MARS Java, ative o modo estrito, evite extensões identificadas e execute testes diferenciais com as mesmas entradas.</p>")}
         `
       }

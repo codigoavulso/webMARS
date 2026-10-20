@@ -5,7 +5,8 @@ reproduzíveis, legíveis e livres de dados pessoais.
 
 ## Perfil obrigatório
 
-- aplicação: webMARS `0.6.0`;
+- aplicação dos estados atualizados nesta edição: webMARS `0.6.3`, commit
+  `772eb34ecb659f091dde2fa5602aef9c7f908631`;
 - interface: português nos fluxos traduzidos; nomes técnicos internos e algumas
   ferramentas podem conservar a designação original em inglês;
 - tema: **Claro**;
@@ -25,11 +26,16 @@ Use nomes ASCII em kebab-case, por exemplo
 `03-editor-project-tree-light.png`. Capture apenas a área necessária, mas deixe
 visíveis os títulos, separadores ou controlos que orientam o leitor.
 
-## Conjunto v0.1
+## Conjunto v0.2 e proveniência
 
 Editor e Executar são modos mutuamente exclusivos. Ferramentas complexas não
-foram agrupadas numa imagem ilegível: a edição v0.1 inclui **35 capturas** —
-15 estados gerais e uma janela maximizada para cada uma das 20 ferramentas.
+foram agrupadas numa imagem ilegível: a edição v0.2 inclui **36 capturas** —
+16 estados gerais e uma janela maximizada para cada uma das 20 ferramentas.
+
+Esta edição recaptura `public-library-search-light.png` e `help-menu-light.png`
+e acrescenta `usage-statistics-light.png` no webMARS 0.6.3. As outras 33 imagens
+mantêm os ficheiros e a proveniência do webMARS 0.6.0 capturado em 2026-08-29;
+não são apresentadas como novas capturas da versão 0.6.3.
 
 ### Estados centrais entregues
 
@@ -43,10 +49,11 @@ foram agrupadas numa imagem ilegível: a edição v0.1 inclui **35 capturas** �
 | `file-examples-light.png` | Ficheiro → Exemplos, categoria e exemplo abertos; não existe filtro. |
 | `settings-interface-light.png` | Definições → Interface com o tema Claro selecionado. |
 | `cloud-menu-light.png` | Menu Cloud sem dados pessoais. |
-| `help-menu-light.png` | Menu Ajuda e entradas da documentação integrada. |
+| `help-menu-light.png` | Menu Ajuda da 0.6.3, incluindo Estatísticas de utilização. |
 | `welcome-light.png` | Boas-vindas na primeira visita, com ação inicial selecionada. |
 | `library-menu-light.png` | Menu Biblioteca e os seus fluxos públicos. |
-| `public-library-search-light.png` | Pesquisa no catálogo público da instalação. |
+| `public-library-search-light.png` | Tabela de publicações, pesquisa, seleção, detalhes e paginação da 0.6.3. |
+| `usage-statistics-light.png` | Painel da 0.6.3 com seis indicadores principais e os dois gráficos. |
 | `publish-project-light.png` | Publicação explícita do projeto ativo. |
 | `password-reset-light.png` | Início da recuperação de password por email/código. |
 | `email-verification-light.png` | Introdução do código temporário de verificação. |
@@ -61,6 +68,19 @@ Use o ID no nome `tool-<id>-light.png`. O conjunto entregue é:
 `memory-reference-visualization`, `mips-xray`, `example-register-watch`,
 `pipeline-lab`, `scavenger-hunt`, `screen-magnifier`, `stack-visualizer`,
 `system-clock` e `tty-ansi-terminal`.
+
+### Fixtures novos da edição 0.2
+
+Os três estados novos usam um servidor local isolado da instalação pública,
+com o código real da app e dados sintéticos. A Biblioteca mostra projetos de
+demonstração com metadados fictícios, sem conta autenticada. O painel recebe
+agregados de demonstração para 60 minutos, 24 horas e 30 dias; os eventos não
+são enviados ao coletor de produção. As legendas identificam os dados sintéticos.
+
+O projeto de fundo contém apenas o programa inicial incluído na app. Selecione
+Português e Claro em Definições → Interface antes de capturar. Maximize a janela
+de estatísticas; mantenha a tabela da Biblioteca com uma linha selecionada e
+os detalhes visíveis. O menu Ajuda é capturado com as restantes janelas fechadas.
 
 O Bitmap Terminal não possui exemplo dedicado nesta release. O fixture de
 captura deriva `bitmap_ascii.c`, substituindo

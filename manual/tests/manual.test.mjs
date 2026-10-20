@@ -76,7 +76,7 @@ test("manual and product versions are explicit, independent and locked", async (
 
 test("chapter order is explicit, exhaustive and stable", () => {
   assert.deepEqual(chapters.map((chapter) => chapter.id), [...CHAPTER_ORDER]);
-  assert.equal(CHAPTER_ORDER.length, 24);
+  assert.equal(CHAPTER_ORDER.length, 25);
   assert.deepEqual(CHAPTER_ORDER.slice(14, 21), [
     "cloud",
     "biblioteca-publica",
@@ -86,6 +86,7 @@ test("chapter order is explicit, exhaustive and stable", () => {
     "kit-docente",
     "administrar-estender"
   ]);
+  assert.equal(CHAPTER_ORDER[21], "estatisticas-utilizacao");
 });
 
 test("chapter and section routes are unique and substantive", () => {
@@ -311,7 +312,7 @@ test("screenshot inventory is exact, canonical and identical in source and dist"
   const outputInventory = (await readdir(join(distRoot, "assets", "screenshots")))
     .filter((file) => file.endsWith(".png"))
     .sort();
-  assert.equal(sourceInventory.length, 35);
+  assert.equal(sourceInventory.length, 36);
   assert.deepEqual([...referenced].sort(), sourceInventory, "every screenshot must be referenced exactly by the edition");
   assert.deepEqual(outputInventory, sourceInventory, "dist screenshot inventory");
   for (const tool of TOOL_DATA) assert.ok(referenced.has(`tool-${tool.id}-light.png`), tool.id);
@@ -340,7 +341,7 @@ test("editorial metadata and screenshot protocol stay aligned", async () => {
   assert.match(readme, /prefixo de tag `manual-v`/);
   assert.match(readme, new RegExp(`webMARS \`${MANUAL.webmarsVersion.replaceAll(".", "\\.")}\``));
   assert.match(screenshots, /tema: \*\*Claro\*\*/);
-  assert.match(screenshots, /35 capturas/);
+  assert.match(screenshots, /36 capturas/);
   assert.match(screenshots, /1280 × 720/);
   for (const tool of TOOL_DATA) assert.match(screenshots, new RegExp(`\\b${tool.id.replaceAll("-", "\\-")}\\b`));
 });

@@ -1,6 +1,6 @@
 # Kit para docentes do webMARS
 
-Documentos editáveis que acompanham o Manual v0.1. Substitua todos os campos entre parênteses retos e conserve sempre o URL completo da instalação.
+Documentos editáveis que acompanham o Manual v0.2 para webMARS 0.6.3. Substitua todos os campos entre parênteses retos e conserve sempre o URL completo da instalação.
 
 - `migration.md`: migração de atividades MARS.
 - `first-class.md`: preparação e condução da primeira aula.

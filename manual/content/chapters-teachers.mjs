@@ -88,7 +88,9 @@ o link de revisão fixa mostrado em Biblioteca → As minhas publicações.</pre
           <h3>Mensagem de privacidade</h3>
           <pre>Não é necessária conta para editar ou executar localmente. A conta é usada
 apenas para Cloud, recuperação por email e publicação. Esta turma utiliza a
-instalação [HOSTNAME], operada por [ENTIDADE / CONTACTO].</pre>
+instalação [HOSTNAME], operada por [ENTIDADE / CONTACTO].
+Consulte a área de privacidade em Ajuda/Sobre para conhecer a recolha
+de estatísticas da instalação; na instalação oficial é automática.</pre>
           <p>Substitua todos os campos entre parênteses retos. Não publique passwords, códigos temporários, emails de alunos ou tokens em enunciados e screenshots.</p>
         `
       },
@@ -115,11 +117,13 @@ instalação [HOSTNAME], operada por [ENTIDADE / CONTACTO].</pre>
           ${table(["Componente", "Responsabilidade"], [
             ["webMARS estático", "Interface, simulador, exemplos, rotas <code>/e</code>/<code>/p</code> e configuração pública"],
             ["BackMars", "Contas, sessões, projetos Cloud, códigos de recuperação, biblioteca e revisões"],
+            ["Coletor de métricas", "Eventos e tempos aproximados; agregados públicos sem contas ou conteúdo dos projetos"],
             ["SMTP", "Entrega de códigos temporários; password de aplicação apenas no ambiente protegido do BackMars"],
             ["Proxy/HTTPS", "TLS, CORS, limite de pedidos, fallback de rotas e logs de acesso"],
             ["Operador", "Backups, retenção, resposta a incidentes, contacto e informação aos utilizadores"]
           ])}
           <p>Antes de anunciar a instância, teste registo, confirmação de email, reset de password, abertura anónima de publicação, conflito de nome, revisão fixa e arquivo. Faça backup consistente da SQLite e proteja diretório, base de dados, <code>SECRET_KEY</code>, pepper de códigos e credenciais SMTP com permissões apenas de administrador.</p>
+          <p>Documente a recolha configurada na área de privacidade. O painel <a href="#/estatisticas-utilizacao">Estatísticas de utilização</a> permite observar agregados; não identifica alunos nem comprova a correção do trabalho. Interação e presença têm regras diferentes e não devem ser somadas.</p>
           <p>Ao pedir suporte, recolha hostname da instância, versão webMARS/BackMars, browser, sistema operativo, URL sem dados secretos, passos e mensagem de erro. Nunca envie App Password, cookie, código temporário ou base de dados numa conversa pública.</p>
         `
       },

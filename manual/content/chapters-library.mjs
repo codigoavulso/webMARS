@@ -54,17 +54,19 @@ export const libraryChapters = [
       },
       {
         id: "explorar",
-        title: "Pesquisar, pré-visualizar e abrir",
+        title: "Explorar em tabela, pesquisar e abrir",
         content: html`
           ${steps([
             "Escolha <strong>Biblioteca → Explorar biblioteca pública…</strong>.",
-            "Pesquise por nome público, título, descrição ou tag; deixe vazio para ver tudo.",
-            "Percorra as páginas quando a instalação tiver mais de 50 resultados.",
+            "Consulte a tabela com título, nome público, autor, tipo, dificuldade, idioma e data de modificação.",
+            "Escreva na barra de pesquisa para filtrar por nome público, título, descrição ou tag. A pesquisa é submetida após uma breve pausa; o botão <strong>Explorar</strong> permite submetê-la imediatamente. Deixe vazio para consultar todos os itens publicados.",
+            "Use <strong>Página anterior</strong> e <strong>Página seguinte</strong>: o servidor entrega até 25 resultados de cada vez. Uma pesquisa nova regressa à primeira página.",
             "Escolha um item e selecione <strong>Pré-visualizar</strong>.",
             "Confirme autor, revisão, licença, descrição e instruções.",
             "Selecione <strong>Abrir como cópia local</strong>. O novo projeto passa a pertencer apenas ao seu browser."
           ])}
-          ${screenshot("./assets/screenshots/public-library-search-light.png", "Pesquisa da Biblioteca pública em tema claro", "A pesquisa consulta apenas a instalação BackMars desta página e nunca mistura catálogos de outros operadores.")}
+          <p>Um clique seleciona a linha e mostra descrição, revisão, licença e tags na zona de detalhes. Faça duplo clique ou prima <kbd>Enter</kbd> para pré-visualizar; as setas <kbd>↑</kbd>/<kbd>↓</kbd> percorrem as linhas. Os cabeçalhos identificam as colunas; esta versão não oferece ordenação ao clicar neles.</p>
+          ${screenshot("./assets/screenshots/public-library-search-light.png", "Biblioteca pública em vista de detalhe: pesquisa, linhas com metadados, descrição do item selecionado e paginação", "Interface real do webMARS 0.6.3 com publicações sintéticas. A pesquisa consulta o servidor da instalação; a paginação limita cada resposta a 25 resultados.")}
           <p><strong>Abrir ligação pública…</strong> aceita um nome, <code>/p/nome</code>, <code>/p/nome@3</code> ou uma URL completa da mesma origem webMARS. Uma URL absoluta de outra instalação é recusada para não abrir silenciosamente um projeto homónimo no servidor errado.</p>
         `
       },

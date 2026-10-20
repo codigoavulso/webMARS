@@ -3,6 +3,39 @@
 Todas as alterações relevantes deste subprojeto são registadas aqui. O formato
 segue *Keep a Changelog* e o manual usa versionamento semântico próprio.
 
+## [0.2.0] — 2026-10-20
+
+### Adicionado
+
+- início de sessão social opcional, associação de contas e configuração dos fornecedores;
+- classificação de público e comparação entre visitas, sessões e atividade Cloud;
+
+- capítulo de Estatísticas de utilização: últimos 60 minutos, 24 horas e
+  30 dias, seis indicadores principais, 12 medições, gráficos, filtros e tabelas;
+- interpretação de sessões, novas sessões, interação, presença, mediana e P90,
+  distinguindo visitas, contas Cloud e resultados educativos;
+- instalação do coletor, retenção, agregados públicos e diagnóstico do painel;
+- captura real do painel com dados sintéticos, elevando o conjunto a 36 imagens.
+
+### Alterado
+
+- produto documentado: webMARS 0.6.4, commit
+  `09afa3008c95b21e2f988e7b3708335d35d16a4f`, verificado em 2026-10-20;
+- Biblioteca pública em vista de detalhe, pesquisa no servidor, páginas de
+  25 resultados, seleção, metadados e navegação por teclado;
+- capturas da Biblioteca pública e menu Ajuda atualizadas para a interface 0.6.3;
+- mapa de dados, recolha automática e Kit Docente atualizados; as 33 capturas
+  dos fluxos que não mudaram conservam a proveniência 0.6.0;
+- cobertura expandida para 21 capítulos numerados, mantendo as URLs anteriores;
+- catálogos locais e hashes do product lock atualizados para a edição auditada.
+
+### Corrigido
+
+- a entrada histórica 0.1.1 apresenta os seus próprios commit e versão, sem
+  herdar dinamicamente os metadados de edições posteriores;
+- esclarecido que `vendor/` serve os testes da aplicação e não o alojamento.
+- a edição no cabeçalho passa a derivar dos metadados do Manual, tal como o título da página.
+
 ## [0.1.1] — 2026-09-03
 
 ### Corrigido
@@ -44,5 +77,6 @@ segue *Keep a Changelog* e o manual usa versionamento semântico próprio.
 - recuperação de password e verificação de email por código temporário;
 - Kit Docente e guia completo de self-hosting/Gmail para webMARS 0.6.0.
 
+[0.2.0]: https://github.com/codigoavulso/webMARS/releases/tag/manual-v0.2.0
 [0.1.1]: https://github.com/codigoavulso/webMARS/releases/tag/manual-v0.1.1
 [0.1.0]: https://github.com/codigoavulso/webMARS/releases/tag/manual-v0.1.0
