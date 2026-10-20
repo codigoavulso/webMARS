@@ -1,4 +1,4 @@
-# webMARS v0.6.3
+# webMARS v0.6.4
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -32,10 +32,10 @@ schema and the separate Raspberry Pi collector installation.
 ## Manual do webMARS
 
 [`manual/`](manual/README.md) is the independent, Portuguese-language webMARS
-manual. It has its own semantic version (`0.1.1`), changelog, static build and
-test suite. This edition was authored for webMARS `0.6.2`, remains bundled with
-`0.6.3`, and includes
-searchable reference data plus real light-theme screenshots for every tool.
+manual. It has its own semantic version (`0.2.0`), changelog, static build and
+test suite. This edition documents webMARS `0.6.4`, including public usage
+statistics and the paginated Public Library, and includes searchable reference
+data plus real light-theme screenshots for every tool.
 
 ```bash
 cd manual
@@ -43,12 +43,12 @@ npm run validate
 npm run serve
 ```
 
-## Highlights in v0.6.3
+## Highlights in v0.6.4
 
-- Added an integrated Help > Usage statistics window with public aggregate charts for the last 60 minutes, 24 hours and 30 days, including filters and exact-value tables.
-- Added a public, aggregate-only Raspberry Pi statistics endpoint. It separates interaction time from visible presence and exposes no session identifiers.
-- Replaced the Public Library selection dialog with a searchable, paginated details view of published projects.
-- Expanded automatic usage events and linked heartbeat samples to the same temporary session as other events.
+- Added optional Google and Facebook sign-in through BackMars, including explicit linking to existing Cloud accounts.
+- Separated public, internal, test and automated traffic, with probable human interaction signals and aggregate web/app comparisons.
+- Added aggregate Cloud account and activity statistics, audience filters and clearer usage charts.
+- Updated the independent Manual to 0.2.0 and removed unused legacy assets while preserving the MARS reference.
 
 ## Main Capabilities
 
@@ -119,6 +119,13 @@ checksum under `dist/`:
 ```bash
 npm run package:release
 ```
+
+Preview removable build output with `npm run clean`; run `npm run clean -- --apply`
+to remove expanded release trees, old ZIPs, the generated Manual site, raw
+coverage, Python caches and temporary PDF previews. The current release ZIP and
+checksum are retained for deployment. Source, Git history, reference files,
+preview databases and unrelated archives are preserved. Removed build output can
+be recreated with the packaging, Manual build and coverage commands.
 
 The package is assembled from an explicit public-file allowlist and validates
 its copied files, manifests, local references, JavaScript/JSON syntax, ZIP
@@ -221,6 +228,8 @@ of the system with every figure linked to the report that produced it.
 - Public repository documentation is intentionally kept lightweight and should not override runtime behavior.
 
 ## Release Line
+
+- `v0.6.4`: optional social sign-in, traffic classification, web/app correlation, aggregate Cloud account activity and Manual 0.2.0
 
 - `v0.6.3`: public usage-statistics charts and aggregate endpoint, searchable paginated Public Library, expanded session-linked metrics
 - `v0.6.2`: public English and Portuguese discovery pages, duration-only active-time heartbeat, aggregate Raspberry Pi collector, privacy documentation and expanded release validation

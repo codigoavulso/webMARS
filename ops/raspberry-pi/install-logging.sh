@@ -6,7 +6,7 @@ SITE_CONFIG=/etc/nginx/sites-available/nextcloud
 STAMP=$(date +%Y%m%d-%H%M%S)
 SITE_BACKUP="${SITE_CONFIG}.bak-webmars-logging-${STAMP}"
 
-for source_file in nginx-webmars-logging.conf logrotate-webmars webmars-visits.py webmars-analytics.py; do
+for source_file in nginx-webmars-logging.conf logrotate-webmars webmars-visits.py webmars-analytics.py webmars-audience.py; do
     if [[ ! -f "${SCRIPT_DIR}/${source_file}" ]]; then
         echo "Missing ${SCRIPT_DIR}/${source_file}" >&2
         exit 1
@@ -28,6 +28,9 @@ sudo install -o root -g root -m 0755 \
 sudo install -o root -g root -m 0755 \
     "${SCRIPT_DIR}/webmars-analytics.py" \
     /usr/local/bin/webmars-analytics
+sudo install -o root -g root -m 0755 \
+    "${SCRIPT_DIR}/webmars-audience.py" \
+    /usr/local/bin/webmars-audience
 
 if sudo grep -Fq 'access_log /var/log/nginx/webmars_access.log;' "$SITE_CONFIG"; then
     sudo sed -i \
@@ -45,6 +48,10 @@ if sudo grep -Fq 'error_log  /var/log/nginx/webmars_error.log;' "$SITE_CONFIG"; 
 elif ! sudo grep -Fq 'error_log  /var/log/nginx/webmars/error.log;' "$SITE_CONFIG"; then
     echo "Could not identify the webMARS error_log directive." >&2
     exit 1
+fi
+
+if ! sudo grep -Fq 'add_header Set-Cookie $webmars_visit_cookie always;' "$SITE_CONFIG"; then
+    sudo sed -i '/access_log \/var\/log\/nginx\/webmars\/visits.json webmars_json/a\    add_header Set-Cookie $webmars_visit_cookie always;' "$SITE_CONFIG"
 fi
 
 if ! sudo /usr/sbin/nginx -t; then

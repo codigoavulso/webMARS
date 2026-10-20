@@ -14,15 +14,19 @@
     ["compile_error", "Compilation errors"], ["tool_open", "Tools opened"],
     ["feature_use", "Features used"], ["example_open", "Examples opened"],
     ["heartbeat", "Heartbeats"], ["interaction_seconds", "Interaction time (seconds)"],
-    ["presence_seconds", "Visible presence (seconds)"]
+    ["presence_seconds", "Visible presence (seconds)"],
+    ["login_start", "Sign-in attempts"], ["login_success", "Successful sign-ins"],
+    ["account_created", "Accounts created"], ["login_error", "Sign-in errors"], ["account_linked", "Accounts linked"]
   ];
   const DIMENSIONS = [
+    ["audience", "Traffic classification"],
     ["events", "Event types"], ["resources", "Resources"], ["source", "Sources"],
     ["language", "Languages"], ["device", "Input devices"],
     ["surface", "Pages and app"], ["returning", "Return categories"]
   ];
   const EVENT_LABELS = Object.fromEntries(METRICS.map(([key, label]) => [key, label]));
   Object.assign(EVENT_LABELS, { active_time: "Interaction samples", launch_app: "App launches" });
+  Object.assign(EVENT_LABELS, { cloud_save: "Save Project", cloud_load: "Open Cloud Project..." });
 
   function createUsageStatisticsWindow(refs, windowManager, translate) {
     const win = document.createElement("section");
@@ -42,6 +46,7 @@
         <div class="usage-stats-toolbar">
           <div class="usage-stats-controls">
             <label><span data-stat-label="Period"></span><select data-stat-role="window"></select></label>
+            <label><span data-stat-label="Audience"></span><select data-stat-role="audience"></select></label>
             <label><span data-stat-label="Trend metric"></span><select data-stat-role="metric"></select></label>
             <label><span data-stat-label="Chart style"></span><select data-stat-role="style"></select></label>
             <button class="tool-btn" type="button" data-stat-role="refresh" data-stat-label="Refresh"></button>
@@ -75,11 +80,20 @@
           </section>
         </div>
         <p class="usage-stats-note" data-stat-label="Sessions are temporary visits, not unique people. Interaction and visible presence are separate measurements."></p>
+        <details><summary data-stat-label="Traffic classification"></summary>
+          <div data-stat-role="population"></div>
+          <p data-stat-label="Classification is approximate. Unmarked operator usage remains unclassified."></p>
+        </details>
+        <details><summary data-stat-label="Server-confirmed Cloud activity"></summary>
+          <div data-stat-role="cloud-activity"></div>
+        </details>
       </div>`;
     refs.windows.desktop.appendChild(win);
     windowManager.registerWindow(win);
     const field = (name) => win.querySelector(`[data-stat-role="${name}"]`);
-    const state = { data: null, loading: false, controller: null, request: 0, refreshTimer: null };
+    const state = { data: null, cloudData: null, loading: false, controller: null, request: 0, refreshTimer: null };
+    const audienceLabel = (key) => translate({ public: "Public traffic", human: "Probable human", unknown: "Unclassified",
+      internal: "Internal usage", test: "Tests", automated: "Probable automation", all: "All traffic" }[key] || key);
     const options = (select, values) => {
       for (const [value, label] of values) {
         const option = document.createElement("option");
@@ -89,6 +103,8 @@
       }
     };
     options(field("window"), WINDOWS);
+    options(field("audience"), [["public", "Public traffic"], ["human", "Probable human"], ["unknown", "Unclassified"],
+      ["internal", "Internal usage"], ["test", "Tests"], ["automated", "Probable automation"], ["all", "All traffic"]]);
     options(field("metric"), METRICS);
     options(field("style"), [["columns", "Columns"], ["line", "Line"]]);
     options(field("dimension"), DIMENSIONS);
@@ -196,6 +212,20 @@
 
     function render() {
       const data = state.data;
+      if (data) {
+        const classification = data.web_traffic?.web_visits_by_class || data.classification?.sessions_by_class || {};
+        const title = data.web_traffic?.web_visits_by_class ? translate("Web visits") : translate("Sessions");
+        renderTable(field("population"), Object.entries(classification).map(([key,count]) => ({label:audienceLabel(key),display:number(count)})), translate("Traffic classification"), title);
+        if (data.web_traffic && !data.web_traffic.unavailable) {
+          field("population").append(el("p", "", `${translate("App sessions linked to web visits")}: ${number(data.web_traffic.linked_app_sessions)} · ${translate("Unlinked app sessions")}: ${number(data.web_traffic.unlinked_app_sessions)}`));
+        }
+        const cloud = state.cloudData;
+        if (cloud) {
+          const rows = [{label:translate("Active Cloud accounts"),display:number(cloud.active_accounts)}];
+          for (const row of cloud.events || []) rows.push({label:`${translate(EVENT_LABELS[row.event] || row.event)} · ${{google:"Google",facebook:"Facebook",password:translate("Password")}[row.method] || row.method}`,display:number(row.count)});
+          renderTable(field("cloud-activity"), rows, translate("Measure"), translate("Value"));
+        } else field("cloud-activity").textContent = translate("Cloud activity is unavailable for this filter or installation.");
+      }
       if (!data) return;
       const totals = data.totals || {};
       const cards = [
@@ -242,8 +272,8 @@
         label: dimension === "events"
           ? translate(EVENT_LABELS[entry.key] || entry.key)
           : dimension === "resources"
-            ? `${translate(entry.kind === "tool_open" ? "Tool" : entry.kind === "feature_use" ? "Feature" : "Example")}: ${String(entry.key || "").replaceAll(/[-_]/g, " ")}`
-            : translate(String(entry.key || "")) }))
+            ? `${translate(EVENT_LABELS[entry.kind] || (entry.kind === "tool_open" ? "Tool" : entry.kind === "feature_use" ? "Feature" : "Example"))}: ${String(entry.key || "").replaceAll(/[-_]/g, " ")}`
+            : dimension === "audience" ? audienceLabel(entry.key) : translate(String(entry.key || "")) }))
         .filter((entry) => entry.label.toLocaleLowerCase(locale()).includes(filter))
         .sort((a, b) => (Number(b[measure]) || 0) - (Number(a[measure]) || 0));
       const limit = field("limit").value === "all" ? matches.length : Number(field("limit").value);
@@ -276,6 +306,7 @@
         return;
       }
       endpoint.searchParams.set("window", field("window").value);
+      endpoint.searchParams.set("audience", field("audience").value);
       try {
         const response = await scope.fetch(endpoint.href, { credentials: "omit", cache: "no-store",
           redirect: "error", signal: state.controller.signal });
@@ -286,6 +317,25 @@
           throw new Error("Invalid statistics response");
         }
         state.data = data;
+        state.cloudData = null;
+        // Account aggregates are server-confirmed and separately labelled;
+        // they cannot be restricted to a browser's probable-human class.
+        if (["public", "internal", "test", "all"].includes(field("audience").value)) {
+          try {
+            const api = new URL(scope.WebMarsConfig?.backMarsApiBase || "/api", scope.location.origin);
+            if (api.protocol !== "https:" && !["localhost", "127.0.0.1", "[::1]"].includes(api.hostname)) throw new Error("Invalid API URL");
+            const accountUrl = new URL(api.href.replace(/\/$/, "") + "/statistics");
+            accountUrl.searchParams.set("window", field("window").value);
+            accountUrl.searchParams.set("context", field("audience").value);
+            const signal = AbortSignal.any([state.controller.signal, AbortSignal.timeout(3000)]);
+            const accountResponse = await scope.fetch(accountUrl.href, { credentials: "omit", cache: "no-store", redirect: "error", signal });
+            if (accountResponse.ok) {
+              const accountData = await accountResponse.json();
+              if (request === state.request) state.cloudData = accountData;
+            }
+          } catch { /* The static simulator also runs without BackMars. */ }
+        }
+        if (request !== state.request) return;
         render();
       } catch (error) {
         if (request !== state.request) return;
@@ -310,6 +360,7 @@
       render();
     }
     field("window").addEventListener("change", () => { void load(); });
+    field("audience").addEventListener("change", () => { void load(); });
     for (const name of ["metric", "style", "dimension", "measure", "limit"]) {
       field(name).addEventListener("change", render);
     }

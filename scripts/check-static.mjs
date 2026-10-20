@@ -69,7 +69,6 @@ for (const file of files) {
 }
 
 const privacyFiles = [
-  "help/info.html",
   "help/en/info.html",
   "help/pt/info.html",
   "help/es/info.html",

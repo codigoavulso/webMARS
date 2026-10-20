@@ -1079,6 +1079,21 @@
         const frame = aboutHostNode.querySelector("iframe");
         if (!(frame instanceof HTMLIFrameElement)) return;
         bindHelpFrameLinks(frame, openDocument);
+        frame.addEventListener("load", () => {
+          const doc = frame.contentDocument;
+          const link = doc?.querySelector('a[href*="privacy"]');
+          if (!link || !globalScope.WebMarsUsage?.setContext) return;
+          const label = doc.createElement("label");
+          const checkbox = doc.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = globalScope.WebMarsUsage.getContext() === "internal";
+          checkbox.disabled = globalScope.WebMarsUsage.getContext() === "test";
+          checkbox.addEventListener("change", () => globalScope.WebMarsUsage.setContext(checkbox.checked ? "internal" : "public"));
+          label.append(checkbox, doc.createTextNode(translate("Mark this browser as internal usage")));
+          const paragraph = doc.createElement("p");
+          paragraph.append(label);
+          link.closest("p")?.after(paragraph);
+        });
         frame.addEventListener("error", () => {
           postMarsError("[error] Failed to load selected help file.");
         });

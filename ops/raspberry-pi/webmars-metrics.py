@@ -12,6 +12,7 @@ import re
 import sqlite3
 import time
 import threading
+import runpy
 from urllib.parse import parse_qs, urlsplit
 
 EVENTS = {"page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "heartbeat", "tool_open", "feature_use"}
@@ -22,17 +23,27 @@ SOURCES = {"direct", "search", "social", "internal", "other"}
 RETURNS = {"new", "same_day", "days_1_6", "days_7_30", "older"}
 LANGUAGES = set("en pt es zh hi ar fr bn ru id de ja ko tr vi ur it pl fa th other".split())
 FIELDS = {"v", "session", "event", "surface", "detail", "seconds", "returning", "source", "device", "language"}
+AUTH_EVENTS = {"login_start", "login_success", "login_error", "account_created", "account_linked"}
+EVENTS |= AUTH_EVENTS | {"interaction"}
+FIELDS_V2 = FIELDS | {"context", "automation", "interaction", "visit"}
+AUDIENCES = {"all", "public", "human", "unknown", "internal", "test", "automated"}
+BOT_PATTERN = re.compile(r"bot|crawler|spider|headless|curl|wget|python|playwright|puppeteer|selenium|uptimerobot|scanner", re.I)
 RETENTION_SECONDS = 35 * 86400
 HEARTBEAT_INTERVAL_CAP = 90
 PUBLIC_WINDOWS = {"60m": (3600, 300), "24h": (86400, 3600), "30d": (30 * 86400, 86400)}
 
 
 def validate_event(data):
-    if not isinstance(data, dict) or set(data) != FIELDS:
+    if not isinstance(data, dict) or set(data) not in (FIELDS, FIELDS_V2):
         return False
-    if type(data["v"]) is not int or data["v"] != 1:
+    if type(data["v"]) is not int or data["v"] not in {1, 2} or set(data) != (FIELDS if data["v"] == 1 else FIELDS_V2):
         return False
-    if not all(isinstance(data[key], str) for key in FIELDS - {"v", "seconds"}):
+    if not all(isinstance(data[key], str) for key in set(data) - {"v", "seconds"}):
+        return False
+    if data["v"] == 2 and (data["context"] not in {"public", "internal", "test"}
+            or data["automation"] not in {"none", "webdriver"}
+            or data["interaction"] not in {"trusted", "not_seen"}
+            or not re.fullmatch(r"[a-f0-9]{32}|none", data["visit"])):
         return False
     if not re.fullmatch(r"[a-f0-9]{32}", data["session"]):
         return False
@@ -50,6 +61,8 @@ def validate_event(data):
         return data["detail"] in TOOLS
     if data["event"] == "feature_use":
         return data["detail"] in FEATURES
+    if data["event"] in AUTH_EVENTS:
+        return data["detail"] in {"password", "google", "facebook"}
     return data["detail"] == "none"
 
 
@@ -64,6 +77,12 @@ def initialize(database):
             language TEXT NOT NULL)""")
         db.execute("CREATE INDEX IF NOT EXISTS events_received ON events(received)")
         db.execute("CREATE INDEX IF NOT EXISTS events_session ON events(session)")
+        columns = {r[1] for r in db.execute("PRAGMA table_info(events)")}
+        for column, declaration in {"context": "TEXT NOT NULL DEFAULT 'legacy'",
+                "automation": "TEXT NOT NULL DEFAULT 'unknown'", "interaction": "TEXT NOT NULL DEFAULT 'not_seen'",
+                "visit": "TEXT NOT NULL DEFAULT 'none'"}.items():
+            if column not in columns:
+                db.execute(f"ALTER TABLE events ADD COLUMN {column} {declaration}")
         # Aggregate immediately: no per-ping timestamps or session identifiers.
         db.execute("""CREATE TABLE IF NOT EXISTS heartbeats (
             day TEXT NOT NULL, active_minutes INTEGER NOT NULL, pings INTEGER NOT NULL,
@@ -85,13 +104,15 @@ def prune(database, now=None):
         db.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
 
-def record(database, data, now=None):
+def record(database, data, now=None, user_agent=""):
     if not validate_event(data):
         raise ValueError("Invalid metrics event")
     with closing(sqlite3.connect(database)) as db, db:
-        db.execute("INSERT INTO events VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+        db.execute("INSERT INTO events(received,session,event,surface,detail,seconds,return_bucket,source,device,language,context,automation,interaction,visit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
             int(now or time.time()), data["session"], data["event"], data["surface"], data["detail"],
-            data["seconds"], data["returning"], data["source"], data["device"], data["language"]
+            data["seconds"], data["returning"], data["source"], data["device"], data["language"],
+            data.get("context", "legacy"), "detected_bot" if BOT_PATTERN.search(user_agent) else data.get("automation", "unknown"),
+            data.get("interaction", "not_seen"), data.get("visit", "none")
         ))
 
 
@@ -130,7 +151,27 @@ def record_heartbeat(database, data, now=None):
                    (day, server_active_seconds // 60))
 
 
-def public_statistics(database, window="60m", now=None):
+def classify_sessions(rows):
+    signals = defaultdict(set)
+    for row in rows:
+        values = signals[row["session"]]
+        if row["context"] in {"internal", "test"}: values.add(row["context"])
+        if row["automation"] in {"webdriver", "detected_bot"}: values.add("automated")
+        if row["interaction"] == "trusted": values.add("human")
+    return {sid: next((kind for kind in ("internal", "test", "automated", "human") if kind in values), "unknown")
+            for sid, values in signals.items()}
+
+
+def select_audience(rows, audience):
+    if audience not in AUDIENCES:
+        raise ValueError("Invalid audience")
+    classes = classify_sessions(rows)
+    selected = rows if audience == "all" else [r for r in rows if
+        (classes[r["session"]] in {"human", "unknown"} if audience == "public" else classes[r["session"]] == audience)]
+    return selected, Counter(classes.values())
+
+
+def public_statistics(database, window="60m", now=None, audience="all", log_root=None):
     """Publish fixed, aggregate windows without session tokens or individual records."""
     if window not in PUBLIC_WINDOWS:
         raise ValueError("Invalid statistics window")
@@ -147,6 +188,8 @@ def public_statistics(database, window="60m", now=None):
         presence_baseline = dict(db.execute(
             "SELECT session, MAX(seconds) FROM events WHERE received < ? AND event = 'heartbeat' GROUP BY session", (start,)))
 
+    rows, population = select_audience(rows, audience)
+    classes = classify_sessions(rows)
     buckets = [{"from": start + index * step, "through": min(now, start + (index + 1) * step),
                 "sessions": set(), "new_sessions": 0, "events": 0, "interaction_seconds": 0,
                 "presence_seconds": 0, "event_counts": Counter()}
@@ -154,7 +197,7 @@ def public_statistics(database, window="60m", now=None):
     sessions = {}
     event_sessions = defaultdict(set)
     resources = defaultdict(lambda: {"events": 0, "sessions": set()})
-    facets = {name: defaultdict(set) for name in ("source", "returning", "device", "language", "surface")}
+    facets = {name: defaultdict(set) for name in ("source", "returning", "device", "language", "surface", "audience")}
     interaction_by_session = Counter()
     presence_by_session = Counter()
     recent_presence = set()
@@ -174,8 +217,9 @@ def public_statistics(database, window="60m", now=None):
                 facets[name][value].add(sid)
         sessions[sid]["events"].add(row["event"])
         facets["surface"][row["surface"]].add(sid)
+        facets["audience"][classes[sid]].add(sid)
         event_sessions[row["event"]].add(sid)
-        if row["event"] in {"tool_open", "feature_use", "example_open"}:
+        if row["event"] in {"tool_open", "feature_use", "example_open"} | AUTH_EVENTS:
             resource = resources[(row["event"], row["detail"])]
             resource["events"] += 1
             resource["sessions"].add(sid)
@@ -209,8 +253,20 @@ def public_statistics(database, window="60m", now=None):
     ready = {sid for sid, item in sessions.items() if "app_ready" in item["events"]}
     activated = sum("run_success" in sessions[sid]["events"] for sid in ready)
     iso = lambda timestamp: datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
+    web_traffic = None
+    if log_root:
+        analyzer_path = Path(__file__).with_name("webmars-audience.py")
+        if not analyzer_path.exists():
+            analyzer_path = Path(__file__).with_name("webmars-audience")
+        try:
+            web_traffic = runpy.run_path(str(analyzer_path))["analyze"](log_root, database, duration // 3600, now)
+        except (OSError, ValueError, sqlite3.Error):
+            web_traffic = {"unavailable": True}
     return {
         "window": window, "from": iso(start), "through": iso(now), "bucket_seconds": step,
+        "audience": audience, "classification": {"sessions_by_class": dict(population),
+            "note": "Human/automation are probable signals, not identity proof. Unknown includes historical events. Internal/test are explicit markers; unmarked operator use cannot be inferred."},
+        "web_traffic": web_traffic,
         "totals": {
             "sessions": len(sessions), "new_sessions": len(sessions.keys() - earlier),
             "events": len(rows), "interaction_seconds": sum(interaction_by_session.values()),
@@ -238,7 +294,7 @@ def public_statistics(database, window="60m", now=None):
     }
 
 
-def report(database, days=30, now=None):
+def report(database, days=30, now=None, audience="all"):
     now = int(now or time.time())
     # Read-only connection: asking for a report must not create an empty database.
     uri = Path(database).resolve().as_uri() + "?mode=ro"
@@ -253,6 +309,7 @@ def report(database, days=30, now=None):
         # heartbeat buckets as time or describe legacy samples as sessions.
         heartbeat_visits = db.execute("SELECT first_seen, last_seen, active_seconds, pings FROM heartbeat_sessions WHERE last_seen >= ? AND last_seen <= ?", (now - days * 86400, now)).fetchall()
         baseline = dict(db.execute("SELECT session, MAX(seconds) FROM events WHERE received < ? AND event != 'heartbeat' GROUP BY session", (now - days * 86400,)).fetchall())
+    rows, population = select_audience(rows, audience)
     sessions = {}
     for row in rows:
         sid = row["session"]
@@ -270,7 +327,7 @@ def report(database, days=30, now=None):
     count = lambda event: sum(event in item["events"] for item in sessions.values())
     ready = [item for item in sessions.values() if "app_ready" in item["events"]]
     activated = sum("run_success" in item["events"] for item in ready)
-    durations = sorted(item["seconds"] for item in sessions.values())
+    durations = sorted(max(0, item["seconds"] - baseline.get(sid, 0)) for sid, item in sessions.items())
     first_runs = sorted(item["success"] - item["ready"] for item in ready if item["success"] is not None and item["success"] >= item["ready"])
     daily = {}
     resources = {}
@@ -314,6 +371,8 @@ def report(database, days=30, now=None):
     legacy_recent_hashes = {row["session_hash"] for row in presence_rows}
     return {
         "window_days": days,
+        "audience": audience,
+        "traffic_classification": dict(population),
         "event_window_utc": {"from": datetime.fromtimestamp(now - days * 86400, timezone.utc).isoformat(),
                              "through": datetime.fromtimestamp(now, timezone.utc).isoformat()},
         "duration_only_heartbeats": {
@@ -414,7 +473,7 @@ def summary(data):
     return "\n".join(lines)
 
 
-def make_handler(database, origin):
+def make_handler(database, origin, log_root=None):
     public_cache = {}
     public_cache_lock = threading.Lock()
 
@@ -454,7 +513,7 @@ def make_handler(database, origin):
                 else:
                     if not validate_event(data):
                         return self.reply(400)
-                    record(database, data)
+                    record(database, data, user_agent=self.headers.get("User-Agent", ""))
             except (ValueError, UnicodeError, TimeoutError):
                 return self.reply(400)
             except sqlite3.Error:
@@ -466,17 +525,19 @@ def make_handler(database, origin):
             if parsed.path != "/public":
                 return self.reply(404)
             params = parse_qs(parsed.query, keep_blank_values=True)
-            if set(params) != {"window"} or len(params["window"]) != 1 or params["window"][0] not in PUBLIC_WINDOWS:
+            if not {"window"} <= set(params) <= {"window", "audience"} or len(params["window"]) != 1 or params["window"][0] not in PUBLIC_WINDOWS or ("audience" in params and (len(params["audience"]) != 1 or params["audience"][0] not in AUDIENCES)):
                 return self.reply(400)
             window = params["window"][0]
+            audience = params.get("audience", ["all"])[0]
+            cache_key = (window, audience)
             try:
                 with public_cache_lock:
-                    cached = public_cache.get(window)
+                    cached = public_cache.get(cache_key)
                     if cached and time.monotonic() - cached[0] < 30:
                         body = cached[1]
                     else:
-                        body = json.dumps(public_statistics(database, window), separators=(",", ":")).encode("utf-8")
-                        public_cache[window] = (time.monotonic(), body)
+                        body = json.dumps(public_statistics(database, window, audience=audience, log_root=log_root), separators=(",", ":")).encode("utf-8")
+                        public_cache[cache_key] = (time.monotonic(), body)
             except sqlite3.Error:
                 return self.reply(503)
             self.send_response(200)
@@ -498,11 +559,13 @@ def main():
     parser.add_argument("--report", action="store_true")
     parser.add_argument("--summary", action="store_true", help="Print an aggregate readable report (with --report)")
     parser.add_argument("--days", type=int, choices=range(1, 36), default=30)
+    parser.add_argument("--audience", choices=sorted(AUDIENCES), default="all")
+    parser.add_argument("--access-log-root", default=None)
     args = parser.parse_args()
     if args.summary and not args.report:
         parser.error("--summary requires --report")
     if args.report:
-        data = report(args.database, args.days)
+        data = report(args.database, args.days, audience=args.audience)
         print(summary(data) if args.summary else json.dumps(data, indent=2, ensure_ascii=False))
         return
     initialize(args.database)
@@ -515,7 +578,7 @@ def main():
             if time.monotonic() - self.last_prune >= 3600:
                 prune(args.database)
                 self.last_prune = time.monotonic()
-    Server(("127.0.0.1", args.port), make_handler(args.database, args.origin)).serve_forever()
+    Server(("127.0.0.1", args.port), make_handler(args.database, args.origin, args.access_log_root)).serve_forever()
 
 
 if __name__ == "__main__":

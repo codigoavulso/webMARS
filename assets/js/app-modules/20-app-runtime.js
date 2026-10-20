@@ -1660,6 +1660,7 @@ async function cloudRequestJson(path, options = {}) {
   const url = /^https?:\/\//i.test(rawPath) ? rawPath : `${cloudApiBase}${rawPath.startsWith("/") ? rawPath : `/${rawPath}`}`;
   const headers = {
     Accept: "application/json",
+    "X-WebMARS-Context": window.WebMarsUsage?.getContext?.() || "public",
     ...(options.headers && typeof options.headers === "object" ? options.headers : {})
   };
   const hasBody = Object.prototype.hasOwnProperty.call(options, "body");
@@ -2133,15 +2134,79 @@ async function chooseCloudProjectId(projects = []) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+async function cloudSocialSections(intent = "login") {
+  let configured;
+  try { configured = await cloudRequestJson("/auth/providers", { signal: AbortSignal.timeout(3000) }); }
+  catch { return []; }
+  const providers = (configured?.providers || []).filter((name) => ["google", "facebook"].includes(name));
+  if (!providers.length) return [];
+  const providerNames = { google: "Google", facebook: "Facebook" };
+  return [{ title: translateText(intent === "link" ? "Linked sign-in methods" : "Continue with an existing account"),
+    fields: providers.map((provider) => ({ type: "button", name: `social-${provider}`,
+      label: translateText(intent === "link" ? "Link {provider}" : "Continue with {provider}", { provider: providerNames[provider] }),
+      onClick: (dialog) => startCloudSocialLogin(provider, intent, dialog)
+    })) }];
+}
+
+async function startCloudSocialLogin(provider, intent, dialog) {
+  const popup = window.open("about:blank", "webmars-cloud-sign-in", "popup,width=520,height=680");
+  if (!popup) throw new Error(translateText("Allow the sign-in window to open and try again."));
+  dialog.setMessage(translateText("Complete sign-in in the provider window."), "info");
+  window.WebMarsUsage?.track("login_start", provider);
+  let cleanup = () => {};
+  try {
+    const start = await cloudRequestJson(`/auth/${provider}/start`, { method: "POST",
+      body: { intent, context: window.WebMarsUsage?.getContext?.() || "public" } });
+    const target = new URL(start.url);
+    const allowedHost = provider === "google" ? "accounts.google.com" : "www.facebook.com";
+    if (target.protocol !== "https:" || target.hostname !== allowedHost) throw new Error("Invalid sign-in destination.");
+    const result = await new Promise((resolve, reject) => {
+      const apiOrigin = new URL(cloudApiBase, window.location.href).origin;
+      const listener = (event) => {
+        if (event.origin !== apiOrigin || event.source !== popup || event.data?.type !== "webmars-social-auth"
+          || event.data?.state !== start.state || event.data?.provider !== provider) return;
+        resolve(event.data.status);
+      };
+      const timer = window.setInterval(() => { if (popup.closed) resolve("cancelled"); }, 700);
+      const timeout = window.setTimeout(() => reject(new Error(translateText("Sign-in timed out. Try again."))), 10 * 60 * 1000);
+      cleanup = () => { window.removeEventListener("message", listener); window.clearInterval(timer); window.clearTimeout(timeout); };
+      window.addEventListener("message", listener);
+      popup.location.href = target.href;
+    });
+    if (result === "cancelled") return { close: false };
+    if (!["success", "created", "linked"].includes(result)) {
+      const messages = {
+        existing_account: "An account already uses this email. Sign in to it, then link this provider from the Cloud menu.",
+        verified_email_required: "An email is required. Create an account with email first, then link this provider from the Cloud menu.",
+        identity_conflict: "This sign-in method is already linked to another account."
+      };
+      throw new Error(translateText(messages[result] || "Social sign-in failed. Try again."));
+    }
+    const payload = await cloudRequestJson("/me");
+    if (!payload?.authenticated || !payload?.user) throw new Error(translateText("Social sign-in failed. Try again."));
+    setCloudSessionState("authenticated", payload.user, "");
+    if (result !== "linked") window.WebMarsUsage?.track("login_success", provider);
+    if (result === "created") window.WebMarsUsage?.track("account_created", provider);
+    if (result === "linked") window.WebMarsUsage?.track("account_linked", provider);
+    void refreshCloudProjectSyncDocuments({ render: true, postStatus: true, reason: "login" }).catch(() => {});
+    return { close: true, result: { ok: true, value: true } };
+  } catch (error) {
+    window.WebMarsUsage?.track("login_error", provider);
+    throw error;
+  } finally { cleanup(); try { popup.close(); } catch {} }
+}
+
 async function openCloudLoginDialog() {
+  const socialSections = await cloudSocialSections();
   const result = await runDialogForm({
     title: translateText("Cloud Login"),
     message: translateText("Sign in to the WebMARS cloud workspace service."),
     confirmLabel: translateText("Login"),
     cancelLabel: translateText("Cancel"),
     width: "460px",
-    height: "300px",
+    height: socialSections.length ? "400px" : "300px",
     sections: [
+      ...socialSections,
       {
         title: translateText("Credentials"),
         layout: "table",
@@ -2185,6 +2250,7 @@ async function openCloudLoginDialog() {
       });
       dialog.setBusy(true, { allowCancel: true });
       try {
+        window.WebMarsUsage?.track("login_start", "password");
         const payload = await cloudRequestJson("/login", {
           method: "POST",
           signal: attemptController?.signal,
@@ -2193,6 +2259,7 @@ async function openCloudLoginDialog() {
         if (attemptCancelled || attemptController?.signal?.aborted) return { close: false };
         stopAttemptStatus();
         setCloudSessionState("authenticated", payload?.user || { username }, "");
+        window.WebMarsUsage?.track("login_success", "password");
         void refreshCloudProjectSyncDocuments({ render: true, postStatus: true, reason: "login" }).catch(() => {});
         postMarsMessage("Cloud login successful: {name}.", { name: getCloudUserDisplayName(payload?.user || { username }) });
         dialog.setMessage(translateText("Cloud login successful: {name}.", {
@@ -2203,6 +2270,7 @@ async function openCloudLoginDialog() {
         if (attemptCancelled || attemptController?.signal?.aborted) return { close: false };
         stopAttemptStatus();
         const message = describeCloudError(error, "Cloud login failed.");
+        window.WebMarsUsage?.track("login_error", "password");
         setCloudSessionState("error", null, message);
         postMarsMessage("[error] Cloud login failed: {message}", { message });
         dialog.setMessage(translateText("[error] Cloud login failed: {message}", { message }), "error");
@@ -2223,14 +2291,16 @@ async function openCloudLoginDialog() {
 }
 
 async function openCloudRegisterDialog() {
+  const socialSections = await cloudSocialSections();
   const result = await runDialogForm({
     title: translateText("Create Cloud User"),
     message: translateText("Create a new WebMARS cloud user and sign in immediately."),
     confirmLabel: translateText("Create User"),
     cancelLabel: translateText("Cancel"),
     width: "500px",
-    height: "390px",
+    height: socialSections.length ? "490px" : "390px",
     sections: [
+      ...socialSections,
       {
         title: translateText("Account"),
         layout: "table",
@@ -2298,6 +2368,7 @@ async function openCloudRegisterDialog() {
       });
       dialog.setBusy(true, { allowCancel: true });
       try {
+        window.WebMarsUsage?.track("login_start", "password");
         const payload = await cloudRequestJson("/register", {
           method: "POST",
           signal: attemptController?.signal,
@@ -2306,6 +2377,8 @@ async function openCloudRegisterDialog() {
         if (attemptCancelled || attemptController?.signal?.aborted) return { close: false };
         stopAttemptStatus();
         setCloudSessionState("authenticated", payload?.user || { username, email }, "");
+        window.WebMarsUsage?.track("account_created", "password");
+        window.WebMarsUsage?.track("login_success", "password");
         void refreshCloudProjectSyncDocuments({ render: true, postStatus: true, reason: "register" }).catch(() => {});
         postMarsMessage("Cloud user created: {name}.", {
           name: getCloudUserDisplayName(payload?.user || { username, email })
@@ -2318,6 +2391,7 @@ async function openCloudRegisterDialog() {
         if (attemptCancelled || attemptController?.signal?.aborted) return { close: false };
         stopAttemptStatus();
         const status = Number(error?.status) || 0;
+        window.WebMarsUsage?.track("login_error", "password");
         const field = String(error?.payload?.field || "").trim().toLowerCase();
         let dialogMessage = "";
         if (status === 409) {
@@ -9549,6 +9623,17 @@ const commands = {
 
   async cloudPasswordReset() {
     return openCloudPasswordResetDialog();
+  },
+
+  async cloudLinkProvider() {
+    const sections = await cloudSocialSections("link");
+    if (!sections.length) {
+      await runDialogForm({ title: translateText("Linked sign-in methods"), message: translateText("No social sign-in providers are configured on this installation."), sections: [], hideConfirm: true });
+      return;
+    }
+    return runDialogForm({ title: translateText("Linked sign-in methods"),
+      message: translateText("Link a provider to keep using the same Cloud account and projects."),
+      sections, hideConfirm: true, cancelLabel: translateText("Close"), width: "480px", height: "290px" });
   },
 
   async cloudVerifyEmail() {

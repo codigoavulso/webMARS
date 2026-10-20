@@ -71,8 +71,9 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: "Create User...", command: "cloudRegister" },
         { label: "Forgot Password...", command: "cloudPasswordReset" }
       );
-    } else if (!cloudEmailVerified) {
-      cloudMenuItems.push({ label: "Verify Email...", command: "cloudVerifyEmail" });
+    } else {
+      cloudMenuItems.push({ label: "Linked sign-in methods", command: "cloudLinkProvider" });
+      if (!cloudEmailVerified) cloudMenuItems.push({ label: "Verify Email...", command: "cloudVerifyEmail" });
     }
     cloudMenuItems.push(
       "-",

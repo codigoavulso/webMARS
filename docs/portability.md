@@ -1,6 +1,6 @@
 # webMARS portability matrix
 
-**webMARS 0.6.3.** Maintained by hand, per release. Unlike the generated
+**webMARS 0.6.4.** Maintained by hand, per release. Unlike the generated
 reports in [evidence.md](evidence.md), this one records what a person actually
 ran, so it cannot be produced by a script.
 

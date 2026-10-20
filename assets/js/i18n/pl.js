@@ -3,6 +3,7 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("pl",{
+  "Link {provider}": "Połącz z {provider}",
   "File": "Plik",
   "Edit": "Edytuj",
   "View": "Zobacz",
@@ -1844,6 +1845,39 @@
   "P90 visible presence": "P90 widoczna obecność",
   "No data for these filters.": "Brak danych dla tych filtrów.",
   "Tool": "Narzędzie",
-  "Feature": "Funkcja"
+  "Feature": "Funkcja",
+  "Linked sign-in methods": "Połączone metody logowania",
+  "Continue with an existing account": "Kontynuuj z istniejącym kontem",
+  "Continue with {provider}": "Kontynuuj za pomocą {provider}",
+  "Allow the sign-in window to open and try again.": "Zezwól na otwarcie okna logowania i spróbuj ponownie.",
+  "Complete sign-in in the provider window.": "Dokończ logowanie w oknie dostawcy.",
+  "Sign-in timed out. Try again.": "Upłynął limit czasu logowania. Spróbuj ponownie.",
+  "Social sign-in failed. Try again.": "Logowanie społecznościowe nie powiodło się. Spróbuj ponownie.",
+  "No social sign-in providers are configured on this installation.": "W tej instalacji nie skonfigurowano żadnych dostawców logowania społecznościowego.",
+  "Link a provider to keep using the same Cloud account and projects.": "Połącz dostawcę, aby nadal korzystać z tego samego konta i projektów Cloud.",
+  "An account already uses this email. Sign in to it, then link this provider from the Cloud menu.": "Konto używa już tego adresu e-mail. Zaloguj się do niego, a następnie połącz tego dostawcę z menu Cloud.",
+  "An email is required. Create an account with email first, then link this provider from the Cloud menu.": "Wymagany jest adres e-mail. Najpierw utwórz konto z adresem e-mail, a następnie połącz tego dostawcę z menu Cloud.",
+  "This sign-in method is already linked to another account.": "Ta metoda logowania jest już połączona z innym kontem.",
+  "Mark this browser as internal usage": "Oznacz tę przeglądarkę jako do użytku wewnętrznego",
+  "Traffic classification": "Klasyfikacja ruchu",
+  "Audience": "Publiczność",
+  "Public traffic": "Ruch publiczny",
+  "Probable human": "Prawdopodobny człowiek",
+  "Unclassified": "Niesklasyfikowane",
+  "Internal usage": "Zastosowanie wewnętrzne",
+  "Probable automation": "Prawdopodobna automatyzacja",
+  "All traffic": "Cały ruch",
+  "Sign-in attempts": "Próby logowania",
+  "Successful sign-ins": "Pomyślne logowanie",
+  "Accounts created": "Utworzono konta",
+  "Sign-in errors": "Błędy logowania",
+  "Accounts linked": "Konta połączone",
+  "Classification is approximate. Unmarked operator usage remains unclassified.": "Klasyfikacja jest przybliżona. Użycie nieoznakowanego operatora pozostaje niesklasyfikowane.",
+  "Server-confirmed Cloud activity": "Aktywność Cloud potwierdzona przez serwer",
+  "Web visits": "Wizyty internetowe",
+  "App sessions linked to web visits": "Sesje aplikacji powiązane z wizytami w Internecie",
+  "Unlinked app sessions": "Niepołączone sesje aplikacji",
+  "Active Cloud accounts": "Aktywne konta Cloud.",
+  "Cloud activity is unavailable for this filter or installation.": "Aktywność Cloud jest niedostępna dla tego filtra lub instalacji."
   });
 })();

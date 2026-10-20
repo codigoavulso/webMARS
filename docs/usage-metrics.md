@@ -1,5 +1,75 @@
 # Automatic webMARS statistics
 
+## Traffic classification and account adoption (local implementation)
+
+Browser events now use schema **v2**. In addition to the bounded v1 fields,
+they carry `context` (`public`, `internal`, `test`), `automation` (`none`,
+`webdriver`), `interaction` (`trusted`, `not_seen`) and `visit` (a temporary
+navigation token or `none`). The collector still accepts v1 events unchanged.
+Existing rows migrate additively to `legacy`/unknown; they are never retrospectively
+declared human, internal or automated.
+
+Help > About > Privacy contains **Mark this browser as internal usage**. This
+persists a one-bit operator marker locally and starts a new metrics session when
+changed. It labels all subsequent use in that browser, including genuine operator
+work, until cleared. A second coarse context cookie lets web logs see the same
+marker. Local/preview deployments can force `metrics.context="test"`; this cannot
+be relabelled public by the operator control. It does not disable collection.
+
+The Nginx logging configuration supplies `webmars_visit`, a random first-party
+cookie valid for 30 minutes, refreshed on document navigation. It is included as
+`visit` in events and structured logs to cross-check a navigation against app
+activity. It is not a permanent visitor ID, account ID or fingerprint. The event
+POST still omits Cookie credentials; the bounded temporary token is in its body.
+The request User-Agent is inspected in memory for a coarse bot flag; raw headers
+are not stored by the collector. Normal access logs retain their existing policy.
+
+Classification is conservative, in priority order: marked internal, configured
+tests, probable automation (WebDriver/known bot UA), probable human (trusted input
+reported by the browser), unclassified. Merely loading JavaScript is insufficient
+evidence of humanity. Trusted-input reports can be forged; these are statistical
+signals, not bot-proof authentication. Unmarked operator use cannot be inferred.
+
+Public statistics accept `audience=all|public|human|unknown|internal|test|automated`.
+`public` includes probable humans and unclassified sessions, excluding marked
+internal/tests and probable automation. The UI defaults to this public filter,
+offers each class explicitly and displays the population breakdown separately.
+The API defaults to `all` for v1 API compatibility. `classification` includes
+all-class counts; neither it nor the filtered aggregates exposes individual
+tokens. CLI reports accept `--audience` with the same values.
+
+Install the updated logging configuration before the frontend; confirm the HTML
+response actually sets the navigation cookie. A location with its own
+`add_header` directives must also include `add_header Set-Cookie
+$webmars_visit_cookie always;` without removing its other security/cache headers.
+The logging installer adds the server-level directive for the bundled layout.
+Install/restart the v2 collector before deploying the v2 frontend. The collector
+service uses `SupplementaryGroups=adm` to read access logs; it publishes only
+the aggregate output of `webmars-audience`, never raw log rows.
+
+`sudo webmars-audience --hours 24` cross-checks web visits, known bots, operator
+markers and app events using the temporary navigation token. Legacy logs can be
+grouped using address/UA only in memory; those values are never printed or
+persisted by this report. App-only sessions are reported as unlinked, not silently
+discarded or called bots. Browser and HTTP visits have different boundaries and
+must not be added. Missing cache/network/cookie observations remain uncertain.
+
+New event kinds: `interaction` (first trusted pointer/key input), `login_start`,
+`login_success`, `login_error`, `account_created`, `account_linked`. Auth-event
+details are limited to `password`, `google`, `facebook`. No email, provider
+subject, user ID or account identifier is sent to this collector.
+
+The dashboard's separate Cloud section calls BackMars `/api/statistics` for
+server-confirmed counts and distinct active accounts in minute-rounded windows.
+Only public/internal/test/all contexts can be selected there; account aggregates
+cannot be restricted to the browser-only probable-human class. BackMars keeps
+private minute-bucket account activity for 35 days to deduplicate accounts, and
+returns counts only. These are account statistics, not anonymous visitor counts.
+See the sibling BackMars `SOCIAL-LOGIN.md` for provider activation and linking.
+
+The following older v1 protocol description documents compatibility behavior;
+v2 fields and the temporary navigation/context cookies above extend it.
+
 The official installation sends first-party statistics automatically. There is
 no acceptance dialog or statistics checkbox. The user-facing explanation is
 in Help/About's privacy area and the public English/Portuguese privacy pages.
@@ -146,16 +216,19 @@ its private state directory. Records expire after 35 days with hourly pruning.
 No historical data need deleting: `consenting_tab_sessions` is renamed to
 `measured_tab_sessions`; downstream scripts must adopt the new name.
 
-The Nginx telemetry routes disable access/error logging, forward no IP,
-cookies or raw browser headers and limit request rates. Only Origin,
-Content-Type and fixed proxy Host are forwarded. HTTP still exposes a network
+The Nginx telemetry routes disable access/error logging, forward no IP or
+Cookie headers and limit request rates. Origin, Content-Type, fixed proxy Host
+and the event endpoint's User-Agent are forwarded. The User-Agent is reduced
+to a bot flag in memory, never retained by the collector. HTTP still exposes a network
 IP to the host. Ordinary site logs are a separate system.
 
 ## Installation/update and verification
 
 1. Install/restart the collector and snippets with
    `ops/raspberry-pi/install-metrics.sh` before the frontend, so it accepts the
-   new event types. No BackMars API/database change is needed.
+   new event types. Browser collection is independent of BackMars; social login
+   and the server-confirmed Cloud section require the updated BackMars schema
+   and API described in `SOCIAL-LOGIN.md`.
 2. Include `/etc/nginx/snippets/webmars-metrics.conf` in the HTTPS server,
    validate Nginx and reload it. The snippet serves the aggregate public GET
    endpoint as well as the event POST endpoint.

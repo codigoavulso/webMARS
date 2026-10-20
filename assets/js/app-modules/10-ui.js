@@ -4648,6 +4648,9 @@ function createDialogSystem(windowManager, desktop, options = {}) {
             ${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}
           `;
         }
+        if (type === "button") {
+          return `<button class="tool-btn" type="button" data-dialog-action="${escapeHtml(String(field.name))}">${label}</button>`;
+        }
         const min = Number.isFinite(field?.min) ? ` min="${field.min}"` : "";
         const max = Number.isFinite(field?.max) ? ` max="${field.max}"` : "";
         const step = Number.isFinite(field?.step) ? ` step="${field.step}"` : "";
@@ -4770,6 +4773,36 @@ function createDialogSystem(windowManager, desktop, options = {}) {
     syncActiveButtons();
 
     windowManager.show(win.id);
+    if (active.kind === "form") {
+      const current = active;
+      for (const section of current.sections) {
+        for (const field of section.fields || []) {
+          if (field.type !== "button" || typeof field.onClick !== "function") continue;
+          const button = Array.from(formNode.querySelectorAll("[data-dialog-action]"))
+            .find((node) => node.dataset.dialogAction === String(field.name));
+          button?.addEventListener("click", async () => {
+            if (active !== current || current.pendingConfirm) return;
+            const controller = createActiveFormController(current);
+            current.pendingConfirm = true;
+            setFormDisabled(true);
+            syncActiveButtons();
+            try {
+              const result = await field.onClick(controller);
+              if (active !== current) return;
+              if (result?.close === true) resolveActive(result.result || { ok: true, value: true });
+            } catch (error) {
+              controller.setMessage(String(error?.message || "Operation failed."), "error");
+            } finally {
+              if (active === current) {
+                current.pendingConfirm = false;
+                setFormDisabled(false);
+                syncActiveButtons();
+              }
+            }
+          });
+        }
+      }
+    }
     if (active.kind === "prompt") {
       inputNode.focus();
       inputNode.select();
@@ -4871,7 +4904,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
       closeAsCancel();
       return;
     }
-    if (event.key === "Enter" && event.target.tagName !== "TEXTAREA") {
+    if (event.key === "Enter" && event.target.tagName !== "TEXTAREA" && event.target.tagName !== "BUTTON") {
       event.preventDefault();
       confirmButton?.click();
     }

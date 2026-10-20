@@ -2,7 +2,7 @@
 (function installUsageMetrics(scope) {
   "use strict";
   const config = scope.WebMarsConfig?.metrics;
-  const EVENTS = new Set(["page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "heartbeat", "tool_open", "feature_use"]);
+  const EVENTS = new Set(["page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "heartbeat", "tool_open", "feature_use", "interaction", "login_start", "login_success", "login_error", "account_created", "account_linked"]);
   // Only shipped product resource identifiers may leave this boundary.
   const TOOLS = new Set(["bht-simulator", "bitmap-display", "bitmap-terminal-tool", "cache-simulator", "digital-lab-sim", "float-representation", "instruction-counter", "instruction-statistics", "intro-to-tools", "keyboard-display-mmio", "mars-bot", "memory-reference-visualization", "mips-xray", "example-register-watch", "pipeline-lab", "scavenger-hunt", "screen-magnifier", "stack-visualizer", "system-clock", "tty-ansi-terminal"]);
   const FEATURES = new Set(["step", "backstep", "run", "project_save", "project_import", "cloud_save", "cloud_load", "help", "teacher_kit"]);
@@ -29,6 +29,13 @@
   function storage(name) { try { return scope[name]; } catch { return null; } }
   const local = storage("localStorage");
   const tab = storage("sessionStorage");
+  const CONTEXT_KEY = "webmars-metrics-context-v1";
+  let context = ["internal", "test"].includes(config?.context) ? config.context
+    : (read(local, CONTEXT_KEY) === "internal" ? "internal" : "public");
+  let trustedInteraction = false;
+  // A short-lived navigation token supplied by this installation's Nginx.
+  // Empty on static/custom hosts; never fall back to a persistent visitor ID.
+  const visit = /(?:^|;\s*)webmars_visit=([a-f0-9]{32})(?:;|$)/.exec(document.cookie || "")?.[1] || "none";
   // Installation configuration controls the destination. UI preferences,
   // storage availability and browser signals do not gate statistical events.
   function allowed() { return Boolean(endpoint); }
@@ -84,12 +91,17 @@
       const key = `${event}:${detail}`;
       if (usedResources.has(key)) return false;
       usedResources.add(key);
+    } else if (["login_start", "login_success", "login_error", "account_created", "account_linked"].includes(event)) {
+      if (!["password", "google", "facebook"].includes(detail)) return false;
+      safeDetail = detail;
     } else if (event === "example_open") {
       safeDetail = /^lesson(?:0[1-9]|1[0-5])$/.test(detail) ? detail : "other";
     }
     const language = String(scope.WebMarsI18n?.getLanguage?.() || document.documentElement.lang || "en").split("-")[0];
     const payload = {
-      v: 1, session: current.id, event, surface, detail: safeDetail,
+      v: 2, session: current.id, event, surface, detail: safeDetail,
+      context, automation: scope.navigator?.webdriver === true ? "webdriver" : "none",
+      interaction: trustedInteraction ? "trusted" : "not_seen", visit,
       seconds: Number.isInteger(secondsOverride) ? secondsOverride : Math.floor(current.seconds), returning: current.returning, source: current.source,
       device: scope.matchMedia?.("(pointer: coarse)").matches ? "touch" : "pointer",
       language: /^(en|pt|es|zh|hi|ar|fr|bn|ru|id|de|ja|ko|tr|vi|ur|it|pl|fa|th)$/.test(language) ? language : "other"
@@ -132,12 +144,30 @@
     write(tab, SESSION_KEY, JSON.stringify(current));
     if (current.seconds - lastSentSeconds >= 30) flush();
   }
-  scope.WebMarsUsage = Object.freeze({ track, trackHeartbeat, getSessionId, exampleOpened });
+  function setContext(value) {
+    if (!["public", "internal"].includes(value) || config?.context === "test") return false;
+    context = value;
+    write(local, CONTEXT_KEY, value);
+    try { document.cookie = `webmars_metrics_context=${value}; Path=/; SameSite=Lax; Max-Age=31536000${scope.location.protocol === "https:" ? "; Secure" : ""}`; } catch {}
+    session = null;
+    try { tab?.removeItem(SESSION_KEY); } catch {}
+    usedResources.clear();
+    lastSentSeconds = 0;
+    track("page_view");
+    return true;
+  }
+  scope.WebMarsUsage = Object.freeze({ track, trackHeartbeat, getSessionId, exampleOpened, getContext: () => context, setContext });
   function init() {
     if (!endpoint) return;
     track("page_view");
     for (const name of ["pointerdown", "keydown", "scroll", "focus"]) {
-      scope.addEventListener(name, () => { lastInteraction = Date.now(); }, { passive: true });
+      scope.addEventListener(name, (event) => {
+        lastInteraction = Date.now();
+        if (!trustedInteraction && event.isTrusted === true && ["pointerdown", "keydown"].includes(name)) {
+          trustedInteraction = true;
+          track("interaction");
+        }
+      }, { passive: true });
     }
     document.addEventListener("click", (event) => {
       if (event.target.closest?.("a[data-launch-app]")) track("launch_app");

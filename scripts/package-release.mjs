@@ -10,7 +10,7 @@ import {
   rm,
   writeFile
 } from "node:fs/promises";
-import { dirname, extname, join, posix, resolve, sep } from "node:path";
+import { basename, dirname, extname, join, posix, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateRawSync, inflateRawSync } from "node:zlib";
 
@@ -78,85 +78,6 @@ const PUBLIC_TREES = Object.freeze([
     root: "manual/teacher-kit",
     extensions: [".md", ".txt"]
   }
-]);
-
-// These are repository-only assets. The application uses the localized help
-// trees, and the large diagram/source screenshots below are not referenced by
-// the shipped UI. Keeping the exclusion explicit prevents archival content
-// from silently becoming part of a release.
-const EXCLUDED_PUBLIC_FILES = new Set([
-  "assets/images/ALUcontrol.png",
-  "assets/images/Assemble22.png",
-  "assets/images/control.png",
-  "assets/images/Copy16.png",
-  "assets/images/Copy22.png",
-  "assets/images/Cut16.gif",
-  "assets/images/Cut22.gif",
-  "assets/images/Cut24.gif",
-  "assets/images/Dump16.png",
-  "assets/images/Dump22.png",
-  "assets/images/Edit_tab.jpg",
-  "assets/images/Execute_tab.jpg",
-  "assets/images/Find16.png",
-  "assets/images/Find22.png",
-  "assets/images/Help16.png",
-  "assets/images/Help22.png",
-  "assets/images/mars.ico",
-  "assets/images/mars32.ico",
-  "assets/images/MarsSurfacePathfinder.jpg",
-  "assets/images/MarsThumbnail.gif",
-  "assets/images/MyBlank16.gif",
-  "assets/images/MyBlank24.gif",
-  "assets/images/New22.png",
-  "assets/images/Next22.png",
-  "assets/images/Open22.png",
-  "assets/images/Paste16.png",
-  "assets/images/Paste22.png",
-  "assets/images/Pause22.png",
-  "assets/images/Play22.png",
-  "assets/images/Previous22.png",
-  "assets/images/Print16.gif",
-  "assets/images/Print22.gif",
-  "assets/images/Print24.gif",
-  "assets/images/RedMars16.gif",
-  "assets/images/RedMars32.GIF",
-  "assets/images/RedMars50.gif",
-  "assets/images/Redo22.png",
-  "assets/images/register.png",
-  "assets/images/Reset22.png",
-  "assets/images/Save22.png",
-  "assets/images/SaveAs16.png",
-  "assets/images/SaveAs22.png",
-  "assets/images/StepBack22.png",
-  "assets/images/StepForward22.png",
-  "assets/images/Stop22.png",
-  "assets/images/Undo22.png",
-  "help/about-card.html",
-  "help/Acknowledgements.html",
-  "help/BugReportingHelp.html",
-  "help/changelog.html",
-  "help/ExceptionsHelp.html",
-  "help/HTML_of_links_for_posting_to_MARS_website.html",
-  "help/info.html",
-  "help/MacrosHelp.html",
-  "help/MarsHelpCommand.html",
-  "help/MarsHelpDebugging.html",
-  "help/MarsHelpHistory.html",
-  "help/MarsHelpIDE.html",
-  "help/MarsHelpIntro.html",
-  "help/MarsHelpLimits.html",
-  "help/MarsHelpSettings.html",
-  "help/MarsHelpTools.html",
-  "help/MIPSInstructionSetSong.html",
-  "help/SyscallHelp.html",
-  "help/MARSlicense.txt",
-  "help/SyscallMessageDialogError.gif",
-  "help/SyscallMessageDialogInformation.gif",
-  "help/SyscallMessageDialogQuestion.gif",
-  "help/SyscallMessageDialogWarning.gif",
-  "help/en/HTML_of_links_for_posting_to_MARS_website.html",
-  "help/es/HTML_of_links_for_posting_to_MARS_website.html",
-  "help/pt/HTML_of_links_for_posting_to_MARS_website.html"
 ]);
 
 const FORBIDDEN_RELEASE_PATH = /(^|\/)(?:\.git|\.github|docs|node_modules|scripts|test-results|tests)(?:\/|$)/i;
@@ -263,7 +184,7 @@ async function collectTreeFiles(tree, sourceRoot = projectRoot) {
         allowedExtensions.has(extname(entry.name).toLowerCase()),
         `Extension is not allowlisted for ${tree.root}: ${relativePath}`
       );
-      if (!EXCLUDED_PUBLIC_FILES.has(relativePath)) files.push(relativePath);
+      files.push(relativePath);
     }
   }
 
@@ -833,17 +754,27 @@ async function pathExists(path) {
 // A release is three public paths that must describe the same build. Renaming
 // them one by one without a rollback can leave a new directory beside an old
 // ZIP (or no checksum at all). Back up an existing complete set, publish the
-// staged set, and restore the previous set if any rename fails.
+// staged set, and restore the previous set if any rename fails. Workspace
+// cleanup can retain only the ZIP and checksum; explicitly allow that state
+// only after verifying the pair, and restore that same state on failure.
 async function publishReleaseSet(entries, operations = {}) {
   const move = operations.rename || rename;
   const remove = operations.rm || rm;
   assert(entries.length > 0, "No release artifacts were supplied for publication.");
 
   const existing = await Promise.all(entries.map((entry) => pathExists(entry.target)));
+  const archiveOnly = operations.allowArchiveOnly === true && entries.length === 3
+    && !existing[0] && existing[1] && existing[2];
   assert(
-    existing.every(Boolean) || existing.every((present) => !present),
+    existing.every(Boolean) || existing.every((present) => !present) || archiveOnly,
     "Existing release artifacts are incomplete; refusing to replace a partial set."
   );
+  if (archiveOnly) {
+    const digest = sha256(await readFile(entries[1].target));
+    const checksum = (await readFile(entries[2].target, "utf8")).trim();
+    assert(checksum === `${digest}  ${basename(entries[1].target)}`,
+      "Stored release ZIP and checksum disagree; refusing to replace the archived release.");
+  }
   for (const entry of entries) {
     assert(!await pathExists(entry.backup), `Release backup already exists: ${toPosix(entry.backup)}`);
   }
@@ -851,11 +782,10 @@ async function publishReleaseSet(entries, operations = {}) {
   const backedUp = [];
   const published = [];
   try {
-    if (existing.every(Boolean)) {
-      for (const entry of entries) {
-        await move(entry.target, entry.backup);
-        backedUp.push(entry);
-      }
+    for (const [index, entry] of entries.entries()) {
+      if (!existing[index]) continue;
+      await move(entry.target, entry.backup);
+      backedUp.push(entry);
     }
     for (const entry of entries) {
       await move(entry.staged, entry.target);
@@ -935,7 +865,7 @@ async function packageRelease() {
       { staged: stagingDirectory, target: releaseDirectory, backup: backupDirectory },
       { staged: temporaryZipPath, target: zipPath, backup: backupZipPath },
       { staged: temporaryChecksumPath, target: zipChecksumPath, backup: backupChecksumPath }
-    ]);
+    ], { allowArchiveOnly: true });
 
     console.log(`[package] Release directory: ${toPosix(releaseDirectory)}`);
     console.log(`[package] ZIP archive: ${toPosix(zipPath)}`);

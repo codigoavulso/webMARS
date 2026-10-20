@@ -3,6 +3,7 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("de",{
+  "Link {provider}": "Mit {provider} verknüpfen",
   "File": "Datei",
   "Edit": "Bearbeiten",
   "View": "Ansicht",
@@ -1844,6 +1845,39 @@
   "Tool": "Werkzeug",
   "Top 10": "Die 10 häufigsten",
   "Top 20": "Die 20 häufigsten",
-  "Feature": "Besonderheit"
+  "Feature": "Besonderheit",
+  "Linked sign-in methods": "Verknüpfte Anmeldemethoden",
+  "Continue with an existing account": "Fahren Sie mit einem bestehenden Konto fort",
+  "Continue with {provider}": "Weiter mit {provider}",
+  "Allow the sign-in window to open and try again.": "Lassen Sie zu, dass sich das Anmeldefenster öffnet, und versuchen Sie es erneut.",
+  "Complete sign-in in the provider window.": "Schließen Sie die Anmeldung im Anbieterfenster ab.",
+  "Sign-in timed out. Try again.": "Zeitüberschreitung bei der Anmeldung. Versuchen Sie es erneut.",
+  "Social sign-in failed. Try again.": "Die soziale Anmeldung ist fehlgeschlagen. Versuchen Sie es erneut.",
+  "No social sign-in providers are configured on this installation.": "Für diese Installation sind keine Social-Sign-In-Anbieter konfiguriert.",
+  "Link a provider to keep using the same Cloud account and projects.": "Verknüpfen Sie einen Anbieter, um weiterhin dasselbe Cloud-Konto und dieselben Projekte zu verwenden.",
+  "An account already uses this email. Sign in to it, then link this provider from the Cloud menu.": "Ein Konto verwendet diese E-Mail bereits. Melden Sie sich an und verknüpfen Sie dann diesen Anbieter über das Menü Cloud.",
+  "An email is required. Create an account with email first, then link this provider from the Cloud menu.": "Eine E-Mail ist erforderlich. Erstellen Sie zunächst ein Konto mit E-Mail und verknüpfen Sie dann diesen Anbieter über das Menü Cloud.",
+  "This sign-in method is already linked to another account.": "Diese Anmeldemethode ist bereits mit einem anderen Konto verknüpft.",
+  "Mark this browser as internal usage": "Markieren Sie diesen Browser als interne Nutzung",
+  "Traffic classification": "Verkehrsklassifizierung",
+  "Audience": "Publikum",
+  "Public traffic": "Öffentlicher Verkehr",
+  "Probable human": "Wahrscheinlich ein Mensch",
+  "Unclassified": "Nicht klassifiziert",
+  "Internal usage": "Interner Gebrauch",
+  "Probable automation": "Wahrscheinliche Automatisierung",
+  "All traffic": "Der gesamte Verkehr",
+  "Sign-in attempts": "Anmeldeversuche",
+  "Successful sign-ins": "Erfolgreiche Anmeldungen",
+  "Accounts created": "Konten erstellt",
+  "Sign-in errors": "Anmeldefehler",
+  "Accounts linked": "Konten verknüpft",
+  "Classification is approximate. Unmarked operator usage remains unclassified.": "Die Klassifizierung ist ungefähr. Die nicht markierte Betreibernutzung bleibt unklassifiziert.",
+  "Server-confirmed Cloud activity": "Vom Server bestätigte Aktivität Cloud.",
+  "Web visits": "Webbesuche",
+  "App sessions linked to web visits": "Mit Webbesuchen verknüpfte App-Sitzungen",
+  "Unlinked app sessions": "Nicht verknüpfte App-Sitzungen",
+  "Active Cloud accounts": "Aktive Cloud-Konten",
+  "Cloud activity is unavailable for this filter or installation.": "Die Aktivität Cloud ist für diesen Filter oder diese Installation nicht verfügbar."
   });
 })();

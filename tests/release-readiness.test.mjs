@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import test from "node:test";
 import { access, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
@@ -8,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import vm from "node:vm";
 import { collectFindings } from "../scripts/check-i18n-coverage.mjs";
+import { cleanWorkspace } from "../scripts/clean-workspace.mjs";
 import {
   collectReleaseInputs,
   collectTreeFiles,
@@ -17,7 +19,7 @@ import {
 
 const run = promisify(execFile);
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.6.3";
+const expectedReleaseVersion = "0.6.4";
 const languages = [
   "en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id",
   "de", "ja", "ko", "tr", "vi", "ur", "it", "pl", "fa", "th"
@@ -169,6 +171,67 @@ test("the release version is coherent across runtime and release metadata", asyn
   }
 });
 
+test("workspace cleanup previews first and preserves source, current ZIPs and unrelated archives", async () => {
+  const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-cleanup-"));
+  const fixture = async (path, content = "fixture") => {
+    const target = resolve(sandbox, path);
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, content);
+  };
+  const preserved = ["assets/js/app.js", ".git/config", "vendor/mars/Mars4_5.jar",
+    "dist/webmars-9.8.7.zip", "dist/webmars-9.8.7.zip.sha256", "dist/backmars-backup.tar.gz",
+    "dist/notes.txt", "docs/coverage-report.md", "test-results/preview.sqlite3"];
+  const removable = ["dist/webmars-9.8.6/index.html", "dist/webmars-9.8.6.zip",
+    "dist/webmars-9.8.6.zip.sha256", "dist/webmars-9.8.7/index.html",
+    "manual/dist/index.html", "coverage/raw/old.json", "tmp/pdfs/page-1.png", "hs_err_pid123.log"];
+  try {
+    await fixture("package.json", JSON.stringify({ version: "9.8.7" }));
+    for (const path of [...preserved, ...removable]) await fixture(path);
+    const preview = await cleanWorkspace(sandbox);
+    assert.equal(preview.files, removable.length);
+    for (const path of removable) assert.equal(await readFile(resolve(sandbox, path), "utf8"), "fixture");
+    const applied = await cleanWorkspace(sandbox, { apply: true });
+    assert.deepEqual(applied, preview);
+    for (const path of removable) assert.equal(await exists(resolve(sandbox, path)), false, path);
+    for (const path of preserved) assert.equal(await readFile(resolve(sandbox, path), "utf8"), "fixture", path);
+    assert.equal((await cleanWorkspace(sandbox, { apply: true })).files, 0);
+  } finally {
+    await rm(sandbox, { recursive: true, force: true });
+  }
+});
+
+test("workspace cleanup rejects junctions before removing any generated files", async () => {
+  const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-cleanup-link-"));
+  const outside = await mkdtemp(resolve(tmpdir(), "webmars-cleanup-outside-"));
+  try {
+    await writeFile(resolve(sandbox, "package.json"), '{"version":"9.8.7"}');
+    await mkdir(resolve(sandbox, "dist"));
+    await writeFile(resolve(sandbox, "dist/webmars-9.8.6.zip"), "old-build");
+    await writeFile(resolve(outside, "important.txt"), "preserve");
+    await mkdir(resolve(sandbox, "manual"));
+    await symlink(outside, resolve(sandbox, "manual/dist"), process.platform === "win32" ? "junction" : "dir");
+    await assert.rejects(cleanWorkspace(sandbox, { apply: true }), /link/i);
+    assert.equal(await readFile(resolve(outside, "important.txt"), "utf8"), "preserve");
+    assert.equal(await readFile(resolve(sandbox, "dist/webmars-9.8.6.zip"), "utf8"), "old-build");
+  } finally {
+    await rm(sandbox, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
+  }
+});
+
+test("workspace cleanup refuses a nested Git checkout in a generated directory", async () => {
+  const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-cleanup-nested-git-"));
+  try {
+    await writeFile(resolve(sandbox, "package.json"), '{"version":"9.8.7"}');
+    await mkdir(resolve(sandbox, "manual/dist/.git"), { recursive: true });
+    await writeFile(resolve(sandbox, "manual/dist/.git/config"), "preserve");
+    await assert.rejects(cleanWorkspace(sandbox, { apply: true }), /nested Git repository/);
+    assert.equal(await readFile(resolve(sandbox, "manual/dist/.git/config"), "utf8"), "preserve");
+  } finally {
+    await rm(sandbox, { recursive: true, force: true });
+  }
+});
+
 test("changelog --check fails while any locale still needs to be cut", async () => {
   const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-changelog-check-"));
   try {
@@ -311,8 +374,8 @@ test("release reference validation treats the HTML base as routing metadata", as
   }
 });
 
-test("release publication rolls back instead of leaving a partial artifact trio", async () => {
-  for (const hasPreviousRelease of [false, true]) {
+test("release publication restores complete or archive-only prior state on failure", async () => {
+  for (const previousState of ["none", "complete", "archive"]) {
     const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-package-publish-"));
     try {
       const stagedDirectory = resolve(sandbox, "staged-release");
@@ -331,15 +394,18 @@ test("release publication rolls back instead of leaving a partial artifact trio"
       await writeFile(resolve(stagedDirectory, "marker.txt"), "new directory", "utf8");
       await writeFile(stagedZip, "new zip", "utf8");
       await writeFile(stagedChecksum, "new checksum", "utf8");
-      if (hasPreviousRelease) {
+      if (previousState === "complete") {
         await mkdir(releaseDirectory, { recursive: true });
         await writeFile(resolve(releaseDirectory, "marker.txt"), "old directory", "utf8");
+      }
+      if (previousState !== "none") {
         await writeFile(zipPath, "old zip", "utf8");
-        await writeFile(checksumPath, "old checksum", "utf8");
+        await writeFile(checksumPath, `${createHash("sha256").update("old zip").digest("hex")}  webmars-9.8.7.zip\n`, "utf8");
       }
 
       await assert.rejects(
         () => publishReleaseSet(entries, {
+          allowArchiveOnly: true,
           rename: async (source, target) => {
             if (source === stagedZip) throw new Error("injected ZIP publication failure");
             await rename(source, target);
@@ -351,13 +417,47 @@ test("release publication rolls back instead of leaving a partial artifact trio"
       const targetPresence = await Promise.all(entries.map((entry) => exists(entry.target)));
       assert.deepEqual(
         targetPresence,
-        hasPreviousRelease ? [true, true, true] : [false, false, false],
-        "publication failure must restore the complete prior state"
+        previousState === "complete" ? [true, true, true] : previousState === "archive" ? [false, true, true] : [false, false, false],
+        "publication failure must restore the exact prior state"
       );
-      if (hasPreviousRelease) {
+      if (previousState === "complete") {
         assert.equal(await readFile(resolve(releaseDirectory, "marker.txt"), "utf8"), "old directory");
+      }
+      if (previousState !== "none") {
         assert.equal(await readFile(zipPath, "utf8"), "old zip");
-        assert.equal(await readFile(checksumPath, "utf8"), "old checksum");
+        assert.equal(await readFile(checksumPath, "utf8"), `${createHash("sha256").update("old zip").digest("hex")}  webmars-9.8.7.zip\n`);
+      }
+      assert.deepEqual(await Promise.all(entries.map((entry) => exists(entry.backup))), [false, false, false]);
+    } finally {
+      await rm(sandbox, { recursive: true, force: true });
+    }
+  }
+});
+
+test("release rebuilding after cleanup verifies the retained ZIP/checksum pair", async () => {
+  for (const corrupt of [false, true]) {
+    const sandbox = await mkdtemp(resolve(tmpdir(), "webmars-package-archive-"));
+    try {
+      const entries = ["webmars-9.8.7", "webmars-9.8.7.zip", "webmars-9.8.7.zip.sha256"].map((name, index) => ({
+        staged: resolve(sandbox, `staged-${index}`), target: resolve(sandbox, name), backup: resolve(sandbox, `backup-${index}`)
+      }));
+      await mkdir(entries[0].staged);
+      await writeFile(resolve(entries[0].staged, "index.html"), "new site");
+      await writeFile(entries[1].staged, "new zip");
+      await writeFile(entries[2].staged, "new checksum");
+      await writeFile(entries[1].target, "old zip");
+      const digest = createHash("sha256").update(corrupt ? "different zip" : "old zip").digest("hex");
+      await writeFile(entries[2].target, `${digest}  webmars-9.8.7.zip\n`);
+      if (corrupt) {
+        await assert.rejects(publishReleaseSet(entries, { allowArchiveOnly: true }), /ZIP and checksum disagree/);
+        assert.equal(await readFile(entries[1].target, "utf8"), "old zip");
+        assert.equal(await exists(entries[0].target), false);
+        assert.equal(await exists(entries[0].staged), true);
+      } else {
+        await publishReleaseSet(entries, { allowArchiveOnly: true });
+        assert.equal(await readFile(resolve(entries[0].target, "index.html"), "utf8"), "new site");
+        assert.equal(await readFile(entries[1].target, "utf8"), "new zip");
+        assert.equal(await readFile(entries[2].target, "utf8"), "new checksum");
       }
       assert.deepEqual(await Promise.all(entries.map((entry) => exists(entry.backup))), [false, false, false]);
     } finally {
@@ -774,7 +874,6 @@ test("release packaging and CI use the supported public commands", async () => {
   assert.match(workflow, /\buses:\s*actions\/setup-node@v7\b/);
   assert.match(workflow, /\bnode-version:\s*24\b/);
   assert.match(validateScript, /args:\s*\["test"\]/, "validate must run the complete npm test suite");
-  assert.match(packageScript, /\bEXCLUDED_PUBLIC_FILES\b/);
   assert.match(packageScript, /\bvalidateZipArchive\b/);
 });
 
