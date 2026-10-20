@@ -35,7 +35,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
     const hasActiveFile = Array.isArray(state?.files) && state.files.length > 0;
     const cloudAuthenticated = state?.cloud?.authenticated === true;
     const cloudEmailVerified = state?.cloud?.user?.emailVerified === true;
-    const cloudUserName = String(state?.cloud?.user?.username || "").trim();
+    const cloudUserName = String(state?.cloud?.user?.displayName || state?.cloud?.user?.username || "").trim();
     const examples = typeof handlers.getExampleMenuItems === "function" ? handlers.getExampleMenuItems() : [];
     const exampleItems = examples.length ? examples : [{ label: "(no examples)", enabled: () => false }];
     const windows = typeof handlers.getViewMenuItems === "function" ? handlers.getViewMenuItems() : [];

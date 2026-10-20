@@ -5,6 +5,15 @@ import vm from "node:vm";
 
 const runtime = await readFile(new URL("../assets/js/app-modules/20-app-runtime.js", import.meta.url), "utf8");
 const source = runtime.slice(runtime.indexOf("async function cloudSocialSections("), runtime.indexOf("async function openCloudLoginDialog("));
+test("generated account names have a friendly label without replacing the login identity", () => {
+  const context = vm.createContext({});
+  vm.runInContext(runtime.slice(runtime.indexOf("function getCloudUserDisplayName("), runtime.indexOf("function setCloudSessionState(")), context);
+  const user = { username: "user-9a9d35a3e566", email: "joao.silva+cloud@example.test" };
+  assert.equal(context.getCloudUserDisplayName(user), "Joao Silva");
+  assert.equal(user.username, "user-9a9d35a3e566");
+  assert.equal(context.getCloudUserDisplayName({ username: "my-handle", email: user.email }), "my-handle");
+  assert.equal(context.getCloudUserDisplayName({ username: user.username }), user.username);
+});
 function harness({blocked=false, destination="https://accounts.google.com/o/oauth2/v2/auth", authenticated=true}={}) {
   const listeners = new Map(), intervals = [], calls = [], metrics = [];
   let state = null, closed = false;

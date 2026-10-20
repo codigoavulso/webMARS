@@ -375,6 +375,7 @@ function buildCloudStoreState() {
       ? {
         id: Number(cloudUser.id) || 0,
         username: String(cloudUser.username || ""),
+        displayName: getCloudUserDisplayName(cloudUser),
         email: String(cloudUser.email || ""),
         emailVerified: cloudUser.emailVerified === true
       }
@@ -1631,6 +1632,11 @@ function updateCloudStoreState() {
 function getCloudUserDisplayName(user = cloudUser) {
   const username = String(user?.username || "").trim();
   const email = String(user?.email || "").trim();
+  if (/^user-[a-f0-9]{12}$/.test(username) && email.includes("@")) {
+    const name = email.slice(0, email.lastIndexOf("@"))
+      .split("+")[0].replace(/[._-]+/g, " ").trim();
+    if (name) return name.replace(/(^|\s)(\S)/gu, (_, space, letter) => space + letter.toLocaleUpperCase());
+  }
   return username || email || "user";
 }
 
