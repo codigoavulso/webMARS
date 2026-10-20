@@ -768,6 +768,12 @@ th {
   background: var(--surface-sunken);
   color: var(--text);
 }
+.usage-stats-toolbar {
+  margin: -2px -2px 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
 .usage-stats-controls,
 .usage-stats-panel-head {
   display: flex;
@@ -797,21 +803,24 @@ th {
 .usage-stats-controls .tool-btn { min-height: 28px; }
 .usage-stats-status {
   min-height: 18px;
-  margin: 9px 0;
+  margin: 7px 0;
   color: var(--text-muted);
   font-size: 11px;
 }
+.usage-stats-overview { margin-bottom: 10px; }
 .usage-stats-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
   gap: 8px;
-  margin-bottom: 10px;
 }
+.usage-stats-kpis-primary { grid-template-columns: repeat(6, minmax(110px, 1fr)); }
+.usage-stats-kpi-details { margin-top: 7px; }
+.usage-stats-kpi-details summary { cursor: pointer; color: var(--accent-strong); font-size: 11px; }
 .usage-stats-kpi {
   display: grid;
   gap: 4px;
-  min-height: 54px;
-  padding: 8px 10px;
+  min-height: 48px;
+  padding: 7px 9px;
   border: 1px solid var(--line-soft);
   background: var(--surface);
   color: var(--text-muted);
@@ -819,11 +828,17 @@ th {
 }
 .usage-stats-kpi strong {
   color: var(--accent-strong);
-  font-size: 18px;
+  font-size: 16px;
   font-variant-numeric: tabular-nums;
 }
+.usage-stats-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr);
+  align-items: start;
+  gap: 10px;
+}
 .usage-stats-panel {
-  margin-bottom: 10px;
+  min-width: 0;
   padding: 9px 10px;
   border: 1px solid var(--line);
   background: var(--surface);
@@ -842,8 +857,8 @@ th {
 .usage-stats-chart {
   display: block;
   width: 100%;
-  min-height: 185px;
-  max-height: 260px;
+  min-height: 150px;
+  max-height: 190px;
   overflow: visible;
 }
 .usage-stats-grid { stroke: var(--line-soft); stroke-width: 1; }
@@ -866,5 +881,11 @@ th {
   .usage-stats-controls label { flex: 1 1 135px; }
   .usage-stats-controls select,
   .usage-stats-controls input { width: 100%; max-width: none; }
+  .usage-stats-kpis-primary { grid-template-columns: repeat(2, minmax(110px, 1fr)); }
+  .usage-stats-charts { grid-template-columns: 1fr; }
   .usage-stats-chart { min-height: 160px; }
+}
+@media (min-width: 701px) and (max-width: 980px) {
+  .usage-stats-kpis-primary { grid-template-columns: repeat(3, minmax(110px, 1fr)); }
+  .usage-stats-charts { grid-template-columns: 1fr; }
 }

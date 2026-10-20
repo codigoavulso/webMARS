@@ -28,7 +28,7 @@
     const win = document.createElement("section");
     win.id = "window-usage-statistics";
     win.className = "desktop-window window-hidden tool-window dialog-window mobile-panel-window usage-stats-window";
-    Object.assign(win.style, { left: "84px", top: "48px", width: "980px", height: "650px", minWidth: "420px", minHeight: "380px" });
+    Object.assign(win.style, { left: "84px", top: "48px", width: "1120px", height: "680px", minWidth: "520px", minHeight: "420px" });
     win.innerHTML = `
       <div class="window-titlebar">
         <span class="window-title" data-stat-label="Usage statistics"></span>
@@ -39,31 +39,41 @@
         </div>
       </div>
       <div class="window-content usage-stats-content">
-        <div class="usage-stats-controls">
-          <label><span data-stat-label="Period"></span><select data-stat-role="window"></select></label>
-          <label><span data-stat-label="Trend metric"></span><select data-stat-role="metric"></select></label>
-          <label><span data-stat-label="Chart style"></span><select data-stat-role="style"></select></label>
-          <button class="tool-btn" type="button" data-stat-role="refresh" data-stat-label="Refresh"></button>
+        <div class="usage-stats-toolbar">
+          <div class="usage-stats-controls">
+            <label><span data-stat-label="Period"></span><select data-stat-role="window"></select></label>
+            <label><span data-stat-label="Trend metric"></span><select data-stat-role="metric"></select></label>
+            <label><span data-stat-label="Chart style"></span><select data-stat-role="style"></select></label>
+            <button class="tool-btn" type="button" data-stat-role="refresh" data-stat-label="Refresh"></button>
+          </div>
         </div>
         <p class="usage-stats-status" data-stat-role="status" role="status"></p>
-        <div class="usage-stats-kpis" data-stat-role="kpis"></div>
-        <section class="usage-stats-panel">
-          <h3 data-stat-label="Activity over time"></h3>
-          <svg data-stat-role="trend-chart" class="usage-stats-chart" viewBox="0 0 800 240" role="img"></svg>
-          <details><summary data-stat-label="Show values"></summary><div class="usage-stats-table-wrap" data-stat-role="trend-table"></div></details>
-        </section>
-        <section class="usage-stats-panel">
-          <div class="usage-stats-panel-head"><h3 data-stat-label="Breakdown"></h3>
-            <div class="usage-stats-controls usage-stats-breakdown-controls">
-              <label><span data-stat-label="Group by"></span><select data-stat-role="dimension"></select></label>
-              <label><span data-stat-label="Measure"></span><select data-stat-role="measure"></select></label>
-              <label><span data-stat-label="Filter results"></span><input data-stat-role="filter" type="search" maxlength="80"></label>
-              <label><span data-stat-label="Show"></span><select data-stat-role="limit"></select></label>
+        <div class="usage-stats-overview">
+          <div class="usage-stats-kpis usage-stats-kpis-primary" data-stat-role="kpis-primary"></div>
+          <details class="usage-stats-kpi-details">
+            <summary data-stat-label="Show values"></summary>
+            <div class="usage-stats-kpis usage-stats-kpis-details" data-stat-role="kpis-details"></div>
+          </details>
+        </div>
+        <div class="usage-stats-charts">
+          <section class="usage-stats-panel">
+            <h3 data-stat-label="Activity over time"></h3>
+            <svg data-stat-role="trend-chart" class="usage-stats-chart" viewBox="0 0 800 240" role="img"></svg>
+            <details><summary data-stat-label="Show values"></summary><div class="usage-stats-table-wrap" data-stat-role="trend-table"></div></details>
+          </section>
+          <section class="usage-stats-panel">
+            <div class="usage-stats-panel-head"><h3 data-stat-label="Breakdown"></h3>
+              <div class="usage-stats-controls usage-stats-breakdown-controls">
+                <label><span data-stat-label="Group by"></span><select data-stat-role="dimension"></select></label>
+                <label><span data-stat-label="Measure"></span><select data-stat-role="measure"></select></label>
+                <label><span data-stat-label="Filter results"></span><input data-stat-role="filter" type="search" maxlength="80"></label>
+                <label><span data-stat-label="Show"></span><select data-stat-role="limit"></select></label>
+              </div>
             </div>
-          </div>
-          <svg data-stat-role="breakdown-chart" class="usage-stats-chart" viewBox="0 0 800 240" role="img"></svg>
-          <details open><summary data-stat-label="Show values"></summary><div class="usage-stats-table-wrap" data-stat-role="breakdown-table"></div></details>
-        </section>
+            <svg data-stat-role="breakdown-chart" class="usage-stats-chart" viewBox="0 0 800 240" role="img"></svg>
+            <details><summary data-stat-label="Show values"></summary><div class="usage-stats-table-wrap" data-stat-role="breakdown-table"></div></details>
+          </section>
+        </div>
         <p class="usage-stats-note" data-stat-label="Sessions are temporary visits, not unique people. Interaction and visible presence are separate measurements."></p>
       </div>`;
     refs.windows.desktop.appendChild(win);
@@ -200,11 +210,17 @@
         ["Median visible presence", durationOrDash(totals.presence_distribution?.median_seconds)],
         ["P90 visible presence", durationOrDash(totals.presence_distribution?.p90_seconds)]
       ];
-      field("kpis").replaceChildren(...cards.map(([label, value]) => {
+      const renderKpi = ([label, value]) => {
         const card = el("div", "usage-stats-kpi");
         card.append(el("span", "", translate(label)), el("strong", "", value));
         return card;
-      }));
+      };
+      const primaryLabels = new Set([
+        "Measured sessions", "New sessions", "Events received",
+        "Ready with successful run", "Interaction time", "Visible presence"
+      ]);
+      field("kpis-primary").replaceChildren(...cards.filter(([label]) => primaryLabels.has(label)).map(renderKpi));
+      field("kpis-details").replaceChildren(...cards.map(renderKpi));
       const selectedMetric = field("metric").value;
       const metricLabel = translate(METRICS.find(([key]) => key === selectedMetric)?.[1] || selectedMetric);
       const windowName = field("window").value;
@@ -274,7 +290,8 @@
       } catch (error) {
         if (request !== state.request) return;
         state.data = null;
-        field("kpis").replaceChildren();
+        field("kpis-primary").replaceChildren();
+        field("kpis-details").replaceChildren();
         field("trend-chart").replaceChildren();
         field("breakdown-chart").replaceChildren();
         field("trend-table").replaceChildren();
