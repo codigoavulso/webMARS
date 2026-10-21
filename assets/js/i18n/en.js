@@ -1893,6 +1893,9 @@
     "Collected since": "Collected since",
     "Previous period": "Previous period",
     "Error sessions": "Error sessions",
-    "Authenticated session": "Authenticated session"
+    "Authenticated session": "Authenticated session",
+    "Search": "Search",
+    "Created": "Created",
+    "Status": "Status"
   });
 })();

@@ -55,17 +55,18 @@
     if (!Number.isFinite(timestamp) || timestamp <= 0) return "";
     const date = new Date(timestamp);
     const now = new Date();
+    const locale = root.WebMarsI18n?.getLanguage?.();
     try {
       const sameDay = date.getFullYear() === now.getFullYear()
         && date.getMonth() === now.getMonth()
         && date.getDate() === now.getDate();
       if (sameDay) {
-        return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+        return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
       }
       if (date.getFullYear() === now.getFullYear()) {
-        return date.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+        return date.toLocaleDateString(locale, { day: "2-digit", month: "short" });
       }
-      return date.toLocaleDateString(undefined, { year: "numeric", month: "short" });
+      return date.toLocaleDateString(locale, { year: "numeric", month: "short" });
     } catch {
       return date.toISOString().slice(0, 10);
     }
@@ -75,7 +76,7 @@
     const timestamp = Number(value);
     if (!Number.isFinite(timestamp) || timestamp <= 0) return "";
     try {
-      return new Date(timestamp).toLocaleString();
+      return new Date(timestamp).toLocaleString(root.WebMarsI18n?.getLanguage?.());
     } catch {
       return "";
     }
@@ -1844,7 +1845,147 @@
     };
   }
 
+  // Shared details browser for remote projects and publication catalogues.
+  // Data providers keep server pagination; chrome and keyboard behavior stay here.
+  function createCollectionWindow(windowManager, desktop, config = {}) {
+    ensureFileManagerStyles();
+    const win = document.createElement("section");
+    win.id = config.id;
+    win.className = "desktop-window window-hidden tool-window dialog-window mobile-panel-window collection-window";
+    Object.assign(win.style, {left:"120px", top:"65px", width:"900px", height:config.height || "520px", minWidth:"320px", minHeight:"300px"});
+    win.innerHTML = `<div class="window-titlebar"><span class="window-title"></span><div class="window-controls">
+      <button class="win-btn" data-win-action="min" type="button">_</button><button class="win-btn" data-win-action="max" type="button">[]</button>
+      <button class="win-btn win-btn-close" data-win-action="close" type="button">x</button></div></div>
+      <div class="window-content collection-browser">
+        <p class="collection-caption"></p>
+        <div class="collection-toolbar"><label class="fm-search">${icon("search")}<input type="search" maxlength="120" autocomplete="off"></label>
+          <button class="fm-btn" type="button" data-collection-refresh>${icon("refresh")}<span></span></button></div>
+        <div class="collection-actions"></div>
+        <div class="collection-table-wrap"><table class="collection-table"><thead><tr></tr></thead><tbody></tbody></table><p class="collection-empty" hidden></p></div>
+        <div class="collection-details" aria-live="polite"></div>
+        <footer class="collection-footer"><span role="status"></span><div>
+          <button class="fm-btn" type="button" data-collection-page="previous"></button><span class="collection-page"></span>
+          <button class="fm-btn" type="button" data-collection-page="next"></button><button class="fm-btn" type="button" data-collection-close></button>
+        </div></footer></div>`;
+    desktop.append(win); windowManager.registerWindow(win);
+    const find = selector => win.querySelector(selector);
+    const search = find('input[type="search"]'), body = find("tbody"), details = find(".collection-details");
+    const actions = config.actions || [], limit = config.pageSize || 25;
+    const state = {items:[], selected:null, offset:0, hasMore:false, loading:false, busy:false, request:0, controller:null};
+    let timer = null, disposed = false;
+    const buttons = actions.map(action => {
+      const button = document.createElement("button"); button.type = "button";
+      button.className = `fm-btn${action.primary ? " primary" : ""}${action.danger ? " fm-btn-danger" : ""}`;
+      button.dataset.collectionAction = action.id;
+      button.addEventListener("click", () => { void perform(action); });
+      find(".collection-actions").append(button); return button;
+    });
+    function syncActions() {
+      win.setAttribute("aria-busy", String(state.loading || state.busy));
+      actions.forEach((action, index) => { buttons[index].textContent = t(action.label);
+        buttons[index].title = t(action.description || action.label);
+        buttons[index].disabled = state.loading || state.busy || !state.selected || action.enabled?.(state.selected) === false;
+      });
+      for (const row of body.children) { const selected = state.selected && row.dataset.key === String(config.key(state.selected));
+        row.setAttribute("aria-selected", String(selected)); row.tabIndex = selected ? 0 : -1;
+      }
+      find('[data-collection-page="previous"]').disabled = state.loading || state.busy || state.offset === 0;
+      find('[data-collection-page="next"]').disabled = state.loading || state.busy || !state.hasMore;
+      search.disabled = state.busy;
+      find("[data-collection-refresh]").disabled = state.loading || state.busy;
+      find("[data-collection-close]").disabled = state.busy;
+      find('[data-win-action="close"]').disabled = state.busy;
+    }
+    function select(item) {
+      state.selected = item || null;
+      details.textContent = item ? String(config.details?.(item) || "") : "";
+      details.hidden = !details.textContent;
+      syncActions();
+    }
+    function refreshTranslations() {
+      find(".window-title").textContent = t(config.title);
+      find(".collection-caption").textContent = t(config.message || "");
+      find(".collection-caption").hidden = !config.message;
+      search.placeholder = t("Search"); search.setAttribute("aria-label", t("Search") + " · " + t(config.title));
+      find("[data-collection-refresh] span").textContent = t("Refresh");
+      find('[data-collection-page="previous"]').textContent = t("Previous page");
+      find('[data-collection-page="next"]').textContent = t("Next page");
+      find("[data-collection-close]").textContent = t(config.closeLabel || "Close");
+      const header = find("thead tr"); header.replaceChildren();
+      for (const column of config.columns) { const th = document.createElement("th"); th.scope = "col"; th.textContent = t(column.label); header.append(th); }
+      render();
+    }
+    function render() {
+      const selectedKey = state.selected ? config.key(state.selected) : null;
+      body.replaceChildren();
+      state.items.forEach(item => {
+        const row = document.createElement("tr"); row.dataset.key = String(config.key(item));
+        config.columns.forEach(column => { const cell = document.createElement("td");
+          cell.textContent = String(column.value(item) ?? "—"); cell.title = cell.textContent; row.append(cell);
+        });
+        row.addEventListener("click", () => { if (!state.busy) select(item); });
+        row.addEventListener("dblclick", () => { select(item); void perform(actions.find(action => action.primary) || actions[0]); });
+        row.addEventListener("keydown", event => {
+          if (state.busy) return;
+          if (event.key === " ") { event.preventDefault(); select(item); }
+          if (event.key === "Enter") { event.preventDefault(); select(item); void perform(actions.find(action => action.primary) || actions[0]); }
+          const index = state.items.indexOf(item);
+          const next = event.key === "ArrowDown" ? index + 1 : event.key === "ArrowUp" ? index - 1 : event.key === "Home" ? 0 : event.key === "End" ? state.items.length - 1 : null;
+          if (next !== null && state.items[next]) { event.preventDefault(); select(state.items[next]); body.children[next]?.focus(); }
+        });
+        body.append(row);
+      });
+      const empty = find(".collection-empty"); empty.hidden = state.loading || state.items.length > 0;
+      empty.textContent = t(search.value.trim() ? "No data for these filters." : config.emptyMessage || "No data for these filters.");
+      find(".collection-page").textContent = `${state.offset / limit + 1}`;
+      find("[role=status]").textContent = state.loading ? t("Loading...") : `${state.offset + (state.items.length ? 1 : 0)}–${state.offset + state.items.length}`;
+      select(state.items.find(item => config.key(item) === selectedKey) || state.items[0]);
+    }
+    async function load() {
+      if (disposed || state.busy) return;
+      const preferredKey = state.selected ? config.key(state.selected) : null;
+      const request = ++state.request; state.controller?.abort(); state.controller = new AbortController();
+      state.loading = true; state.items = []; state.selected = null; render();
+      try {
+        const result = await config.load({query:search.value.trim(), offset:state.offset, limit, signal:state.controller.signal});
+        if (disposed || request !== state.request) return;
+        state.items = Array.isArray(result?.items) ? result.items : []; state.hasMore = result?.hasMore === true;
+        state.selected = state.items.find(item => config.key(item) === preferredKey) || null;
+        state.loading = false;
+        if (!state.items.length && state.offset > 0) { state.offset = Math.max(0, state.offset - limit); return load(); }
+        render();
+      } catch (error) {
+        if (disposed || request !== state.request) return;
+        state.loading = false; state.hasMore = false; render();
+        find("[role=status]").textContent = String(config.describeError?.(error) || error?.message || error);
+      }
+    }
+    async function perform(action) {
+      if (!action || !state.selected || state.loading || state.busy || action.enabled?.(state.selected) === false) return;
+      state.busy = true; syncActions();
+      let result;
+      try { result = await config.onAction(action.id, state.selected); }
+      catch (error) { if (!disposed) find("[role=status]").textContent = String(config.describeError?.(error) || error?.message || error); }
+      finally { state.busy = false; if (!disposed) { syncActions(); if (result?.refresh) void load(); } }
+    }
+    function close() { if (state.busy) return; ++state.request; state.controller?.abort(); clearTimeout(timer); windowManager.hide(win.id); config.onClose?.(); }
+    search.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => { state.offset = 0; void load(); }, 250); });
+    search.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); clearTimeout(timer); state.offset = 0; void load(); } });
+    find("[data-collection-refresh]").addEventListener("click", () => { void load(); });
+    for (const direction of ["previous", "next"]) find(`[data-collection-page="${direction}"]`).addEventListener("click", () => {
+      if (state.busy || state.loading || (direction === "next" ? !state.hasMore : state.offset === 0)) return;
+      state.offset += direction === "next" ? limit : -limit; void load();
+    });
+    find("[data-collection-close]").addEventListener("click", close);
+    find('[data-win-action="close"]').addEventListener("click", close);
+    win.addEventListener("keydown", event => { if (event.key === "Escape" && !state.busy) { event.preventDefault(); close(); } });
+    refreshTranslations();
+    return { element:win, open() { windowManager.show(win.id); void load(); search.focus(); }, reload:load, refreshTranslations,
+      destroy() { disposed = true; ++state.request; state.controller?.abort(); clearTimeout(timer); windowManager.hide(win.id); windowManager.unregisterWindow?.(win.id); } };
+  }
+
   const api = Object.freeze({
+    createCollectionWindow,
     createFileManager,
     ensureFileManagerStyles,
     closeContextMenu,

@@ -1887,6 +1887,9 @@
     "Collected since": "数据起始时间",
     "Previous period": "上一时段",
     "Error sessions": "出现错误的会话",
-    "Authenticated session": "已认证会话"
+    "Authenticated session": "已认证会话",
+    "Search": "搜索",
+    "Created": "创建时间",
+    "Status": "状态"
   });
 })();

@@ -1887,6 +1887,9 @@
     "Collected since": "البيانات متاحة منذ",
     "Previous period": "الفترة السابقة",
     "Error sessions": "جلسات بها أخطاء",
-    "Authenticated session": "جلسة موثقة"
+    "Authenticated session": "جلسة موثقة",
+    "Search": "بحث",
+    "Created": "تاريخ الإنشاء",
+    "Status": "الحالة"
   });
 })();

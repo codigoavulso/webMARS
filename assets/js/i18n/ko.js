@@ -1887,6 +1887,9 @@
     "Collected since": "데이터 시작일",
     "Previous period": "이전 기간",
     "Error sessions": "오류가 있는 세션",
-    "Authenticated session": "인증된 세션"
+    "Authenticated session": "인증된 세션",
+    "Search": "검색",
+    "Created": "생성일",
+    "Status": "상태"
   });
 })();

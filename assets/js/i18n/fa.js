@@ -1887,6 +1887,9 @@
     "Collected since": "داده‌ها از تاریخ",
     "Previous period": "دوره پیشین",
     "Error sessions": "نشست‌های دارای خطا",
-    "Authenticated session": "نشست احراز هویت شده"
+    "Authenticated session": "نشست احراز هویت شده",
+    "Search": "جستجو",
+    "Created": "ایجادشده",
+    "Status": "وضعیت"
   });
 })();

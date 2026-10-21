@@ -4652,6 +4652,12 @@ function createDialogSystem(windowManager, desktop, options = {}) {
           const googleIcon = field.icon === "google";
           return `<button class="tool-btn${googleIcon ? " dialog-google-button" : ""}" type="button" data-dialog-action="${escapeHtml(String(field.name))}">${googleIcon ? '<img src="assets/google-sign-in.png" width="20" height="20" alt="" aria-hidden="true">' : ""}<span>${label}</span></button>`;
         }
+        if (type === "textarea") {
+          return `<label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
+            <span class="dialog-form-label">${label}</span>
+            <textarea id="${fieldId}" data-field-name="${escapeHtml(String(field.name))}" class="dialog-form-control" rows="3">${escapeHtml(String(value ?? ""))}</textarea>
+          </label>${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}`;
+        }
         const min = Number.isFinite(field?.min) ? ` min="${field.min}"` : "";
         const max = Number.isFinite(field?.max) ? ` max="${field.max}"` : "";
         const step = Number.isFinite(field?.step) ? ` step="${field.step}"` : "";
@@ -7415,6 +7421,7 @@ function injectRuntimeStyles() {
       min-height: 0;
       overflow: auto;
       display: grid;
+      align-content: start;
       gap: 10px;
       padding-right: 2px;
     }
@@ -7424,6 +7431,7 @@ function injectRuntimeStyles() {
       background: var(--surface);
       padding: 8px;
       display: grid;
+      align-content: start;
       gap: 8px;
     }
 
@@ -7447,6 +7455,7 @@ function injectRuntimeStyles() {
 
     .dialog-form-fields {
       display: grid;
+      align-content: start;
       gap: 8px;
     }
 

@@ -177,7 +177,7 @@ The current bootstrap order is:
 | `05-layout-config.js` | Shared compact and stacked layout breakpoints through `WebMarsLayoutConfig`. |
 | `09-ui-translation.js` | Static DOM-tree translation helper used by the main UI and auxiliary windows. |
 | `10-ui.js` | File-kind classification, application layout, editor and execution panes, window management, dialogs and UI rendering helpers. |
-| `11-ui-file-manager.js` | Project-tree rendering, folder and file operations, drag-and-drop imports and selection workflows. |
+| `11-ui-file-manager.js` | Shared file-manager chrome, project-tree rendering, folder/file operations, drag-and-drop imports and the collection browser used by Cloud projects and publications. |
 | `12-ui-tool-manager.js` | Tool manifest loading, script registration, tool-window hosting and ordered delivery of runtime snapshots. |
 | `13-ui-menu-system.js` | Menu definitions, popup/submenu behavior, checks, shortcuts and command dispatch. |
 | `15-help-system.js` | Localized in-app help, About window and internal document viewer. |

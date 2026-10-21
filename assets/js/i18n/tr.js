@@ -1887,6 +1887,9 @@
     "Collected since": "Verilerin başlangıcı",
     "Previous period": "Önceki dönem",
     "Error sessions": "Hatalı oturumlar",
-    "Authenticated session": "Kimliği doğrulanmış oturum"
+    "Authenticated session": "Kimliği doğrulanmış oturum",
+    "Search": "Ara",
+    "Created": "Oluşturulma",
+    "Status": "Durum"
   });
 })();

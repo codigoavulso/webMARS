@@ -687,86 +687,6 @@ th {
     grid-template-columns: 1fr;
   }
 }
-/* Public library browser: compact details view with bounded server pages. */
-.public-library-window .public-library-browser {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
-  gap: 8px;
-  min-height: 0;
-  padding: 10px;
-  background: var(--surface-sunken);
-}
-.public-library-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.public-library-search label { white-space: nowrap; }
-.public-library-search input { flex: 1; min-width: 0; }
-.public-library-table-wrap {
-  min-height: 0;
-  overflow: auto;
-  border: 1px solid var(--line);
-  background: var(--surface);
-}
-.public-library-table {
-  width: 100%;
-  min-width: 800px;
-  border-collapse: collapse;
-  table-layout: fixed;
-  text-align: start;
-}
-.public-library-table th,
-.public-library-table td {
-  padding: 6px 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  border-bottom: 1px solid var(--line-soft);
-}
-.public-library-table th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--surface-strong);
-  color: var(--text-heading);
-}
-.public-library-table th:first-child { width: 23%; }
-.public-library-table th:nth-child(2) { width: 16%; }
-.public-library-table th:nth-child(3) { width: 14%; }
-.public-library-table th:nth-child(4) { width: 12%; }
-.public-library-table th:nth-child(5) { width: 13%; }
-.public-library-table th:nth-child(6) { width: 8%; }
-.public-library-table th:nth-child(7) { width: 14%; }
-.public-library-table tbody tr { cursor: pointer; }
-.public-library-table tbody tr:hover { background: var(--surface-muted); }
-.public-library-table tbody tr[aria-selected="true"] { background: var(--accent-soft); }
-.public-library-table tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.public-library-empty { margin: 14px; color: var(--text-muted); }
-.public-library-details {
-  display: grid;
-  gap: 4px;
-  min-height: 48px;
-  max-height: 90px;
-  overflow: auto;
-  padding: 7px 9px;
-  border: 1px solid var(--line-soft);
-  background: var(--surface);
-}
-.public-library-details span:last-child { color: var(--text-muted); }
-.public-library-footer,
-.public-library-footer-actions {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.public-library-footer { justify-content: space-between; }
-.public-library-footer-actions { flex-wrap: wrap; justify-content: flex-end; }
-@media (max-width: 700px) {
-  .public-library-search { flex-wrap: wrap; }
-  .public-library-search label { width: 100%; }
-}
-
 /* Public statistics dashboard lives inside the existing desktop window manager. */
 .tool-window.usage-stats-window .window-content {
   display: block;
@@ -914,3 +834,26 @@ th {
 @media (max-width: 700px) { .usage-stats-tabs .tool-btn { flex: 1 1 auto; } }
 
 .usage-stats-population-caption { align-self: center; font-size: 11px; color: var(--text-muted); margin-inline-end: 4px; }
+
+/* Collection windows use the file manager's buttons, spacing and selection. */
+.tool-window .collection-browser { display:grid; grid-template-rows:auto auto auto minmax(100px,1fr) auto auto; gap:8px; padding:10px; background:var(--surface-sunken); color:var(--text); min-height:0; }
+.collection-caption { margin:0; color:var(--text-muted); font-size:11px; }
+.collection-toolbar { display:flex; gap:8px; align-items:center; }
+.collection-toolbar .fm-search { display:flex; flex:1; min-width:0; margin:0; }
+.tool-window .collection-toolbar input { width:100%; min-width:0; background:transparent; border:0; box-shadow:none; }
+.collection-table-wrap { overflow:auto; min-height:0; border:1px solid var(--line-soft); background:var(--surface); }
+.collection-table { width:100%; border-collapse:collapse; text-align:start; font-size:11px; }
+.collection-table th { position:sticky; top:0; background:var(--surface-strong); color:var(--text-heading); z-index:1; white-space:nowrap; }
+.collection-table th,.collection-table td { padding:6px 9px; border-bottom:1px solid var(--line-soft); text-align:start; }
+.collection-table td { max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.collection-table tbody tr { cursor:pointer; }
+.collection-table tbody tr:hover { background:var(--surface-muted); }
+.collection-table tbody tr[aria-selected="true"] { background:var(--accent-soft); color:var(--text); }
+.collection-table tbody tr:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+.collection-empty { padding:12px; margin:0; color:var(--text-muted); font-size:11px; }
+.collection-details { padding:7px 9px; border:1px solid var(--line-soft); background:var(--surface); font-size:11px; line-height:1.5; white-space:pre-line; max-height:75px; overflow:auto; }
+.collection-actions,.collection-footer,.collection-footer>div { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.collection-footer { justify-content:space-between; padding-top:6px; border-top:1px solid var(--line-soft); font-size:11px; color:var(--text-muted); }
+.collection-page { min-width:24px; text-align:center; }
+.collection-browser [hidden] { display:none !important; }
+@media(max-width:800px) { .tool-window .collection-browser { padding:7px; } .collection-table th,.collection-table td { padding:9px; } .collection-actions .fm-btn { min-height:32px; } .collection-footer { align-items:start; } .collection-footer>div { justify-content:flex-end; flex:1; } }

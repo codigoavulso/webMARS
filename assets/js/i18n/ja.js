@@ -1887,6 +1887,9 @@
     "Collected since": "データの開始日時",
     "Previous period": "前の期間",
     "Error sessions": "エラーのあるセッション",
-    "Authenticated session": "認証済みセッション"
+    "Authenticated session": "認証済みセッション",
+    "Search": "検索",
+    "Created": "作成日時",
+    "Status": "状態"
   });
 })();

@@ -200,6 +200,7 @@ test("owners can edit visibility, restore archives and preserve pinned access", 
   assert.match(runtime, /Restore this publication before adding a revision/);
   assert.match(runtime, /`\/publications\/mine\?\$\{params\}`/);
   assert.match(runtime, /payload\?\.hasMore === true/);
-  assert.match(runtime, /selected === "__previous__"/);
-  assert.match(runtime, /selected === "__next__"/);
+  assert.match(runtime, /createCollectionWindow/);
+  assert.match(runtime, /id:"copy-latest"/);
+  assert.match(runtime, /id:"archive"/);
 });

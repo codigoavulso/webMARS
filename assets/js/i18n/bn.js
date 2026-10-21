@@ -1887,6 +1887,9 @@
     "Collected since": "তথ্য উপলব্ধ হয়েছে",
     "Previous period": "আগের সময়কাল",
     "Error sessions": "ত্রুটিযুক্ত সেশন",
-    "Authenticated session": "প্রমাণীকৃত সেশন"
+    "Authenticated session": "প্রমাণীকৃত সেশন",
+    "Search": "খুঁজুন",
+    "Created": "তৈরি হয়েছে",
+    "Status": "অবস্থা"
   });
 })();

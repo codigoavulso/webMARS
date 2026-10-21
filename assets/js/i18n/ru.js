@@ -1887,6 +1887,9 @@
     "Collected since": "Данные доступны с",
     "Previous period": "Предыдущий период",
     "Error sessions": "Сеансы с ошибками",
-    "Authenticated session": "Авторизованный сеанс"
+    "Authenticated session": "Авторизованный сеанс",
+    "Search": "Поиск",
+    "Created": "Создано",
+    "Status": "Состояние"
   });
 })();

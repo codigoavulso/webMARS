@@ -1887,6 +1887,9 @@
     "Collected since": "डेटा उपलब्ध है",
     "Previous period": "पिछली अवधि",
     "Error sessions": "त्रुटि वाले सत्र",
-    "Authenticated session": "प्रमाणित सत्र"
+    "Authenticated session": "प्रमाणित सत्र",
+    "Search": "खोजें",
+    "Created": "निर्मित",
+    "Status": "स्थिति"
   });
 })();

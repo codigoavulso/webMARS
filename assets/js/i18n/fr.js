@@ -1887,6 +1887,9 @@
     "Collected since": "Données disponibles depuis",
     "Previous period": "Période précédente",
     "Error sessions": "Sessions avec erreurs",
-    "Authenticated session": "Session authentifiée"
+    "Authenticated session": "Session authentifiée",
+    "Search": "Rechercher",
+    "Created": "Créé",
+    "Status": "État"
   });
 })();

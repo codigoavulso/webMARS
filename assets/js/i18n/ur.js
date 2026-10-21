@@ -1887,6 +1887,9 @@
     "Collected since": "ڈیٹا دستیاب ہونے کی تاریخ",
     "Previous period": "پچھلی مدت",
     "Error sessions": "خرابی والے سیشن",
-    "Authenticated session": "تصدیق شدہ سیشن"
+    "Authenticated session": "تصدیق شدہ سیشن",
+    "Search": "تلاش",
+    "Created": "تخلیق",
+    "Status": "حالت"
   });
 })();

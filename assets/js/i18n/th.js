@@ -1887,6 +1887,9 @@
     "Collected since": "มีข้อมูลตั้งแต่",
     "Previous period": "ช่วงเวลาก่อนหน้า",
     "Error sessions": "เซสชันที่มีข้อผิดพลาด",
-    "Authenticated session": "เซสชันที่ยืนยันตัวตน"
+    "Authenticated session": "เซสชันที่ยืนยันตัวตน",
+    "Search": "ค้นหา",
+    "Created": "สร้างเมื่อ",
+    "Status": "สถานะ"
   });
 })();

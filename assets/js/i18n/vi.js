@@ -1887,6 +1887,9 @@
     "Collected since": "Dữ liệu có từ",
     "Previous period": "Giai đoạn trước",
     "Error sessions": "Phiên có lỗi",
-    "Authenticated session": "Phiên đã xác thực"
+    "Authenticated session": "Phiên đã xác thực",
+    "Search": "Tìm kiếm",
+    "Created": "Đã tạo",
+    "Status": "Trạng thái"
   });
 })();

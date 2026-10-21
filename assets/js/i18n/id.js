@@ -1887,6 +1887,9 @@
     "Collected since": "Data tersedia sejak",
     "Previous period": "Periode sebelumnya",
     "Error sessions": "Sesi dengan kesalahan",
-    "Authenticated session": "Sesi terautentikasi"
+    "Authenticated session": "Sesi terautentikasi",
+    "Search": "Cari",
+    "Created": "Dibuat",
+    "Status": "Keadaan"
   });
 })();
