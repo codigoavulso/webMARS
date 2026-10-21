@@ -6,6 +6,7 @@ from contextlib import closing
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import math
 import hashlib
 from pathlib import Path
 import re
@@ -182,13 +183,17 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
     with closing(sqlite3.connect(uri, uri=True)) as db:
         db.row_factory = sqlite3.Row
         rows = db.execute("SELECT * FROM events WHERE received >= ? AND received <= ? ORDER BY received", (start, now)).fetchall()
+        collected_from = db.execute("SELECT MIN(received) FROM events").fetchone()[0]
+        previous_rows = db.execute("SELECT * FROM events WHERE received >= ? AND received < ? ORDER BY received", (start-duration, start)).fetchall()
         earlier = {row[0] for row in db.execute("SELECT DISTINCT session FROM events WHERE received < ?", (start,))}
         interaction_baseline = dict(db.execute(
             "SELECT session, MAX(seconds) FROM events WHERE received < ? AND event != 'heartbeat' GROUP BY session", (start,)))
         presence_baseline = dict(db.execute(
             "SELECT session, MAX(seconds) FROM events WHERE received < ? AND event = 'heartbeat' GROUP BY session", (start,)))
 
+    all_rows = rows
     rows, population = select_audience(rows, audience)
+    previous_rows, _ = select_audience(previous_rows, audience)
     classes = classify_sessions(rows)
     buckets = [{"from": start + index * step, "through": min(now, start + (index + 1) * step),
                 "sessions": set(), "new_sessions": 0, "events": 0, "interaction_seconds": 0,
@@ -213,8 +218,9 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
             if sid not in earlier:
                 bucket["new_sessions"] += 1
             for name, value in (("source", row["source"]), ("returning", row["return_bucket"]),
-                                ("device", row["device"]), ("language", row["language"])):
+                                ("device", row["device"])):
                 facets[name][value].add(sid)
+        sessions[sid]["language"] = row["language"]
         sessions[sid]["events"].add(row["event"])
         facets["surface"][row["surface"]].add(sid)
         facets["audience"][classes[sid]].add(sid)
@@ -247,11 +253,17 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
             return {"median_seconds": None, "p90_seconds": None, "max_seconds": None}
         mid = len(values) // 2
         median = values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2
-        return {"median_seconds": median, "p90_seconds": values[int((len(values) - 1) * .9)], "max_seconds": values[-1]}
+        return {"median_seconds": median, "p90_seconds": values[max(0, math.ceil(len(values) * .9) - 1)], "max_seconds": values[-1]}
 
+    for sid, item in sessions.items():
+        facets["language"][item["language"]].add(sid)
     event_counts = Counter(row["event"] for row in rows)
     ready = {sid for sid, item in sessions.items() if "app_ready" in item["events"]}
     activated = sum("run_success" in sessions[sid]["events"] for sid in ready)
+    # Historical active_time started at page load. It is not evidence of input.
+    engaged = {row["session"] for row in rows if row["interaction"] == "trusted"}
+    successful = {sid for sid, item in sessions.items() if "run_success" in item["events"]}
+    errors = {sid for sid, item in sessions.items() if item["events"] & {"run_error", "assemble_error", "compile_error"}}
     iso = lambda timestamp: datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
     web_traffic = None
     if log_root:
@@ -267,8 +279,17 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
         "audience": audience, "classification": {"sessions_by_class": dict(population),
             "note": "Human/automation are probable signals, not identity proof. Unknown includes historical events. Internal/test are explicit markers; unmarked operator use cannot be inferred."},
         "web_traffic": web_traffic,
+        "quality": {"collected_from": iso(collected_from) if collected_from is not None else None,
+                    "classified_sessions": sum(value for key, value in population.items() if key != "unknown"),
+                    "total_sessions": sum(population.values()),
+                    "legacy_sessions": len({r["session"] for r in all_rows if r["context"] == "legacy"})},
+        "comparison": {"complete": collected_from is not None and collected_from <= start-duration,
+                       "from": iso(start-duration), "through": iso(start),
+                       "sessions": len({r["session"] for r in previous_rows})},
         "totals": {
             "sessions": len(sessions), "new_sessions": len(sessions.keys() - earlier),
+            "interacting_sessions": len(engaged), "successful_sessions": len(successful), "error_sessions": len(errors),
+            "returning_sessions": len({r["session"] for r in rows if r["return_bucket"] in {"days_1_6", "days_7_30", "older"}}),
             "events": len(rows), "interaction_seconds": sum(interaction_by_session.values()),
             "presence_seconds": sum(presence_by_session.values()), "recent_presence_sessions": len(recent_presence),
             "ready_sessions": len(ready), "ready_with_successful_run": activated,
@@ -353,7 +374,7 @@ def report(database, days=30, now=None, audience="all"):
     def duration_summary(values):
         values = sorted(values)
         return {"sessions": len(values), "median_seconds": median(values),
-                "p90_seconds": values[int((len(values) - 1) * .9)] if values else None,
+                "p90_seconds": values[max(0, math.ceil(len(values) * .9) - 1)] if values else None,
                 "max_seconds": max(values) if values else None,
                 "buckets": {name: sum(lower <= value < upper for value in values)
                             for name, lower, upper in [("under_1m", 0, 60), ("1m_to_5m", 60, 300),

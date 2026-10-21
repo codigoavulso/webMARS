@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "Cloud इस फ़िल्टर या इंस्टॉलेशन के लिए गतिविधि अनुपलब्ध है।",
     "Merge Cloud accounts": "Cloud खाते मिलाएँ",
     "Merge accounts": "खाते मिलाएँ",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} को {target} में मिलाएँ? {target} और उसका पासवर्ड सुरक्षित रहेगा। {projects} प्रोजेक्ट और {publications} प्रकाशन स्थानांतरित होंगे। समान नाम वाले प्रोजेक्ट अलग रहेंगे। दोनों प्रवेश विधियाँ इसी खाते का उपयोग करेंगी।"
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} को {target} में मिलाएँ? {target} और उसका पासवर्ड सुरक्षित रहेगा। {projects} प्रोजेक्ट और {publications} प्रकाशन स्थानांतरित होंगे। समान नाम वाले प्रोजेक्ट अलग रहेंगे। दोनों प्रवेश विधियाँ इसी खाते का उपयोग करेंगी।",
+    "Sessions with interaction": "सक्रिय सहभागिता वाले सत्र",
+    "Returning sessions": "अगले दिनों में वापसी",
+    "Collected since": "डेटा उपलब्ध है",
+    "Previous period": "पिछली अवधि",
+    "Error sessions": "त्रुटि वाले सत्र",
+    "Authenticated session": "प्रमाणित सत्र"
   });
 })();

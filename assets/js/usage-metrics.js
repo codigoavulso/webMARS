@@ -16,6 +16,7 @@
   let lastTick = Date.now();
   let lastInteraction = lastTick;
   let lastSentSeconds = 0;
+  let lastPresenceSeconds = 0;
   const usedResources = new Set();
   let endpoint = null;
   try {
@@ -74,6 +75,7 @@
     }
     session.touched = now;
     session.seconds = Math.max(0, Math.min(86400, Number(session.seconds) || 0));
+    session.presenceSeconds = Math.max(0, Math.min(86400, Number(session.presenceSeconds) || 0));
     write(tab, SESSION_KEY, JSON.stringify(session));
     return session;
   }
@@ -89,8 +91,11 @@
       // Rank resource adoption once per visit; repeated stepping must not
       // create one request per instruction or dominate the statistics.
       const key = `${event}:${detail}`;
-      if (usedResources.has(key)) return false;
+      if (usedResources.has(key) || (Array.isArray(current.resources) && current.resources.includes(key))) return false;
       usedResources.add(key);
+      current.resources = [...usedResources, ...(Array.isArray(current.resources) ? current.resources : [])]
+        .filter((value, index, all) => all.indexOf(value) === index).slice(0, 40);
+      write(tab, SESSION_KEY, JSON.stringify(current));
     } else if (["login_start", "login_success", "login_error", "account_created", "account_linked"].includes(event)) {
       if (!["password", "google", "facebook"].includes(detail)) return false;
       safeDetail = detail;
@@ -120,7 +125,14 @@
   }
   function track(event, detail = "none") { return send(event, detail); }
   function trackHeartbeat(seconds) {
-    return Number.isInteger(seconds) && seconds > 0 ? send("heartbeat", "none", Math.min(31536000, seconds)) : false;
+    if (!allowed() || !Number.isInteger(seconds) || seconds <= lastPresenceSeconds) return false;
+    const current = getSession();
+    if (!current) return false;
+    const increment = seconds - lastPresenceSeconds;
+    lastPresenceSeconds = seconds;
+    current.presenceSeconds = Math.min(86400, current.presenceSeconds + increment);
+    write(tab, SESSION_KEY, JSON.stringify(current));
+    return send("heartbeat", "none", current.presenceSeconds);
   }
   function getSessionId() {
     try { return getSession()?.id || null; } catch { return null; }
@@ -136,7 +148,7 @@
     const now = Date.now();
     const elapsed = Math.max(0, Math.min(5000, now - lastTick));
     lastTick = now;
-    if (!allowed() || document.visibilityState !== "visible" || !document.hasFocus() || now - lastInteraction > 60000) return;
+    if (!allowed() || !trustedInteraction || document.visibilityState !== "visible" || !document.hasFocus() || now - lastInteraction > 60000) return;
     let current;
     try { current = getSession(); } catch { return; }
     if (!current) return;
@@ -146,6 +158,7 @@
   }
   function setContext(value) {
     if (!["public", "internal"].includes(value) || config?.context === "test") return false;
+    if (context === value) return true;
     context = value;
     write(local, CONTEXT_KEY, value);
     try { document.cookie = `webmars_metrics_context=${value}; Path=/; SameSite=Lax; Max-Age=31536000${scope.location.protocol === "https:" ? "; Secure" : ""}`; } catch {}
@@ -157,12 +170,15 @@
     return true;
   }
   scope.WebMarsUsage = Object.freeze({ track, trackHeartbeat, getSessionId, exampleOpened, getContext: () => context, setContext });
+  scope.addEventListener("storage", (event) => {
+    if (event.key === CONTEXT_KEY && ["public", "internal"].includes(event.newValue)) setContext(event.newValue);
+  });
   function init() {
     if (!endpoint) return;
     track("page_view");
     for (const name of ["pointerdown", "keydown", "scroll", "focus"]) {
       scope.addEventListener(name, (event) => {
-        lastInteraction = Date.now();
+        if (event.isTrusted === true) lastInteraction = Date.now();
         if (!trustedInteraction && event.isTrusted === true && ["pointerdown", "keydown"].includes(name)) {
           trustedInteraction = true;
           track("interaction");

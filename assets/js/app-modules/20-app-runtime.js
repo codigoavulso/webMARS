@@ -9487,7 +9487,7 @@ async function openWelcomeDialog() {
 let usageStatisticsWindow = null;
 function openUsageStatistics() {
   if (!usageStatisticsWindow) {
-    usageStatisticsWindow = usageStatisticsModule.createUsageStatisticsWindow(refs, windowManager, translateText);
+    usageStatisticsWindow = usageStatisticsModule.createUsageStatisticsWindow(refs, windowManager, translateText, () => toolManager.getTools());
   }
   usageStatisticsWindow.open();
 }

@@ -7499,10 +7499,10 @@ function injectRuntimeStyles() {
       min-height: 30px;
       max-width: 100%;
       padding: 4px 12px;
-      border: 1px solid #747775;
+      border: 1px solid var(--google-button-border);
       border-radius: 4px;
-      background: #fff;
-      color: #1f1f1f;
+      background: var(--google-button-bg);
+      color: var(--google-button-text);
       font: 500 12px/20px Arial, sans-serif;
     }
 
@@ -7512,8 +7512,8 @@ function injectRuntimeStyles() {
     }
 
     .tool-window .tool-btn.dialog-google-button:hover:not(:disabled) {
-      background: #f2f2f2;
-      color: #1f1f1f;
+      background: var(--google-button-hover);
+      color: var(--google-button-text);
     }
 
     .tool-window .tool-btn.dialog-google-button:focus-visible {

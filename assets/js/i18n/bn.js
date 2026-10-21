@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "Cloud কার্যকলাপ এই ফিল্টার বা ইনস্টলেশনের জন্য অনুপলব্ধ।",
     "Merge Cloud accounts": "Cloud অ্যাকাউন্ট একত্র করুন",
     "Merge accounts": "অ্যাকাউন্ট একত্র করুন",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} কে {target}-এ একত্র করবেন? {target} ও তার পাসওয়ার্ড থাকবে। {projects}টি প্রকল্প ও {publications}টি প্রকাশনা স্থানান্তর হবে। একই নামের প্রকল্প আলাদা থাকবে। প্রবেশের দুটি পদ্ধতিই এই অ্যাকাউন্ট ব্যবহার করবে।"
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} কে {target}-এ একত্র করবেন? {target} ও তার পাসওয়ার্ড থাকবে। {projects}টি প্রকল্প ও {publications}টি প্রকাশনা স্থানান্তর হবে। একই নামের প্রকল্প আলাদা থাকবে। প্রবেশের দুটি পদ্ধতিই এই অ্যাকাউন্ট ব্যবহার করবে।",
+    "Sessions with interaction": "মিথস্ক্রিয়াযুক্ত সেশন",
+    "Returning sessions": "পরের দিনে ফিরে আসা",
+    "Collected since": "তথ্য উপলব্ধ হয়েছে",
+    "Previous period": "আগের সময়কাল",
+    "Error sessions": "ত্রুটিযুক্ত সেশন",
+    "Authenticated session": "প্রমাণীকৃত সেশন"
   });
 })();

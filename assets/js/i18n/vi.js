@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "Hoạt động Cloud không khả dụng cho bộ lọc hoặc cài đặt này.",
     "Merge Cloud accounts": "Hợp nhất tài khoản Cloud",
     "Merge accounts": "Hợp nhất tài khoản",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Hợp nhất {source} vào {target}? Giữ {target} và mật khẩu. Chuyển {projects} dự án và {publications} bài đăng. Các dự án trùng tên được giữ riêng. Cả hai cách đăng nhập sẽ dùng tài khoản này."
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Hợp nhất {source} vào {target}? Giữ {target} và mật khẩu. Chuyển {projects} dự án và {publications} bài đăng. Các dự án trùng tên được giữ riêng. Cả hai cách đăng nhập sẽ dùng tài khoản này.",
+    "Sessions with interaction": "Phiên có tương tác",
+    "Returning sessions": "Trở lại vào ngày sau",
+    "Collected since": "Dữ liệu có từ",
+    "Previous period": "Giai đoạn trước",
+    "Error sessions": "Phiên có lỗi",
+    "Authenticated session": "Phiên đã xác thực"
   });
 })();

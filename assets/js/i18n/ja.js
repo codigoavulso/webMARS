@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "Cloud アクティビティは、このフィルタまたはインストールでは使用できません。",
     "Merge Cloud accounts": "Cloud アカウントを統合",
     "Merge accounts": "アカウントを統合",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} を {target} に統合しますか？{target} とそのパスワードは維持されます。プロジェクト {projects} 件と公開作品 {publications} 件を移行します。同名のプロジェクトは別々に保持されます。両方のログイン方法でこのアカウントを使用します。"
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} を {target} に統合しますか？{target} とそのパスワードは維持されます。プロジェクト {projects} 件と公開作品 {publications} 件を移行します。同名のプロジェクトは別々に保持されます。両方のログイン方法でこのアカウントを使用します。",
+    "Sessions with interaction": "操作のあるセッション",
+    "Returning sessions": "後日の再訪",
+    "Collected since": "データの開始日時",
+    "Previous period": "前の期間",
+    "Error sessions": "エラーのあるセッション",
+    "Authenticated session": "認証済みセッション"
   });
 })();

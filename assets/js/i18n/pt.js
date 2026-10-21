@@ -1890,6 +1890,12 @@
     "[warn] Restore this publication before adding a revision.": "[warn] Restaure esta publicação antes de adicionar uma revisão.",
     "Merge Cloud accounts": "Fundir contas Cloud",
     "Merge accounts": "Fundir contas",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Fundir {source} em {target}? Mantém-se {target} e a sua palavra-passe. Serão transferidos {projects} projeto(s) e {publications} publicação(ões). Projetos com o mesmo nome ficam separados. As duas formas de entrada passam a usar esta conta."
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Fundir {source} em {target}? Mantém-se {target} e a sua palavra-passe. Serão transferidos {projects} projeto(s) e {publications} publicação(ões). Projetos com o mesmo nome ficam separados. As duas formas de entrada passam a usar esta conta.",
+    "Sessions with interaction": "Sessões com interação",
+    "Returning sessions": "Regressos noutros dias",
+    "Collected since": "Dados disponíveis desde",
+    "Previous period": "Período anterior",
+    "Error sessions": "Sessões com erros",
+    "Authenticated session": "Sessão autenticada"
   });
 })();

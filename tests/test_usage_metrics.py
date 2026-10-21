@@ -23,6 +23,28 @@ def event(**changes):
 
 
 class MetricsTests(unittest.TestCase):
+    def test_small_sample_percentiles_engagement_and_coverage_are_honest(self):
+        now = 1788600000
+        metrics.record(self.database, event(session="c" * 32), now=now - 8000)
+        metrics.record(self.database, event(session="d" * 32), now=now - 4000)
+        metrics.record(self.database, event(event="page_view", language="en"), now=now - 200)
+        evidence = dict(v=2, context="public", automation="none", interaction="trusted", visit="none")
+        metrics.record(self.database, event(event="active_time", seconds=129, language="pt", **evidence), now=now - 100)
+        metrics.record(self.database, event(session="b" * 32, event="active_time", seconds=142, returning="days_1_6", **evidence), now=now - 80)
+        metrics.record(self.database, event(session="b" * 32, event="run_success", seconds=142), now=now - 60)
+        result = metrics.public_statistics(self.database, now=now)
+        totals = result["totals"]
+        self.assertEqual(totals["interaction_distribution"]["median_seconds"], 135.5)
+        self.assertEqual(totals["interaction_distribution"]["p90_seconds"], 142)
+        self.assertEqual(totals["interacting_sessions"], 2)
+        self.assertEqual(totals["successful_sessions"], 1)
+        self.assertEqual(totals["returning_sessions"], 1)
+        self.assertEqual(result["breakdowns"]["language"], [{"key":"pt", "sessions":2}])
+        self.assertTrue(result["comparison"]["complete"])
+        self.assertEqual(result["comparison"]["sessions"], 1)
+        self.assertFalse(metrics.public_statistics(self.database, window="30d", now=now)["comparison"]["complete"])
+        self.assertEqual(result["quality"]["legacy_sessions"], 2)
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.database = str(Path(self.temporary.name) / "events.sqlite3")

@@ -52,3 +52,10 @@ test("account events accept only provider categories, never emails or account ID
   assert.equal(env.api.track("account_created", "person@example.com"), false);
   assert.equal(env.api.track("account_created", "12345"), false);
 });
+
+test("the internal marker follows changes from another tab", () => {
+  const env = harness();
+  env.emit("storage", {key:"webmars-metrics-context-v1", newValue:"internal"});
+  assert.equal(env.api.getContext(), "internal");
+  assert.equal(env.sent.at(-1).context, "internal");
+});

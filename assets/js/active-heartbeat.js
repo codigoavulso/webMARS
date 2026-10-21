@@ -9,6 +9,7 @@
   let lastPing = lastSample;
   let active = isActive();
   let activeMs = 0;
+  let sentSeconds = 0;
   let running = true;
   // Sampling also bounds time counted across browser/OS suspension. Reading
   // without typing counts; hidden tabs do not. A visible background tab still
@@ -24,14 +25,18 @@
     const time = sample();
     if (!running || !active || time - lastPing < 60000) return;
     lastPing = time;
-    const activeSeconds = Math.min(31536000, Math.floor(activeMs / 1000));
-    if (!activeSeconds) return;
+    flush();
+  }
+  function flush() {
+    const activeSeconds = Math.min(86400, Math.floor(activeMs / 1000));
+    if (activeSeconds <= sentSeconds) return;
+    sentSeconds = activeSeconds;
     try {
       window.WebMarsUsage.trackHeartbeat(activeSeconds);
     } catch { /* A failed metric must never affect the simulator. */ }
   }
-  document.addEventListener("visibilitychange", sample);
-  window.addEventListener("pagehide", () => { sample(); running = false; active = false; });
+  document.addEventListener("visibilitychange", () => { sample(); if (!isActive()) flush(); });
+  window.addEventListener("pagehide", () => { sample(); flush(); running = false; active = false; });
   window.addEventListener("pageshow", () => {
     running = true;
     lastSample = now();

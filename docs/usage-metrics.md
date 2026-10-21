@@ -211,6 +211,37 @@ cross-device retention. Historical events never received cannot be recovered.
 
 ## Retention and hosting
 
+### Collection and dashboard revision (21 October 2026)
+
+Interaction time now requires a trusted pointer/key action: merely opening the
+page no longer starts the interaction clock. Presence is still separate and
+includes reading without typing. Partial presence is flushed when hiding or
+leaving a page, and its cumulative counter survives same-tab reloads. Resource
+adoption is deduplicated across those reloads; it measures visits using a
+resource rather than every click. Internal/public markers propagate to other
+open tabs through the browser storage event. No account identifier is added.
+
+The overview separates app-session classification from web-visit classification,
+including automation visible only in the HTTP logs. Its four primary measures
+are sessions, sessions with interaction, returns on later days, and sessions
+with a successful run. Returning sessions exclude same-day reloads and are not
+unique returning people. Historical v1 interaction time remains estimated and
+unclassified; these changes cannot retrospectively identify human visitors.
+
+The API exposes the earliest retained observation and previous-period session
+counts, with a completeness flag. The dashboard only shows comparisons when the
+whole preceding period is covered, and omits chart buckets preceding the first
+retained record. Completeness does not prove uninterrupted collection or an
+unchanged policy. Compare periods under the same policy before claiming growth.
+P90 uses nearest rank (`ceil(0.9*n)-1`), including small samples. Session language
+uses the latest received value instead of the pre-translation page-load default.
+
+Overview, Resources and Cloud views retain the numerical details, with CSV
+export of aggregate totals, timeline, the filtered resource breakdown and Cloud
+events. Cloud reads and writes are labelled authenticated sessions, not password
+logins; historical default labels are normalized at query time without rewriting
+the stored counters.
+
 Standard-library Python/SQLite listens on loopback port 8766. Systemd isolates
 its private state directory. Records expire after 35 days with hourly pruning.
 No historical data need deleting: `consenting_tab_sessions` is renamed to

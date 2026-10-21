@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "Cloud 이 필터 또는 설치에는 활동을 사용할 수 없습니다.",
     "Merge Cloud accounts": "Cloud 계정 병합",
     "Merge accounts": "계정 병합",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source}을(를) {target}에 병합할까요? {target}과 비밀번호는 유지됩니다. 프로젝트 {projects}개와 게시물 {publications}개를 이전합니다. 이름이 같은 프로젝트는 별도로 보관됩니다. 두 로그인 방법 모두 이 계정을 사용합니다."
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source}을(를) {target}에 병합할까요? {target}과 비밀번호는 유지됩니다. 프로젝트 {projects}개와 게시물 {publications}개를 이전합니다. 이름이 같은 프로젝트는 별도로 보관됩니다. 두 로그인 방법 모두 이 계정을 사용합니다.",
+    "Sessions with interaction": "상호작용한 세션",
+    "Returning sessions": "다른 날의 재방문",
+    "Collected since": "데이터 시작일",
+    "Previous period": "이전 기간",
+    "Error sessions": "오류가 있는 세션",
+    "Authenticated session": "인증된 세션"
   });
 })();

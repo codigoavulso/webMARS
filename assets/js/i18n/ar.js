@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "نشاط Cloud غير متاح لهذا المرشح أو التثبيت.",
     "Merge Cloud accounts": "دمج حسابات Cloud",
     "Merge accounts": "دمج الحسابات",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "دمج {source} في {target}؟ يُحتفظ بحساب {target} وكلمة مروره. يُنقل {projects} مشروع و{publications} منشور. تُحفظ المشاريع ذات الأسماء المتطابقة منفصلة. ستستخدم طريقتا الدخول هذا الحساب."
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "دمج {source} في {target}؟ يُحتفظ بحساب {target} وكلمة مروره. يُنقل {projects} مشروع و{publications} منشور. تُحفظ المشاريع ذات الأسماء المتطابقة منفصلة. ستستخدم طريقتا الدخول هذا الحساب.",
+    "Sessions with interaction": "جلسات تفاعلية",
+    "Returning sessions": "عودة في أيام لاحقة",
+    "Collected since": "البيانات متاحة منذ",
+    "Previous period": "الفترة السابقة",
+    "Error sessions": "جلسات بها أخطاء",
+    "Authenticated session": "جلسة موثقة"
   });
 })();

@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "กิจกรรม Cloud ไม่พร้อมใช้งานสำหรับตัวกรองหรือการติดตั้งนี้",
     "Merge Cloud accounts": "รวมบัญชี Cloud",
     "Merge accounts": "รวมบัญชี",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "รวม {source} เข้ากับ {target} หรือไม่? เก็บ {target} และรหัสผ่านไว้ โอน {projects} โครงการและ {publications} ผลงานเผยแพร่ โครงการชื่อซ้ำจะถูกเก็บแยกกัน วิธีเข้าสู่ระบบทั้งสองจะใช้บัญชีนี้"
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "รวม {source} เข้ากับ {target} หรือไม่? เก็บ {target} และรหัสผ่านไว้ โอน {projects} โครงการและ {publications} ผลงานเผยแพร่ โครงการชื่อซ้ำจะถูกเก็บแยกกัน วิธีเข้าสู่ระบบทั้งสองจะใช้บัญชีนี้",
+    "Sessions with interaction": "เซสชันที่มีการโต้ตอบ",
+    "Returning sessions": "กลับมาในวันถัดไป",
+    "Collected since": "มีข้อมูลตั้งแต่",
+    "Previous period": "ช่วงเวลาก่อนหน้า",
+    "Error sessions": "เซสชันที่มีข้อผิดพลาด",
+    "Authenticated session": "เซสชันที่ยืนยันตัวตน"
   });
 })();

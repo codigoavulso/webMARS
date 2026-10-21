@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "Bu filtre veya kurulum için Cloud etkinliği mevcut değil.",
     "Merge Cloud accounts": "Cloud hesaplarını birleştir",
     "Merge accounts": "Hesapları birleştir",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source}, {target} ile birleştirilsin mi? {target} ve parolası korunur. {projects} proje ve {publications} yayın aktarılır. Aynı adlı projeler ayrı tutulur. Her iki giriş yöntemi bu hesabı kullanır."
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source}, {target} ile birleştirilsin mi? {target} ve parolası korunur. {projects} proje ve {publications} yayın aktarılır. Aynı adlı projeler ayrı tutulur. Her iki giriş yöntemi bu hesabı kullanır.",
+    "Sessions with interaction": "Etkileşimli oturumlar",
+    "Returning sessions": "Sonraki günlerde dönüşler",
+    "Collected since": "Verilerin başlangıcı",
+    "Previous period": "Önceki dönem",
+    "Error sessions": "Hatalı oturumlar",
+    "Authenticated session": "Kimliği doğrulanmış oturum"
   });
 })();

@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "فعالیت Cloud برای این فیلتر یا نصب در دسترس نیست.",
     "Merge Cloud accounts": "ادغام حساب‌های Cloud",
     "Merge accounts": "ادغام حساب‌ها",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "حساب {source} در {target} ادغام شود؟ حساب {target} و گذرواژه آن حفظ می‌شود. {projects} پروژه و {publications} انتشار منتقل می‌شود. پروژه‌های هم‌نام جدا می‌مانند. هر دو روش ورود از این حساب استفاده خواهند کرد."
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "حساب {source} در {target} ادغام شود؟ حساب {target} و گذرواژه آن حفظ می‌شود. {projects} پروژه و {publications} انتشار منتقل می‌شود. پروژه‌های هم‌نام جدا می‌مانند. هر دو روش ورود از این حساب استفاده خواهند کرد.",
+    "Sessions with interaction": "نشست‌های دارای تعامل",
+    "Returning sessions": "بازگشت در روزهای بعد",
+    "Collected since": "داده‌ها از تاریخ",
+    "Previous period": "دوره پیشین",
+    "Error sessions": "نشست‌های دارای خطا",
+    "Authenticated session": "نشست احراز هویت شده"
   });
 })();

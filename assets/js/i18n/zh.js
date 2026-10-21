@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "Cloud 活动对此过滤器或安装不可用。",
     "Merge Cloud accounts": "合并 Cloud 账户",
     "Merge accounts": "合并账户",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "将 {source} 合并到 {target}？保留 {target} 及其密码。转移 {projects} 个项目和 {publications} 个发布内容。同名项目会分别保留。两种登录方式都将使用此账户。"
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "将 {source} 合并到 {target}？保留 {target} 及其密码。转移 {projects} 个项目和 {publications} 个发布内容。同名项目会分别保留。两种登录方式都将使用此账户。",
+    "Sessions with interaction": "有交互的会话",
+    "Returning sessions": "后续日期回访",
+    "Collected since": "数据起始时间",
+    "Previous period": "上一时段",
+    "Error sessions": "出现错误的会话",
+    "Authenticated session": "已认证会话"
   });
 })();

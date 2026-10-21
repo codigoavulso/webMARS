@@ -102,6 +102,27 @@ test("heartbeat events reuse the visit session and carry cumulative seconds", ()
   assert.equal(heartbeat.detail, "none");
 });
 
+test("presence and resource adoption survive reloads without double counting", () => {
+  const first = harness();
+  first.api.trackHeartbeat(60);
+  first.api.track("tool_open", "pipeline-lab");
+  const next = harness({localStorage:first.localStorage, sessionStorage:first.sessionStorage});
+  next.api.trackHeartbeat(20);
+  assert.equal(next.sent.at(-1).body.seconds, 80);
+  assert.equal(next.api.trackHeartbeat(20), false);
+  assert.equal(next.api.track("tool_open", "pipeline-lab"), false);
+});
+
+test("opening a page and synthetic input do not count as interaction time", () => {
+  const env = harness();
+  env.emit("pointerdown", {isTrusted:false});
+  for (let i=0; i<12; i++) env.advance(5000);
+  assert.equal(env.sent.some(e=>e.body.event==="active_time"),false);
+  env.emit("pointerdown", {isTrusted:true});
+  for (let i=0; i<6; i++) env.advance(5000);
+  assert.equal(env.sent.at(-1).body.seconds,30);
+});
+
 test("resource adoption accepts shipped IDs and deduplicates rapid repeated actions", async () => {
   const env = harness();
   const manifest = JSON.parse(await readFile(new URL("../tools/tools.json", import.meta.url), "utf8"));
@@ -123,6 +144,7 @@ test("resource adoption accepts shipped IDs and deduplicates rapid repeated acti
 
 test("active time excludes hidden, unfocused, idle pages and long timer suspension", () => {
   const env = harness();
+  env.emit("pointerdown", {isTrusted: true});
   for (let i = 0; i < 6; i++) env.advance(5000);
   assert.equal(env.sent.at(-1).body.event, "active_time");
   assert.equal(env.sent.at(-1).body.seconds, 30);
@@ -135,7 +157,7 @@ test("active time excludes hidden, unfocused, idle pages and long timer suspensi
   env.advance(120000);
   env.api.track("run_success");
   assert.equal(env.sent.at(-1).body.seconds, 30);
-  env.emit("keydown");
+  env.emit("keydown", {isTrusted: true});
   env.advance(5000);
   env.emit("pagehide");
   assert.equal(env.sent.at(-1).body.seconds, 35);

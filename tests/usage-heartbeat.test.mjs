@@ -74,11 +74,12 @@ test("hidden pages do not accrue active time; visible background tabs continue",
   env.document.visibilityState = "hidden";
   env.emit("visibilitychange");
   env.run(120);
-  assert.equal(env.sent.length, 0);
+  assert.equal(env.sent.length, 1);
+  assert.equal(JSON.parse(env.sent[0].request.body).seconds, 30);
   env.document.visibilityState = "visible";
   env.emit("visibilitychange");
   env.run(5);
-  assert.equal(JSON.parse(env.sent[0].request.body).seconds, 35);
+  assert.equal(JSON.parse(env.sent.at(-1).request.body).seconds, 35);
 });
 
 test("refresh resets counters; suspension and back-forward cache cannot inflate duration", () => {

@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "Действие Cloud недоступно для этого фильтра или установки.",
     "Merge Cloud accounts": "Объединить учётные записи Cloud",
     "Merge accounts": "Объединить учётные записи",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Объединить {source} с {target}? Сохранить {target} и его пароль. Перенести проекты ({projects}) и публикации ({publications}). Проекты с одинаковыми именами сохраняются отдельно. Оба способа входа будут использовать эту учётную запись."
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Объединить {source} с {target}? Сохранить {target} и его пароль. Перенести проекты ({projects}) и публикации ({publications}). Проекты с одинаковыми именами сохраняются отдельно. Оба способа входа будут использовать эту учётную запись.",
+    "Sessions with interaction": "Сеансы с взаимодействием",
+    "Returning sessions": "Возвраты в последующие дни",
+    "Collected since": "Данные доступны с",
+    "Previous period": "Предыдущий период",
+    "Error sessions": "Сеансы с ошибками",
+    "Authenticated session": "Авторизованный сеанс"
   });
 })();

@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "L'attività Cloud non è disponibile per questo filtro o installazione.",
     "Merge Cloud accounts": "Unisci account Cloud",
     "Merge accounts": "Unisci account",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Unire {source} in {target}? Mantieni {target} e la sua password. Trasferisci {projects} progetti e {publications} pubblicazioni. I progetti con lo stesso nome restano separati. Entrambi i metodi di accesso useranno questo account."
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Unire {source} in {target}? Mantieni {target} e la sua password. Trasferisci {projects} progetti e {publications} pubblicazioni. I progetti con lo stesso nome restano separati. Entrambi i metodi di accesso useranno questo account.",
+    "Sessions with interaction": "Sessioni con interazione",
+    "Returning sessions": "Ritorni in giorni successivi",
+    "Collected since": "Dati disponibili dal",
+    "Previous period": "Periodo precedente",
+    "Error sessions": "Sessioni con errori",
+    "Authenticated session": "Sessione autenticata"
   });
 })();

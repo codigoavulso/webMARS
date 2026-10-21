@@ -1887,6 +1887,12 @@
     "[warn] Restore this publication before adding a revision.": "[warn] Restore this publication before adding a revision.",
     "Merge Cloud accounts": "Merge Cloud accounts",
     "Merge accounts": "Merge accounts",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account."
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.",
+    "Sessions with interaction": "Sessions with interaction",
+    "Returning sessions": "Returning sessions",
+    "Collected since": "Collected since",
+    "Previous period": "Previous period",
+    "Error sessions": "Error sessions",
+    "Authenticated session": "Authenticated session"
   });
 })();

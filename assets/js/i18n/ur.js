@@ -1881,6 +1881,12 @@
   "Cloud activity is unavailable for this filter or installation.": "Cloud سرگرمی اس فلٹر یا انسٹالیشن کے لیے دستیاب نہیں ہے۔",
     "Merge Cloud accounts": "Cloud اکاؤنٹس ضم کریں",
     "Merge accounts": "اکاؤنٹس ضم کریں",
-    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} کو {target} میں ضم کریں؟ {target} اور اس کا پاس ورڈ محفوظ رہے گا۔ {projects} منصوبے اور {publications} اشاعتیں منتقل ہوں گی۔ ایک نام کے منصوبے الگ رہیں گے۔ داخلے کے دونوں طریقے یہ اکاؤنٹ استعمال کریں گے۔"
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} کو {target} میں ضم کریں؟ {target} اور اس کا پاس ورڈ محفوظ رہے گا۔ {projects} منصوبے اور {publications} اشاعتیں منتقل ہوں گی۔ ایک نام کے منصوبے الگ رہیں گے۔ داخلے کے دونوں طریقے یہ اکاؤنٹ استعمال کریں گے۔",
+    "Sessions with interaction": "تعامل والے سیشن",
+    "Returning sessions": "بعد کے دنوں میں واپسی",
+    "Collected since": "ڈیٹا دستیاب ہونے کی تاریخ",
+    "Previous period": "پچھلی مدت",
+    "Error sessions": "خرابی والے سیشن",
+    "Authenticated session": "تصدیق شدہ سیشن"
   });
 })();
