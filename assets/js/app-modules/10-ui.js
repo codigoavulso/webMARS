@@ -7480,6 +7480,10 @@ function injectRuntimeStyles() {
       grid-template-rows: auto minmax(0, 1fr);
     }
 
+    [id^="window-cloud-merge-"] .dialog-message {
+      min-height: 84px;
+    }
+
     .cloud-auth-section .dialog-form-fields {
       align-content: center;
       gap: 8px;

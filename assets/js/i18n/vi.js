@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "Phiên ứng dụng được liên kết với lượt truy cập web",
   "Unlinked app sessions": "Phiên ứng dụng đã hủy liên kết",
   "Active Cloud accounts": "Tài khoản Cloud đang hoạt động",
-  "Cloud activity is unavailable for this filter or installation.": "Hoạt động Cloud không khả dụng cho bộ lọc hoặc cài đặt này."
+  "Cloud activity is unavailable for this filter or installation.": "Hoạt động Cloud không khả dụng cho bộ lọc hoặc cài đặt này.",
+    "Merge Cloud accounts": "Hợp nhất tài khoản Cloud",
+    "Merge accounts": "Hợp nhất tài khoản",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Hợp nhất {source} vào {target}? Giữ {target} và mật khẩu. Chuyển {projects} dự án và {publications} bài đăng. Các dự án trùng tên được giữ riêng. Cả hai cách đăng nhập sẽ dùng tài khoản này."
   });
 })();

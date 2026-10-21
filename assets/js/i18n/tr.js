@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "Web ziyaretleriyle bağlantılı uygulama oturumları",
   "Unlinked app sessions": "Bağlantısız uygulama oturumları",
   "Active Cloud accounts": "Aktif Cloud hesapları",
-  "Cloud activity is unavailable for this filter or installation.": "Bu filtre veya kurulum için Cloud etkinliği mevcut değil."
+  "Cloud activity is unavailable for this filter or installation.": "Bu filtre veya kurulum için Cloud etkinliği mevcut değil.",
+    "Merge Cloud accounts": "Cloud hesaplarını birleştir",
+    "Merge accounts": "Hesapları birleştir",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source}, {target} ile birleştirilsin mi? {target} ve parolası korunur. {projects} proje ve {publications} yayın aktarılır. Aynı adlı projeler ayrı tutulur. Her iki giriş yöntemi bu hesabı kullanır."
   });
 })();

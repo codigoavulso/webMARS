@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "ऐप सत्र वेब विज़िट से जुड़े हुए हैं",
   "Unlinked app sessions": "अनलिंक किए गए ऐप सत्र",
   "Active Cloud accounts": "सक्रिय Cloud खाते",
-  "Cloud activity is unavailable for this filter or installation.": "Cloud इस फ़िल्टर या इंस्टॉलेशन के लिए गतिविधि अनुपलब्ध है।"
+  "Cloud activity is unavailable for this filter or installation.": "Cloud इस फ़िल्टर या इंस्टॉलेशन के लिए गतिविधि अनुपलब्ध है।",
+    "Merge Cloud accounts": "Cloud खाते मिलाएँ",
+    "Merge accounts": "खाते मिलाएँ",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} को {target} में मिलाएँ? {target} और उसका पासवर्ड सुरक्षित रहेगा। {projects} प्रोजेक्ट और {publications} प्रकाशन स्थानांतरित होंगे। समान नाम वाले प्रोजेक्ट अलग रहेंगे। दोनों प्रवेश विधियाँ इसी खाते का उपयोग करेंगी।"
   });
 })();

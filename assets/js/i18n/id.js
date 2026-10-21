@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "Sesi aplikasi ditautkan ke kunjungan web",
   "Unlinked app sessions": "Sesi aplikasi tidak tertaut",
   "Active Cloud accounts": "Akun Cloud aktif",
-  "Cloud activity is unavailable for this filter or installation.": "Aktivitas Cloud tidak tersedia untuk filter atau instalasi ini."
+  "Cloud activity is unavailable for this filter or installation.": "Aktivitas Cloud tidak tersedia untuk filter atau instalasi ini.",
+    "Merge Cloud accounts": "Gabungkan akun Cloud",
+    "Merge accounts": "Gabungkan akun",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Gabungkan {source} ke {target}? Pertahankan {target} dan kata sandinya. Pindahkan {projects} proyek dan {publications} publikasi. Proyek dengan nama sama tetap terpisah. Kedua metode masuk akan menggunakan akun ini."
   });
 })();

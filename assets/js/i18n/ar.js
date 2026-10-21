@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "جلسات التطبيق مرتبطة بزيارات الويب",
   "Unlinked app sessions": "جلسات التطبيق غير المرتبطة",
   "Active Cloud accounts": "حسابات Cloud النشطة",
-  "Cloud activity is unavailable for this filter or installation.": "نشاط Cloud غير متاح لهذا المرشح أو التثبيت."
+  "Cloud activity is unavailable for this filter or installation.": "نشاط Cloud غير متاح لهذا المرشح أو التثبيت.",
+    "Merge Cloud accounts": "دمج حسابات Cloud",
+    "Merge accounts": "دمج الحسابات",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "دمج {source} في {target}؟ يُحتفظ بحساب {target} وكلمة مروره. يُنقل {projects} مشروع و{publications} منشور. تُحفظ المشاريع ذات الأسماء المتطابقة منفصلة. ستستخدم طريقتا الدخول هذا الحساب."
   });
 })();

@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "ওয়েব ভিজিটের সাথে লিঙ্ক করা অ্যাপ সেশন",
   "Unlinked app sessions": "আনলিঙ্ক করা অ্যাপ সেশন",
   "Active Cloud accounts": "সক্রিয় Cloud অ্যাকাউন্ট",
-  "Cloud activity is unavailable for this filter or installation.": "Cloud কার্যকলাপ এই ফিল্টার বা ইনস্টলেশনের জন্য অনুপলব্ধ।"
+  "Cloud activity is unavailable for this filter or installation.": "Cloud কার্যকলাপ এই ফিল্টার বা ইনস্টলেশনের জন্য অনুপলব্ধ।",
+    "Merge Cloud accounts": "Cloud অ্যাকাউন্ট একত্র করুন",
+    "Merge accounts": "অ্যাকাউন্ট একত্র করুন",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} কে {target}-এ একত্র করবেন? {target} ও তার পাসওয়ার্ড থাকবে। {projects}টি প্রকল্প ও {publications}টি প্রকাশনা স্থানান্তর হবে। একই নামের প্রকল্প আলাদা থাকবে। প্রবেশের দুটি পদ্ধতিই এই অ্যাকাউন্ট ব্যবহার করবে।"
   });
 })();

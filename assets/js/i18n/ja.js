@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "Web 訪問にリンクされたアプリ セッション",
   "Unlinked app sessions": "リンクされていないアプリセッション",
   "Active Cloud accounts": "アクティブな Cloud アカウント",
-  "Cloud activity is unavailable for this filter or installation.": "Cloud アクティビティは、このフィルタまたはインストールでは使用できません。"
+  "Cloud activity is unavailable for this filter or installation.": "Cloud アクティビティは、このフィルタまたはインストールでは使用できません。",
+    "Merge Cloud accounts": "Cloud アカウントを統合",
+    "Merge accounts": "アカウントを統合",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} を {target} に統合しますか？{target} とそのパスワードは維持されます。プロジェクト {projects} 件と公開作品 {publications} 件を移行します。同名のプロジェクトは別々に保持されます。両方のログイン方法でこのアカウントを使用します。"
   });
 })();

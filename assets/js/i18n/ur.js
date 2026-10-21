@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "ویب وزٹ سے منسلک ایپ سیشنز",
   "Unlinked app sessions": "غیر لنک کردہ ایپ سیشنز",
   "Active Cloud accounts": "فعال Cloud اکاؤنٹس",
-  "Cloud activity is unavailable for this filter or installation.": "Cloud سرگرمی اس فلٹر یا انسٹالیشن کے لیے دستیاب نہیں ہے۔"
+  "Cloud activity is unavailable for this filter or installation.": "Cloud سرگرمی اس فلٹر یا انسٹالیشن کے لیے دستیاب نہیں ہے۔",
+    "Merge Cloud accounts": "Cloud اکاؤنٹس ضم کریں",
+    "Merge accounts": "اکاؤنٹس ضم کریں",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "{source} کو {target} میں ضم کریں؟ {target} اور اس کا پاس ورڈ محفوظ رہے گا۔ {projects} منصوبے اور {publications} اشاعتیں منتقل ہوں گی۔ ایک نام کے منصوبے الگ رہیں گے۔ داخلے کے دونوں طریقے یہ اکاؤنٹ استعمال کریں گے۔"
   });
 })();

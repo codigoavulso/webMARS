@@ -2147,7 +2147,7 @@ async function cloudSocialSections(intent = "login") {
   const providers = (configured?.providers || []).filter((name) => name === "google");
   if (!providers.length) return [];
   const providerNames = { google: "Google", facebook: "Facebook" };
-  return [{ title: translateText(intent === "link" ? "Linked sign-in methods" : "Continue with an existing account"),
+  return [{ title: translateText(intent === "link" ? "Linked sign-in methods" : "Continue with an existing account"), className: "cloud-auth-section",
     fields: providers.map((provider) => ({ type: "button", name: `social-${provider}`, icon: "google",
       label: translateText(intent === "link" ? "Link {provider}" : "Continue with {provider}", { provider: providerNames[provider] }),
       onClick: (dialog) => startCloudSocialLogin(provider, intent, dialog)
@@ -2166,7 +2166,7 @@ async function startCloudSocialLogin(provider, intent, dialog) {
     const target = new URL(start.url);
     const allowedHost = provider === "google" ? "accounts.google.com" : "www.facebook.com";
     if (target.protocol !== "https:" || target.hostname !== allowedHost) throw new Error("Invalid sign-in destination.");
-    const result = await new Promise((resolve, reject) => {
+    let result = await new Promise((resolve, reject) => {
       const apiOrigin = new URL(cloudApiBase, window.location.href).origin;
       const listener = (event) => {
         if (event.origin !== apiOrigin || event.source !== popup || event.data?.type !== "webmars-social-auth"
@@ -2180,6 +2180,29 @@ async function startCloudSocialLogin(provider, intent, dialog) {
       popup.location.href = target.href;
     });
     if (result === "cancelled") return { close: false };
+    if (result === "merge_required" && intent === "link") {
+      cleanup();
+      popup.close();
+      const preview = await cloudRequestJson("/auth/merge");
+      const confirmation = await runDialogForm({
+        title: translateText("Merge Cloud accounts"),
+        message: translateText("Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.", {
+          source: getCloudUserDisplayName(preview.source), target: preview.target,
+          projects: preview.projects, publications: preview.publications
+        }),
+        confirmLabel: translateText("Merge accounts"), cancelLabel: translateText("Cancel"),
+        width: "500px", height: "270px",
+        sections: [{ title: preview.target, className: "dialog-form-section-compact", fields: [{
+          name: "password", label: translateText("Password"), type: "password", autocomplete: "current-password"
+        }] }],
+        beforeResolve: async (values) => {
+          await cloudRequestJson("/auth/merge", { method: "POST", body: { confirm: true, password: values.password } });
+          return { result: { ok: true } };
+        }
+      }, { windowIdPrefix: "window-cloud-merge" });
+      if (!confirmation?.ok) return { close: false };
+      result = "linked";
+    }
     if (!["success", "created", "linked"].includes(result)) {
       const messages = {
         existing_account: "An account already uses this email. Sign in to it, then link this provider from the Cloud menu.",

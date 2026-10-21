@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "เซสชันของแอปเชื่อมโยงกับการเข้าชมเว็บ",
   "Unlinked app sessions": "เซสชันแอปที่ไม่ได้เชื่อมโยง",
   "Active Cloud accounts": "บัญชี Cloud ที่ใช้งานอยู่",
-  "Cloud activity is unavailable for this filter or installation.": "กิจกรรม Cloud ไม่พร้อมใช้งานสำหรับตัวกรองหรือการติดตั้งนี้"
+  "Cloud activity is unavailable for this filter or installation.": "กิจกรรม Cloud ไม่พร้อมใช้งานสำหรับตัวกรองหรือการติดตั้งนี้",
+    "Merge Cloud accounts": "รวมบัญชี Cloud",
+    "Merge accounts": "รวมบัญชี",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "รวม {source} เข้ากับ {target} หรือไม่? เก็บ {target} และรหัสผ่านไว้ โอน {projects} โครงการและ {publications} ผลงานเผยแพร่ โครงการชื่อซ้ำจะถูกเก็บแยกกัน วิธีเข้าสู่ระบบทั้งสองจะใช้บัญชีนี้"
   });
 })();

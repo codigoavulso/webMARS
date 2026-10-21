@@ -1884,6 +1884,9 @@
     "Edit details and visibility": "Edit details and visibility",
     "[warn] The latest link is unavailable while this publication is archived. Copy its pinned revision or restore it first.": "[warn] The latest link is unavailable while this publication is archived. Copy its pinned revision or restore it first.",
     "[info] This publication is already archived. Use Edit details and visibility to restore it.": "[info] This publication is already archived. Use Edit details and visibility to restore it.",
-    "[warn] Restore this publication before adding a revision.": "[warn] Restore this publication before adding a revision."
+    "[warn] Restore this publication before adding a revision.": "[warn] Restore this publication before adding a revision.",
+    "Merge Cloud accounts": "Merge Cloud accounts",
+    "Merge accounts": "Merge accounts",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account."
   });
 })();

@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "Sessions d'application liées aux visites Web",
   "Unlinked app sessions": "Sessions d'application non liées",
   "Active Cloud accounts": "Comptes Cloud actifs",
-  "Cloud activity is unavailable for this filter or installation.": "L'activité Cloud n'est pas disponible pour ce filtre ou cette installation."
+  "Cloud activity is unavailable for this filter or installation.": "L'activité Cloud n'est pas disponible pour ce filtre ou cette installation.",
+    "Merge Cloud accounts": "Fusionner les comptes Cloud",
+    "Merge accounts": "Fusionner les comptes",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Fusionner {source} dans {target} ? Conserver {target} et son mot de passe. Transférer {projects} projet(s) et {publications} publication(s). Les projets de même nom restent séparés. Les deux méthodes de connexion utiliseront ce compte."
   });
 })();

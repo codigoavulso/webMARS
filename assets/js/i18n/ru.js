@@ -1878,6 +1878,9 @@
   "App sessions linked to web visits": "Сеансы приложения, связанные с посещениями веб-сайтов",
   "Unlinked app sessions": "Несвязанные сеансы приложения",
   "Active Cloud accounts": "Активные аккаунты Cloud",
-  "Cloud activity is unavailable for this filter or installation.": "Действие Cloud недоступно для этого фильтра или установки."
+  "Cloud activity is unavailable for this filter or installation.": "Действие Cloud недоступно для этого фильтра или установки.",
+    "Merge Cloud accounts": "Объединить учётные записи Cloud",
+    "Merge accounts": "Объединить учётные записи",
+    "Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.": "Объединить {source} с {target}? Сохранить {target} и его пароль. Перенести проекты ({projects}) и публикации ({publications}). Проекты с одинаковыми именами сохраняются отдельно. Оба способа входа будут использовать эту учётную запись."
   });
 })();
