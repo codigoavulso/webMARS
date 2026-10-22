@@ -18,7 +18,7 @@
     : String(value ?? "");
 
   function esc(value) {
-    if (typeof root.escapeHtml === "function") return root.escapeHtml(value);
+    if (typeof root.escapeHtml === "function") return root.escapeHtml(String(value ?? ""));
     return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     }[ch]));
@@ -343,6 +343,7 @@
           const inspector = qs(".pm-inspector"); inspector.hidden = false;
           inspector.innerHTML = `<strong>${esc(metadata.title || node.name)}</strong><p>${esc(t("Author"))}: ${esc(metadata.author?.username || "—")} · ${esc(t("Language"))}: ${esc(metadata.language || "—")} · ${esc(metadata.license || "")} · r${esc(metadata.revision || metadata.latestRevision || "")}</p><p>${esc(metadata.description || "")}</p>${metadata.instructions ? `<pre>${esc(metadata.instructions)}</pre>` : ""}`;
         }
+        state.error = "";
         expanded.add(node.key); remoteView.render();
       } catch (error) { state.error = describeError(error); remoteView.render(); }
     }
