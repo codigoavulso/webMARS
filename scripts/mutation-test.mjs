@@ -207,9 +207,22 @@ async function runSlice(files) {
 // that could finish after the original source has been put back.
 let activeMutation = null;
 
+function writeMutationFile(path, content) {
+  for (let attempt = 0; ; attempt += 1) {
+    try { writeFileSync(path, content, "utf8"); return; }
+    catch (error) {
+      // Windows scanners can briefly lock a source file after the test worker
+      // exits. Restoration must finish before the next mutant or normal test.
+      if (process.platform !== "win32" || attempt >= 8
+        || !["EBUSY", "EPERM", "EACCES", "UNKNOWN"].includes(error.code)) throw error;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 * (attempt + 1));
+    }
+  }
+}
+
 function restoreMutation(mutation = activeMutation) {
   if (!mutation) return;
-  writeFileSync(mutation.path, mutation.original, "utf8");
+  writeMutationFile(mutation.path, mutation.original);
   if (activeMutation === mutation) activeMutation = null;
 }
 
@@ -256,7 +269,7 @@ async function evaluate(mutant) {
   const mutation = { file: mutant.file, path, original };
   activeMutation = mutation;
   try {
-    writeFileSync(path, mutated, "utf8");
+    writeMutationFile(path, mutated);
     const testRun = await runSlice(SLICES[mutant.slice]);
     const outcome = testRun.status === "passed"
       ? "survived"
@@ -397,4 +410,6 @@ try {
 } catch (error) {
   process.stderr.write(`[mutation] ${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;
+} finally {
+  restoreMutation();
 }

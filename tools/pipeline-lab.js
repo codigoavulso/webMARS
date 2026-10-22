@@ -442,7 +442,7 @@
     if (!consumer || consumer.bubble || !consumer.reads.length) return null;
     if (config.forwarding) {
       const producer = stages.EX;
-      return null;
+      if (!producer || producer.bubble || !producer.isLoad) return null;
       const registers = registersOverlap(consumer.reads, producer.writes);
       return registers.length
         ? { type: "load-use", registers, producer, consumer }
