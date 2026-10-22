@@ -40,7 +40,7 @@ test("every context field the documentation tells authors to use is passed to to
     "engine", "messagesPane", "windowManager", "desktop", "escapeHtml",
     "defaultMemoryMap", "createToolWindowShell", "createPlaceholderTool",
     "createToolDeltaHistory", "createDisplayFitController", "runtimeControls",
-    "openHelpDocument", "nextPlacement"
+    "openHelpDocument", "openManual", "nextPlacement"
   ];
   documented.forEach((field) => {
     assert.ok(doc.includes(`\`${field}\``), `docs/tool-api.md must document ${field}`);

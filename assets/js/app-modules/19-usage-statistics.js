@@ -80,7 +80,7 @@
           </div>
           <details class="usage-stats-panel usage-stats-diagnostics"><summary data-stat-label="Traffic classification"></summary>
             <div data-stat-role="population"></div>
-            <p data-stat-label="Classification is approximate. Unmarked operator usage remains unclassified."></p>
+            <p data-stat-label="Traffic estimates can include unmarked internal use."></p>
           </details>
         </section>
         <section data-stat-view="resources" id="usage-stats-resources" role="tabpanel" hidden>
@@ -100,7 +100,7 @@
         <section data-stat-view="cloud" id="usage-stats-cloud" role="tabpanel" hidden>
           <section class="usage-stats-panel"><h3 data-stat-label="Server-confirmed Cloud activity"></h3><div data-stat-role="cloud-activity"></div></section>
         </section>
-        <p class="usage-stats-note" data-stat-label="Sessions are temporary visits, not unique people. Interaction and visible presence are separate measurements."></p>
+        <p class="usage-stats-note" data-stat-label="Sessions are visits, not people. Time measures overlap; sessions may repeat across intervals."></p>
       </div>`;
     refs.windows.desktop.appendChild(win);
     windowManager.registerWindow(win);
@@ -287,7 +287,7 @@
           + ["human", "unknown", "internal", "test", "automated"].filter(kind => web[kind]).map(kind => `${audienceLabel(kind)}: ${number(web[kind])}`).join(" · ") : "";
       field("coverage").textContent = data.quality?.collected_from
         ? translate("Collected since") + ": " + new Intl.DateTimeFormat(locale(), {dateStyle:"short",timeStyle:"short"}).format(new Date(data.quality.collected_from))
-          + " · " + translate("Classification is approximate. Unmarked operator usage remains unclassified.") : "";
+          : "";
       const steps = [["Measured sessions", totals.sessions], ["Ready sessions", totals.ready_sessions],
         ["Sessions with interaction", totals.interacting_sessions], ["Successful runs", totals.successful_sessions ?? totals.ready_with_successful_run],
         ["Error sessions", totals.error_sessions]];
@@ -368,7 +368,7 @@
       state.exportRows = [[dimension, measure], ...grouped.map(entry => [entry.label, entry.value])];
       renderRanking(field("breakdown-chart"), grouped, dimensionLabel);
       renderTable(field("breakdown-table"), grouped, dimensionLabel, translate(measure === "events" ? "Events" : "Sessions"));
-      field("status").textContent = `${translate("Updated")}: ${new Intl.DateTimeFormat(locale(), { dateStyle: "short", timeStyle: "short" }).format(new Date(data.through))} · ${translate("Buckets can include the same session more than once.")}`;
+      field("status").textContent = `${translate("Updated")}: ${new Intl.DateTimeFormat(locale(), { dateStyle: "short", timeStyle: "short" }).format(new Date(data.through))}`;
     }
 
     async function load() {
@@ -438,7 +438,7 @@
         field("population").replaceChildren();
         field("funnel").replaceChildren();
         field("cloud-activity").replaceChildren();
-        field("status").textContent = `${translate("Statistics are unavailable on this installation.")} ${error?.message || ""}`.trim();
+        field("status").textContent = translate("Statistics are unavailable on this installation.");
       } finally {
         if (request === state.request) state.loading = false;
       }

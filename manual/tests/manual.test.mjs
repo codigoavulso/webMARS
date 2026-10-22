@@ -5,6 +5,7 @@ import { join, relative, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { chapters, CHAPTER_ORDER, MANUAL, TOOL_DATA } from "../content/index.mjs";
+import { WORKED_EXAMPLES } from "../content/worked-examples.mjs";
 
 const manualRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const distRoot = join(manualRoot, "dist");
@@ -126,6 +127,28 @@ test("all internal manual links resolve", () => {
       }
     }
   }
+});
+
+test("the reader sees the exact complete sources used by executable example checks", () => {
+  const content = chapters.flatMap((chapter) => chapter.sections.map((section) => section.content)).join("\n");
+  for (const [name, example] of Object.entries(WORKED_EXAMPLES)) {
+    for (const source of [example.source, ...Object.values(example.files || {})]) {
+      const escaped = source.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      assert.ok(content.includes(`<pre><code>${escaped}</code></pre>`), `${name}: tested source missing from the guide`);
+    }
+  }
+});
+
+test("lazy screenshots reserve their canonical dimensions before deep-link scrolling", () => {
+  let count = 0;
+  for (const chapter of chapters) for (const section of chapter.sections) {
+    for (const image of section.content.matchAll(/<img\b[^>]*loading="lazy"[^>]*>/g)) {
+      assert.match(image[0], /width="1280"/, `${chapter.id}/${section.id}`);
+      assert.match(image[0], /height="720"/, `${chapter.id}/${section.id}`);
+      count += 1;
+    }
+  }
+  assert.ok(count >= 36);
 });
 
 test("every product tool in the vendored manifest has an individual section", async () => {

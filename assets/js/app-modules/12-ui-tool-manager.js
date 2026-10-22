@@ -278,6 +278,14 @@ function createToolManager(engine, messagesPane, windowManager, desktop, helpSys
     return true;
   }
 
+  function openManual(chapter = "") {
+    if (typeof helpSystem?.openManual !== "function") return false;
+    const url = new URL(window.WebMarsModules?.publicLibrary?.config?.manualUrl || "./manual/", window.location.href);
+    if (chapter) url.hash = `/${chapter}`;
+    helpSystem.openManual(url.href);
+    return true;
+  }
+
   function dispatchToolLoaderEvent(name, detail) {
     try {
       window.dispatchEvent(new CustomEvent(name, { detail }));
@@ -636,8 +644,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop, helpSys
     const shell = createToolWindowShell(id, label, 620, 330, `
       <div class="tool-placeholder">
         <h3>${escapeHtml(label)}</h3>
-        <p>This tool is detected from Java MARS sources and already wired in the web menu.</p>
-        <p>Its full behavior and rendering are pending implementation in the JS runtime migration.</p>
+        <p>This tool could not be loaded. Close it and try again.</p>
       </div>
     `);
 
@@ -802,6 +809,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop, helpSys
           createDisplayFitController,
           runtimeControls: runtimeControlBridge,
           openHelpDocument,
+          openManual,
           nextPlacement
         });
 

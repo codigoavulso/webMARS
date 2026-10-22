@@ -3,6 +3,29 @@
 Todas as alterações relevantes deste subprojeto são registadas aqui. O formato
 segue *Keep a Changelog* e o manual usa versionamento semântico próprio.
 
+## [0.2.1] — 2026-10-22
+
+### Adicionado
+
+- 13 secções práticas com exercícios, resultados esperados e diagnóstico;
+- seis programas completos partilhados entre o texto e os testes de execução;
+- verificações de output, memória, stack, registos e variantes dos exercícios;
+- manual numa janela integrada na aplicação, com tema sincronizado, pesquisa
+  e abertura do capítulo/secção corrente num separador independente;
+- filtro de capítulos por título, resumo e palavras-chave, e guias por tarefa;
+- procedimento para associar Google e fundir contas Cloud já existentes;
+- leitura dos separadores Panorâmica, Recursos e atividade Cloud, comparação
+  de períodos e exportação CSV com limites de interpretação.
+
+### Alterado
+
+- contrato da soma corrigido para não prometer um resultado positivo;
+- limites do exemplo de handler explicitados para interrupções e delay slots;
+- leitura compacta dentro da app, navegação responsiva e cartões de percursos;
+- entrada social da instalação oficial descrita como Google;
+- abertura de projetos Cloud e gestão de publicações descritas em vista de tabela;
+- legendas de capturas históricas explicitam as diferenças da interface atual.
+
 ## [0.2.0] — 2026-10-20
 
 ### Adicionado
@@ -77,6 +100,7 @@ segue *Keep a Changelog* e o manual usa versionamento semântico próprio.
 - recuperação de password e verificação de email por código temporário;
 - Kit Docente e guia completo de self-hosting/Gmail para webMARS 0.6.0.
 
+[0.2.1]: https://github.com/codigoavulso/webMARS/releases/tag/manual-v0.2.1
 [0.2.0]: https://github.com/codigoavulso/webMARS/releases/tag/manual-v0.2.0
 [0.1.1]: https://github.com/codigoavulso/webMARS/releases/tag/manual-v0.1.1
 [0.1.0]: https://github.com/codigoavulso/webMARS/releases/tag/manual-v0.1.0

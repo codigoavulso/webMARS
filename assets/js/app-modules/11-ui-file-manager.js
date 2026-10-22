@@ -634,6 +634,13 @@
       color: var(--text-muted);
     }
 
+    .fm-status > [data-fm-status-cells] {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: inherit;
+    }
+
     .fm-footer {
       display: flex;
       align-items: center;
@@ -1155,7 +1162,7 @@
       </div>
       <div class="fm-columns" data-fm-columns${features.columns ? "" : " hidden"}></div>
       <div class="fm-body" data-fm-body tabindex="0" role="tree" aria-label="${esc(config.label || t("Files"))}"></div>
-      <div class="fm-status" data-fm-status${features.status ? "" : " hidden"}></div>
+      <div class="fm-status" data-fm-status${features.status ? "" : " hidden"}><span data-fm-status-cells></span></div>
       <div class="fm-footer" data-fm-footer hidden></div>
     `;
 
@@ -1167,6 +1174,7 @@
     const columnsNode = host.querySelector("[data-fm-columns]");
     const bodyNode = host.querySelector("[data-fm-body]");
     const statusNode = host.querySelector("[data-fm-status]");
+    const statusCellsNode = host.querySelector("[data-fm-status-cells]");
     const footerNode = host.querySelector("[data-fm-footer]");
 
     const touchQuery = typeof window.matchMedia === "function"
@@ -1319,6 +1327,7 @@
     }
 
     function collectSearchMatches() {
+      if (config.remoteSearch === true) return sorted(rootNodes);
       const query = state.query.trim().toLowerCase();
       const matches = [];
       index.forEach((entry) => {
@@ -1394,7 +1403,7 @@
         actionsNode.innerHTML = "";
         return;
       }
-      actionsNode.innerHTML = actions.map((action) => {
+      actionsNode.innerHTML = actions.filter((action) => callback("isActionVisible", action.id) !== false).map((action) => {
         const disabled = callback("isActionEnabled", action.id) === false;
         const classes = [
           "fm-btn",
@@ -1409,7 +1418,8 @@
     function renderStatus() {
       if (!features.status) return;
       const cells = callback("getStatusCells");
-      statusNode.innerHTML = (Array.isArray(cells) ? cells : [])
+      // Keep controls mounted by the project manager intact during refreshes.
+      statusCellsNode.innerHTML = (Array.isArray(cells) ? cells : [])
         .filter((cell) => String(cell || "").trim())
         .map((cell) => `<span>${esc(cell)}</span>`)
         .join("");
@@ -1766,6 +1776,7 @@
     if (searchInput instanceof HTMLInputElement) {
       on(searchInput, "input", () => {
         state.query = searchInput.value;
+        callback("onSearch", state.query);
         render();
       });
       on(searchInput, "keydown", (event) => {
@@ -1773,6 +1784,7 @@
         event.stopPropagation();
         searchInput.value = "";
         state.query = "";
+        callback("onSearch", "");
         render();
       });
     }

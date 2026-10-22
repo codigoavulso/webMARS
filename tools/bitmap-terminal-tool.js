@@ -139,7 +139,7 @@
     id: "bitmap-terminal-tool",
     label: "Bitmap Terminal Tool",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("bitmap-terminal-tool", "Bitmap Terminal Tool, Version 0.1", 900, 660, `
+      const shell = ctx.createToolWindowShell("bitmap-terminal-tool", "Bitmap Terminal Tool", 900, 660, `
         <div class="bt-tool">
           <h2 class="bt-title">Bitmap Terminal (Framebuffer + Keyboard)</h2>
           <div class="mars-tool-display-options">

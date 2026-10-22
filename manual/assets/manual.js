@@ -29,6 +29,8 @@ const toast = document.querySelector("#toast");
 const appLink = document.querySelector("#webmars-app-link");
 const supportLink = document.querySelector("#manual-support-link");
 const brandEdition = document.querySelector(".brand-edition");
+const chapterFilter = document.querySelector("#chapter-filter");
+const embedded = window.parent !== window && new URLSearchParams(location.search).get("embedded") === "1";
 
 if (brandEdition) brandEdition.textContent = `Ed. ${MANUAL.displayVersion.replace(/^v/, "")}`;
 
@@ -125,6 +127,22 @@ function renderNavigation() {
   }).join("");
 }
 
+function filterChapters() {
+  const terms = normalize(chapterFilter.value).split(" ").filter(Boolean);
+  let visible = 0;
+  for (const link of nav.querySelectorAll("[data-chapter-link]")) {
+    const chapter = chapterById.get(link.dataset.chapterLink);
+    const text = normalize([chapter.title, chapter.summary, ...chapter.keywords].join(" "));
+    const matches = terms.every((term) => text.includes(term));
+    link.parentElement.hidden = !matches;
+    if (matches) visible += 1;
+  }
+  for (const part of nav.querySelectorAll(".nav-part")) {
+    part.hidden = ![...part.querySelectorAll("[data-chapter-link]")].some((link) => !link.parentElement.hidden);
+  }
+  document.querySelector("#chapter-filter-empty").hidden = visible > 0;
+}
+
 function renderNavSections(chapter) {
   nav.querySelectorAll(".nav-sections").forEach((list) => list.remove());
   const link = nav.querySelector(`[data-chapter-link="${CSS.escape(chapter.id)}"]`);
@@ -166,15 +184,13 @@ function renderTitlePage(chapter) {
     <p class="imprint">Edição ${escapeHtml(MANUAL.version)} · ${escapeHtml(MANUAL.locale)}</p>
     <h1>Manual do webMARS</h1>
     <p class="title-sub">${escapeHtml(chapter.title)}</p>
-    <hr class="title-rule">
     <div class="imprint-lines">
-      <p>Verificado com webMARS <b>${escapeHtml(MANUAL.webmarsVersion)}</b>, commit <b>${escapeHtml(MANUAL.verifiedCommit.slice(0, 12))}</b></p>
-      <p>Data de verificação <b>${escapeHtml(MANUAL.verifiedAt)}</b></p>
-      <p>${chapters.length} capítulos · sem dependências externas, cookies ou telemetria</p>
+      <p>webMARS <b>${escapeHtml(MANUAL.webmarsVersion)}</b> · ${chapters.length} capítulos e páginas de referência</p>
+      <p>Pesquisa local · leitura integrada ou em separador independente</p>
     </div>
   </header>
-  <nav class="contents-block" aria-label="Índice geral">
-    <h2>Índice geral</h2>
+  <details class="contents-block"><summary>Consultar o índice completo</summary>
+  <nav aria-label="Índice geral">
     ${parts.map((part, index) => {
       const entries = chaptersOfPart(part);
       if (!entries.length) return "";
@@ -187,7 +203,7 @@ function renderTitlePage(chapter) {
       <p class="contents-part-label"><span class="part-numeral">Apêndices</span></p>
       ${APPENDIX_IDS.map((id) => chapterById.get(id)).filter(Boolean).map(tocEntry).join("")}
     </section>
-  </nav>`;
+  </nav></details>`;
 }
 
 /* --- Abertura de capítulo ----------------------------------------------- */
@@ -195,14 +211,14 @@ function renderTitlePage(chapter) {
 function renderChapterOpener(chapter) {
   const label = chapter.number ? `Capítulo <span class="chapter-numeral">${escapeHtml(chapter.number)}</span>` : escapeHtml(chapter.part);
   const contents = chapter.sections.length > 1
-    ? `<nav class="chapter-contents" aria-label="Neste capítulo">
-        <p>Neste capítulo</p>
+    ? `<details class="chapter-contents"><summary>Neste capítulo · ${chapter.sections.length} secções</summary>
+       <nav aria-label="Neste capítulo">
         ${chapter.sections.map((section, index) => `<a class="toc-entry" href="${chapterHref(chapter.id, section.id)}">
           <span class="toc-numeral">${escapeHtml(sectionNumeral(chapter, index))}</span>
           <span class="toc-title">${escapeHtml(section.title)}</span>
           <span class="toc-leader" aria-hidden="true"></span>
         </a>`).join("")}
-      </nav>`
+      </nav></details>`
     : "";
   return `<header class="chapter-opener">
     <p class="chapter-label">${label}<span class="label-rule" aria-hidden="true"></span><span>${escapeHtml(chapter.part)}</span></p>
@@ -964,15 +980,27 @@ function applyTheme(theme) {
   if (theme === "auto") delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = theme;
   try {
+    if (embedded) return updateThemeControl(theme);
     if (theme === "auto") localStorage.removeItem("webmars-manual-theme");
     else localStorage.setItem("webmars-manual-theme", theme);
   } catch { /* armazenamento indisponível */ }
+  updateThemeControl(theme);
+}
+
+function updateThemeControl(theme) {
   themeGlyph.textContent = THEME_GLYPH[theme];
   themeToggle.setAttribute("aria-label", `${THEME_LABEL[theme]}. Alternar.`);
   themeToggle.title = THEME_LABEL[theme];
 }
 
 /* --- Ligações ----------------------------------------------------------- */
+
+chapterFilter.addEventListener("input", filterChapters);
+window.addEventListener("message", (event) => {
+  if (!embedded || event.source !== window.parent || event.origin !== location.origin
+    || event.data?.type !== "webmars:manual-theme" || !["light", "dark"].includes(event.data.theme)) return;
+  applyTheme(event.data.theme);
+});
 
 navToggle.addEventListener("click", () => {
   const open = !book.classList.contains("nav-open");

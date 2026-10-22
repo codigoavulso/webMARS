@@ -1471,6 +1471,51 @@ mark { background: var(--marker); color: inherit; }
   }
 }
 
+/* Pesquisa do índice e composição compacta dentro da aplicação. */
+.nav-filter { display: block; margin: 0.75rem 0 1rem; }
+.nav-filter input {
+  width: 100%; padding: 0.55rem 0.65rem;
+  background: var(--paper-raised); border: 1px solid var(--rule-strong);
+  border-radius: 6px; font: 0.8rem var(--ff-ui);
+}
+.nav-filter input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.nav-empty { font: 0.8rem/1.5 var(--ff-ui); color: var(--ink-muted); }
+[hidden] { display: none !important; }
+:root[data-embedded="true"] { --nav-w: 15rem; --measure: 36rem; --margin-col: 0rem; --gutter: 1.5rem; --hang: 0rem; }
+:root[data-embedded="true"] body { font-family: var(--ff-ui); font-size: 0.94rem; line-height: 1.65; }
+:root[data-embedded="true"] .head-app-link,
+:root[data-embedded="true"] #theme-toggle { display: none; }
+:root[data-embedded="true"] .book-main { padding: calc(var(--head-h) + 1.5rem) 1.75rem 3rem; }
+:root[data-embedded="true"] .page { grid-template-columns: [text-start] minmax(0, 1fr) [text-end]; width: 100%; max-width: 48rem; }
+:root[data-embedded="true"] .callout { float: none; position: static; width: auto; margin: 1rem 0; }
+:root[data-embedded="true"] .section-numeral { position: static; display: block; }
+:root[data-embedded="true"] :is(.title-page h1, .chapter-opener h1, .manual-section > h2) { font-family: var(--ff-ui); }
+:root[data-embedded="true"] .prose p { text-align: left; }
+:root[data-embedded="true"] .screenshot { display: block; width: 100%; }
+:root[data-embedded="true"] .screenshot figcaption { margin-top: 0.5rem; }
+:root[data-embedded="true"] :is(.table-wrap, .tool-index, .reference-controls, .reference-list) { width: 100%; }
+.card-grid { gap: 0.75rem; border-top: 0; }
+.manual-card { padding: 1rem; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper-raised); }
+.manual-card strong { font-family: var(--ff-ui); font-size: 0.95rem; }
+.manual-card .card-icon { color: var(--accent); }
+.title-page { margin-bottom: 1.5rem; padding-bottom: 1.5rem; }
+.title-page .imprint { margin-bottom: 1rem; }
+.imprint-lines p { margin: 0; }
+.title-page h1 { font-size: clamp(2rem, 4vw, 3rem); }
+.title-page .title-sub { max-width: 100%; margin-bottom: 1rem; font-style: normal; }
+.contents-block { margin-bottom: 1.5rem; }
+:is(.contents-block, .chapter-contents) > summary {
+  padding: 0.6rem 0; color: var(--accent); cursor: pointer; font: 0.82rem var(--ff-ui);
+}
+:is(.contents-block, .chapter-contents)[open] > summary { margin-bottom: 0.9rem; }
+@media (min-width: 560px) {
+  .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  :root[data-embedded="true"] { --nav-w: min(20rem, 86vw); }
+  :root[data-embedded="true"] .book-main { padding-left: 1.1rem; padding-right: 1.1rem; }
+}
+
 /* --- 20. Impressão ------------------------------------------------------ */
 
 @media print {

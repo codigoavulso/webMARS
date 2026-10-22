@@ -2,6 +2,11 @@
 
 Date: 2026-03-15
 
+Historical assessment from this date. The `C1-NATIVE` profile was implemented
+later; see [the current Mini-C reference](mini-c-manual.txt) and the in-app
+Mini-C help for its present scope. Recommendations below describe the state at
+the time of this review.
+
 ## Objective
 
 Measure how far the current Mini-C compiler/runtime can go for "native-like" console C code without forcing source adaptation, and separate:

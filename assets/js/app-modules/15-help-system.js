@@ -830,6 +830,72 @@
       { left: 148, top: 78, minWidth: 620, minHeight: 420 }
     );
 
+    const manualWin = buildWindowShell(
+      "window-help-manual",
+      "mars-java-doc-window mars-manual-window mobile-panel-window",
+      "Open the Manual",
+      1080,
+      700,
+      `<div class="window-content" style="display:flex;flex-direction:column;min-height:0;padding:0;overflow:hidden">
+        <div class="mars-help-footer" style="flex:none;justify-content:space-between">
+          <span>webMARS · pt-PT</span>
+          <a class="tool-btn" id="mars-manual-detach" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit">Open in new tab</a>
+        </div>
+        <iframe id="mars-manual-frame" title="${escape(translate("Open the Manual"))}" style="flex:1;width:100%;min-height:0;border:0"></iframe>
+      </div>`,
+      { left: 60, top: 30, minWidth: 340, minHeight: 300 }
+    );
+
+    desktop.appendChild(manualWin);
+    windowManager.registerWindow(manualWin);
+    const refreshManualTranslations = typeof translateStaticTree === "function" ? translateStaticTree(manualWin) : () => {};
+    const manualFrame = manualWin.querySelector("#mars-manual-frame");
+    const manualDetach = manualWin.querySelector("#mars-manual-detach");
+    let manualBaseUrl = "";
+
+    function syncManualTheme() {
+      if (!manualBaseUrl) return;
+      manualFrame.contentWindow?.postMessage({
+        type: "webmars:manual-theme",
+        theme: document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"
+      }, new URL(manualBaseUrl).origin);
+    }
+
+    function openManual(url = "./manual/") {
+      const target = new URL(url || "./manual/", globalScope.location.href);
+      if (!["http:", "https:"].includes(target.protocol)) return;
+      // Config normalizes service URLs without a trailing slash. A static
+      // directory needs it so the Manual's relative modules resolve below it.
+      if (!target.pathname.endsWith("/") && !/\.[a-z0-9]+$/i.test(target.pathname)) target.pathname += "/";
+      target.searchParams.delete("embedded");
+      target.searchParams.delete("theme");
+      if (target.href !== manualBaseUrl) {
+        manualBaseUrl = target.href;
+        manualDetach.href = manualBaseUrl;
+        target.searchParams.set("embedded", "1");
+        target.searchParams.set("theme", document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
+        manualFrame.src = target.href;
+      }
+      refreshManualTranslations();
+      windowManager.show(manualWin.id);
+    }
+
+    manualFrame.addEventListener("load", () => {
+      syncManualTheme();
+      const updateManualLink = () => {
+        const target = new URL(manualFrame.contentWindow.location.href);
+        if (!["http:", "https:"].includes(target.protocol)) return;
+        target.searchParams.delete("embedded");
+        target.searchParams.delete("theme");
+        manualDetach.href = target.href;
+      };
+      try {
+        manualFrame.contentWindow.addEventListener("hashchange", updateManualLink);
+        updateManualLink();
+      } catch { /* Separate-origin manuals keep their configured public URL. */ }
+    });
+    globalScope.addEventListener("webmars:theme-changed", syncManualTheme);
+
     desktop.appendChild(helpWin);
     desktop.appendChild(aboutWin);
     desktop.appendChild(docWin);
@@ -1135,6 +1201,10 @@
 
     window.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
+      if (!manualWin.classList.contains("window-hidden")) {
+        windowManager.hide(manualWin.id);
+        return;
+      }
       if (!docWin.classList.contains("window-hidden")) {
         windowManager.hide(docWin.id);
         return;
@@ -1162,6 +1232,7 @@
         windowManager.show(aboutWin.id);
       },
       openDocument,
+      openManual,
       close() {
         windowManager.hide(helpWin.id);
       },
@@ -1169,6 +1240,7 @@
         refreshHelpWindowTranslations();
         refreshAboutWindowTranslations();
         refreshDocumentWindowTranslations();
+        refreshManualTranslations();
         helpTitleNode.textContent = translate(MARS_HELP_TITLE);
         aboutTitleNode.textContent = translate(ABOUT_MARS_TITLE);
         docTitleNode.textContent = translate(state.docTitle || DOC_VIEWER_TITLE);

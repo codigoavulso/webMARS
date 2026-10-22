@@ -21,17 +21,18 @@ export const statisticsChapters = [
             "Escolha <strong>Ajuda → Estatísticas de utilização</strong>. Não é necessário iniciar sessão Cloud.",
             "Em <strong>Período</strong>, selecione os últimos 60 minutos, 24 horas ou 30 dias.",
             "Em <strong>Público</strong>, escolha tráfego público, provável humano, sem classificação, utilização interna, testes, provável automação ou todo o tráfego. O tráfego público inclui sessões sem classificação; não representa pessoas confirmadas.",
-            "Leia os seis indicadores principais e compare os gráficos de evolução e distribuição.",
+            "Leia os quatro indicadores principais: sessões medidas, sessões com interação, regressos noutros dias e execuções bem-sucedidas.",
             "Abra <strong>Mostrar valores</strong> sob o resumo para consultar todas as medições; cada gráfico tem a sua própria tabela de valores.",
             "Use <strong>Atualizar</strong> para pedir uma leitura nova. A janela também atualiza automaticamente a cada minuto enquanto está aberta."
           ])}
-          <p>Em <strong>Classificação do tráfego</strong>, consulte os grupos medidos nos logs e a ligação às sessões da app. A atividade Cloud confirmada pelo servidor apresenta contagens de criação, entrada e utilização de contas, separadamente das sessões anónimas. Para excluir os seus próprios usos da medição pública, marque este navegador como utilização interna em <strong>Ajuda → Sobre → Privacidade</strong>. Os dados antigos e os usos internos sem marcação continuam sem classificação.</p>
+          <p>A leitura começa em <strong>Panorâmica</strong>. Mude para <strong>Recursos</strong> para comparar funcionalidades e para <strong>Atividade Cloud confirmada pelo servidor</strong> para consultar operações de contas e projetos. Estes separadores evitam misturar medidas com origens e significados diferentes.</p>
+          <p>Em <strong>Classificação do tráfego</strong>, consulte os grupos medidos nos logs e a ligação às sessões da app. Para excluir os seus próprios usos da medição pública, marque este navegador como utilização interna em <strong>Ajuda → Sobre → Privacidade</strong>. Os dados antigos e os usos internos sem marcação continuam sem classificação.</p>
           ${table(["Período", "Intervalos do gráfico", "Pergunta a que ajuda a responder"], [
             ["Últimos 60 minutos", "12 intervalos de cinco minutos", "Há atividade recente e que recursos estão a ser usados?"],
             ["Últimas 24 horas", "24 intervalos de uma hora", "Em que horas se concentra a utilização?"],
             ["Últimos 30 dias", "30 intervalos de um dia", "Como evoluem as visitas e a adoção ao longo das semanas?"]
           ])}
-          ${screenshot("./assets/screenshots/usage-statistics-light.png", "Estatísticas de utilização no tema claro: seis indicadores principais, evolução da atividade e distribuição por tipos de evento", "Interface real do webMARS 0.6.3 com dados sintéticos de demonstração; os números não representam utilização real. As duas visualizações partilham uma linha em ecrãs largos e ficam empilhadas em ecrãs menores.")}
+          ${screenshot("./assets/screenshots/usage-statistics-light.png", "Versão anterior do painel de estatísticas no tema claro, com dados sintéticos", "Captura de referência do webMARS 0.6.3. A versão atual organiza estes dados nos separadores Panorâmica, Recursos e Atividade Cloud; os números desta imagem são sintéticos.")}
           <p>Os períodos são móveis, contados para trás a partir da leitura do servidor. As horas e datas são apresentadas segundo o idioma e o fuso horário do browser. A resposta agregada pode ficar em cache no servidor durante 30 segundos.</p>
         `
       },
@@ -39,10 +40,13 @@ export const statisticsChapters = [
         id: "resumo-e-medicoes",
         title: "Interpretar o resumo e as medições completas",
         content: html`
-          <p>O resumo destaca seis valores. A opção <strong>Mostrar valores</strong> conserva as 12 medições, incluindo presença recente e distribuições de duração.</p>
+          <p>O resumo destaca quatro indicadores. A opção <strong>Mostrar valores</strong> abre todas as medições, incluindo sessões prontas, eventos, presença recente e distribuições de duração. Quando existe cobertura completa, o cartão de sessões mostra também o período anterior; a comparação perde significado se os períodos tiverem recolha ou filtros diferentes.</p>
           ${table(["Medição", "Como interpretar"], [
             ["Sessões medidas", "Sessões temporárias com pelo menos um evento recebido no período; não corresponde a pessoas únicas."],
             ["Novas sessões", "Sessões observadas pela primeira vez no período, sem eventos anteriores na base retida; não significa novos utilizadores ou novas contas."],
+            ["Sessões com interação", "Sessões com amostras de interação; ajuda a separar a abertura da página de uma utilização observada."],
+            ["Regressos noutros dias", "Sessões classificadas pelo sinal local de regresso; não identifica pessoas nem acompanha outros browsers."],
+            ["Execuções bem-sucedidas", "Sessões com uma execução terminada normalmente; o rótulo resumido não representa o total de instruções executadas."],
             ["Sessões com app pronta", "Sessões com o evento de carregamento concluído dentro do período."],
             ["Sessões prontas com execução bem-sucedida", "Sessões com app pronta e uma execução terminada normalmente no período; não demonstra correção do exercício."],
             ["Eventos recebidos", "Quantidade de eventos, incluindo resultados de ações, amostras de interação e pings."],
@@ -59,15 +63,30 @@ export const statisticsChapters = [
         id: "graficos-e-filtros",
         title: "Escolher gráficos e filtrar os resultados",
         content: html`
-          <p>Na barra superior, <strong>Métrica da evolução</strong> escolhe o valor do gráfico temporal: sessões, novas sessões, eventos, carregamentos, resultados de compilação/montagem/execução, ferramentas, funcionalidades, exemplos, heartbeats ou duração. <strong>Tipo de gráfico</strong> alterna entre colunas e linha nos dois gráficos.</p>
-          <p>Em <strong>Distribuição</strong>, escolha como agrupar: tipos de evento, recursos, origens, idiomas, dispositivos de entrada, páginas/app ou categorias de regresso. A medida <strong>Sessões</strong> indica quantas visitas utilizaram uma categoria. <strong>Eventos</strong> está disponível para tipos de evento e recursos.</p>
+          <p>Em <strong>Panorâmica</strong>, <strong>Métrica da evolução</strong> escolhe o valor do gráfico temporal: sessões, novas sessões, eventos, carregamentos, resultados de compilação/montagem/execução, ferramentas, funcionalidades, exemplos, heartbeats, entrada de contas ou duração. <strong>Tipo de gráfico</strong> alterna entre colunas e linha na evolução. A sequência de estados ao lado ajuda a comparar sessões medidas, prontas, com interação, com execução bem-sucedida e com erros; não é um percurso obrigatório nem uma soma de grupos exclusivos.</p>
+          <p>No separador <strong>Recursos</strong>, o gráfico de barras horizontais compara os grupos selecionados: classificação do tráfego, tipos de evento, recursos, origens, idiomas, dispositivos de entrada, páginas/app ou categorias de regresso. A medida <strong>Sessões</strong> indica quantas visitas utilizaram uma categoria. <strong>Eventos</strong> está disponível para tipos de evento e recursos.</p>
           ${steps([
-            "Para comparar ferramentas, escolha <strong>Agrupar por → Recursos</strong> e <strong>Medida → Sessões</strong>.",
+            "Abra o separador <strong>Recursos</strong>; escolha <strong>Agrupar por → Recursos</strong> e <strong>Medida → Sessões</strong>.",
             "Escreva parte do nome em <strong>Filtrar resultados</strong>; o filtro atua sobre as categorias já agregadas.",
             "Em <strong>Mostrar</strong>, escolha os primeiros 10, 20 ou todos os resultados. A ordenação segue a medida escolhida, do maior para o menor.",
             "Consulte <strong>Mostrar valores</strong> sob o gráfico para ler nomes completos e quantidades exatas. Passe o ponteiro sobre uma coluna ou ponto para consultar o respetivo valor."
           ])}
           <p>Mudar a métrica, a distribuição, o texto ou a quantidade mostrada reutiliza os agregados carregados. Mudar o período ou atualizar pede novos dados ao servidor. Uma sessão pode surgir em vários intervalos temporais e categorias: somar as colunas de sessões pode contar a mesma visita mais de uma vez.</p>
+        `
+      },
+      {
+        id: "perguntas-praticas",
+        title: "Responder a perguntas concretas e exportar dados",
+        content: html`
+          ${table(["Pergunta", "Leitura recomendada", "Verificação essencial"], [
+            ["Estamos a crescer?", "Últimos 30 dias, público equivalente, evolução de sessões e comparação com o período anterior.", "Consulte o início da cobertura. Uma alteração na recolha pode simular crescimento."],
+            ["As visitas estão a usar a app?", "Panorâmica: compare sessões medidas, prontas, com interação e execução.", "Abrir a página não prova utilização; uma saída normal não prova correção de um exercício."],
+            ["Que ferramentas são mais usadas?", "Recursos: agrupar por Recursos, medir Sessões e depois Eventos.", "Sessões mede alcance observado; eventos mede frequência. A mesma visita pode usar várias ferramentas."],
+            ["Os meus testes estão a distorcer os resultados?", "Compare Público com Utilização interna, Testes e Todo o tráfego.", "Marque o seu navegador em Privacidade. A marcação atual não reclassifica automaticamente o passado."],
+            ["Quantas contas foram usadas?", "Atividade Cloud confirmada pelo servidor: operações e métodos de entrada.", "Contas ativas no período não são o total de contas registadas na base de dados."]
+          ])}
+          <p>Use <strong>Exportar CSV</strong> para descarregar o período e público selecionados, totais, evolução temporal, distribuição e atividade Cloud carregada. O ficheiro inclui as datas de início e fim para permitir comparar leituras. Os filtros de nome e limite da distribuição afetam os resultados preparados para essa vista; registe esses filtros quando partilhar uma análise.</p>
+          <p>O CSV é um retrato dos agregados carregados no momento. Não contém a lista de pessoas, emails, fontes nem sessões individuais. Para responder a uma pergunta administrativa sobre todas as contas registadas, o operador deve consultar os dados próprios do BackMars.</p>
         `
       },
       {

@@ -52,13 +52,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
       { label: "All files", command: "closeAllFiles", enabled: () => hasActiveFile },
       { label: "Close project", command: "closeProject", enabled: () => hasOpenProject }
     ];
-    const cloudMenuItems = [
-      {
-        label: () => (cloudAuthenticated
-          ? translateText("Signed in as {name}", { name: cloudUserName || "user" })
-          : "Not signed in"),
-        enabled: () => false
-      },
+    const accountMenuItems = [
       {
         label: () => (cloudAuthenticated
           ? translateText("Logout ({name})", { name: cloudUserName || "user" })
@@ -67,23 +61,19 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
       }
     ];
     if (!cloudAuthenticated) {
-      cloudMenuItems.push(
-        { label: "Create User...", command: "cloudRegister" },
+      accountMenuItems.push(
+        { label: "Create Account", command: "cloudRegister" },
         { label: "Forgot Password...", command: "cloudPasswordReset" }
       );
     } else {
-      cloudMenuItems.push({ label: "Linked sign-in methods", command: "cloudLinkProvider" });
-      if (!cloudEmailVerified) cloudMenuItems.push({ label: "Verify Email...", command: "cloudVerifyEmail" });
+      accountMenuItems.push({ label: "Linked sign-in methods", command: "cloudLinkProvider" });
+      if (!cloudEmailVerified) accountMenuItems.push({ label: "Verify Email...", command: "cloudVerifyEmail" });
     }
-    cloudMenuItems.push(
-      "-",
-      { label: "Open Cloud Project...", command: "cloudOpenProject", enabled: () => cloudAuthenticated },
-      { label: "Save Project", command: "cloudSaveProject", enabled: () => cloudAuthenticated && hasOpenProject },
-      { label: "Sync All Projects", command: "cloudSyncAllProjects", enabled: () => cloudAuthenticated },
-      { label: "Refresh Session", command: "cloudRefreshSession" }
-    );
+    accountMenuItems.push("-", { label: "Refresh Session", command: "cloudRefreshSession" });
     return {
       File: [
+        { label: "Projects", command: "openProjectManager", shortcut: "Ctrl+Shift+P" },
+        "-",
         { label: "New", submenu: newMenuItems },
         { label: "Open from Disk...", command: "openFileFromDisk", shortcut: "Ctrl+O" },
         { label: "Open from Browser Storage...", command: "openFileFromBrowserStorage" },
@@ -101,14 +91,27 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
         { label: () => "Dump Memory...", command: "dumpMemory", shortcut: "Ctrl+D" },
         { label: "Dump Run I/O", command: "dumpRunIo" }
       ],
-      Cloud: cloudMenuItems,
-      Library: [
-        { label: "Browse Public Library...", command: "publicBrowse" },
-        { label: "Open Public Link...", command: "publicOpenLink" },
-        { label: "Copy Built-in Example Link...", command: "publicCopyExampleLink" },
+      Online: [
+        { label: () => cloudAuthenticated
+          ? translateText("Signed in as {name}", { name: cloudUserName || "user" })
+          : "Not signed in", enabled: () => false },
+        { label: "Account", submenu: accountMenuItems },
         "-",
-        { label: "Publish Active Project...", command: "publicPublish", enabled: () => hasOpenProject },
-        { label: "My Publications...", command: "publicManage", enabled: () => cloudAuthenticated }
+        { label: "Cloud projects", command: "cloudOpenProject" },
+        { label: "Browse Public Library...", command: "publicBrowse" },
+        { label: "My Publications...", command: "publicManage", enabled: () => cloudAuthenticated },
+        "-",
+        { label: "Project", submenu: [
+          { label: "Save Project", command: "cloudSaveProject", enabled: () => cloudAuthenticated && hasOpenProject },
+          { label: "Synchronize with Cloud", command: "cloudSyncProject", enabled: () => cloudAuthenticated && hasOpenProject },
+          { label: "Sync All Projects", command: "cloudSyncAllProjects", enabled: () => cloudAuthenticated },
+          "-",
+          { label: "Publish Active Project...", command: "publicPublish", enabled: () => hasOpenProject }
+        ] },
+        { label: "Links", submenu: [
+          { label: "Open Public Link...", command: "publicOpenLink" },
+          { label: "Copy Built-in Example Link...", command: "publicCopyExampleLink" }
+        ] }
       ],
       Edit: [
         { label: "Undo", command: "undo", shortcut: "Ctrl+Z" },
@@ -168,6 +171,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
       })),
       Help: [
         { label: "Help", command: "helpHub", shortcut: "F1" },
+        { label: "Open the Manual", command: "helpManual" },
         { label: "Welcome...", command: "helpWelcome" },
         { label: "Teacher Kit...", command: "helpTeacherKit" },
         { label: "MIPS Reference PDF", command: "helpMipsPdf" },

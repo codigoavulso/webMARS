@@ -104,7 +104,7 @@
     id: "system-clock",
     label: "System Clock and Timer",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("system-clock", "System Clock and Timer, Version 1.0", 900, 620, `
+      const shell = ctx.createToolWindowShell("system-clock", "System Clock and Timer", 900, 620, `
         <div class="sc-tool">
           <div class="sc-toolbar">
             <button class="tool-btn" data-sc="connect" type="button">Connect to MIPS</button>
@@ -136,12 +136,12 @@
                 <label class="sc-check"><input type="checkbox" data-sc="enable"><span>Enabled (control bit 0)</span></label>
                 <label class="sc-check"><input type="checkbox" data-sc="irq"><span>Raise interrupts (control bit 1)</span></label>
                 <label class="sc-check"><input type="checkbox" data-sc="wall"><span>Count real milliseconds (control bit 2)</span></label>
-                <div class="sc-note">Simulated time counts executed instructions, so a run is repeatable and backstep stays exact. Real milliseconds are not reproducible.</div>
+                <div class="sc-note">Instruction-based time is repeatable; real time is not.</div>
               </div>
               <div class="sc-card" style="flex:1; min-height:0; overflow:auto;">
                 <h4>Memory-mapped registers</h4>
                 <table class="sc-regs" data-sc="regs"></table>
-                <div class="sc-note">The program owns these words: write the control register to arm the timer, and write the status register to acknowledge a tick.</div>
+                <div class="sc-note">The program controls these registers.</div>
               </div>
             </div>
           </div>

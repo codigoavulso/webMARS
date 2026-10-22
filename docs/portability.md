@@ -1,14 +1,16 @@
 # webMARS portability matrix
 
-**webMARS 0.6.4.** Maintained by hand, per release. Unlike the generated
+**webMARS 0.6.5.** Maintained by hand, per release. Unlike the generated
 reports in [evidence.md](evidence.md), this one records what a person actually
 ran, so it cannot be produced by a script.
 
-For this release, the new Usage statistics window was opened and filtered in a
-local Chromium-based browser preview with synthetic data for all three periods.
-The Raspberry Pi aggregate query was also run read-only against the live metrics
-database. The earlier browser and device checks below have not all been repeated
-for 0.6.3; their status records the last hands-on verification, not a new test.
+For 0.6.5, the embedded project manager and Online menu were exercised in a
+local Chromium-based browser preview, including the compact layout, location
+switching, filters, account-dialog navigation, editable errors and password
+visibility. Google callback validation and cancellation were covered by
+simulated provider tests; a fresh production Google authorization was not
+performed during this cycle. Earlier device checks below retain their original
+status and are not claims of new hands-on verification.
 
 ## How to read it
 

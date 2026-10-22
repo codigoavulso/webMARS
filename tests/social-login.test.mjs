@@ -14,7 +14,7 @@ test("generated account names have a friendly label without replacing the login 
   assert.equal(context.getCloudUserDisplayName({ username: "my-handle", email: user.email }), "my-handle");
   assert.equal(context.getCloudUserDisplayName({ username: user.username }), user.username);
 });
-function harness({blocked=false, destination="https://accounts.google.com/o/oauth2/v2/auth", authenticated=true}={}) {
+function harness({blocked=false, destination="https://accounts.google.com/o/oauth2/v2/auth", authenticated=true, user={id:1,username:"sample"}}={}) {
   const listeners = new Map(), intervals = [], calls = [], metrics = [];
   let state = null, closed = false;
   const popup = {location:{href:""},get closed(){return closed;},close(){closed=true;}};
@@ -25,12 +25,12 @@ function harness({blocked=false, destination="https://accounts.google.com/o/oaut
   const env = {window,URL,AbortSignal,cloudApiBase:"https://backmars.test/api",translateText:s=>s,
     cloudRequestJson:async(path,options)=>{calls.push({path,options});
       if(path.endsWith("/start"))return{url:destination,state:"flow-123"};
-      if(path==="/me")return{authenticated,user:authenticated?{id:1,username:"sample"}:null};
+      if(path==="/me")return{authenticated,user:authenticated?user:null};
       return{providers:["google","facebook","not-supported"]};},
     setCloudSessionState:(...args)=>state=args,refreshCloudProjectSyncDocuments:()=>Promise.resolve()};
   vm.createContext(env);vm.runInContext(source,env);
   return {env,popup,listeners,intervals,calls,metrics,get state(){return state;},
-    run:()=>env.startCloudSocialLogin("google","login",{setMessage(){}}),
+    run:(dialog={setMessage(){}})=>env.startCloudSocialLogin("google","login",dialog),
     message:(changes={})=>listeners.get("message")?.({origin:"https://backmars.test",source:popup,
       data:{type:"webmars-social-auth",state:"flow-123",provider:"google",status:"created"},...changes})};
 }
@@ -62,4 +62,33 @@ test("provider discovery builds native dialog actions only for supported provide
   assert.equal(sections.length,1);assert.equal(sections[0].fields.length,1);
   assert.equal(sections[0].fields[0].name,"social-google");
   assert(sections[0].fields.every(f=>f.type==="button"&&typeof f.onClick==="function"));
+});
+
+test("cancelling the parent closes the Google popup and removes pending listeners", async()=>{
+  const h=harness(); let cancel;
+  const pending=h.run({setMessage(){},setBusy(){},setCancelHandler:fn=>{cancel=fn;}});
+  await tick(); cancel();
+  assert.equal((await pending).close,false);
+  assert.equal(h.popup.closed,true);
+  assert.equal(h.listeners.size,0);
+  assert.equal(h.state,null);
+});
+
+test("Google accounts with an unfinished username resume setup on later logins", async()=>{
+  const h=harness({user:{id:1,username:"user-123456789abc"}});
+  let prompted=false;
+  h.env.runDialogForm=async()=>{prompted=true; return{ok:true};};
+  const pending=h.run(); await tick();
+  h.message({data:{type:"webmars-social-auth",state:"flow-123",provider:"google",status:"success"}});
+  assert.equal((await pending).close,true);
+  assert.equal(prompted,true);
+});
+
+test("cancelling Google username setup signs out without completing the original action",async()=>{
+  const h=harness({user:{id:1,username:"user-123456789abc"}});
+  h.env.runDialogForm=async()=>({ok:false});
+  const pending=h.run(); await tick(); h.message();
+  assert.equal((await pending).close,false);
+  assert(h.calls.some(c=>c.path==="/logout"));
+  assert.equal(h.state[0],"anonymous");
 });

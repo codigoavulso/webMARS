@@ -442,7 +442,7 @@
     if (!consumer || consumer.bubble || !consumer.reads.length) return null;
     if (config.forwarding) {
       const producer = stages.EX;
-      if (!producer || producer.bubble || !producer.isLoad) return null;
+      return null;
       const registers = registersOverlap(consumer.reads, producer.writes);
       return registers.length
         ? { type: "load-use", registers, producer, consumer }
@@ -2474,16 +2474,16 @@
         } else if (!snapshot.followingExecution) {
           registerNote.textContent = snapshot.execution.recorded > 0
             ? t("Switch the instruction stream to the recorded execution to see register values.")
-            : t("The assembled program is not executed, so no register holds a value. Run the program in webMARS and the recorded execution appears here.");
+            : t("Run the program to see recorded register values.");
         } else if (snapshot.execution.recorded === 0) {
-          registerNote.textContent = t("No execution recorded yet. Step or run the program in webMARS and the pipeline follows it.");
+          registerNote.textContent = t("Run or step the program to record execution.");
         } else {
           const inFlight = Math.max(0, snapshot.execution.replayed - snapshot.execution.retired);
           registerNote.textContent = inFlight > 0
-            ? t("webMARS has finished {recorded} instruction(s), but {inFlight} of them are still in the pipeline. This table shows what has actually been written back, so it lags the main Registers window by exactly those {inFlight}.", {
+            ? t("Registers reflect completed instructions. {inFlight} of {recorded} recorded instructions are still in the pipeline.", {
                 recorded: snapshot.execution.recorded, inFlight
               })
-            : t("Every recorded instruction has written back, so these values match the main Registers window exactly.");
+            : t("Register values match the Registers window.");
         }
         renderRegisterTable(snapshot);
         renderRegisterHistory(snapshot);
@@ -2704,8 +2704,8 @@
         // The distinction matters: a value shown here was observed in the
         // functional runtime, never computed by the timing model.
         architectureNote.textContent = snapshot.followingExecution
-          ? t("Cycle {cycle}. The values shown were recorded from the webMARS run; the timing model does not compute them.", { cycle: snapshot.cycle })
-          : t("Cycle {cycle}. The model does not compute values, so components show operand names, not contents.", { cycle: snapshot.cycle });
+          ? t("Cycle {cycle} · recorded register values.", { cycle: snapshot.cycle })
+          : t("Cycle {cycle} · operand names only.", { cycle: snapshot.cycle });
       }
 
       function renderModelNote(snapshot) {
@@ -2792,10 +2792,10 @@
           clockNode.append(flight);
         }
         clockNode.title = snapshot.followingExecution
-          ? t("webMARS has finished {recorded} instruction(s); {retired} of them have written back in the pipeline and {inFlight} are still in flight. That gap is why the two register views differ.", {
+          ? t("Recorded: {recorded} · written back: {retired} · in flight: {inFlight}.", {
               recorded: snapshot.execution.recorded, retired: snapshot.execution.retired, inFlight
             })
-          : t("The pipeline runs on its own clock and is not executing the program.");
+          : t("Pipeline simulation only; the program is not running.");
       }
 
       function render() {
@@ -2873,7 +2873,7 @@
             registers: snapshot.lastHazard.registers.join(", ")
           });
         } else if (snapshot.followingExecution && snapshot.execution.recorded === 0) {
-          statusNode.textContent = t("No execution recorded yet. Step or run the program in webMARS and the pipeline follows it.");
+          statusNode.textContent = t("Run or step the program to record execution.");
         } else if (snapshot.done && snapshot.followingExecution) {
           statusNode.textContent = t("Replayed {recorded} recorded steps in {cycles} pipeline cycles.", {
             recorded: snapshot.execution.recorded, cycles: snapshot.cycle
@@ -2883,7 +2883,7 @@
         } else if (snapshot.followingExecution) {
           statusNode.textContent = t("Cycle {cycle}, replaying the recorded webMARS run.", { cycle: snapshot.cycle });
         } else {
-          statusNode.textContent = t("Cycle {cycle} of the independent Pipeline Lab simulation.", { cycle: snapshot.cycle });
+          statusNode.textContent = t("Pipeline cycle {cycle}.", { cycle: snapshot.cycle });
         }
         if (executionTruncated) {
           statusNode.textContent += ` ${t("The recording stopped at {limit} instructions.", { limit: MAX_EXECUTION_RECORDS })}`;

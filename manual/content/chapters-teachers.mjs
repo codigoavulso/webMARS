@@ -44,7 +44,7 @@ export const teacherChapters = [
             ["Fecho", "Descarregar a fonte e confirmar que reabre", "Ficheiro entregue e, se aplicável, revisão pública"],
             ["Contingência", "Disponibilizar fonte e instruções sem rede", "Anexo no LMS ou pasta da turma"]
           ])}
-          <p>Comece com <code>/e/lesson01-registers</code> ou copie a ligação estável através de <strong>Biblioteca → Copiar ligação de exemplo incorporado</strong>. Uma ligação direta abre uma pré-visualização; o aluno confirma <strong>Abrir como novo projeto</strong>, criando uma cópia local independente.</p>
+          <p>Comece com <code>/e/lesson01-registers</code> ou copie a ligação estável através de <strong>Online → Ligações → Copiar ligação de exemplo incorporado</strong>. Uma ligação direta abre uma pré-visualização; o aluno confirma <strong>Abrir como novo projeto</strong>, criando uma cópia local independente.</p>
           <p>Explique explicitamente as três zonas de persistência: projeto local no browser, download no dispositivo e projeto Cloud opcional. Publicar na Biblioteca é uma quarta ação, deliberada, e nunca acontece ao guardar localmente.</p>
         `
       },
@@ -60,7 +60,7 @@ export const teacherChapters = [
           ])}
           ${steps([
             "Inicie sessão e confirme o email. A verificação impede publicação abusiva com endereços não controlados.",
-            "Teste e guarde o projeto local. Escolha <strong>Biblioteca → Publicar projeto ativo</strong>.",
+            "Teste e guarde o projeto local. Escolha <strong>Online → Projeto → Publicar projeto ativo</strong>.",
             "Defina nome público, título, descrição, tags, tipo, dificuldade, licença e visibilidade. Não inclua dados pessoais nos ficheiros.",
             "Copie o URL da revisão mais recente e o URL fixo apresentado após a publicação.",
             "Para corrigir, abra o projeto revisto e use <strong>As minhas publicações → Publicar projeto ativo como nova revisão</strong>. Nunca tente substituir a revisão usada numa avaliação."
@@ -84,7 +84,7 @@ Sem rede: use o ficheiro anexado e abra-o a partir do disco.</pre>
           <h3>Demonstração que acompanha a versão mais recente</h3>
           <pre>Demonstração webMARS: [URL COMPLETO /p/nome]
 Este link acompanha correções futuras. Para citar um resultado, copie também
-o link de revisão fixa mostrado em Biblioteca → As minhas publicações.</pre>
+o link de revisão fixa mostrado em Online → As minhas publicações.</pre>
           <h3>Mensagem de privacidade</h3>
           <pre>Não é necessária conta para editar ou executar localmente. A conta é usada
 apenas para Cloud, recuperação por email e publicação. Esta turma utiliza a

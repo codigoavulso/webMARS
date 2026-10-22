@@ -111,7 +111,7 @@
     id: "keyboard-display-mmio",
     label: "Keyboard and Display MMIO Simulator",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("keyboard-display-mmio", "Keyboard and Display MMIO Simulator, Version 1.4", 980, 760, `
+      const shell = ctx.createToolWindowShell("keyboard-display-mmio", "Keyboard and Display MMIO Simulator", 980, 760, `
         <div class="mars-tool-shell kd-tool">
           <h2 class="mars-tool-heading">Keyboard and Display MMIO Simulator</h2>
           <div class="mars-tool-split-vertical kd-split" data-kd="split">

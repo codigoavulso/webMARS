@@ -48,7 +48,7 @@
     label: "Screen Magnifier",
     create(ctx) {
       const options = buildTargetOptions();
-      const shell = ctx.createToolWindowShell("screen-magnifier", "Screen Magnifier 1.0", 980, 760, `
+      const shell = ctx.createToolWindowShell("screen-magnifier", "Screen Magnifier", 980, 760, `
         <div class="smag-tool">
           <div class="smag-top">
             <button class="tool-btn" data-sm="capture" type="button">Capture</button>

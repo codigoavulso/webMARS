@@ -87,8 +87,7 @@ function renderLayout(root) {
       <nav class="menu-bar panel">
         <span class="menu-logo" aria-hidden="true">&#128640;</span>
         <button class="menu-item" type="button" data-menu="File">File</button>
-        <button class="menu-item" type="button" data-menu="Cloud">Cloud</button>
-        <button class="menu-item" type="button" data-menu="Library">Library</button>
+        <button class="menu-item" type="button" data-menu="Online">Online</button>
         <button class="menu-item" type="button" data-menu="Edit">Edit</button>
         <button class="menu-item" type="button" data-menu="View">View</button>
         <button class="menu-item" type="button" data-menu="Run">Run</button>
@@ -171,7 +170,7 @@ function renderLayout(root) {
                       <div class="editor-gutter" id="editor-gutter" aria-hidden="true"><pre id="editor-gutter-lines"></pre></div>
                       <div class="editor-code-wrap">
                         <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"></pre>
-                        <textarea id="source-editor" aria-label="Source editor" spellcheck="false" inputmode="text" enterkeyhint="enter" autocomplete="off" autocapitalize="off" autocorrect="off"></textarea>
+                        <textarea id="source-editor" aria-label="Source editor" wrap="off" spellcheck="false" inputmode="text" enterkeyhint="enter" autocomplete="off" autocapitalize="off" autocorrect="off"></textarea>
                       </div>
                     </div>
                   </div>
@@ -4504,6 +4503,8 @@ function createDialogSystem(windowManager, desktop, options = {}) {
   function setMessageContent(text, tone = "") {
     if (!(messageNode instanceof HTMLTextAreaElement)) return;
     messageNode.value = String(text || "");
+    messageNode.hidden = !messageNode.value.trim();
+    win.classList.toggle("dialog-without-message", messageNode.hidden);
     messageNode.classList.remove("info", "success", "error");
     const normalizedTone = String(tone || "").trim().toLowerCase();
     if (normalizedTone === "info" || normalizedTone === "success" || normalizedTone === "error") {
@@ -4664,6 +4665,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
         const inputType = type === "number"
           ? "number"
           : (type === "password" ? "password" : "text");
+        const revealPassword = inputType === "password" && field.reveal === true;
         const fieldName = String(field?.name || "").toLowerCase();
         const inferredInputMode = inputType === "number"
           ? (Number.isFinite(field?.step) && !Number.isInteger(field.step) ? "decimal" : "numeric")
@@ -4686,6 +4688,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
         return `
           <label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
             <span class="dialog-form-label">${label}</span>
+            ${revealPassword ? '<span class="dialog-password-control">' : ""}
             <input
               id="${fieldId}"
               data-field-name="${escapeHtml(String(field?.name || ""))}"
@@ -4700,6 +4703,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
               value="${escapeHtml(String(value ?? ""))}"
               ${min}${max}${step}${placeholder}
             >
+            ${revealPassword ? `<button type="button" class="tool-btn" data-password-target="${fieldId}" aria-pressed="false" aria-label="${escapeHtml(translateText("Show password"))}">${escapeHtml(translateText("Show"))}</button></span>` : ""}
           </label>
           ${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}
         `;
@@ -4915,6 +4919,19 @@ function createDialogSystem(windowManager, desktop, options = {}) {
       event.preventDefault();
       confirmButton?.click();
     }
+  });
+
+  formNode?.addEventListener("click", (event) => {
+    const button = event.target instanceof Element ? event.target.closest("[data-password-target]") : null;
+    if (!(button instanceof HTMLButtonElement) || button.disabled) return;
+    event.preventDefault();
+    const input = document.getElementById(button.dataset.passwordTarget);
+    if (!(input instanceof HTMLInputElement) || !formNode.contains(input)) return;
+    const visible = input.type === "password";
+    input.type = visible ? "text" : "password";
+    button.setAttribute("aria-pressed", String(visible));
+    button.setAttribute("aria-label", translateText(visible ? "Hide password" : "Show password"));
+    button.textContent = translateText(visible ? "Hide" : "Show");
   });
 
   return {
@@ -6270,6 +6287,8 @@ function injectRuntimeStyles() {
       line-height: 1.25;
       font-family: "Cascadia Code", "Consolas", "Lucida Console", monospace;
       tab-size: 8;
+      /* The selection and syntax overlay must use the same physical lines. */
+      white-space: pre;
       z-index: 2;
       overflow: auto;
     }
@@ -7380,6 +7399,11 @@ function injectRuntimeStyles() {
       color: var(--text);
     }
 
+    .dialog-message[hidden] { display: none; }
+    .dialog-form-active.dialog-without-message .dialog-window-content {
+      grid-template-rows: minmax(0, 1fr) auto;
+    }
+
     /* With a form present the description is a caption, not the content, so the
        free row belongs to the fields. The stacked layout already did this; on
        the desktop the message box stretched to fill the window while the
@@ -7486,15 +7510,20 @@ function injectRuntimeStyles() {
     }
 
     .cloud-auth-section {
-      grid-template-rows: auto minmax(0, 1fr);
+      grid-template-rows: auto auto;
+      align-content: start;
     }
+
+    .dialog-password-control { display:flex; align-items:stretch; gap:4px; min-width:0; }
+    .dialog-password-control input { flex:1; min-width:0; }
+    .dialog-password-control > button { flex:0 0 auto; min-height:26px; padding:2px 6px; }
 
     [id^="window-cloud-merge-"] .dialog-message {
       min-height: 84px;
     }
 
     .cloud-auth-section .dialog-form-fields {
-      align-content: center;
+      align-content: start;
       gap: 8px;
     }
 
@@ -8235,14 +8264,6 @@ function injectRuntimeStyles() {
         color: var(--text-on-accent);
       }
 
-      /* Long lines wrapped, which also desynchronized the highlight overlay:
-         that layer is white-space: pre, so the two disagreed on where a line
-         ended. Scrolling sideways keeps them in step. */
-      .desktop-stacked #source-editor {
-        white-space: pre;
-        overflow: auto;
-      }
-
       .desktop.desktop-stacked .desktop-window.window-closable .window-controls [data-win-action="close"] {
         display: inline-flex !important;
         align-items: center;
@@ -8510,6 +8531,10 @@ function injectRuntimeStyles() {
 
       .desktop.desktop-stacked .desktop-window.mobile-panel-window.dialog-form-active .dialog-window-content {
         grid-template-rows: minmax(48px, 96px) minmax(0, 1fr) auto;
+      }
+
+      .desktop.desktop-stacked .desktop-window.mobile-panel-window.dialog-form-active.dialog-without-message .dialog-window-content {
+        grid-template-rows: minmax(0, 1fr) auto;
       }
 
       .desktop.desktop-stacked .desktop-window.mobile-panel-window .dialog-form,

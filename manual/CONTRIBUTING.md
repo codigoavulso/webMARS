@@ -22,6 +22,19 @@ Uma secção que ensina uma tarefa deve, quando aplicável, conter:
 - **Problemas frequentes** — causa, diagnóstico e recuperação;
 - **Compatibilidade** — limitações ou diferença em relação ao MARS 4.5.
 
+## Exemplos verificados
+
+Os programas completos dos guias práticos vivem em
+`content/worked-examples.mjs`. Renderize essas fontes nos capítulos em vez de
+manter uma cópia divergente. Registe linguagem/perfil, saída esperada e, quando
+relevante, memória e registos a verificar. Distinga fragmentos de programas
+completos e explique as condições dos exercícios com falhas intencionais.
+
+No repositório webMARS, `npm run test:manual` executa as fontes e variantes no
+compilador e simulador atuais. O manual distribuído não depende desse teste nem
+do código do produto. Execute também `npm run validate` na pasta do manual para
+confirmar ligações, distribuição e consistência editorial.
+
 ## Capturas de ecrã
 
 Siga `SCREENSHOTS.md`. Cada imagem precisa de texto alternativo que descreva a

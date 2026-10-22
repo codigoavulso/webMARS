@@ -137,11 +137,12 @@
     }
   }
 
+  // Original MARS tool: Ingo Kofler.
   host.register({
     id: "bht-simulator",
     label: "BHT Simulator",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("bht-simulator", "BHT Simulator, Version 1.0 (Ingo Kofler)", 900, 760, `
+      const shell = ctx.createToolWindowShell("bht-simulator", "BHT Simulator", 900, 760, `
         <div class="bht-tool">
           <h2>Branch History Table Simulator</h2>
           <div class="bht-row">

@@ -13,7 +13,10 @@
   <script src="./manual-config.js"></script>
   <script>
     try {
-      const stored = localStorage.getItem("webmars-manual-theme");
+      const options = new URLSearchParams(location.search);
+      const embedded = window.parent !== window && options.get("embedded") === "1";
+      if (embedded) document.documentElement.dataset.embedded = "true";
+      const stored = embedded ? options.get("theme") : localStorage.getItem("webmars-manual-theme");
       if (stored === "light" || stored === "dark") document.documentElement.dataset.theme = stored;
     } catch { /* armazenamento indisponível: fica o tema do sistema */ }
   </script>
@@ -54,6 +57,10 @@
 
     <aside class="book-nav" id="book-nav" aria-label="Índice do manual">
       <p class="nav-heading">Índice</p>
+      <label class="nav-filter"><span class="sr-only">Filtrar capítulos</span>
+        <input id="chapter-filter" type="search" placeholder="Filtrar capítulos…" autocomplete="off">
+      </label>
+      <p id="chapter-filter-empty" class="nav-empty" role="status" hidden>Sem capítulos para esta pesquisa. Use a pesquisa integral para procurar no texto.</p>
       <nav id="chapter-navigation"></nav>
       <div class="nav-appendix">
         <a href="#/sobre-o-manual">Sobre esta edição</a>

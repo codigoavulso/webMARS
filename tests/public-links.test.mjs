@@ -189,6 +189,7 @@ test("public copies require interchange version 1 and foreign origins are refuse
 });
 
 test("owners can edit visibility, restore archives and preserve pinned access", async () => {
+  const manager = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "21-project-manager.js"), "utf8");
   const runtime = await readFile(
     resolve(projectRoot, "assets", "js", "app-modules", "20-app-runtime.js"),
     "utf8"
@@ -198,9 +199,10 @@ test("owners can edit visibility, restore archives and preserve pinned access", 
   assert.match(runtime, /value: "published"[\s\S]*value: "unlisted"/);
   assert.match(runtime, /publication\.status === "archived" \? publication\.latestRevision : null/);
   assert.match(runtime, /Restore this publication before adding a revision/);
-  assert.match(runtime, /`\/publications\/mine\?\$\{params\}`/);
-  assert.match(runtime, /payload\?\.hasMore === true/);
-  assert.match(runtime, /createCollectionWindow/);
-  assert.match(runtime, /id:"copy-latest"/);
-  assert.match(runtime, /id:"archive"/);
+  assert.match(manager, /owned \? "\/publications\/mine" : "\/publications"/);
+  assert.match(manager, /hasMore: Boolean\(payload\?\.hasMore\)/);
+  assert.match(manager, /id: "copy-latest"/);
+  assert.match(manager, /id: "copy-pinned"/);
+  assert.match(manager, /id: "revision"/);
+  assert.match(manager, /id: "archive"/);
 });

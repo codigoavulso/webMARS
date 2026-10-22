@@ -241,9 +241,11 @@ async function translateBatch(items, target) {
   // the wrong key, which is worse than leaving them all in English.
   if (!parts) {
     if (items.length === 1) {
-      throw new Error(
-        `Translation endpoint changed or dropped a protected token for ${JSON.stringify(items[0])}`
-      );
+      // Public translation endpoints occasionally rewrite a protected marker
+      // inside a long sentence. Keep that source entry intact and continue
+      // translating the rest of the catalog instead of aborting the run.
+      console.warn(`  skipped: translation response changed a protected token in ${JSON.stringify(items[0])}`);
+      return [items[0]];
     }
     const output = [];
     for (const item of items) output.push(...await translateBatch([item], target));

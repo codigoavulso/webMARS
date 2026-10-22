@@ -29,7 +29,6 @@ handler:
     eret`;
 
 const contractExample = `//@requires 0 <= n && n <= \\length(a);
-//@ensures \\result >= 0;
 int soma(int a[], int n) {
     int i = 0;
     int total = 0;
@@ -344,6 +343,7 @@ igual:`)}
             ["15", "Divisão por zero", "Divisor zero nas operações aplicáveis."]
           ])}
           ${codeBlock(exceptionExample)}
+          ${callout("warning", "Fragmento de demonstração, não um handler universal", "<p>Somar quatro a EPC demonstra como ignorar uma instrução numa exceção síncrona simples, sem delay slot. Uma interrupção não implica saltar uma instrução; uma exceção num delay slot exige interpretar Cause/BD e o salto. Preservar registos e reconhecer a fonte também faz parte de um handler real.</p>")}
           <p>O motor escreve Cause/EPC/BadVAddr, entra em nível de exceção e transfere para o handler configurado se existir código executável. <code>eret</code> restaura o fluxo. Um handler deve distinguir interrupção, exceção recuperável e falha que não pode ignorar com segurança.</p>
         `
       },
@@ -479,6 +479,7 @@ p->x = xs[0];`, "Mini-C")}
           ${codeBlock(contractExample, "Mini-C com contratos")}
           <p>O compilador reconhece <code>requires</code>, <code>ensures</code> e <code>loop_invariant</code> no modelo atual, além de <code>\\length</code> e <code>\\result</code>. <code>assert(e)</code> exige uma condição em execução; <code>error("mensagem")</code> termina imediatamente.</p>
           <p>Contratos são instrumentos pedagógicos e verificações geradas, não uma prova formal completa do programa.</p>
+          <p>O contrato desta soma limita n ao comprimento do vetor. Não garante resultado positivo: os elementos podem ser negativos. Uma pós-condição sobre o sinal exigiria hipóteses sobre os valores e sobre overflow.</p>
         `
       },
       {

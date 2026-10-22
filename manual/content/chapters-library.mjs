@@ -41,7 +41,7 @@ export const libraryChapters = [
         id: "exemplos-incorporados",
         title: "Ligação direta para um exemplo incorporado",
         content: html`
-          <p>Cada exemplo distribuído com o webMARS tem um ID público permanente. Escolha <strong>Biblioteca → Copiar ligação de exemplo incorporado…</strong>, selecione o exemplo e copie a URL.</p>
+          <p>Cada exemplo distribuído com o webMARS tem um ID público permanente. Escolha <strong>Online → Ligações → Copiar ligação de exemplo incorporado…</strong>, selecione o exemplo e copie a URL.</p>
           ${workflow([
             { label: "1", title: "Escolher exemplo" },
             { label: "2", title: "Copiar /e/ID" },
@@ -57,7 +57,7 @@ export const libraryChapters = [
         title: "Explorar em tabela, pesquisar e abrir",
         content: html`
           ${steps([
-            "Escolha <strong>Biblioteca → Explorar biblioteca pública…</strong>.",
+            "Escolha <strong>Online → Explorar biblioteca pública…</strong>.",
             "Consulte a tabela com título, nome público, autor, tipo, dificuldade, idioma e data de modificação.",
             "Escreva na barra de pesquisa para filtrar por nome público, título, descrição ou tag. A pesquisa é submetida após uma breve pausa; o botão <strong>Explorar</strong> permite submetê-la imediatamente. Deixe vazio para consultar todos os itens publicados.",
             "Use <strong>Página anterior</strong> e <strong>Página seguinte</strong>: o servidor entrega até 25 resultados de cada vez. Uma pesquisa nova regressa à primeira página.",
@@ -77,7 +77,7 @@ export const libraryChapters = [
           <p>Publicar exige projeto aberto, sessão BackMars e email verificado. A verificação usa o código enviado no registo; pode introduzir esse código sem pedir outro. Se pedir um novo, o anterior deixa de ser válido.</p>
           ${steps([
             "Guarde e execute o projeto local; remova dados que não pretende tornar públicos.",
-            "Escolha <strong>Biblioteca → Publicar projeto ativo…</strong>.",
+            "Escolha <strong>Online → Projeto → Publicar projeto ativo…</strong>.",
             "Se necessário, confirme o email com o código temporário.",
             "Escolha o nome público. Use apenas letras minúsculas, números e hífen; o primeiro autor a reclamar o nome fica com ele permanentemente.",
             "Preencha título, descrição, tags, tipo, dificuldade e licença.",
@@ -121,7 +121,7 @@ export const libraryChapters = [
             ["<code>/p/nome</code>", "Abre a revisão mais recente e metadados atuais; deixa de abrir após arquivo", "Página pessoal, material que deve acompanhar atualizações"],
             ["<code>/p/nome@N</code>", "Conteúdo e metadados imutáveis; permanece após arquivo normal", "LMS, enunciado, aula, avaliação e referência científica"]
           ])}
-          <p>Escolha <strong>Biblioteca → As minhas publicações… → Publicar projeto ativo como nova revisão</strong>. A revisão seguinte recebe um número novo; as anteriores não são reescritas. Editar metadados altera o latest, não a resposta já fixada em <code>@N</code>.</p>
+          <p>Escolha <strong>Online → As minhas publicações… → Publicar projeto ativo como nova revisão</strong>. A revisão seguinte recebe um número novo; as anteriores não são reescritas. Editar metadados altera o latest, não a resposta já fixada em <code>@N</code>.</p>
           ${callout("note", "Exceção operacional", "<p>Um operador pode remover material por segurança, privacidade ou obrigação legal. Fora dessa exceção, nomes nunca mudam de dono e revisões fixas sobrevivem ao arquivo do autor.</p>")}
         `
       },
@@ -130,6 +130,7 @@ export const libraryChapters = [
         title: "Gerir e arquivar uma publicação",
         content: html`
           <p>Em <strong>As minhas publicações…</strong> pode copiar a URL latest, copiar a revisão fixa, pré-visualizar/abrir, editar detalhes e visibilidade, publicar nova revisão ou arquivar.</p>
+          <p>A gestão usa uma tabela com pesquisa e seleção, seguindo o mesmo modelo da abertura Cloud e da Biblioteca pública. Selecione primeiro uma publicação para consultar os detalhes e só depois escolha a ação. Pesquisar muda o conjunto visível; não altera o conteúdo nem a visibilidade da publicação.</p>
           <p><strong>Editar detalhes e visibilidade</strong> altera título, descrição, instruções, etiquetas, tipo, dificuldade, licença e o estado publicado/não listado. Numa publicação arquivada, guardar um destes dois estados também a restaura, sem mudar o nome público nem qualquer revisão anterior.</p>
           <p>Arquivar remove o item da pesquisa e faz <code>/p/nome</code> deixar de abrir. O nome continua reservado para sempre e as ligações <code>/p/nome@N</code> mantêm as revisões existentes. Editar ou restaurar exige a conta proprietária com email verificado.</p>
           ${callout("warning", "Arquivo não é apagamento", "<p>Não use arquivo como mecanismo de eliminação urgente de dados sensíveis: revisões fixas foram concebidas para persistir. Contacte o operador para um takedown administrativo.</p>")}
@@ -141,7 +142,7 @@ export const libraryChapters = [
         content: html`
           ${table(["Mensagem/sintoma", "Causa provável", "Ação"], [
             ["Nome já reclamado", "Outra conta chegou primeiro ou o nome foi arquivado", "Escolher outro nome; o antigo não é libertado"],
-            ["Email não verificado", "Código ainda não confirmado", "Cloud → Verificar email; usar o código recebido ou pedir novo"],
+            ["Email não verificado", "Código ainda não confirmado", "Online → Conta → Verificar email; usar o código recebido ou pedir novo"],
             ["Ficheiro inseguro/não suportado", "Path, extensão, duplicado, NUL ou limite", "Corrigir a árvore local e publicar novamente"],
             ["Ligação de outra instalação", "Origem absoluta não corresponde", "Abrir a instalação indicada pela URL, não o nome local"],
             ["Publicação não encontrada", "Nome/revisão incorreto, latest arquivado ou takedown", "Confirmar URL completa e contactar o autor/operador"],

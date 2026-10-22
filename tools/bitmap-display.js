@@ -226,7 +226,7 @@
     id: "bitmap-display",
     label: "Bitmap Display",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("bitmap-display", "Bitmap Display, Version 1.0", 800, 700, `
+      const shell = ctx.createToolWindowShell("bitmap-display", "Bitmap Display", 800, 700, `
         <div class="mars-tool-shell bitmap-tool">
           <h2 class="mars-tool-heading">Bitmap Display</h2>
           <div class="mars-tool-display-options">

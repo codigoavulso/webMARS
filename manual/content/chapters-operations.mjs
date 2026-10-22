@@ -108,17 +108,44 @@ export const operationChapters = [
         id: "conta",
         title: "Criar conta, iniciar e terminar sessão",
         content: html`
-          <p>Se o administrador tiver configurado os fornecedores, as janelas de entrada e registo apresentam <strong>Continuar com Google</strong> e <strong>Continuar com Facebook</strong>. A confirmação abre na janela do fornecedor e regressa à mesma conta Cloud, sem pedir uma nova password. Para associar um fornecedor a uma conta que já existe, entre primeiro nessa conta e escolha <strong>Cloud → Métodos de entrada associados</strong>; os projetos mantêm o mesmo proprietário. A criação por Google usa identificador e email verificado. No Facebook, o email recebido continua sujeito à verificação da instalação; se não for fornecido, crie uma conta por email e associe-a depois.</p>
+          <p>O botão <strong>Continuar com Google</strong>, quando disponível, aparece tanto ao iniciar sessão como ao criar conta. A autorização abre numa janela Google; a palavra-passe Google nunca é introduzida no webMARS. Na primeira entrada, escolha um nome de utilizador disponível. Se cancelar este passo, poderá retomá-lo na próxima entrada.</p>
+          <p>Se já tem uma conta com palavra-passe, entre primeiro nessa conta e associe o Google em <strong>Online → Conta → Métodos de entrada associados</strong>. Entrar diretamente com Google pela primeira vez pode criar uma conta Cloud separada; nesse caso, siga o procedimento de fusão abaixo.</p>
           ${steps([
-            "Abra <strong>Cloud</strong> e escolha <strong>Criar utilizador…</strong>.",
-            "Preencha username, email, password e repetição. A validação local impede campos vazios e passwords diferentes; o servidor aplica regras adicionais.",
+            "Na janela de entrada, escolha <strong>Criar conta</strong>, ou use a opção de registo no menu <strong>Online → Conta</strong>.",
+            "Preencha nome de utilizador, email e palavra-passe. Repita a palavra-passe para confirmar. Pode usar Mostrar/Ocultar para a conferir.",
             "Após sucesso, a sessão é iniciada e o nome aparece no menu.",
-            "Noutro dispositivo, escolha <strong>Login…</strong> e introduza username/password.",
-            "Use <strong>Logout</strong> para invalidar a sessão e limpar o estado Cloud no cliente."
+            "Noutro dispositivo, inicie sessão com o nome de utilizador ou email e a palavra-passe, ou com o Google associado.",
+            "Use <strong>Terminar sessão</strong> no menu Online → Conta para sair da conta."
           ])}
-          <p>Requests autenticados usam <code>credentials: include</code>; a sessão reside num cookie controlado pelo backend. <strong>Cloud → Esqueci-me da password…</strong> envia um código numérico temporário para o email da conta; o código expira, é de uso único e a nova password revoga as outras sessões. <strong>Cloud → Verificar email…</strong> usa o mesmo modelo antes de permitir publicação pública. É possível introduzir um código já recebido sem pedir outro; pedir um código novo invalida o anterior. A eliminação de conta ainda depende do administrador da instalação.</p>
+          <p>Se uma tentativa falhar, corrija os campos e volte a tentar na mesma janela. Os atalhos entre entrada, registo e recuperação mantêm a operação que estava a realizar, sem transportar a palavra-passe entre formulários.</p>
+          <p><strong>Esqueceu-se da palavra-passe?</strong> permite pedir um código temporário para o email da conta ou usar um código já recebido. No passo seguinte pode reenviar o código ou alterar o email. A resposta ao pedido não revela se existe uma conta com esse endereço. Depois de confirmar o código e a nova palavra-passe, fica com sessão iniciada; as outras sessões são revogadas. Se entrar com Google, também pode voltar à janela de entrada e escolher <strong>Continuar com Google</strong>.</p>
+          <p><strong>Online → Conta → Verificar email…</strong> permite confirmar o endereço antes de publicar projetos. Introduza o código recebido ou escolha <strong>Enviar novo código</strong>. Cada código é temporário e de uso único; o novo código substitui o anterior. A eliminação de conta ainda depende do administrador da instalação.</p>
           ${screenshot("./assets/screenshots/password-reset-light.png", "Diálogo Esqueceu-se da palavra-passe no tema claro, com o email de uma conta de teste e a opção para usar um código já recebido", "A recuperação começa pelo email da conta ou continua com um código temporário já recebido; a resposta não confirma se esse email está registado.")}
           ${screenshot("./assets/screenshots/email-verification-light.png", "Diálogo Verificar email no tema claro, com o campo para um código temporário de seis dígitos", "A verificação associa o endereço de email à conta antes de permitir publicação pública; o código temporário é introduzido apenas nesta instalação BackMars.")}
+        `
+      },
+      {
+        id: "associar-e-fundir",
+        title: "Associar Google e fundir duas contas existentes",
+        content: html`
+          <p><strong>Associar</strong> acrescenta um método de entrada à conta atual. Se esse Google já criou outra conta Cloud, o webMARS apresenta uma proposta de <strong>fusão</strong> para reunir os dados numa única conta.</p>
+          ${steps([
+            "Termine a sessão e entre com a conta que pretende conservar, usando o respetivo nome de utilizador e palavra-passe.",
+            "Abra <strong>Online → Conta → Métodos de entrada associados</strong> e escolha <strong>Associar Google</strong>.",
+            "Na janela Google, selecione a identidade que pretende associar e conclua a autorização.",
+            "Se existir outra conta Cloud ligada a essa identidade, leia o resumo: conta de origem, conta a conservar e quantidades de projetos e publicações a transferir.",
+            "Confirme a palavra-passe da conta que vai conservar e escolha <strong>Fundir contas</strong>. Se os nomes ou as quantidades não forem os esperados, cancele e volte a confirmar as contas.",
+            "Após o sucesso, confirme os projetos e as publicações. A mesma conta passa a aceitar tanto a palavra-passe original como a entrada Google."
+          ])}
+          ${table(["Elemento", "Resultado da fusão"], [
+            ["Conta de destino", "Mantém o nome e a palavra-passe da conta em que iniciou sessão."],
+            ["Projetos Cloud", "Os projetos da origem são transferidos. Projetos com nomes iguais são preservados separadamente."],
+            ["Publicações", "A propriedade passa para a conta de destino; confirme as ligações e revisões na Biblioteca."],
+            ["Métodos de entrada", "A identidade Google fica associada à conta conservada."],
+            ["Trabalho local", "Continua no browser; a fusão atua sobre as contas e documentos Cloud."]
+          ])}
+          ${callout("warning", "Escolha a conta a conservar antes de associar", "<p>O sentido da fusão é a conta Google de origem para a conta onde está autenticado. Cancelar a confirmação permite rever a escolha antes da transferência. Não se deve presumir uma função de desfazer a fusão.</p>")}
+          <p>Se a janela não abrir, permita popups para esta instalação e repita o clique. Se o Google apresentar uma conta diferente, use o seletor de contas do próprio Google. Uma sessão expirada exige nova entrada antes de repetir a associação.</p>
         `
       },
       {
@@ -134,8 +161,8 @@ export const operationChapters = [
         title: "Abrir um projeto remoto",
         content: html`
           ${steps([
-            "Inicie sessão e selecione <strong>Cloud → Abrir projeto Cloud…</strong>.",
-            "Escolha o projeto na lista.",
+            "Inicie sessão e selecione <strong>Online → Projetos na nuvem</strong>.",
+            "Pesquise pelo nome e escolha uma linha na tabela de projetos. As colunas mostram o nome e as datas de modificação e criação; a área de detalhes confirma a seleção.",
             "O documento é normalizado e importado para a biblioteca local; preferências/layout locais em vigor não são substituídos indiscriminadamente.",
             "Confirme a árvore, ficheiro ativo e badge de sincronização antes de editar."
           ])}
@@ -145,10 +172,10 @@ export const operationChapters = [
         id: "guardar-cloud",
         title: "Guardar o projeto ativo na Cloud",
         content: html`
-          <p><strong>Cloud → Guardar projeto</strong> envia o projeto ativo para o BackMars configurado. Antes do pedido de rede, o webMARS incorpora as alterações do editor no documento do projeto e persiste a cópia local.</p>
+          <p><strong>Online → Projeto → Guardar projeto</strong> envia o projeto ativo para o BackMars configurado. Antes do pedido de rede, o webMARS incorpora as alterações do editor no documento do projeto e persiste a cópia local.</p>
           ${steps([
             "Abra o projeto que pretende enviar e guarde qualquer edição em curso.",
-            "Inicie sessão e escolha <strong>Cloud → Guardar projeto</strong>.",
+            "Inicie sessão e escolha <strong>Online → Projeto → Guardar projeto</strong>.",
             "O webMARS procura o projeto remoto com o mesmo nome: cria-o se ainda não existir ou atualiza-o com a versão remota atual como precondição.",
             "Aguarde a mensagem <strong>Projeto Cloud guardado</strong> e confirme o nome apresentado.",
             "Se surgir um conflito, mantenha a cópia local, abra a versão remota para comparação e combine conscientemente as alterações."
@@ -548,7 +575,7 @@ export const operationChapters = [
         id: "cloud",
         title: "Cloud indisponível ou em conflito",
         content: html`
-          <p>Guarde/descarregue localmente e atualize a sessão. Use <strong>Cloud → Guardar projeto</strong> para enviar apenas o projeto ativo ou <strong>Sincronizar todos os projetos</strong> para comparar a coleção. Em conflito, preserve ambas as versões e combine manualmente; não repita uploads cegamente.</p>
+          <p>Guarde/descarregue localmente e atualize a sessão. Use <strong>Online → Projeto → Guardar projeto</strong> para enviar apenas o projeto ativo ou <strong>Sincronizar todos os projetos</strong> para comparar a coleção. Em conflito, preserve ambas as versões e combine manualmente; não repita uploads cegamente.</p>
         `
       },
       {
@@ -889,7 +916,7 @@ export const operationChapters = [
             <li>Menu em cima/baixo; RTL em árabe, urdu e persa.</li>
             <li><code>$sp</code> inicial Default é <code>0x7fffeffc</code>.</li>
             <li>Backstep usa deltas inversos, não snapshots integrais.</li>
-            <li>Cloud → Guardar projeto envia o projeto ativo; Sync compara a coleção completa.</li>
+            <li>Online → Projeto → Guardar projeto envia o projeto ativo; Sync compara a coleção completa.</li>
             <li>Importação <code>.p</code> existe sem exportação de projeto equivalente identificada.</li>
             <li>Biblioteca pública em tabela, com pesquisa no servidor e páginas de 25 resultados.</li>
             <li>Estatísticas públicas em Ajuda, com seis indicadores imediatos e 12 medições disponíveis.</li>

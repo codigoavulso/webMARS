@@ -19,7 +19,7 @@ import {
 
 const run = promisify(execFile);
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.6.4";
+const expectedReleaseVersion = "0.6.5";
 const languages = [
   "en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id",
   "de", "ja", "ko", "tr", "vi", "ur", "it", "pl", "fa", "th"
@@ -592,12 +592,14 @@ test("release shell and localized toolbar labels are complete", async () => {
   }
 });
 
-test("the Public Library is reachable from the main menu", async () => {
+test("the Online menu exposes Cloud and the Public Library", async () => {
   const ui = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "10-ui.js"), "utf8");
   const menus = await readFile(resolve(projectRoot, "assets", "js", "app-modules", "13-ui-menu-system.js"), "utf8");
 
-  assert.match(ui, /data-menu="Library">Library<\/button>/);
-  assert.match(menus, /Library:\s*\[/);
+  assert.match(ui, /data-menu="Online">Online<\/button>/);
+  assert.doesNotMatch(ui, /data-menu="(?:Cloud|Library)"/);
+  assert.match(menus, /Online:\s*\[/);
+  assert.match(menus, /command:\s*"cloudOpenProject"/);
   assert.match(menus, /command:\s*"publicBrowse"/);
   assert.match(menus, /command:\s*"publicPublish"/);
 });

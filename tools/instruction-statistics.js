@@ -65,11 +65,12 @@
     return "Other";
   }
 
+  // Original MARS tool: Ingo Kofler.
   host.register({
     id: "instruction-statistics",
     label: "Instruction Statistics",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("instruction-statistics", "Instruction Statistics, Version 1.0 (Ingo Kofler)", 580, 320, `
+      const shell = ctx.createToolWindowShell("instruction-statistics", "Instruction Statistics", 580, 320, `
         <div class="istats-tool">
           <div class="istats-grid">
             <label>Total:</label>

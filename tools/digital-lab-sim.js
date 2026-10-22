@@ -159,11 +159,12 @@
     ctx2d.fill();
   }
 
+  // Original MARS tool: Didier Teifreto.
   host.register({
     id: "digital-lab-sim",
     label: "Digital Lab Sim",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("digital-lab-sim", "Digital Lab Sim, Version 1.0 (Didier Teifreto)", 560, 360, `
+      const shell = ctx.createToolWindowShell("digital-lab-sim", "Digital Lab Sim", 560, 360, `
         <div class="mars-tool-shell dlab-tool">
           <h2 class="mars-tool-heading">Digital Lab Sim</h2>
           <div class="dlab-main">

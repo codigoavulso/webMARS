@@ -1,10 +1,10 @@
 export const MANUAL = Object.freeze({
   title: "Manual do webMARS",
-  version: "0.2.0",
-  displayVersion: "v0.2",
-  webmarsVersion: "0.6.4",
-  verifiedCommit: "09afa3008c95b21e2f988e7b3708335d35d16a4f",
-  verifiedAt: "2026-10-20",
+  version: "0.2.1",
+  displayVersion: "v0.2.1",
+  webmarsVersion: "0.6.5",
+  verifiedCommit: "PENDING-0.6.5",
+  verifiedAt: "PENDING-2026-10-22",
   locale: "pt-PT"
 });
 
@@ -35,7 +35,7 @@ export function workflow(items) {
 }
 
 export function screenshot(src, alt, caption) {
-  return `<figure class="screenshot"><div class="screenshot-frame"><img src="${src}" alt="${alt}" loading="lazy"></div><figcaption>${caption}</figcaption></figure>`;
+  return `<figure class="screenshot"><div class="screenshot-frame"><img src="${src}" alt="${alt}" width="1280" height="720" loading="lazy"></div><figcaption>${caption}</figcaption></figure>`;
 }
 
 export const SHORTCUTS = [
@@ -64,7 +64,7 @@ export const MENU_ATLAS = [
   ["Executar", "Compilar Mini-C; Montar; Executar; Pausar; Parar; Passo; Passo atrás; Reiniciar"],
   ["Definições", "Apresentação; assembler; Mini-C; armazenamento; Cloud; interface; runtime e memória"],
   ["Ferramentas", "Vinte ferramentas educativas, de arquitetura, desempenho e dispositivos"],
-  ["Ajuda", "Centro de ajuda; boas-vindas; kit docente; estatísticas de utilização; referência MIPS em PDF; informação e créditos"]
+  ["Ajuda", "Centro de ajuda; manual integrado; boas-vindas; kit docente; estatísticas de utilização; referência MIPS em PDF; informação e créditos"]
 ];
 
 export const MEMORY_MAP = [
@@ -120,5 +120,5 @@ export const FEATURE_FAMILIES = [
   ["Idiomas da aplicação", 20, "Descritos"],
   ["Categorias de exemplos", 5, "Cobertas"],
   ["Lições Assembly", 15, "Percurso documentado"],
-  ["Medições de utilização", 12, "Resumo, gráficos e limites documentados"]
+  ["Medições de utilização", 15, "Resumo, gráficos e limites documentados"]
 ];

@@ -1,4 +1,4 @@
-# webMARS Code Architecture (v0.6.4)
+# webMARS Code Architecture (v0.6.5)
 
 webMARS is a static browser application built from ordered, non-ES-module
 scripts. The assembler and simulator use one JavaScript implementation; the
@@ -45,6 +45,8 @@ flowchart TB
     bench["19-runtime-benchmarks.js<br/>measurements"]
     library["19-public-library.js<br/>stable public examples"]
     statistics["19-usage-statistics.js<br/>public aggregate charts"]
+    repository["20-project-repository.js<br/>IndexedDB project records"]
+    projectmanager["21-project-manager.js<br/>unified project manager"]
     compiler["17-mini-c-compiler.js<br/>Mini-C to MIPS"]
   end
   subgraph CORE["Core"]
@@ -66,6 +68,9 @@ flowchart TB
   runtime --> bench
   runtime --> library
   runtime --> statistics
+  runtime --> repository
+  runtime --> projectmanager
+  projectmanager --> repository
   runtime --> compiler
   runtime --> engine
   compiler --> engine
@@ -165,7 +170,9 @@ The current bootstrap order is:
 18. `assets/js/app-modules/19-runtime-benchmarks.js`
 19. `assets/js/app-modules/19-public-library.js`
 20. `assets/js/app-modules/19-usage-statistics.js`
-21. `assets/js/app-modules/20-app-runtime.js`
+21. `assets/js/app-modules/20-project-repository.js`
+22. `assets/js/app-modules/21-project-manager.js`
+23. `assets/js/app-modules/20-app-runtime.js`
 
 ## Current modules
 
@@ -187,6 +194,8 @@ The current bootstrap order is:
 | `19-runtime-benchmarks.js` | In-memory compile, assemble and run measurements, including duration, estimated instrumented JavaScript utilization and throughput. |
 | `19-public-library.js` | Stable built-in-example and public-publication routes, public-library browsing, publication and immutable revision links. |
 | `19-usage-statistics.js` | Help-menu statistics window with aggregate charts, filters, exact-value tables and localized labels. |
+| `20-project-repository.js` | IndexedDB-backed project, recycle-bin and session records, with one-way migration from the legacy localStorage library and a compatibility mirror for the runtime. |
+| `21-project-manager.js` | Unified project browser embedded in Main's Project view. Every location uses the shared file-manager chrome, rows and context menus. The local location preserves selection and drag/drop; remote locations load documents on demand into read-only folder trees. Actions depend on location, resource and selection. Bounded, cancellable requests distinguish unavailable services from authentication and valid empty results. Runtime events and the project-manager bridge perform editor and authenticated mutations. |
 | `20-app-runtime.js` | Final composition root: preferences, projects and sessions, compiler/assembler commands, run loop, persistence, cloud adapters, tools, help and UI synchronization. |
 
 The files under `assets/js/reference/` are generated data consumed by the core
@@ -199,6 +208,9 @@ and help system, not alternative execution engines.
   `WebMarsLayoutConfig`, `createMarsEngine` and
   `createMarsJavaStyleHelpSystem` remain globals because the loader is not ESM.
 - `20-app-runtime.js` is the composition root and therefore must stay last.
+- `20-project-repository.js` must load before `21-project-manager.js` and before
+  the runtime so local project actions can use the persistent repository while
+  keeping the legacy localStorage mirror available during migration.
 - A module must not silently depend on a script loaded after it.
 - Changes to a shared global or registry entry require tests for every consumer.
 
@@ -221,7 +233,7 @@ should remain incremental:
 
 Names such as `core/syscalls` or `runtime/session` may be useful conceptual
 boundaries for future extraction, but they are not directories or modules in
-the v0.6.4 tree.
+the v0.6.5 tree.
 
 ## Theming
 

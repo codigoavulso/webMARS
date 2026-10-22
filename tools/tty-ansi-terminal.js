@@ -427,7 +427,7 @@
     id: "tty-ansi-terminal",
     label: "TTY Device + ANSI Terminal",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("tty-ansi-terminal", "TTY Device + ANSI Terminal, Version 1.0", 980, 720, `
+      const shell = ctx.createToolWindowShell("tty-ansi-terminal", "TTY Device + ANSI Terminal", 980, 720, `
         <div class="mars-tool-shell tty-ansi-tool">
           <h2 class="mars-tool-heading">TTY Device + ANSI Terminal</h2>
           <div class="mars-tool-display-options">
@@ -478,7 +478,7 @@
                       <span>CRLF translation</span>
                     </label>
                     <div class="tty-ansi-hint" data-tty="hint">
-                      Focus the terminal and type to feed receiver data. The transmitter stream understands text, ANSI cursor control, screen clearing, colors, and DEC line drawing.
+                      Click the terminal to type.
                     </div>
                   </div>
                   <div class="tty-ansi-status" data-tty="status"></div>
@@ -1536,7 +1536,7 @@
       function refreshUiText() {
         shell.refreshTranslations?.();
         if (hintNode) {
-          hintNode.textContent = t("Focus the terminal and type to feed receiver data. Optional local echo, CRLF translation, and destructive backspace make the terminal feel closer to a system console.");
+          hintNode.textContent = t("Click the terminal to type.");
         }
         if (baseNode) baseNode.value = toHex32(mmioBase());
         if (localEchoToggle) localEchoToggle.checked = localEchoEnabled;

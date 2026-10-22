@@ -123,6 +123,7 @@ like a tool that silently stops updating.
 | `createDisplayFitController` | Sizes a window to a fixed-size virtual display |
 | `runtimeControls` | The execution control bridge |
 | `openHelpDocument` | Opens a help page in the embedded viewer |
+| `openManual` | Opens the integrated manual; accepts an optional chapter, such as `ferramentas` |
 | `nextPlacement` | Cascading position for a new window |
 
 ## The window shell

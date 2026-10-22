@@ -59,11 +59,12 @@
     return "R";
   }
 
+  // Original MARS tool: Felipe Lessa.
   host.register({
     id: "instruction-counter",
     label: "Instruction Counter",
     create(ctx) {
-      const shell = ctx.createToolWindowShell("instruction-counter", "Instruction Counter, Version 1.0 (Felipe Lessa)", 650, 280, `
+      const shell = ctx.createToolWindowShell("instruction-counter", "Instruction Counter", 650, 280, `
         <div class="icount-tool">
           <h2 class="icount-title">Counting the number of instructions executed</h2>
           <div class="icount-grid">

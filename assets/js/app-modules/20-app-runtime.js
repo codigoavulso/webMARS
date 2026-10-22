@@ -172,6 +172,13 @@ benchmarkCollector.subscribe(renderBenchmarkStatus);
 renderBenchmarkStatus();
 if (typeof window !== "undefined") window.WebMarsBenchmarks = benchmarkCollector;
 const windowManager = createWindowManager(refs);
+// The unified project manager is loaded before the runtime. Expose only the
+// stable desktop handles it needs; editor state and commands remain private to
+// this runtime and are reached through typed DOM events below.
+if (typeof window !== "undefined") {
+  window.WebMarsWindowManager = windowManager;
+  window.WebMarsAppRefs = refs;
+}
 const transientDialogSystems = new Set();
 let transientDialogCounter = 0;
 const createModernHelpSystem = (typeof window !== "undefined" ? window : globalThis).createMarsJavaStyleHelpSystem;
@@ -703,8 +710,20 @@ function normalizeProjectData(project) {
   const files = normalizeProjectFiles(project.files);
   const folderPaths = normalizeProjectFolderPaths(project.folderPaths, files);
   const activeFileId = String(project.activeFileId || files[0]?.id || "");
+  const existingId = String(project.id || "").trim();
+  let id = existingId;
+  if (!id) {
+    try {
+      id = typeof window.crypto?.randomUUID === "function"
+        ? window.crypto.randomUUID()
+        : `project-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+    } catch {
+      id = `project-${Date.now().toString(36)}`;
+    }
+  }
   return {
     version: Number.isFinite(project.version) ? (project.version | 0) : PROJECT_SCHEMA_VERSION,
+    id,
     isOpen: project.isOpen !== false,
     name,
     description: String(project.description || ""),
@@ -717,6 +736,7 @@ function normalizeProjectData(project) {
       : {},
     layout: normalizeWindowSessionData(project.layout),
     states: normalizeProjectStateSlots(project.states),
+    createdAt: Number(project.createdAt) || Date.now(),
     updatedAt: Number(project.updatedAt) || Date.now()
   };
 }
@@ -755,6 +775,11 @@ function normalizeProjectLibraryData(library) {
 function saveProjectLibraryData(library) {
   try {
     window.localStorage.setItem(PROJECT_LIBRARY_STORAGE_KEY, JSON.stringify(library));
+    // IndexedDB is the v2 recovery/catalogue store. Keep the legacy snapshot
+    // for older sessions while writes are mirrored asynchronously so a quota
+    // or browser storage failure never blocks the editor transaction.
+    const mirror = window.WebMarsProjectRepository?.mirrorLibrary?.(library);
+    if (mirror && typeof mirror.catch === "function") mirror.catch(() => {});
     return true;
   } catch {
     return false;
@@ -774,6 +799,8 @@ function loadProjectLibraryData() {
 function saveProjectData(project) {
   try {
     window.localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(project));
+    const mirror = window.WebMarsProjectRepository?.saveProject?.(project);
+    if (mirror && typeof mirror.catch === "function") mirror.catch(() => {});
     return true;
   } catch {
     return false;
@@ -1649,6 +1676,7 @@ function setCloudSessionState(nextState, user = null, errorMessage = "") {
     renderProjectTree(true);
   }
   updateCloudStoreState();
+  window.dispatchEvent(new CustomEvent("webmars:cloud-session-changed"));
 }
 
 function setCloudSyncState(active, errorMessage = "", options = {}) {
@@ -1920,7 +1948,6 @@ async function renameCloudProjectByName(previousRootPath, nextRootPath) {
 
 async function refreshCloudProjectSyncDocuments(options = {}) {
   if (cloudProjectSyncRefreshPromise) return cloudProjectSyncRefreshPromise;
-  const reasonLabel = String(options.reason || "session").trim();
   const shouldPostStatus = options.postStatus === true;
   cloudProjectSyncRefreshPromise = (async () => {
     if (cloudAuthState !== "authenticated") {
@@ -1937,10 +1964,7 @@ async function refreshCloudProjectSyncDocuments(options = {}) {
     }
 
     if (shouldPostStatus) {
-      postMarsMessage("[info] Cloud project sync started after {reason} at {url}.", {
-        reason: translateText(reasonLabel),
-        url: `${cloudApiBase}/projects`
-      });
+      postMarsMessage("Syncing Cloud projects...");
     }
 
     const remoteProjects = await listCloudProjects();
@@ -2107,7 +2131,7 @@ async function chooseCloudProjectId(projects = []) {
     const browser = window.WebMarsFileManager.createCollectionWindow(windowManager, refs.windows.desktop, {
       id: `window-cloud-projects-${++transientDialogCounter}`, title: "Open Cloud Project",
       height:"380px",
-      message: "Choose a remote project to load into the workspace.", closeLabel: "Cancel", key: item => item?.id,
+      closeLabel: "Cancel", key: item => item?.id,
       columns: [{label:"Project", value:item=>item.name}, {label:"Modified", value:item=>window.WebMarsFileManager.formatDate(Date.parse(item.updatedAt)) || "—"},
         {label:"Created", value:item=>window.WebMarsFileManager.formatDate(Date.parse(item.createdAt)) || "—"}],
       details: item => `${item.name}\n${translateText("Modified")}: ${formatTimestampForDisplay(item.updatedAt)}`,
@@ -2122,11 +2146,11 @@ async function chooseCloudProjectId(projects = []) {
   });
 }
 
-async function cloudSocialSections(intent = "login") {
-  let configured;
-  try { configured = await cloudRequestJson("/auth/providers", { signal: AbortSignal.timeout(3000) }); }
+async function cloudSocialSections(intent = "login", configured = null) {
+  try { configured ||= await cloudRequestJson("/auth/providers", { signal: AbortSignal.timeout(3000) }); }
   catch { return []; }
-  const providers = (configured?.providers || []).filter((name) => name === "google");
+  const providers = (configured?.providers || []).filter((name) => name === "google"
+    && (intent !== "link" || !(configured.connected || []).includes(name)));
   if (!providers.length) return [];
   const providerNames = { google: "Google", facebook: "Facebook" };
   return [{ title: translateText(intent === "link" ? "Linked sign-in methods" : "Continue with an existing account"), className: "cloud-auth-section",
@@ -2142,13 +2166,24 @@ async function startCloudSocialLogin(provider, intent, dialog) {
   dialog.setMessage(translateText("Complete sign-in in the provider window."), "info");
   window.WebMarsUsage?.track("login_start", provider);
   let cleanup = () => {};
+  let cancelPending = null;
+  let cancelled = false;
+  dialog.setBusy?.(true, { allowCancel: true });
+  dialog.setCancelHandler?.(() => {
+    cancelled = true;
+    cleanup();
+    try { popup.close(); } catch {}
+    cancelPending?.("cancelled");
+  });
   try {
     const start = await cloudRequestJson(`/auth/${provider}/start`, { method: "POST",
       body: { intent, context: window.WebMarsUsage?.getContext?.() || "public" } });
+    if (cancelled) return { close: false };
     const target = new URL(start.url);
     const allowedHost = provider === "google" ? "accounts.google.com" : "www.facebook.com";
     if (target.protocol !== "https:" || target.hostname !== allowedHost) throw new Error("Invalid sign-in destination.");
     let result = await new Promise((resolve, reject) => {
+      cancelPending = resolve;
       const apiOrigin = new URL(cloudApiBase, window.location.href).origin;
       const listener = (event) => {
         if (event.origin !== apiOrigin || event.source !== popup || event.data?.type !== "webmars-social-auth"
@@ -2161,25 +2196,39 @@ async function startCloudSocialLogin(provider, intent, dialog) {
       window.addEventListener("message", listener);
       popup.location.href = target.href;
     });
-    if (result === "cancelled") return { close: false };
+    if (result === "cancelled") {
+      dialog.setMessage(translateText("Google sign-in cancelled. You can try again."), "info");
+      return { close: false };
+    }
+    cleanup();
+    popup.close();
+    dialog.setCancelHandler?.(null);
+    dialog.setBusy?.(true);
     if (result === "merge_required" && intent === "link") {
       cleanup();
       popup.close();
       const preview = await cloudRequestJson("/auth/merge");
       const confirmation = await runDialogForm({
         title: translateText("Merge Cloud accounts"),
-        message: translateText("Merge {source} into {target}? Keep {target} and its password. Transfer {projects} project(s) and {publications} publication(s). Projects with the same name are kept separately. Both sign-in methods will use this account.", {
+        message: translateText("Merge {source} into {target}? Transfer {projects} project(s) and {publications} publication(s). Keep {target}'s password and both sign-ins. Same-name projects stay separate.", {
           source: getCloudUserDisplayName(preview.source), target: preview.target,
           projects: preview.projects, publications: preview.publications
         }),
         confirmLabel: translateText("Merge accounts"), cancelLabel: translateText("Cancel"),
         width: "500px", height: "270px",
         sections: [{ title: preview.target, className: "dialog-form-section-compact", fields: [{
-          name: "password", label: translateText("Password"), type: "password", autocomplete: "current-password"
+          name: "password", label: translateText("Password"), type: "password", reveal: true, autocomplete: "current-password"
         }] }],
-        beforeResolve: async (values) => {
-          await cloudRequestJson("/auth/merge", { method: "POST", body: { confirm: true, password: values.password } });
-          return { result: { ok: true } };
+        beforeResolve: async (values, form) => {
+          if (!values.password) { form.setMessage(translateText("Fill in all account fields."), "error"); return { close: false }; }
+          form.setBusy(true);
+          try {
+            await cloudRequestJson("/auth/merge", { method: "POST", body: { confirm: true, password: values.password } });
+            return { result: { ok: true } };
+          } catch (error) {
+            form.setMessage(cloudAuthError(error), "error");
+            return { close: false };
+          } finally { form.setBusy(false); }
         }
       }, { windowIdPrefix: "window-cloud-merge" });
       if (!confirmation?.ok) return { close: false };
@@ -2189,12 +2238,42 @@ async function startCloudSocialLogin(provider, intent, dialog) {
       const messages = {
         existing_account: "An account already uses this email. Sign in to it, then link this provider from the Cloud menu.",
         verified_email_required: "An email is required. Create an account with email first, then link this provider from the Cloud menu.",
-        identity_conflict: "This sign-in method is already linked to another account."
+        identity_conflict: "This sign-in method is already linked to another account.",
+        rate_limited: "Too many attempts. Please wait and try again."
       };
       throw new Error(translateText(messages[result] || "Social sign-in failed. Try again."));
     }
     const payload = await cloudRequestJson("/me");
     if (!payload?.authenticated || !payload?.user) throw new Error(translateText("Social sign-in failed. Try again."));
+    if (intent !== "link" && provider === "google" && /^user-[a-f0-9]{12}$/i.test(String(payload.user.username || ""))) {
+      const usernameResult = await runDialogForm({
+        title: translateText("Choose a username"),
+        message: translateText("Choose the name that will appear in webMARS."),
+        confirmLabel: translateText("Continue"), cancelLabel: translateText("Cancel"),
+        width: "430px", height: "220px",
+        sections: [{ title: translateText("Username"), fields: [{ name: "username", label: translateText("Username"), autocomplete: "username", value: "" }] }],
+        beforeResolve: async (values, form) => {
+          const username = String(values?.username || "").trim();
+          if (!username) { form.setMessage(translateText("Username is required."), "error"); return { close: false }; }
+          form.setBusy(true);
+          try {
+            const updated = await cloudRequestJson("/me", { method: "PATCH", body: { username } });
+            payload.user = updated?.user || { ...payload.user, username };
+            return { result: { ok: true, value: true } };
+          } catch (error) {
+            if (Number(error?.status) === 409) form.setMessage(translateText("Username already exists. Please choose another username and try again."), "error");
+            else form.setMessage(describeCloudError(error, "Could not save the username."), "error");
+            return { close: false };
+          } finally { form.setBusy(false); }
+        }
+      }, { windowIdPrefix: "window-cloud-username" });
+      if (!usernameResult?.ok) {
+        try { await cloudRequestJson("/logout", { method: "POST" }); } catch {}
+        setCloudSessionState("anonymous", null, "");
+        dialog.setMessage(translateText("Google sign-in cancelled. You can try again."), "info");
+        return { close: false };
+      }
+    }
     setCloudSessionState("authenticated", payload.user, "");
     if (result !== "linked") window.WebMarsUsage?.track("login_success", provider);
     if (result === "created") window.WebMarsUsage?.track("account_created", provider);
@@ -2204,254 +2283,147 @@ async function startCloudSocialLogin(provider, intent, dialog) {
   } catch (error) {
     window.WebMarsUsage?.track("login_error", provider);
     throw error;
-  } finally { cleanup(); try { popup.close(); } catch {} }
+  } finally {
+    cleanup();
+    dialog.setCancelHandler?.(null);
+    dialog.setBusy?.(false);
+    try { popup.close(); } catch {}
+  }
 }
 
-async function openCloudLoginDialog() {
-  const socialSections = await cloudSocialSections();
-  const result = await runDialogForm({
-    title: translateText("Cloud Login"),
-    message: translateText("Sign in to the WebMARS cloud workspace service."),
-    confirmLabel: translateText("Login"),
-    cancelLabel: translateText("Cancel"),
-    width: "460px",
-    height: "260px",
-    sections: [
-      {
-        title: translateText("Credentials"),
-        layout: "table",
-        className: socialSections.length ? "cloud-auth-section" : "",
-        fields: [
-          ...socialSections.flatMap((section) => section.fields),
-          {
-            name: "username",
-            label: translateText("Username"),
-            type: "text",
-            autocomplete: "username",
-            value: ""
-          },
-          {
-            name: "password",
-            label: translateText("Password"),
-            type: "password",
-            autocomplete: "current-password",
-            value: ""
-          }
-        ]
-      }
-    ],
-    beforeResolve: async (values, dialog) => {
-      const username = String(values?.username || "").trim();
-      const password = String(values?.password || "");
-      if (!username || !password) {
-        dialog.setMessage(translateText("[warn] Username and password are required."), "error");
-        dialog.setFinalResult({ ok: true, value: false });
-        dialog.setCloseOnly(translateText("Close"));
-        return { close: false };
-      }
-
-      const attemptUrl = `${cloudApiBase}/login`;
-      postMarsMessage("[info] Cloud login started at {url}.", { url: attemptUrl });
-      const stopAttemptStatus = startCloudAttemptStatus(dialog, "Attempting cloud login at {url}... {seconds}s elapsed.", attemptUrl);
-      const attemptController = typeof AbortController === "function" ? new AbortController() : null;
-      let attemptCancelled = false;
-      dialog.setCancelHandler(() => {
-        attemptCancelled = true;
-        stopAttemptStatus();
-        attemptController?.abort();
-      });
-      dialog.setBusy(true, { allowCancel: true });
-      try {
-        window.WebMarsUsage?.track("login_start", "password");
-        const payload = await cloudRequestJson("/login", {
-          method: "POST",
-          signal: attemptController?.signal,
-          body: { username, password }
-        });
-        if (attemptCancelled || attemptController?.signal?.aborted) return { close: false };
-        stopAttemptStatus();
-        setCloudSessionState("authenticated", payload?.user || { username }, "");
-        window.WebMarsUsage?.track("login_success", "password");
-        void refreshCloudProjectSyncDocuments({ render: true, postStatus: true, reason: "login" }).catch(() => {});
-        postMarsMessage("Cloud login successful: {name}.", { name: getCloudUserDisplayName(payload?.user || { username }) });
-        dialog.setMessage(translateText("Cloud login successful: {name}.", {
-          name: getCloudUserDisplayName(payload?.user || { username })
-        }), "success");
-        dialog.setFinalResult({ ok: true, value: true });
-      } catch (error) {
-        if (attemptCancelled || attemptController?.signal?.aborted) return { close: false };
-        stopAttemptStatus();
-        const message = describeCloudError(error, "Cloud login failed.");
-        window.WebMarsUsage?.track("login_error", "password");
-        setCloudSessionState("error", null, message);
-        postMarsMessage("[error] Cloud login failed: {message}", { message });
-        dialog.setMessage(translateText("[error] Cloud login failed: {message}", { message }), "error");
-        dialog.setFinalResult({ ok: true, value: false });
-      }
-      dialog.setCancelHandler(null);
-      dialog.setCloseOnly(translateText("Close"));
-      return { close: false };
+// Navigation returns to this flow so a successful registration or recovery also
+// completes the original action that requested sign-in.
+async function openCloudAuthDialog(initialMode = "login", initialValues = {}) {
+  let mode = initialMode;
+  let values = initialValues;
+  while (true) {
+    if (mode === "recover") {
+      if (await openCloudPasswordResetDialog(values.email || values.username || "", { backToLogin: true })) return true;
+      mode = "login";
+      continue;
     }
-  }, {
-    windowIdPrefix: "window-dialog-system",
-    left: "250px",
-    top: "130px",
-    width: "460px",
-    height: "260px"
-  });
-  return result?.value === true;
+    const result = await openCloudCredentialsDialog(mode, values);
+    if (result?.route) {
+      mode = result.route;
+      values = result.values || {};
+      continue;
+    }
+    return result?.ok === true && result?.value === true;
+  }
 }
 
-async function openCloudRegisterDialog() {
+function cloudAuthNavigation(name, label, route) {
+  return { type: "button", name, label: translateText(label),
+    onClick: (dialog) => {
+      let { username = "", email = "" } = dialog.getValues();
+      if (route === "register" && username.includes("@") && !email) { email = username; username = ""; }
+      if (route === "login" && email) username = email;
+      dialog.close({ route, values: { username, email } });
+      return { close: false };
+    } };
+}
+
+function cloudAuthError(error, registering = false) {
+  const status = Number(error?.status);
+  const field = String(error?.payload?.field || "");
+  if (status === 429) return translateText("Too many attempts. Please wait and try again.");
+  if (!registering && status === 401) return translateText("The username, email or password is incorrect.");
+  if (registering && status === 409) return translateText(field === "username"
+    ? "Username already exists. Please choose another username and try again."
+    : "An account already uses this email. Sign in or recover your password.");
+  if (status === 0 || status >= 500) return translateText("The service could not be reached.");
+  return describeCloudError(error, registering ? "Cloud user creation failed." : "Cloud login failed.");
+}
+
+async function openCloudCredentialsDialog(mode = "login", initial = {}) {
+  const registering = mode === "register";
   const socialSections = await cloudSocialSections();
-  const result = await runDialogForm({
-    title: translateText("Create Cloud User"),
-    message: translateText("Create a new WebMARS cloud user and sign in immediately."),
-    confirmLabel: translateText("Create User"),
-    cancelLabel: translateText("Cancel"),
-    width: "500px",
-    height: "350px",
-    sections: [
-      {
-        title: translateText("Account"),
-        layout: "table",
-        className: socialSections.length ? "cloud-auth-section" : "",
-        fields: [
-          ...socialSections.flatMap((section) => section.fields),
-          {
-            name: "username",
-            label: translateText("Username"),
-            type: "text",
-            autocomplete: "username",
-            value: ""
-          },
-          {
-            name: "email",
-            label: translateText("Email"),
-            type: "text",
-            inputMode: "email",
-            autocomplete: "email",
-            value: ""
-          },
-          {
-            name: "password",
-            label: translateText("Password"),
-            type: "password",
-            autocomplete: "new-password",
-            value: ""
-          },
-          {
-            name: "repeatPassword",
-            label: translateText("Repeat Password"),
-            type: "password",
-            autocomplete: "new-password",
-            value: ""
-          }
-        ]
-      }
-    ],
+  const fields = [
+    ...socialSections.flatMap((section) => section.fields),
+    { name: "username", label: translateText(registering ? "Username" : "Username or email"),
+      autocomplete: "username", value: initial.username || "" },
+    ...(registering ? [{ name: "email", label: translateText("Email"), inputMode: "email",
+      autocomplete: "email", value: initial.email || "" }] : []),
+    { name: "password", label: translateText("Password"), type: "password", reveal: true,
+      autocomplete: registering ? "new-password" : "current-password",
+      help: registering ? translateText("Use at least eight characters.") : "" },
+    ...(registering ? [{ name: "repeatPassword", label: translateText("Repeat Password"), type: "password", reveal: true, autocomplete: "new-password" }] : []),
+    cloudAuthNavigation(registering ? "sign-in" : "create-account", registering ? "Already have an account? Sign in" : "Create Account", registering ? "login" : "register"),
+    cloudAuthNavigation("forgot-password", "Forgot password?", "recover")
+  ];
+  return runDialogForm({
+    title: translateText(registering ? "Create Account" : "Cloud Login"),
+    confirmLabel: translateText(registering ? "Create Account" : "Login"),
+    cancelLabel: translateText("Cancel"), width: "460px", height: registering ? "440px" : "340px",
+    sections: [{ title: translateText("Account"), layout: "table", className: "cloud-auth-section", fields }],
     beforeResolve: async (values, dialog) => {
       const username = String(values?.username || "").trim();
       const email = String(values?.email || "").trim().toLowerCase();
       const password = String(values?.password || "");
-      const repeatPassword = String(values?.repeatPassword || "");
-
-      if (!username || !email || !password || !repeatPassword) {
-        dialog.setMessage(translateText("[warn] Username, email, password and repeat password are required."), "error");
-        dialog.setFinalResult({ ok: true, value: false });
-        dialog.setCloseOnly(translateText("Close"));
+      if (!username || !password || (registering && (!email || !values?.repeatPassword))) {
+        dialog.setMessage(translateText("Fill in all account fields."), "error");
         return { close: false };
       }
-      if (password !== repeatPassword) {
-        dialog.setMessage(translateText("[warn] Password and repeat password must match."), "error");
-        dialog.setFinalResult({ ok: true, value: false });
-        dialog.setCloseOnly(translateText("Close"));
+      if (registering && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        dialog.setMessage(translateText("Enter a valid email address."), "error");
         return { close: false };
       }
-
-      const attemptUrl = `${cloudApiBase}/register`;
-      postMarsMessage("[info] Cloud user registration started at {url}.", { url: attemptUrl });
-      const stopAttemptStatus = startCloudAttemptStatus(dialog, "Attempting cloud user registration at {url}... {seconds}s elapsed.", attemptUrl);
-      const attemptController = typeof AbortController === "function" ? new AbortController() : null;
-      let attemptCancelled = false;
-      dialog.setCancelHandler(() => {
-        attemptCancelled = true;
-        stopAttemptStatus();
-        attemptController?.abort();
-      });
+      if (registering && (password.length < 8 || password !== values.repeatPassword)) {
+        dialog.setMessage(translateText("Passwords must match and contain at least eight characters."), "error");
+        return { close: false };
+      }
+      const controller = new AbortController();
+      let cancelled = false;
+      dialog.setCancelHandler(() => { cancelled = true; controller.abort(); });
       dialog.setBusy(true, { allowCancel: true });
+      dialog.setMessage(translateText(registering ? "Creating account..." : "Signing in..."), "info");
       try {
         window.WebMarsUsage?.track("login_start", "password");
-        const payload = await cloudRequestJson("/register", {
-          method: "POST",
-          signal: attemptController?.signal,
-          body: { username, email, password }
+        const payload = await cloudRequestJson(registering ? "/register" : "/login", {
+          method: "POST", signal: controller.signal,
+          body: registering ? { username, email, password } : { username, password }
         });
-        if (attemptCancelled || attemptController?.signal?.aborted) return { close: false };
-        stopAttemptStatus();
-        setCloudSessionState("authenticated", payload?.user || { username, email }, "");
-        window.WebMarsUsage?.track("account_created", "password");
+        if (cancelled) return { close: false };
+        if (!payload?.user) throw new Error(translateText("Cloud login failed."));
+        setCloudSessionState("authenticated", payload.user, "");
+        if (registering) window.WebMarsUsage?.track("account_created", "password");
         window.WebMarsUsage?.track("login_success", "password");
-        void refreshCloudProjectSyncDocuments({ render: true, postStatus: true, reason: "register" }).catch(() => {});
-        postMarsMessage("Cloud user created: {name}.", {
-          name: getCloudUserDisplayName(payload?.user || { username, email })
-        });
-        dialog.setMessage(translateText("Cloud user created: {name}.", {
-          name: getCloudUserDisplayName(payload?.user || { username, email })
-        }), "success");
-        dialog.setFinalResult({ ok: true, value: true });
+        void refreshCloudProjectSyncDocuments({ render: true, postStatus: true, reason: mode }).catch(() => {});
+        postMarsMessage(registering ? "Cloud user created: {name}." : "Cloud login successful: {name}.", { name: getCloudUserDisplayName(payload.user) });
+        return { result: { ok: true, value: true } };
       } catch (error) {
-        if (attemptCancelled || attemptController?.signal?.aborted) return { close: false };
-        stopAttemptStatus();
-        const status = Number(error?.status) || 0;
+        if (cancelled) return { close: false };
         window.WebMarsUsage?.track("login_error", "password");
-        const field = String(error?.payload?.field || "").trim().toLowerCase();
-        let dialogMessage = "";
-        if (status === 409) {
-          if (field === "username") {
-            dialogMessage = translateText("Username already exists. Please choose another username and try again.");
-            postMarsMessage("[warn] Username already exists. Please choose another username and try again.");
-          } else if (field === "email") {
-            dialogMessage = translateText("Email already exists. Please choose another email and try again.");
-            postMarsMessage("[warn] Email already exists. Please choose another email and try again.");
-          } else {
-            dialogMessage = translateText("Username or email already exists. Please review the form and try again.");
-            postMarsMessage("[warn] Username or email already exists. Please review the form and try again.");
-          }
-        } else {
-          const message = describeCloudError(error, "Cloud user creation failed.");
-          setCloudSessionState("error", null, message);
-          postMarsMessage("[error] Cloud user creation failed: {message}", { message });
-          dialogMessage = translateText("[error] Cloud user creation failed: {message}", { message });
-        }
-        dialog.setMessage(dialogMessage, "error");
-        dialog.setFinalResult({ ok: true, value: false });
+        dialog.setMessage(cloudAuthError(error, registering), "error");
+        return { close: false };
+      } finally {
+        dialog.setCancelHandler(null);
+        dialog.setBusy(false);
       }
-      dialog.setCancelHandler(null);
-      dialog.setCloseOnly(translateText("Close"));
-      return { close: false };
     }
-  }, {
-    windowIdPrefix: "window-dialog-system",
-    left: "250px",
-    top: "130px",
-    width: "500px",
-    height: "350px"
-  });
-  return result?.value === true;
+  }, { windowIdPrefix: "window-cloud-access", left: "250px", top: "110px", width: "460px", height: registering ? "440px" : "340px" });
 }
 
-async function openPasswordResetConfirmDialog(emailAddress) {
+async function openCloudLoginDialog() {
+  return openCloudAuthDialog("login");
+}
+
+async function openCloudRegisterDialog() {
+  return openCloudAuthDialog("register");
+}
+
+async function openPasswordResetConfirmDialog(emailAddress, options = {}) {
   const email = String(emailAddress || "").trim().toLowerCase();
   const result = await runDialogForm({
-    title: translateText("Enter Temporary Code"),
-    message: translateText("Enter the six-digit code from the email and choose a new password."),
+    title: translateText("Reset Password"),
+    message: translateText("If this email belongs to an account, a code has been sent. Check your inbox and spam folder."),
     confirmLabel: translateText("Reset Password"),
     cancelLabel: translateText("Cancel"),
-    width: "500px",
-    height: "390px",
+    width: "460px",
+    height: "400px",
     sections: [{
       title: translateText("Password recovery"),
+      description: email,
       layout: "table",
       fields: [
         {
@@ -2465,17 +2437,28 @@ async function openPasswordResetConfirmDialog(emailAddress) {
         {
           name: "password",
           label: translateText("New Password"),
-          type: "password",
+          type: "password", reveal: true,
           autocomplete: "new-password",
           value: ""
         },
         {
           name: "repeatPassword",
           label: translateText("Repeat Password"),
-          type: "password",
+          type: "password", reveal: true,
           autocomplete: "new-password",
           value: ""
-        }
+        },
+        {
+          type: "button", name: "resend-code", label: translateText("Send a new code"),
+          onClick: async (dialog) => {
+            try {
+              await cloudRequestJson("/password-reset/request", { method: "POST", body: { email } });
+              dialog.setMessage(translateText("If this email belongs to an account, a code has been sent. Check your inbox and spam folder."), "info");
+            } catch (error) { dialog.setMessage(cloudAuthError(error), "error"); }
+            return { close: false };
+          }
+        },
+        cloudAuthNavigation("change-email", "Change email", "recover")
       ]
     }],
     beforeResolve: async (values, dialog) => {
@@ -2497,10 +2480,13 @@ async function openPasswordResetConfirmDialog(emailAddress) {
           body: { email, code, password }
         });
         setCloudSessionState("authenticated", payload?.user || { email }, "");
+        void refreshCloudProjectSyncDocuments({ render: true, postStatus: true, reason: "recovery" }).catch(() => {});
         postMarsMessage("Password reset completed. You are signed in.");
       } catch (error) {
         dialog.setBusy(false);
-        dialog.setMessage(describeCloudError(error, translateText("Password reset failed.")), "error");
+        dialog.setMessage(Number(error?.status) === 400
+          ? translateText("The code is invalid or expired. Try again or request a new code.")
+          : cloudAuthError(error), "error");
         return { close: false };
       }
       return undefined;
@@ -2509,19 +2495,20 @@ async function openPasswordResetConfirmDialog(emailAddress) {
     windowIdPrefix: "window-password-reset-confirm",
     left: "245px",
     top: "125px",
-    width: "500px",
-    height: "390px"
+    width: "460px",
+    height: "400px"
   });
+  if (result?.route === "recover") return openCloudPasswordResetDialog(email, options);
   return result?.ok === true;
 }
 
-async function openCloudPasswordResetDialog() {
+async function openCloudPasswordResetDialog(initialEmail = "", options = {}) {
   const result = await runDialogForm({
     title: translateText("Forgot Password"),
-    message: translateText("Request a temporary code by email, or continue with a code you already received. The answer is deliberately the same whether or not an account exists."),
+    message: translateText("Request a code by email or use one you already have."),
     confirmLabel: translateText("Continue"),
-    cancelLabel: translateText("Cancel"),
-    width: "500px",
+    cancelLabel: translateText(options.backToLogin ? "Back to sign in" : "Cancel"),
+    width: "460px",
     height: "285px",
     sections: [{
       title: translateText("Account email"),
@@ -2533,7 +2520,7 @@ async function openCloudPasswordResetDialog() {
           type: "text",
           inputMode: "email",
           autocomplete: "email",
-          value: ""
+          value: String(initialEmail).includes("@") ? String(initialEmail) : ""
         },
         {
           name: "alreadyHaveCode",
@@ -2567,12 +2554,12 @@ async function openCloudPasswordResetDialog() {
     windowIdPrefix: "window-password-reset-request",
     left: "245px",
     top: "135px",
-    width: "500px",
+    width: "460px",
     height: "285px"
   });
   if (!result?.ok) return false;
   const email = String(result.value?.email || "").trim().toLowerCase();
-  return openPasswordResetConfirmDialog(email);
+  return openPasswordResetConfirmDialog(email, options);
 }
 
 async function openCloudEmailVerificationDialog() {
@@ -2581,61 +2568,23 @@ async function openCloudEmailVerificationDialog() {
     postMarsMessage("Email address is already verified.");
     return true;
   }
-  const requestChoice = await runDialogForm({
-    title: translateText("Verify Email"),
-    message: translateText("Use the code you already received, or request a new one. Requesting a new code invalidates the previous code."),
-    confirmLabel: translateText("Continue"),
-    cancelLabel: translateText("Cancel"),
-    width: "500px",
-    height: "260px",
-    sections: [{
-      title: translateText("Temporary code"),
-      fields: [{
-        name: "sendNewCode",
-        label: translateText("Send me a new code"),
-        type: "checkbox",
-        value: false
-      }]
-    }],
-    beforeResolve: async (values, dialog) => {
-      if (!values?.sendNewCode) return undefined;
-      dialog.setBusy(true);
-      try {
-        await cloudRequestJson("/email-verification/request", { method: "POST", body: {} });
-      } catch (error) {
-        dialog.setBusy(false);
-        dialog.setMessage(describeCloudError(error, translateText("Could not request an email verification code.")), "error");
-        return { close: false };
-      }
-      return undefined;
-    }
-  }, {
-    windowIdPrefix: "window-email-verification-request",
-    left: "235px",
-    top: "145px",
-    width: "500px",
-    height: "260px"
-  });
-  if (!requestChoice?.ok) return false;
   const result = await runDialogForm({
     title: translateText("Verify Email"),
     message: translateText("Enter the six-digit code sent to your account email."),
-    confirmLabel: translateText("Verify"),
-    cancelLabel: translateText("Cancel"),
-    width: "460px",
-    height: "285px",
-    sections: [{
-      title: translateText("Email verification"),
-      layout: "table",
-      fields: [{
-        name: "code",
-        label: translateText("Temporary code"),
-        type: "text",
-        inputMode: "numeric",
-        autocomplete: "one-time-code",
-        value: ""
-      }]
-    }],
+    confirmLabel: translateText("Verify"), cancelLabel: translateText("Cancel"),
+    width: "460px", height: "300px",
+    sections: [{ title: translateText("Email verification"), description: String(cloudUser?.email || ""),
+      layout: "table", className: "cloud-auth-section", fields: [
+        { name: "code", label: translateText("Temporary code"), inputMode: "numeric", autocomplete: "one-time-code" },
+        { type: "button", name: "resend-code", label: translateText("Send a new code"),
+          onClick: async (dialog) => {
+            try {
+              await cloudRequestJson("/email-verification/request", { method: "POST", body: {} });
+              dialog.setMessage(translateText("A new code has been sent. It replaces the previous code."), "info");
+            } catch (error) { dialog.setMessage(cloudAuthError(error), "error"); }
+            return { close: false };
+          } }
+      ] }],
     beforeResolve: async (values, dialog) => {
       const code = String(values?.code || "").trim();
       if (!/^\d{6}$/.test(code)) {
@@ -2644,34 +2593,26 @@ async function openCloudEmailVerificationDialog() {
       }
       dialog.setBusy(true);
       try {
-        const payload = await cloudRequestJson("/email-verification/confirm", {
-          method: "POST",
-          body: { code }
-        });
+        const payload = await cloudRequestJson("/email-verification/confirm", { method: "POST", body: { code } });
         setCloudSessionState("authenticated", payload?.user || cloudUser, "");
         postMarsMessage("Email address verified.");
+        return { result: { ok: true, value: true } };
       } catch (error) {
-        dialog.setBusy(false);
-        dialog.setMessage(describeCloudError(error, translateText("Email verification failed.")), "error");
+        dialog.setMessage(Number(error?.status) === 400
+          ? translateText("The code is invalid or expired. Try again or request a new code.")
+          : cloudAuthError(error), "error");
         return { close: false };
-      }
-      return undefined;
+      } finally { dialog.setBusy(false); }
     }
-  }, {
-    windowIdPrefix: "window-email-verification",
-    left: "255px",
-    top: "135px",
-    width: "460px",
-    height: "285px"
-  });
+  }, { windowIdPrefix: "window-email-verification", left: "250px", top: "130px", width: "460px", height: "300px" });
   return result?.ok === true;
 }
 
 async function openCloudServerPreferencesDialog() {
   if (publicLibraryModule?.config?.allowBackMarsOverride !== true) {
     await runDialogConfirm({
-      title: translateText("BackMars for this installation"),
-      message: translateText("This installation fixes Cloud, account recovery and the public library to one BackMars service: {url}", {
+      title: translateText("Cloud Server Preferences"),
+      message: translateText("Cloud service: {url}", {
         url: publicLibraryModule?.config?.backMarsApiBase || cloudApiBase
       }),
       confirmLabel: translateText("OK"),
@@ -2684,7 +2625,6 @@ async function openCloudServerPreferencesDialog() {
   const currentApiBase = normalizeCloudApiBase(current.cloudApiBase || "");
   const result = await runDialogForm({
     title: translateText("Cloud Server Preferences"),
-    message: translateText("Configure the WebMARS cloud server URL."),
     confirmLabel: translateText("OK"),
     cancelLabel: translateText("Cancel"),
     width: "540px",
@@ -2800,6 +2740,89 @@ async function saveActiveProjectToCloud(options = {}) {
     setCloudSyncState(false, message);
     postMarsMessage("[error] Cloud save failed: {message}", { message });
     return { ok: false, message };
+  }
+}
+
+async function syncSelectedProjectWithCloud(rootPath, direction = "sync") {
+  const normalizedRoot = String(rootPath || "").trim();
+  let mode = ["sync", "push", "pull"].includes(direction) ? direction : "sync";
+  if (!normalizedRoot) return { ok: false, cancelled: true };
+  if (!await ensureCloudAuthenticated(mode === "pull" ? "getting the project from the cloud" : mode === "push" ? "sending the project to the cloud" : "synchronizing the project")) {
+    return { ok: false, cancelled: true };
+  }
+
+  setCloudSyncState(true, "");
+  try {
+    if (projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", normalizedRoot)) {
+      syncOpenProjectBeforeCloudAction();
+    }
+    const localProject = normalizeProjectData(findProjectInLibrary(normalizedRoot));
+    if (!localProject) throw new Error(translateText("The local project could not be found."));
+
+    const remoteProjects = await listCloudProjects({ includeDocuments: true });
+    const remoteByName = chooseLatestRemoteProjectByName(remoteProjects);
+    const remoteMeta = remoteByName.get(normalizeProjectRootKey(normalizedRoot));
+
+    if (mode === "push") {
+      const result = await saveProjectToCloud(localProject, remoteByName);
+      postMarsMessage("Project sent to the cloud: {name}.", { name: normalizedRoot });
+      setCloudSyncState(false, "", { updateTimestamp: true });
+      renderProjectTree(true);
+      return { ok: true, direction: "push", created: result.created === true };
+    }
+
+    if (!remoteMeta) {
+      if (mode === "pull") {
+        postMarsMessage("[info] No cloud project was found with the name '{name}'.", { name: normalizedRoot });
+        return { ok: false, missing: true };
+      }
+      const result = await saveProjectToCloud(localProject, remoteByName);
+      postMarsMessage("Project sent to the cloud: {name}.", { name: normalizedRoot });
+      return { ok: true, direction: "push", created: result.created === true };
+    }
+
+    const projectRecord = remoteMeta.project ? remoteMeta : await loadCloudProject(remoteMeta.id);
+    const remoteProject = deserializeProjectFromCloudDocument(projectRecord?.project, normalizedRoot);
+    if (!remoteProject) throw new Error(translateText("The cloud project is invalid."));
+
+    if (mode === "sync") {
+      const remoteUpdatedAt = parseTimestampValue(remoteMeta.updatedAt, 0);
+      const localUpdatedAt = toCloudServerTime(localProject.updatedAt);
+      if (remoteUpdatedAt > localUpdatedAt + 1000) mode = "pull";
+      else mode = "push";
+    }
+
+    if (mode === "pull") {
+      const summary = buildProjectCloudSyncSummary(localProject, remoteProject);
+      const changed = summary.projectTone !== "green";
+      if (changed) {
+        const accepted = await runDialogConfirm({
+          title: translateText("Get project from cloud"),
+          message: translateText("Replace the local project '{name}' with the cloud version?", { name: normalizedRoot }),
+          confirmLabel: translateText("Replace local copy"),
+          cancelLabel: translateText("Cancel")
+        }, { windowIdPrefix: "window-cloud-pull-project" });
+        if (!accepted) return { ok: false, cancelled: true };
+      }
+      const imported = importCloudProjectRecord(projectRecord, {
+        open: projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", normalizedRoot)
+      });
+      if (!imported) throw new Error(translateText("The cloud project could not be saved locally."));
+      setCloudProjectSyncDocument(normalizedRoot, imported, projectRecord?.etag);
+      postMarsMessage("Project received from the cloud: {name}.", { name: normalizedRoot });
+      return { ok: true, direction: "pull" };
+    }
+
+    const result = await saveProjectToCloud(localProject, remoteByName);
+    postMarsMessage("Project synchronized with the cloud: {name}.", { name: normalizedRoot });
+    return { ok: true, direction: "push", created: result.created === true };
+  } catch (error) {
+    if (isCloudStaleVersionError(error)) reportCloudSaveConflict(normalizedRoot, error);
+    else postMarsMessage("[error] Project synchronization failed: {message}", { message: describeCloudError(error, "Cloud synchronization failed.") });
+    return { ok: false, message: String(error?.message || error) };
+  } finally {
+    setCloudSyncState(false, "", { updateTimestamp: true });
+    renderProjectTree(true);
   }
 }
 
@@ -3258,14 +3281,21 @@ function replaceProjectInLibrary(previousRootPath, nextProject, options = {}) {
 
 function removeProjectFromLibrary(rootPath, options = {}) {
   const rootKey = normalizeProjectRootKey(rootPath);
-  if (!rootKey) return false;
+  const projectId = String(options.projectId || "").trim();
+  if (!rootKey && !projectId) return false;
   const sourceProjects = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
-  const projects = sourceProjects.filter((entry) => normalizeProjectRootKey(entry?.rootPath) !== rootKey);
+  const removedProject = sourceProjects.find((entry) => projectId
+    ? String(entry?.id || "") === projectId
+    : normalizeProjectRootKey(entry?.rootPath) === rootKey);
+  const removedRootKey = normalizeProjectRootKey(removedProject?.rootPath || rootPath);
+  const projects = sourceProjects.filter((entry) => removedProject
+    ? String(entry?.id || "") !== String(removedProject.id || "")
+    : normalizeProjectRootKey(entry?.rootPath) !== rootKey);
   if (projects.length === sourceProjects.length) return false;
   const activeRootKey = normalizeProjectRootKey(projectLibraryState?.activeRootPath || "");
   const nextActiveRoot = (
     projects.length
-      ? (activeRootKey === rootKey ? projects[0].rootPath : (projectLibraryState?.activeRootPath || projects[0].rootPath))
+      ? (activeRootKey === removedRootKey ? projects[0].rootPath : (projectLibraryState?.activeRootPath || projects[0].rootPath))
       : ""
   );
   const candidateLibrary = normalizeProjectLibraryData({
@@ -3280,11 +3310,11 @@ function removeProjectFromLibrary(rootPath, options = {}) {
   )) || candidateProjects[0] || null;
   if (!saveProjectAndLibraryData(candidateActiveProject, candidateLibrary)) return false;
   projectLibraryState = candidateLibrary;
-  setCloudProjectSyncDocument(rootPath, null);
+  setCloudProjectSyncDocument(removedProject?.rootPath || rootPath, null);
   // Without this the project stays in the cloud and the next "Sync All
   // Projects" downloads it straight back, so deleting one never sticks.
   if (options.deleteFromCloud !== false) {
-    void deleteCloudProjectsByName(normalizeProjectRootPath(rootPath, "project"));
+    void deleteCloudProjectsByName(normalizeProjectRootPath(removedProject?.rootPath || rootPath, "project"));
   }
   return true;
 }
@@ -3479,9 +3509,13 @@ function setProjectTreeSelection(selection) {
   if (!selection || typeof selection !== "object") {
     projectTreeSelectedNode = null;
   } else {
-    const type = String(selection.type || "").trim();
+    const rawType = String(selection.type || "").trim();
     const rootPath = String(selection.rootPath || "").trim();
     const path = String(selection.path || "").trim();
+    // Projects restored from an older file-manager layout may expose their
+    // top row as `root`. Once it carries a project path it is the project
+    // itself, so keep the same actions and selection identity as `project`.
+    const type = rawType === "root" && rootPath ? "project" : rawType;
     projectTreeSelectedNode = {
       key: getProjectTreeNodeKey(type, rootPath, path),
       type,
@@ -3851,6 +3885,7 @@ function getProjectFileManagerStatusCells() {
 const PROJECT_FILE_MANAGER_ACTIONS = Object.freeze([
   { id: "new-file", label: "New File", icon: "newFile" },
   { id: "new-folder", label: "New Folder", icon: "newFolder" },
+  { id: "sync", label: "Synchronize with Cloud", icon: "refresh" },
   { id: "rename", label: "Rename", icon: "rename" },
   { id: "delete", label: "Delete", icon: "trash", danger: true }
 ]);
@@ -3873,11 +3908,16 @@ function isProjectFileManagerActionEnabled(actionId) {
   const selectionType = String(selection?.type || "");
   const isReadOnly = selection?.readOnly === true || selectionType.startsWith("libs-");
   const targetsProjectContent = selectionType === "project"
+    || (selectionType === "root" && Boolean(selection?.rootPath))
     || selectionType === "folder"
     || selectionType === "file";
 
   if (action === "new-file") return projectIsOpen() && (!selectionType || (!isReadOnly && targetsProjectContent));
   if (action === "new-folder") return (!selectionType && projectIsOpen()) || (!isReadOnly && targetsProjectContent);
+  if (action === "sync") {
+    return !isReadOnly && Boolean(selection?.rootPath)
+      && (selectionType === "project" || selectionType === "folder" || selectionType === "file");
+  }
   if (action === "rename" || action === "delete") return !isReadOnly && targetsProjectContent;
   return true;
 }
@@ -3895,6 +3935,8 @@ function getProjectFileManagerContextItems(node) {
     "-",
     { id: "new-file", label: "New File", icon: "newFile", disabled: !projectIsOpen() },
     { id: "new-folder", label: "New Folder", icon: "newFolder" },
+    "-",
+    { id: "sync", label: "Synchronize with Cloud", icon: "refresh" },
     "-",
     { id: "rename", label: "Rename", icon: "rename" },
     { id: "delete", label: "Delete", icon: "trash", danger: true }
@@ -3919,6 +3961,11 @@ async function handleProjectFileManagerAction(actionId, node) {
   }
   if (action === "new-file") {
     await handleProjectTreeCreateFileAction();
+    return;
+  }
+  if (action === "sync") {
+    const rootPath = String(node?.rootPath || projectTreeSelectedNode?.rootPath || "").trim();
+    if (rootPath) await window.WebMarsProjectManagerBridge?.sync?.(rootPath, action);
     return;
   }
   await handleProjectTreeAction(action);
@@ -3988,9 +4035,9 @@ function createProjectFileManagerView(host) {
     isChecked: (node) => isProjectTreeNodeChecked(node.key),
     onSelect: (node) => {
       setProjectTreeSelection(node);
-      if (node.type === "project" && node.rootPath) {
-        activateProjectInLibrary(node.rootPath, { revealContents: false });
-      }
+      window.dispatchEvent(new CustomEvent("webmars:project-manager-selection", {
+        detail: { rootPath: node.rootPath || "", type: node.type }
+      }));
     },
     onActivate: (node) => activateProjectTreeNode(node),
     onCheck: (node, checked) => setProjectTreeNodeChecked(node, checked),
@@ -3998,6 +4045,7 @@ function createProjectFileManagerView(host) {
       void handleProjectFileManagerAction(actionId, node);
     },
     isActionEnabled: isProjectFileManagerActionEnabled,
+    isActionVisible: (actionId) => isProjectFileManagerActionEnabled(actionId),
     getContextItems: getProjectFileManagerContextItems,
     getStatusCells: getProjectFileManagerStatusCells,
     emptyText: () => translateText("No files in project."),
@@ -7180,7 +7228,6 @@ async function openInterfacePreferencesPanel() {
   const themes = getAvailableThemes();
   const result = await runDialogForm({
     title: translateText("Interface Preferences"),
-    message: translateText("Adjust theme, language, editor, and highlighting settings."),
     confirmLabel: translateText("OK"),
     cancelLabel: translateText("Cancel"),
     width: "540px",
@@ -7394,7 +7441,6 @@ async function openRuntimeMemoryPreferencesPanel() {
   };
   const result = await runDialogForm({
     title: translateText("Runtime & Memory Preferences"),
-    message: translateText("Adjust exception handler, memory configuration, and memory limits."),
     confirmLabel: translateText("OK"),
     cancelLabel: translateText("Cancel"),
     width: "520px",
@@ -7503,7 +7549,6 @@ async function openMiniCCompilerPreferencesPanel() {
   const currentSubsetToken = normalizeMiniCSubsetPreferenceToken(current.miniCSubset || "C1-NATIVE");
   const result = await runDialogForm({
     title: translateText("Mini-C Compiler Preferences"),
-    message: translateText("Configure Mini-C frontend settings."),
     confirmLabel: translateText("OK"),
     cancelLabel: translateText("Cancel"),
     width: "520px",
@@ -8726,43 +8771,8 @@ async function loadAndPreviewPublication(slug, revision = null) {
   return previewPublicPublication(payload?.publication);
 }
 
-let publicLibraryBrowser = null;
-function publicationBrowserColumns(owned = false) {
-  const columns = [{label:"Title",value:item=>item.title || item.slug},
-    {label:"Public name",value:item=>item.slug}];
-  if (!owned) columns.push({label:"Author",value:item=>item.author?.username || "—"});
-  columns.push({label:"Kind",value:item=>translateText(String(item.kind || "—").replace(/^./, letter=>letter.toUpperCase()))});
-  if (owned) columns.push({label:"Status",value:item=>publicationStatusLabel(item.status)}, {label:"Revision",value:item=>item.latestRevision});
-  else columns.push({label:"Difficulty",value:item=>translateText(String(item.difficulty || "—").replace(/^./,letter=>letter.toUpperCase()))}, {label:"Language",value:item=>item.language || "—"});
-  columns.push({label:"Modified",value:item=>window.WebMarsFileManager.formatDate(Date.parse(item.updatedAt || item.createdAt)) || "—"});
-  return columns;
-}
-
-function publicationBrowserDetails(item) {
-  return [item.description, `${translateText("Revision")}: ${item.latestRevision || 1} · ${translateText("License")}: ${item.license || "—"}`,
-    (Array.isArray(item.tags) ? item.tags : []).join(", "),
-    `${translateText("Modified")}: ${formatTimestampForDisplay(item.updatedAt || item.createdAt)}`].filter(Boolean).join("\n");
-}
-
-function createPublicLibraryBrowser() {
-  return window.WebMarsFileManager.createCollectionWindow(windowManager, refs.windows.desktop, {
-    id:"window-public-browser", title:"Public Library", key:item=>item?.slug,
-    columns:publicationBrowserColumns(), details:publicationBrowserDetails,
-    emptyMessage:"This BackMars installation has no public projects yet.", describeError:describePublicLibraryError,
-    load: async ({query,offset,limit,signal}) => {
-      const params=new URLSearchParams({limit:String(limit),offset:String(offset)});
-      if(query) params.set("q",query);
-      const payload=await publicLibraryModule.requestJson(`/publications?${params}`, {authenticated:false,signal});
-      return {items:payload?.publications,hasMore:publicLibraryModule.hasNextPublicationPage(payload,limit)};
-    },
-    actions:[{id:"open",label:"Preview and open",primary:true}],
-    onAction:async (_action,item)=>{if(await loadAndPreviewPublication(item.slug)) windowManager.hide("window-public-browser");}
-  });
-}
-
 function browsePublicLibrary() {
-  if (!publicLibraryBrowser) publicLibraryBrowser = createPublicLibraryBrowser();
-  publicLibraryBrowser.open();
+  window.WebMarsProjectManager?.open?.("public");
   return true;
 }
 
@@ -8856,7 +8866,7 @@ async function publishActiveProject() {
     .replace(/^-+|-+$/g, "") || "project";
   const result = await runDialogForm({
     title: translateText("Publish Project"),
-    message: translateText("The public name is first-come, permanent and unique inside this BackMars installation."),
+    message: translateText("Choose a permanent public name. Published revisions cannot be edited."),
     confirmLabel: translateText("Publish"),
     cancelLabel: translateText("Cancel"),
     width: "620px",
@@ -8936,7 +8946,7 @@ async function editOwnPublication(publication) {
   if (cloudUser?.emailVerified !== true && !await openCloudEmailVerificationDialog()) return false;
   const result = await runDialogForm({
     title: translateText("Edit Publication"),
-    message: translateText("The public name and existing revisions cannot be changed. Saving a published or unlisted status also restores an archived publication."),
+    message: translateText("Public names and past revisions stay unchanged. Publishing or unlisting restores archived items."),
     confirmLabel: translateText("Save Changes"),
     cancelLabel: translateText("Cancel"),
     width: "650px",
@@ -9001,41 +9011,9 @@ async function editOwnPublication(publication) {
   return true;
 }
 
-function publicationStatusLabel(status) {
-  const normalized = String(status || "published").toLowerCase();
-  if (normalized === "archived") return translateText("Archived");
-  if (normalized === "unlisted") return translateText("Unlisted");
-  return translateText("Published");
-}
-
-let ownPublicationsBrowser = null;
 async function manageOwnPublications() {
   if (!await ensureCloudAuthenticated("managing public projects")) return false;
-  if (!ownPublicationsBrowser) ownPublicationsBrowser = window.WebMarsFileManager.createCollectionWindow(windowManager, refs.windows.desktop, {
-    id:"window-public-manage",title:"My Publications",message:"Manage a public name or publish the active project as a new immutable revision.",
-    key:item=>item?.slug,columns:publicationBrowserColumns(true),details:publicationBrowserDetails,describeError:describePublicLibraryError,
-    emptyMessage:"No data for these filters.",
-    load:async ({query,offset,limit,signal})=>{
-      const params=new URLSearchParams({limit:String(limit),offset:String(offset)});
-      if(query) params.set("q",query);
-      const payload=await publicLibraryModule.requestJson(`/publications/mine?${params}`,{signal});
-      return {items:payload?.publications,hasMore:payload?.hasMore === true};
-    },
-    actions:[
-      {id:"open",label:"Open",description:"Preview and open",primary:true},
-      {id:"copy-latest",label:"Copy latest URL",enabled:item=>item.status!=="archived"},
-      {id:"copy-pinned",label:"Copy pinned revision URL"},
-      {id:"edit",label:"Edit",description:"Edit details and visibility"},
-      {id:"revision",label:"Publish",description:"Publish active project as new revision",enabled:item=>item.status!=="archived" && projectState.isOpen === true},
-      {id:"archive",label:"Archive",description:"Archive publication",danger:true,enabled:item=>item.status!=="archived"}
-    ],
-    onAction:async(action,publication)=>{
-      const done=await performOwnPublicationAction({publication,action});
-      if (done === true && action === "open") windowManager.hide("window-public-manage");
-      return {refresh:done === true && ["edit","revision","archive"].includes(action)};
-    }
-  });
-  ownPublicationsBrowser.open();
+  window.WebMarsProjectManager?.open?.("mine");
   return true;
 }
 
@@ -9059,7 +9037,7 @@ async function performOwnPublicationAction({publication,action}) {
         postMarsMessage("[info] This publication is already archived. Use Edit details and visibility to restore it.");
         return false;
       }
-      const confirmed = await requestConfirmDialog("Archive Publication", "Archive this publication? Its public name will never be reusable.", {
+      const confirmed = await requestConfirmDialog("Archive Publication", "Archive this publication? Revision links remain available and the public name stays reserved.", {
         confirmLabel: "Archive", cancelLabel: "Cancel"
       });
       if (!confirmed) return false;
@@ -9180,23 +9158,17 @@ function openTeacherKitDocument() {
 }
 
 async function openWelcomeDialog() {
-  const instanceName = String(publicLibraryModule?.config?.instanceName || "webMARS");
   const result = await runDialogForm({
     title: translateText("Welcome to webMARS"),
-    message: translateText("MARS in the browser, without Java. Files stay on this device unless you explicitly use Cloud or publish to this installation's public library. Accounts and public names belong to {instance}.", {
-      instance: instanceName
-    }),
     confirmLabel: translateText("Continue"),
     cancelLabel: translateText("Close"),
-    width: "620px",
-    height: "300px",
+    width: "500px",
+    height: "220px",
     sections: [{
       className: "dialog-form-section-compact",
-      title: translateText("Start here"),
-      description: translateText("Choose what you want to do first."),
       fields: [{
         name: "action",
-        label: translateText("Action"),
+        label: translateText("Start here"),
         type: "select",
         value: "first-example",
         options: [
@@ -9213,8 +9185,8 @@ async function openWelcomeDialog() {
     windowIdPrefix: "window-help-welcome",
     left: "190px",
     top: "95px",
-    width: "620px",
-    height: "300px"
+    width: "500px",
+    height: "220px"
   });
   if (!result?.ok) return false;
   const action = String(result.value?.action || "continue");
@@ -9237,9 +9209,7 @@ async function openWelcomeDialog() {
     return true;
   }
   if (action === "manual") {
-    const manualUrl = String(publicLibraryModule?.config?.manualUrl || "").trim();
-    if (manualUrl) window.open(manualUrl, "_blank", "noopener,noreferrer");
-    else openTeacherKitDocument();
+    helpSystem.openManual(publicLibraryModule?.config?.manualUrl || "./manual/");
     return true;
   }
   return true;
@@ -9332,7 +9302,7 @@ const commands = {
     modeController.setMode("edit");
     windowManager.focus("window-editor");
     editor.focus();
-    postMarsMessage("New source buffer created: {name}.", { name: created.name });
+    postMarsMessage("Created '{name}'.", { name: created.name });
     syncProjectFromEditor(true);
     scheduleProjectPersist({ syncFromEditor: true });
   },
@@ -9348,7 +9318,7 @@ const commands = {
     modeController.setMode("edit");
     windowManager.focus("window-editor");
     editor.focus();
-    postMarsMessage("New C0 source buffer created: {name}.", { name: created.name });
+    postMarsMessage("Created '{name}'.", { name: created.name });
     syncProjectFromEditor(true);
     scheduleProjectPersist({ syncFromEditor: true });
   },
@@ -9418,14 +9388,29 @@ const commands = {
   },
 
   async cloudLinkProvider() {
-    const sections = await cloudSocialSections("link");
-    if (!sections.length) {
-      await runDialogForm({ title: translateText("Linked sign-in methods"), message: translateText("No social sign-in providers are configured on this installation."), sections: [], hideConfirm: true });
-      return;
+    if (!await ensureCloudAuthenticated("using cloud features")) return false;
+    let configured;
+    try { configured = await cloudRequestJson("/auth/providers"); }
+    catch (error) {
+      await runDialogForm({ title: translateText("Linked sign-in methods"), message: cloudAuthError(error),
+        sections: [], hideConfirm: true, cancelLabel: translateText("Close"), width: "460px", height: "220px" });
+      return false;
     }
+    const sections = await cloudSocialSections("link", configured);
+    const linked = (configured.connected || []).includes("google");
     return runDialogForm({ title: translateText("Linked sign-in methods"),
-      message: translateText("Link a provider to keep using the same Cloud account and projects."),
-      sections, hideConfirm: true, cancelLabel: translateText("Close"), width: "480px", height: "290px" });
+      message: translateText(linked ? "Google is linked. Use Google or your existing sign-in method to access this account."
+        : sections.length ? "Link Google to sign in to this account with either method. If Google already has an account, you can merge it here."
+          : "Social sign-in is unavailable."),
+      sections: [{ title: getCloudUserDisplayName(cloudUser), description: String(cloudUser?.email || ""),
+        className: "dialog-form-section-compact", fields: [{
+          type: "button", name: "reset-password", label: translateText("Reset Password"),
+          onClick: async () => {
+            const ok = await openCloudPasswordResetDialog(cloudUser?.email || "");
+            return ok ? { close: true, result: { ok: true, value: true } } : { close: false };
+          }
+        }] }, ...sections],
+      hideConfirm: true, cancelLabel: translateText("Close"), width: "460px", height: "300px" });
   },
 
   async cloudVerifyEmail() {
@@ -9451,11 +9436,17 @@ const commands = {
   },
 
   async cloudOpenProject() {
-    return openProjectFromCloud();
+    window.WebMarsProjectManager?.open?.("cloud");
+    return true;
   },
 
   async cloudSaveProject() {
     return saveActiveProjectToCloud();
+  },
+
+  async cloudSyncProject() {
+    if (!projectIsOpen()) return false;
+    return syncSelectedProjectWithCloud(projectState.rootPath);
   },
 
   async cloudSyncAllProjects() {
@@ -9517,6 +9508,10 @@ const commands = {
     scheduleProjectPersist({ syncFromEditor: true });
   },
 
+  openProjectManager() {
+    window.WebMarsProjectManager?.open?.();
+    window.WebMarsUsage?.track("feature_use", "project_manager");
+  },
   async closeProject() {
     if (runActive) stopRunLoop();
     const closed = await closeProjectWorkspace();
@@ -10130,7 +10125,7 @@ const commands = {
     });
     const result = await runDialogForm({
       title: translateText("Store/Load state"),
-      message: translateText("Manage up to 5 saved state slots for this project."),
+      message: translateText("Saves files, preferences and layout, not execution progress."),
       confirmLabel: translateText("Apply"),
       cancelLabel: translateText("Cancel"),
       width: "500px",
@@ -10421,12 +10416,103 @@ const commands = {
 
 
   helpHub() { helpSystem.open("mips", "basic"); window.WebMarsUsage?.track("feature_use", "help"); },
+  helpManual() { helpSystem.openManual(publicLibraryModule?.config?.manualUrl || "./manual/"); window.WebMarsUsage?.track("feature_use", "help"); },
   helpWelcome() { return openWelcomeDialog(); },
   helpTeacherKit() { openTeacherKitDocument(); window.WebMarsUsage?.track("feature_use", "teacher_kit"); },
   helpMipsPdf() { helpSystem.openDocument("./help/mipsref.pdf", "MIPS Reference PDF"); },
   helpUsageStatistics() { openUsageStatistics(); },
   helpAbout() { helpSystem.openAbout(); }
 };
+
+// Project manager actions are deliberately routed through the existing runtime
+// so opening a row updates the active editor, project tree and persistence in
+// one transaction instead of creating a second project state.
+window.addEventListener("webmars:project-open", async (event) => {
+  const item = event.detail?.item;
+  if (!item) return;
+  try {
+    if (item.location === "local") {
+      const project = normalizeProjectData(item.source);
+      if (!project || !openProjectWorkspace(project, { applySettings: true, applyLayout: true })) {
+        throw new Error(translateText("[error] Failed to open project '{name}'.", { name: item.name }));
+      }
+      windowManager.focus("window-main");
+      postMarsMessage("Project loaded: {name}.", { name: project.name });
+      return;
+    }
+    if (item.location === "cloud") {
+      const record = await loadCloudProject(item.source?.id ?? item.source?.numericId);
+      const imported = importCloudProjectRecord(record, { open: true });
+      if (!imported) throw new Error(translateText("[error] Failed to open project '{name}'.", { name: item.name }));
+      postMarsMessage("Project loaded: {name}.", { name: imported.name });
+      return;
+    }
+  } catch (error) {
+    postMarsMessage("[error] Failed to load example: {message}", { message: String(error?.message || error) });
+  }
+});
+window.addEventListener("webmars:project-copy-public", (event) => {
+  const publication = event.detail?.item?.source;
+  if (!publication) return;
+  try {
+    const project = materializePublicProject(publication);
+    if (!project || !openProjectWorkspace(project, { applySettings: false, applyLayout: false })) {
+      throw new Error(translateText("Failed to load file."));
+    }
+    postMarsMessage("Opened public project '{name}' as an independent local copy.", { name: project.name });
+  } catch (error) {
+    postMarsMessage("[error] Failed to load example: {message}", { message: String(error?.message || error) });
+  }
+});
+window.addEventListener("webmars:project-trash", async (event) => {
+  const item = event.detail?.item;
+  const rootPath = String(item?.path || item?.source?.rootPath || "").trim();
+  if (!rootPath) return;
+  const active = projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", rootPath);
+  if (active) {
+    const closed = await closeProjectWorkspace();
+    if (!closed) {
+      if (projectState) upsertProjectInLibrary(projectState, { makeActive: true, silentQuota: true });
+      window.WebMarsProjectManager?.reload?.();
+      return;
+    }
+  }
+  removeProjectFromLibrary(rootPath, { projectId: item?.id || item?.source?.id, deleteFromCloud: false });
+  postMarsMessage("Project deleted: {name}.", { name: rootPath });
+  window.WebMarsProjectManager?.reload?.();
+});
+window.addEventListener("webmars:project-new", () => { void commands.newProject(); });
+window.addEventListener("webmars:project-manager-show", () => {
+  modeController.setMode("project");
+  windowManager.focus("window-main");
+  renderProjectTree(true);
+});
+window.WebMarsProjectManagerBridge = {
+  async sync(rootPath, direction = "sync") {
+    return syncSelectedProjectWithCloud(rootPath, direction);
+  },
+  async action(action, item) {
+    if (item.location === "mine") return performOwnPublicationAction({ publication: item.source, action });
+    if (item.location !== "cloud") return false;
+    const id = Number(item.source?.id);
+    if (!Number.isSafeInteger(id) || id <= 0) return false;
+    if (action === "rename") {
+      const name = await requestTextDialog("Rename", "Name", item.name, { confirmLabel: "Rename", cancelLabel: "Cancel" });
+      if (!name || name === item.name) return false;
+      await cloudRequestJson(`/projects/${id}`, { method: "PUT", headers: { "If-Match": item.source.etag }, body: { name } });
+      return true;
+    }
+    if (action === "delete") {
+      const confirmed = await requestConfirmDialog("Delete Project", translateText("Delete project '{name}'?", { name: item.name }), { confirmLabel: "Delete", cancelLabel: "Cancel" });
+      if (!confirmed) return false;
+      await cloudRequestJson(`/v2/projects/${id}/trash`, { method: "POST", headers: { "If-Match": item.source.etag } });
+      return true;
+    }
+    return false;
+  },
+  login: () => commands.cloudLogin()
+};
+window.WebMarsProjectManager?.mount?.();
 
 // Double-tapping the mobile View tab asks for full screen; the mode bar has no
 // access to the command table, so it announces the intent instead.
@@ -10651,6 +10737,8 @@ function persistWorkspaceSession() {
       try {
         window.localStorage.setItem(SESSION_STORAGE_KEY, serialized);
         window.localStorage.setItem(SESSION_SERVER_DRAFT_KEY, JSON.stringify(buildServerDraftPayload(payload)));
+        const mirror = window.WebMarsProjectRepository?.saveSession?.(payload);
+        if (mirror && typeof mirror.catch === "function") mirror.catch(() => {});
         return;
       } catch {
         // Try the next smaller candidate.
@@ -11031,9 +11119,6 @@ if (!restoredSession && !projectIsOpen()) {
 const restoredWindowState = normalizeWindowSessionData(restoredSession?.windowState);
 if (restoredWindowState && typeof windowManager.applySessionWindowState === "function") {
   windowManager.applySessionWindowState(restoredWindowState);
-  postMarsMessage("Tool windows restored ({count} state entry(ies)).", {
-    count: restoredWindowState.windows.length
-  });
   const restoredHelpWindow = restoredWindowState.windows.find((entry) => (
     entry
     && typeof entry === "object"
@@ -11042,6 +11127,9 @@ if (restoredWindowState && typeof windowManager.applySessionWindowState === "fun
   ));
   if (restoredHelpWindow) {
     helpSystem.open();
+  }
+  if (restoredWindowState.windows.some((entry) => entry?.id === "window-help-manual" && entry.hidden !== true)) {
+    helpSystem.openManual(publicLibraryModule?.config?.manualUrl || "./manual/");
   }
   const restoredAboutWindow = restoredWindowState.windows.find((entry) => (
     entry
@@ -11098,9 +11186,6 @@ if (startupSavedLayout?.loaded && startupSavedLayout.snapshot && typeof windowMa
       persistWorkspaceSession();
     }, 420);
   }
-  postMarsMessage("Saved layout loaded ({count} window(s)).", {
-    count: Array.isArray(startupSavedLayout.snapshot.windows) ? startupSavedLayout.snapshot.windows.length : 0
-  });
 } else if (projectState?.layout && typeof windowManager.applySavedLayoutState === "function") {
   const toolIdsToRestoreFromProjectLayout = extractVisibleToolIds(projectState.layout);
   toolIdsToRestoreFromProjectLayout.forEach((toolId) => {
@@ -11119,9 +11204,6 @@ if (startupSavedLayout?.loaded && startupSavedLayout.snapshot && typeof windowMa
       persistWorkspaceSession();
     }, 420);
   }
-  postMarsMessage("Project layout loaded ({count} window(s)).", {
-    count: Array.isArray(projectState.layout.windows) ? projectState.layout.windows.length : 0
-  });
 }
 
 modeController.setMode(projectIsOpen() ? "edit" : "project");

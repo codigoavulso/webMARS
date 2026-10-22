@@ -101,13 +101,13 @@ export const TOOL_DATA = [
     id: "intro-to-tools",
     name: "Introduction to Tools",
     group: "Aprendizagem e utilitários",
-    purpose: "Demonstrar a interface comum de uma ferramenta e o ciclo Connect/Reset sem modificar a simulação.",
+    purpose: "Apresentar os passos básicos para utilizar as ferramentas e abrir o respetivo capítulo do manual.",
     example: "Pode abrir sem programa.",
-    connect: "Leia a janela e experimente Connect, executar alguns passos e Reset.",
-    controls: "Texto introdutório, Connect/Disconnect e Reset.",
+    connect: "Esta janela é apenas um guia e não precisa de ligação ao MIPS.",
+    controls: "Abrir o Manual e Fechar.",
     interpretation: "Serve para perceber que abrir uma tool não é o mesmo que ligá-la ao MIPS.",
-    protocol: "Observação básica do host de ferramentas.",
-    limits: "O texto interno conserva referências históricas a classes Java/<code>mars.tools</code>. Para criar ferramentas web, a autoridade é <code>docs/tool-api.md</code>."
+    protocol: "Não lê nem altera a memória ou os registos do programa.",
+    limits: "As opções disponíveis variam entre ferramentas; consulte a secção de cada uma neste capítulo."
   },
   {
     id: "keyboard-display-mmio",

@@ -5,6 +5,7 @@ import { operationChapters } from "./chapters-operations.mjs";
 import { teacherChapters } from "./chapters-teachers.mjs";
 import { libraryChapters } from "./chapters-library.mjs";
 import { statisticsChapters } from "./chapters-statistics.mjs";
+import { practiceGuides } from "./practice-guides.mjs";
 
 export { MANUAL } from "./shared.mjs";
 export { TOOL_DATA };
@@ -47,7 +48,14 @@ const chapterSources = [
   ...statisticsChapters
 ];
 
-const chaptersById = new Map(chapterSources.map((chapter) => [chapter.id, chapter]));
+const chaptersById = new Map(chapterSources.map((chapter) => {
+  const practice = practiceGuides[chapter.id];
+  return [chapter.id, practice ? {
+    ...chapter,
+    readingMinutes: chapter.readingMinutes + practice.minutes,
+    sections: [...chapter.sections, ...practice.sections]
+  } : chapter];
+}));
 if (chaptersById.size !== chapterSources.length) {
   throw new Error("The Manual contains duplicate chapter ids.");
 }

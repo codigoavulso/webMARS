@@ -74,12 +74,27 @@ export const coreChapters = [
         content: html`
           <p>A versão ${MANUAL.displayVersion} documenta o <strong>webMARS ${MANUAL.webmarsVersion}</strong>. Cobre o ambiente de trabalho, a árvore de projetos, a montagem MIPS32, o runtime funcional, Mini-C, Cloud, Biblioteca pública, estatísticas de utilização, ligações estáveis, todas as ferramentas incluídas, o Pipeline Lab, o Kit Docente, acessibilidade, formatos de dados, privacidade e administração.</p>
           <div class="stat-strip" aria-label="Cobertura da edição">
-            <div class="stat"><strong>20</strong><span>capítulos numerados</span></div>
+            <div class="stat"><strong>21</strong><span>capítulos numerados</span></div>
             <div class="stat"><strong>20</strong><span>ferramentas descritas</span></div>
             <div class="stat"><strong>565</strong><span>entradas MIPS incorporadas</span></div>
             <div class="stat"><strong>0</strong><span>dependências externas</span></div>
           </div>
           ${callout("note", "Manual e aplicação têm versões diferentes", `<p>A versão do manual indica a maturidade editorial. A etiqueta “webMARS ${MANUAL.webmarsVersion}” identifica o produto cujo comportamento foi verificado. Uma nova release da aplicação exige auditoria, mas não obriga o manual a usar o mesmo número.</p>`)}
+        `
+      },
+      {
+        id: "guias-por-tarefa",
+        title: "Encontre a resposta pela tarefa",
+        content: html`
+          ${table(["Quero…", "Guia", "Resultado a confirmar"], [
+            ["Guardar trabalho sem criar conta", '<a href="#/projetos-ficheiros">Projetos e ficheiros</a>', "Uma cópia local e uma exportação de segurança."],
+            ["Usar a mesma conta com palavra-passe e Google", '<a href="#/cloud/associar-e-fundir">Associar e fundir contas</a>', "Os dois métodos dão acesso aos mesmos projetos."],
+            ["Partilhar um exercício com a turma", '<a href="#/biblioteca-publica">Biblioteca pública</a>', "Uma ligação de revisão fixa, com instruções e licença."],
+            ["Perceber se a app está a crescer", '<a href="#/estatisticas-utilizacao/perguntas-praticas">Ler as estatísticas</a>', "Comparar visitas, sessões e contas sem as confundir."],
+            ["Descobrir por que o meu programa não avança", '<a href="#/resolucao-problemas">Resolver problemas</a>', "Distinguir erro de montagem, espera de entrada e execução."],
+            ["Consultar o manual enquanto programo", '<a href="#/aceder/manual-integrado">Manual na aplicação</a>', "Ler numa janela integrada ou no seu próprio separador."]
+          ])}
+          <p>O campo <strong>Filtrar capítulos</strong> reduz o índice por assunto. Para procurar uma palavra no texto completo, incluindo exemplos e referência, use <strong>Índice remissivo</strong>, <kbd>Ctrl</kbd> + <kbd>K</kbd> ou <kbd>/</kbd>.</p>
         `
       },
       {
@@ -207,6 +222,21 @@ export const coreChapters = [
             "Para seguir este manual visualmente, escolha o tema <strong>Claro</strong>, não <strong>Sistema</strong>."
           ])}
           ${callout("note", "Conta opcional", "<p>Não precisa de criar conta para editar, compilar, montar, executar, usar ferramentas, guardar localmente, descarregar ficheiros ou abrir conteúdos públicos. A conta é necessária para projetos Cloud e para publicar ou gerir conteúdos na Biblioteca pública da instalação.</p>")}
+        `
+      },
+      {
+        id: "manual-integrado",
+        title: "Ler o manual dentro da app ou num separador",
+        content: html`
+          ${steps([
+            "Na aplicação, escolha <strong>Ajuda → Abrir o Manual</strong>, ou a mesma opção na janela de boas-vindas.",
+            "O manual abre numa janela do ambiente de trabalho. Pode movê-la, redimensioná-la, maximizá-la ou minimizá-la como as outras janelas, mantendo o projeto aberto.",
+            "Filtre o índice por assunto ou pesquise o texto completo com <kbd>Ctrl</kbd> + <kbd>K</kbd>. As ligações entre capítulos permanecem na janela do manual.",
+            "Para estudar em paralelo ou noutro monitor, escolha <strong>Abrir num novo separador</strong> na barra da janela. Abre o capítulo e a secção que está a consultar.",
+            "Também pode abrir diretamente a pasta <code>/manual/</code> desta instalação. A versão autónoma conserva a pesquisa, a referência e as imagens."
+          ])}
+          <p>Dentro da aplicação, o manual acompanha o tema claro ou escuro do ambiente de trabalho. No separador independente, o botão de tema permite escolher Sistema, Claro ou Escuro. A preferência autónoma não é alterada por consultar o manual integrado.</p>
+          ${callout("note", "Idioma desta edição", "<p>O manual editorial está disponível em português de Portugal. A aplicação e a sua referência integrada suportam outros idiomas; mudar o idioma da app não traduz automaticamente os capítulos desta edição.</p>")}
         `
       },
       {

@@ -1,4 +1,4 @@
-# webMARS v0.6.4
+# webMARS v0.6.5
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
@@ -23,7 +23,7 @@ schema and the separate Raspberry Pi collector installation.
 
 ## Current Status
 
-- Feature-complete product line; normal development is now limited to bug fixes, compatibility work and documentation.
+- The MIPS editor, assembler and simulator form a mature core; current work also improves project, Cloud, library and usage-statistics workflows.
 - Main target is practical compatibility with Java MARS 4.5 behavior inside the browser.
 - Some edge cases can still differ from desktop Java MARS.
 - The runtime deliberately uses one JavaScript implementation to keep behavior, debugging, and maintenance predictable.
@@ -32,8 +32,8 @@ schema and the separate Raspberry Pi collector installation.
 ## Manual do webMARS
 
 [`manual/`](manual/README.md) is the independent, Portuguese-language webMARS
-manual. It has its own semantic version (`0.2.0`), changelog, static build and
-test suite. This edition documents webMARS `0.6.4`, including public usage
+manual. It has its own semantic version (`0.2.1`), changelog, static build and
+test suite. This edition documents webMARS `0.6.5`, including public usage
 statistics and the paginated Public Library, and includes searchable reference
 data plus real light-theme screenshots for every tool.
 
@@ -43,12 +43,12 @@ npm run validate
 npm run serve
 ```
 
-## Highlights in v0.6.4
+## Highlights in v0.6.5
 
-- Added optional Google and Facebook sign-in through BackMars, including explicit linking to existing Cloud accounts.
-- Separated public, internal, test and automated traffic, with probable human interaction signals and aggregate web/app comparisons.
-- Added aggregate Cloud account and activity statistics, audience filters and clearer usage charts.
-- Updated the independent Manual to 0.2.0 and removed unused legacy assets while preserving the MARS reference.
+- Unified local files, Cloud projects, public publications and the recycle bin in the embedded project manager, preserving context menus and file actions.
+- Consolidated Cloud and Library into the Online menu, with context-aware project synchronization and publication controls.
+- Reworked account access, Google sign-in and linking, account merging, password recovery and email verification with editable error states and consistent navigation.
+- Expanded the integrated Manual, practical examples and translations, improved usage statistics and editor alignment, and removed obsolete project files.
 
 ## Main Capabilities
 
@@ -153,6 +153,8 @@ Measurements are kept only in memory and are neither persisted nor transmitted.
 - `assets/js/app-modules/10-ui.js`: windowing/layout/UI foundation.
 - `assets/js/app-modules/19-runtime-benchmarks.js`: local timing, JS-utilization, and throughput collector.
 - `assets/js/app-modules/19-public-library.js`: deployment identity, stable route parsing and public BackMars requests.
+- `assets/js/app-modules/20-project-repository.js`: IndexedDB project/recycle-bin/session repository with legacy migration.
+- `assets/js/app-modules/21-project-manager.js`: unified local, Cloud and public project browser.
 - `assets/js/app-modules/20-app-runtime.js`: runtime orchestration, commands, persistence, and integration glue.
 - `tools/`: pluggable MARS-style tool windows.
 - `help/`: built-in help, about/info pages, changelog, and reference content.
@@ -228,6 +230,8 @@ of the system with every figure linked to the report that produced it.
 - Public repository documentation is intentionally kept lightweight and should not override runtime behavior.
 
 ## Release Line
+
+- `v0.6.5`: embedded project manager, unified Online menu, account-flow improvements, project API v2 and Manual 0.2.1
 
 - `v0.6.4`: optional social sign-in, traffic classification, web/app correlation, aggregate Cloud account activity and Manual 0.2.0
 
