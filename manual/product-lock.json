@@ -7,9 +7,9 @@
   "product": {
     "name": "webmars",
     "version": "0.6.5",
-    "verificationStatus": "pending",
-    "verifiedCommit": null,
-    "verifiedAt": null
+    "verificationStatus": "verified",
+    "verifiedCommit": "65eda30e18a9541b65be1cc9f06a71bc79d4fc11",
+    "verifiedAt": "2026-10-22"
   },
   "catalogs": {
     "helpReference": {
