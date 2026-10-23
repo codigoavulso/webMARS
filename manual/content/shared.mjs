@@ -3,7 +3,7 @@ export const MANUAL = Object.freeze({
   version: "0.2.2",
   displayVersion: "v0.2.2",
   webmarsVersion: "0.6.6",
-  verifiedCommit: "65eda30e18a9541b65be1cc9f06a71bc79d4fc11",
+  verifiedCommit: "00546cc84c8fc3e730eea2233a458742bd536332",
   verifiedAt: "2026-10-24",
   locale: "pt-PT"
 });

@@ -2,7 +2,7 @@ Preparação da v0.6.6 — 24/10/2026: inclui as correções das duas rondas aba
 
 Estado da intervenção — 24/10/2026
 
-Corrigido no código local (a versão continua em 0.6.5):
+Correções incluídas na versão 0.6.6:
 [x] P0: eliminar um projeto local nunca elimina a cópia Cloud; a operação remota mantém a sua ação e confirmação próprias.
 [x] P0: eliminação simples e em lote guardam uma cópia na reciclagem antes de remover o projeto; se a gravação falhar, não o removem.
 [x] P0/P1: restauro recupera o conteúdo, resolve colisões de nomes/IDs e mantém a cópia na reciclagem se não conseguir gravar.
