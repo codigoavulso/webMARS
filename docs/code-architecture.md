@@ -1,4 +1,4 @@
-# webMARS Code Architecture (v0.6.5)
+# webMARS Code Architecture (v0.6.6)
 
 webMARS is a static browser application built from ordered, non-ES-module
 scripts. The assembler and simulator use one JavaScript implementation; the
@@ -21,6 +21,9 @@ experimental WASM/hybrid backend is no longer part of the application.
     language manifest cannot be loaded.
   - Loads the application modules last, ending with
     `assets/js/app-modules/20-app-runtime.js`.
+  - Loads only the small Mini-C interface at startup. The compiler engine is
+    requested at the first compilation, with one shared request and retry after
+    failure. A compilation failure never replaces the running app with a splash.
 
 The app should be served over HTTP. Manifests, examples, help documents, tools
 and libraries are loaded as local resources at runtime.
@@ -48,6 +51,8 @@ flowchart TB
     repository["20-project-repository.js<br/>IndexedDB project records"]
     projectmanager["21-project-manager.js<br/>unified project manager"]
     compiler["17-mini-c-compiler.js<br/>Mini-C to MIPS"]
+    compileriface["17-mini-c-interface.js<br/>metadata and lazy loader"]
+    startup["20-project-bootstrap.js<br/>startup recovery policy"]
   end
   subgraph CORE["Core"]
     engine["00-core.js<br/>assembler + runtime engine"]
@@ -71,7 +76,9 @@ flowchart TB
   runtime --> repository
   runtime --> projectmanager
   projectmanager --> repository
-  runtime --> compiler
+  runtime --> compileriface
+  compileriface -. "on demand" .-> compiler
+  runtime --> startup
   runtime --> engine
   compiler --> engine
   tools --> engine
@@ -107,6 +114,12 @@ what currently does.
   Mini-C/C0 and C1-NATIVE.
 - **Must not**: depend on UI state or on the engine's *runtime* state. It emits
   assembly text; the engine assembles it like any other source.
+- `17-mini-c-interface.js` owns the shared template, filename helpers and
+  asynchronous loader. The engine reuses that metadata; templates are not
+  duplicated between eager and deferred modules.
+- `20-project-bootstrap.js` decides which persisted snapshot is authoritative.
+  A valid empty catalogue stays empty; old active-project and editor-session
+  snapshots cannot resurrect deleted projects. Independent editor files survive.
 
 ### Interface (`10-ui.js`, `11-*`, `13-*`, `15-*`)
 
@@ -164,15 +177,18 @@ The current bootstrap order is:
 12. `assets/js/app-modules/12-ui-tool-manager.js`
 13. `assets/js/app-modules/13-ui-menu-system.js`
 14. `assets/js/app-modules/15-help-system.js`
-15. `assets/js/app-modules/17-mini-c-compiler.js`
-16. `assets/js/app-modules/18-runtime-browser-storage.js`
-17. `assets/js/app-modules/19-runtime-settings.js`
-18. `assets/js/app-modules/19-runtime-benchmarks.js`
-19. `assets/js/app-modules/19-public-library.js`
-20. `assets/js/app-modules/19-usage-statistics.js`
-21. `assets/js/app-modules/20-project-repository.js`
-22. `assets/js/app-modules/21-project-manager.js`
-23. `assets/js/app-modules/20-app-runtime.js`
+15. `assets/js/app-modules/17-mini-c-interface.js`
+16. `assets/js/app-modules/20-project-bootstrap.js`
+17. `assets/js/app-modules/18-runtime-browser-storage.js`
+18. `assets/js/app-modules/19-runtime-settings.js`
+19. `assets/js/app-modules/19-runtime-benchmarks.js`
+20. `assets/js/app-modules/19-public-library.js`
+21. `assets/js/app-modules/19-usage-statistics.js`
+22. `assets/js/app-modules/20-project-repository.js`
+23. `assets/js/app-modules/21-project-manager.js`
+24. `assets/js/app-modules/20-app-runtime.js`
+
+`17-mini-c-compiler.js` is loaded on demand after this eager graph is ready.
 
 ## Current modules
 
@@ -189,12 +205,14 @@ The current bootstrap order is:
 | `13-ui-menu-system.js` | Menu definitions, popup/submenu behavior, checks, shortcuts and command dispatch. |
 | `15-help-system.js` | Localized in-app help, About window and internal document viewer. |
 | `17-mini-c-compiler.js` | Mini-C/C0 and C1-NATIVE source detection, parsing, semantic checks and MIPS generation. |
+| `17-mini-c-interface.js` | Small shared compiler metadata and lazy engine loader; deduplicates requests, bounds loading time and permits retry. |
+| `20-project-bootstrap.js` | Pure startup policy for committed catalogues, legacy migration and independent editor files. |
 | `18-runtime-browser-storage.js` | Browser source-folder storage and the related file, preference, memory-map and example-loading workflows consumed by the app runtime. |
 | `19-runtime-settings.js` | Runtime preference validation, memory/backstep limits, address parsing, language-preference and theme-preference helpers. |
 | `19-runtime-benchmarks.js` | In-memory compile, assemble and run measurements, including duration, estimated instrumented JavaScript utilization and throughput. |
 | `19-public-library.js` | Stable built-in-example and public-publication routes, public-library browsing, publication and immutable revision links. |
 | `19-usage-statistics.js` | Help-menu statistics window with aggregate charts, filters, exact-value tables and localized labels. |
-| `20-project-repository.js` | IndexedDB-backed project, recycle-bin and session records, with one-way migration from the legacy localStorage library and a compatibility mirror for the runtime. |
+| `20-project-repository.js` | IndexedDB recovery mirror and session records. Runtime and manager use the committed localStorage catalogue; queued mirrors read the latest committed snapshot and await transaction completion. A full asynchronous primary-store migration is separate work. |
 | `21-project-manager.js` | Unified project browser embedded in Main's Project view. Every location uses the shared file-manager chrome, rows and context menus. The local location preserves selection and drag/drop; remote locations load documents on demand into read-only folder trees. Actions depend on location, resource and selection. Bounded, cancellable requests distinguish unavailable services from authentication and valid empty results. Runtime events and the project-manager bridge perform editor and authenticated mutations. |
 | `20-app-runtime.js` | Final composition root: preferences, projects and sessions, compiler/assembler commands, run loop, persistence, cloud adapters, tools, help and UI synchronization. |
 
@@ -209,8 +227,8 @@ and help system, not alternative execution engines.
   `createMarsJavaStyleHelpSystem` remain globals because the loader is not ESM.
 - `20-app-runtime.js` is the composition root and therefore must stay last.
 - `20-project-repository.js` must load before `21-project-manager.js` and before
-  the runtime so local project actions can use the persistent repository while
-  keeping the legacy localStorage mirror available during migration.
+  the runtime. IndexedDB must not present an older catalogue in preference to
+  the committed localStorage source of truth, including an empty catalogue.
 - A module must not silently depend on a script loaded after it.
 - Changes to a shared global or registry entry require tests for every consumer.
 
@@ -233,7 +251,7 @@ should remain incremental:
 
 Names such as `core/syscalls` or `runtime/session` may be useful conceptual
 boundaries for future extraction, but they are not directories or modules in
-the v0.6.5 tree.
+the v0.6.6 tree.
 
 ## Theming
 

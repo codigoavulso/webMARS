@@ -43,7 +43,7 @@
 
   function legacyProjects() {
     const library = parseStorage(LOCAL_LIBRARY_KEY, null);
-    if (Array.isArray(library?.projects) && library.projects.length) return library.projects.filter(Boolean);
+    if (Array.isArray(library?.projects)) return library.projects.filter(Boolean);
     const active = parseStorage(LOCAL_PROJECT_KEY, null);
     return active && typeof active === "object" ? [active] : [];
   }
@@ -59,7 +59,10 @@
       try {
         transaction = db.transaction(store, mode);
         const result = action(transaction.objectStore(store));
-        result.onsuccess = () => resolve(result.result);
+        // Request success precedes commit; quota/abort can still roll it back.
+        transaction.oncomplete = () => resolve(result.result);
+        transaction.onerror = () => reject(transaction.error || result.error || new Error("IndexedDB transaction failed."));
+        transaction.onabort = () => reject(transaction.error || new Error("IndexedDB transaction aborted."));
         result.onerror = () => reject(result.error || new Error("IndexedDB request failed."));
       } catch (error) {
         reject(error);
@@ -151,31 +154,47 @@
     return request(db, storeName, "readonly", (store) => store.getAll());
   }
 
-  async function mirrorLibrary(library) {
-    const db = await ready;
-    if (!db) return false;
-    const incoming = Array.isArray(library?.projects) ? library.projects.map((project) => record(project)) : [];
-    await new Promise((resolve, reject) => {
-      const transaction = db.transaction(PROJECT_STORE, "readwrite");
-      const store = transaction.objectStore(PROJECT_STORE);
-      const keep = new Set(incoming.map((project) => project.id));
-      const cursorRequest = store.openCursor();
-      cursorRequest.onsuccess = () => {
-        const cursor = cursorRequest.result;
-        if (!cursor) return;
-        if (!keep.has(cursor.value.id)) cursor.delete();
-        cursor.continue();
-      };
-      incoming.forEach((project) => store.put(project));
-      transaction.oncomplete = resolve;
-      transaction.onerror = () => reject(transaction.error || new Error("Project repository update failed."));
+  let mirrorQueue = Promise.resolve();
+  function mirrorLibrary() {
+    // Serialize mirrors and read the committed source at execution time.
+    // An older async write must not overwrite a newer snapshot or rollback.
+    const operation = mirrorQueue.then(async () => {
+      const db = await ready;
+      if (!db) return false;
+      const library = parseStorage(LOCAL_LIBRARY_KEY, null);
+      if (!Array.isArray(library?.projects)) return false;
+      const incoming = library.projects.map((project) => record(project));
+      const trash = legacyTrash().map((project) => record(project, { deletedAt: project.deletedAt, deletedFrom: "local" }));
+      await new Promise((resolve, reject) => {
+        const transaction = db.transaction([PROJECT_STORE, TRASH_STORE], "readwrite");
+        const store = transaction.objectStore(PROJECT_STORE);
+        const trashStore = transaction.objectStore(TRASH_STORE);
+        // Clear within the same transaction before inserts: replacing IDs or
+        // swapping names must not collide with an old rootKey unique index.
+        store.clear();
+        trashStore.clear();
+        incoming.forEach((project) => store.put(project));
+        trash.forEach((project) => trashStore.put(project));
+        transaction.oncomplete = resolve;
+        transaction.onerror = () => reject(transaction.error || new Error("Project repository update failed."));
+        transaction.onabort = () => reject(transaction.error || new Error("Project repository update aborted."));
+      });
+      return true;
     });
-    return true;
+    mirrorQueue = operation.catch(() => {});
+    return operation;
   }
 
   async function listProjects(options = {}) {
+    // Runtime and manager must read the same committed catalogue, including
+    // an explicitly empty one. IDB is only a recovery source when absent.
+    const legacy = parseStorage(options.trash ? TRASH_KEY : LOCAL_LIBRARY_KEY, null);
+    if (options.trash ? Array.isArray(legacy) : Array.isArray(legacy?.projects)) {
+      return (options.trash ? legacy : legacy.projects).map((project) => record(project,
+        options.trash ? { deletedAt: project.deletedAt, deletedFrom: "local" } : {}));
+    }
     const db = await ready;
-    if (!db) return legacyProjects().map((project) => record(project));
+    if (!db) return (options.trash ? legacyTrash() : legacyProjects()).map((project) => record(project));
     const values = await all(db, options.trash ? TRASH_STORE : PROJECT_STORE);
     return values.sort((a, b) => String(a.name).localeCompare(String(b.name), undefined, { sensitivity: "base" }));
   }
@@ -197,6 +216,7 @@
       transaction.objectStore(TRASH_STORE).put(value);
       transaction.oncomplete = resolve;
       transaction.onerror = () => reject(transaction.error || new Error("Project recycle operation failed."));
+      transaction.onabort = () => reject(transaction.error || new Error("Project recycle operation aborted."));
     });
     return true;
   }
@@ -213,6 +233,7 @@
       transaction.objectStore(TRASH_STORE).delete(String(project.id));
       transaction.oncomplete = resolve;
       transaction.onerror = () => reject(transaction.error || new Error("Project restore failed."));
+      transaction.onabort = () => reject(transaction.error || new Error("Project restore aborted."));
     });
     return true;
   }

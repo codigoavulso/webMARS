@@ -1975,6 +1975,14 @@
     "Project synchronized with the cloud: {name}.": "Mit der Cloud synchronisiertes Projekt: {name}.",
     "[error] Project synchronization failed: {message}": "[Fehler] Projektsynchronisierung fehlgeschlagen: {message}",
     "Cloud synchronization failed.": "Cloud Synchronisierung fehlgeschlagen.",
-    "Synchronize with Cloud": "Synchronisieren mit Cloud"
+    "Synchronize with Cloud": "Synchronisieren mit Cloud",
+    "Project conflict": "Projektkonflikt",
+    "Choose which version to keep, or keep both under different names.": "Wählen Sie aus, welche Version Sie behalten möchten, oder behalten Sie beide unter verschiedenen Namen.",
+    "Keep": "Behalten",
+    "Keep both (rename the local project)": "Behalten Sie beide bei (benennen Sie das lokale Projekt um)",
+    "Keep local version (replace cloud)": "Lokale Version behalten (Cloud ersetzen)",
+    "Keep cloud version (replace local)": "Cloud-Version beibehalten (lokal ersetzen)",
+    "New project name": "Neuer Projektname",
+    "Choose an unused project name.": "Wählen Sie einen unbenutzten Projektnamen."
   });
 })();

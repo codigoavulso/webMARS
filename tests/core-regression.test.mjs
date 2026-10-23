@@ -25,7 +25,7 @@ main:
 function extractNamedFunction(source, name) {
   const start = source.indexOf(`function ${name}(`);
   assert.ok(start >= 0, `missing function ${name}`);
-  const openBrace = source.indexOf("{", start);
+  const openBrace = source.indexOf(") {", start) + 2;
   let depth = 0;
   for (let index = openBrace; index < source.length; index += 1) {
     if (source[index] === "{") depth += 1;
@@ -509,7 +509,7 @@ test("project mutations and state slots only report success after persistence su
 
   assert.match(runtimeSource, /if \(!saveProjectLibraryData\(candidateLibrary\)\) return null;/);
   assert.match(runtimeSource, /if \(!saveProjectAndLibraryData\(normalizedProject, candidateLibrary\)\) return null;/);
-  assert.match(runtimeSource, /if \(!saveProjectAndLibraryData\(candidateActiveProject, candidateLibrary\)\) return false;/);
+  assert.match(runtimeSource, /if \(!saveProjectAndLibraryData\(candidateActiveProject, candidateLibrary\)\) \{\s*restoreProjectStorageValue\(trashKey, previousTrash\);\s*return false;/);
   assert.match(runtimeSource, /if \(!saveProjectAndLibraryData\(nextProjectState, candidateLibrary\)\) return false;/);
   assert.match(runtimeSource, /if \(!persistProjectNow\(\{ syncFromEditor: false \}\)\) \{\s*projectState = previousProjectState;\s*return null;/);
   assert.match(runtimeSource, /if \(!persistProjectNow\(\{ syncFromEditor: true \}\)\) \{\s*projectState = previousProjectState;\s*postMarsMessage\("\[error\] Failed to save to browser storage\."\);\s*return;\s*\}\s*postMarsMessage\("State stored in slot \{slot\}\."/);

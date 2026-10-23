@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "manual": {
     "name": "webmars-manual",
-    "version": "0.2.1"
+    "version": "0.2.2"
   },
   "product": {
     "name": "webmars",
-    "version": "0.6.5",
+    "version": "0.6.6",
     "verificationStatus": "verified",
     "verifiedCommit": "65eda30e18a9541b65be1cc9f06a71bc79d4fc11",
-    "verifiedAt": "2026-10-22"
+    "verifiedAt": "2026-10-24"
   },
   "catalogs": {
     "helpReference": {

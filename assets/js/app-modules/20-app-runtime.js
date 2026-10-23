@@ -9,7 +9,7 @@ const runtimeSettingsModule = moduleRegistry.runtimeSettings;
 const runtimeBenchmarksModule = moduleRegistry.runtimeBenchmarks;
 const publicLibraryModule = moduleRegistry.publicLibrary;
 const usageStatisticsModule = moduleRegistry.usageStatistics;
-const miniCCompilerModule = moduleRegistry.miniCCompiler;
+const miniCCompilerModule = moduleRegistry.miniCInterface;
 const fileKindsModule = moduleRegistry.fileKinds;
 
 if (!runtimeCoreStoreModule || typeof runtimeCoreStoreModule.createStore !== "function") {
@@ -37,13 +37,13 @@ if (!usageStatisticsModule || typeof usageStatisticsModule.createUsageStatistics
   throw new Error("[mars-web] usageStatistics module was not loaded before app runtime.");
 }
 if (!miniCCompilerModule
-  || typeof miniCCompilerModule.compile !== "function"
+  || typeof miniCCompilerModule.load !== "function"
   || typeof miniCCompilerModule.isSourceFile !== "function"
   || typeof miniCCompilerModule.deriveGeneratedAsmName !== "function"
   || typeof miniCCompilerModule.defaultTemplate !== "string"
   || !miniCCompilerModule.defaultTemplate.trim()
 ) {
-  throw new Error("[mars-web] miniCCompiler module was not loaded before app runtime.");
+  throw new Error("[mars-web] miniCInterface module was not loaded before app runtime.");
 }
 if (!fileKindsModule
   || typeof fileKindsModule.classifyFileName !== "function"
@@ -430,18 +430,6 @@ function normalizeRestoredFile(file, index) {
   };
 }
 
-function collectSessionProjectSeedFiles(files = []) {
-  return (Array.isArray(files) ? files : [])
-    .filter((file) => file && typeof file === "object" && file.projectOwned !== false)
-    .map((file) => ({
-      id: String(file.id || ""),
-      path: String(file.sourceProjectPath || file.name || ""),
-      source: String(file.source ?? ""),
-      savedSource: typeof file.savedSource === "string" ? String(file.savedSource) : String(file.source ?? "")
-    }))
-    .filter((file) => String(file.path || "").trim().length);
-}
-
 function collectSessionExternalEditorFiles(files = [], existingFiles = []) {
   const existingIds = new Set(
     (Array.isArray(existingFiles) ? existingFiles : [])
@@ -772,14 +760,15 @@ function normalizeProjectLibraryData(library) {
   };
 }
 
-function saveProjectLibraryData(library) {
+function saveProjectLibraryData(library, options = {}) {
   try {
     window.localStorage.setItem(PROJECT_LIBRARY_STORAGE_KEY, JSON.stringify(library));
-    // IndexedDB is the v2 recovery/catalogue store. Keep the legacy snapshot
-    // for older sessions while writes are mirrored asynchronously so a quota
-    // or browser storage failure never blocks the editor transaction.
-    const mirror = window.WebMarsProjectRepository?.mirrorLibrary?.(library);
-    if (mirror && typeof mirror.catch === "function") mirror.catch(() => {});
+    // localStorage is authoritative until the runtime can await IDB commits.
+    // Never mirror a partial multi-key write that may still be rolled back.
+    if (options.mirror !== false) {
+      const mirror = window.WebMarsProjectRepository?.mirrorLibrary?.(library);
+      if (mirror && typeof mirror.catch === "function") mirror.catch((error) => console.warn("Project recovery mirror failed.", error));
+    }
     return true;
   } catch {
     return false;
@@ -796,11 +785,13 @@ function loadProjectLibraryData() {
   }
 }
 
-function saveProjectData(project) {
+function saveProjectData(project, options = {}) {
   try {
     window.localStorage.setItem(PROJECT_STORAGE_KEY, JSON.stringify(project));
-    const mirror = window.WebMarsProjectRepository?.saveProject?.(project);
-    if (mirror && typeof mirror.catch === "function") mirror.catch(() => {});
+    if (options.mirror !== false) {
+      const mirror = window.WebMarsProjectRepository?.saveProject?.(project);
+      if (mirror && typeof mirror.catch === "function") mirror.catch((error) => console.warn("Project recovery mirror failed.", error));
+    }
     return true;
   } catch {
     return false;
@@ -831,11 +822,11 @@ function restoreProjectStorageValue(key, value) {
 function saveProjectAndLibraryData(project, library) {
   const previous = readProjectStorageSnapshot();
   if (!previous) return false;
-  if (!saveProjectLibraryData(library)) return false;
+  if (!saveProjectLibraryData(library, { mirror: false })) return false;
 
   let savedProject = false;
   if (project && typeof project === "object") {
-    savedProject = saveProjectData(project);
+    savedProject = saveProjectData(project, { mirror: false });
   } else {
     try {
       window.localStorage.removeItem(PROJECT_STORAGE_KEY);
@@ -844,7 +835,11 @@ function saveProjectAndLibraryData(project, library) {
       savedProject = false;
     }
   }
-  if (savedProject) return true;
+  if (savedProject) {
+    const mirror = window.WebMarsProjectRepository?.mirrorLibrary?.(library);
+    if (mirror && typeof mirror.catch === "function") mirror.catch((error) => console.warn("Project recovery mirror failed.", error));
+    return true;
+  }
 
   restoreProjectStorageValue(PROJECT_LIBRARY_STORAGE_KEY, previous.library);
   restoreProjectStorageValue(PROJECT_STORAGE_KEY, previous.project);
@@ -1025,56 +1020,28 @@ function loadWorkspaceSession() {
   return null;
 }
 
-const restoredSession = loadWorkspaceSession();
-const storedProject = loadProjectData();
-const fallbackBootstrapProject = storedProject || createDefaultProjectData({
-  files: collectSessionProjectSeedFiles(restoredSession?.files),
-  activeFileId: restoredSession?.activeFileId || "",
-  settings: preferences
+const projectBootstrap = moduleRegistry.projectBootstrap.resolve({
+  library: loadProjectLibraryData(),
+  project: loadProjectData(),
+  session: loadWorkspaceSession(),
+  createDefault: options => createDefaultProjectData({ ...options, settings: preferences }),
+  normalizeLibrary: normalizeProjectLibraryData,
+  rootKey: normalizeProjectRootKey
 });
-const storedProjectLibrary = loadProjectLibraryData();
-let bootstrapProjectLibrary = (
-  storedProjectLibrary && Array.isArray(storedProjectLibrary.projects) && storedProjectLibrary.projects.length
-    ? storedProjectLibrary
-    : normalizeProjectLibraryData({
-      version: PROJECT_LIBRARY_SCHEMA_VERSION,
-      activeRootPath: fallbackBootstrapProject.rootPath,
-      projects: [fallbackBootstrapProject]
-    })
-);
-const storedProjectRootKey = normalizeProjectRootKey(storedProject?.rootPath || "");
-if (storedProjectRootKey) {
-  const hasStoredProject = bootstrapProjectLibrary.projects.some((entry) => (
-    normalizeProjectRootKey(entry.rootPath) === storedProjectRootKey
-  ));
-  if (!hasStoredProject) {
-    bootstrapProjectLibrary = normalizeProjectLibraryData({
-      ...bootstrapProjectLibrary,
-      activeRootPath: storedProject.rootPath,
-      projects: [...bootstrapProjectLibrary.projects, storedProject]
-    });
-  }
-}
-if (!Array.isArray(bootstrapProjectLibrary.projects) || !bootstrapProjectLibrary.projects.length) {
-  bootstrapProjectLibrary = normalizeProjectLibraryData({
-    version: PROJECT_LIBRARY_SCHEMA_VERSION,
-    activeRootPath: fallbackBootstrapProject.rootPath,
-    projects: [fallbackBootstrapProject]
-  });
-}
-const bootstrapProject = bootstrapProjectLibrary.projects.find((entry) => (
-  normalizeProjectRootKey(entry.rootPath) === normalizeProjectRootKey(bootstrapProjectLibrary.activeRootPath)
-)) || fallbackBootstrapProject;
-saveProjectData(bootstrapProject);
-saveProjectLibraryData(bootstrapProjectLibrary);
+const restoredSession = projectBootstrap.session;
+const bootstrapProjectLibrary = projectBootstrap.library;
+const bootstrapProject = projectBootstrap.project;
+saveProjectAndLibraryData(bootstrapProjectLibrary.projects.length ? bootstrapProject : null, bootstrapProjectLibrary);
 
 const fallbackInitialFileId = restoredSession?.activeFileId || "file-initial";
-const fallbackInitialFiles = restoredSession?.files || [{
+const initialSource = bootstrapProjectLibrary.projects.length ? INITIAL_SOURCE : "";
+const fallbackInitialFiles = restoredSession?.files?.length ? restoredSession.files : [{
   id: fallbackInitialFileId,
-  name: "src/main.s",
-  source: INITIAL_SOURCE,
-  savedSource: INITIAL_SOURCE,
-  undoStack: [INITIAL_SOURCE],
+  name: bootstrapProjectLibrary.projects.length ? "src/main.s" : "untitled.s",
+  source: initialSource,
+  savedSource: initialSource,
+  projectOwned: bootstrapProjectLibrary.projects.length > 0,
+  undoStack: [initialSource],
   redoStack: []
 }];
 const initialFiles = buildStartupEditorFiles(bootstrapProject, restoredSession, fallbackInitialFiles);
@@ -1864,43 +1831,6 @@ async function loadCloudProject(projectId) {
   return payload?.project && typeof payload.project === "object" ? payload.project : null;
 }
 
-async function deleteCloudProjectsByName(rootPath) {
-  if (cloudAuthState !== "authenticated") return 0;
-  const name = String(rootPath || "").trim();
-  if (!name) return 0;
-  try {
-    const remoteProjects = await listCloudProjects({ includeDocuments: true });
-    const matches = remoteProjects.filter((entry) => (
-      normalizeProjectRootKey(entry?.name || "") === normalizeProjectRootKey(name)
-    ));
-    let deleted = 0;
-    for (const match of matches) {
-      if (!Number.isFinite(Number(match?.id))) continue;
-      let versionToken = String(match?.etag || getCloudProjectVersionToken(name) || "").trim();
-      if (!versionToken) {
-        const current = await loadCloudProject(match.id);
-        versionToken = String(current?.etag || "").trim();
-      }
-      if (!versionToken) throw new Error(translateText("The cloud service did not provide a project version token."));
-      await cloudRequestJson(`/projects/${match.id}`, {
-        method: "DELETE",
-        headers: { "If-Match": versionToken }
-      });
-      deleted += 1;
-    }
-    if (deleted) postMarsMessage("Deleted '{name}' from the cloud workspace.", { name });
-    return deleted;
-  } catch (error) {
-    // A failed remote delete must not block the local one; say so instead of
-    // letting the project quietly reappear on the next sync.
-    postMarsMessage("[warn] Could not delete '{name}' from the cloud: {message}", {
-      name,
-      message: describeCloudError(error, "Cloud request failed.")
-    });
-    return 0;
-  }
-}
-
 async function renameCloudProjectByName(previousRootPath, nextRootPath) {
   if (cloudAuthState !== "authenticated") return false;
   const previousName = String(previousRootPath || "").trim();
@@ -2038,7 +1968,39 @@ function importCloudProjectRecord(projectRecord, options = {}) {
   return normalized;
 }
 
-async function saveProjectToCloud(project, remoteProjectsByName = null) {
+async function resolveCloudProjectConflict(local, remote) {
+  const preview = project => (project.files || []).map(file => `${file.path || file.name}\n${file.source || ""}`).join("\n\n────────\n\n");
+  return runDialogForm({
+    title: translateText("Project conflict"), width: "900px", height: "640px",
+    message: translateText("Choose which version to keep, or keep both under different names."),
+    confirmLabel: translateText("Apply"), cancelLabel: translateText("Cancel"),
+    sections: [
+      { title: translateText("On this device"), className: "cloud-conflict-preview", fields: [{ name: "localPreview", label: local.rootPath, type: "textarea", readOnly: true, value: preview(local) }] },
+      { title: translateText("Cloud"), className: "cloud-conflict-preview", fields: [{ name: "cloudPreview", label: remote.rootPath, type: "textarea", readOnly: true, value: preview(remote) }] },
+      { title: translateText("Action"), className: "cloud-conflict-choice", fields: [
+        { name: "choice", label: translateText("Keep"), type: "select", value: "both", options: [
+          { value: "both", label: translateText("Keep both (rename the local project)") },
+          { value: "local", label: translateText("Keep local version (replace cloud)") },
+          { value: "cloud", label: translateText("Keep cloud version (replace local)") }
+        ] },
+        { name: "newName", label: translateText("New project name"), value: "" }
+      ] }
+    ],
+    beforeResolve: async (values, dialog) => {
+      if (values.choice !== "both") return { close: true };
+      const name = String(values.newName || "").trim();
+      const projects = await listCloudProjects();
+      if (!name || /[\\/\x00-\x1f]/.test(name) || findProjectInLibrary(name)
+        || projects.some(project => normalizeProjectRootKey(project.name) === normalizeProjectRootKey(name))) {
+        dialog.setMessage(translateText("Choose an unused project name."), "error");
+        return { close: false };
+      }
+      return { close: true };
+    }
+  }, { windowIdPrefix: "window-cloud-project-conflict" });
+}
+
+async function saveProjectToCloud(project, remoteProjectsByName = null, options = {}) {
   const normalized = normalizeProjectData(project);
   if (!normalized) throw new Error("Active project is not valid.");
   const document = serializeProjectForCloud(normalized);
@@ -2049,10 +2011,40 @@ async function saveProjectToCloud(project, remoteProjectsByName = null) {
     ? remoteProjectsByName.get(normalizeProjectRootKey(projectName))
     : null;
   if (existing && Number.isFinite(Number(existing.id))) {
+    const current = await loadCloudProject(existing.id);
+    const currentDocument = deserializeProjectFromCloudDocument(current?.project, projectName);
+    if (!currentDocument) throw new Error(translateText("The cloud project is invalid."));
+    if (buildProjectCloudSyncSummary(normalized, currentDocument).projectTone === "green") {
+      setCloudProjectSyncDocument(projectName, currentDocument, current.etag);
+      return { created: false, unchanged: true, project: current };
+    }
+    const resolution = options.interactive !== false && await resolveCloudProjectConflict(normalized, currentDocument);
+    if (!resolution?.ok || !resolution?.value) {
+      const error = new Error("Cloud project differs; both copies were preserved.");
+      error.status = 412;
+      error.payload = { code: "stale_version", project: current };
+      throw error;
+    }
+    if (resolution.value.choice === "both") {
+      const copy = normalizeProjectData({ ...normalized, rootPath: String(resolution.value.newName).trim() });
+      if (!upsertProjectInLibrary(copy)) throw new Error(translateText("The cloud project could not be saved locally."));
+      const result = await saveProjectToCloud(copy, new Map(), options);
+      const imported = importCloudProjectRecord(current, { open: false });
+      if (!imported) throw new Error(translateText("The cloud project could not be saved locally."));
+      setCloudProjectSyncDocument(projectName, imported, current.etag);
+      return result;
+    }
+    if (resolution.value.choice === "cloud") {
+      const imported = importCloudProjectRecord(current, { open: false });
+      if (!imported) throw new Error(translateText("The cloud project could not be saved locally."));
+      setCloudProjectSyncDocument(projectName, imported, current.etag);
+      return { created: false, direction: "pull", project: current };
+    }
+    if (resolution.value.choice !== "local") throw new Error("Invalid conflict resolution.");
     // Send the version this workspace last read. The service answers 412 when
     // the stored copy moved on, which turns a silent overwrite into a reported
     // conflict.
-    let versionToken = getCloudProjectVersionToken(projectName) || String(existing.etag || "").trim();
+    let versionToken = String(current.etag || "").trim();
     if (!versionToken) {
       const current = await loadCloudProject(existing.id);
       versionToken = String(current?.etag || "").trim();
@@ -2786,10 +2778,8 @@ async function syncSelectedProjectWithCloud(rootPath, direction = "sync") {
     if (!remoteProject) throw new Error(translateText("The cloud project is invalid."));
 
     if (mode === "sync") {
-      const remoteUpdatedAt = parseTimestampValue(remoteMeta.updatedAt, 0);
-      const localUpdatedAt = toCloudServerTime(localProject.updatedAt);
-      if (remoteUpdatedAt > localUpdatedAt + 1000) mode = "pull";
-      else mode = "push";
+      const result = await saveProjectToCloud(localProject, remoteByName);
+      return { ok: true, direction: result.direction || "sync", created: result.created === true };
     }
 
     if (mode === "pull") {
@@ -2885,35 +2875,28 @@ async function syncAllProjectsWithCloud() {
         continue;
       }
 
-      const remoteUpdatedAt = parseTimestampValue(remoteMeta.updatedAt, 0);
-      const localUpdatedAt = toCloudServerTime(localProject.updatedAt);
-      if (remoteUpdatedAt > localUpdatedAt + 1000) {
-        const projectRecord = remoteMeta.project
-          ? remoteMeta
-          : await loadCloudProject(remoteMeta.id);
-        const imported = importCloudProjectRecord(projectRecord, { open: false });
-        if (imported) downloaded += 1;
-        else skipped += 1;
-      } else {
-        try {
-          await saveProjectToCloud(localProject, remoteByName);
-          uploaded += 1;
-        } catch (error) {
-          if (!isCloudStaleVersionError(error) && !isCloudDuplicateNameError(error)) throw error;
-          if (isCloudDuplicateNameError(error)) {
-            postMarsMessage("[warn] The cloud already holds a different project named '{name}'.", {
-              name: localProject.rootPath
-            });
-          } else {
-            reportCloudSaveConflict(localProject.rootPath, error);
-          }
-          conflicted += 1;
-        }
+      try {
+        const result = await saveProjectToCloud(localProject, remoteByName);
+        if (result.unchanged) skipped += 1;
+        else if (result.direction === "pull") downloaded += 1;
+        else uploaded += 1;
+      } catch (error) {
+        if (!isCloudStaleVersionError(error) && !isCloudDuplicateNameError(error)) throw error;
+        reportCloudSaveConflict(localProject.rootPath, error);
+        conflicted += 1;
       }
       remoteByName.delete(remoteKey);
     }
 
     for (const remoteMeta of remoteByName.values()) {
+      // A local deletion is not a remote deletion, nor permission to recreate
+      // the removed local copy automatically during a bulk synchronization.
+      let locallyDeleted = false;
+      try {
+        const trash = JSON.parse(window.localStorage.getItem("webmars-project-trash-v1") || "[]");
+        locallyDeleted = Array.isArray(trash) && trash.some((entry) => normalizeProjectRootKey(entry.rootPath) === normalizeProjectRootKey(remoteMeta.name));
+      } catch { /* no readable tombstone */ }
+      if (locallyDeleted) { skipped += 1; continue; }
       const projectRecord = remoteMeta.project
         ? remoteMeta
         : await loadCloudProject(remoteMeta.id);
@@ -3308,14 +3291,25 @@ function removeProjectFromLibrary(rootPath, options = {}) {
   const candidateActiveProject = candidateProjects.find((entry) => (
     normalizeProjectRootKey(entry?.rootPath) === candidateActiveKey
   )) || candidateProjects[0] || null;
-  if (!saveProjectAndLibraryData(candidateActiveProject, candidateLibrary)) return false;
+  // Keep the recovery copy before touching the live catalogue. If quota or
+  // storage access prevents this write, deletion must fail without data loss.
+  const trashKey = "webmars-project-trash-v1";
+  let previousTrash;
+  try {
+    previousTrash = window.localStorage.getItem(trashKey);
+    const trash = previousTrash ? JSON.parse(previousTrash) : [];
+    if (!Array.isArray(trash)) return false;
+    trash.push({ ...removedProject, id: `trash-${Date.now()}-${Math.random().toString(36).slice(2)}`, deletedAt: Date.now(), deletedFrom: "local" });
+    window.localStorage.setItem(trashKey, JSON.stringify(trash));
+  } catch { return false; }
+  if (!saveProjectAndLibraryData(candidateActiveProject, candidateLibrary)) {
+    restoreProjectStorageValue(trashKey, previousTrash);
+    return false;
+  }
   projectLibraryState = candidateLibrary;
   setCloudProjectSyncDocument(removedProject?.rootPath || rootPath, null);
-  // Without this the project stays in the cloud and the next "Sync All
-  // Projects" downloads it straight back, so deleting one never sticks.
-  if (options.deleteFromCloud !== false) {
-    void deleteCloudProjectsByName(normalizeProjectRootPath(removedProject?.rootPath || rootPath, "project"));
-  }
+  // This operation is local. Remote deletion requires the Cloud action and
+  // its own confirmation; a matching name is never authorization to delete.
   return true;
 }
 
@@ -5333,10 +5327,8 @@ async function handleProjectTreeBulkDeleteAction(selectedNodes = []) {
   let hadLastFileWarning = false;
 
   plan.projects.forEach((rootPath) => {
-    if (projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", rootPath)) {
-      removedOpenProject = true;
-    }
     if (removeProjectFromLibrary(rootPath)) {
+      if (projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", rootPath)) removedOpenProject = true;
       deletedCount += 1;
     }
   });
@@ -8491,12 +8483,13 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences, opt
 
   let compileResult = null;
   try {
+    const compiler = await miniCCompilerModule.load();
     await ensureMiniCGlobalLibrariesLoaded();
     if (typeof options.isCurrent === "function" && !options.isCurrent()) return null;
     const includeSourceMap = collectMiniCIncludeSourceMap();
     const includeResolver = createMiniCIncludeResolver(sourceName, includeSourceMap);
     const useLibrarySources = buildMiniCUseLibrarySources(includeSourceMap, subset);
-    compileResult = benchmarkCollector.measure("compile", () => miniCCompilerModule.compile(source, {
+    compileResult = benchmarkCollector.measure("compile", () => compiler.compile(source, {
       sourceName,
       subset,
       targetAbi,
@@ -10464,23 +10457,6 @@ window.addEventListener("webmars:project-copy-public", (event) => {
     postMarsMessage("[error] Failed to load example: {message}", { message: String(error?.message || error) });
   }
 });
-window.addEventListener("webmars:project-trash", async (event) => {
-  const item = event.detail?.item;
-  const rootPath = String(item?.path || item?.source?.rootPath || "").trim();
-  if (!rootPath) return;
-  const active = projectIsOpen() && isSameProjectRootPath(projectState?.rootPath || "", rootPath);
-  if (active) {
-    const closed = await closeProjectWorkspace();
-    if (!closed) {
-      if (projectState) upsertProjectInLibrary(projectState, { makeActive: true, silentQuota: true });
-      window.WebMarsProjectManager?.reload?.();
-      return;
-    }
-  }
-  removeProjectFromLibrary(rootPath, { projectId: item?.id || item?.source?.id, deleteFromCloud: false });
-  postMarsMessage("Project deleted: {name}.", { name: rootPath });
-  window.WebMarsProjectManager?.reload?.();
-});
 window.addEventListener("webmars:project-new", () => { void commands.newProject(); });
 window.addEventListener("webmars:project-manager-show", () => {
   modeController.setMode("project");
@@ -10488,6 +10464,28 @@ window.addEventListener("webmars:project-manager-show", () => {
   renderProjectTree(true);
 });
 window.WebMarsProjectManagerBridge = {
+  importLocal(project) {
+    // Manager imports share the runtime quota checks and live catalogue.
+    if (findProjectInLibrary(project.rootPath)) return false;
+    return Boolean(upsertProjectInLibrary(project));
+  },
+  restoreLocal(project, trashId) {
+    if (findProjectInLibrary(project.rootPath)) return false;
+    const trashKey = "webmars-project-trash-v1";
+    let previous;
+    try {
+      previous = window.localStorage.getItem(trashKey);
+      const trash = previous ? JSON.parse(previous) : [];
+      if (!Array.isArray(trash) || !trash.some((entry) => entry.id === trashId)) return false;
+      window.localStorage.setItem(trashKey, JSON.stringify(trash.filter((entry) => entry.id !== trashId)));
+    } catch { return false; }
+    if (!upsertProjectInLibrary(project)) {
+      restoreProjectStorageValue(trashKey, previous);
+      return false;
+    }
+    renderProjectTree(true);
+    return true;
+  },
   async sync(rootPath, direction = "sync") {
     return syncSelectedProjectWithCloud(rootPath, direction);
   },
@@ -11106,7 +11104,7 @@ if (startupPreferences !== preferences) {
 }
 updateRunSpeedLabel();
 if (!restoredSession && !projectIsOpen()) {
-  editor.setSource(INITIAL_SOURCE);
+  editor.setSource(initialSource);
 } else {
   editor.refreshStatus();
   if (restoredSession?.files?.length) {

@@ -1,0 +1,396 @@
+Preparação da v0.6.6 — 24/10/2026: inclui as correções das duas rondas abaixo e número de build fixo AAAAMMDDhhmm na janela Sobre.
+
+Estado da intervenção — 24/10/2026
+
+Corrigido no código local (a versão continua em 0.6.5):
+[x] P0: eliminar um projeto local nunca elimina a cópia Cloud; a operação remota mantém a sua ação e confirmação próprias.
+[x] P0: eliminação simples e em lote guardam uma cópia na reciclagem antes de remover o projeto; se a gravação falhar, não o removem.
+[x] P0/P1: restauro recupera o conteúdo, resolve colisões de nomes/IDs e mantém a cópia na reciclagem se não conseguir gravar.
+[x] P1: catálogo localStorage como fonte de verdade comum ao runtime e ao gestor. O espelho IndexedDB só começa depois das gravações confirmadas; operações pendentes leem o último catálogo confirmado e são serializadas.
+[x] P1: importações comparam raízes normalizadas com .p e recebem um ID livre; passam pelas quotas e pelo estado do runtime.
+[x] P1: matriz de compatibilidade regenerada.
+[x] P2: reciclagem e catálogo ativo separados também sem IndexedDB; listas vazias não recuperam dados antigos do espelho.
+[x] P2: escritas IndexedDB aguardam oncomplete e rejeitam erros/abortos da transação.
+[x] P2: abrir, consultar e exportar publicações usam o mesmo carregador, incluindo revisões de publicações arquivadas.
+[x] P2: importação limitada antes de file.text(), com validação estrutural e limites de ficheiros/conteúdo.
+[x] P2: falha terminal no arranque mostra o módulo afetado e botão para recarregar, sem ser ocultada pelo temporizador.
+[x] Segurança: servidor de desenvolvimento usa a política de ficheiros públicos da distribuição e verifica realpath; bloqueia ficheiros internos, ocultos e ligações para fora da raiz pública.
+[x] Sincronizar todos respeita as eliminações locais registadas na reciclagem, sem apagar a cópia remota nem a voltar a descarregar automaticamente.
+
+Validação final: npm run validate aprovado, com 511 testes passados, zero falhas e zero ignorados. Verificados também o arranque no navegador e os HTTP 403 para /.git/config e /package.json; os módulos públicos e o manual continuam acessíveis.
+Testes: os 12 cenários de tests/project-lifecycle.test.mjs cobrem eliminação/restauro, quota, rollback, conflitos de nomes/IDs, ausência de IndexedDB, abortos após sucesso do pedido, espelhamento, importação, publicações arquivadas, servidor e falha no arranque.
+
+Segunda ronda de consolidação — 24/10/2026:
+[x] Recuperação após recarregar: um catálogo válido, incluindo vazio, prevalece sobre snapshots antigos do projeto ativo. Eliminar o último projeto não o faz reaparecer ao reiniciar.
+[x] Ficheiros independentes do editor são mantidos quando o catálogo está vazio; a migração de sessões anteriores ao catálogo preserva os caminhos e o conteúdo guardado/não guardado.
+[x] Política de arranque extraída para 20-project-bootstrap.js, com testes independentes do DOM e do motor MIPS.
+[x] Compilador Mini-C carregado a pedido. O arranque usa apenas 17-mini-c-interface.js; pedidos simultâneos partilham o carregamento, com timeout e nova tentativa após falha.
+[x] Template e regras de nomes do Mini-C partilhados entre interface e motor, sem duplicação; harnesses de testes e benchmarks adaptados.
+[x] Removidos o percurso antigo de eliminação remota por nome e o evento alternativo sem utilização para eliminação local.
+[x] CI configurado com um job separado para Java e MARS 4.5 verificado por SHA-256. WEBMARS_REQUIRE_MARS=1 impede que a ausência da referência passe como teste ignorado. O mesmo comando passou localmente: 12 testes, zero falhas e zero ignorados.
+[x] Verificado no navegador: o motor do compilador não é pedido no arranque e a primeira compilação carrega-o e gera Assembly.
+[x] Mapa de arquitetura e ordem dos módulos atualizados.
+Validação da segunda ronda: npm run validate aprovado, com 516 testes passados, zero falhas e zero ignorados. A compilação com carregamento a pedido foi também confirmada num navegador, em origem local isolada.
+
+Pendente: migração integral do runtime para IndexedDB como armazenamento principal e continuação da extração dos restantes módulos extensos. A passagem integral para IndexedDB exige mudar a API síncrona do runtime e não foi simulada por uma alteração parcial. O carregamento diferido do compilador já foi concluído; outras funcionalidades podem ser avaliadas individualmente.
+A confirmação do CI remoto e da publicação é registada na release v0.6.6.
+
+Relatório original (preservado):
+
+Code Review — webMARS
+Repositório: codigoavulso/webMARS · Versão 0.6.5 · Branch main · 23/10/2026
+
+A análise incide sobre o código-fonte, a arquitetura, a segurança, o funcionamento do simulador, a gestão de projetos, a infraestrutura e os testes. Não consultei o conteúdo de nenhum README.md.
+
+O webMARS é um projeto consideravelmente maior do que uma simples interface para executar Assembly: inclui um assembler MIPS, um motor de simulação, um compilador Mini-C, ferramentas de análise de execução, persistência local, sincronização cloud e um sistema de publicação de projetos.
+
+1. Problemas encontrados
+Alta prioridade Importação de projetos com risco de colisão e perda de dados
+Ficheiro: 21-project-manager.js, linhas 644–664
+
+Na função importFile(), a verificação de nomes duplicados compara nomes de projetos com caminhos completos, que incluem a extensão .p.
+
+Por exemplo, com um projeto existente chamado teste.p, importar outro chamado teste pode produzir:
+
+existing = new Set(["teste.p"]);
+candidate = "teste";
+
+existing.has(candidate); // false
+
+A função não deteta a colisão e atribui ao novo projeto o mesmo rootPath, teste.p.
+
+Isto entra em conflito com a lógica de normalização da biblioteca, que elimina entradas com o mesmo caminho de raiz, e com o índice rootKey único do IndexedDB.
+
+Consequência: o projeto importado pode desaparecer da biblioteca normalizada, criar divergências entre as cópias armazenadas ou impedir a atualização do IndexedDB.
+
+Correção: comparar sempre os caminhos de raiz normalizados, incluindo a extensão, e garantir um identificador de projeto não utilizado antes de gravar.
+
+Alta prioridade Persistência sem transação única entre localStorage e IndexedDB
+Ficheiros:
+
+20-app-runtime.js, linhas 775–852
+
+20-project-repository.js, linhas 154–174
+
+O método saveProjectAndLibraryData() tenta manter a consistência entre os dados locais, mas as operações de espelhamento para IndexedDB são assíncronas e os respetivos erros são ignorados.
+
+Há um cenário problemático concreto:
+
+A nova biblioteca é escrita no localStorage.
+
+É iniciado o espelhamento assíncrono para IndexedDB.
+
+A gravação do projeto ativo falha, por exemplo devido à quota de armazenamento.
+
+O código restaura os valores anteriores no localStorage.
+
+O espelhamento iniciado anteriormente não é cancelado e pode persistir a biblioteca que acabou de ser rejeitada.
+
+Além disso, o gestor de projetos prefere os registos do IndexedDB quando estes existem, introduzindo a possibilidade de apresentar informação divergente da utilizada pelo runtime.
+
+Consequência: inconsistência entre projetos visíveis, projetos efetivamente ativos e dados recuperados posteriormente.
+
+Correção: estabelecer uma única fonte de verdade e efetuar gravações consistentes. O ideal seria IndexedDB como armazenamento principal, com transações completas, migração controlada e um mecanismo explícito de recuperação.
+
+Alta prioridade A reciclagem dos projetos não está ligada à eliminação normal
+Ficheiros: 20-app-runtime.js, linhas 5405–5434 e 21-project-manager.js, linhas 583–615
+
+O gestor apresenta uma localização intitulada Recycle bin. Existe até uma função moveToTrash() que prepara os dados para recuperação.
+
+O problema é que essa função não é chamada pelo fluxo normal de eliminação.
+
+Quando se elimina um projeto pela árvore, a operação chama diretamente removeProjectFromLibrary(). Esta remove o projeto da biblioteca, sem o colocar na reciclagem.
+
+Consequência: um utilizador pode eliminar um projeto, procurar recuperá-lo na reciclagem e descobrir que não está lá.
+
+Este é um dos problemas que corrigiria primeiro, sobretudo numa aplicação utilizada para escrever e guardar código.
+
+Prioridade média A reciclagem pode mostrar projetos ativos quando IndexedDB não está disponível
+Ficheiros: 20-project-repository.js, linhas 176–180 e 21-project-manager.js, linhas 91–101
+
+No método listProjects(options), quando IndexedDB não está disponível, o código devolve sempre os projetos locais, ignorando options.trash.
+
+Assim, listProjects({ trash: true }) pode devolver os projetos ativos, que depois são apresentados pelo gestor como elementos da reciclagem.
+
+O fallback deve distinguir explicitamente entre a biblioteca de projetos e a biblioteca de eliminados.
+
+Prioridade média Falha no carregamento de módulos deixa a aplicação bloqueada no ecrã inicial
+Ficheiros: app.bundle.js, linhas 50–79 e index.html, carregamento inicial
+
+Quando um módulo JavaScript falha ao carregar, o loader adiciona uma mensagem de erro ao #app e interrompe a sequência.
+
+Contudo, o ecrã inicial só desaparece quando é recebido o evento webmars:tools-ready, que pode nunca ocorrer após essa falha.
+
+O utilizador fica com o ecrã de carregamento sobreposto à mensagem de erro. O temporizador apenas altera o texto para indicar que o arranque está a demorar.
+
+Correção: criar um evento terminal de falha, apresentar o módulo afetado e disponibilizar uma opção de recarregamento.
+
+2. Estado dos testes automatizados
+Última execução do GitHub Actions
+
+CI falhou
+Aprovados
+
+494
+Falhados
+
+1
+Ignorados
+
+1
+Workflow de 22/10/2026, commit c55e8fd. O job do Manual passou; o job principal falhou.
+Consultar execução e logs no GitHub
+
+O teste que falhou foi tests/evidence-package.test.mjs, na verificação de que a matriz de compatibilidade corresponde exatamente à versão atual do código.
+
+O próprio teste indica a correção:
+
+npm run docs:matrix
+
+Depois será necessário incluir o ficheiro regenerado no commit.
+
+É uma falha de consistência dos artefactos gerados, não uma demonstração de que uma instrução MIPS esteja incorreta.
+
+O único teste ignorado é o diferencial contra o MARS 4.5, por ausência do JAR de referência no ambiente de CI. Isto importa: embora a cobertura automatizada seja extensa, a comparação integral com a implementação original não está a ser executada nesse workflow.
+
+3. Outros problemas relevantes
+Alta prioridade Eliminar um projeto local também pode eliminar a cópia cloud
+Este é, potencialmente, o problema com maior impacto sobre os dados do utilizador.
+
+Ficheiros: 20-app-runtime.js, linhas 3282–3319 e 20-app-runtime.js, linhas 1867–1902
+
+A remoção de um projeto utiliza este comportamento por defeito:
+
+if (options.deleteFromCloud !== false) {
+  void deleteCloudProjectsByName(
+    normalizeProjectRootPath(
+      removedProject?.rootPath || rootPath,
+      "project"
+    )
+  );
+}
+
+A função chamada procura projetos remotos com o mesmo nome normalizado e envia pedidos HTTP DELETE para cada correspondência.
+
+A confirmação apresentada na árvore de projetos limita-se a perguntar se o utilizador pretende eliminar o projeto. Não esclarece que a operação também pode afetar a cloud.
+
+Cenário: um utilizador autenticado quer remover apenas uma cópia local para libertar espaço. Ao confirmar, pode desencadear a eliminação da correspondente versão remota.
+
+A eliminação remota é assíncrona e não bloqueia a eliminação local em caso de erro, podendo ainda produzir estados parcialmente sincronizados.
+
+Recomendação: separar explicitamente Eliminar deste dispositivo de Eliminar também da cloud, com confirmação específica para a segunda operação. Uma eventual proteção contra o reaparecimento dos projetos durante a sincronização deve utilizar um mecanismo próprio, e não uma eliminação remota implícita.
+
+Prioridade média Exportação de publicações arquivadas não tem o fallback utilizado pela abertura
+Ficheiro: 21-project-manager.js, abertura e 21-project-manager.js, exportação
+
+Ao abrir uma publicação própria arquivada, o código contempla recuperar a última revisão disponível se o pedido normal falhar.
+
+Na exportação, esse fallback não existe: o código tenta apenas a rota normal /publications/{slug}.
+
+Consequentemente, a publicação pode conseguir ser aberta, mas falhar ao ser descarregada, dependendo do comportamento da API relativamente a publicações arquivadas.
+
+A solução é centralizar a obtenção de uma publicação numa única função reutilizada pelas operações de abrir, consultar e exportar.
+
+Risco de segurança condicionado Servidor de desenvolvimento permite aceder a ficheiros internos do repositório
+Ficheiro: scripts/serve.mjs, linhas 45–107
+
+O servidor estático valida que o caminho pedido se encontra dentro do diretório do repositório. Essa é uma proteção útil contra path traversal convencional.
+
+Contudo, não restringe os ficheiros servidos aos recursos públicos da aplicação. Um pedido dirigido a .git/config, por exemplo, pode ser servido se esse ficheiro existir no diretório de execução. Também não existe proteção explícita contra symlinks que apontem para fora da raiz.
+
+Por defeito, o servidor escuta apenas em 127.0.0.1, o que reduz substancialmente a exposição.
+
+O risco torna-se relevante se o servidor for disponibilizado na rede, por exemplo através de HOST=0.0.0.0.
+
+Correção: servir exclusivamente um diretório de distribuição, bloquear ficheiros ocultos e verificar o caminho real (realpath) antes de abrir ficheiros.
+
+Prioridade média As gravações individuais do IndexedDB não aguardam a conclusão da transação
+Ficheiro: 20-project-repository.js, linhas 56–67
+
+A função auxiliar request() resolve a promessa no evento onsuccess do pedido, não no evento oncomplete da transação.
+
+Para leituras, isso é normalmente suficiente. Para escritas, o sucesso de um pedido não garante, por si só, que a transação inteira tenha sido confirmada.
+
+A implementação já espera corretamente pelo transaction.oncomplete em algumas operações, como mirrorLibrary(), mas não mantém essa regra em saveProject() e saveSession().
+
+Recomendo uniformizar o comportamento, aguardando a conclusão da transação para todas as escritas.
+
+Prioridade média Importação de ficheiros sem limite antecipado de dimensão
+Ficheiro: 21-project-manager.js, linhas 644–665
+
+O importador executa await file.text() e JSON.parse(text) antes de verificar o tamanho ou a complexidade do projeto.
+
+Em contrapartida, o carregamento de projetos públicos possui limites explícitos para o número de ficheiros, a dimensão individual e o tamanho total.
+
+Um ficheiro de importação excessivamente grande pode provocar consumo significativo de memória ou bloquear a interface durante a análise e serialização.
+
+Deveria existir uma validação antecipada de file.size, seguida de validação estrutural antes de persistir o projeto.
+
+4. Arquitetura e qualidade técnica
+A organização geral é razoável para uma aplicação originalmente construída em JavaScript diretamente no navegador. A separação entre motor MIPS, Mini-C, interface, ferramentas, persistência e testes é reconhecível.
+
+Contudo, existem alguns pontos de concentração de complexidade.
+
+Componente
+
+Avaliação
+
+Motor MIPS / assembler
+
+Estrutura elaborada, com proteções de memória e mecanismos de recuperação
+
+Compilador Mini-C
+
+Subsistema próprio, mas concentrado num módulo muito extenso
+
+Interface
+
+Funcionalmente rica, mas com forte acoplamento entre módulos
+
+Gestão de projetos
+
+Principal área de risco funcional encontrada
+
+Ferramentas de simulação
+
+Boa separação por ferramenta, embora algumas sejam bastante grandes
+
+Testes
+
+Cobertura de cenários muito diversificada, com limitações de integração
+
+CI e releases
+
+Processo bem estruturado, mas o último commit não passou a validação
+
+Complexidade dos módulos principais
+Dimensão dos principais módulos JavaScript
+Linhas de código aproximadas, incluindo comentários e espaços em branco
+
+0
+3,5 mil
+7 mil
+10,5 mil
+14 mil
+Runtime da aplicação
+Motor MIPS
+Compilador Mini-C
+Pipeline Lab
+Stack Visualizer
+Gestor de ficheiros
+Runtime da aplicação: Linhas 11,5 mil
+Motor MIPS: Linhas 9,3 mil
+Compilador Mini-C: Linhas 7,8 mil
+Pipeline Lab: Linhas 3,4 mil
+Stack Visualizer: Linhas 2,9 mil
+Gestor de ficheiros: Linhas 2 mil
+O 20-app-runtime.js, com cerca de 11 500 linhas, concentra responsabilidades que deveriam estar mais separadas: execução, integração cloud, gestão dos projetos, persistência, comandos e interação com a interface.
+
+Não defendo uma reescrita. Recomendo extração progressiva por responsabilidades, acompanhada de testes que garantam a preservação do comportamento.
+
+5. Desempenho
+O carregador inicial referencia 23 ficheiros JavaScript, representando aproximadamente 2,28 MB de código não comprimido, e carrega os módulos sequencialmente.
+
+Referência: app.bundle.js, carregamento dos módulos.
+
+Isto não significa que sejam transferidos 2,28 MB pela rede: compressão HTTP e cache podem reduzir substancialmente o tráfego. Mas a quantidade de código inicial também afeta análise e execução JavaScript.
+
+A opção mais útil seria carregar determinadas funcionalidades apenas quando necessárias, particularmente o compilador Mini-C e alguns módulos auxiliares.
+
+Em contrapartida, há decisões positivas no ciclo de execução: o runtime executa instruções por lotes, utiliza limites de tempo por iteração e evita atualizar toda a interface a cada instrução. São mecanismos importantes para manter a aplicação responsiva.
+
+6. Segurança
+O resultado é relativamente positivo na parte do navegador, mas incompleto no que respeita à cloud.
+
+O gestor de ficheiros aplica escape HTML a nomes, caminhos e atributos que introduz na interface. Os projetos públicos passam por validação de caminhos e limites de dimensão. O coletor de métricas aceita um conjunto limitado de campos e eventos, e a configuração impede o envio das métricas para uma origem arbitrária.
+
+Estas são boas escolhas.
+
+Também não encontrei, nos principais módulos inspecionados, utilização de eval() ou new Function() para executar código fornecido pelo utilizador.
+
+Por outro lado, o servidor BackMars não faz parte do código analisado. Assim, não seria correto afirmar que a autenticação, as permissões de acesso, a proteção CSRF ou a eliminação de projetos na API estão seguras. Os testes de autenticação existentes utilizam respostas simuladas da API em vários cenários.
+
+Existe ainda uma distinção importante em matéria de privacidade: embora o coletor de métricas evite recolher IP nos eventos, a configuração de logs Nginx inclui campos como endereço IP, User-Agent e Referer. É uma superfície de dados diferente e deve ter uma política de retenção adequada.
+
+7. Qualidade dos testes
+A existência de quase 500 testes no job principal é um ponto bastante favorável. Há testes para instruções MIPS, memória, syscalls, interrupções, execução reversível, compilação, pipeline, ferramentas e robustez perante entradas inválidas.
+
+Particularmente positivos são os testes de fuzzing determinístico, os testes de invariantes de memória e os mecanismos de comparação diferencial com MARS.
+
+Contudo, a revisão identificou uma lacuna evidente: os caminhos de criação, importação, eliminação, reciclagem, restauração e sincronização de projetos precisam de testes de integração conjuntos. Os testes individuais de módulos não são suficientes para detetar todas as inconsistências entre localStorage, IndexedDB, interface e cloud.
+
+Seria também vantajoso integrar a comparação diferencial MARS 4.5 no CI regular, quando for viável disponibilizar legalmente o artefacto de referência.
+
+8. Ordem de intervenção recomendada
+Prioridade
+
+Trabalho
+
+Motivo
+
+P0
+
+Separar eliminação local de eliminação cloud
+
+Prevenir perda de projetos remotos
+
+P0
+
+Corrigir a reciclagem e testar a recuperação
+
+Prevenir eliminação irrecuperável
+
+P1
+
+Resolver a consistência localStorage/IndexedDB
+
+Integridade dos dados
+
+P1
+
+Corrigir colisões na importação
+
+Evitar perda ou ocultação de projetos
+
+P1
+
+Regenerar matriz e recuperar CI verde
+
+Garantir qualidade da versão
+
+P2
+
+Corrigir fallbacks e transações IndexedDB
+
+Fiabilidade da persistência
+
+P2
+
+Melhorar carregamento e recuperação de erros
+
+Experiência do utilizador
+
+P2
+
+Introduzir limites na importação
+
+Robustez perante entradas grandes
+
+P3
+
+Dividir módulos extensos e otimizar arranque
+
+Manutenção e desempenho
+
+9. Avaliação final
+O meu diagnóstico é que o webMARS tem uma base técnica forte no motor de simulação e nos testes, mas a gestão do ciclo de vida dos projetos não apresenta o mesmo nível de robustez.
+
+A maior preocupação não é a correção das instruções MIPS: nos percursos analisados, não identifiquei um defeito concreto no núcleo de execução que justifique classificá-lo como incorreto. A preocupação principal são as operações sobre dados persistentes, sobretudo quando envolvem simultaneamente o navegador e a cloud.
+
+A aplicação está numa fase em que a próxima melhoria importante deveria ser menos orientada para acrescentar funcionalidades e mais orientada para consolidar as existentes.
+
+Conclusão: manteria a arquitetura global, evitaria uma reescrita e concentraria os próximos esforços na integridade dos projetos, no isolamento das operações destrutivas e em testes de integração completos. Até isso estar corrigido, recomendaria exportações de segurança para projetos importantes.
+
+Limites desta revisão: analisei a árvore do repositório e os principais módulos e fluxos, mas não executei localmente a aplicação nem percorri linha a linha todos os 2 039 ficheiros. Os resultados de testes apresentados provêm dos logs do GitHub Actions. As falhas descritas como confirmadas resultam da leitura dos caminhos de execução; os riscos condicionados foram identificados separadamente. Nenhum README.md foi aberto ou lido, e não alterei qualquer ficheiro do repositório.
+
+

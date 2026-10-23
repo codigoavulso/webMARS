@@ -1,10 +1,11 @@
-# webMARS v0.6.5
+# webMARS v0.6.6
 
 Live test: [https://webmars.nfiles.top/](https://webmars.nfiles.top/)
 
 Public learning pages: [English](https://webmars.nfiles.top/discover/) ·
 [Português](https://webmars.nfiles.top/discover/pt/). They cover getting started,
 teaching, stack/recursion, pipeline and Mini-C without requiring JavaScript.
+Stamp the release build once with `npm run build:stamp` (Lisbon time, `YYYYMMDDhhmm`); serving and packaging preserve that number.
 Regenerate them with `npm run docs:public` after updating the product version.
 See [automatic usage statistics](docs/usage-metrics.md) for the product-use measurement
 schema and the separate Raspberry Pi collector installation.
@@ -32,8 +33,8 @@ schema and the separate Raspberry Pi collector installation.
 ## Manual do webMARS
 
 [`manual/`](manual/README.md) is the independent, Portuguese-language webMARS
-manual. It has its own semantic version (`0.2.1`), changelog, static build and
-test suite. This edition documents webMARS `0.6.5`, including public usage
+manual. It has its own semantic version (`0.2.2`), changelog, static build and
+test suite. This edition documents webMARS `0.6.6`, including public usage
 statistics and the paginated Public Library, and includes searchable reference
 data plus real light-theme screenshots for every tool.
 
@@ -43,12 +44,12 @@ npm run validate
 npm run serve
 ```
 
-## Highlights in v0.6.5
+## Highlights in v0.6.6
 
-- Unified local files, Cloud projects, public publications and the recycle bin in the embedded project manager, preserving context menus and file actions.
-- Consolidated Cloud and Library into the Online menu, with context-aware project synchronization and publication controls.
-- Reworked account access, Google sign-in and linking, account merging, password recovery and email verification with editable error states and consistent navigation.
-- Expanded the integrated Manual, practical examples and translations, improved usage statistics and editor alignment, and removed obsolete project files.
+- Compare conflicting local and Cloud projects side by side, keep both under a new name or explicitly choose which version to keep. Concurrent Cloud changes remain protected.
+- Recover deleted projects from the recycle bin without silently deleting their Cloud copies; reject invalid or oversized imports before changing the workspace.
+- Fix browsing published project files, preserve empty workspaces on restart and provide a retry when startup fails.
+- Load the Mini-C compiler only when needed, validate the MARS reference in continuous integration and show the release build number in About.
 
 ## Main Capabilities
 
@@ -231,6 +232,7 @@ of the system with every figure linked to the report that produced it.
 
 ## Release Line
 
+- `v0.6.6`: safer project synchronization, recycle-bin recovery, lazy Mini-C loading, build identification and Manual 0.2.2
 - `v0.6.5`: embedded project manager, unified Online menu, account-flow improvements, project API v2 and Manual 0.2.1
 
 - `v0.6.4`: optional social sign-in, traffic classification, web/app correlation, aggregate Cloud account activity and Manual 0.2.0

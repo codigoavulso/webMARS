@@ -21,7 +21,8 @@
     "./assets/js/app-modules/12-ui-tool-manager.js",
     "./assets/js/app-modules/13-ui-menu-system.js",
     "./assets/js/app-modules/15-help-system.js",
-    "./assets/js/app-modules/17-mini-c-compiler.js",
+    "./assets/js/app-modules/17-mini-c-interface.js",
+    "./assets/js/app-modules/20-project-bootstrap.js",
     "./assets/js/app-modules/18-runtime-browser-storage.js",
     "./assets/js/app-modules/19-runtime-settings.js",
     "./assets/js/app-modules/19-runtime-benchmarks.js",
@@ -55,6 +56,7 @@
     msg.style.color = "#8b0000";
     msg.style.padding = "8px";
     root.appendChild(msg);
+    dispatchLoaderEvent("webmars:startup-failed", { failedModule: src });
     dispatchLoaderEvent("webmars:scripts-loaded", { ok: false, failedModule: src });
   }
 

@@ -89,6 +89,14 @@ const ZIP_METHOD_DEFLATE = 8;
 const ZIP_DOS_TIME = 0;
 const ZIP_DOS_DATE = 0x5021; // 2020-01-01, fixed for reproducible archives.
 
+function isPublicReleasePath(path) {
+  const normalized = String(path).replaceAll("\\", "/");
+  if (normalized.split("/").some((part) => !part || part.startsWith("."))
+    || FORBIDDEN_RELEASE_PATH.test(normalized) || TEMPORARY_NAME.test(normalized)) return false;
+  return PUBLIC_ROOT_FILES.includes(normalized) || PUBLIC_TREES.some((tree) =>
+    normalized.startsWith(`${tree.root}/`) && tree.extensions.includes(extname(normalized).toLowerCase()));
+}
+
 function toPosix(path) {
   return path.replaceAll("\\", "/");
 }
@@ -146,6 +154,7 @@ async function readPackageMetadata() {
   const appVersionSource = await readFile(join(projectRoot, APP_VERSION_PATH), "utf8");
   const appVersion = appVersionSource.match(/\bAPP_VERSION\s*=\s*["']([^"']+)["']/)?.[1];
   assert(appVersion, `${APP_VERSION_PATH} does not declare APP_VERSION.`);
+  assert(/\bAPP_BUILD\s*=\s*"\d{12}"/.test(appVersionSource), `${APP_VERSION_PATH} must declare a fixed YYYYMMDDhhmm build.`);
   assert(
     appVersion === version,
     `Version mismatch: package.json is ${version}, but ${APP_VERSION_PATH} is ${appVersion}.`
@@ -888,4 +897,4 @@ if (invokedPath === fileURLToPath(import.meta.url)) {
   }
 }
 
-export { collectReleaseInputs, collectTreeFiles, publishReleaseSet, validateDocumentReferences };
+export { collectReleaseInputs, collectTreeFiles, publishReleaseSet, validateDocumentReferences, isPublicReleasePath };

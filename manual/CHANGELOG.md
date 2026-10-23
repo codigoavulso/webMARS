@@ -3,6 +3,15 @@
 Todas as alterações relevantes deste subprojeto são registadas aqui. O formato
 segue *Keep a Changelog* e o manual usa versionamento semântico próprio.
 
+## [0.2.2] — 2026-10-24
+
+Tag independente: `manual-v0.2.2`.
+
+### Alterado
+
+- edição verificada para o webMARS 0.6.6, com correções de recuperação e sincronização;
+- preservação do carregamento dos módulos JavaScript na instalação oficial.
+
 ## [0.2.1] — 2026-10-22
 
 ### Adicionado

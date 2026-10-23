@@ -1,7 +1,8 @@
 // Differential conformance against MARS 4.5.
 //
 // The behavioural comparison needs the reference jar and a JVM, neither of
-// which is present in a plain clone or in CI. Those tests skip rather than
+// which is present in a plain clone. The dedicated CI job requires both.
+// Local runs without the reference skip rather than
 // fail - but skipping silently would let conformance rot unnoticed, so the
 // checks that need no jar always run: the exception list must stay coherent,
 // every declared difference must have a minimal case, and the published report
@@ -39,6 +40,9 @@ const reportPath = resolve(projectRoot, "docs/mars-conformance.md");
 
 const expectations = JSON.parse(await readFile(resolve(differentialRoot, "expectations.json"), "utf8"));
 const status = await referenceStatus();
+if (process.env.WEBMARS_REQUIRE_MARS === "1" && !status.canRun) {
+  throw new Error("The required MARS reference or Java runtime is unavailable; conformance cannot be skipped.");
+}
 
 async function exists(path) {
   try {

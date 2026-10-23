@@ -8,7 +8,15 @@
 </head>
 <body>
   <h1>Changelog</h1>
-  <p class="lead">Release 0.6.5 unifies project management and online workflows, improves account access and expands the integrated Manual.</p>
+  <p class="lead">Release 0.6.6 protects project synchronization and recovery, fixes public project browsing and identifies each build.</p>
+
+  <h2>0.6.6 &mdash; Safer projects and reliable recovery</h2>
+  <ul>
+    <li>Compare conflicting local and Cloud projects side by side, keep both under a new name or explicitly choose which version to keep. Concurrent Cloud changes remain protected.</li>
+    <li>Recover deleted projects from the recycle bin without silently deleting their Cloud copies; reject invalid or oversized imports before changing the workspace.</li>
+    <li>Fix browsing published project files, preserve empty workspaces on restart and provide a retry when startup fails.</li>
+    <li>Load the Mini-C compiler only when needed, validate the MARS reference in continuous integration and show the release build number in About.</li>
+  </ul>
 
   <h2>0.6.5 &mdash; unified projects and online workflows</h2>
   <ul>

@@ -7,6 +7,7 @@ test("public and owned publications expand with numeric revisions and recover fr
   const source = await readFile(new URL("../assets/js/app-modules/21-project-manager.js", import.meta.url), "utf8");
   const escape = source.match(/  function esc\(value\) \{[\s\S]*?\n  \}/)[0];
   const browse = source.match(/    async function browseFiles\(node\) \{[\s\S]*?\n    \}/)[0];
+  const publicationLoader = source.match(/  async function loadPublication\(item\) \{[\s\S]*?\n  \}/)[0];
   for (const location of ["public", "mine"]) {
     const inspector = {};
     const context = vm.createContext({
@@ -17,7 +18,7 @@ test("public and owned publications expand with numeric revisions and recover fr
       describeError: error => { throw error; },
       node: { key: location, type: "project", name: "Example", item: { location, path: "example", source: {} } }
     });
-    await vm.runInContext(`${escape}\n${browse}\nbrowseFiles(node)`, context);
+    await vm.runInContext(`${escape}\n${publicationLoader}\n${browse}\nbrowseFiles(node)`, context);
     assert.equal(context.expanded.has(location), true);
     assert.equal(context.documents.get(location).files[0].path, "main.s");
     assert.match(inspector.innerHTML, /r2/);

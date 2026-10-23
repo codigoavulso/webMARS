@@ -1,8 +1,9 @@
 import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
+import { stat, realpath } from "node:fs/promises";
 import { createServer } from "node:http";
-import { extname, resolve, sep } from "node:path";
+import { extname, resolve, sep, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isPublicReleasePath } from "./package-release.mjs";
 
 const projectRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const rootPrefix = `${projectRoot}${sep}`;
@@ -47,7 +48,19 @@ export function resolveRequestPath(requestUrl) {
   const relativePath = requestPath.replace(/^[/\\]+/, "") || "index.html";
   const target = resolve(projectRoot, relativePath);
   if (target !== projectRoot && !target.startsWith(rootPrefix)) return null;
+  if (relativePath.split(/[/\\]/).some((part) => part.startsWith("."))) return null;
   return target;
+}
+
+export async function resolvePublicFile(target) {
+  let fileStats = await stat(target);
+  if (fileStats.isDirectory()) target = resolve(target, "index.html");
+  if (!isPublicReleasePath(relative(projectRoot, target))) return null;
+  const actual = await realpath(target);
+  const actualRoot = await realpath(projectRoot);
+  if (!actual.startsWith(`${actualRoot}${sep}`) || !isPublicReleasePath(relative(actualRoot, actual))) return null;
+  fileStats = await stat(actual);
+  return fileStats.isFile() ? { target: actual, fileStats } : null;
 }
 
 export function isStableAppRoute(requestUrl) {
@@ -82,16 +95,10 @@ const server = createServer(async (request, response) => {
   }
 
   try {
-    let fileStats = await stat(target);
-    if (fileStats.isDirectory()) {
-      target = resolve(target, "index.html");
-      if (target !== projectRoot && !target.startsWith(rootPrefix)) {
-        sendText(response, 403, "Forbidden");
-        return;
-      }
-      fileStats = await stat(target);
-    }
-    if (!fileStats.isFile()) throw new Error("Not a file");
+    const publicFile = await resolvePublicFile(target);
+    if (!publicFile) { sendText(response, 403, "Forbidden"); return; }
+    ({ target } = publicFile);
+    const { fileStats } = publicFile;
 
     response.writeHead(200, {
       "Content-Length": fileStats.size,
@@ -101,7 +108,9 @@ const server = createServer(async (request, response) => {
       response.end();
       return;
     }
-    createReadStream(target).pipe(response);
+    const stream = createReadStream(target);
+    stream.on("error", () => response.destroy());
+    stream.pipe(response);
   } catch {
     sendText(response, 404, "Not found");
   }

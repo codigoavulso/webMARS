@@ -5,6 +5,14 @@
 
   i18n.registerLanguage("pt", {
     ...baseCatalog,
+    "Project conflict": "Conflito de projeto",
+    "Choose which version to keep, or keep both under different names.": "Escolha a versão a manter ou guarde ambas com nomes diferentes.",
+    "Keep": "Manter",
+    "Keep both (rename the local project)": "Manter ambos (dar novo nome ao projeto local)",
+    "Keep local version (replace cloud)": "Manter versão local (substituir a da nuvem)",
+    "Keep cloud version (replace local)": "Manter versão da nuvem (substituir a local)",
+    "New project name": "Novo nome do projeto",
+    "Choose an unused project name.": "Escolha um nome de projeto que ainda não exista.",
     "Online": "Online",
     "Cloud projects": "Projetos na nuvem",
     "Links": "Ligações",
@@ -1961,8 +1969,8 @@
     "Use Reset to clear the tool's measurements.": "Use Reiniciar para limpar as medições da ferramenta.",
     "Registers reflect completed instructions. {inFlight} of {recorded} recorded instructions are still in the pipeline.": "Os registos refletem as instruções concluídas. Das {recorded} instruções registadas, {inFlight} ainda estão no pipeline.",
     "Open a tool from the Tools menu.": "Abra uma ferramenta no menu Ferramentas.",
-    "Connect to MIPS if the tool offers that option.": "Ligue-a ao MIPS, se essa opção estiver disponível."
-    , "On this device": "Neste dispositivo",
+    "Connect to MIPS if the tool offers that option.": "Ligue-a ao MIPS, se essa opção estiver disponível.",
+    "On this device": "Neste dispositivo",
     "Cloud": "Nuvem",
     "Public library": "Biblioteca pública",
     "My publications": "As minhas publicações",

@@ -408,7 +408,19 @@ ${table(mmio.offsets.map((entry) => [`\`${entry.name}\``, `\`${entry.offset}\``]
   browsers or profiles without an explicit export.
 `;
 
-  await writeFile(outputPath, document, "utf8");
+  // Verification runs alongside readers on Windows. Avoid rewriting an
+  // unchanged report and retry transient locks without accepting drift.
+  let previous;
+  try { previous = await readFile(outputPath, "utf8"); } catch (error) { if (error.code !== "ENOENT") throw error; }
+  if (previous !== document) {
+    for (let attempt = 0; ; attempt += 1) {
+      try { await writeFile(outputPath, document, "utf8"); break; }
+      catch (error) {
+        if (attempt >= 5 || !["EBUSY", "EPERM", "EACCES", "UNKNOWN"].includes(error.code)) throw error;
+        await new Promise(resolve => setTimeout(resolve, 50 * (attempt + 1)));
+      }
+    }
+  }
   return { basic: basicRows.length, extensions: extraOpcodes.length, syscalls: syscallRows.length };
 }
 

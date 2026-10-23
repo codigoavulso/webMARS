@@ -19,7 +19,7 @@ import {
 
 const run = promisify(execFile);
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.6.5";
+const expectedReleaseVersion = "0.6.6";
 const languages = [
   "en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id",
   "de", "ja", "ko", "tr", "vi", "ur", "it", "pl", "fa", "th"
@@ -474,7 +474,7 @@ test("application-version tokens are replaced inside iframe documents", async ()
     setAttribute(name, value) { attributes.set(name, value); }
   };
   const textNode = {
-    nodeValue: "Version __WEBMARS_APP_VERSION__",
+    nodeValue: "Version __WEBMARS_APP_VERSION__ · Build __WEBMARS_APP_BUILD__",
     parentElement: { tagName: "P" }
   };
   let textPending = true;
@@ -509,7 +509,28 @@ test("application-version tokens are replaced inside iframe documents", async ()
 
   assert.equal(foreignDocument.title, `webMARS ${expectedReleaseVersion}`);
   assert.equal(attributes.get("content"), `webMARS ${expectedReleaseVersion}`);
-  assert.equal(textNode.nodeValue, `Version ${expectedReleaseVersion}`);
+  const build = sandbox.window.WebMarsAppVersion.build;
+  assert.match(build, /^\d{12}$/);
+  assert.equal(textNode.nodeValue, `Version ${expectedReleaseVersion} · Build ${build}`);
+  assert.equal(sandbox.window.WebMarsAppVersion.replaceVersionToken("__WEBMARS_APP_BUILD__"), build);
+});
+
+test("build stamps use Lisbon release time with zero padding and a 24-hour clock", async () => {
+  const { formatBuildNumber } = await import("../scripts/set-build.mjs");
+  assert.equal(formatBuildNumber(new Date("2026-01-02T00:03:59Z")), "202601020003");
+  assert.equal(formatBuildNumber(new Date("2026-07-02T23:04:00Z")), "202607030004");
+  const source = await readFile(resolve(projectRoot, "assets/js/app-version.js"), "utf8");
+  const sandbox = {};
+  vm.runInNewContext(source, sandbox);
+  assert.match(sandbox.WebMarsAppVersion.build, /^\d{12}$/);
+  for (const language of await readdir(resolve(projectRoot, "help"))) {
+    const path = resolve(projectRoot, "help", language, "about-card.html");
+    try {
+      assert.match(await readFile(path, "utf8"), /__WEBMARS_APP_BUILD__/);
+    } catch (error) {
+      if (error.code !== "ENOTDIR" && error.code !== "ENOENT") throw error;
+    }
+  }
 });
 
 test("release tree has no obsolete runtime or transient generated artifacts", async () => {
@@ -964,7 +985,7 @@ test("the theme follows the browser by default and resolves through shared token
   assert.match(runtimeSettingsSource, /systemThemeMedia\.addEventListener\("change", handleChange\)/);
   assert.match(runtimeSettingsSource, /function applyThemePreference\(theme\)/);
   assert.match(runtimeSettingsSource, /webmars:theme-changed/);
-  assert.match(appRuntime, /function applyUiPreferences\(nextPreferences\) \{\n\s+applyThemePreference\(nextPreferences\.theme\);/);
+  assert.match(appRuntime, /function applyUiPreferences\(nextPreferences\) \{\r?\n\s+applyThemePreference\(nextPreferences\.theme\);/);
   assert.match(appRuntime, /theme: sanitizeTheme\(values\.theme, current\.theme\),/);
 });
 

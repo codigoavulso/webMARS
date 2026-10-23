@@ -4656,7 +4656,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
         if (type === "textarea") {
           return `<label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
             <span class="dialog-form-label">${label}</span>
-            <textarea id="${fieldId}" data-field-name="${escapeHtml(String(field.name))}" class="dialog-form-control" rows="3">${escapeHtml(String(value ?? ""))}</textarea>
+            <textarea id="${fieldId}" data-field-name="${escapeHtml(String(field.name))}" class="dialog-form-control" rows="3"${field.readOnly === true ? " readonly" : ""}>${escapeHtml(String(value ?? ""))}</textarea>
           </label>${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}`;
         }
         const min = Number.isFinite(field?.min) ? ` min="${field.min}"` : "";
@@ -7450,6 +7450,11 @@ function injectRuntimeStyles() {
       padding-right: 2px;
     }
 
+    .dialog-form:has(.cloud-conflict-preview) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cloud-conflict-preview { min-width: 0; }
+    .cloud-conflict-preview textarea { min-height: 260px; font-family: monospace; white-space: pre; }
+    .cloud-conflict-choice { grid-column: 1 / -1; }
+    @media (max-width: 600px) { .dialog-form:has(.cloud-conflict-preview) { grid-template-columns: minmax(0, 1fr); } }
     .dialog-form-section {
       border: 1px solid var(--line-soft);
       background: var(--surface);

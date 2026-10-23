@@ -1,10 +1,10 @@
 export const MANUAL = Object.freeze({
   title: "Manual do webMARS",
-  version: "0.2.1",
-  displayVersion: "v0.2.1",
-  webmarsVersion: "0.6.5",
+  version: "0.2.2",
+  displayVersion: "v0.2.2",
+  webmarsVersion: "0.6.6",
   verifiedCommit: "65eda30e18a9541b65be1cc9f06a71bc79d4fc11",
-  verifiedAt: "2026-10-22",
+  verifiedAt: "2026-10-24",
   locale: "pt-PT"
 });
 
@@ -57,8 +57,7 @@ export const SHORTCUTS = [
 
 export const MENU_ATLAS = [
   ["Ficheiro", "Novo; Abrir do disco; Abrir do armazenamento do browser; Fechar; Guardar ficheiro; Guardar projeto; Descarregar; Exemplos; Exportar E/S"],
-  ["Cloud", "Estado da sessão; Login/logout; Criar utilizador; Abrir projeto Cloud; Guardar projeto; Sincronizar; Atualizar sessão"],
-  ["Biblioteca", "Explorar; abrir ligação pública; copiar ligação de exemplo; publicar; gerir revisões e arquivo"],
+  ["Online", "Conta e métodos de entrada; projetos na nuvem; sincronização; biblioteca pública; ligações; publicações e revisões"],
   ["Editar", "Desfazer; Refazer; Cortar; Copiar; Colar; Procurar; Selecionar tudo"],
   ["Ver", "Mostra, esconde e recupera janelas do ambiente e das ferramentas"],
   ["Executar", "Compilar Mini-C; Montar; Executar; Pausar; Parar; Passo; Passo atrás; Reiniciar"],

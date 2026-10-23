@@ -3,6 +3,14 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("en", {
+    "Project conflict": "Project conflict",
+    "Choose which version to keep, or keep both under different names.": "Choose which version to keep, or keep both under different names.",
+    "Keep": "Keep",
+    "Keep both (rename the local project)": "Keep both (rename the local project)",
+    "Keep local version (replace cloud)": "Keep local version (replace cloud)",
+    "Keep cloud version (replace local)": "Keep cloud version (replace local)",
+    "New project name": "New project name",
+    "Choose an unused project name.": "Choose an unused project name.",
     "Online": "Online",
     "Cloud projects": "Cloud projects",
     "Links": "Links",
@@ -1954,8 +1962,8 @@
     "Use Reset to clear the tool's measurements.": "Use Reset to clear the tool's measurements.",
     "Registers reflect completed instructions. {inFlight} of {recorded} recorded instructions are still in the pipeline.": "Registers reflect completed instructions. {inFlight} of {recorded} recorded instructions are still in the pipeline.",
     "Open a tool from the Tools menu.": "Open a tool from the Tools menu.",
-    "Connect to MIPS if the tool offers that option.": "Connect to MIPS if the tool offers that option."
-    , "On this device": "On this device",
+    "Connect to MIPS if the tool offers that option.": "Connect to MIPS if the tool offers that option.",
+    "On this device": "On this device",
     "Cloud": "Cloud",
     "Public library": "Public library",
     "My publications": "My publications",

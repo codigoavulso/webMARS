@@ -83,7 +83,7 @@ export const operationChapters = [
         id: "local-first",
         title: "O modelo local-first",
         content: html`
-          <p>O projeto local continua a ser editável sem conta ou rede. Uma sessão Cloud acrescenta uma coleção remota; Sync compara versões e decide subir/descer sem transformar o servidor numa drive montada.</p>
+          <p>O projeto local continua a ser editável sem conta ou rede. Uma sessão Cloud acrescenta uma coleção remota; Sincronizar compara as cópias e pede uma decisão quando encontra diferenças em conflito.</p>
           ${table(["Operação", "Local", "Rede"], [
             ["Editar/compilar/montar/executar", "Completa", "Não necessária"],
             ["Guardar ficheiro/projeto local", "Browser", "Não necessária"],
@@ -162,7 +162,7 @@ export const operationChapters = [
         content: html`
           ${steps([
             "Inicie sessão e selecione <strong>Online → Projetos na nuvem</strong>.",
-            "Pesquise pelo nome e escolha uma linha na tabela de projetos. As colunas mostram o nome e as datas de modificação e criação; a área de detalhes confirma a seleção.",
+            "Na vista Projetos, escolha Nuvem. Expanda o projeto para consultar os ficheiros; faça duplo clique para abrir o ficheiro pretendido.",
             "O documento é normalizado e importado para a biblioteca local; preferências/layout locais em vigor não são substituídos indiscriminadamente.",
             "Confirme a árvore, ficheiro ativo e badge de sincronização antes de editar."
           ])}
@@ -202,15 +202,15 @@ export const operationChapters = [
         title: "ETags, versões e conflitos",
         content: html`
           <p>Cada documento remoto fornece um ETag calculado a partir do nome/conteúdo. Atualização, rename ou delete envia <code>If-Match</code>. Se outra sessão alterou o projeto, o servidor rejeita a versão antiga e o cliente preserva a cópia local.</p>
-          <p>Um conflito não deve ser resolvido por tentativas repetidas cegas. Abra/reveja a versão remota, descarregue uma cópia local, combine as alterações num projeto novo e sincronize com uma base atual.</p>
+          <p>A janela de conflito apresenta as duas cópias lado a lado, com comparação dos ficheiros. Pode manter ambas indicando um nome livre, conservar a cópia local ou conservar a cópia da nuvem. Cancelar mantém ambas inalteradas. Se a cópia remota voltar a mudar durante a decisão, a substituição é recusada e deve rever a diferença atual.</p>
         `
       },
       {
         id: "rename-delete",
         title: "Renomear e eliminar com sessão ativa",
         content: html`
-          <p>Rename/delete locais tentam refletir a operação remota quando existe correspondência e sessão. A falha remota não deve apagar a cópia local; Mensagens MARS informa a divergência.</p>
-          ${callout("warning", "Confirme antes de eliminar", "<p>Descarregue uma cópia e sincronize primeiro. A eliminação remota é uma alteração material e pode afetar outros dispositivos autenticados.</p>")}
+          <p>Apagar um projeto neste dispositivo guarda primeiro uma cópia recuperável na reciclagem e não elimina a cópia Cloud. A sincronização de todos os projetos respeita esta eliminação local e não volta a descarregar automaticamente o projeto enquanto existir esse registo na reciclagem.</p>
+          ${callout("warning", "Confirme antes de eliminar", "<p>Apagar na Nuvem é uma operação distinta de apagar neste dispositivo. Confirme a localização antes de eliminar; pode restaurar projetos locais a partir da Reciclagem.</p>")}
         `
       },
       {

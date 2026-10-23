@@ -33,6 +33,44 @@
     return `${prefix}-${(hash >>> 0).toString(36)}`;
   }
 
+  const MAX_IMPORT_BYTES = 8 * 1024 * 1024;
+
+  function localRootPath(value) {
+    const raw = String(value || "imported-project").trim().replace(/\\/g, "/").replace(/^\.\/+/, "").replace(/^\/+/, "");
+    return /\.p$/i.test(raw) ? raw : `${raw}.p`;
+  }
+
+  function prepareLocalCopy(source, library) {
+    const roots = new Set(library.map((entry) => localRootPath(entry.rootPath || entry.name).toLowerCase()));
+    const ids = new Set(library.map((entry) => String(entry.id || "")));
+    const stem = localRootPath(source.rootPath || source.name).replace(/\.p$/i, "");
+    let candidate = `${stem}.p`, suffix = 2;
+    while (roots.has(candidate.toLowerCase())) candidate = `${stem} (${suffix++}).p`;
+    const baseId = root.crypto?.randomUUID?.() || stableId("local", candidate);
+    let id = baseId;
+    while (ids.has(id)) id = `${baseId}-${suffix++}`;
+    const copy = { ...source, id, name: candidate.replace(/\.p$/i, ""), rootPath: candidate, isOpen: false, updatedAt: Date.now() };
+    delete copy.deletedAt;
+    delete copy.deletedFrom;
+    return copy;
+  }
+
+  function validateImportedProject(source) {
+    if (!source || typeof source !== "object" || !Array.isArray(source.files)
+      || !source.files.length || source.files.length > 4096
+      || (source.folderPaths && (!Array.isArray(source.folderPaths) || source.folderPaths.length > 4096))) throw new Error(t("Failed to load file."));
+    let total = 0;
+    for (const file of source.files) {
+      const path = String(file?.path || file?.name || "").replace(/\\/g, "/");
+      if (!path || path.length > 1024 || path.startsWith("/") || /^[a-z]:/i.test(path)
+        || path.split("/").some((part) => part === "..") || /[\x00-\x1f]/.test(path)
+        || typeof file.source !== "string") throw new Error(t("Failed to load file."));
+      const size = new TextEncoder().encode(file.source).length;
+      total += size;
+      if (size > 2 * 1024 * 1024 || total > MAX_IMPORT_BYTES) throw new Error(t("Failed to load file."));
+    }
+  }
+
   function localProject(entry, index = 0) {
     if (!entry || typeof entry !== "object") return null;
     const rootPath = String(entry.rootPath || entry.name || `project-${index + 1}`).trim() || `project-${index + 1}`;
@@ -58,7 +96,7 @@
       const raw = root.localStorage?.getItem(LOCAL_LIBRARY_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
       const projects = Array.isArray(parsed?.projects) ? parsed.projects : [];
-      if (projects.length) return projects.map(localProject).filter(Boolean);
+      if (Array.isArray(parsed?.projects)) return projects.map(localProject).filter(Boolean);
       const current = root.localStorage?.getItem(LOCAL_PROJECT_KEY);
       const active = current ? localProject(JSON.parse(current)) : null;
       return active ? [active] : [];
@@ -68,6 +106,8 @@
   }
 
   async function readLocalProjectsAsync() {
+    // Match the synchronous runtime's committed catalogue, even when empty.
+    try { if (Array.isArray(JSON.parse(root.localStorage?.getItem(LOCAL_LIBRARY_KEY))?.projects)) return readLocalProjects(); } catch { /* recovery below */ }
     const repository = root.WebMarsProjectRepository;
     if (repository?.ready && typeof repository.listProjects === "function") {
       try {
@@ -82,13 +122,15 @@
   function readTrash() {
     try {
       const parsed = JSON.parse(root.localStorage?.getItem(TRASH_KEY) || "[]");
-      return Array.isArray(parsed) ? parsed.map((item) => ({ ...item, kind: "trash", location: "trash", writable: true })) : [];
+      return Array.isArray(parsed) ? parsed.map((item, index) => ({ ...localProject(item, index), deletedAt: item.deletedAt,
+        deletedFrom: item.deletedFrom, kind: "trash", location: "trash", writable: true })) : [];
     } catch {
       return [];
     }
   }
 
   async function readTrashAsync() {
+    try { if (Array.isArray(JSON.parse(root.localStorage?.getItem(TRASH_KEY)))) return readTrash(); } catch { /* recovery below */ }
     const repository = root.WebMarsProjectRepository;
     if (repository?.ready && typeof repository.listProjects === "function") {
       try {
@@ -98,15 +140,6 @@
       } catch { /* the legacy snapshot remains the recovery path */ }
     }
     return readTrash();
-  }
-
-  function writeTrash(items) {
-    try {
-      root.localStorage?.setItem(TRASH_KEY, JSON.stringify(items));
-      return true;
-    } catch {
-      return false;
-    }
   }
 
   function apiBase() {
@@ -138,6 +171,19 @@
     if (!payload || typeof payload !== "object") throw new Error(t("Failed to load file."));
     return payload;
     } finally { clearTimeout(timeout); options.signal?.removeEventListener("abort", onAbort); }
+  }
+
+  async function loadPublication(item) {
+    if (item.source?.project) return item.source;
+    const path = `/publications/${encodeURIComponent(item.path)}`;
+    const pinned = item.location === "mine" && item.source?.latestRevision
+      ? `${path}/revisions/${encodeURIComponent(item.source.latestRevision)}` : null;
+    if (pinned && item.source.status === "archived") return (await requestJson(pinned)).publication;
+    try { return (await requestJson(path)).publication; }
+    catch (error) {
+      if (!pinned || ![404, 410].includes(error.status)) throw error;
+      return (await requestJson(pinned)).publication;
+    }
   }
 
   function ensureStyles() {
@@ -328,10 +374,8 @@
             project = result.project?.project;
             if (project?.project) project = project.project;
           } else if (["public", "mine"].includes(item.location)) {
-            const suffix = item.source.status === "archived" ? `/revisions/${item.source.latestRevision}` : "";
-            const result = await requestJson(`/publications/${encodeURIComponent(item.path)}${suffix}`);
-            project = result.publication?.project;
-            metadata = result.publication;
+            metadata = await loadPublication(item);
+            project = metadata?.project;
           } else project = item.source;
           let files = project?.files;
           if (files && !Array.isArray(files)) files = Object.entries(files).map(([path, source]) => ({ path, source }));
@@ -558,15 +602,7 @@
       if (item.location === "public" || item.location === "mine") {
         void (async () => {
           try {
-            let payload = item.source?.project ? item.source : null;
-            if (!payload) {
-              try {
-                payload = (await requestJson(`/publications/${encodeURIComponent(item.path)}`)).publication;
-              } catch (error) {
-                if (item.location !== "mine" || !item.source?.latestRevision) throw error;
-                payload = (await requestJson(`/publications/${encodeURIComponent(item.path)}/revisions/${encodeURIComponent(item.source.latestRevision)}`)).publication;
-              }
-            }
+            const payload = await loadPublication(item);
             if (!payload?.project) throw new Error(t("This publication does not contain a supported public project."));
             notify("copy-public", { item: { ...item, source: payload } });
           } catch (error) {
@@ -580,36 +616,13 @@
       notify("open", { item });
     }
 
-    async function moveToTrash(item) {
-      if (!item || item.location !== "local") return;
-      const library = (await readLocalProjectsAsync()).map((entry) => entry.source);
-      const filtered = library.filter((entry) => String(entry.rootPath || entry.name || "").toLocaleLowerCase() !== String(item.path || "").toLocaleLowerCase());
-      const current = readTrash();
-      const next = current.filter((entry) => entry.id !== item.id);
-      next.push({ ...item.source, id: item.id, name: item.name, rootPath: item.path, deletedAt: Date.now(), deletedFrom: "local" });
-      try {
-        root.localStorage?.setItem(LOCAL_LIBRARY_KEY, JSON.stringify({ version: 2, projects: filtered, activeRootPath: filtered[0]?.rootPath || "" }));
-      } catch {
-        state.error = t("Could not move the project to the recycle bin."); renderList(); return;
-      }
-      if (!writeTrash(next)) {
-        try { root.localStorage?.setItem(LOCAL_LIBRARY_KEY, JSON.stringify({ version: 2, projects: library, activeRootPath: library[0]?.rootPath || "" })); } catch { /* best effort rollback */ }
-        state.error = t("Could not move the project to the recycle bin."); renderList(); return;
-      }
-      try { await root.WebMarsProjectRepository?.trashProject?.(item.source); } catch { /* localStorage remains the recovery copy */ }
-      notify("trash", { item });
-      void load();
-    }
-
     async function restore(item) {
       if (!item || item.location !== "trash") return;
       const library = (await readLocalProjectsAsync()).map((entry) => entry.source);
-      const restored = { ...item.source, isOpen: false, updatedAt: Date.now() };
-      if (!library.some((entry) => String(entry.rootPath || entry.name) === String(restored.rootPath || restored.name))) library.push(restored);
-      try { root.localStorage?.setItem(LOCAL_LIBRARY_KEY, JSON.stringify({ version: 2, projects: library, activeRootPath: "" })); } catch { state.error = t("Could not restore the project."); renderList(); return; }
-      writeTrash(readTrash().filter((entry) => entry.id !== item.id));
-      try { await root.WebMarsProjectRepository?.restoreProject?.(item.source); } catch { /* localStorage remains the recovery copy */ }
-      notify("restore", { item });
+      const restored = prepareLocalCopy(item.source, library);
+      if (!root.WebMarsProjectManagerBridge?.restoreLocal?.(restored, item.id)) {
+        state.error = t("Could not restore the project."); renderList(); return;
+      }
       state.location = "local";
       void load();
     }
@@ -623,7 +636,7 @@
           const record = await requestJson(`/projects/${encodeURIComponent(item.source?.id ?? item.source?.numericId)}`);
           project = record?.project?.project || record?.project;
         } else if ((item.location === "public" || item.location === "mine") && !project?.project) {
-          project = (await requestJson(`/publications/${encodeURIComponent(item.path)}`)).publication;
+          project = await loadPublication(item);
         }
         if (project?.project && typeof project.project === "object") project = project.project;
         if (!project || typeof project !== "object" || !Array.isArray(project.files)) throw new Error(t("Failed to load file."));
@@ -644,20 +657,15 @@
     async function importFile(file) {
       if (!file) return;
       try {
+        if (!Number.isFinite(file.size) || file.size > MAX_IMPORT_BYTES) throw new Error(t("Failed to load file."));
         const text = await file.text();
+        if (new TextEncoder().encode(text).length > MAX_IMPORT_BYTES) throw new Error(t("Failed to load file."));
         const parsed = JSON.parse(text);
         const source = parsed?.project && typeof parsed.project === "object" ? parsed.project : parsed;
-        if (!source || typeof source !== "object" || !Array.isArray(source.files)) throw new Error(t("Failed to load file."));
-        const rootPath = String(source.rootPath || source.name || "imported-project").trim() || "imported-project";
+        validateImportedProject(source);
         const library = (await readLocalProjectsAsync()).map((entry) => entry.source);
-        const existing = new Set(library.map((entry) => String(entry.rootPath || entry.name || "").toLocaleLowerCase()));
-        let name = String(source.name || "Imported project").trim() || "Imported project";
-        let candidate = name; let suffix = 2;
-        while (existing.has(String(candidate).toLocaleLowerCase())) candidate = `${name} (${suffix++})`;
-        const imported = { ...source, id: stableId("local", `${candidate}-${Date.now()}`), name: candidate, rootPath: candidate.endsWith(".p") ? candidate : `${candidate}.p`, isOpen: false, updatedAt: Date.now() };
-        library.push(imported);
-        root.localStorage?.setItem(LOCAL_LIBRARY_KEY, JSON.stringify({ version: 2, projects: library, activeRootPath: imported.rootPath }));
-        try { await root.WebMarsProjectRepository?.saveProject?.(imported); } catch { /* runtime persistence remains authoritative */ }
+        const imported = prepareLocalCopy(source, library);
+        if (!root.WebMarsProjectManagerBridge?.importLocal?.(imported)) throw new Error(t("Failed to save to browser storage."));
         const item = localProject(imported);
         state.location = "local";
         notify("open", { item });

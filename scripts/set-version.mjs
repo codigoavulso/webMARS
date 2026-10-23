@@ -50,7 +50,7 @@ const declarations = [
   },
   {
     file: "package-lock.json",
-    pattern: /("version":\s*)"\d+\.\d+\.\d+"/g,
+    pattern: /("name":\s*"webmars",\s*"version":\s*)"\d+\.\d+\.\d+"/g,
     replace: `$1"${version}"`,
     // The root object and the "" package entry both carry it.
     expect: 2

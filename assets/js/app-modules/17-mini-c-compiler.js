@@ -16,23 +16,10 @@
     ));
   };
 
-  const SOURCE_EXTENSION_PATTERN = /\.(c|c0)$/i;
-  const DEFAULT_TEMPLATE = [
-    "#include <stdio.h>",
-    "",
-    "int fact(int n) {",
-    "  if (n <= 1) return 1;",
-    "  return n * fact(n - 1);",
-    "}",
-    "",
-    "int main(void) {",
-    "  int value = fact(5);",
-    "  print_int(value);",
-    "  print_char(10);",
-    "  return 0;",
-    "}",
-    ""
-  ].join("\n");
+  const metadata = registry.miniCInterface;
+  if (!metadata) throw new Error("Mini-C interface must load before the compiler engine.");
+  const DEFAULT_TEMPLATE = metadata.defaultTemplate;
+  const deriveGeneratedAsmName = metadata.deriveGeneratedAsmName;
 
   const KEYWORDS = new Set([
     "int", "void", "bool", "char", "string",
@@ -7679,12 +7666,6 @@
     throw createDiagnostic(translateText("Unsupported intrinsic '{callee}'.", { callee: node.callee }), node, "codegen");
   }
 
-  function deriveGeneratedAsmName(fileName = "untitled.c") {
-    const baseName = String(fileName || "untitled.c").trim().replace(/\\/g, "/").split("/").pop() || "untitled.c";
-    const stem = baseName.replace(/\.[^.]+$/g, "");
-    return `${stem || "program"}.generated.s`;
-  }
-
   function compile(sourceText, options = {}) {
     const rawSource = String(sourceText ?? "");
     const sourceName = String(options.sourceName || "program.c");
@@ -7820,7 +7801,7 @@
 
   registry.miniCCompiler = Object.freeze({
     isSourceFile(fileName = "") {
-      return SOURCE_EXTENSION_PATTERN.test(String(fileName || "").trim());
+      return metadata.isSourceFile(fileName);
     },
     deriveGeneratedAsmName,
     defaultTemplate: DEFAULT_TEMPLATE,

@@ -27,11 +27,11 @@
   <meta name="twitter:image" content="https://webmars.nfiles.top/assets/images/screenshot-main.png">
 
   <link rel="icon" href="./favicon.ico" type="image/x-icon" />
-  <link rel="stylesheet" href="./assets/css/styles.css?v=0.6.5" />
+  <link rel="stylesheet" href="./assets/css/styles.css?v=0.6.6" />
   <script src="./webmars-config.js"></script>
   <script defer src="./assets/js/usage-metrics.js"></script>
   <script defer src="./assets/js/active-heartbeat.js"></script>
-  <script src="./assets/js/app-version.js?v=0.6.5"></script>
+  <script src="./assets/js/app-version.js?v=0.6.6"></script>
   <script>
     /*
      * Pick the theme before first paint so the splash and the interface never
@@ -162,6 +162,7 @@
       const loaderText = document.getElementById("webmars-loader-text");
       let appScriptLoading = false;
       let loaderHidden = false;
+      let loaderFailed = false;
       let splashTimer = null;
 
       function setLoaderText(message) {
@@ -173,12 +174,23 @@
       }
 
       function showLoaderFailure(title, message) {
+        loaderFailed = true;
+        if (splashTimer !== null) { window.clearTimeout(splashTimer); splashTimer = null; }
         setLoaderTitle(title || "Startup error");
         setLoaderText(message || "webMARS failed to start. Check browser console for details.");
+        if (loader && !document.getElementById("webmars-loader-retry")) {
+          const retry = document.createElement("button");
+          retry.id = "webmars-loader-retry";
+          retry.className = "tool-btn";
+          retry.type = "button";
+          retry.textContent = window.WebMarsI18n?.t?.("Refresh") || "Refresh";
+          retry.addEventListener("click", () => window.location.reload());
+          loader.appendChild(retry);
+        }
       }
 
       function hideLoader() {
-        if (loaderHidden || !(loader instanceof HTMLElement)) return;
+        if (loaderFailed || loaderHidden || !(loader instanceof HTMLElement)) return;
         loaderHidden = true;
         document.getElementById("webmars-public-intro")?.remove();
         if (splashTimer !== null) {
@@ -205,9 +217,11 @@
       }
 
       window.addEventListener("webmars:tools-manifest-load-start", () => {
+        if (loaderFailed) return;
         setLoaderText("Loading tools manifest...");
       }, { once: true });
       window.addEventListener("webmars:tools-manifest-loaded", (event) => {
+        if (loaderFailed) return;
         const detail = event instanceof CustomEvent ? event.detail : null;
         setLoaderText(detail?.ok === false
           ? "Using built-in tool list and loading tool modules..."
@@ -216,11 +230,19 @@
       window.addEventListener("webmars:tools-ready", () => {
         hideLoader();
       }, { once: true });
-      window.addEventListener("webmars:scripts-loaded", () => {
+      window.addEventListener("webmars:startup-failed", (event) => {
+        showLoaderFailure("Load error", `Failed to load: ${event.detail?.failedModule || APP_BUNDLE_SRC}`);
+      }, { once: true });
+      window.addEventListener("webmars:scripts-loaded", (event) => {
+        if (event.detail?.ok === false) {
+          showLoaderFailure("Load error", `Failed to load: ${event.detail.failedModule || APP_BUNDLE_SRC}`);
+          return;
+        }
+        if (loaderFailed) return;
         setLoaderText("Initializing runtime and drawing interface...");
       }, { once: true });
       window.addEventListener("load", () => {
-        if (loaderHidden) return;
+        if (loaderFailed || loaderHidden) return;
         setLoaderText("Finalizing interface...");
       }, { once: true });
       window.addEventListener("error", (event) => {
@@ -241,7 +263,7 @@
         showLoaderFailure("Startup error", message);
       });
       splashTimer = window.setTimeout(() => {
-        if (loaderHidden) return;
+        if (loaderFailed || loaderHidden) return;
         setLoaderTitle("Still starting");
         setLoaderText("Startup is taking longer than usual. Waiting for modules to finish...");
       }, SPLASH_MAX_MS);

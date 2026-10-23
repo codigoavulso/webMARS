@@ -241,6 +241,8 @@ async function loadMiniCCompiler() {
   const sandbox = { console };
   sandbox.window = sandbox;
   const context = vm.createContext(sandbox);
+  const metadata = await readFile(resolve(projectRoot, "assets/js/app-modules/17-mini-c-interface.js"), "utf8");
+  vm.runInContext(metadata, context, { filename: "17-mini-c-interface.js" });
   vm.runInContext(source, context, { filename: "assets/js/app-modules/17-mini-c-compiler.js" });
   const registry = context.WebMarsModules || {};
   const compiler = registry.miniCCompiler || context.MiniCCompiler || null;

@@ -1,12 +1,14 @@
 (() => {
   const globalScope = typeof window !== "undefined" ? window : globalThis;
   const APP_NAME = "webMARS";
-  const APP_VERSION = "0.6.5";
+  const APP_VERSION = "0.6.6";
+  const APP_BUILD = "202610240044";
   const VERSION_TOKEN = "__WEBMARS_APP_VERSION__";
+  const BUILD_TOKEN = "__WEBMARS_APP_BUILD__";
 
   function replaceVersionToken(value) {
-    if (typeof value !== "string" || value.indexOf(VERSION_TOKEN) === -1) return value;
-    return value.split(VERSION_TOKEN).join(APP_VERSION);
+    if (typeof value !== "string") return value;
+    return value.split(VERSION_TOKEN).join(APP_VERSION).split(BUILD_TOKEN).join(APP_BUILD);
   }
 
   function withVersion(value) {
@@ -58,6 +60,8 @@
   globalScope.WebMarsAppVersion = Object.freeze({
     name: APP_NAME,
     version: APP_VERSION,
+    build: APP_BUILD,
+    buildToken: BUILD_TOKEN,
     token: VERSION_TOKEN,
     label: `${APP_NAME} ${APP_VERSION}`,
     replaceVersionToken,
