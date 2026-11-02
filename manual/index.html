@@ -96,6 +96,17 @@
     <div class="search-results" id="search-results" role="listbox" aria-label="Resultados da pesquisa"></div>
   </dialog>
 
+  <dialog class="image-dialog" id="image-dialog" aria-labelledby="image-dialog-title" aria-describedby="image-dialog-caption">
+    <form method="dialog" class="image-dialog-head">
+      <h2 id="image-dialog-title">Imagem ampliada</h2>
+      <button type="submit" aria-label="Fechar imagem" autofocus>×</button>
+    </form>
+    <figure>
+      <img id="image-dialog-image" alt="">
+      <figcaption id="image-dialog-caption"></figcaption>
+    </figure>
+  </dialog>
+
   <div class="toast" id="toast" role="status" hidden></div>
 
   <script type="module" src="./assets/manual.js"></script>

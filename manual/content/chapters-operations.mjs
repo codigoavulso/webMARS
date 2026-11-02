@@ -14,7 +14,7 @@ import {
 } from "./shared.mjs";
 
 const GLOSSARY = [
-  ["ABI o32", "Convenção MIPS que define argumentos, retornos, registos preservados e frames."],
+  ["ABI o32", "Interface binária MIPS que inclui chamadas, representação de dados e regras de ligação; uma convenção educativa pode reproduzir apenas parte desse contrato."],
   ["Assembler / montar", "Traduzir fonte Assembly para instruções e dados endereçados."],
   ["Assembly", "Linguagem textual próxima das instruções e diretivas da máquina."],
   ["Backstep / passo atrás", "Aplicar o delta inverso da última instrução para regressar ao estado anterior."],
@@ -26,7 +26,7 @@ const GLOSSARY = [
   ["C1-NATIVE", "Perfil Mini-C com char por byte, strings nativas, argc/argv e ponteiros adicionais."],
   ["Cloud", "Backend opcional para conta, sessão e documentos de projeto remotos."],
   ["COP0", "Coprocessador de controlo: Status, Cause, EPC, BadVAddr e exceções/interrupções."],
-  ["COP1", "Coprocessador de ponto flutuante e respetivos registos/flags."],
+  ["COP1", "Coprocessador de vírgula flutuante e respetivos registos de dados e controlo."],
   ["CPI", "Ciclos por instrução concluída num modelo de pipeline."],
   ["Delayed branching", "Modo em que a instrução após um branch ocupa um delay slot."],
   ["Diretiva", "Comando ao assembler que organiza segmentos, dados, símbolos ou pré-processamento."],
@@ -38,7 +38,7 @@ const GLOSSARY = [
   ["Forwarding", "Encaminhamento de um resultado em voo diretamente para um consumidor."],
   ["Framebuffer", "Região de memória cujas words/bytes são interpretadas como imagem ou terminal."],
   ["Handler", "Rotina que recebe exceção/interrupção, inspeciona COP0 e pode regressar com eret."],
-  ["Hazard", "Dependência ou conflito que impede uma instrução de avançar normalmente no pipeline."],
+  ["Hazard", "Conflito de dados, controlo ou recursos na execução sobreposta; uma dependência pode existir sem causar stall."],
   ["Heap", "Região de alocação dinâmica que cresce para endereços maiores."],
   ["Imagem executável", "Resultado montado: segmentos, símbolos e instruções prontos para o runtime."],
   ["Instrução básica", "Forma que corresponde à codificação executada pelo motor."],
@@ -52,7 +52,7 @@ const GLOSSARY = [
   ["Pipeline", "Modelo que sobrepõe fases de várias instruções em ciclos."],
   ["Projeto", "Árvore persistente de fontes, settings, layout e metadados de trabalho."],
   ["Pseudoinstrução", "Forma conveniente expandida pelo assembler numa ou mais básicas."],
-  ["Registo", "Elemento de estado de acesso rápido; no MIPS geral tem 32 bits."],
+  ["Registo", "Elemento de estado do processador; os registos inteiros gerais do modelo MIPS32 aqui descrito têm 32 bits."],
   ["Runtime funcional", "Motor que aplica efeitos arquiteturais sem simular ciclos de um CPU."],
   ["Segmento de dados", "Região da imagem que contém dados estáticos e áreas relacionadas."],
   ["Segmento de texto", "Região da imagem que contém instruções executáveis."],
@@ -60,7 +60,7 @@ const GLOSSARY = [
   ["Stack", "Região LIFO de chamadas/locais que cresce para endereços menores."],
   ["Stack frame", "Fatia da stack associada a uma chamada de função."],
   ["Stall", "Ciclo em que uma instrução não avança por dependência/recurso."],
-  ["Syscall", "Instrução que pede ao runtime um serviço identificado em $v0."],
+  ["Syscall", "Instrução de chamada ao sistema; no ambiente MARS/webMARS, o serviço é selecionado em $v0. A numeração pertence ao ambiente, não à ISA."],
   ["TTY", "Terminal de texto com dispositivo de entrada/saída e interpretação ANSI opcional."],
   ["VFS", "Sistema virtual de ficheiros persistido no browser para syscalls/programas."],
   ["#use / #include", "Diretivas Mini-C que resolvem bibliotecas ou ficheiros do projeto."]

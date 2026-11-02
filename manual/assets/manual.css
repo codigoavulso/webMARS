@@ -728,6 +728,71 @@ img { max-width: 100%; }
   width: 100%;
   height: auto;
 }
+.screenshot-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.screenshot-open:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+html.image-dialog-open { overflow: hidden; }
+.image-dialog {
+  width: fit-content;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  padding: 1rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  color: var(--ink);
+  overflow: auto;
+}
+.image-dialog::backdrop { background: rgb(0 0 0 / 75%); }
+.image-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--ff-ui);
+}
+.image-dialog-head h2 { margin: 0; font: inherit; }
+.image-dialog-head button {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.image-dialog figure { margin: 0; }
+.image-dialog img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: calc(100vh - 12rem);
+  max-height: calc(100dvh - 12rem);
+  margin: auto;
+  object-fit: contain;
+}
+.image-dialog figcaption {
+  max-width: 80ch;
+  margin-top: 0.75rem;
+  color: var(--ink-muted);
+  font: 0.8rem/1.5 var(--ff-ui);
+}
+@media print {
+  .image-dialog { display: none !important; }
+  html.image-dialog-open { overflow: visible; }
+}
 .screenshot figcaption {
   grid-column: 3;
   align-self: end;

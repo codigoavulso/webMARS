@@ -340,7 +340,7 @@ igual:`)}
             ["10", "Reserved instruction", "Codificação desconhecida/não suportada."],
             ["12", "Overflow", "Aritmética assinada verificada."],
             ["13", "Trap", "Condição de trap verdadeira."],
-            ["15", "Divisão por zero", "Divisor zero nas operações aplicáveis."]
+            ["15", "Designação interna de divisão por zero", "Não implica que div/divu básicos emitam esta exceção; confirme a instrução e a expansão usadas."]
           ])}
           ${codeBlock(exceptionExample)}
           ${callout("warning", "Fragmento de demonstração, não um handler universal", "<p>Somar quatro a EPC demonstra como ignorar uma instrução numa exceção síncrona simples, sem delay slot. Uma interrupção não implica saltar uma instrução; uma exceção num delay slot exige interpretar Cause/BD e o salto. Preservar registos e reconhecer a fonte também faz parte de um handler real.</p>")}
@@ -575,7 +575,7 @@ int main(int argc, char **argv) {
     part: "Referência",
     title: "Modelo MIPS do webMARS",
     summary: "Registos, representação, memória, ABI, pilha, heap, COP0, COP1, exceções e LL/SC.",
-    intro: "O runtime implementa um modelo funcional MIPS32 little-endian orientado ao ensino. Esta página fornece o vocabulário necessário para interpretar as restantes vistas e ferramentas.",
+    intro: "O webMARS implementa um modelo funcional MIPS32 little-endian orientado ao ensino. Registos, dados, memória e controlo de fluxo são apresentados distinguindo regras arquiteturais, convenções e escolhas do simulador.",
     level: "Intermédio",
     readingMinutes: 34,
     keywords: ["mips32", "registos", "endianness", "stack", "heap", "cop0", "cop1", "ll sc", "abi"],
@@ -644,7 +644,7 @@ int main(int argc, char **argv) {
         title: "COP1 e IEEE 754",
         content: html`
           <p>COP1 possui 32 registos de 32 bits. Valores simples ocupam um; doubles ocupam pares segundo as restrições implementadas. Instruções aritméticas, conversões, comparações e branches FP atualizam registos e flags.</p>
-          <p>NaN, infinito, zeros assinados e arredondamento seguem o modelo disponível/FCSR. A ferramenta Floating Point Representation ajuda a decompor sinal, expoente e fração de uma word simples.</p>
+          <p>NaN, infinito e zeros assinados têm representações próprias. O arredondamento e FCSR devem ser consultados por operação; a presença destes registos não garante todos os modos de uma FPU física. A ferramenta Floating Point Representation decompõe sinal, expoente e fração de uma palavra em precisão simples.</p>
         `
       },
       {
@@ -670,7 +670,8 @@ int main(int argc, char **argv) {
     addiu $t1, $t0, 1
     move  $t2, $t1
     sc    $t2, 0($a0)
-    beqz  $t2, tentar`)}
+    beqz  $t2, tentar
+    nop                 # slot neutro se delayed branching estiver ativo`)}
           <p>O modelo serve para estudar atualização atómica; o runtime no browser não cria por si só múltiplos cores concorrentes.</p>
         `
       },
@@ -740,7 +741,7 @@ syscall`)}
         id: "portabilidade",
         title: "Portabilidade da referência",
         content: html`
-          <p>Entradas “básicas” e “pseudo” refletem a implementação webMARS 0.6.3 e a sua linhagem MARS 4.5. Extensões de protocolo, Mini-C e serviços 60–103 podem não existir noutro simulador.</p>
+          <p>Entradas “básicas” e “pseudo” refletem os catálogos incorporados da edição documentada e a linhagem MARS 4.5. Não constituem uma lista universal de todas as instruções MIPS32. Extensões de protocolo, Mini-C e serviços 60–103 podem não existir noutro simulador.</p>
           ${callout("compat", "Confirme no destino", "<p>Para material que precisa de correr no MARS Java, ative o modo estrito, evite extensões identificadas e execute testes diferenciais com as mesmas entradas.</p>")}
         `
       }

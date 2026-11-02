@@ -6,10 +6,10 @@
   },
   "product": {
     "name": "webmars",
-    "version": "0.6.6",
-    "verificationStatus": "verified",
-    "verifiedCommit": "00546cc84c8fc3e730eea2233a458742bd536332",
-    "verifiedAt": "2026-10-24"
+    "version": "0.7.0",
+    "verificationStatus": "pending",
+    "verifiedCommit": null,
+    "verifiedAt": null
   },
   "catalogs": {
     "helpReference": {

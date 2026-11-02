@@ -26,6 +26,9 @@ const searchInput = document.querySelector("#search-input");
 const searchResults = document.querySelector("#search-results");
 const searchHint = document.querySelector("#search-hint");
 const toast = document.querySelector("#toast");
+const imageDialog = document.querySelector("#image-dialog");
+const expandedImage = document.querySelector("#image-dialog-image");
+const expandedCaption = document.querySelector("#image-dialog-caption");
 const appLink = document.querySelector("#webmars-app-link");
 const supportLink = document.querySelector("#manual-support-link");
 const brandEdition = document.querySelector(".brand-edition");
@@ -454,6 +457,18 @@ function decorateFigures(root, prefix) {
   let counter = 0;
   for (const figure of root.querySelectorAll("figure.screenshot")) {
     counter += 1;
+    const image = figure.querySelector(".screenshot-frame img");
+    if (image && !image.closest("button")) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "screenshot-open";
+      button.setAttribute("aria-label", `Ampliar imagem: ${image.alt}`);
+      button.setAttribute("aria-haspopup", "dialog");
+      button.setAttribute("aria-controls", "image-dialog");
+      button.title = "Clique para ampliar";
+      image.replaceWith(button);
+      button.append(image);
+    }
     const caption = figure.querySelector("figcaption");
     if (!caption) continue;
     caption.querySelector(".figure-tag")?.remove();
@@ -463,6 +478,27 @@ function decorateFigures(root, prefix) {
     caption.prepend(tag);
   }
 }
+
+function openImage(button) {
+  const image = button.querySelector("img");
+  expandedImage.src = image.currentSrc || image.src;
+  expandedImage.alt = image.alt;
+  const caption = button.closest("figure").querySelector("figcaption");
+  expandedCaption.textContent = caption
+    ? [...caption.childNodes].map((node) => node.textContent).join(" ").trim()
+    : image.alt;
+  closeGloss();
+  imageDialog.showModal();
+  document.documentElement.classList.add("image-dialog-open");
+}
+
+imageDialog.addEventListener("click", (event) => {
+  if (event.target === imageDialog) imageDialog.close();
+});
+imageDialog.addEventListener("close", () => {
+  document.documentElement.classList.remove("image-dialog-open");
+  expandedImage.removeAttribute("src");
+});
 
 function decorateTables(root, prefix) {
   let counter = 0;
@@ -687,6 +723,7 @@ function scrollToRoute(sectionId) {
 }
 
 async function renderRoute() {
+  if (imageDialog.open) imageDialog.close();
   const { chapterId, sectionId } = parseRoute();
   const chapter = chapterById.get(chapterId);
   closeNav();
@@ -1027,6 +1064,11 @@ themeToggle.addEventListener("click", () => {
 });
 
 article.addEventListener("click", (event) => {
+  const imageButton = event.target.closest(".screenshot-open");
+  if (imageButton) {
+    openImage(imageButton);
+    return;
+  }
   const trigger = event.target.closest("button.glossed");
   if (trigger) {
     event.preventDefault();
@@ -1037,6 +1079,7 @@ article.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (imageDialog.open) return;
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
     event.preventDefault();
     openSearch();

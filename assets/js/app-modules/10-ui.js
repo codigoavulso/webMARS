@@ -85,7 +85,6 @@ function renderLayout(root) {
       </nav>
 
       <nav class="menu-bar panel">
-        <span class="menu-logo" aria-hidden="true">&#128640;</span>
         <button class="menu-item" type="button" data-menu="File">File</button>
         <button class="menu-item" type="button" data-menu="Online">Online</button>
         <button class="menu-item" type="button" data-menu="Edit">Edit</button>
@@ -6150,7 +6149,6 @@ function injectRuntimeStyles() {
   style.id = "mars-runtime-style";
   style.textContent = `
     .menu-item.active { border-color: var(--line-strong); background: linear-gradient(180deg, var(--surface-raised), var(--surface-inset)); }
-    .menu-logo { width: 16px; height: 16px; margin: 0 4px 0 1px; align-self: center; flex: 0 0 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; line-height: 1; }
     .menu-bar { padding: 3px 5px; gap: 3px; }
     .menu-item { padding: 2px 7px; font-size: 12px; line-height: 1.1; }
     /* Desktop toolbars are a single responsive strip. Individual groups may
@@ -8600,10 +8598,6 @@ function injectRuntimeStyles() {
     }
 
     @media (max-width: 499px) {
-      .menu-logo {
-        display: none;
-      }
-
       .menu-bar {
         padding: 2px 4px;
       }

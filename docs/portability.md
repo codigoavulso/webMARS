@@ -1,8 +1,15 @@
 # webMARS portability matrix
 
-**webMARS 0.6.6.** Maintained by hand, per release. Unlike the generated
+**webMARS 0.7.0.** Maintained by hand, per release. Unlike the generated
 reports in [evidence.md](evidence.md), this one records what a person actually
 ran, so it cannot be produced by a script.
+
+For 0.7.0, a local Chromium preview on Windows exercised assembly, execution,
+step and backstep with the registers lesson (output `12 + 30 = 42`). The menu
+without its decorative icon was checked in Portuguese and Arabic RTL, including
+the 375 × 812 stacked layout. The Manual's image dialog was checked with mouse,
+keyboard, Escape, focus restoration and a 390-pixel viewport. Earlier platform
+checks below retain their original scope.
 
 For 0.6.5, the embedded project manager and Online menu were exercised in a
 local Chromium-based browser preview, including the compact layout, location

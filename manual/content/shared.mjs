@@ -2,9 +2,9 @@ export const MANUAL = Object.freeze({
   title: "Manual do webMARS",
   version: "0.2.2",
   displayVersion: "v0.2.2",
-  webmarsVersion: "0.6.6",
-  verifiedCommit: "00546cc84c8fc3e730eea2233a458742bd536332",
-  verifiedAt: "2026-10-24",
+  webmarsVersion: "0.7.0",
+  verifiedCommit: "PENDING-0.7.0",
+  verifiedAt: "PENDING-0.7.0",
   locale: "pt-PT"
 });
 

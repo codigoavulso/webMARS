@@ -6,6 +6,7 @@ import { teacherChapters } from "./chapters-teachers.mjs";
 import { libraryChapters } from "./chapters-library.mjs";
 import { statisticsChapters } from "./chapters-statistics.mjs";
 import { practiceGuides } from "./practice-guides.mjs";
+import { architectureReference } from "./architecture-reference.mjs";
 
 export { MANUAL } from "./shared.mjs";
 export { TOOL_DATA };
@@ -50,10 +51,13 @@ const chapterSources = [
 
 const chaptersById = new Map(chapterSources.map((chapter) => {
   const practice = practiceGuides[chapter.id];
-  return [chapter.id, practice ? {
+  const reference = architectureReference[chapter.id] || [];
+  return [chapter.id, practice || reference.length ? {
     ...chapter,
-    readingMinutes: chapter.readingMinutes + practice.minutes,
-    sections: [...chapter.sections, ...practice.sections]
+    readingMinutes: chapter.readingMinutes + (practice?.minutes || 0) + reference.length * 3,
+    sections: chapter.id === "modelo-mips"
+      ? [reference[0], ...chapter.sections, ...reference.slice(1), ...(practice?.sections || [])]
+      : [...chapter.sections, ...reference, ...(practice?.sections || [])]
   } : chapter];
 }));
 if (chaptersById.size !== chapterSources.length) {

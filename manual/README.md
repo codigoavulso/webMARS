@@ -3,7 +3,7 @@
 ![Área de trabalho do webMARS no tema claro](./assets/screenshots/workspace-overview-light.png)
 
 O Manual do webMARS é um subprojeto editorial autónomo, com versão e ciclo de
-lançamento próprios. A versão `0.2.2` documenta o webMARS `0.6.6` em português
+lançamento próprios. A versão `0.2.2` documenta o webMARS `0.7.0` em português
 e foi concebida para poder ser publicada tanto em `/manual/` juntamente com a
 aplicação como num alojamento estático independente.
 

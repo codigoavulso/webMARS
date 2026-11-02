@@ -6,6 +6,41 @@ import { createJavaScriptEngine, loadMiniCCompiler } from "./helpers/engines.mjs
 
 let compiler;
 
+test("Manual architecture reference: signed extension, shifts and basic division match the described results", async () => {
+  await execute({ language: "assembly", sourceName: "architecture-reference.s", expectedOutput: "",
+    source: `.data
+sample: .byte 0x80
+.text
+.globl main
+main:
+  la $t7, sample
+  lb $s0, 0($t7)
+  lbu $s1, 0($t7)
+  li $t0, -3
+  sra $s6, $t0, 1
+  li $t1, 65536
+  sltiu $s7, $t1, -1
+  li $t3, -7
+  li $t4, 3
+  div $t3, $t4
+  mflo $s2
+  mfhi $s3
+  div $t3, $zero
+  mflo $s4
+  mfhi $s5
+  li $v0, 10
+  syscall`,
+    registers: [[16, -128], [17, 128], [18, -2], [19, -1], [20, -2], [21, -1], [22, -2], [23, 1]]
+  });
+});
+
+test("Manual architecture reference: the worked R-format encoding is exact", async () => {
+  const engine = await createJavaScriptEngine();
+  const assembled = engine.assemble(".text\nadd $t2, $t0, $t1", { sourceName: "encoding.s" });
+  assert.equal(assembled.ok, true);
+  assert.equal(engine.readWord(0x00400000) >>> 0, 0x01095020);
+});
+
 async function execute(example, delayedBranching = false) {
   let assembly = example.source;
   if (example.language === "minic") {
