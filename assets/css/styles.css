@@ -759,11 +759,11 @@ th {
   overflow-wrap: anywhere;
 }
 .usage-stats-status {
+  min-block-size: 1.4em;
   margin-block: 8px;
   color: var(--text-muted);
   font-size: 11px;
 }
-.usage-stats-status:empty { display: none; }
 .usage-stats-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -800,6 +800,9 @@ th {
   text-align: start;
 }
 .usage-stats-panel h3 small { color: var(--text-muted); font-size: 10px; }
+[data-stat-view="resources"] > .usage-stats-panel,
+[data-stat-view="cloud"] > .usage-stats-panel,
+#usage-stats-builds { min-block-size: 120px; }
 .usage-stats-chart {
   display: block;
   inline-size: 100%;

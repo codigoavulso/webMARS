@@ -60,7 +60,7 @@
           <div class="usage-stats-kpis usage-stats-kpis-primary" data-stat-role="kpis-primary"></div>
           <div class="usage-stats-charts">
             <section class="usage-stats-panel">
-              <div class="usage-stats-panel-head"><h3><span data-stat-label="Activity over time"></span> <small data-stat-role="axis-zone" hidden>UTC</small></h3>
+              <div class="usage-stats-panel-head"><h3><span data-stat-label="Activity over time"></span> <small data-stat-role="axis-zone">Europe/Lisbon</small></h3>
                 <div class="usage-stats-controls">
                   <label><span data-stat-label="Trend metric"></span><select data-stat-role="metric"></select></label>
                   <label><span data-stat-label="Chart style"></span><select data-stat-role="style"></select></label>
@@ -164,7 +164,7 @@
       return element;
     };
 
-    function renderChart(target, items, style, metricLabel) {
+    function renderChart(target, items, style, metricLabel, emptyMessage = translate("No data for these filters.")) {
       target.replaceChildren();
       target.setAttribute("aria-label", `${metricLabel}: ${items.map((item) => `${item.label} ${item.display}`).join(", ")}`);
       const canvasWidth = Math.max(160, target.clientWidth || 760);
@@ -176,13 +176,15 @@
       for (let tick = 0; tick <= tickCount; tick += 1) {
         const y = top + height - tick * height / tickCount;
         target.appendChild(svg("line", { x1: left, x2: left + width, y1: y, y2: y, class: "usage-stats-grid" }));
-        const label = svg("text", { x: left - 7, y: y + 4, "text-anchor": "end", class: "usage-stats-axis-label" });
-        label.textContent = number(Math.round(maximum * tick / tickCount));
-        target.appendChild(label);
+        if (items.length) {
+          const label = svg("text", { x: left - 7, y: y + 4, "text-anchor": "end", class: "usage-stats-axis-label" });
+          label.textContent = number(Math.round(maximum * tick / tickCount));
+          target.appendChild(label);
+        }
       }
       if (!items.length) {
         const empty = svg("text", { x: canvasWidth / 2, y: 105, "text-anchor": "middle", class: "usage-stats-axis-label" });
-        empty.textContent = translate("No data for these filters.");
+        empty.textContent = emptyMessage;
         target.appendChild(empty);
         return;
       }
@@ -193,8 +195,9 @@
         const y = top + height * (1 - item.value / maximum);
         points.push(`${x},${y}`);
         if (style === "columns") {
-          const bar = svg("rect", { x: left + index * stride + Math.max(1, stride * 0.1), y,
-            width: Math.max(1, stride * 0.8), height: Math.max(0, top + height - y), class: "usage-stats-bar" });
+          const barWidth = stride * 0.8;
+          const bar = svg("rect", { x: x - barWidth / 2, y,
+            width: barWidth, height: Math.max(0, top + height - y), class: "usage-stats-bar" });
           const title = svg("title");
           title.textContent = `${item.label}: ${item.display}`;
           bar.appendChild(title);
@@ -293,39 +296,62 @@
       return Number(metric in bucket ? bucket[metric] : bucket.event_counts?.[metric]) || 0;
     }
 
+    function renderPrimaryCards(totals, comparison) {
+      const primary = [
+        ["Measured sessions", totals?.sessions],
+        ["Sessions with interaction", totals?.interacting_sessions],
+        ["Returning sessions", totals?.returning_sessions],
+        ["Successful runs", totals?.successful_sessions ?? totals?.ready_with_successful_run]
+      ];
+      field("kpis-primary").replaceChildren(...primary.map(([label, value]) => {
+        const card = el("div", "usage-stats-kpi");
+        card.append(el("span", "", translate(label)), el("strong", "", value == null ? "—" : number(value)));
+        if (label === "Measured sessions") {
+          const previous = Number(comparison?.sessions) || 0;
+          const percent = previous ? Math.round((value / previous - 1) * 100) : 0;
+          const subtitle = comparison?.complete
+            ? `${translate("Previous period")}: ${number(previous)}${previous ? ` · ${percent >= 0 ? "+" : ""}${number(percent)}%` : ""}`
+            : "\u00A0";
+          card.append(el("small", "", subtitle));
+        }
+        return card;
+      }));
+    }
+
     function render() {
       const data = state.data;
-      if (data) {
-        const trafficRows = (counts) => Object.entries(counts || {})
-          .sort(([, a], [, b]) => b - a)
-          .map(([key, count]) => ({label: audienceLabel(key), display: number(count)}));
-        renderTable(field("population"), trafficRows(data.classification?.sessions_by_class),
-          translate("All traffic"), translate("Sessions"));
-        const web = data.web_traffic;
-        if (web?.web_visits_by_class) {
-          renderTable(field("web-summary"), trafficRows(web.web_visits_by_class),
-            translate("Traffic classification"), translate("Web visits"));
-        } else {
-          field("web-summary").textContent = web?.pending ? translate("Loading...")
-            : web?.unavailable ? translate("Statistics are unavailable on this installation.") : "";
-        }
-        const cloud = state.cloudData;
-        if (cloud) {
-          const rows = [{label:translate("Active Cloud accounts"),display:number(cloud.active_accounts)}];
-          for (const row of cloud.events || []) rows.push({label:`${translate(EVENT_LABELS[row.event] || row.event)} · ${{google:"Google",facebook:"Facebook",password:translate("Password"),session:translate("Authenticated session")}[row.method] || row.method}`,display:number(row.count)});
-          renderTable(field("cloud-activity"), rows, translate("Measure"), translate("Value"));
-        } else field("cloud-activity").textContent = translate("Cloud activity is unavailable for this filter or installation.");
+      renderPrimaryCards(data?.totals, data?.comparison);
+      const selectedMetric = field("metric").value;
+      const metricLabel = translate(METRICS.find(([key]) => key === selectedMetric)?.[1] || selectedMetric);
+      if (!data) {
+        renderChart(field("trend-chart"), [], field("style").value, metricLabel, "");
+        return;
       }
-      if (!data) return;
+      const trafficRows = (counts) => Object.entries(counts || {})
+        .sort(([, a], [, b]) => b - a)
+        .map(([key, count]) => ({label: audienceLabel(key), display: number(count)}));
+      renderTable(field("population"), trafficRows(data.classification?.sessions_by_class),
+        translate("All traffic"), translate("Sessions"));
+      const web = data.web_traffic;
+      if (web?.web_visits_by_class) {
+        renderTable(field("web-summary"), trafficRows(web.web_visits_by_class),
+          translate("Traffic classification"), translate("Web visits"));
+      } else {
+        field("web-summary").textContent = web?.pending ? translate("Loading...")
+          : web?.unavailable ? translate("Statistics are unavailable on this installation.") : "";
+      }
+      const cloud = state.cloudData;
+      if (cloud) {
+        const rows = [{label:translate("Active Cloud accounts"),display:number(cloud.active_accounts)}];
+        for (const row of cloud.events || []) rows.push({label:`${translate(EVENT_LABELS[row.event] || row.event)} · ${{google:"Google",facebook:"Facebook",password:translate("Password"),session:translate("Authenticated session")}[row.method] || row.method}`,display:number(row.count)});
+        renderTable(field("cloud-activity"), rows, translate("Measure"), translate("Value"));
+      } else field("cloud-activity").textContent = translate("Cloud activity is unavailable for this filter or installation.");
       const totals = data.totals || {};
       field("coverage").textContent = data.quality?.collected_from
         ? translate("Collected since") + ": " + new Intl.DateTimeFormat(locale(), {dateStyle:"short",timeStyle:"short"}).format(new Date(data.quality.collected_from))
           : "";
       const cards = [
-        ["Measured sessions", number(totals.sessions)], ["New sessions", number(totals.new_sessions)],
-        ["Sessions with interaction", number(totals.interacting_sessions)],
-        ["Returning sessions", number(totals.returning_sessions)],
-        ["Successful runs", number(totals.successful_sessions ?? totals.ready_with_successful_run)],
+        ["New sessions", number(totals.new_sessions)],
         ["Ready sessions", number(totals.ready_sessions)],
         ["Ready with successful run", number(totals.ready_with_successful_run)],
         ["Events received", number(totals.events)], ["Interaction time", duration(totals.interaction_seconds)],
@@ -336,38 +362,25 @@
         ["Median visible presence", durationOrDash(totals.presence_distribution?.median_seconds)],
         ["P90 visible presence", durationOrDash(totals.presence_distribution?.p90_seconds)]
       ];
-      const renderKpi = ([label, value]) => {
-        const card = el("div", "usage-stats-kpi");
-        card.append(el("span", "", translate(label)), el("strong", "", value));
-        if (label === "Measured sessions" && data.comparison?.complete) {
-          const previous = Number(data.comparison.sessions) || 0;
-          card.append(el("small", "", translate("Previous period") + ": " + number(previous)
-            + (previous ? " · " + (totals.sessions >= previous ? "+" : "") + number(Math.round((totals.sessions - previous) / previous * 100)) + "%" : "")));
-        }
-        return card;
-      };
-      const primaryLabels = new Set([
-        "Measured sessions", "Sessions with interaction", "Returning sessions", "Successful runs"
-      ]);
-      field("kpis-primary").replaceChildren(...cards.filter(([label]) => primaryLabels.has(label)).map(renderKpi));
-      renderTable(field("kpis-details"), cards.filter(([label]) => !primaryLabels.has(label))
+      renderTable(field("kpis-details"), cards
         .map(([label, display]) => ({label: translate(label), display})), translate("Measure"), translate("Value"));
-      const selectedMetric = field("metric").value;
-      const metricLabel = translate(METRICS.find(([key]) => key === selectedMetric)?.[1] || selectedMetric);
-      const windowName = field("window").value;
-      field("axis-zone").hidden = windowName !== "30d";
-      const axisFormat = new Intl.DateTimeFormat(locale(), windowName === "30d"
-        ? { day: "2-digit", month: "2-digit", timeZone: "UTC" } : { hour: "2-digit", minute: "2-digit" });
-      const intervalFormat = new Intl.DateTimeFormat(locale(), {
-        dateStyle: "short", timeStyle: "short", ...(windowName === "30d" ? {timeZone: "UTC"} : {})
-      });
+      const windowName = data.window;
+      const timeZone = data.time_zone || (windowName === "30d" ? "UTC" : Intl.DateTimeFormat().resolvedOptions().timeZone);
+      field("axis-zone").textContent = timeZone;
+      const dateFormat = new Intl.DateTimeFormat(locale(), { day: "2-digit", month: "2-digit", timeZone });
+      const clock = new Intl.DateTimeFormat(locale(), { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone });
+      const offsetClock = new Intl.DateTimeFormat(locale(), { hour: "2-digit", timeZoneName: "shortOffset", timeZone });
       const timed = (Array.isArray(data.timeline) ? data.timeline : [])
-        .filter((bucket) => !data.quality?.collected_from || new Date(bucket.through) > new Date(data.quality.collected_from)).map((bucket) => {
+        .filter((bucket) => windowName === "60m" || !data.quality?.collected_from || new Date(bucket.until || bucket.through) > new Date(data.quality.collected_from)).map((bucket) => {
         const value = metricValue(bucket, selectedMetric);
-        const from = new Date(bucket.from), through = new Date(bucket.through);
-        const interval = intervalFormat.formatRange(from, through) + (windowName === "30d" ? " UTC" : "");
-        return { label: interval,
-          axisLabel: axisFormat.format(windowName === "30d" ? through : from), value,
+        const from = new Date(bucket.from);
+        const lastMinute = new Date(Math.max(+from, Date.parse(bucket.until || bucket.through) - 60000));
+        const date = dateFormat.format(from);
+        const start = clock.format(from);
+        const hours = windowName === "60m" ? start : `${start}–${clock.format(lastMinute)}`;
+        const offset = windowName === "24h" ? offsetClock.formatToParts(from).find(part => part.type === "timeZoneName")?.value : "";
+        return { label: [date, hours, offset].filter(Boolean).join(" · "),
+          axisLabel: windowName === "30d" ? date : start, value,
           display: selectedMetric.endsWith("_seconds") ? duration(value) : number(value) };
       });
       renderChart(field("trend-chart"), timed, field("style").value, metricLabel);
@@ -411,6 +424,7 @@
       state.controller = new AbortController();
       state.loading = true;
       field("status").textContent = translate("Loading...");
+      if (!state.data) render();
       renderBuilds(null);
       const configured = scope.WebMarsConfig?.metrics?.publicEndpoint;
       let endpoint;
@@ -494,9 +508,7 @@
       } catch (error) {
         if (request !== state.request) return;
         state.data = null;
-        field("kpis-primary").replaceChildren();
         field("kpis-details").replaceChildren();
-        field("trend-chart").replaceChildren();
         field("breakdown-chart").replaceChildren();
         field("trend-table").replaceChildren();
         field("web-summary").textContent = "";
@@ -504,6 +516,7 @@
         field("population").replaceChildren();
         field("cloud-activity").replaceChildren();
         renderBuilds(null);
+        render();
         field("status").textContent = translate("Statistics are unavailable on this installation.");
       } finally {
         if (request === state.request) state.loading = false;

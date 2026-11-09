@@ -28,12 +28,12 @@ export const statisticsChapters = [
           <p>A leitura começa em <strong>Panorâmica</strong>. Mude para <strong>Recursos</strong> para comparar funcionalidades e para <strong>Atividade Cloud confirmada pelo servidor</strong> para consultar operações de contas e projetos. Estes separadores evitam misturar medidas com origens e significados diferentes.</p>
           <p>Em <strong>Classificação do tráfego</strong>, consulte separadamente os grupos medidos nos logs web e nas sessões da app. Para excluir os seus próprios usos da medição pública, marque este navegador como utilização interna na mesma secção. Os dados antigos e os usos internos sem marcação continuam sem classificação.</p>
           ${table(["Período", "Intervalos do gráfico", "Pergunta a que ajuda a responder"], [
-            ["Últimos 60 minutos", "12 intervalos de cinco minutos", "Há atividade recente e que recursos estão a ser usados?"],
-            ["Últimas 24 horas", "24 intervalos de uma hora", "Em que horas se concentra a utilização?"],
-            ["Últimos 30 dias", "30 intervalos de um dia", "Como evoluem as visitas e a adoção ao longo das semanas?"]
+            ["Últimos 60 minutos", "60 intervalos de um minuto", "Em que minutos houve atividade recente?"],
+            ["Últimas 24 horas", "Horas de xx:00 a xx:59", "Em que horas se concentra a utilização?"],
+            ["Últimos 30 dias", "Dias de 00:00 a 23:59", "Como evoluem as visitas e a adoção ao longo das semanas?"]
           ])}
           ${screenshot("./assets/screenshots/usage-statistics-light.png", "Versão anterior do painel de estatísticas no tema claro, com dados sintéticos", "Captura de referência do webMARS 0.6.3. A versão atual organiza estes dados nos separadores Panorâmica, Recursos e Atividade Cloud; os números desta imagem são sintéticos.")}
-          <p>Os períodos são móveis, contados para trás a partir da leitura do servidor. As datas do gráfico de 30 dias identificam o fim de cada intervalo em UTC; nos períodos mais curtos, as horas seguem o fuso horário do browser. A resposta agregada pode ficar em cache no servidor durante 30 segundos.</p>
+          <p>O gráfico usa a hora de Lisboa e inclui o minuto, a hora ou o dia em curso, com os dados recebidos até à última leitura. Na mudança de hora, o desvio UTC distingue as horas que se repetem. A resposta agregada pode ficar em cache durante 30 segundos.</p>
         `
       },
       {

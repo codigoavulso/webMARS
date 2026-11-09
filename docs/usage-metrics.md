@@ -92,6 +92,12 @@ under the unknown build in aggregate breakdowns.
 The Builds tab and CSV export show distinct sessions and received events per
 build for the selected period and audience. A session can span several builds.
 
+App statistics use 60 clock minutes, 24 clock hours or 30 calendar days in
+`Europe/Lisbon`, including the interval in progress. A timeline bucket exposes
+its calendar boundary as `until` and the extent covered by the response as
+`through`. The nominal `bucket_seconds` stays at 86400 for days even when a
+day spans 23 or 25 hours across a daylight-saving change.
+
 The dashboard loads app aggregates with `part=app`. Web-log diagnostics use
 `part=web`, which can return 202 while an aggregate is prepared in the background.
 The collector reuses the web aggregate across audience filters and refreshes it

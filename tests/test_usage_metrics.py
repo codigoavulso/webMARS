@@ -1,4 +1,5 @@
 import contextlib
+from datetime import datetime, timedelta
 import http.client
 import importlib.util
 import io
@@ -81,7 +82,7 @@ class MetricsTests(unittest.TestCase):
 
     def test_public_statistics_separate_interaction_from_presence_and_hide_sessions(self):
         now = 1788600000
-        start = now - 3600
+        start = now - 59 * 60
         metrics.record(self.database, event(event="active_time", seconds=20), now=start - 10)
         metrics.record(self.database, event(event="heartbeat", seconds=60), now=start - 5)
         metrics.record(self.database, event(event="heartbeat", seconds=120), now=start + 10)
@@ -97,7 +98,7 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(result["totals"]["interaction_seconds"], 105)
         self.assertEqual(result["totals"]["presence_seconds"], 120)
         self.assertEqual(result["totals"]["ready_with_successful_run"], 1)
-        self.assertEqual(len(result["timeline"]), 12)
+        self.assertEqual(len(result["timeline"]), 60)
         self.assertEqual(sum(row["interaction_seconds"] for row in result["timeline"]), 105)
         self.assertEqual(result["breakdowns"]["resources"][0]["key"], "tty-ansi-terminal")
         self.assertNotIn("a" * 32, json.dumps(result))
@@ -106,6 +107,37 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(len(metrics.public_statistics(self.database, "30d", now=now)["timeline"]), 30)
         with self.assertRaises(ValueError):
             metrics.public_statistics(self.database, "all", now=now)
+
+    def test_chart_buckets_use_clock_boundaries_and_keep_the_current_slot(self):
+        now = int(datetime.fromisoformat("2026-10-25T02:17:31+00:00").timestamp())
+        minute = now - now % 60
+        for received in (minute - 59 * 60 - 1, minute - 59 * 60, minute - 1, minute, now, now + 1):
+            metrics.record(self.database, event(), now=received)
+        result = metrics.public_statistics(self.database, "60m", now=now)
+        self.assertEqual(result["time_zone"], "Europe/Lisbon")
+        buckets = result["timeline"]
+        self.assertEqual(len(buckets), 60)
+        self.assertEqual(sum(row["events"] for row in buckets), 4)
+        self.assertEqual([buckets[index]["events"] for index in (0, -2, -1)], [1, 1, 2])
+        self.assertEqual(buckets[-1]["from"], "2026-10-25T02:17:00+00:00")
+        self.assertEqual(buckets[-1]["through"], "2026-10-25T02:17:31+00:00")
+        self.assertEqual(buckets[-1]["until"], "2026-10-25T02:18:00+00:00")
+
+        def local(value):
+            return datetime.fromisoformat(value).astimezone(metrics.STATISTICS_ZONE)
+
+        hours = metrics.public_statistics(self.database, "24h", now=now)["timeline"]
+        self.assertEqual(len(hours), 24)
+        self.assertTrue(all(local(row["from"]).minute == 0 and local(row["until"]).minute == 0 for row in hours))
+        repeated = [local(row["from"]) for row in hours if local(row["from"]).hour == 1]
+        self.assertEqual([value.utcoffset() for value in repeated], [timedelta(hours=1), timedelta(0)])
+
+        days = metrics.public_statistics(self.database, "30d", now=now)["timeline"]
+        self.assertEqual(len(days), 30)
+        self.assertTrue(all(local(row["from"]).hour == 0 and local(row["until"]).hour == 0 for row in days))
+        last = days[-1]
+        self.assertEqual(datetime.fromisoformat(last["until"]) - datetime.fromisoformat(last["from"]), timedelta(hours=25))
+        self.assertEqual(local(last["from"]).day, 25)
 
     def test_cli_report_keeps_event_heartbeat_out_of_interaction_time(self):
         now = 1788600000

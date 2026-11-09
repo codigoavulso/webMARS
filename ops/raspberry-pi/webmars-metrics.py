@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Automatic first-party statistics. Standard library only; no IP/header/body logging."""
 import argparse
+from bisect import bisect_right
 from collections import Counter, defaultdict
 from contextlib import closing
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
@@ -15,6 +16,7 @@ import time
 import threading
 import runpy
 from urllib.parse import parse_qs, urlsplit
+from zoneinfo import ZoneInfo
 
 EVENTS = {"page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "heartbeat", "tool_open", "feature_use"}
 TOOLS = set("bht-simulator bitmap-display bitmap-terminal-tool cache-simulator digital-lab-sim float-representation instruction-counter instruction-statistics intro-to-tools keyboard-display-mmio mars-bot memory-reference-visualization mips-xray example-register-watch pipeline-lab scavenger-hunt screen-magnifier stack-visualizer system-clock tty-ansi-terminal".split())
@@ -31,7 +33,8 @@ AUDIENCES = {"all", "public", "human", "unknown", "internal", "test", "automated
 BOT_PATTERN = re.compile(r"bot|crawler|spider|headless|curl|wget|python|playwright|puppeteer|selenium|uptimerobot|scanner", re.I)
 RETENTION_SECONDS = 35 * 86400
 HEARTBEAT_INTERVAL_CAP = 90
-PUBLIC_WINDOWS = {"60m": (3600, 300), "24h": (86400, 3600), "30d": (30 * 86400, 86400)}
+PUBLIC_WINDOWS = {"60m": (3600, 60), "24h": (86400, 3600), "30d": (30 * 86400, 86400)}
+STATISTICS_ZONE = ZoneInfo("Europe/Lisbon")
 
 
 def validate_event(data):
@@ -205,13 +208,21 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
         raise ValueError("Invalid statistics window")
     now = int(now or time.time())
     duration, step = PUBLIC_WINDOWS[window]
-    start = now - duration
+    offsets = range(1 - duration // step, 2)
+    if window == "30d":
+        midnight = datetime.fromtimestamp(now, STATISTICS_ZONE).replace(hour=0, minute=0, second=0, microsecond=0)
+        edges = [int((midnight + timedelta(days=offset)).timestamp()) for offset in offsets]
+    else:
+        boundary = now - now % step
+        edges = [boundary + offset * step for offset in offsets]
+    start = edges[0]
+    previous_start = start - (now - start)
     uri = Path(database).resolve().as_uri() + "?mode=ro"
     with closing(sqlite3.connect(uri, uri=True)) as db:
         db.row_factory = sqlite3.Row
         rows = db.execute("SELECT * FROM events WHERE received >= ? AND received <= ? ORDER BY received", (start, now)).fetchall()
         collected_from = db.execute("SELECT MIN(received) FROM events").fetchone()[0]
-        previous_rows = db.execute("SELECT * FROM events WHERE received >= ? AND received < ? ORDER BY received", (start-duration, start)).fetchall()
+        previous_rows = db.execute("SELECT * FROM events WHERE received >= ? AND received < ? ORDER BY received", (previous_start, start)).fetchall()
         earlier = {row[0] for row in db.execute("SELECT DISTINCT session FROM events WHERE received < ?", (start,))}
         interaction_baseline = dict(db.execute(
             "SELECT session, MAX(seconds) FROM events WHERE received < ? AND event != 'heartbeat' GROUP BY session", (start,)))
@@ -222,10 +233,10 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
     rows, population = select_audience(rows, audience)
     previous_rows, _ = select_audience(previous_rows, audience)
     classes = classify_sessions(rows)
-    buckets = [{"from": start + index * step, "through": min(now, start + (index + 1) * step),
+    buckets = [{"from": lower, "through": upper,
                 "sessions": set(), "new_sessions": 0, "events": 0, "interaction_seconds": 0,
                 "presence_seconds": 0, "event_counts": Counter()}
-               for index in range(duration // step)]
+               for lower, upper in zip(edges, edges[1:])]
     sessions = {}
     event_sessions = defaultdict(set)
     resources = defaultdict(lambda: {"events": 0, "sessions": set()})
@@ -236,7 +247,7 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
     recent_presence = set()
     for row in rows:
         sid = row["session"]
-        index = min(len(buckets) - 1, (row["received"] - start) // step)
+        index = bisect_right(edges, row["received"]) - 1
         bucket = buckets[index]
         bucket["sessions"].add(sid)
         bucket["events"] += 1
@@ -300,6 +311,7 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
         web_traffic = web_statistics(log_root, database, window, now)
     return {
         "window": window, "from": iso(start), "through": iso(now), "bucket_seconds": step,
+        "time_zone": STATISTICS_ZONE.key,
         "audience": audience, "classification": {"sessions_by_class": dict(population),
             "note": "Human/automation are probable signals, not identity proof. Unknown includes historical events. Internal/test are explicit markers; unmarked operator use cannot be inferred."},
         "web_traffic": web_traffic,
@@ -307,8 +319,8 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
                     "classified_sessions": sum(value for key, value in population.items() if key != "unknown"),
                     "total_sessions": sum(population.values()),
                     "legacy_sessions": len({r["session"] for r in all_rows if r["context"] == "legacy"})},
-        "comparison": {"complete": collected_from is not None and collected_from <= start-duration,
-                       "from": iso(start-duration), "through": iso(start),
+        "comparison": {"complete": collected_from is not None and collected_from <= previous_start,
+                       "from": iso(previous_start), "through": iso(start),
                        "sessions": len({r["session"] for r in previous_rows})},
         "totals": {
             "sessions": len(sessions), "new_sessions": len(sessions.keys() - earlier),
@@ -320,7 +332,7 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
             "interaction_distribution": duration_distribution(interaction_by_session.values()),
             "presence_distribution": duration_distribution(presence_by_session.values())
         },
-        "timeline": [{"from": iso(bucket["from"]), "through": iso(bucket["through"]),
+        "timeline": [{"from": iso(bucket["from"]), "through": iso(min(now, bucket["through"])), "until": iso(bucket["through"]),
                       "sessions": len(bucket["sessions"]), "new_sessions": bucket["new_sessions"],
                       "events": bucket["events"], "interaction_seconds": bucket["interaction_seconds"],
                       "presence_seconds": bucket["presence_seconds"], "event_counts": dict(bucket["event_counts"])}
