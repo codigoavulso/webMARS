@@ -1,24 +1,14 @@
-# ==========================================================
-# Aula 07 - Palavras em memoria, e porque os enderecos saltam 4
+# 07 - Palavras em memória
 #
-# O PROBLEMA
-#   A memoria e enderecada byte a byte, mas um registo tem quatro
-#   bytes. O que e que um endereco seleciona de facto?
+# Os endereços de memória contam bytes. Cada palavra ocupa quatro bytes, por isso `lw` e `sw`
+# usam aqui os deslocamentos 0, 4 e 8.
 #
-# O QUE O HARDWARE FAZ
-#   O lw e o sw movem quatro bytes num unico acesso, logo palavras
-#   consecutivas ficam a quatro enderecos de distancia. Os dois
-#   bits baixos do endereco tem de ser zero: e esse alinhamento
-#   que permite buscar uma palavra inteira num ciclo.
+# O endereço de uma palavra tem de ser múltiplo de quatro. Neste programa, usar o deslocamento 1
+# em vez de 4 provoca uma exceção de alinhamento.
 #
-# A SOLUCAO
-#   A aritmetica de enderecos e feita em bytes, logo um indice de
-#   palavras e sempre escalado por quatro.
-#
-# OBSERVE
-#   Monte e abra o Segmento de Dados em 0x10010000. Os tres
-#   valores aparecem em colunas adjacentes da mesma linha.
-# ==========================================================
+# Depois das escritas, veja `cell` no Segmento de dados. As três palavras consecutivas devem
+# conter 111, 222 e 333.
+
         .data
 cell:   .word 0, 0, 0
 m1:     .asciiz "read back: "

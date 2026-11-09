@@ -1,24 +1,14 @@
-# ==========================================================
-# Aula 03 - Portas logicas em 32 bits
+# 03 - Portas lógicas em 32 bits
 #
-# O PROBLEMA
-#   AND, OR e XOR sao portas de um bit. Um registo tem 32 bits.
-#   O que significa uma porta com essa largura?
+# Cada bit do resultado depende apenas dos bits na mesma posição nos dois operandos. Não há
+# transporte entre posições.
 #
-# O QUE O HARDWARE FAZ
-#   Coloca 32 copias da porta lado a lado. O bit 0 do resultado
-#   depende so do bit 0 de cada operando, o bit 1 so do bit 1, e
-#   assim por diante. Nao ha transporte entre eles.
+# Com a máscara `0x0F`, AND conserva os quatro bits inferiores e limpa os restantes. OR põe os
+# quatro inferiores a 1 e XOR inverte-os.
 #
-# A SOLUCAO
-#   E essa independencia que faz a mascara funcionar: escolher os
-#   bits a manter com AND, forcar a um com OR, inverter com XOR.
-#
-# OBSERVE
-#   0xCC e 11001100 e a mascara 0x0F e 00001111. O AND mantem os
-#   quatro bits baixos, o OR poe-nos a um, o XOR inverte-os. So o
-#   nibble baixo muda.
-# ==========================================================
+# Compare os três resultados em hexadecimal e experimente a máscara `0xF0` para trabalhar sobre
+# o grupo seguinte de quatro bits.
+
         .data
 ma:     .asciiz "AND keeps the low nibble: "
 mo:     .asciiz "OR sets the low nibble:   "

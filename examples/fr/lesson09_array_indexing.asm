@@ -1,24 +1,14 @@
-# ==========================================================
-#Leçon 09 - Indexation d'un tableau
+# 09 - Indexation d'un tableau
 #
-#THE PROBLEM
-#Une instruction de chargement propose un registre de base et une constante
-#décalage. Rien d'autre. Alors, comment atteint-on un[i] alors que je suis seulement
-#connu au moment de l'exécution, assis dans un registre ?
+# Chaque élément du tableau occupe quatre octets. Décalez l'index vers la gauche de deux pour
+# calculer son décalage d'octet.
 #
-#WHAT THE HARDWARE DOES
-#Il ajoute la base à tout ce que contient le registre. L'indice
-#doit donc déjà être en octets, pas en éléments.
+# Suivez la séquence `sll`, `add`, `lw` : redimensionnez l'index, ajoutez l'adresse de base et
+# chargez l'élément.
 #
-#THE SOLUTION
-#Redimensionnez l'index en fonction de la taille de l'élément, puis ajoutez. Pour quatre octets
-#mots que la mise à l'échelle est un décalage laissé par deux, ce qui coûte
-#rien.
-#
-#WATCH FOR
-#Les trois lignes sll, add, lw correspondent à ce que a[i] compile.
-#Parcourez une itération et lisez $t5 et $t6.
-# ==========================================================
+# À l'indice 2, `$t5` vaut 8 et `$t6` pointe vers la valeur 30. Les cinq éléments totalisent
+# 150.
+
         .data
 arr:    .word 10, 20, 30, 40, 50
 m1:     .asciiz "sum = "

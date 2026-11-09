@@ -1,24 +1,14 @@
-# ==========================================================
-#Lekcja 03 – Bramki logiczne na 32 bitach
+# 03 - Bramki logiczne powyżej 32 bitów
 #
-#THE PROBLEM
-#AND, OR i XOR są bramkami jednobitowymi. Rejestr przechowuje 32 bity.
-#Co oznacza brama przy tej szerokości?
+# Każdy bit wyniku zależy tylko od odpowiednich bitów dwóch operandów. Nie ma przenoszenia
+# pomiędzy pozycjami bitów.
 #
-#WHAT THE HARDWARE DOES
-#Umieszcza obok siebie 32 kopie bramy. Bit 0
-#wynik zależy tylko od bitu 0 każdego operandu, bit 1 tylko od
-#bit 1 i tak dalej. Między nimi nie odbywa się żadne przenoszenie.
+# W przypadku maski `0x0F` AND zachowuje cztery najniższe bity i usuwa resztę. OR ustawia cztery
+# najniższe bity, a XOR je odwraca.
 #
-#THE SOLUTION
-#To właśnie ta niezależność sprawia, że maska działa: wybierz którą
-#bity do zachowania za pomocą AND, wymuś jedynkę za pomocą OR, odwróć za pomocą XOR.
-#
-#WATCH FOR
-#0xCC to 11001100, a maska 0x0F to 00001111. AND zachowuje
-#cztery najniższe bity, OR ustawia je, XOR odwraca je. Tylko
-#niskie skubanie kiedykolwiek się zmienia.
-# ==========================================================
+# Porównaj trzy wyniki w formacie szesnastkowym, a następnie wypróbuj maskę `0xF0`, aby
+# popracować nad następną grupą czterech bitów.
+
         .data
 ma:     .asciiz "AND keeps the low nibble: "
 mo:     .asciiz "OR sets the low nibble:   "

@@ -1,6 +1,6 @@
 #Ciao mondo per l'I/O di esecuzione
 #Stampa un messaggio semplice ed esce.
-#Questo è l'esempio più piccolo della suddivisione dati/testo e della convenzione syscall.
+# Il messaggio appartiene a .data; le istruzioni che lo stampano appartengono a .text.
 
 .data
 #.asciiz memorizza i caratteri seguiti dal terminatore zero richiesto dalla syscall 4.

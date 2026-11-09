@@ -1,4 +1,4 @@
-# Teste manual de paridade para lowering de pseudo-ops.
+# Monte e compare as colunas Fonte e Básico no Segmento de texto para ver como se expandem as pseudoinstruções.
 # Apos executar, inspecione o segmento de dados em results:
 #   results[0] = 1            seq 5,5
 #   results[1] = 1            sge 5,5

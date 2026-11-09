@@ -1,5 +1,5 @@
-#Fattoriale ricorsivo (classico di facoltà)
-#Legge n e stampa n! (per n piccolo).
+# Fattoriale ricorsivo con uno stack frame separato per ogni chiamata.
+# Prova un numero intero compreso tra 0 e 12. I fattoriali più grandi superano un risultato a 32 bit con segno.
 
 .data
 ask: .asciiz "n (0..12)? "

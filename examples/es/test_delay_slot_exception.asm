@@ -1,4 +1,4 @@
-# Prueba manual de paridad:
+# Observa Cause y EPC para ver cómo el procesador registra una excepción en la ranura de retardo.
 # Con delayed branching activado, el overflow ocurre en el delay slot.
 # Comportamiento esperado:
 # - mensaje de excepcion: overflow aritmetico

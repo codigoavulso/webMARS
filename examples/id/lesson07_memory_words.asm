@@ -1,24 +1,14 @@
-# ==========================================================
-#Pelajaran 07 - Kata-kata dalam ingatan, dan mengapa alamat melonjak empat
+# 07 - Kata-kata dalam ingatan
 #
-#THE PROBLEM
-#Memori dialamatkan satu byte pada satu waktu, tetapi register tetap ada
-#empat byte. Apa sebenarnya yang dipilih oleh satu alamat?
+# Alamat memori menghitung byte. Setiap kata menempati empat byte, jadi `lw` dan `sw` gunakan
+# offset 0, 4 dan 8 di sini.
 #
-#WHAT THE HARDWARE DOES
-#lw dan sw memindahkan empat byte dalam satu akses, jadi berurutan
-#kata-kata berjarak empat alamat. Dua bit rendah dari
-#alamat harus nol: penyelarasan itulah yang memungkinkan
-#perangkat keras mengambil seluruh kata dalam satu siklus.
+# Alamat kata harus kelipatan empat. Menggunakan offset 1 dan bukannya 4 menyebabkan
+# pengecualian penyelarasan dalam program ini.
 #
-#THE SOLUTION
-#Aritmatika alamat dilakukan dalam byte, jadi indeks menjadi kata-kata
-#selalu berskala empat.
-#
-#WATCH FOR
-#Rakit, lalu buka Segmen Data di 0x10010000. Itu
-#tiga nilai muncul di kolom yang berdekatan dalam satu baris.
-# ==========================================================
+# Setelah penyimpanan, lihat `cell` di Segmen Data. Tiga kata yang berdekatan harus berisi 111,
+# 222 dan 333.
+
         .data
 cell:   .word 0, 0, 0
 m1:     .asciiz "read back: "

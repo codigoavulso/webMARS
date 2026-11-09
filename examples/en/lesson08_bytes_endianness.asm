@@ -1,24 +1,13 @@
-# ==========================================================
-# Lesson 08 - Bytes inside a word, and byte order
+# 08 - Bytes and byte order
 #
-# THE PROBLEM
-#   A word occupies four addresses. Which byte does the lowest
-#   of those addresses name?
+# In this simulator's little-endian memory, the least significant byte of a word lives at the
+# lowest address.
 #
-# WHAT THE HARDWARE DOES
-#   That choice is byte order, and it is a wiring decision made
-#   once for the whole machine. MIPS here is little-endian: the
-#   least significant byte lives at the lowest address.
+# Store `0x04030201` as a word and read offsets 0 through 3 as bytes. The output is 1, 2, 3, 4.
 #
-# THE SOLUTION
-#   Store one word, then read it back a byte at a time and let
-#   the order answer the question for you.
-#
-# WATCH FOR
-#   0x04030201 comes back as 1 2 3 4. The byte written last in
-#   the literal is read first. lbu is used rather than lb so a
-#   byte above 127 is not sign-extended.
-# ==========================================================
+# Try a low byte of `0xFF`. An unsigned load with `lbu` gives 255, while a signed load with `lb`
+# gives -1.
+
         .data
 cell:   .word 0
 m1:     .asciiz "bytes from low address: "

@@ -1,5 +1,5 @@
 #Tolok ukur perilaku cache: akses sekuensial versus akses stride-16.
-#Buka Alat > Alat Simulasi Cache Data, sambungkan ke MIPS, dan centang Aktif.
+# Buka Alat > Simulator Tembolok Data dan sambungkan ke MIPS. Centang «Diaktifkan».
 #
 #Setiap eksekusi mengukur tepat satu pola cold-cache. Setel ACCESS_PATTERN
 #ke 1 atau 2, setel ulang statistik simulator, lalu rakit dan jalankan kembali.

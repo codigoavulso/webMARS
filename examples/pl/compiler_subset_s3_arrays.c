@@ -8,7 +8,7 @@ int row_sum(int row[]) {   //parametrem jest adres: wiersz nie jest kopiowany
 }
 
 int main(void) {
-  //Temat tablic S3: tablice lokalne, listy inicjatorów, kształty wielowymiarowe i parametry tablic.
+  // Tablica 2 na 3 jest układana wiersz po rzędzie. Przekazanie jednego wiersza powoduje przekazanie jego adresu.
   int matrix[2][3] = { {1, 2, 3}, {4, 5, 6} };   //dwa rzędy po trzy słowa sąsiadujące ze sobą w pamięci
   int total = row_sum(matrix[0]) + row_sum(matrix[1]);   //matrix[0] i matrix[1] mają adresy oddalone od siebie o 12 bajtów
 

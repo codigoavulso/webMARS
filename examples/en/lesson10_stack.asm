@@ -1,25 +1,13 @@
-# ==========================================================
-# Lesson 10 - The stack is a register and an offset
+# 10 - The stack
 #
-# THE PROBLEM
-#   There are 32 registers and they are shared by every piece of
-#   code. Where does a value go when it must survive work that
-#   will reuse those registers?
+# By convention the stack grows toward lower addresses. Subtract 8 from `$sp` to reserve space
+# for two words.
 #
-# WHAT THE HARDWARE DOES
-#   Nothing special at all. $sp is an ordinary register that
-#   happens to point into memory, and the stack grows towards
-#   lower addresses purely by convention.
+# The program saves two registers with `sw`, clears them, then restores their values with `lw`.
 #
-# THE SOLUTION
-#   Reserving space is a subtraction from $sp, releasing it an
-#   addition. Push and pop are just sw and lw.
-#
-# WATCH FOR
-#   The registers are deliberately cleared between the stores
-#   and the loads, so the printed values can only have come
-#   back from memory. Watch $sp move by 8 and back.
-# ==========================================================
+# Watch `$sp` before reservation, during the two stores and after release. Its final value
+# should match its initial value.
+
         .data
 m1:     .asciiz "restored: "
 sp2:    .asciiz " "

@@ -1,5 +1,5 @@
 #Program argümanları örneği.
-#MARS'da argc/argv desteğini test etmek için bu örneği kullanın.
+# Boşlukların tek bir argümanın içinde nasıl kalabileceğini görmek için tırnak içindeki bir argümanı deneyin.
 #Denemek için Ayarlar > MIPS programına sağlanan program bağımsız değişkenleri seçeneğine gidin,
 #bazı argümanlar girin, ardından programı birleştirin ve çalıştırın.
 #Örnek argümanlar: ola 123 "abc def"

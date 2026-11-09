@@ -1,24 +1,14 @@
-# ==========================================================
-#Lezione 07 - Parole in memoria e perché gli indirizzi saltano di quattro
+# 07 - Parole in memoria
 #
-#THE PROBLEM
-#La memoria viene indirizzata un byte alla volta, ma mantiene un registro
-#quattro byte. Cosa seleziona effettivamente un singolo indirizzo?
+# Gli indirizzi di memoria contano i byte. Ogni parola occupa quattro byte, quindi `lw` e `sw`
+# utilizzano qui gli offset 0, 4 e 8.
 #
-#WHAT THE HARDWARE DOES
-#lw e sw spostano quattro byte in un accesso, quindi consecutivi
-#le parole si trovano a quattro indirizzi di distanza. I due bit bassi di
-#l'indirizzo deve essere zero: quell'allineamento è ciò che consente a
-#l'hardware recupera un'intera parola in un ciclo.
+# Un indirizzo di parola deve essere un multiplo di quattro. L'utilizzo dell'offset 1 anziché 4
+# provoca un'eccezione di allineamento in questo programma.
 #
-#THE SOLUTION
-#L'aritmetica degli indirizzi viene eseguita in byte, quindi un indice in parole
-#è sempre scalato per quattro.
-#
-#WATCH FOR
-#Assembla, quindi apri il segmento dati in 0x10010000. Il
-#vengono visualizzati tre valori in colonne adiacenti di una riga.
-# ==========================================================
+# Dopo i negozi, guarda `cell` nel segmento dati. Le tre parole adiacenti dovrebbero contenere
+# 111, 222 e 333.
+
         .data
 cell:   .word 0, 0, 0
 m1:     .asciiz "read back: "

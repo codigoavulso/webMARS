@@ -1,5 +1,5 @@
-#Rekursive Fakultät (Fakultätsklassiker)
-#Liest n und gibt n aus! (für kleines n).
+# Rekursive Fakultät mit einem separaten Stapelrahmen für jeden Aufruf.
+# Versuchen Sie es mit einer Ganzzahl zwischen 0 und 12. Größere Fakultäten überlaufen ein vorzeichenbehaftetes 32-Bit-Ergebnis.
 
 .data
 ask: .asciiz "n (0..12)? "

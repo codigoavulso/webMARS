@@ -1,24 +1,14 @@
-# ==========================================================
-#Bài 07 - Từ trong bộ nhớ và tại sao địa chỉ nhảy lên bốn
+# 07 - Từ ngữ trong trí nhớ
 #
-#THE PROBLEM
-#Bộ nhớ được đánh địa chỉ một byte mỗi lần, nhưng một thanh ghi vẫn giữ
-#bốn byte. Một địa chỉ thực sự chọn gì?
+# Địa chỉ bộ nhớ đếm byte. Mỗi từ chiếm bốn byte, vì vậy `lw` và `sw` sử dụng các giá trị bù 0,
+# 4 và 8 ở đây.
 #
-#WHAT THE HARDWARE DOES
-#lw và sw di chuyển bốn byte trong một lần truy cập, sao cho liên tiếp
-#các từ ngồi cách nhau bốn địa chỉ. Hai bit thấp của
-#địa chỉ phải bằng 0: sự căn chỉnh đó là điều cho phép
-#phần cứng lấy toàn bộ một từ trong một chu kỳ.
+# Địa chỉ từ phải là bội số của bốn. Việc sử dụng offset 1 thay vì 4 sẽ gây ra ngoại lệ căn
+# chỉnh trong chương trình này.
 #
-#THE SOLUTION
-#Số học địa chỉ được thực hiện theo byte, do đó chỉ mục thành các từ
-#luôn được chia tỷ lệ bằng bốn.
-#
-#WATCH FOR
-#Lắp ráp, sau đó mở Data Segment tại 0x10010000. các
-#ba giá trị xuất hiện trong các cột liền kề của một hàng.
-# ==========================================================
+# Sau các cửa hàng, hãy xem `cell` trong Phân đoạn dữ liệu. Ba từ liền kề phải chứa 111, 222 và
+# 333.
+
         .data
 cell:   .word 0, 0, 0
 m1:     .asciiz "read back: "

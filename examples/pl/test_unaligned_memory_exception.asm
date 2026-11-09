@@ -1,4 +1,4 @@
-#Ręczny test parzystości pod kątem błędu adresu przy obciążeniu.
+# Ładowanie słów wymaga adresu podzielnego przez cztery. W tym przykładzie użyto 0x10010001 do wywołania wyjątku.
 #Oczekiwane zachowanie:
 #- wyjątek ładowania zgłoszony w dniu 0x10010001
 #- zły adres / wyświetla się vaddr 0x10010001

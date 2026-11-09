@@ -1,6 +1,6 @@
 # Hello World para Run I/O
 # Imprime uma mensagem simples e termina.
-# É o exemplo mínimo da separação data/text e da convenção de syscalls.
+# A mensagem fica em .data e as instruções que a imprimem ficam em .text.
 
 .data
 # .asciiz reserva também o byte zero que termina a string.

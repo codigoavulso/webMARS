@@ -8,7 +8,7 @@ int row_sum(int row[]) {   // el parámetro es una dirección: la fila no se cop
 }
 
 int main(void) {
-  // Tema de arrays S3: arrays locales, listas de inicializacion, shapes multidimensionales y parametros array.
+  // Un arreglo de 2 por 3 se guarda por filas. Al pasar una fila a la función, se pasa su dirección.
   int matrix[2][3] = { {1, 2, 3}, {4, 5, 6} };   // dos filas de tres palabras, contiguas en memoria
   int total = row_sum(matrix[0]) + row_sum(matrix[1]);   // matrix[0] y matrix[1] son direcciones a 12 bytes de distancia
 

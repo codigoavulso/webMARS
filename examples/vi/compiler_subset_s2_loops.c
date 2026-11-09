@@ -1,6 +1,6 @@
 ﻿int main(void) {
-  //Yêu cầu C0-S2- hoặc cao hơn: vòng lặp for, ngắt/tiếp tục và ++/--.
-  int sum = 0;   //bộ tích lũy nằm trong một sổ đăng ký sau khi được biên dịch
+  //Yêu cầu C0-S2 hoặc cao hơn: vòng lặp for, ngắt/tiếp tục và ++/--.
+  int sum = 0;   // Bộ tích lũy giữ tổng chạy qua các lần lặp.
 
   for (int i = 0; i < 10; i++) {   //vòng lặp for trở thành phép so sánh cộng với nhánh lùi
     if ((i % 2) == 0) continue;   //tiếp tục nhảy đến phần tăng, bỏ qua phần thân

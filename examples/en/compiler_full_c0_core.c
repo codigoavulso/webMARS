@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   // the program passes the address, never the wh
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   // the contracts above are checked by the compiler, not printed
+int accumulate(stats_t box, int values[], int n) {   // The precondition limits n to the array bounds; the invariant tracks which indexes the loop can read.
   box->count = n;
   box->total = 0;
 

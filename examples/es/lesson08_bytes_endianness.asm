@@ -1,25 +1,14 @@
-# ==========================================================
-# Clase 08 - Bytes dentro de una palabra, y orden de bytes
+# 08 - Bytes y orden de bytes
 #
-# EL PROBLEMA
-#   Una palabra ocupa cuatro direcciones. A cual de los bytes se
-#   refiere la mas baja de ellas?
+# En la memoria little-endian de este simulador, el byte menos significativo de una palabra
+# queda en la dirección más baja.
 #
-# LO QUE HACE EL HARDWARE
-#   Esa eleccion es el orden de bytes, una decision de cableado
-#   tomada una vez para toda la maquina. Aqui MIPS es
-#   little-endian: el byte menos significativo esta en la
-#   direccion mas baja.
+# Guarda `0x04030201` como palabra y lee los bytes de los desplazamientos 0 a 3. El resultado es
+# 1, 2, 3, 4.
 #
-# LA SOLUCION
-#   Guardar una palabra y leerla byte a byte, dejando que el orden
-#   responda la pregunta.
-#
-# OBSERVE
-#   0x04030201 sale como 1 2 3 4. El byte escrito ultimo en el
-#   literal se lee primero. Se usa lbu y no lb para que un byte
-#   por encima de 127 no se extienda con signo.
-# ==========================================================
+# Prueba `0xFF` como byte menos significativo. La carga sin signo con `lbu` da 255 y la carga
+# con signo con `lb` da -1.
+
         .data
 cell:   .word 0
 m1:     .asciiz "bytes from low address: "

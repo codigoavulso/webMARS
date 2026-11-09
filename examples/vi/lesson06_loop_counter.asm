@@ -1,24 +1,13 @@
-# ==========================================================
-#Bài 06 - Bộ đếm trong phần mềm và phần cứng
+# 06 - Vòng lặp như một bộ đếm
 #
-#THE PROBLEM
-#Bộ đếm phần cứng là một thanh ghi, một bộ tăng và một
-#bộ so sánh. Cùng một chiếc máy trông như thế nào được viết
-#như hướng dẫn?
+# `$t0` là số tiếp theo cần in. `$t1` là giới hạn trên độc quyền, vì vậy giới hạn 11 sẽ in từ 1
+# đến 10.
 #
-#WHAT THE HARDWARE DOES
-#Chính xác là ba phần đó, mỗi phần một hướng dẫn: thanh ghi
-#giữ số đếm, addi là số tăng, slt có nhánh
-#là bộ so sánh quyết định ở vòng khác.
+# Việc so sánh chạy trước mỗi lần lặp. Việc tăng tiến tới giới hạn và bước nhảy lặp lại quá
+# trình kiểm tra.
 #
-#THE SOLUTION
-#Vòng lặp không phải là một khái niệm mới. Đó là logic tuần tự được đánh vần
-#ra ngoài, với PC là đồng hồ.
-#
-#WATCH FOR
-#$t0 là thanh ghi đếm và $t1 là giới hạn. Bước qua
-#một vòng đầy đủ và gọi tên dòng nào là phần nào.
-# ==========================================================
+# Thay đổi giới hạn thành 1 và chạy. Nhánh thoát được lấy trước lần in đầu tiên.
+
         .data
 sp:     .asciiz " "
         .text
@@ -28,7 +17,7 @@ main:
         li   $t1, 11            #giới hạn
 
 loop:
-        #Bất biến vòng lặp: $t0 là giá trị tiếp theo được in và vẫn nằm dưới $t1.
+        # Ở bài kiểm tra vòng lặp, $t0 là ứng cử viên tiếp theo. Chỉ in nếu nó ở dưới $t1.
         slt  $t2, $t0, $t1      #so sánh
         beq  $t2, $zero, endl   #thoát khi số lượng đạt đến giới hạn
 

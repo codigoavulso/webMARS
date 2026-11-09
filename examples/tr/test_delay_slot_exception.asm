@@ -1,4 +1,4 @@
-#Manuel eşlik testi:
+# CPU'nun bir gecikme yuvasında bir istisnayı nasıl kaydettiğini görmek için Nedeni ve EPC öğesini inceleyin.
 #Gecikmeli dallanma etkinleştirildiğinde gecikme yuvasında taşma meydana gelir.
 #Beklenen davranış:
 #- istisna mesajı: aritmetik taşma

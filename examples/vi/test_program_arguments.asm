@@ -1,5 +1,5 @@
 #Ví dụ về đối số chương trình
-#Sử dụng ví dụ này để kiểm tra khả năng hỗ trợ argc/argv trong MARS.
+# Hãy thử một đối số trong dấu ngoặc kép để xem làm thế nào các khoảng trắng có thể nằm trong một đối số duy nhất.
 #Để dùng thử, hãy đi tới Cài đặt > Đối số chương trình được cung cấp cho chương trình MIPS,
 #nhập một số đối số, sau đó Lắp ráp và chạy chương trình.
 #Đối số ví dụ: ola 123 "abc def"

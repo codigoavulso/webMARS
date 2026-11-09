@@ -15,7 +15,7 @@ digit_buf:  .space 16
 
 .text
 main:
-  lui  $s0, 0xffff                #MMIO base = 0xFFFF0000
+  lui  $s0, 0xffff                #Indirizzo di base MMIO = 0xFFFF0000
 
   la   $a0, msg_banner
   jal  send_zstr

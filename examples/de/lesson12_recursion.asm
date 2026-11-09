@@ -1,25 +1,14 @@
-# ==========================================================
-#Lektion 12 – Rekursion benötigt einen Frame pro Aufruf
+# 12 – Rekursion und Frames
 #
-#THE PROBLEM
-#Ein rekursiver Aufruf überschreibt $ra und das Argumentregister.
-#Der äußere Ruf hat dann keinen Weg zurück und keine Ahnung, was es ist
-#eigene n war.
+# Ein rekursiver Aufruf überschreibt `$ra` und verwendet `$a0` für sein eigenes Argument.
+# Speichern Sie beide Werte vor dem Anruf.
 #
-#WHAT THE HARDWARE DOES
-#Es stellt einen $ra bereit, keinen Stapel davon. Es wird nichts gespeichert
-#automatisch; Wenn der Code es nicht speichert, ist es weg.
+# Gehen Sie für jeden Wert von 5 bis 1 in `fact`. Jeder Aufruf reserviert acht Bytes,
+# einschließlich des Aufrufs, der 1 zurückgibt.
 #
-#THE SOLUTION
-#Bei jeder Aktivierung wird ein Frame auf dem Stapel geöffnet, dessen Inhalt erhalten bleibt
-#wird nach dem Anruf noch benötigt und stellt es unterwegs wieder her
-#raus. Die Stapeltiefe ist die Rekursionstiefe.
-#
-#WATCH FOR
-#Setzen Sie einen Haltepunkt auf dem Mul und beobachten Sie, wie $sp um 8 Prozent abfällt
-#Ebene. Die fünf gespeicherten Kopien von n machen das aus
-#Vervielfachung auf dem Rückweg möglich.
-# ==========================================================
+# Setzen Sie einen Haltepunkt auf `mul`, um den Rückweg zu beobachten. Jeder Aufruf lädt sein
+# eigenes Argument neu, multipliziert und gibt seinen Rahmen frei.
+
         .data
 m1:     .asciiz "5! = "
         .text
@@ -61,7 +50,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
-        #Stellen Sie den Status des Angerufenen wieder her und verwerfen Sie genau den Frame, der bei der Eingabe zugewiesen wurde.
+        # Stellen Sie die gespeicherte Absenderadresse wieder her, bevor Sie den Frame dieses Anrufs freigeben.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

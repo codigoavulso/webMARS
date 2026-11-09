@@ -1,27 +1,14 @@
-# ==========================================================
-#Leçon 14 - Nombres réels en 32 bits
+# 14 - Nombres réels en 32 bits
 #
-#THE PROBLEM
-#3.5 n’a pas sa place dans un registre entier. D'où vient le
-#partie fractionnaire va, et comment un très grand nombre est-il stocké
-#dans les mêmes 32 bits qu'un très petit ?
+# Un flottant simple précision possède un bit de signe, huit bits d'exposant et 23 bits de
+# fraction.
 #
-#WHAT THE HARDWARE DOES
-#IEEE-754 divise le mot en trois champs : un bit de signe,
-#huit bits d'exposant et vingt-trois bits de fraction. Le
-#l'exposant fait glisser le point binaire, c'est pourquoi le format est
-#appelé virgule flottante.
+# `lwc1` copie le modèle de bits dans un registre à virgule flottante. Ensuite, `add.s` ajoute
+# 3,5 et 1,25 pour produire 4,75.
 #
-#THE SOLUTION
-#Un fichier de registre séparé ($f0..$f31) et un additionneur séparé
-#gérer ces valeurs, c'est pourquoi les mnémoniques diffèrent :
-#lwc1 à charger, add.s à ajouter, syscall 2 à imprimer.
-#
-#WATCH FOR
-#Ouvrez Outils > Représentation à virgule flottante et entrez 3.5.
-#Regardez les trois champs, puis vérifiez que 4,75 est exact -
-#contrairement à 0,1, qui n'a pas de fraction binaire finie.
-# ==========================================================
+# Comparez les encodages de 4,75 et 0,1 dans l'outil Représentation en virgule flottante. 4,75
+# est exact ; 0,1 doit être arrondi.
+
         .data
 a:      .float 3.5
 b:      .float 1.25
@@ -29,7 +16,7 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
-        #Les adresses entières localisent toujours les données ; lwc1 déplace ses bits dans COP1.
+
         la   $a0, m1
         li   $v0, 4
         syscall

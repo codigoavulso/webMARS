@@ -1,27 +1,14 @@
-# ==========================================================
-#Lektion 13 – Eine Anweisung ist eine Zahl
+# 13 - Eine Anweisung ist eine Zahl
 #
-#THE PROBLEM
-#Der Prozessor ruft Wörter aus dem Speicher ab. Code lebt in
-#Erinnerung auch. Was unterscheidet also eine Anweisung von einer
-#Stück Daten?
+# Stellen Sie die Spalte „Code“ im Textsegment zusammen und überprüfen Sie sie. Jeder
+# Grundbefehl ist ein 32-Bit-Wort, das in Felder unterteilt ist.
 #
-#WHAT THE HARDWARE DOES
-#Nichts, jenseits dessen, in welches Register das Wort geladen wird. Die
-#Der PC wählt Wörter aus, die an den Decoder gehen; lw wählt Wörter aus
-#das geht in die Registerdatei. Die Bits sind von der gleichen Art.
+# Vergleichen Sie die beiden `add`-Anweisungen. Die Operationsfelder stimmen überein, während
+# die Registerfelder die unterschiedlichen Operanden kodieren.
 #
-#THE SOLUTION
-#Lesen Sie die Kodierung direkt aus. Zusammenbauen und öffnen
-#Hauptmenü > Ausführen: In der Spalte „Code“ wird jede Anweisung als angezeigt
-#das 32-Bit-Wort, das es wirklich ist.
-#
-#WATCH FOR
-#In dieser Lektion wird absichtlich nichts gedruckt – die Ausgabe ist die
-#Textsegment selbst. Vergleichen Sie die beiden Adds: gleicher Opcode und
-#Funktionsfelder, unterschiedliche Registernummern. Dann finden Sie die
-#Literal 100 im Addi-Wort.
-# ==========================================================
+# In `addi` enthalten die unteren 16 Bits die unmittelbare 100, also `0x0064`. Ändern Sie es auf
+# 101 und bauen Sie es erneut zusammen, um die Änderung zu sehen.
+
         .text
         .globl main
 main:

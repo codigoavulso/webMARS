@@ -1,24 +1,13 @@
-# ==========================================================
-#Lekcja 02 - Dopełnienie do dwójki
+# 02 – Dopełnienie do dwójki
 #
-#THE PROBLEM
-#Rejestr składa się z 32 przewodów, każdy wysoki lub niski. Nie ma drutu
-#dla znaku minus, ale liczby ujemne muszą działać.
+# W 32-bitowym uzupełnieniu do dwójki odwrócenie bitów liczby 5 i dodanie 1 daje reprezentację
+# -5.
 #
-#WHAT THE HARDWARE DOES
-#Odczytuje górny bit jako znak, ale nie jako osobną flagę:
-#-n jest przechowywane jako wzór bitowy, który dodany do n jest zawijany
-#zero. Odwróć każdy bit i dodaj jeden i masz to.
+# Program oblicza tę samą wartość na dwa sposoby: `sub` od zera, następnie `nor` i `addi`.
 #
-#THE SOLUTION
-#Odejmowanie nie wymaga drugiego obwodu. a - b staje się
-#a + (-b), więc jeden sumator obsługuje obie operacje.
-#
-#WATCH FOR
-#Obie połówki drukują -5. Drugi dociera do niego długą drogą,
-#z nor i addi, pokazujące, co sub robi wewnętrznie.
-#Ustaw Wartości na szesnastkowe, aby zobaczyć 0xFFFFFFFB.
-# ==========================================================
+# Obie ścieżki wypisują -5. Sprawdź `0xFFFFFFFB` w rejestrach, aby zobaczyć, jak te same bity
+# wyglądają w formacie szesnastkowym.
+
         .data
 m1:     .asciiz "zero minus 5 = "
 m2:     .asciiz "invert bits of 5, add 1 = "

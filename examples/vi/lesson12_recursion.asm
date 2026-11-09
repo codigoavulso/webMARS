@@ -1,25 +1,14 @@
-# ==========================================================
-#Bài 12 - Đệ quy cần một khung cho mỗi lệnh gọi
+# 12 - Đệ quy và khung
 #
-#THE PROBLEM
-#Cuộc gọi đệ quy ghi đè $ra và thanh ghi đối số.
-#Cuộc gọi bên ngoài sau đó không có đường quay lại và không biết nó là gì
-#riêng n là.
+# Lệnh gọi đệ quy ghi đè `$ra` và sử dụng `$a0` cho đối số của chính nó. Lưu cả hai giá trị
+# trước khi thực hiện cuộc gọi.
 #
-#WHAT THE HARDWARE DOES
-#Nó cung cấp một $ra, không phải một chồng chúng. Không có gì được lưu
-#tự động; nếu mã không lưu nó, nó sẽ biến mất.
+# Nhập vào `fact` cho mỗi giá trị từ 5 đến 1. Mỗi lệnh gọi đều dự trữ 8 byte, bao gồm cả lệnh
+# gọi trả về 1.
 #
-#THE SOLUTION
-#Mỗi lần kích hoạt sẽ mở một khung trên ngăn xếp, giữ lại những gì nó
-#vẫn sẽ cần sau cuộc gọi và khôi phục nó trên đường đi
-#ra ngoài. Độ sâu ngăn xếp là độ sâu đệ quy.
-#
-#WATCH FOR
-#Đặt điểm dừng trên mul và xem $sp giảm 8 mỗi
-#cấp độ. Năm bản sao được lưu của n là điều tạo nên
-#phép nhân trên đường trở về có thể.
-# ==========================================================
+# Đặt điểm ngắt trên `mul` để xem đường dẫn quay lại. Mỗi cuộc gọi sẽ tải lại đối số của chính
+# nó, nhân lên và giải phóng khung của nó.
+
         .data
 m1:     .asciiz "5! = "
         .text
@@ -61,7 +50,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
-        #Khôi phục trạng thái callee và loại bỏ chính xác khung được phân bổ khi nhập.
+        # Khôi phục địa chỉ trả lại đã lưu trước khi giải phóng khung của cuộc gọi này.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

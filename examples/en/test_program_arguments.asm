@@ -1,5 +1,5 @@
 # Program arguments example.
-# Use this example to test argc/argv support in MARS.
+# Try an argument in quotes to see how spaces can stay inside a single argument.
 # To try it, go to Settings > Program arguments provided to MIPS program,
 # enter some arguments, then Assemble and run the program.
 # Example arguments: ola 123 "abc def"

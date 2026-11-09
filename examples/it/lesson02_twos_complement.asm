@@ -1,24 +1,13 @@
-# ==========================================================
-#Lezione 02 - Complemento a due
+# 02 - Complemento a due
 #
-#THE PROBLEM
-#Un registro è composto da 32 fili, ciascuno alto o basso. Non c'è nessun filo
-#per un segno meno, tuttavia, i numeri negativi devono funzionare.
+# Nel complemento a due a 32 bit, invertendo i bit di 5 e aggiungendo 1 si produce la
+# rappresentazione di -5.
 #
-#WHAT THE HARDWARE DOES
-#Legge la parte superiore come un segno, ma non come un flag separato:
-#-n viene memorizzato come sequenza di bit che, sommata a n, va a capo
-#zero. Inverti ogni bit e aggiungine uno e il gioco è fatto.
+# Il programma calcola lo stesso valore in due modi: `sub` da zero, quindi `nor` e `addi`.
 #
-#THE SOLUTION
-#La sottrazione non necessita di un secondo circuito. a - b diventa
-#a + (-b), quindi un sommatore serve entrambe le operazioni.
-#
-#WATCH FOR
-#Entrambe le metà stampano -5. Il secondo lo raggiunge per la lunga strada,
-#con nor e addi, che mostra cosa fa sub internamente.
-#Imposta i valori su esadecimale per vedere 0xFFFFFFFB.
-# ==========================================================
+# Entrambi i percorsi stampano -5. Ispeziona `0xFFFFFFFB` nei registri per vedere come appaiono
+# gli stessi bit in esadecimale.
+
         .data
 m1:     .asciiz "zero minus 5 = "
 m2:     .asciiz "invert bits of 5, add 1 = "

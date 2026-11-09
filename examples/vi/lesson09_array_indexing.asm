@@ -1,24 +1,13 @@
-# ==========================================================
-#Bài 09 - Lập chỉ mục cho mảng
+# 09 - Lập chỉ mục một mảng
 #
-#THE PROBLEM
-#Lệnh tải cung cấp một thanh ghi cơ sở và một hằng số
-#bù đắp. Không có gì khác. Vậy làm sao đạt được a[i] khi tôi chỉ
-#được biết đến vào thời điểm chạy, đang ngồi trong sổ đăng ký?
+# Mỗi phần tử mảng chiếm bốn byte. Dịch chuyển chỉ số sang trái hai để tính toán độ lệch byte
+# của nó.
 #
-#WHAT THE HARDWARE DOES
-#Nó thêm cơ sở vào bất cứ thứ gì mà sổ đăng ký nắm giữ. chỉ số
-#do đó phải ở dạng byte chứ không phải ở dạng phần tử.
+# Thực hiện theo trình tự `sll`, `add`, `lw`: chia tỷ lệ chỉ mục, thêm địa chỉ cơ sở và tải phần
+# tử.
 #
-#THE SOLUTION
-#Chia tỷ lệ chỉ mục theo kích thước phần tử, sau đó thêm. Đối với bốn byte
-#nói rằng tỷ lệ là sự dịch chuyển còn lại hai, chi phí
-#không có gì.
-#
-#WATCH FOR
-#Ba dòng sll, add, lw là những gì a[i] biên dịch thành.
-#Bước qua một lần lặp và đọc $t5 và $t6.
-# ==========================================================
+# Ở chỉ số 2, `$t5` là 8 và `$t6` trỏ đến giá trị 30. Năm phần tử cộng lại bằng 150.
+
         .data
 arr:    .word 10, 20, 30, 40, 50
 m1:     .asciiz "sum = "

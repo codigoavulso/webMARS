@@ -1,24 +1,14 @@
-# ==========================================================
-# Clase 04 - Desplazamientos, o multiplicar con cables
+# 04 - Desplazamientos y potencias de dos
 #
-# EL PROBLEMA
-#   Un multiplicador general es uno de los bloques mas caros de
-#   un datapath. Multiplicar por 8 no deberia costar tanto.
+# Desplazar tres posiciones a la izquierda multiplica por 8 cuando el resultado cabe en el
+# registro. Los bits que salen por el extremo se pierden.
 #
-# LO QUE HACE EL HARDWARE
-#   Un desplazamiento no es aritmetica: son los mismos bits leidos
-#   desde cables distintos. Desplazar n a la izquierda multiplica
-#   por 2^n y solo cuesta enrutado.
+# A la derecha, `srl` rellena con ceros y `sra` copia el bit de signo. Al desplazar -16 dos
+# posiciones, se obtiene 1073741820 y -4, respectivamente.
 #
-# LA SOLUCION
-#   Las potencias de dos pasan a ser desplazamientos. Fijese en
-#   los dos a la derecha: srl mete ceros arriba, sra copia el bit
-#   de signo, asi que solo sra divide bien un negativo.
-#
-# OBSERVE
-#   -16 >> 2 da -4 con sra, pero un positivo enorme con srl. Los
-#   bits se movieron igual; cambia lo que entro por arriba.
-# ==========================================================
+# Prueba -15 con `sra`. El resultado es -4 porque el desplazamiento redondea hacia abajo,
+# mientras que la división con signo redondea hacia cero.
+
         .data
 m1:     .asciiz "5 << 3 = "
 m2:     .asciiz "-16 >> 2 arithmetic = "

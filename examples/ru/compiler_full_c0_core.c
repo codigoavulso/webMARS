@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //программа передает адре�
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //приведенные выше контракты проверяются компилятором, а не печатаются
+int accumulate(stats_t box, int values[], int n) {   // Предварительное условие ограничивает n пределами массива; инвариантные дорожки, индексы которых может читать цикл.
   box->count = n;
   box->total = 0;
 

@@ -1,24 +1,14 @@
-# ==========================================================
-#Ders 07 - Bellekteki kelimeler ve adreslerin neden dörde atladığı
+# 07 - Hafızadaki kelimeler
 #
-#THE PROBLEM
-#Bellek her seferinde bir bayt olarak adreslenir, ancak bir kayıt tutulur
-#dört bayt. Tek bir adres aslında neyi seçer?
+# Bellek adresleri baytları sayar. Her kelime dört bayt kaplar, dolayısıyla `lw` ve `sw` burada
+# 0, 4 ve 8 ofsetlerini kullanır.
 #
-#WHAT THE HARDWARE DOES
-#lw ve sw tek erişimde dört baytı hareket ettirir, böylece ardışık
-#kelimeler dört adrese ayrı ayrı oturur. Düşük iki bit
-#adres sıfır olmalıdır: bu hizalama,
-#donanım tek bir döngüde tüm sözcüğü getirir.
+# Bir kelime adresi dördün katı olmalıdır. 4 yerine ofset 1'in kullanılması bu programda
+# hizalama istisnasına neden olur.
 #
-#THE SOLUTION
-#Adres aritmetiği bayt cinsinden yapılır, dolayısıyla kelimelere dayalı bir dizin
-#her zaman dörde ölçeklenir.
-#
-#WATCH FOR
-#Birleştirin, ardından 0x10010000 adresindeki Veri Segmentini açın.
-#bir satırın bitişik sütunlarında üç değer görünür.
-# ==========================================================
+# Mağazalardan sonra Veri Segmentindeki `cell`'ye bakın. Bitişik üç kelime 111, 222 ve 333'ü
+# içermelidir.
+
         .data
 cell:   .word 0, 0, 0
 m1:     .asciiz "read back: "

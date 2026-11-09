@@ -1,27 +1,13 @@
-# ==========================================================
-#Lezione 14 - Numeri reali a 32 bit
+# 14 - Numeri reali a 32 bit
 #
-#THE PROBLEM
-#3.5 non ha posto in un registro di numeri interi. Da dove viene il
-#parte frazionaria e come viene memorizzato un numero molto grande
-#negli stessi 32 bit di uno molto piccolo?
+# Un float a precisione singola ha un bit di segno, otto bit di esponente e 23 bit di frazione.
 #
-#WHAT THE HARDWARE DOES
-#IEEE-754 divide la parola in tre campi: un bit di segno,
-#otto bit esponenti e ventitré bit frazionari. Il
-#l'esponente fa scorrere il punto binario, motivo per cui il formato è
-#chiamato virgola mobile.
+# `lwc1` copia la sequenza di bit in un registro a virgola mobile. Quindi `add.s` aggiunge 3,5 e
+# 1,25 per produrre 4,75.
 #
-#THE SOLUTION
-#Un file di registro separato ($f0..$f31) e un sommatore separato
-#gestire questi valori, motivo per cui i mnemonici differiscono:
-#lwc1 da caricare, add.s da aggiungere, syscall 2 da stampare.
-#
-#WATCH FOR
-#Apri Strumenti > Rappresentazione in virgola mobile e inserisci 3.5.
-#Osserva i tre campi, quindi verifica che 4,75 sia esatto -
-#a differenza di 0,1, che non ha frazione binaria finita.
-# ==========================================================
+# Confronta le codifiche di 4.75 e 0.1 nello strumento Rappresentazione in virgola mobile. 4,75
+# è esatto; 0,1 necessita di arrotondamento.
+
         .data
 a:      .float 3.5
 b:      .float 1.25
@@ -29,7 +15,7 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
-        #Gli indirizzi interi individuano comunque i dati; lwc1 sposta i suoi bit in COP1.
+
         la   $a0, m1
         li   $v0, 4
         syscall

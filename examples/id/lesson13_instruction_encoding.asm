@@ -1,27 +1,14 @@
-# ==========================================================
-#Pelajaran 13 - Instruksi adalah sebuah angka
+# 13 - Instruksi adalah angka
 #
-#THE PROBLEM
-#Prosesor mengambil kata-kata dari memori. Kode tinggal di
-#memori juga. Lalu apa yang membedakan instruksi dengan a
-#sepotong data?
+# Rakit dan periksa kolom Kode di Segmen Teks. Setiap instruksi dasar adalah kata 32-bit yang
+# dibagi menjadi beberapa bidang.
 #
-#WHAT THE HARDWARE DOES
-#Tidak ada, di luar register mana kata tersebut dimuat. Itu
-#PC memilih kata-kata yang masuk ke decoder; aku memilih kata-kata
-#yang masuk ke file register. Bitnya sama jenisnya.
+# Bandingkan dua instruksi `add`. Bidang operasi cocok, sedangkan bidang register mengkodekan
+# operan yang berbeda.
 #
-#THE SOLUTION
-#Baca pengkodeannya secara langsung. Rakit dan buka
-#Utama > Jalankan: kolom Kode menampilkan setiap instruksi sebagai
-#kata 32-bit sebenarnya.
-#
-#WATCH FOR
-#Pelajaran ini tidak mencetak apa pun dengan sengaja - outputnya adalah
-#Segmen Teks itu sendiri. Bandingkan dua penambahan: opcode yang sama dan
-#bidang fungsi, nomor register yang berbeda. Kemudian temukan
-#literal 100 di dalam kata addi.
-# ==========================================================
+# Dalam `addi`, 16 bit rendah menampung 100, yaitu `0x0064`. Ubah menjadi 101 dan pasang kembali
+# untuk melihat perubahannya.
+
         .text
         .globl main
 main:

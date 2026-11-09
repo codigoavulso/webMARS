@@ -1,6 +1,6 @@
 ﻿int main(void) {
-  // Requires C0-S2- or higher: for loops, break/continue, and ++/--.
-  int sum = 0;   // the accumulator lives in a register once compiled
+  // Requires C0-S2 or higher: for loops, break/continue, and ++/--.
+  int sum = 0;   // The accumulator keeps the running sum across iterations.
 
   for (int i = 0; i < 10; i++) {   // a for loop becomes a comparison plus a backward branch
     if ((i % 2) == 0) continue;   // continue jumps to the increment, skipping the body

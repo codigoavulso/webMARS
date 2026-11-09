@@ -158,10 +158,19 @@ class MetricsTests(unittest.TestCase):
     def test_build_is_allowlisted_and_reported_without_session_ids(self):
         now = 1788600000
         metrics.record(self.database, event(build="202611082315"), now=now)
+        metrics.record(self.database, event(build="202611082315", event="run_success"), now=now)
+        metrics.record(self.database, event(build="202611082316"), now=now)
         metrics.record(self.database, event(session="b" * 32), now=now)
+        metrics.record(self.database, event(session="c" * 32, v=2, context="internal", automation="none",
+                                            interaction="trusted", visit="none", build="202611082315"), now=now)
         result = metrics.public_statistics(self.database, now=now)
         self.assertEqual(result["breakdowns"]["build"], [
-            {"key": "202611082315", "sessions": 1}, {"key": "unknown", "sessions": 1}])
+            {"key": "202611082315", "sessions": 2, "events": 3},
+            {"key": "202611082316", "sessions": 1, "events": 1},
+            {"key": "unknown", "sessions": 1, "events": 1}])
+        self.assertEqual(result["totals"]["sessions"], 3)
+        internal = metrics.public_statistics(self.database, now=now, audience="internal")
+        self.assertEqual(internal["breakdowns"]["build"], [{"key": "202611082315", "sessions": 1, "events": 1}])
         self.assertFalse(metrics.validate_event(event(build="name@example.test")))
         self.assertFalse(metrics.validate_event(event(build=202611082315)))
 

@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //程序传递地址，而不是整个块
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //上面的合约由编译器检查，不打印
+int accumulate(stats_t box, int values[], int n) {   // 前提条件将 n 限制为数组边界；不变跟踪循环可以读取的索引。
   box->count = n;
   box->total = 0;
 

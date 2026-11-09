@@ -1,25 +1,14 @@
-# ==========================================================
-#Bài 10 - Ngăn xếp là một thanh ghi và một offset
+# 10 - Ngăn xếp
 #
-#THE PROBLEM
-#Có 32 thanh ghi và chúng được chia sẻ bởi mọi phần của
-#mã. Một giá trị sẽ đi đâu khi nó phải tồn tại trong công việc đó
-#sẽ sử dụng lại những sổ đăng ký đó?
+# Theo quy ước, ngăn xếp sẽ phát triển về các địa chỉ thấp hơn. Trừ 8 từ `$sp` để dành chỗ cho
+# hai từ.
 #
-#WHAT THE HARDWARE DOES
-#Không có gì đặc biệt cả. $sp là một thanh ghi thông thường
-#tình cờ trỏ vào bộ nhớ và ngăn xếp tăng dần về phía
-#địa chỉ thấp hơn hoàn toàn theo quy ước.
+# Chương trình lưu hai thanh ghi với `sw`, xóa chúng, sau đó khôi phục giá trị của chúng bằng
+# `lw`.
 #
-#THE SOLUTION
-#Đặt trước dung lượng là một phép trừ khỏi $sp, giải phóng nó
-#bổ sung. Đẩy và bật chỉ là sw và lw.
-#
-#WATCH FOR
-#Các sổ đăng ký được cố tình xóa giữa các cửa hàng
-#và tải, vì vậy các giá trị được in chỉ có thể đến
-#trở về từ ký ức. Xem $sp di chuyển 8 và quay lại.
-# ==========================================================
+# Xem `$sp` trước khi đặt chỗ, trong thời gian mở cửa hàng và sau khi ra mắt. Giá trị cuối cùng
+# của nó phải khớp với giá trị ban đầu của nó.
+
         .data
 m1:     .asciiz "restored: "
 sp2:    .asciiz " "

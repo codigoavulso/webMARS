@@ -1,27 +1,13 @@
-# ==========================================================
-#Bài 14 - Số thực 32 bit
+# 14 - Số thực 32 bit
 #
-#THE PROBLEM
-#3.5 không có chỗ trong thanh ghi số nguyên. ở đâu
-#phần phân số đi, và một số rất lớn được lưu trữ như thế nào
-#trong cùng 32 bit như một bit rất nhỏ?
+# Một float có độ chính xác đơn có một bit dấu, tám bit số mũ và 23 bit phân số.
 #
-#WHAT THE HARDWARE DOES
-#IEEE-754 chia từ thành ba trường: một bit dấu,
-#tám bit số mũ và hai mươi ba bit phân số. các
-#số mũ trượt điểm nhị phân, đó là lý do tại sao định dạng là
-#gọi là dấu phẩy động.
+# `lwc1` sao chép mẫu bit vào thanh ghi dấu phẩy động. Sau đó `add.s` cộng 3,5 và 1,25 để được
+# 4,75.
 #
-#THE SOLUTION
-#Một tệp đăng ký riêng ($f0..$f31) và một bộ cộng riêng
-#xử lý các giá trị này, đó là lý do tại sao cách ghi nhớ lại khác nhau:
-#lwc1 để tải, thêm.s để thêm, syscall 2 để in.
-#
-#WATCH FOR
-#Mở Công cụ > Biểu diễn dấu phẩy động và nhập 3.5.
-#Xem ba trường, sau đó kiểm tra xem 4,75 có chính xác không -
-#không giống như 0,1, không có phân số nhị phân hữu hạn.
-# ==========================================================
+# So sánh mã hóa 4,75 và 0,1 trong công cụ Biểu diễn dấu phẩy động. 4,75 là chính xác; 0,1 cần
+# làm tròn.
+
         .data
 a:      .float 3.5
 b:      .float 1.25
@@ -29,7 +15,7 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
-        #Địa chỉ số nguyên vẫn định vị dữ liệu; lwc1 di chuyển các bit của nó vào COP1.
+
         la   $a0, m1
         li   $v0, 4
         syscall

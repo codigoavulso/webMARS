@@ -1,27 +1,15 @@
-# ==========================================================
-# Lesson 15 - Why stride changes the speed
+# 15 - Why stride changes the speed
 #
-# THE PROBLEM
-#   The two loops below read the same array and perform the same
-#   number of loads. On a real machine one is far slower. The
-#   instruction count cannot explain it.
+# Both loops use the same array. The first reads all 256 words; the second reads every 16th
+# word, making only 16 loads.
 #
-# WHAT THE HARDWARE DOES
-#   Memory does not deliver single words. A miss fetches a whole
-#   block, betting that neighbouring words will be wanted soon.
-#   A stride of one collects that bet; a stride of sixteen pays
-#   for a block and reads one word of it.
+# With cache blocks of 16 words, sequential reads can reuse each fetched block. The second loop
+# advances to a new block at each load.
 #
-# THE SOLUTION
-#   Nothing in the code changes. Locality is a property of the
-#   access pattern, and it is the pattern that must be fixed.
-#
-# WATCH FOR
-#   Open Tools > Data Cache Simulator, press Connect to MIPS,
-#   then run. Compare the hit rate of the two loops. Both sums
-#   print 0 because the array is zeroed - the number is not the
-#   point here, the hit rate is.
-# ==========================================================
+# Connect the simulator to MIPS, tick «Enabled» and set the block size to 16 words.
+# Use the Data Cache Simulator with a breakpoint at `far` to inspect the first loop. Reset the
+# cache statistics there before running the second loop, and compare hit rates.
+
         .data
 buf:    .word 0:256
 m1:     .asciiz "stride 1 sum = "
@@ -29,7 +17,7 @@ m2:     .asciiz "stride 16 sum = "
         .text
         .globl main
 main:
-# ---- every word of each block ----
+# Sequential pass: all 256 words.
         la   $t0, buf
         li   $t1, 0
         li   $t2, 256
@@ -55,11 +43,11 @@ endnear:
         li   $a0, 10
         syscall
 
-# ---- one word per block, sixteen words apart ----
+# Strided pass: one load every sixteen words.
         li   $t1, 0
         li   $t3, 0
 far:
-        # Adding 16 skips 64 bytes per iteration: commonly one whole cache block.
+        # The next address is 64 bytes away: sixteen words at four bytes each.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

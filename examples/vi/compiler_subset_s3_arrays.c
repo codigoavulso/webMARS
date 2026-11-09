@@ -8,7 +8,7 @@ int row_sum(int row[]) {   //tham số là một địa chỉ: hàng không đư
 }
 
 int main(void) {
-  //Chủ đề về mảng S3: mảng cục bộ, danh sách khởi tạo, hình dạng đa chiều và tham số mảng.
+  // Mảng 2 x 3 được sắp xếp theo từng hàng. Đi qua một hàng sẽ chuyển địa chỉ của nó.
   int matrix[2][3] = { {1, 2, 3}, {4, 5, 6} };   //hai hàng ba chữ liền nhau trong trí nhớ
   int total = row_sum(matrix[0]) + row_sum(matrix[1]);   //ma trận [0] và ma trận [1] là các địa chỉ cách nhau 12 byte
 

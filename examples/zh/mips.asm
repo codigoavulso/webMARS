@@ -189,7 +189,7 @@ date_colon: .asciiz ":"
 date_utc: .asciiz " UTC"
 date_days_prefix: .asciiz "days since the epoch: "
 
-#---- BASIC interpreter ----
+# ---- BASIC 解释器 ----
 basic_banner: .asciiz "MARS-OS BASIC - 64 program lines, 26 integer variables A..Z\r\nStatements PRINT LET INPUT IF/THEN GOTO GOSUB RETURN FOR/NEXT REM END CLS\r\nCommands   RUN LIST NEW SAVE name LOAD name BYE     Ctrl-C stops a program\r\n"
 basic_ready: .asciiz "READY.\r\n"
 basic_prompt: .asciiz "] "

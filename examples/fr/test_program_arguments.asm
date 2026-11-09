@@ -1,5 +1,5 @@
 #Exemple d'arguments de programme.
-#Utilisez cet exemple pour tester la prise en charge d'argc/argv dans MARS.
+# Essayez un argument entre guillemets pour voir comment les espaces peuvent rester à l'intérieur d'un seul argument.
 #Pour l'essayer, allez dans Paramètres > Arguments du programme fournis au programme MIPS,
 #entrez quelques arguments, puis assemblez et exécutez le programme.
 #Exemples d'arguments : ola 123 "abc def"

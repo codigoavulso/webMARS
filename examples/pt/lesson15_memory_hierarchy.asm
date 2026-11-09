@@ -1,27 +1,15 @@
-# ==========================================================
-# Aula 15 - Porque o passo altera a velocidade
+# 15 - Porque o passo altera a velocidade
 #
-# O PROBLEMA
-#   Os dois ciclos abaixo leem o mesmo array e fazem o mesmo
-#   numero de leituras. Numa maquina real um deles e muito mais
-#   lento. A contagem de instrucoes nao explica isso.
+# Os dois ciclos usam o mesmo vetor. O primeiro lê as 256 palavras e o segundo lê uma palavra em
+# cada 16, num total de 16 leituras.
 #
-# O QUE O HARDWARE FAZ
-#   A memoria nao entrega palavras isoladas. Uma falha traz um
-#   bloco inteiro, apostando que as palavras vizinhas serao
-#   pedidas em breve. Um passo de um cobra essa aposta; um passo
-#   de dezasseis paga um bloco e le uma palavra dele.
+# Com blocos de cache de 16 palavras, as leituras consecutivas podem reutilizar cada bloco
+# carregado. O segundo ciclo avança um bloco em cada leitura.
 #
-# A SOLUCAO
-#   Nada muda no codigo. A localidade e uma propriedade do padrao
-#   de acesso, e e o padrao que tem de ser corrigido.
-#
-# OBSERVE
-#   Abra Ferramentas > Data Cache Simulator, prima Connect to
-#   MIPS e execute. Compare a taxa de acertos dos dois ciclos. As
-#   duas somas dao 0 porque o array esta a zeros - o numero nao
-#   interessa aqui, a taxa de acertos e que interessa.
-# ==========================================================
+# Ligue o simulador ao MIPS, marque «Ativado» e defina blocos de 16 palavras.
+# No Simulador de cache de dados, pare em `far` para analisar o primeiro ciclo. Reinicie aí as
+# estatísticas da cache antes do segundo ciclo e compare as taxas de acerto.
+
         .data
 buf:    .word 0:256
 m1:     .asciiz "stride 1 sum = "
@@ -29,7 +17,7 @@ m2:     .asciiz "stride 16 sum = "
         .text
         .globl main
 main:
-# ---- every word of each block ----
+# Passagem sequencial pelas 256 palavras.
         la   $t0, buf
         li   $t1, 0
         li   $t2, 256
@@ -55,11 +43,11 @@ endnear:
         li   $a0, 10
         syscall
 
-# ---- one word per block, sixteen words apart ----
+# Passagem com uma leitura a cada dezasseis palavras.
         li   $t1, 0
         li   $t3, 0
 far:
-        # Somar 16 salta 64 bytes por iteração: normalmente um bloco de cache inteiro.
+        # O endereço seguinte fica 64 bytes adiante, ou seja, dezasseis palavras de quatro bytes.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

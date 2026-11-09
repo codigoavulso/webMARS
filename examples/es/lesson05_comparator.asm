@@ -1,23 +1,14 @@
-# ==========================================================
-# Clase 05 - El comparador y el salto
+# 05 - Comparador y salto
 #
-# EL PROBLEMA
-#   Una decision necesita un bit, pero comparar dos numeros de 32
-#   bits es una resta. Como decide una resta?
+# La instrucción `slt` compara dos enteros con signo y escribe 1 si el primero es menor, o 0 en
+# caso contrario.
 #
-# LO QUE HACE EL HARDWARE
-#   slt resta y descarta todo menos el signo, escribiendo 0 o 1.
-#   El salto entrega ese bit a la logica del PC, que suma un
-#   desplazamiento o deja avanzar el PC.
+# Con 7 y 12, `$t2` vale 1. Por eso, `beq` no salta a `notless` y la ejecución sigue con la
+# instrucción siguiente.
 #
-# LA SOLUCION
-#   Comparar a un registro y saltar segun ese registro. El control
-#   de flujo es aritmetica mas un multiplexor en el PC.
-#
-# OBSERVE
-#   Tras slt, $t2 vale 1. Pase el beq y siga el PC en la barra de
-#   estado: salta en lugar de avanzar cuatro.
-# ==========================================================
+# Con los saltos retardados desactivados, ejecuta `beq` y observa el PC. Intercambia los dos
+# valores de entrada y compara el nuevo destino.
+
         .data
 lo:     .asciiz "a is smaller"
 hi:     .asciiz "a is not smaller"

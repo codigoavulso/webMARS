@@ -1,4 +1,4 @@
-# Manual parity test:
+# Inspect Cause and EPC to see how the CPU records an exception in a delay slot.
 # With delayed branching enabled, the overflow happens in the delay slot.
 # Expected behavior:
 # - exception message: arithmetic overflow

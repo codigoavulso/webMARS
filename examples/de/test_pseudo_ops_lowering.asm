@@ -1,4 +1,4 @@
-#Manueller Paritätstest zur Pseudo-Op-Absenkung.
+# Stellen Sie „Source“ und „Basic“ im Textsegment zusammen und vergleichen Sie sie, um zu sehen, wie sich Pseudoanweisungen erweitern.
 #Überprüfen Sie nach der Ausführung das Datensegment bei den Ergebnissen:
 #Ergebnisse[0] = 1 seq 5,5
 #Ergebnisse[1] = 1 SGE 5,5

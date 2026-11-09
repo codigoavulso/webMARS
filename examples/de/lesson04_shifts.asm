@@ -1,24 +1,14 @@
-# ==========================================================
-#Lektion 04 – Verschiebungen oder Multiplikation mit Drähten
+# 04 - Verschiebungen und Zweierpotenzen
 #
-#THE PROBLEM
-#Ein allgemeiner Multiplikator ist einer der teuersten Blöcke überhaupt
-#ein Datenpfad. Die Multiplikation mit 8 sollte nicht so viel kosten.
+# Eine Linksverschiebung um 3 multipliziert sich mit 8, wenn das Ergebnis passt. Über die Kante
+# hinaus verschobene Bits werden verworfen.
 #
-#WHAT THE HARDWARE DOES
-#Eine Verschiebung ist überhaupt keine Arithmetik: Es werden dieselben Bits gelesen
-#aus verschiedenen Drähten. Eine Verschiebung um n nach links multipliziert mit 2^n
-#und kostet nur Routing.
+# Rechts füllt `srl` mit Nullen und `sra` kopiert das Vorzeichenbit. Erwarten Sie für -16,
+# verschoben um 2, 1073741820 bzw. -4.
 #
-#THE SOLUTION
-#Zweierpotenzen werden zu Verschiebungen. Beachten Sie die beiden Rechtsverschiebungen: srl
-#Füttert oben Nullen ein, sra kopiert das Vorzeichenbit, also nur
-#sra dividiert eine negative Zahl richtig.
-#
-#WATCH FOR
-#-16 >> 2 ergibt -4 bei SRA, aber ein großes Plus bei Srl. Die
-#Bits bewegten sich identisch; Nur was oben eingegeben wird, unterscheidet sich.
-# ==========================================================
+# Versuchen Sie es mit -15 mit `sra`. Das Ergebnis ist -4, da die Verschiebung abrundet;
+# vorzeichenbehaftete Division rundet gegen Null.
+
         .data
 m1:     .asciiz "5 << 3 = "
 m2:     .asciiz "-16 >> 2 arithmetic = "

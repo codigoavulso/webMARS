@@ -1,4 +1,4 @@
-#Ręczny test parzystości dla obniżania pseudo-operacji.
+# Złóż i porównaj Source z Basic w segmencie tekstu, aby zobaczyć, jak rozwijają się pseudoinstrukcje.
 #Po uruchomieniu sprawdź segment danych w wynikach:
 #wyniki[0] = 1 sekwencja 5,5
 #wyniki[1] = 1 stopień 5,5

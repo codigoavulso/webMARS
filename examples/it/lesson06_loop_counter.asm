@@ -1,24 +1,13 @@
-# ==========================================================
-#Lezione 06 - Un contatore, nel software e nell'hardware
+# 06 - Loop come contatore
 #
-#THE PROBLEM
-#Un contatore hardware è un registro, un incrementatore e un
-#comparatore. Che aspetto ha scritto la stessa macchina
-#come istruzioni?
+# `$t0` è il numero successivo da stampare. `$t1` è il limite superiore esclusivo, quindi un
+# limite di 11 stampa da 1 a 10.
 #
-#WHAT THE HARDWARE DOES
-#Esattamente quelle tre parti, una per istruzione: il registro
-#contiene il conteggio, addi è l'incrementatore, slt con un ramo
-#è il comparatore che decide un altro round.
+# Il confronto viene eseguito prima di ogni iterazione. L'incremento avanza verso il limite e il
+# salto ripete il controllo.
 #
-#THE SOLUTION
-#Un ciclo non è un concetto nuovo. È scritta in logica sequenziale
-#fuori, con il PC come orologio.
-#
-#WATCH FOR
-#$t0 è il registro di conteggio e $t1 il limite. Passa attraverso
-#un giro completo e indicare quale linea è quale parte.
-# ==========================================================
+# Cambia il limite a 1 e corri. Il ramo di uscita viene preso prima della prima stampa.
+
         .data
 sp:     .asciiz " "
         .text
@@ -28,7 +17,7 @@ main:
         li   $t1, 11            #il limite
 
 loop:
-        #Invariante del ciclo: $t0 è il valore successivo da stampare e rimane sotto $t1.
+        # Al loop test, $t0 è il candidato successivo. Stampalo solo se è inferiore a $t1.
         slt  $t2, $t0, $t1      #comparatore
         beq  $t2, $zero, endl   #esce quando il conteggio raggiunge il limite
 

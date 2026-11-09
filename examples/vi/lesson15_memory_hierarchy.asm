@@ -1,27 +1,15 @@
-# ==========================================================
-#Bài 15 - Tại sao sải chân làm thay đổi tốc độ
+# 15 - Tại sao sải chân làm thay đổi tốc độ
 #
-#THE PROBLEM
-#Hai vòng lặp bên dưới đọc cùng một mảng và thực hiện cùng một
-#số lượng tải. Trên máy thật thì tốc độ chậm hơn rất nhiều. các
-#số lượng hướng dẫn không thể giải thích nó.
+# Cả hai vòng lặp đều sử dụng cùng một mảng. Đầu tiên đọc tất cả 256 từ; cái thứ hai đọc mỗi từ
+# thứ 16, chỉ thực hiện được 16 lần tải.
 #
-#WHAT THE HARDWARE DOES
-#Trí nhớ không cung cấp những từ đơn lẻ. Một lần bỏ lỡ lấy toàn bộ
-#chặn, cá rằng các từ lân cận sẽ sớm bị truy nã.
-#Một bước tiến của một người sẽ thu được số tiền đặt cược đó; một bước tiến mười sáu lần trả lương
-#cho một khối và đọc một từ của nó.
+# Với các khối bộ đệm gồm 16 từ, các lần đọc tuần tự có thể sử dụng lại từng khối được tìm nạp.
+# Vòng lặp thứ hai tiến tới một khối mới ở mỗi lần tải.
 #
-#THE SOLUTION
-#Không có gì trong mã thay đổi. Địa phương là tài sản của
-#mẫu truy cập và đó là mẫu phải được sửa.
-#
-#WATCH FOR
-#Mở Công cụ > Trình mô phỏng bộ đệm dữ liệu, nhấn Kết nối với MIPS,
-#sau đó chạy. So sánh tốc độ trúng của hai vòng. Cả hai tổng
-#in 0 vì mảng bằng 0 - số không phải là
-#điểm ở đây, tỷ lệ trúng là.
-# ==========================================================
+# Kết nối bộ mô phỏng với MIPS, đánh dấu «Đã bật» và đặt kích thước khối thành 16 từ.
+# Sử dụng Trình mô phỏng bộ đệm dữ liệu với điểm dừng ở `far` để kiểm tra vòng lặp đầu tiên. Đặt
+# lại số liệu thống kê bộ đệm ở đó trước khi chạy vòng lặp thứ hai và so sánh tỷ lệ trúng.
+
         .data
 buf:    .word 0:256
 m1:     .asciiz "stride 1 sum = "
@@ -29,7 +17,7 @@ m2:     .asciiz "stride 16 sum = "
         .text
         .globl main
 main:
-#---- từng từ của mỗi khối ----
+# Pass tuần tự: tất cả 256 từ.
         la   $t0, buf
         li   $t1, 0
         li   $t2, 256
@@ -55,11 +43,11 @@ endnear:
         li   $a0, 10
         syscall
 
-#---- một từ mỗi khối, cách nhau mười sáu từ ----
+# Strided pass: tải một lần cho mỗi mười sáu từ.
         li   $t1, 0
         li   $t3, 0
 far:
-        #Thêm 16 lần bỏ qua 64 byte mỗi lần lặp: thường là toàn bộ khối bộ đệm.
+        # Địa chỉ tiếp theo cách đó 64 byte: mười sáu từ, mỗi từ bốn byte.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

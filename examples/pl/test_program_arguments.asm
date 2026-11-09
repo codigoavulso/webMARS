@@ -1,5 +1,5 @@
 #Przykład argumentów programu.
-#Użyj tego przykładu, aby przetestować obsługę argc/argv w MARS.
+# Wypróbuj argument w cudzysłowie, aby zobaczyć, jak spacje mogą pozostać w pojedynczym argumencie.
 #Aby spróbować, przejdź do Ustawienia > Argumenty programu podane do programu MIPS,
 #wprowadź kilka argumentów, następnie Assembluj i uruchom program.
 #Przykładowe argumenty: ola 123 "abc def"

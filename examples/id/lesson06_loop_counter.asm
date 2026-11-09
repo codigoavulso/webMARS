@@ -1,24 +1,13 @@
-# ==========================================================
-#Pelajaran 06 - Penghitung, dalam perangkat lunak dan perangkat keras
+# 06 - Ulangi sebagai penghitung
 #
-#THE PROBLEM
-#Penghitung perangkat keras adalah register, inkrementer, dan a
-#pembanding. Seperti apa bentuk mesin yang sama yang tertulis
-#sebagai instruksi?
+# `$t0` adalah angka berikutnya yang akan dicetak. `$t1` adalah batas atas eksklusif, jadi batas
+# 11 cetakan 1 sampai 10.
 #
-#WHAT THE HARDWARE DOES
-#Tepatnya ketiga bagian itu, satu per instruksi: register
-#memegang hitungan, addi adalah penambah, slt dengan cabang
-#adalah pembanding yang memutuskan putaran berikutnya.
+# Perbandingan dijalankan sebelum setiap iterasi. Peningkatan tersebut membuat kemajuan menuju
+# batas, dan lompatan mengulangi pemeriksaan tersebut.
 #
-#THE SOLUTION
-#Lingkaran bukanlah konsep baru. Ini adalah logika sekuensial yang dieja
-#keluar, dengan PC sebagai jamnya.
-#
-#WATCH FOR
-#$t0 adalah register hitungan dan $t1 adalah batasnya. Melangkahlah
-#satu putaran penuh dan sebutkan garis mana bagiannya.
-# ==========================================================
+# Ubah batas menjadi 1 dan jalankan. Cabang keluar diambil sebelum cetakan pertama.
+
         .data
 sp:     .asciiz " "
         .text
@@ -28,7 +17,7 @@ main:
         li   $t1, 11            #batasnya
 
 loop:
-        #Invarian loop: $t0 adalah nilai berikutnya yang akan dicetak dan tetap di bawah $t1.
+        # Pada tes loop, $t0 adalah kandidat berikutnya. Cetak hanya jika di bawah $t1.
         slt  $t2, $t0, $t1      #pembanding
         beq  $t2, $zero, endl   #keluar ketika hitungan mencapai batas
 

@@ -1,27 +1,13 @@
-# ==========================================================
-#Pelajaran 14 - Bilangan real dalam 32 bit
+# 14 - Bilangan real dalam 32 bit
 #
-#THE PROBLEM
-#3.5 tidak mempunyai tempat dalam register bilangan bulat. Dimana
-#bagian pecahan pergi, dan bagaimana bilangan yang sangat besar disimpan
-#dalam 32 bit yang sama dengan yang sangat kecil?
+# Pelampung presisi tunggal memiliki satu bit tanda, delapan bit eksponen, dan 23 bit pecahan.
 #
-#WHAT THE HARDWARE DOES
-#IEEE-754 membagi kata menjadi tiga bidang: satu bit tanda,
-#delapan bit eksponen dan dua puluh tiga bit pecahan. Itu
-#eksponen menggeser titik biner, itulah sebabnya formatnya demikian
-#disebut titik mengambang.
+# `lwc1` menyalin pola bit ke dalam register floating-point. Kemudian `add.s` menambahkan 3,5
+# dan 1,25 untuk menghasilkan 4,75.
 #
-#THE SOLUTION
-#File register terpisah ($f0..$f31) dan adder terpisah
-#menangani nilai-nilai ini, itulah sebabnya mnemoniknya berbeda:
-#lwc1 untuk memuat, add.s untuk menambahkan, syscall 2 untuk mencetak.
-#
-#WATCH FOR
-#Buka Alat > Representasi Titik Mengambang dan masukkan 3.5.
-#Perhatikan ketiga kolom tersebut, lalu periksa apakah 4,75 sudah tepat -
-#tidak seperti 0,1, yang tidak memiliki pecahan biner berhingga.
-# ==========================================================
+# Bandingkan pengkodean 4,75 dan 0,1 di alat Representasi Titik Mengambang. 4,75 tepat; 0,1
+# perlu pembulatan.
+
         .data
 a:      .float 3.5
 b:      .float 1.25
@@ -29,7 +15,7 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
-        #Alamat bilangan bulat masih mencari data; lwc1 memindahkan bitnya ke COP1.
+
         la   $a0, m1
         li   $v0, 4
         syscall

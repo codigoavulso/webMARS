@@ -1,25 +1,14 @@
-# ==========================================================
-#Lektion 11 – Aufrufen einer Funktion
+# 11 – Aufrufen einer Funktion
 #
-#THE PROBLEM
-#Der Einstieg in eine Routine ist einfach. Zurückkommen geht nicht, denn
-#Dieselbe Routine kann von vielen Orten aus aufgerufen werden
-#Die Rücksendeadresse ist jedes Mal unterschiedlich.
+# Ausführung mit verzögerter Verzweigung. `jal` springt zur Funktion und trägt die Adresse der
+# nächsten Anweisung in `$ra` ein.
 #
-#WHAT THE HARDWARE DOES
-#JAL erledigt zwei Dinge in einer Anweisung: Es speichert die
-#Adresse der folgenden Anweisung in $ra und springt dann. jr
-#springt zu dem, was ein Register enthält, also kehrt jr $ra zurück.
+# Die Aufrufkonvention übergibt 17 und 42 in `$a0` und `$a1`. Die Funktion gibt den größeren
+# Wert in `$v0` zurück.
 #
-#THE SOLUTION
-#Alles andere ist Übereinstimmung, keine Schaltung: Argumente in
-#$a0..$a3, ergibt $v0. Brechen Sie die Konvention und den Code
-#lässt sich immer noch zusammenbauen – es hört einfach auf zu interagieren.
-#
-#WATCH FOR
-#Treten Sie auf das Gefäß und lesen Sie $ra. Vergleichen Sie es mit der Adresse
-#der Zeile nach dem Aufruf im Textsegment.
-# ==========================================================
+# Treten Sie in den Anruf ein, vergleichen Sie `$ra` mit der Adresse nach `jal` und folgen Sie
+# dann `jr $ra` zurück zum Anrufer.
+
         .data
 m1:     .asciiz "max(17, 42) = "
         .text
@@ -31,8 +20,7 @@ main:
 
         li   $a0, 17            #erstes Argument
         li   $a1, 42            #zweites Argument
-        #jal ändert sowohl den Kontrollfluss als auch $ra in einem Architekturvorgang.
-        jal  maxof              #$ra = Adresse der nächsten Zeile
+        jal  maxof
 
         move $a0, $v0           #Ergebnis kam zurück in $v0
         li   $v0, 1

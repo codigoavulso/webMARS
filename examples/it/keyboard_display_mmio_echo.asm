@@ -19,7 +19,7 @@ main:
   la $a0, msg2
   syscall
 
-  lui $s0, 0xffff         #MMIO base 0xFFFF0000
+  lui $s0, 0xffff         #Indirizzo di base MMIO = 0xFFFF0000
 
 mmio_loop:
   #attendere il ricevitore della tastiera pronto (bit0 @ 0x0000)

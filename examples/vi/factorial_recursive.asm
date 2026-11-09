@@ -1,5 +1,5 @@
-#Giai thừa đệ quy (giảng viên cổ điển)
-#Đọc n và in n! (đối với n nhỏ).
+# Giai thừa đệ quy với khung ngăn xếp riêng cho mỗi lệnh gọi.
+# Hãy thử một số nguyên từ 0 đến 12. Giai thừa lớn hơn sẽ tràn kết quả 32 bit có dấu.
 
 .data
 ask: .asciiz "n (0..12)? "

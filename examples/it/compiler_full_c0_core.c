@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //il programma passa l'indirizzo, mai l'intero 
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //i contratti di cui sopra vengono controllati dal compilatore, non stampati
+int accumulate(stats_t box, int values[], int n) {   // La precondizione limita n ai limiti dell'array; possono leggere le tracce invarianti che indicizzano il ciclo.
   box->count = n;
   box->total = 0;
 

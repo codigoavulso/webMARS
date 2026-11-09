@@ -1,24 +1,14 @@
-# ==========================================================
-#Lekcja 04 - Przesunięcia, czyli mnożenie za pomocą drutów
+# 04 - Przesunięcia i potęgi dwójki
 #
-#THE PROBLEM
-#Ogólny mnożnik jest jednym z najdroższych bloków
-#ścieżka danych. Mnożenie przez 8 nie powinno kosztować tak dużo.
+# Jeśli wynik pasuje, przesunięcie w lewo o 3 mnoży się przez 8. Bity przesunięte poza krawędź
+# są odrzucane.
 #
-#WHAT THE HARDWARE DOES
-#Przesunięcie nie jest wcale arytmetyczne: jest to odczytywanie tych samych bitów
-#z różnych przewodów. Przesunięcie w lewo o n mnoży się przez 2^n
-#i kosztuje tylko routing.
+# Po prawej stronie `srl` wypełnia zerami i `sra` kopiuje bit znaku. Dla -16 przesuniętego o 2,
+# spodziewaj się odpowiednio 1073741820 i -4.
 #
-#THE SOLUTION
-#Potęgi dwójki stają się przesunięciami. Zwróć uwagę na dwie przesunięcia w prawo: srl
-#podaje zera na górze, sra kopiuje bit znaku, więc tylko
-#sra poprawnie dzieli liczbę ujemną.
-#
-#WATCH FOR
-#-16 >> 2 daje -4 w przypadku sra, ale ogromny plus w przypadku srl. The
-#bity przesunięte identycznie; różni się tylko to, co wpisano na górze.
-# ==========================================================
+# Spróbuj -15 z `sra`. Wynikiem jest -4, ponieważ przesunięcie zaokrągla się w dół; podpisane
+# rundy podziału w kierunku zera.
+
         .data
 m1:     .asciiz "5 << 3 = "
 m2:     .asciiz "-16 >> 2 arithmetic = "

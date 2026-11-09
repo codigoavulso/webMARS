@@ -137,7 +137,7 @@ int main(void) {
   int op_box[1] = {0};
   int right_box[1] = {0};
 
-  //Gardez la sortie de démarrage courte pour que l’invite apparaisse rapidement.
+
   tty_puts("TTY calculator ready.");
   tty_newline();
   tty_puts("Use +, -, *, /   |   q quits");

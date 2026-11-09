@@ -1,24 +1,14 @@
-# ==========================================================
-# Aula 04 - Deslocamentos, ou multiplicar com fios
+# 04 - Deslocamentos e potências de dois
 #
-# O PROBLEMA
-#   Um multiplicador geral e um dos blocos mais caros de um
-#   datapath. Multiplicar por 8 nao devia custar tanto.
+# Deslocar três posições à esquerda multiplica por 8 quando o resultado cabe no registo. Os bits
+# que saem pela extremidade perdem-se.
 #
-# O QUE O HARDWARE FAZ
-#   Um deslocamento nao e aritmetica: sao os mesmos bits lidos a
-#   partir de fios diferentes. Deslocar n a esquerda multiplica
-#   por 2^n e custa apenas encaminhamento.
+# À direita, `srl` preenche com zeros e `sra` replica o bit de sinal. Ao deslocar -16 duas
+# posições, espere 1073741820 e -4, respetivamente.
 #
-# A SOLUCAO
-#   Potencias de dois passam a deslocamentos. Repare nos dois
-#   deslocamentos a direita: o srl entra com zeros no topo, o sra
-#   copia o bit de sinal, logo so o sra divide bem um negativo.
-#
-# OBSERVE
-#   -16 >> 2 da -4 com sra, mas um positivo enorme com srl. Os
-#   bits andaram igual; muda so o que entrou no topo.
-# ==========================================================
+# Experimente -15 com `sra`. O resultado é -4 porque o deslocamento arredonda por defeito,
+# enquanto a divisão com sinal arredonda para zero.
+
         .data
 m1:     .asciiz "5 << 3 = "
 m2:     .asciiz "-16 >> 2 arithmetic = "

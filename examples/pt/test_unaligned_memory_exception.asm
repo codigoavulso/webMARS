@@ -1,4 +1,4 @@
-# Teste manual de paridade para erro de endereco em leitura.
+# A leitura de uma palavra exige um endereço múltiplo de quatro. Este exemplo usa 0x10010001 para provocar a exceção.
 # Comportamento esperado:
 # - excecao de leitura levantada em 0x10010001
 # - bad address / vaddr mostra 0x10010001

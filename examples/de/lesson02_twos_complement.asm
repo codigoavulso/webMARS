@@ -1,24 +1,13 @@
-# ==========================================================
-#Lektion 02 – Zweierkomplement
+# 02 - Zweierkomplement
 #
-#THE PROBLEM
-#Ein Register besteht aus 32 Drähten, jeweils hoch oder niedrig. Es gibt keinen Draht
-#für ein Minuszeichen, aber negative Zahlen müssen funktionieren.
+# Im 32-Bit-Zweierkomplement ergibt die Invertierung der Bits von 5 und die Addition von 1 die
+# Darstellung von -5.
 #
-#WHAT THE HARDWARE DOES
-#Es liest das oberste Bit als Zeichen, aber nicht als separates Flag:
-#-n wird als das Bitmuster gespeichert, das, addiert zu n, umgebrochen wird
-#Null. Kehren Sie jedes Bit um und fügen Sie eins hinzu, und schon haben Sie es.
+# Das Programm berechnet denselben Wert auf zwei Arten: `sub` von Null, dann `nor` und `addi`.
 #
-#THE SOLUTION
-#Die Subtraktion benötigt keinen zweiten Schaltkreis. a - b wird
-#a + (-b), also bedient ein Addierer beide Operationen.
-#
-#WATCH FOR
-#Beide Hälften geben -5 aus. Der zweite erreicht es auf dem langen Weg,
-#mit nor und addi, die zeigen, was sub intern tut.
-#Stellen Sie die Werte auf Hexadezimal ein, um 0xFFFFFFFB anzuzeigen.
-# ==========================================================
+# Beide Pfade geben -5 aus. Überprüfen Sie `0xFFFFFFFB` in den Registern, um zu sehen, wie
+# dieselben Bits im Hexadezimalformat aussehen.
+
         .data
 m1:     .asciiz "zero minus 5 = "
 m2:     .asciiz "invert bits of 5, add 1 = "

@@ -1,27 +1,14 @@
-# ==========================================================
-#Ders 13 - Talimat bir sayıdır
+# 13 - Talimat bir sayıdır
 #
-#THE PROBLEM
-#İşlemci sözcükleri bellekten alır. Kod yaşıyor
-#hafıza da. Peki bir talimatı bir talimattan ayıran şey nedir?
-#veri parçası?
+# Metin Segmentindeki Kod sütununu birleştirin ve inceleyin. Her temel talimat, alanlara
+# bölünmüş 32 bitlik bir kelimedir.
 #
-#WHAT THE HARDWARE DOES
-#Kelimenin yüklendiği kaydın ötesinde hiçbir şey yok.
-#PC, kod çözücüye giden kelimeleri seçer; lw kelimeleri seçiyor
-#bu kayıt dosyasına gider. Bitler aynı türden.
+# İki `add` talimatını karşılaştırın. İşlem alanları eşleşirken, kayıt alanları farklı
+# işlenenleri kodlar.
 #
-#THE SOLUTION
-#Kodlamayı doğrudan okuyun. Birleştirin ve açın
-#Ana > Yürüt: Kod sütunu her talimatı şu şekilde gösterir:
-#32-bit kelime gerçekten öyle.
-#
-#WATCH FOR
-#Bu ders bilerek hiçbir şey yazdırmaz; çıktı,
-#Metin Segmentinin kendisi. İki eklemeyi karşılaştırın: aynı işlem kodu ve
-#fonksiyon alanları, farklı kayıt numaraları. Daha sonra şunu bulun:
-#addi kelimesinin içinde gerçek 100.
-# ==========================================================
+# `addi`'de düşük 16 bit, doğrudan 100'ü tutar, yani `0x0064`. 101 olarak değiştirin ve
+# değişikliği görmek için yeniden birleştirin.
+
         .text
         .globl main
 main:

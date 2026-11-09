@@ -1,5 +1,5 @@
-#Faktorial rekursif (fakultas klasik)
-#Membaca n dan mencetak n! (untuk n kecil).
+# Faktorial rekursif dengan bingkai tumpukan terpisah untuk setiap panggilan.
+# Coba bilangan bulat dari 0 hingga 12. Faktorial yang lebih besar akan melebihi hasil 32-bit yang ditandatangani.
 
 .data
 ask: .asciiz "n (0..12)? "

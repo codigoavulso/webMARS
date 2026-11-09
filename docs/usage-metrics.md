@@ -89,6 +89,9 @@ Each current event, including the presence heartbeat, includes the deployed
 12-digit build number. Events from older clients remain accepted and appear
 under the unknown build in aggregate breakdowns.
 
+The Builds tab and CSV export show distinct sessions and received events per
+build for the selected period and audience. A session can span several builds.
+
 The dashboard loads app aggregates with `part=app`. Web-log diagnostics use
 `part=web`, which can return 202 while an aggregate is prepared in the background.
 The collector reuses the web aggregate across audience filters and refreshes it

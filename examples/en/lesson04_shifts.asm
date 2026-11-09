@@ -1,24 +1,14 @@
-# ==========================================================
-# Lesson 04 - Shifts, or multiplying with wires
+# 04 - Shifts and powers of two
 #
-# THE PROBLEM
-#   A general multiplier is one of the most expensive blocks in
-#   a datapath. Multiplying by 8 should not cost that much.
+# A left shift by 3 multiplies by 8 when the result fits. Bits shifted past the edge are
+# discarded.
 #
-# WHAT THE HARDWARE DOES
-#   A shift is not arithmetic at all: it is the same bits read
-#   from different wires. Shifting left by n multiplies by 2^n
-#   and costs only routing.
+# On the right, `srl` fills with zeros and `sra` copies the sign bit. For -16 shifted by 2,
+# expect 1073741820 and -4 respectively.
 #
-# THE SOLUTION
-#   Powers of two become shifts. Note the two right shifts: srl
-#   feeds zeros in at the top, sra copies the sign bit, so only
-#   sra divides a negative number correctly.
-#
-# WATCH FOR
-#   -16 >> 2 gives -4 with sra but a huge positive with srl. The
-#   bits moved identically; only what entered at the top differs.
-# ==========================================================
+# Try -15 with `sra`. The result is -4 because the shift rounds down; signed division rounds
+# toward zero.
+
         .data
 m1:     .asciiz "5 << 3 = "
 m2:     .asciiz "-16 >> 2 arithmetic = "

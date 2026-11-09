@@ -1,25 +1,14 @@
-# ==========================================================
-#Lektion 10 – Der Stapel ist ein Register und ein Offset
+# 10 – Der Stapel
 #
-#THE PROBLEM
-#Es gibt 32 Register, die von allen Teilen gemeinsam genutzt werden
-#Code. Wohin geht ein Wert, wenn er funktionieren muss?
-#Werden diese Register wiederverwendet?
+# Konventionell wächst der Stapel zu niedrigeren Adressen hin. Subtrahieren Sie 8 von `$sp`, um
+# Platz für zwei Wörter zu reservieren.
 #
-#WHAT THE HARDWARE DOES
-#Überhaupt nichts Besonderes. $sp ist ein gewöhnliches Register
-#zeigt zufällig in den Speicher und der Stapel wächst in Richtung
-#niedrigere Adressen rein konventionell.
+# Das Programm speichert zwei Register mit `sw`, löscht sie und stellt dann ihre Werte mit `lw`
+# wieder her.
 #
-#THE SOLUTION
-#Das Reservieren von Speicherplatz ist eine Subtraktion von $sp und dessen Freigabe
-#Ergänzung. Push und Pop sind nur SW und LW.
-#
-#WATCH FOR
-#Die Kassen werden bewusst zwischen den Filialen geleert
-#und die Lasten, daher können die gedruckten Werte nur gekommen sein
-#aus der Erinnerung zurück. Beobachten Sie, wie sich $sp um 8 und zurück bewegt.
-# ==========================================================
+# Schauen Sie sich `$sp` vor der Reservierung, während der beiden Stores und nach der
+# Veröffentlichung an. Sein Endwert sollte mit seinem Anfangswert übereinstimmen.
+
         .data
 m1:     .asciiz "restored: "
 sp2:    .asciiz " "

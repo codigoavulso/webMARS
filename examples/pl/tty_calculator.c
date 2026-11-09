@@ -137,7 +137,7 @@ int main(void) {
   int op_box[1] = {0};
   int right_box[1] = {0};
 
-  //Zachowaj krótkie dane wyjściowe uruchamiania, aby monit pojawiał się szybko.
+
   tty_puts("TTY calculator ready.");
   tty_newline();
   tty_puts("Use +, -, *, /   |   q quits");

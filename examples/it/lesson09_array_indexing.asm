@@ -1,24 +1,13 @@
-# ==========================================================
-#Lezione 09 - Indicizzazione di un array
+# 09 - Indicizzazione di un array
 #
-#THE PROBLEM
-#Un'istruzione di caricamento offre un registro di base e una costante
-#compensare. Nient'altro. Allora come si raggiunge a[i] quando i è solo
-#conosciuto in fase di esecuzione, seduto in un registro?
+# Ogni elemento dell'array occupa quattro byte. Sposta l'indice a sinistra di due per calcolare
+# il suo offset in byte.
 #
-#WHAT THE HARDWARE DOES
-#Aggiunge la base a ciò che contiene il registro. L'indice
-#deve quindi essere già in byte, non in elementi.
+# Segui la sequenza `sll`, `add`, `lw`: scala l'indice, aggiungi l'indirizzo di base e carica
+# l'elemento.
 #
-#THE SOLUTION
-#Ridimensiona l'indice in base alla dimensione dell'elemento, quindi aggiungi. Per quattro byte
-#Diciamo che il ridimensionamento è uno spostamento lasciato da due, che costa
-#niente.
-#
-#WATCH FOR
-#Le tre righe sll, add, lw sono ciò in cui a[i] viene compilato.
-#Passa attraverso un'iterazione e leggi $t5 e $t6.
-# ==========================================================
+# All'indice 2, `$t5` è 8 e `$t6` punta al valore 30. La somma dei cinque elementi dà 150.
+
         .data
 arr:    .word 10, 20, 30, 40, 50
 m1:     .asciiz "sum = "

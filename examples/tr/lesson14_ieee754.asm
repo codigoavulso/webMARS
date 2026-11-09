@@ -1,27 +1,13 @@
-# ==========================================================
-#Ders 14 - 32 bitlik gerçek sayılar
+# 14 - 32 bitlik gerçek sayılar
 #
-#THE PROBLEM
-#3.5'in tam sayı kaydında yeri yoktur. Nerede
-#kesirli kısım gider ve çok büyük bir sayı nasıl saklanır
-#çok küçük olanla aynı 32 bitte mi?
+# Tek duyarlıklı bir kayan nokta bir işaret bitine, sekiz üs bitine ve 23 kesir bitine sahiptir.
 #
-#WHAT THE HARDWARE DOES
-#IEEE-754, sözcüğü üç alana böler: bir işaret biti,
-#sekiz üslü bit ve yirmi üç kesirli bit.
-#üs ikili noktayı kaydırır, bu nedenle format
-#kayan nokta denir.
+# `lwc1` bit modelini kayan nokta kaydına kopyalar. Daha sonra `add.s` 3,5 ve 1,25'i toplayarak
+# 4,75'i oluşturur.
 #
-#THE SOLUTION
-#Ayrı bir kayıt dosyası ($f0..$f31) ve ayrı bir toplayıcı
-#bu değerleri kullanın, bu nedenle anımsatıcılar farklıdır:
-#Yüklemek için lwc1, eklemek için add.s, yazdırmak için sistem çağrısı 2.
-#
-#WATCH FOR
-#Araçlar > Kayan Nokta Gösterimi'ni açın ve 3.5'i girin.
-#Üç alanı izleyin, ardından 4,75'in kesin olup olmadığını kontrol edin -
-#sonlu ikili kesiri olmayan 0,1'den farklı olarak.
-# ==========================================================
+# Kayan Nokta Gösterimi aracındaki 4,75 ve 0,1 kodlamalarını karşılaştırın. 4,75 kesindir;
+# 0,1'in yuvarlanması gerekiyor.
+
         .data
 a:      .float 3.5
 b:      .float 1.25
@@ -29,7 +15,7 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
-        #Tamsayı adresler yine de verilerin yerini belirler; lwc1, bitlerini COP1 içine taşır.
+
         la   $a0, m1
         li   $v0, 4
         syscall

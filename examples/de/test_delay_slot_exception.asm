@@ -1,4 +1,4 @@
-#Manueller Paritätstest:
+# Untersuchen Sie Ursache und EPC, um zu sehen, wie die CPU eine Ausnahme in einem Verzögerungsslot aufzeichnet.
 #Wenn die verzögerte Verzweigung aktiviert ist, erfolgt der Überlauf im Verzögerungsschlitz.
 #Erwartetes Verhalten:
 #- Ausnahmemeldung: Arithmetischer Überlauf

@@ -1,23 +1,14 @@
-# ==========================================================
-#Pelajaran 05 - Komparator dan Cabang
+# 05 - Pembanding dan cabang
 #
-#THE PROBLEM
-#Sebuah keputusan memerlukan satu bit, tetapi membandingkan dua angka 32-bit
-#adalah pengurangan. Bagaimana pengurangan menjadi pilihan?
+# `slt` membandingkan dua bilangan bulat bertanda dan menulis 1 jika bilangan pertama lebih
+# kecil, atau 0 sebaliknya.
 #
-#WHAT THE HARDWARE DOES
-#slt mengurangi dan membuang semuanya kecuali tanda,
-#menulis 0 atau 1. Cabang kemudian mengumpankan bit itu ke PC
-#logika, yang menambah offset atau memungkinkan PC maju.
+# Untuk 7 dan 12, `$t2` adalah 1, jadi `beq` tidak melompat ke `notless` dan eksekusi berlanjut
+# ke instruksi berikutnya.
 #
-#THE SOLUTION
-#Bandingkan dengan register, cabangkan pada register itu. Kontrol
-#alirannya adalah aritmatika ditambah satu multiplekser di PC.
-#
-#WATCH FOR
-#Setelah slt, $t2 menahan 1. Melewati beq dan menonton PC
-#di bilah status: ia melompat daripada maju empat.
-# ==========================================================
+# Dengan percabangan yang tertunda, lewati `beq` dan amati PC. Tukar dua nilai masukan dan
+# bandingkan tujuan baru.
+
         .data
 lo:     .asciiz "a is smaller"
 hi:     .asciiz "a is not smaller"

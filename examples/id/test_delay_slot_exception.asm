@@ -1,4 +1,4 @@
-#Tes paritas manual:
+# Periksa Penyebab dan EPC untuk melihat bagaimana CPU mencatat pengecualian dalam slot penundaan.
 #Dengan mengaktifkan percabangan tertunda, luapan terjadi di slot penundaan.
 #Perilaku yang diharapkan:
 #- pesan pengecualian: luapan aritmatika

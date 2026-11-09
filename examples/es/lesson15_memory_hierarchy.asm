@@ -1,27 +1,15 @@
-# ==========================================================
-# Clase 15 - Por que el paso cambia la velocidad
+# 15 - Por qué el paso cambia la velocidad
 #
-# EL PROBLEMA
-#   Los dos bucles de abajo leen el mismo array y hacen el mismo
-#   numero de lecturas. En una maquina real uno es mucho mas
-#   lento. El recuento de instrucciones no lo explica.
+# Los dos bucles usan el mismo vector. El primero lee las 256 palabras y el segundo lee una de
+# cada 16, con un total de 16 cargas.
 #
-# LO QUE HACE EL HARDWARE
-#   La memoria no entrega palabras aisladas. Un fallo trae un
-#   bloque entero, apostando que las palabras vecinas se pediran
-#   pronto. Un paso de uno cobra esa apuesta; un paso de dieciseis
-#   paga un bloque y lee una palabra de el.
+# Con bloques de caché de 16 palabras, las lecturas consecutivas pueden reutilizar cada bloque
+# cargado. El segundo bucle avanza un bloque en cada carga.
 #
-# LA SOLUCION
-#   Nada cambia en el codigo. La localidad es una propiedad del
-#   patron de acceso, y es el patron lo que hay que corregir.
-#
-# OBSERVE
-#   Abra Herramientas > Data Cache Simulator, pulse Connect to
-#   MIPS y ejecute. Compare la tasa de aciertos de los dos
-#   bucles. Ambas sumas dan 0 porque el array esta a ceros: el
-#   numero no importa aqui, importa la tasa de aciertos.
-# ==========================================================
+# Conecta el simulador a MIPS, marca «Activado» y fija el tamaño de bloque en 16 palabras.
+# En el Simulador de caché de datos, detente en `far` para analizar el primer bucle. Reinicia
+# allí las estadísticas de caché antes del segundo bucle y compara las tasas de aciertos.
+
         .data
 buf:    .word 0:256
 m1:     .asciiz "stride 1 sum = "
@@ -29,7 +17,7 @@ m2:     .asciiz "stride 16 sum = "
         .text
         .globl main
 main:
-# ---- every word of each block ----
+# Recorrido secuencial por las 256 palabras.
         la   $t0, buf
         li   $t1, 0
         li   $t2, 256
@@ -55,11 +43,11 @@ endnear:
         li   $a0, 10
         syscall
 
-# ---- one word per block, sixteen words apart ----
+# Recorrido con una carga cada dieciséis palabras.
         li   $t1, 0
         li   $t3, 0
 far:
-        # Sumar 16 salta 64 bytes por iteración: normalmente un bloque de caché entero.
+        # La siguiente dirección queda a 64 bytes, es decir, dieciséis palabras de cuatro bytes.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

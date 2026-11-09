@@ -1,24 +1,14 @@
-# ==========================================================
-#Leçon 06 - Un compteur, en logiciel et en matériel
+# 06 - Boucle comme compteur
 #
-#THE PROBLEM
-#Un compteur matériel est un registre, un incrémenteur et un
-#comparateur. A quoi ressemble la même machine écrite
-#comme instructions ?
+# `$t0` est le prochain numéro à imprimer. `$t1` est la limite supérieure exclusive, donc une
+# limite de 11 imprime 1 à 10.
 #
-#WHAT THE HARDWARE DOES
-#Exactement ces trois parties, une par instruction : le registre
-#détient le compte, addi est l'incrémenteur, slt avec une branche
-#est le comparateur qui décide d'un autre tour.
+# La comparaison s'exécute avant chaque itération. L'incrément progresse vers la limite et le
+# saut répète la vérification.
 #
-#THE SOLUTION
-#Une boucle n'est pas un concept nouveau. C'est une logique séquentielle orthographiée
-#dehors, avec le PC comme horloge.
-#
-#WATCH FOR
-#$t0 est le registre de comptage et $t1 la limite. Traversez
-#un tour complet et nommez quelle ligne correspond à quelle partie.
-# ==========================================================
+# Changez la limite à 1 et exécutez. La branche de sortie est prise avant la première
+# impression.
+
         .data
 sp:     .asciiz " "
         .text
@@ -28,7 +18,7 @@ main:
         li   $t1, 11            #la limite
 
 loop:
-        #Invariant de boucle : $t0 est la prochaine valeur à imprimer et reste en dessous de $t1.
+        # Lors du test de boucle, $t0 est le prochain candidat. Imprimez-le uniquement s'il est en dessous de $t1.
         slt  $t2, $t0, $t1      #comparateur
         beq  $t2, $zero, endl   #quitter lorsque le nombre atteint la limite
 

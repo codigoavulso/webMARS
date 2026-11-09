@@ -8,7 +8,7 @@ int row_sum(int row[]) {   //parametre bir adrestir: satır kopyalanmaz
 }
 
 int main(void) {
-  //S3 dizileri konusu: yerel diziler, başlatıcı listeleri, çok boyutlu şekiller ve dizi parametreleri.
+  // 2'ye 3'lük bir dizi satır satır düzenlenir. Bir satırı geçmek adresini geçer.
   int matrix[2][3] = { {1, 2, 3}, {4, 5, 6} };   //hafızada bitişik üç kelimeden oluşan iki satır
   int total = row_sum(matrix[0]) + row_sum(matrix[1]);   //matris[0] ve matris[1] 12 bayt aralıklı adreslerdir
 

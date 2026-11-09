@@ -1,24 +1,13 @@
-# ==========================================================
-#Pelajaran 09 - Mengindeks array
+# 09 - Mengindeks array
 #
-#THE PROBLEM
-#Instruksi beban menawarkan register dasar dan konstanta
-#mengimbangi. Tidak ada yang lain. Jadi bagaimana a[i] dicapai ketika i saja
-#diketahui pada saat run time, duduk di register?
+# Setiap elemen array menempati empat byte. Geser indeks ke kiri sebanyak dua untuk menghitung
+# offset byte-nya.
 #
-#WHAT THE HARDWARE DOES
-#Itu menambahkan basis ke apa pun yang dimiliki register. Indeks
-#oleh karena itu harus sudah dalam byte, bukan dalam elemen.
+# Ikuti urutan `sll`, `add`, `lw`: skalakan indeks, tambahkan alamat dasar dan muat elemen.
 #
-#THE SOLUTION
-#Skalakan indeks berdasarkan ukuran elemen, lalu tambahkan. Untuk empat byte
-#kata-kata bahwa penskalaan adalah pergeseran ke kiri sebanyak dua, yang memerlukan biaya
-#tidak ada apa-apa.
-#
-#WATCH FOR
-#Tiga baris selanjutnya, tambahkan, lw adalah tujuan kompilasi a[i].
-#Lakukan satu iterasi dan baca $t5 dan $t6.
-# ==========================================================
+# Pada indeks 2, `$t5` adalah 8 dan `$t6` menunjuk ke nilai 30. Kelima elemen tersebut berjumlah
+# 150.
+
         .data
 arr:    .word 10, 20, 30, 40, 50
 m1:     .asciiz "sum = "

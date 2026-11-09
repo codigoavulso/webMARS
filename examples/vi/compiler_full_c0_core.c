@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //chương trình chuyển địa chỉ, không
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //các hợp đồng trên được trình biên dịch kiểm tra, không được in ra
+int accumulate(stats_t box, int values[], int n) {   // Điều kiện tiên quyết giới hạn n ở giới hạn mảng; các rãnh bất biến mà chỉ mục mà vòng lặp có thể đọc được.
   box->count = n;
   box->total = 0;
 

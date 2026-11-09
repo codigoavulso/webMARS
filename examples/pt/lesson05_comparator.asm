@@ -1,23 +1,14 @@
-# ==========================================================
-# Aula 05 - O comparador e o desvio
+# 05 - Comparador e desvio
 #
-# O PROBLEMA
-#   Uma decisao precisa de um bit, mas comparar dois numeros de
-#   32 bits e uma subtracao. Como e que uma subtracao decide?
+# A instrução `slt` compara dois inteiros com sinal e escreve 1 se o primeiro for menor, ou 0
+# caso contrário.
 #
-# O QUE O HARDWARE FAZ
-#   O slt subtrai e descarta tudo menos o sinal, escrevendo 0 ou
-#   1. O desvio entrega esse bit a logica do PC, que soma um
-#   deslocamento ou deixa o PC avancar.
+# Com 7 e 12, `$t2` vale 1. Por isso, `beq` não salta para `notless` e a execução segue para a
+# instrução seguinte.
 #
-# A SOLUCAO
-#   Comparar para um registo e desviar com base nele. O controlo
-#   de fluxo e aritmetica mais um multiplexador no PC.
-#
-# OBSERVE
-#   Depois do slt, $t2 vale 1. Passe o beq e siga o PC na barra
-#   de estado: ele salta em vez de avancar quatro.
-# ==========================================================
+# Com os desvios retardados desativados, passe por `beq` e observe o PC. Troque os dois valores
+# de entrada e compare o novo destino.
+
         .data
 lo:     .asciiz "a is smaller"
 hi:     .asciiz "a is not smaller"

@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "Размер шрифта редактора (9-22)",
   "Editor line height (1.0-2.2)": "Высота строки редактора (1.0-2.2)",
   "Editor font size": "Размер шрифта редактора",
+  "Auto-indent on Enter": "Автоотступ при нажатии Enter",
   "Editor line height": "Высота строки редактора",
   "Editor preferences updated.": "Настройки редактора обновлены.",
   "Interface preferences updated.": "Обновлены настройки интерфейса.",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "Кэш: как шаг меняет время",
   "Branch prediction in action": "Прогнозирование ветвей в действии",
   "MIPS Piano": "Пианино MIPS",
+  "MARS-OS TTY Operating System": "MARS-OS — операционная система для терминала TTY",
+
   "MARS-OS TTY Shell": "MARS-OS TTY Оболочка",
   "Fundamentals": "Основы",
   "Algorithms": "Алгоритмы",

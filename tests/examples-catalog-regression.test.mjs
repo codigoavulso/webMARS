@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { access, readFile } from "node:fs/promises";
 import { extname, resolve } from "node:path";
+import vm from "node:vm";
 import {
   createJavaScriptEngine,
   loadMiniCCompiler,
@@ -39,9 +40,10 @@ function sourceSpecs(entry) {
 function teachingComments(source, logicalPath) {
   const isAssembly = [".asm", ".s"].includes(extname(logicalPath).toLowerCase());
   return String(source).split(/\r?\n/).flatMap((line) => {
-    const marker = isAssembly ? line.indexOf("#") : line.indexOf("//");
-    if (marker < 0) return [];
-    const comment = line.slice(marker + (isAssembly ? 1 : 2)).trim();
+    const tokens = isAssembly
+      ? /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|#([^\r\n]*)/g
+      : /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\/\/([^\r\n]*)/g;
+    const comment = Array.from(line.matchAll(tokens)).find((token) => token[1] !== undefined)?.[1].trim();
     // Contract annotations are compiler input, not prose to translate.
     if (!comment || comment.startsWith("@")) return [];
     if (!isAssembly && comment.startsWith("#use")) return [];
@@ -273,6 +275,39 @@ test("example catalog has unique, resolvable entries", async () => {
   }
 });
 
+test("example menu titles and categories are translated for every interface language", async () => {
+  const labels = new Set(entries.flatMap(({ label, category }) => [label, category]));
+  for (const language of languages) {
+    let catalog;
+    const script = await readFile(resolve(projectRoot, "assets/js/i18n", `${language}.js`), "utf8");
+    vm.runInNewContext(script, { window: { WebMarsI18n: {
+      registerLanguage: (_language, value) => { catalog = value; }
+    } } });
+    for (const label of labels) {
+      assert.ok(catalog[label]?.trim(), `${language} is missing '${label}'.`);
+      if (language !== manifest.defaultLanguage) assert.notEqual(catalog[label], label, `${language} falls back to '${label}'.`);
+    }
+  }
+});
+
+test("shared Assembly examples have translations for their prose comments", async () => {
+  const sharedPaths = new Set(entries.flatMap(sourceSpecs).filter((file) => file.shared === true).map((file) => file.path));
+  const prose = new Set();
+  for (const path of sharedPaths) {
+    for (const comment of teachingComments(await readFile(resolve(examplesRoot, path), "utf8"), path)) {
+      if (/[a-z]{3,}\s+[a-z]{3,}/.test(comment)) prose.add(comment);
+    }
+  }
+  for (const language of languages.filter((value) => value !== manifest.defaultLanguage)) {
+    const catalog = JSON.parse(await readFile(resolve(examplesRoot, language, "shared-comments.json"), "utf8"));
+    for (const text of prose) {
+      assert.ok(catalog[text]?.trim(), `${language} is missing '${text}'.`);
+      assert.notEqual(catalog[text], text, `${language} falls back to '${text}'.`);
+      assert.doesNotMatch(catalog[text], /[\r\n]/, "A translated comment must stay on its source line.");
+    }
+  }
+});
+
 test("every teaching example keeps its explanatory comments localized in every language", async () => {
     // The whole catalogue is teaching material now, so every category is checked.
   const teachingEntries = entries.filter((entry) => [
@@ -296,11 +331,18 @@ test("every teaching example keeps its explanatory comments localized in every l
       for (const language of (localized ? languages.filter((value) => value !== "en") : [])) {
         const localizedPath = await resolveExampleFile(language, spec.path);
         const localizedComments = teachingComments(await readFile(localizedPath, "utf8"), spec.path);
-        const allowedLineDifference = 1;
-        assert.ok(
-          localizedComments.length >= englishComments.length - allowedLineDifference,
-          `${spec.path} (${language}) lost explanatory comments from the English lesson.`
-        );
+        if (entry.category === "Lessons") {
+          // A paragraph can wrap to a different number of lines in each script.
+          const header = (await readFile(localizedPath, "utf8")).split(/\r?\n\r?\n/, 1)[0];
+          const paragraphs = header.split(/^#\s*$/m).slice(1);
+          assert.equal(paragraphs.length, 3, `${spec.path} (${language}) needs three teaching notes.`);
+          assert.ok(paragraphs.every((paragraph) => /\p{L}/u.test(paragraph)));
+        } else {
+          assert.ok(
+            localizedComments.length >= englishComments.length - 1,
+            `${spec.path} (${language}) lost explanatory comments from the English example.`
+          );
+        }
         const localizedText = localizedComments.join("\n");
         assert.notEqual(localizedText, englishComments.join("\n"), `${spec.path} (${language}) was not localized.`);
         if (["es", "pt"].includes(language)) {

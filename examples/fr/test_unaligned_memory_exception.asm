@@ -1,4 +1,4 @@
-#Test de parité manuel pour erreur d'adresse au chargement.
+# Un chargement de mots nécessite une adresse divisible par quatre. Cet exemple utilise 0x10010001 pour déclencher l'exception.
 #Comportement attendu :
 #- exception de chargement déclenchée sur 0x10010001
 #- mauvaise adresse / vaddr affiche 0x10010001

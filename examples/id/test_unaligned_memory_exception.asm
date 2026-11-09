@@ -1,4 +1,4 @@
-#Tes paritas manual untuk kesalahan alamat saat memuat.
+# Pemuatan kata memerlukan alamat yang habis dibagi empat. Contoh ini menggunakan 0x10010001 untuk memicu pengecualian.
 #Perilaku yang diharapkan:
 #- pengecualian beban muncul pada 0x10010001
 #- alamat buruk / acara vaddr 0x10010001

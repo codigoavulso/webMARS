@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //প্রোগ্রাম ঠিকান�
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //উপরের চুক্তিগুলি কম্পাইলার দ্বারা চেক করা হয়, মুদ্রিত নয়
+int accumulate(stats_t box, int values[], int n) {   // পূর্বশর্তটি অ্যারের সীমার মধ্যে সীমাবদ্ধ করে; অপরিবর্তনীয় ট্র্যাক যা সূচী লুপ পড়তে পারে।
   box->count = n;
   box->total = 0;
 

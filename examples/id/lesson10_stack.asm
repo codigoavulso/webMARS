@@ -1,25 +1,14 @@
-# ==========================================================
-#Pelajaran 10 - Tumpukan adalah register dan offset
+# 10 - Tumpukan
 #
-#THE PROBLEM
-#Ada 32 register dan dibagikan oleh setiap bagian
-#kode. Kemana perginya suatu nilai ketika ia harus bertahan dalam pekerjaan itu
-#akankah menggunakan kembali register itu?
+# Berdasarkan konvensi, tumpukan tumbuh menuju alamat yang lebih rendah. Kurangi 8 dari `$sp`
+# untuk menyisakan ruang untuk dua kata.
 #
-#WHAT THE HARDWARE DOES
-#Tidak ada yang istimewa sama sekali. $sp adalah register biasa itu
-#kebetulan menunjuk ke memori, dan tumpukan bertambah ke arahnya
-#alamat yang lebih rendah murni berdasarkan konvensi.
+# Program ini menyimpan dua register dengan `sw`, menghapusnya, lalu mengembalikan nilainya
+# dengan `lw`.
 #
-#THE SOLUTION
-#Memesan ruang adalah pengurangan dari $sp, melepaskannya dan
-#tambahan. Push dan pop hanyalah sw dan lw.
-#
-#WATCH FOR
-#Register sengaja dibersihkan antar toko
-#dan bebannya, sehingga nilai yang dicetak hanya bisa datang
-#kembali dari ingatan. Tonton $sp bergerak sebanyak 8 dan mundur.
-# ==========================================================
+# Tonton `$sp` sebelum reservasi, selama dua toko, dan setelah rilis. Nilai akhirnya harus
+# sesuai dengan nilai awalnya.
+
         .data
 m1:     .asciiz "restored: "
 sp2:    .asciiz " "

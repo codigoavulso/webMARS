@@ -1,6 +1,6 @@
 #Hello World dla Run I/O
 #Drukuje prosty komunikat i wychodzi.
-#Jest to najmniejszy przykład podziału danych/tekstu i konwencji wywołania systemowego.
+# Wiadomość należy do .data; instrukcje, które je drukują, należą do .text.
 
 .data
 #.asciiz przechowuje znaki, po których następuje terminator zera wymagany przez wywołanie systemowe 4.

@@ -1,25 +1,13 @@
-# ==========================================================
-# Aula 10 - A pilha e um registo e um deslocamento
+# 10 - A pilha
 #
-# O PROBLEMA
-#   Existem 32 registos e sao partilhados por todo o codigo. Onde
-#   fica um valor que tem de sobreviver a trabalho que vai
-#   reutilizar esses registos?
+# Por convenção, a pilha cresce para endereços mais baixos. Subtraia 8 a `$sp` para reservar
+# espaço para duas palavras.
 #
-# O QUE O HARDWARE FAZ
-#   Nada de especial. O $sp e um registo comum que aponta para a
-#   memoria, e a pilha cresce para enderecos mais baixos apenas
-#   por convencao.
+# O programa guarda dois registos com `sw`, coloca-os a zero e recupera os valores com `lw`.
 #
-# A SOLUCAO
-#   Reservar espaco e subtrair ao $sp, libertar e somar. Empilhar
-#   e desempilhar sao apenas sw e lw.
-#
-# OBSERVE
-#   Os registos sao limpos de proposito entre as escritas e as
-#   leituras, logo os valores impressos so podem ter voltado da
-#   memoria. Siga o $sp a mover-se 8 e a regressar.
-# ==========================================================
+# Observe `$sp` antes da reserva, durante as duas escritas e depois de libertar o espaço. O
+# valor final deve coincidir com o inicial.
+
         .data
 m1:     .asciiz "restored: "
 sp2:    .asciiz " "

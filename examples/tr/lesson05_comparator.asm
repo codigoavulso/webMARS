@@ -1,23 +1,13 @@
-# ==========================================================
-#Ders 05 - Karşılaştırıcı ve dallanma
+# 05 - Karşılaştırıcı ve branşman
 #
-#THE PROBLEM
-#Karar için bir bit gerekir, ancak iki adet 32 bitlik sayının karşılaştırılması
-#bir çıkarma işlemidir. Çıkarma işlemi nasıl bir seçim haline gelir?
+# `slt` iki işaretli tamsayıyı karşılaştırır ve ilki küçükse 1, değilse 0 yazar.
 #
-#WHAT THE HARDWARE DOES
-#slt, işaret dışındaki her şeyi çıkarır ve atar,
-#0 veya 1 yazma. Dal daha sonra bu biti PC'ye besler.
-#ya bir ofset ekleyen ya da bilgisayarın ilerlemesine izin veren mantık.
+# 7 ve 12 için `$t2` 1'dir, dolayısıyla `beq` `notless`'ye atlamaz ve yürütme bir sonraki
+# talimata devam eder.
 #
-#THE SOLUTION
-#Bir kayıtla karşılaştırın, o kayıtta dallayın. Kontrol
-#akış aritmetik artı PC'deki bir çoklayıcıdır.
-#
-#WATCH FOR
-#Slt'den sonra, $t2 1'i tutar. Beq'i geçin ve bilgisayarı izleyin
-#durum çubuğunda: dört basamak ilerlemek yerine atlar.
-# ==========================================================
+# Gecikmeli dallanma kapalıyken `beq`'yi geçin ve bilgisayarı gözlemleyin. İki giriş değerini
+# değiştirin ve yeni hedefi karşılaştırın.
+
         .data
 lo:     .asciiz "a is smaller"
 hi:     .asciiz "a is not smaller"

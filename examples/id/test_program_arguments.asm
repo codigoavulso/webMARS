@@ -1,5 +1,5 @@
 #Contoh argumen program.
-#Gunakan contoh ini untuk menguji dukungan argc/argv di MARS.
+# Cobalah argumen dalam tanda kutip untuk melihat bagaimana spasi bisa tetap berada di dalam satu argumen.
 #Untuk mencobanya, buka Pengaturan > Argumen program yang disediakan untuk program MIPS,
 #masukkan beberapa argumen, lalu Rakit dan jalankan program.
 #Contoh argumen: ola 123 "abc def"

@@ -1,24 +1,14 @@
-# ==========================================================
-#Ders 08 - Bir kelimenin içindeki baytlar ve bayt sırası
+# 08 - Bayt ve bayt sırası
 #
-#THE PROBLEM
-#Bir kelime dört adresi kaplar. Hangi bayt en düşük değeri verir
-#bu adreslerin adı?
+# Bu simülatörün küçük endian hafızasında, bir kelimenin en az anlamlı baytı en düşük adreste
+# bulunur.
 #
-#WHAT THE HARDWARE DOES
-#Bu seçim bayt sırasıdır ve verilen bir kablolama kararıdır
-#tüm makine için bir kez. MIPS işte küçük-endian:
-#en az anlamlı bayt en düşük adreste yaşar.
+# `0x04030201`'yi bir kelime olarak saklayın ve 0'dan 3'e kadar olan uzaklıkları bayt olarak
+# okuyun. Çıktı 1, 2, 3, 4'tür.
 #
-#THE SOLUTION
-#Bir kelimeyi saklayın, ardından her seferinde bir bayt geri okuyun ve
-#Sipariş sizin için soruyu cevaplıyor.
-#
-#WATCH FOR
-#0x04030201 1 2 3 4 olarak geri döner. En son yazılan bayt
-#ilk önce metin okunur. lb yerine lbu kullanılır, dolayısıyla a
-#127'nin üzerindeki bayt işaret genişletmeli değildir.
-# ==========================================================
+# `0xFF` düşük baytını deneyin. `lbu` olan işaretsiz yük 255 verirken, `lb` olan işaretsiz yük
+# -1 verir.
+
         .data
 cell:   .word 0
 m1:     .asciiz "bytes from low address: "

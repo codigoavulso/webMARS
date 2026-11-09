@@ -8,7 +8,7 @@ int row_sum(int row[]) {   //Der Parameter ist eine Adresse: Die Zeile wird nich
 }
 
 int main(void) {
-  //Thema S3-Arrays: lokale Arrays, Initialisierungslisten, mehrdimensionale Formen und Array-Parameter.
+  // Ein 2x3-Array wird Zeile für Zeile angeordnet. Beim Übergeben einer Zeile wird deren Adresse übergeben.
   int matrix[2][3] = { {1, 2, 3}, {4, 5, 6} };   //zwei Reihen mit drei Wörtern, die im Gedächtnis zusammenhängend sind
   int total = row_sum(matrix[0]) + row_sum(matrix[1]);   //Matrix[0] und Matrix[1] sind Adressen im Abstand von 12 Bytes
 

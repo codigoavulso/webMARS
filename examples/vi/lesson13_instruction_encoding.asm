@@ -1,27 +1,14 @@
-# ==========================================================
-#Bài 13 - Lệnh là một số
+# 13 - Lệnh là một số
 #
-#THE PROBLEM
-#Bộ xử lý lấy từ từ bộ nhớ. Mã sống ở
-#trí nhớ cũng vậy. Vậy điều gì phân biệt một chỉ dẫn với một
-#phần dữ liệu?
+# Tập hợp và kiểm tra cột Mã trong Đoạn văn bản. Mỗi lệnh cơ bản là một từ 32 bit được chia
+# thành các trường.
 #
-#WHAT THE HARDWARE DOES
-#Không có gì, ngoài thanh ghi mà từ được tải vào. các
-#PC chọn các từ đi đến bộ giải mã; tôi chọn từ
-#đi đến tập tin đăng ký. Các bit đều cùng loại.
+# So sánh hai hướng dẫn `add`. Các trường thao tác khớp nhau, trong khi các trường thanh ghi mã
+# hóa các toán hạng khác nhau.
 #
-#THE SOLUTION
-#Đọc mã hóa trực tiếp. Lắp ráp và mở
-#Chính > Thực thi: cột Mã hiển thị từng lệnh dưới dạng
-#thực tế là từ 32-bit.
-#
-#WATCH FOR
-#Bài học này không có mục đích in gì cả - đầu ra là
-#Phân đoạn văn bản chính nó. So sánh hai phần bổ sung: cùng một opcode và
-#trường chức năng, số thanh ghi khác nhau. Sau đó tìm
-#nghĩa đen 100 bên trong từ addi.
-# ==========================================================
+# Trong `addi`, 16 bit thấp giữ 100 ngay lập tức, tức là `0x0064`. Thay đổi nó thành 101 và lắp
+# ráp lại để xem sự thay đổi.
+
         .text
         .globl main
 main:

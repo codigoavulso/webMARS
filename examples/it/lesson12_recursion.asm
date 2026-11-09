@@ -1,25 +1,14 @@
-# ==========================================================
-#Lezione 12 - La ricorsione necessita di un frame per chiamata
+# 12 - Ricorsione e frames
 #
-#THE PROBLEM
-#Una chiamata ricorsiva sovrascrive $ra e il registro degli argomenti.
-#La chiamata esterna quindi non ha via di ritorno e non ha idea di cosa sia
-#proprio n era.
+# Una chiamata ricorsiva sovrascrive `$ra` e utilizza `$a0` per il proprio argomento. Salvare
+# entrambi i valori prima di effettuare la chiamata.
 #
-#WHAT THE HARDWARE DOES
-#Fornisce un $ra, non uno stack di essi. Niente viene salvato
-#automaticamente; se il codice non lo salva, non c'è più.
+# Entra in `fact` per ogni valore da 5 a 1. Ogni chiamata riserva otto byte, inclusa la chiamata
+# che restituisce 1.
 #
-#THE SOLUTION
-#Ogni attivazione apre un frame in pila, mantiene quello che contiene
-#sarà ancora necessario dopo la chiamata e lo ripristinerà durante il percorso
-#fuori. La profondità dello stack è la profondità di ricorsione.
-#
-#WATCH FOR
-#Imposta un punto di interruzione sul mul e guarda $sp scendere di 8 per
-#livello. Le cinque copie salvate di n sono ciò che rende il file
-#possibile la moltiplicazione al ritorno.
-# ==========================================================
+# Imposta un punto di interruzione su `mul` per osservare il percorso di ritorno. Ogni chiamata
+# ricarica il proprio argomento, moltiplica e rilascia il proprio frame.
+
         .data
 m1:     .asciiz "5! = "
         .text
@@ -61,7 +50,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
-        #Ripristina lo stato del chiamato ed elimina esattamente il frame assegnato all'ingresso.
+        # Ripristina l'indirizzo del mittente salvato prima di rilasciare il frame di questa chiamata.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

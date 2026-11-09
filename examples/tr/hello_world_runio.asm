@@ -1,6 +1,6 @@
 #Run I/O için Merhaba Dünya
 #Basit bir mesaj yazdırır ve çıkar.
-#Bu, veri/metin bölünmesinin ve sistem çağrısı kuralının en küçük örneğidir.
+# Mesaj .data'ye ait; onu yazdıran talimatlar .text'ye aittir.
 
 .data
 #.asciiz, sistem çağrısı 4'ün gerektirdiği sıfır sonlandırıcının takip ettiği karakterleri saklar.

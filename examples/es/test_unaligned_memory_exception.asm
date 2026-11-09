@@ -1,4 +1,4 @@
-# Prueba manual de paridad para error de direccion en lectura.
+# La carga de una palabra exige una dirección múltiplo de cuatro. Este ejemplo usa 0x10010001 para provocar la excepción.
 # Comportamiento esperado:
 # - excepcion de lectura lanzada en 0x10010001
 # - bad address / vaddr muestra 0x10010001

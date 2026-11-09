@@ -1,25 +1,14 @@
-# ==========================================================
-#Leçon 10 - La pile est un registre et un offset
+# 10 - La pile
 #
-#THE PROBLEM
-#Il existe 32 registres et ils sont partagés par chaque élément de
-#code. Où va une valeur quand elle doit survivre à un travail qui
-#va réutiliser ces registres ?
+# Par convention, la pile croît vers des adresses inférieures. Soustrayez 8 de `$sp` pour
+# réserver de l'espace pour deux mots.
 #
-#WHAT THE HARDWARE DOES
-#Rien de spécial du tout. $sp est un registre ordinaire qui
-#arrive à pointer vers la mémoire, et la pile grandit vers
-#adresses inférieures uniquement par convention.
+# Le programme enregistre deux registres avec `sw`, les efface, puis restaure leurs valeurs avec
+# `lw`.
 #
-#THE SOLUTION
-#La réservation d'espace est une soustraction de $sp, en le libérant un
-#ajout. Push et pop ne sont que sw et lw.
-#
-#WATCH FOR
-#Les registres sont volontairement effacés entre les magasins
-#et les charges, donc les valeurs imprimées ne peuvent provenir que
-#revenu de mémoire. Regardez $sp avancer de 8 et revenir.
-# ==========================================================
+# Regardez `$sp` avant la réservation, pendant les deux magasins et après la sortie. Sa valeur
+# finale doit correspondre à sa valeur initiale.
+
         .data
 m1:     .asciiz "restored: "
 sp2:    .asciiz " "

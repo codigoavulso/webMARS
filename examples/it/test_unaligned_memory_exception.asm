@@ -1,4 +1,4 @@
-#Test di parità manuale per errore di indirizzo al caricamento.
+# Un carico di parole necessita di un indirizzo divisibile per quattro. Questo esempio utilizza 0x10010001 per attivare l'eccezione.
 #Comportamento previsto:
 #- eccezione di caricamento sollevata il 0x10010001
 #- indirizzo errato/vaddr mostra 0x10010001

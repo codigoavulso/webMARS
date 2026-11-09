@@ -1,24 +1,13 @@
-# ==========================================================
-# Aula 09 - Indexar um array
+# 09 - Indexar um array
 #
-# O PROBLEMA
-#   Uma instrucao de leitura oferece um registo base e um
-#   deslocamento constante. Mais nada. Como se chega a a[i]
-#   quando i so e conhecido em execucao, num registo?
+# Cada elemento do vetor ocupa quatro bytes. Desloque o índice duas posições à esquerda para
+# calcular o deslocamento em bytes.
 #
-# O QUE O HARDWARE FAZ
-#   Soma a base ao que o registo contiver. Portanto o indice tem
-#   de vir ja em bytes, e nao em elementos.
+# Siga a sequência `sll`, `add`, `lw`: ajuste a escala do índice, some o endereço base e leia o
+# elemento.
 #
-# A SOLUCAO
-#   Escalar o indice pelo tamanho do elemento e depois somar.
-#   Para palavras de quatro bytes esse escalamento e um
-#   deslocamento de dois a esquerda, que nao custa nada.
-#
-# OBSERVE
-#   As tres linhas sll, add, lw sao aquilo em que a[i] se
-#   traduz. Percorra uma iteracao e leia $t5 e $t6.
-# ==========================================================
+# No índice 2, `$t5` vale 8 e `$t6` aponta para o valor 30. A soma dos cinco elementos é 150.
+
         .data
 arr:    .word 10, 20, 30, 40, 50
 m1:     .asciiz "sum = "

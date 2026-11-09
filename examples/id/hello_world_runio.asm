@@ -1,6 +1,6 @@
 #Halo Dunia untuk Jalankan I/O
 #Mencetak pesan sederhana dan keluar.
-#Ini adalah contoh terkecil dari pemisahan data/teks dan konvensi syscall.
+# Pesan tersebut termasuk dalam .data; instruksi yang mencetaknya ada di .text.
 
 .data
 #.asciiz menyimpan karakter yang diikuti dengan terminator nol yang diperlukan oleh syscall 4.

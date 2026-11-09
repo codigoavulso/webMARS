@@ -1,4 +1,4 @@
-#Ręczny test parzystości:
+# Sprawdź przyczynę i EPC, aby zobaczyć, jak procesor rejestruje wyjątek w szczelinie opóźnienia.
 #Po włączeniu opóźnionego rozgałęziania przepełnienie następuje w szczelinie opóźnienia.
 #Oczekiwane zachowanie:
 #- komunikat wyjątku: przepełnienie arytmetyczne

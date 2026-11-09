@@ -1,24 +1,14 @@
-# ==========================================================
-#Leçon 07 - Mots en mémoire et pourquoi les adresses sautent par quatre
+# 07 - Mots en mémoire
 #
-#THE PROBLEM
-#La mémoire est adressée un octet à la fois, mais un registre contient
-#quatre octets. Que sélectionne réellement une seule adresse ?
+# Les adresses mémoire comptent les octets. Chaque mot occupe quatre octets, donc `lw` et `sw`
+# utilisent ici les décalages 0, 4 et 8.
 #
-#WHAT THE HARDWARE DOES
-#lw et sw déplacent quatre octets en un seul accès, donc consécutifs
-#les mots sont séparés de quatre adresses. Les deux bits graves du
-#l'adresse doit être nulle : cet alignement est ce qui permet au
-#le matériel récupère un mot entier en un seul cycle.
+# Une adresse de mot doit être un multiple de quatre. L'utilisation du décalage 1 au lieu de 4
+# provoque une exception d'alignement dans ce programme.
 #
-#THE SOLUTION
-#L'arithmétique des adresses se fait en octets, donc un index en mots
-#est toujours échelonné par quatre.
-#
-#WATCH FOR
-#Assemblez, puis ouvrez le segment de données à 0x10010000. Le
-#trois valeurs apparaissent dans les colonnes adjacentes d'une ligne.
-# ==========================================================
+# Après les magasins, regardez `cell` dans le segment de données. Les trois mots adjacents
+# doivent contenir 111, 222 et 333.
+
         .data
 cell:   .word 0, 0, 0
 m1:     .asciiz "read back: "

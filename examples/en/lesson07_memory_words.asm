@@ -1,24 +1,14 @@
-# ==========================================================
-# Lesson 07 - Words in memory, and why addresses jump by four
+# 07 - Words in memory
 #
-# THE PROBLEM
-#   Memory is addressed one byte at a time, but a register holds
-#   four bytes. What does a single address actually select?
+# Memory addresses count bytes. Each word occupies four bytes, so `lw` and `sw` use offsets 0, 4
+# and 8 here.
 #
-# WHAT THE HARDWARE DOES
-#   lw and sw move four bytes in one access, so consecutive
-#   words sit four addresses apart. The low two bits of the
-#   address must be zero: that alignment is what lets the
-#   hardware fetch a whole word in one cycle.
+# A word address must be a multiple of four. Using offset 1 instead of 4 causes an alignment
+# exception in this program.
 #
-# THE SOLUTION
-#   Address arithmetic is done in bytes, so an index into words
-#   is always scaled by four.
-#
-# WATCH FOR
-#   Assemble, then open the Data Segment at 0x10010000. The
-#   three values appear in adjacent columns of one row.
-# ==========================================================
+# After the stores, look at `cell` in the Data Segment. The three adjacent words should contain
+# 111, 222 and 333.
+
         .data
 cell:   .word 0, 0, 0
 m1:     .asciiz "read back: "

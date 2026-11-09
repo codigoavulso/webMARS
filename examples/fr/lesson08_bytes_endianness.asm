@@ -1,24 +1,14 @@
-# ==========================================================
-#Leçon 08 - Octets à l'intérieur d'un mot et ordre des octets
+# 08 - Octets et ordre des octets
 #
-#THE PROBLEM
-#Un mot occupe quatre adresses. Quel octet fait le plus bas
-#de ces adresses, le nom ?
+# Dans la mémoire petit-boutiste de ce simulateur, l'octet de poids faible d'un mot réside à
+# l'adresse la plus basse.
 #
-#WHAT THE HARDWARE DOES
-#Ce choix est l'ordre des octets, et c'est une décision de câblage prise
-#une fois pour toute la machine. MIPS ici c'est du petit-boutiste : le
-#l'octet le moins significatif réside à l'adresse la plus basse.
+# Stockez `0x04030201` sous forme de mot et lisez les décalages de 0 à 3 sous forme d'octets. La
+# sortie est 1, 2, 3, 4.
 #
-#THE SOLUTION
-#Stockez un mot, puis relisez-le octet par octet et laissez-le
-#la commande répond à la question pour vous.
-#
-#WATCH FOR
-#0x04030201 revient sous la forme 1 2 3 4. Le dernier octet écrit dans
-#le littéral est lu en premier. lbu est utilisé plutôt que lb donc a
-#l'octet au-dessus de 127 n'est pas étendu par signe.
-# ==========================================================
+# Essayez un octet faible de `0xFF`. Une charge non signée avec `lbu` donne 255, tandis qu'une
+# charge signée avec `lb` donne -1.
+
         .data
 cell:   .word 0
 m1:     .asciiz "bytes from low address: "

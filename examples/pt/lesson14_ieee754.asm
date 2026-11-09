@@ -1,27 +1,14 @@
-# ==========================================================
-# Aula 14 - Numeros reais em 32 bits
+# 14 - Números reais em 32 bits
 #
-# O PROBLEMA
-#   O 3.5 nao cabe num registo inteiro. Para onde vai a parte
-#   fracionaria, e como e que um numero muito grande e guardado
-#   nos mesmos 32 bits que um muito pequeno?
+# Um número de vírgula flutuante de precisão simples tem um bit de sinal, oito de expoente e 23
+# de fração.
 #
-# O QUE O HARDWARE FAZ
-#   O IEEE-754 divide a palavra em tres campos: um bit de sinal,
-#   oito bits de expoente e vinte e tres de fracao. O expoente
-#   desliza a virgula binaria, e e por isso que o formato se
-#   chama virgula flutuante.
+# A instrução `lwc1` copia o padrão de bits para um registo de vírgula flutuante. Depois,
+# `add.s` soma 3,5 e 1,25 e obtém 4,75.
 #
-# A SOLUCAO
-#   Um banco de registos proprio ($f0..$f31) e um somador proprio
-#   tratam destes valores, e por isso os mnemonicos mudam: lwc1
-#   para carregar, add.s para somar, syscall 2 para imprimir.
-#
-# OBSERVE
-#   Abra Ferramentas > Floating Point Representation e escreva
-#   3.5. Veja os tres campos e confirme que 4.75 e exato - ao
-#   contrario de 0.1, que nao tem fracao binaria finita.
-# ==========================================================
+# Compare as codificações de 4,75 e 0,1 na ferramenta Representação de vírgula flutuante. 4,75 é
+# exato, enquanto 0,1 precisa de arredondamento.
+
         .data
 a:      .float 3.5
 b:      .float 1.25
@@ -29,7 +16,7 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
-        # Os endereços inteiros localizam os dados; lwc1 transfere os seus bits para COP1.
+
         la   $a0, m1
         li   $v0, 4
         syscall

@@ -1,5 +1,5 @@
 #Esempio di argomenti del programma.
-#Utilizza questo esempio per testare il supporto argc/argv in MARS.
+# Prova un argomento tra virgolette per vedere come gli spazi possono rimanere all'interno di un singolo argomento.
 #Per provarlo, vai su Impostazioni > Argomenti del programma forniti al programma MIPS,
 #inserisci alcuni argomenti, quindi Assembla ed esegui il programma.
 #Argomenti di esempio: ola 123 "abc def"

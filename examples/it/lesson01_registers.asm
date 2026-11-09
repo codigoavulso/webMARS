@@ -1,24 +1,14 @@
-# ==========================================================
-#Lezione 01 - Registri e valori immediati
+# 01 - Registri e immediati
 #
-#THE PROBLEM
-#Il ALU ha due porte di ingresso ed entrambe sono collegate a
-#registro. Un numero scritto nella fonte non è in a
-#registrarsi, quindi non può raggiungere direttamente quelle porte.
+# L'immediato è codificato nell'istruzione. Assembla e controlla quale istruzione di base
+# diventa ciascuna `li`.
 #
-#WHAT THE HARDWARE DOES
-#Un immediato viaggia all'interno della parola istruzione stessa.
-#addi trasporta un campo a 16 bit; li è una comodità il
-#l'assembler si espande in una o due istruzioni reali.
+# Passa attraverso i due carichi e l'addizione. Nei Registri, segui `$t0 = 12`, `$t1 = 30` e
+# `$t2 = 42`.
 #
-#THE SOLUTION
-#Inserisci prima la costante in un registro, quindi lascia che ALU
-#leggere due registri e scriverne un terzo.
-#
-#WATCH FOR
-#Passare una volta per riga e seguire $t0, $t1 e $t2 nella
-#Pannello Registri. Solo la terza riga tocca ALU.
-# ==========================================================
+# Prova a sostituire 30 con `0x12345678` e rimonta. La costante più grande necessita di più di
+# un'istruzione di base.
+
         .data
 lbl:    .asciiz "12 + 30 = "
         .text
@@ -30,9 +20,9 @@ main:
         syscall
 
         #li è una pseudo-istruzione; Assemble mostra quale vera istruzione diventa.
-        li   $t0, 12            #immediato -> registrati
-        li   $t1, 30            #immediato -> registrati
-        add  $t2, $t0, $t1      #ALU legge due registri
+        li   $t0, 12
+        li   $t1, 30
+        add  $t2, $t0, $t1      # La somma viene scritta su un registro diverso.
 
         move $a0, $t2
         li   $v0, 1

@@ -8,7 +8,7 @@ int row_sum(int row[]) {   //parameternya adalah alamat: baris tidak disalin
 }
 
 int main(void) {
-  //Topik array S3: array lokal, daftar penginisialisasi, bentuk multidimensi, dan parameter array.
+  // Array 2-kali-3 disusun baris demi baris. Melewati satu baris melewati alamatnya.
   int matrix[2][3] = { {1, 2, 3}, {4, 5, 6} };   //dua baris tiga kata, bersebelahan dalam memori
   int total = row_sum(matrix[0]) + row_sum(matrix[1]);   //matriks[0] dan matriks[1] adalah alamat yang terpisah 12 byte
 

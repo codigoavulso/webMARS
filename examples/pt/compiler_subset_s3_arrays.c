@@ -8,7 +8,7 @@ int row_sum(int row[]) {   // o parâmetro é um endereço: a linha não é copi
 }
 
 int main(void) {
-  // Tema de arrays S3: arrays locais, listas de inicializacao, shapes multidimensionais e parametros array.
+  // Um vetor de 2 por 3 é guardado linha a linha. Ao passar uma linha à função, passa-se o seu endereço.
   int matrix[2][3] = { {1, 2, 3}, {4, 5, 6} };   // duas linhas de três palavras, contíguas em memória
   int total = row_sum(matrix[0]) + row_sum(matrix[1]);   // matrix[0] e matrix[1] são endereços a 12 bytes de distância
 

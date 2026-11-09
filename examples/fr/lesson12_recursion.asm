@@ -1,25 +1,14 @@
-# ==========================================================
-#Leçon 12 - La récursivité a besoin d'une image par appel
+# 12 - Récursion et frames
 #
-#THE PROBLEM
-#Un appel récursif écrase $ra et le registre des arguments.
-#L'appel extérieur n'a alors aucun moyen de revenir en arrière et aucune idée de ce que c'est.
-#propre n était.
+# Un appel récursif écrase `$ra` et utilise `$a0` pour son propre argument. Enregistrez les deux
+# valeurs avant de passer l'appel.
 #
-#WHAT THE HARDWARE DOES
-#Il fournit un $ra, pas une pile d'entre eux. Rien n'est sauvegardé
-#automatiquement ; si le code ne le sauvegarde pas, il disparaît.
+# Entrez `fact` pour chaque valeur de 5 à 1. Chaque appel réserve huit octets, y compris l'appel
+# qui renvoie 1.
 #
-#THE SOLUTION
-#Chaque activation ouvre un cadre sur la pile, conserve ce qu'il
-#sera encore nécessaire après l'appel, et le restaure en cours de route
-#dehors. La profondeur de pile est la profondeur de récursion.
-#
-#WATCH FOR
-#Définissez un point d'arrêt sur le mul et regardez $sp descendre de 8 par
-#niveau. Les cinq copies enregistrées de n sont ce qui rend le
-#multiplication au retour possible.
-# ==========================================================
+# Définissez un point d'arrêt sur `mul` pour surveiller le chemin de retour. Chaque appel
+# recharge son propre argument, multiplie et libère sa trame.
+
         .data
 m1:     .asciiz "5! = "
         .text
@@ -61,7 +50,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
-        #Restaurez l’état de l’appelé et supprimez exactement la trame allouée à l’entrée.
+        # Restaurez l'adresse de retour enregistrée avant de libérer la trame de cet appel.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

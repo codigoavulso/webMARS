@@ -1,5 +1,5 @@
-#Özyinelemeli faktöriyel (fakülte klasiği)
-#N'yi okur ve n'yi yazdırır! (küçük n için).
+# Her çağrı için ayrı bir yığın çerçevesine sahip özyinelemeli faktöriyel.
+# 0'dan 12'ye kadar bir tamsayı deneyin. Daha büyük faktöriyeller imzalı 32 bit sonuçtan taşar.
 
 .data
 ask: .asciiz "n (0..12)? "

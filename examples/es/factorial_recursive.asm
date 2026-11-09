@@ -1,5 +1,5 @@
-# Factorial recursivo (clasico de facultad)
-# Lee n e imprime n! (para n pequenos).
+# Factorial recursivo con espacio propio en la pila para cada llamada.
+# Prueba un entero entre 0 y 12. Los factoriales mayores desbordan un entero de 32 bits con signo.
 
 .data
 ask: .asciiz "n (0..12)? "

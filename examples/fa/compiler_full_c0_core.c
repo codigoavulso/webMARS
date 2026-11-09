@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //برنامه آدرس را ارسال می ک
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //قراردادهای بالا توسط کامپایلر بررسی می شوند، نه چاپ شده اند
+int accumulate(stats_t box, int values[], int n) {   // پیش شرط n را به مرزهای آرایه محدود می کند. مسیرهای ثابتی که حلقه را نمایه می کند می تواند بخواند.
   box->count = n;
   box->total = 0;
 

@@ -1,23 +1,13 @@
-# ==========================================================
-#Lezione 05 - Il comparatore e il ramo
+# 05 - Comparatore e ramo
 #
-#THE PROBLEM
-#Una decisione richiede un bit, ma confrontando due numeri a 32 bit
-#è una sottrazione. Come fa una sottrazione a diventare una scelta?
+# `slt` confronta due interi con segno e scrive 1 quando il primo è più piccolo, o 0 altrimenti.
 #
-#WHAT THE HARDWARE DOES
-#slt sottrae e butta via tutto tranne il segno,
-#scrivendo 0 o 1. Il ramo quindi invia quel bit al PC
-#logica, che aggiunge un offset o consente al PC di avanzare.
+# Per 7 e 12, `$t2` è 1, quindi `beq` non salta a `notless` e l'esecuzione continua con
+# l'istruzione successiva.
 #
-#THE SOLUTION
-#Confronta in un registro, dirama su quel registro. Controllo
-#il flusso è aritmetico più un multiplexer sul PC.
-#
-#WATCH FOR
-#Dopo slt, $t2 tiene 1. Passa oltre il beq e guarda il PC
-#nella barra di stato: salta anziché avanzare di quattro.
-# ==========================================================
+# Con la diramazione ritardata, supera `beq` e osserva il PC. Scambia i due valori di input e
+# confronta la nuova destinazione.
+
         .data
 lo:     .asciiz "a is smaller"
 hi:     .asciiz "a is not smaller"

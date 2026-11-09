@@ -1,24 +1,14 @@
-# ==========================================================
-#Lektion 06 – Ein Zähler, in Software und in Hardware
+# 06 – Schleife als Zähler
 #
-#THE PROBLEM
-#Ein Hardwarezähler ist ein Register, ein Inkrementierer und ein
-#Komparator. Wie sieht die gleiche Maschine geschrieben aus?
-#als Anleitung?
+# `$t0` ist die nächste zu druckende Zahl. `$t1` ist die ausschließliche Obergrenze, d. h. eine
+# Grenze von 11 druckt 1 bis 10.
 #
-#WHAT THE HARDWARE DOES
-#Genau diese drei Teile, einer pro Anweisung: das Register
-#enthält den Zählerstand, addi ist der Inkrementierer, slt mit einem Zweig
-#ist der Komparator, der über eine weitere Runde entscheidet.
+# Der Vergleich wird vor jeder Iteration ausgeführt. Das Inkrement schreitet in Richtung des
+# Grenzwerts voran und der Sprung wiederholt die Prüfung.
 #
-#THE SOLUTION
-#Eine Schleife ist kein neues Konzept. Es handelt sich um sequentielle Logik
-#raus, mit dem PC als Uhr.
-#
-#WATCH FOR
-#$t0 ist das Zählregister und $t1 das Limit. Treten Sie durch
-#Eine volle Runde und benennen Sie, welche Linie welcher Teil ist.
-# ==========================================================
+# Ändern Sie das Limit auf 1 und führen Sie es aus. Der Ausgangszweig wird vor dem ersten Druck
+# genommen.
+
         .data
 sp:     .asciiz " "
         .text
@@ -28,7 +18,7 @@ main:
         li   $t1, 11            #die Grenze
 
 loop:
-        #Schleifeninvariante: $t0 ist der nächste zu druckende Wert und bleibt unter $t1.
+        # Beim Schleifentest ist $t0 der nächste Kandidat. Drucken Sie es nur aus, wenn es unter $t1 liegt.
         slt  $t2, $t0, $t1      #Komparator
         beq  $t2, $zero, endl   #Beenden, wenn die Anzahl den Grenzwert erreicht
 

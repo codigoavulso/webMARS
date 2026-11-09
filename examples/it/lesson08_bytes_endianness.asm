@@ -1,24 +1,14 @@
-# ==========================================================
-#Lezione 08 - Byte all'interno di una parola e ordine dei byte
+# 08 - Byte e ordine dei byte
 #
-#THE PROBLEM
-#Una parola occupa quattro indirizzi. Quale byte fa il più basso
-#nome di questi indirizzi?
+# Nella memoria little-endian di questo simulatore, il byte meno significativo di una parola
+# risiede nell'indirizzo più basso.
 #
-#WHAT THE HARDWARE DOES
-#Questa scelta riguarda l'ordine dei byte ed è una decisione di cablaggio presa
-#una volta per l'intera macchina. MIPS ecco little-endian: the
-#il byte meno significativo risiede nell'indirizzo più basso.
+# Memorizza `0x04030201` come una parola e leggi gli offset da 0 a 3 come byte. L'uscita è 1, 2,
+# 3, 4.
 #
-#THE SOLUTION
-#Memorizza una parola, quindi rileggila un byte alla volta e lasciala
-#l'ordine risponde alla domanda per te.
-#
-#WATCH FOR
-#0x04030201 ritorna come 1 2 3 4. Il byte scritto per ultimo in
-#il letterale viene letto per primo. viene utilizzato lbu anziché lb, quindi a
-#il byte superiore a 127 non è con estensione del segno.
-# ==========================================================
+# Prova un byte basso di `0xFF`. Un carico senza segno con `lbu` dà 255, mentre un carico con
+# segno con `lb` dà -1.
+
         .data
 cell:   .word 0
 m1:     .asciiz "bytes from low address: "

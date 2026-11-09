@@ -1,6 +1,6 @@
 #Xin chào thế giới cho Chạy I/O
 #In một tin nhắn đơn giản và thoát.
-#Đây là ví dụ nhỏ nhất về phân chia dữ liệu/văn bản và quy ước tòa nhà.
+# Tin nhắn thuộc về .data; hướng dẫn in nó thuộc về .text.
 
 .data
 #.asciiz lưu trữ các ký tự theo sau là dấu kết thúc bằng 0 theo yêu cầu của syscall 4.

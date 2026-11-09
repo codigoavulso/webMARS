@@ -1,24 +1,14 @@
-# ==========================================================
-#Lektion 09 – Indizieren eines Arrays
+# 09 – Indizierung eines Arrays
 #
-#THE PROBLEM
-#Eine Ladeanweisung bietet ein Basisregister und eine Konstante
-#versetzt. Sonst nichts. Wie wird also ein[i] erreicht, wenn ich nur bin?
-#zur Laufzeit bekannt, in einem Register sitzend?
+# Jedes Array-Element belegt vier Bytes. Verschieben Sie den Index um zwei nach links, um seinen
+# Byte-Offset zu berechnen.
 #
-#WHAT THE HARDWARE DOES
-#Es fügt die Basis zu dem hinzu, was das Register enthält. Der Index
-#muss daher bereits in Bytes vorliegen, nicht in Elementen.
+# Befolgen Sie die Reihenfolge `sll`, `add`, `lw`: Skalieren Sie den Index, fügen Sie die
+# Basisadresse hinzu und laden Sie das Element.
 #
-#THE SOLUTION
-#Skalieren Sie den Index um die Elementgröße und fügen Sie dann hinzu. Für vier Byte
-#Mit anderen Worten, Skalierung ist eine Verschiebung um zwei nach links, was Kosten verursacht
-#nichts.
-#
-#WATCH FOR
-#Die drei Zeilen sll, add, lw sind das, wozu a[i] kompiliert wird.
-#Gehen Sie eine Iteration durch und lesen Sie $t5 und $t6.
-# ==========================================================
+# Bei Index 2 ist `$t5` 8 und `$t6` zeigt auf den Wert 30. Die fünf Elemente ergeben zusammen
+# 150.
+
         .data
 arr:    .word 10, 20, 30, 40, 50
 m1:     .asciiz "sum = "

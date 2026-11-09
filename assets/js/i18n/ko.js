@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "편집기 글꼴 크기(9-22)",
   "Editor line height (1.0-2.2)": "편집기 줄 높이(1.0-2.2)",
   "Editor font size": "편집기 글꼴 크기",
+  "Auto-indent on Enter": "Enter 키를 누르면 자동 들여쓰기",
   "Editor line height": "편집기 줄 높이",
   "Editor preferences updated.": "편집기 환경설정이 업데이트되었습니다.",
   "Interface preferences updated.": "인터페이스 환경설정이 업데이트되었습니다.",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "캐시: 보폭이 시간을 어떻게 변화시키는가",
   "Branch prediction in action": "실행 중인 분기 예측",
   "MIPS Piano": "MIPS 피아노",
+  "MARS-OS TTY Operating System": "MARS-OS TTY 운영 체제",
+
   "MARS-OS TTY Shell": "MARS-OS TTY 쉘",
   "Fundamentals": "기초",
   "Algorithms": "알고리즘",

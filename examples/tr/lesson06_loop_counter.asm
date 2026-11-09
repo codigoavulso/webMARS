@@ -1,24 +1,13 @@
-# ==========================================================
-#Ders 06 - Yazılımda ve donanımda bir sayaç
+# 06 - Sayaç olarak döngü
 #
-#THE PROBLEM
-#Donanım sayacı bir yazmaç, bir artırıcı ve bir
-#karşılaştırıcı. Aynı makine yazılı olarak neye benziyor?
-#talimat olarak mı?
+# `$t0` yazdırılacak bir sonraki sayıdır. `$t1` özel üst sınırdır, yani 11 sınırı 1'den 10'a
+# kadar yazdırır.
 #
-#WHAT THE HARDWARE DOES
-#Tam olarak bu üç bölüm, talimat başına bir tane: kayıt defteri
-#sayımı tutar, addi artırıcıdır, dallı slt
-#başka bir tura karar veren karşılaştırıcıdır.
+# Karşılaştırma her yinelemeden önce çalışır. Artış, sınıra doğru ilerleme sağlar ve atlama,
+# kontrolü tekrarlar.
 #
-#THE SOLUTION
-#Döngü yeni bir kavram değildir. Sıralı mantık yazılır
-#PC'yi saat olarak kullanarak dışarı çıkın.
-#
-#WATCH FOR
-#$t0 sayım kaydıdır ve $t1 limittir. Adım adım ilerleyin
-#bir tam tur ve hangi satırın hangi bölüm olduğunu belirtin.
-# ==========================================================
+# Limiti 1 olarak değiştirin ve çalıştırın. Çıkış dalı ilk baskıdan önce alınır.
+
         .data
 sp:     .asciiz " "
         .text
@@ -28,7 +17,7 @@ main:
         li   $t1, 11            #sınır
 
 loop:
-        #Döngü değişmezi: $t0 yazdırılacak bir sonraki değerdir ve $t1'in altında kalır.
+        # Döngü testinde $t0 bir sonraki adaydır. Yalnızca $t1'nin altındaysa yazdırın.
         slt  $t2, $t0, $t1      #karşılaştırıcı
         beq  $t2, $zero, endl   #sayım sınıra ulaştığında çık
 

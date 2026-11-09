@@ -1,6 +1,6 @@
 ﻿int main(void) {
-  // Requiere C0-S2- o superior: bucles for, break/continue y ++/--.
-  int sum = 0;   // el acumulador vive en un registro tras compilar
+  // Requiere C0-S2 o superior: bucles for, break/continue y ++/--.
+  int sum = 0;   // El acumulador conserva la suma parcial de una iteración a la siguiente.
 
   for (int i = 0; i < 10; i++) {   // un bucle for se vuelve una comparación más un salto hacia atrás
     if ((i % 2) == 0) continue;   // continue salta al incremento, ignorando el cuerpo

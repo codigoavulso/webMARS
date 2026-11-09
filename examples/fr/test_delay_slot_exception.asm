@@ -1,4 +1,4 @@
-#Test de parité manuel :
+# Inspectez Cause et EPC pour voir comment le CPU enregistre une exception dans un créneau de retard.
 #Lorsque le branchement retardé est activé, le débordement se produit dans le slot de retard.
 #Comportement attendu :
 #- message d'exception : débordement arithmétique

@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "Düzenleyici yazı tipi boyutu (9-22)",
   "Editor line height (1.0-2.2)": "Editör satır yüksekliği (1.0-2.2)",
   "Editor font size": "Düzenleyici yazı tipi boyutu",
+  "Auto-indent on Enter": "Enter tuşuna basınca otomatik girinti",
   "Editor line height": "Düzenleyici satır yüksekliği",
   "Editor preferences updated.": "Düzenleyici tercihleri güncellendi.",
   "Interface preferences updated.": "Arayüz tercihleri güncellendi.",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "Önbellek: adım zamanı nasıl değiştirir?",
   "Branch prediction in action": "Şube tahmini iş başında",
   "MIPS Piano": "MIPS Piyano",
+  "MARS-OS TTY Operating System": "MARS-OS TTY işletim sistemi",
+
   "MARS-OS TTY Shell": "MARS-OS TTY Kabuk",
   "Fundamentals": "Temeller",
   "Algorithms": "Algoritmalar",

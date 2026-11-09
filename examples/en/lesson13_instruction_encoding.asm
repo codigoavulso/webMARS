@@ -1,27 +1,14 @@
-# ==========================================================
-# Lesson 13 - An instruction is a number
+# 13 - An instruction is a number
 #
-# THE PROBLEM
-#   The processor fetches words from memory. Code lives in
-#   memory too. So what distinguishes an instruction from a
-#   piece of data?
+# Assemble and inspect the Code column in the Text Segment. Each basic instruction is a 32-bit
+# word divided into fields.
 #
-# WHAT THE HARDWARE DOES
-#   Nothing, beyond which register the word is loaded into. The
-#   PC selects words that go to the decoder; lw selects words
-#   that go to the register file. The bits are the same kind.
+# Compare the two `add` instructions. The operation fields match, while the register fields
+# encode the different operands.
 #
-# THE SOLUTION
-#   Read the encoding directly. Assemble and open
-#   Main > Execute: the Code column shows each instruction as
-#   the 32-bit word it really is.
-#
-# WATCH FOR
-#   This lesson prints nothing on purpose - the output is the
-#   Text Segment itself. Compare the two adds: same opcode and
-#   funct fields, different register numbers. Then find the
-#   literal 100 inside the addi word.
-# ==========================================================
+# In `addi`, the low 16 bits hold the immediate 100, which is `0x0064`. Change it to 101 and
+# reassemble to see the change.
+
         .text
         .globl main
 main:

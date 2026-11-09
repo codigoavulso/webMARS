@@ -1,24 +1,14 @@
-# ==========================================================
-# Clase 03 - Puertas logicas en 32 bits
+# 03 - Puertas lógicas en 32 bits
 #
-# EL PROBLEMA
-#   AND, OR y XOR son puertas de un bit. Un registro tiene 32.
-#   Que significa una puerta con esa anchura?
+# Cada bit del resultado depende solo de los bits en la misma posición de los dos operandos. No
+# hay acarreo entre posiciones.
 #
-# LO QUE HACE EL HARDWARE
-#   Pone 32 copias de la puerta en paralelo. El bit 0 del
-#   resultado depende solo del bit 0 de cada operando, el bit 1
-#   solo del bit 1. No hay acarreo entre ellos.
+# Con la máscara `0x0F`, AND conserva los cuatro bits inferiores y borra el resto. OR pone los
+# cuatro inferiores a 1 y XOR los invierte.
 #
-# LA SOLUCION
-#   Esa independencia es lo que hace funcionar una mascara: elegir
-#   bits con AND, forzarlos a uno con OR, invertirlos con XOR.
-#
-# OBSERVE
-#   0xCC es 11001100 y la mascara 0x0F es 00001111. AND mantiene
-#   los cuatro bits bajos, OR los pone a uno, XOR los invierte.
-#   Solo cambia el nibble bajo.
-# ==========================================================
+# Compara los tres resultados en hexadecimal y prueba la máscara `0xF0` para operar sobre el
+# siguiente grupo de cuatro bits.
+
         .data
 ma:     .asciiz "AND keeps the low nibble: "
 mo:     .asciiz "OR sets the low nibble:   "

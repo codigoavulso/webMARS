@@ -1,27 +1,16 @@
-# ==========================================================
-#Leçon 15 - Pourquoi la foulée change la vitesse
+# 15 - Pourquoi la foulée change la vitesse
 #
-#THE PROBLEM
-#Les deux boucles ci-dessous lisent le même tableau et effectuent la même chose
-#nombre de charges. Sur une vraie machine, c'est beaucoup plus lent. Le
-#le nombre d’instructions ne peut pas l’expliquer.
+# Les deux boucles utilisent le même tableau. Le premier lit les 256 mots ; le second lit tous
+# les 16 mots, ce qui ne fait que 16 chargements.
 #
-#WHAT THE HARDWARE DOES
-#La mémoire ne délivre pas de simples mots. Un raté rapporte un tout
-#bloquer, pariant que les mots voisins seront bientôt recherchés.
-#Une foulée récupère ce pari ; une foulée de seize paie
-#pour un bloc et en lit un mot.
+# Avec des blocs de cache de 16 mots, les lectures séquentielles peuvent réutiliser chaque bloc
+# récupéré. La deuxième boucle avance vers un nouveau bloc à chaque chargement.
 #
-#THE SOLUTION
-#Rien dans le code ne change. La localité est une propriété du
-#modèle d’accès, et c’est le modèle qui doit être corrigé.
-#
-#WATCH FOR
-#Ouvrez Outils > Data Cache Simulator, appuyez sur Se connecter à MIPS,
-#puis courez. Comparez le taux de réussite des deux boucles. Les deux sommes
-#imprime 0 car le tableau est remis à zéro - le nombre n'est pas le
-#point ici, le taux de réussite est.
-# ==========================================================
+# Connectez le simulateur à MIPS, cochez « Activé » et réglez la taille de bloc sur 16 mots.
+# Utilisez le Simulateur de cache de données avec un point d'arrêt à `far` pour inspecter la
+# première boucle. Réinitialisez les statistiques du cache avant d'exécuter la deuxième boucle
+# et comparez les taux de réussite.
+
         .data
 buf:    .word 0:256
 m1:     .asciiz "stride 1 sum = "
@@ -29,7 +18,7 @@ m2:     .asciiz "stride 16 sum = "
         .text
         .globl main
 main:
-#---- chaque mot de chaque bloc ----
+# Passe séquentielle : les 256 mots.
         la   $t0, buf
         li   $t1, 0
         li   $t2, 256
@@ -55,11 +44,11 @@ endnear:
         li   $a0, 10
         syscall
 
-#---- un mot par bloc, espacés de seize mots ----
+# Passe stridée : une charge tous les seize mots.
         li   $t1, 0
         li   $t3, 0
 far:
-        #Ajout de 16 sauts de 64 octets par itération : généralement un bloc de cache entier.
+        # L'adresse suivante est à 64 octets : seize mots de quatre octets chacun.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

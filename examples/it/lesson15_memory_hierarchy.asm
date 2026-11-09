@@ -1,27 +1,16 @@
-# ==========================================================
-#Lezione 15 - Perché il passo cambia la velocità
+# 15 - Perché il passo cambia la velocità
 #
-#THE PROBLEM
-#I due cicli seguenti leggono lo stesso array ed eseguono lo stesso
-#numero di carichi. Su una macchina reale uno è molto più lento. Il
-#il conteggio delle istruzioni non può spiegarlo.
+# Entrambi i cicli utilizzano lo stesso array. Il primo legge tutte le 256 parole; il secondo
+# legge ogni 16 parole, effettuando solo 16 caricamenti.
 #
-#WHAT THE HARDWARE DOES
-#La memoria non fornisce singole parole. Una mancanza vale un intero
-#bloccare, scommettendo che le parole vicine saranno presto richieste.
-#Un passo avanti raccoglie quella scommessa; una falcata di sedici paga
-#per un blocco e ne legge una parola.
+# Con blocchi cache di 16 parole, le letture sequenziali possono riutilizzare ciascun blocco
+# recuperato. Il secondo ciclo avanza ad un nuovo blocco ad ogni carico.
 #
-#THE SOLUTION
-#Non cambia nulla nel codice. La località è di proprietà di
-#modello di accesso, ed è il modello che deve essere corretto.
-#
-#WATCH FOR
-#Apri Strumenti > Simulatore cache dati, premi Connetti a MIPS,
-#poi corri. Confronta il tasso di successo dei due loop. Entrambe le somme
-#stampa 0 perché l'array è azzerato: il numero non è il
-#punto qui, il tasso di successo è.
-# ==========================================================
+# Collega il simulatore a MIPS, seleziona «Abilitato» e imposta la dimensione del blocco a 16 parole.
+# Usa Simulatore di cache di dati con un punto di interruzione su `far` per ispezionare il primo
+# loop. Reimposta le statistiche della cache lì prima di eseguire il secondo ciclo e confronta i
+# tassi di successo.
+
         .data
 buf:    .word 0:256
 m1:     .asciiz "stride 1 sum = "
@@ -29,7 +18,7 @@ m2:     .asciiz "stride 16 sum = "
         .text
         .globl main
 main:
-#---- ogni parola di ogni blocco ----
+# Passaggio sequenziale: tutte le 256 parole.
         la   $t0, buf
         li   $t1, 0
         li   $t2, 256
@@ -55,11 +44,11 @@ endnear:
         li   $a0, 10
         syscall
 
-#---- una parola per blocco, sedici parole di distanza ----
+# Passaggio stridato: un caricamento ogni sedici parole.
         li   $t1, 0
         li   $t3, 0
 far:
-        #Aggiungendo 16 skip da 64 byte per iterazione: comunemente un intero blocco di cache.
+        # L'indirizzo successivo è a 64 byte di distanza: sedici parole da quattro byte ciascuna.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

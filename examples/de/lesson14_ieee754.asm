@@ -1,27 +1,14 @@
-# ==========================================================
-#Lektion 14 – Reelle Zahlen in 32 Bit
+# 14 - Reelle Zahlen in 32 Bit
 #
-#THE PROBLEM
-#3.5 hat keinen Platz in einem Ganzzahlregister. Woher kommt die
-#Bruchteile gehen und wie wird eine sehr große Zahl gespeichert?
-#in den gleichen 32 Bit wie ein sehr kleines?
+# Ein Float mit einfacher Genauigkeit hat ein Vorzeichenbit, acht Exponentenbits und 23
+# Bruchbits.
 #
-#WHAT THE HARDWARE DOES
-#IEEE-754 teilt das Wort in drei Felder auf: ein Vorzeichenbit,
-#acht Exponentenbits und dreiundzwanzig Bruchbits. Die
-#Exponent verschiebt den Binärpunkt, weshalb das Format so ist
-#Fließkomma genannt.
+# `lwc1` kopiert das Bitmuster in ein Gleitkommaregister. Dann addiert `add.s` 3,5 und 1,25, um
+# 4,75 zu ergeben.
 #
-#THE SOLUTION
-#Eine separate Registerdatei ($f0..$f31) und ein separater Addierer
-#verarbeiten diese Werte, weshalb die Mnemoniken unterschiedlich sind:
-#lwc1 zum Laden, add.s zum Hinzufügen, Systemaufruf 2 zum Drucken.
-#
-#WATCH FOR
-#Öffnen Sie Extras > Gleitkommadarstellung und geben Sie 3.5 ein.
-#Beobachten Sie die drei Felder und überprüfen Sie dann, ob 4,75 genau ist.
-#im Gegensatz zu 0,1, das keinen endlichen binären Bruch hat.
-# ==========================================================
+# Vergleichen Sie die Kodierungen von 4,75 und 0,1 im Gleitkommadarstellung-Tool. 4,75 ist
+# genau; 0,1 muss gerundet werden.
+
         .data
 a:      .float 3.5
 b:      .float 1.25
@@ -29,7 +16,7 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
-        #Ganzzahlige Adressen lokalisieren die Daten weiterhin; lwc1 verschiebt seine Bits nach COP1.
+
         la   $a0, m1
         li   $v0, 4
         syscall

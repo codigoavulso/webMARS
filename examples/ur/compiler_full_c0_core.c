@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //پروگرام ایڈریس پاس کرتا �
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //مندرجہ بالا معاہدوں کو کمپائلر کے ذریعہ چیک کیا جاتا ہے، پرنٹ نہیں کیا جاتا ہے۔
+int accumulate(stats_t box, int values[], int n) {   // پیشگی شرط n کو صف کی حدود تک محدود کرتی ہے۔ غیر متزلزل ٹریک جو انڈیکس کرتا ہے لوپ پڑھ سکتا ہے۔
   box->count = n;
   box->total = 0;
 

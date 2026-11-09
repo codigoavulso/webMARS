@@ -1,24 +1,14 @@
-# ==========================================================
-#Ders 03 - 32 bit boyunca mantık kapıları
+# 03 - 32 bitin üzerindeki mantık kapıları
 #
-#THE PROBLEM
-#AND, OR ve XOR tek bitlik geçitlerdir. Bir kayıt 32 bit tutar.
-#Bu genişlikte bir kapı ne anlama geliyor?
+# Her sonuç biti yalnızca iki işlenenin karşılık gelen bitlerine bağlıdır. Bit konumları
+# arasında taşıma yoktur.
 #
-#WHAT THE HARDWARE DOES
-#Kapının 32 kopyasını yan yana koyuyor. Bit 0
-#sonuç yalnızca her işlenenin 0 bitine bağlıdır, bit 1 yalnızca
-#bit 1 vb. Aralarında taşıma geçişi yoktur.
+# `0x0F` maskesiyle AND, düşük dört biti tutar ve geri kalanını temizler. OR düşük dört biti
+# ayarlar ve XOR bunları çevirir.
 #
-#THE SOLUTION
-#Bir maskenin işe yaramasını sağlayan şey bu bağımsızlıktır: Hangisini seçin
-#bitleri AND ile tutun, OR ile bire zorlayın, XOR ile çevirin.
-#
-#WATCH FOR
-#0xCC 11001100'dür ve 0x0F maskesi 00001111'dir. AND tutar
-#   düşük dört bit VEYA bunları ayarlar, XOR onları çevirir. Yalnızca
-#düşük ısırma sayısı sürekli değişir.
-# ==========================================================
+# Üç sonucu onaltılı olarak karşılaştırın, ardından sonraki dört bitlik grup üzerinde çalışmak
+# için `0xF0` maskesini deneyin.
+
         .data
 ma:     .asciiz "AND keeps the low nibble: "
 mo:     .asciiz "OR sets the low nibble:   "

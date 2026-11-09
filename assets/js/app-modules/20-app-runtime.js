@@ -2191,7 +2191,7 @@ async function cloudSocialSections(intent = "login", configured = null) {
     && (intent !== "link" || !(configured.connected || []).includes(name)));
   if (!providers.length) return [];
   const providerNames = { google: "Google", facebook: "Facebook" };
-  return [{ title: translateText(intent === "link" ? "Linked sign-in methods" : "Continue with an existing account"), className: "cloud-auth-section",
+  return [{ title: translateText(intent === "link" ? "Linked sign-in methods" : "Continue with an existing account"),
     fields: providers.map((provider) => ({ type: "button", name: `social-${provider}`, icon: "google",
       label: translateText(intent === "link" ? "Link {provider}" : "Continue with {provider}", { provider: providerNames[provider] }),
       onClick: (dialog) => startCloudSocialLogin(provider, intent, dialog)
@@ -2358,7 +2358,7 @@ async function openCloudAuthDialog(initialMode = "login", initialValues = {}) {
 }
 
 function cloudAuthNavigation(name, label, route) {
-  return { type: "button", name, label: translateText(label),
+  return { type: "button", appearance: "text", name, label: translateText(label),
     onClick: (dialog) => {
       let { username = "", email = "" } = dialog.getValues();
       if (route === "register" && username.includes("@") && !email) { email = username; username = ""; }
@@ -2400,7 +2400,7 @@ async function openCloudCredentialsDialog(mode = "login", initial = {}) {
     title: translateText(registering ? "Create Account" : "Cloud Login"),
     confirmLabel: translateText(registering ? "Create Account" : "Login"),
     cancelLabel: translateText("Cancel"), width: "460px", height: registering ? "440px" : "340px",
-    sections: [{ title: translateText("Account"), layout: "table", className: "cloud-auth-section", fields }],
+    sections: [{ title: translateText("Account"), layout: "table", fields }],
     beforeResolve: async (values, dialog) => {
       const username = String(values?.username || "").trim();
       const email = String(values?.email || "").trim().toLowerCase();
@@ -2619,7 +2619,7 @@ async function openCloudEmailVerificationDialog() {
     confirmLabel: translateText("Verify"), cancelLabel: translateText("Cancel"),
     width: "460px", height: "300px",
     sections: [{ title: translateText("Email verification"), description: String(cloudUser?.email || ""),
-      layout: "table", className: "cloud-auth-section", fields: [
+      layout: "table", fields: [
         { name: "code", label: translateText("Temporary code"), inputMode: "numeric", autocomplete: "one-time-code" },
         { type: "button", name: "resend-code", label: translateText("Send a new code"),
           onClick: async (dialog) => {
@@ -7275,10 +7275,10 @@ async function openInterfacePreferencesPanel() {
   const themes = getAvailableThemes();
   const result = await runDialogForm({
     title: translateText("Interface Preferences"),
-    confirmLabel: translateText("OK"),
+    confirmLabel: translateText("Apply"),
     cancelLabel: translateText("Cancel"),
-    width: "540px",
-    height: "620px",
+    width: "660px",
+    layout: "columns",
     sections: [
       {
         title: translateText("Appearance"),
@@ -7293,13 +7293,7 @@ async function openInterfacePreferencesPanel() {
               value: theme,
               label: translateText(THEME_OPTION_LABELS[theme] || theme)
             }))
-          }
-        ]
-      },
-      {
-        title: translateText("Language"),
-        layout: "table",
-        fields: [
+          },
           {
             name: "language",
             label: translateText("Language"),
@@ -7355,7 +7349,7 @@ async function openInterfacePreferencesPanel() {
           },
           {
             name: "editorAutoIndent",
-            label: ["Auto-indent", "on Enter"].join(" "),
+            label: translateText("Auto-indent on Enter"),
             type: "checkbox",
             value: current.editorAutoIndent !== false
           }
@@ -7389,9 +7383,7 @@ async function openInterfacePreferencesPanel() {
   }, {
     windowIdPrefix: "window-interface-preferences",
     left: "120px",
-    top: "90px",
-    width: "540px",
-    height: "620px"
+    top: "90px"
   });
   if (!result?.ok) return;
 
@@ -7488,10 +7480,9 @@ async function openRuntimeMemoryPreferencesPanel() {
   };
   const result = await runDialogForm({
     title: translateText("Runtime & Memory Preferences"),
-    confirmLabel: translateText("OK"),
+    confirmLabel: translateText("Apply"),
     cancelLabel: translateText("Cancel"),
-    width: "520px",
-    height: "390px",
+    width: "540px",
     sections: [
       {
         title: translateText("Memory Configuration"),
@@ -7544,9 +7535,7 @@ async function openRuntimeMemoryPreferencesPanel() {
   }, {
     windowIdPrefix: "window-runtime-memory-preferences",
     left: "210px",
-    top: "130px",
-    width: "520px",
-    height: "390px"
+    top: "130px"
   });
   if (!result?.ok) return;
 
@@ -7596,10 +7585,9 @@ async function openMiniCCompilerPreferencesPanel() {
   const currentSubsetToken = normalizeMiniCSubsetPreferenceToken(current.miniCSubset || "C1-NATIVE");
   const result = await runDialogForm({
     title: translateText("Mini-C Compiler Preferences"),
-    confirmLabel: translateText("OK"),
+    confirmLabel: translateText("Apply"),
     cancelLabel: translateText("Cancel"),
-    width: "520px",
-    height: "410px",
+    width: "560px",
     sections: [
       {
         title: translateText("Compilation Target"),
@@ -7650,9 +7638,7 @@ async function openMiniCCompilerPreferencesPanel() {
   }, {
     windowIdPrefix: "window-mini-c-preferences",
     left: "210px",
-    top: "120px",
-    width: "520px",
-    height: "410px"
+    top: "120px"
   });
   if (!result?.ok) return;
 
@@ -7783,8 +7769,43 @@ function buildExampleVariantCacheKey(example) {
   return `${example?.id || example?.path || example?.label || "example"}::${getCurrentExampleLanguage()}`;
 }
 
+function getExampleDisplayLabel(example) {
+  const title = translateText(example.label || example.id);
+  return example.minSubset ? `${title} · ${example.minSubset}` : title;
+}
+
+const sharedExampleCommentCatalogs = new Map();
+
+async function loadSharedExampleComments(language) {
+  if (!language || language === DEFAULT_EXAMPLE_LANGUAGE) return null;
+  if (sharedExampleCommentCatalogs.has(language)) return sharedExampleCommentCatalogs.get(language);
+  try {
+    const catalog = JSON.parse(await loadTextResource(`./examples/${language}/shared-comments.json`));
+    sharedExampleCommentCatalogs.set(language, catalog);
+    return catalog;
+  } catch {
+    return null;
+  }
+}
+
+function localizeSharedAssembly(source, catalog) {
+  return source.replace(/[^\r\n]+/g, (line) => {
+    // Follow the assembler's quote rules so a "#" inside a string stays data.
+    const code = stripComment(line);
+    if (code.length === line.length) return line;
+    const comment = line.slice(code.length + 1);
+    const original = comment.trim();
+    if (!Object.hasOwn(catalog, original)) return line;
+    const translation = catalog[original];
+    if (typeof translation !== "string" || /[\r\n]/.test(translation)) return line;
+    return `${code}#${comment.match(/^\s*/)[0]}${translation}`;
+  });
+}
+
 async function loadExampleVariant(example, language) {
   const files = Array.isArray(example?.files) ? example.files : [];
+  const sharedComments = files.some((file) => file.shared === true)
+    ? await loadSharedExampleComments(language) : null;
   const loadedFiles = [];
   for (const file of files) {
     const logicalPath = normalizeExampleRelativePath(file.path);
@@ -7804,6 +7825,9 @@ async function loadExampleVariant(example, language) {
       if (!language || candidatePath === sharedPath) throw error;
       candidatePath = sharedPath;
       source = await loadTextResource(candidatePath);
+    }
+    if (sharedComments && file.shared === true && /\.(?:asm|s)$/i.test(logicalPath)) {
+      source = localizeSharedAssembly(source, sharedComments);
     }
     loadedFiles.push({
       path: candidatePath,
@@ -8887,7 +8911,7 @@ async function copyBuiltInExampleLink() {
         label: translateText("Example"),
         type: "select",
         value: runtimeExampleFiles[0].id,
-        options: runtimeExampleFiles.map((example) => ({ value: example.id, label: example.label }))
+        options: runtimeExampleFiles.map((example) => ({ value: example.id, label: getExampleDisplayLabel(example) }))
       }]
     }]
   }, { windowIdPrefix: "window-example-link", left: "195px", top: "110px", width: "610px", height: "320px" });
@@ -9127,7 +9151,7 @@ async function previewAndOpenStableExample(example) {
   if (!example) return false;
   const accepted = await runDialogConfirm({
     title: translateText("Built-in Example"),
-    message: `${String(example.label || example.id)}\n\n${publicLibraryModule.buildExampleUrl(example.id)}`,
+    message: `${getExampleDisplayLabel(example)}\n\n${publicLibraryModule.buildExampleUrl(example.id)}`,
     confirmLabel: translateText("Open as New Project"),
     cancelLabel: translateText("Cancel")
   }, { windowIdPrefix: "window-example-preview", width: "580px", height: "280px" });
@@ -10428,7 +10452,7 @@ const commands = {
         const items = runtimeExampleFiles
           .filter((example) => example.category === category)
           .map((example) => ({
-            label: example.minSubset ? `${example.label} · ${example.minSubset}` : example.label,
+            label: getExampleDisplayLabel(example),
             command: () => commands.openExample(example)
           }));
         if (!items.length) return null;
@@ -10465,7 +10489,7 @@ const commands = {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       postMarsMessage("[error] Failed to open example '{label}': {message}", {
-        label: example.label,
+        label: getExampleDisplayLabel(example),
         message
       });
     }

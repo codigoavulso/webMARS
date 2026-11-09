@@ -1,23 +1,13 @@
-# ==========================================================
-# Aula 06 - Um contador, em software e em hardware
+# 06 - Ciclo como contador
 #
-# O PROBLEMA
-#   Um contador em hardware e um registo, um incrementador e um
-#   comparador. Como e essa mesma maquina escrita em instrucoes?
+# O registo `$t0` guarda o próximo número a imprimir. O limite em `$t1` é exclusivo, pelo que 11
+# faz imprimir de 1 a 10.
 #
-# O QUE O HARDWARE FAZ
-#   Exatamente essas tres pecas, uma por instrucao: o registo
-#   guarda a contagem, o addi e o incrementador, e o slt com o
-#   desvio e o comparador que decide dar outra volta.
+# A comparação é feita antes de cada iteração. O incremento aproxima o contador do limite e o
+# salto repete a verificação.
 #
-# A SOLUCAO
-#   Um ciclo nao e um conceito novo. E logica sequencial escrita
-#   por extenso, com o PC no papel de relogio.
-#
-# OBSERVE
-#   $t0 e o registo de contagem e $t1 o limite. Percorra uma
-#   volta completa e diga qual linha e qual peca.
-# ==========================================================
+# Mude o limite para 1 e execute. O salto de saída ocorre antes da primeira impressão.
+
         .data
 sp:     .asciiz " "
         .text
@@ -27,7 +17,7 @@ main:
         li   $t1, 11            # limite exclusivo
 
 loop:
-        # Invariante: $t0 é o próximo valor a imprimir e permanece abaixo de $t1.
+        # Ao testar a condição, $t0 é o próximo candidato. Só o imprima se for menor que $t1.
         slt  $t2, $t0, $t1      # comparador
         beq  $t2, $zero, endl   # sair ao atingir o limite
 

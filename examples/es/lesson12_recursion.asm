@@ -1,25 +1,14 @@
-# ==========================================================
-# Clase 12 - La recursion necesita un marco por llamada
+# 12 - Recursión y tramas
 #
-# EL PROBLEMA
-#   Una llamada recursiva sobreescribe $ra y el registro del
-#   argumento. La llamada exterior queda sin camino de vuelta y
-#   sin saber cual era su propio n.
+# Una llamada recursiva sobrescribe `$ra` y usa `$a0` para su propio argumento. Guarda ambos
+# valores antes de la llamada.
 #
-# LO QUE HACE EL HARDWARE
-#   Ofrece un $ra, no una pila de ellos. Nada se guarda solo; si
-#   el codigo no lo guarda, se pierde.
+# Entra en `fact` para cada valor de 5 a 1. Cada llamada reserva ocho bytes, incluida la que
+# devuelve 1.
 #
-# LA SOLUCION
-#   Cada activacion abre un marco en la pila, guarda lo que aun
-#   necesitara tras la llamada y lo restaura al salir. La
-#   profundidad de la pila es la de la recursion.
-#
-# OBSERVE
-#   Ponga un punto de ruptura en el mul y siga a $sp bajar 8 por
-#   nivel. Las cinco copias guardadas de n son lo que hace
-#   posible la multiplicacion al regresar.
-# ==========================================================
+# Coloca un punto de interrupción en `mul` para observar el retorno. Cada llamada recupera su
+# argumento, multiplica y libera el espacio que reservó en la pila.
+
         .data
 m1:     .asciiz "5! = "
         .text
@@ -61,7 +50,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
-        # Restaurar el estado y descartar exactamente el frame reservado al entrar.
+        # Recupera la dirección de retorno guardada antes de liberar el espacio de esta llamada en la pila.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

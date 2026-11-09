@@ -1,24 +1,14 @@
-# ==========================================================
-#Lektion 03 – Logikgatter über 32 Bit
+# 03 – Logikgatter über 32 Bit
 #
-#THE PROBLEM
-#AND, OR und XOR sind Ein-Bit-Gatter. Ein Register enthält 32 Bit.
-#Was bedeutet ein Tor bei dieser Breite?
+# Jedes Ergebnisbit hängt nur von den entsprechenden Bits der beiden Operanden ab. Es gibt
+# keinen Übertrag zwischen Bitpositionen.
 #
-#WHAT THE HARDWARE DOES
-#Es liegen 32 Exemplare des Tores nebeneinander. Bit 0 des
-#Das Ergebnis hängt nur von Bit 0 jedes Operanden ab, Bit 1 nur von
-#Bit 1 und so weiter. Zwischen ihnen gibt es keine Tragefahrten.
+# Mit der Maske `0x0F` behält AND die unteren vier Bits und löscht den Rest. OR setzt die
+# unteren vier Bits und XOR dreht sie um.
 #
-#THE SOLUTION
-#Diese Unabhängigkeit macht eine Maske aus: Wählen Sie welche
-#   Dinge, die man behalten sollte AND, mit ODER auf Eins zwingen, mit umdrehen XOR.
-#
-#WATCH FOR
-#0xCC ist 11001100 und die Maske 0x0F ist 00001111. AND bleibt bestehen
-#die unteren vier Bits, OR setzt sie, XOR dreht sie um. Nur die
-#Low Nibble ändert sich ständig.
-# ==========================================================
+# Vergleichen Sie die drei Ergebnisse im Hexadezimalformat und versuchen Sie es dann mit der
+# Maske `0xF0`, um die nächste Gruppe von vier Bits zu bearbeiten.
+
         .data
 ma:     .asciiz "AND keeps the low nibble: "
 mo:     .asciiz "OR sets the low nibble:   "

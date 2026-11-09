@@ -1,5 +1,5 @@
 #Benchmark zum Cache-Verhalten: sequenzieller Zugriff im Vergleich zu Schritt-16-Zugriff.
-#Öffnen Sie Tools > Data Cache Simulation Tool, verbinden Sie es mit MIPS und markieren Sie Aktiviert.
+# Öffnen Sie Extras > Daten-Cache-Simulator und verbinden Sie es mit MIPS. Aktivieren Sie „Aktiviert“.
 #
 #Jede Ausführung misst genau ein Cold-Cache-Muster. Legen Sie ACCESS_PATTERN fest
 #auf 1 oder 2 setzen, die Simulatorstatistiken zurücksetzen, dann zusammenbauen und erneut ausführen.

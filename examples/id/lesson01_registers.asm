@@ -1,24 +1,14 @@
-# ==========================================================
-#Pelajaran 01 - Register dan nilai langsung
+# 01 - Mendaftar dan segera
 #
-#THE PROBLEM
-#ALU memiliki dua port input dan keduanya dihubungkan ke
-#mendaftarkan berkas. Angka yang ditulis pada sumbernya bukan pada a
-#mendaftar, sehingga tidak dapat menjangkau port tersebut secara langsung.
+# Yang langsung dikodekan dalam instruksi. Kumpulkan dan periksa instruksi dasar mana yang
+# menjadi `li`.
 #
-#WHAT THE HARDWARE DOES
-#Sebuah perjalanan langsung di dalam kata instruksi itu sendiri.
-#addi membawa bidang 16-bit; li adalah kenyamanan itu
-#assembler berkembang menjadi satu atau dua instruksi nyata.
+# Langkah melalui dua beban dan penambahan. Di Register, ikuti `$t0 = 12`, `$t1 = 30` dan
+# `$t2 = 42`.
 #
-#THE SOLUTION
-#Masukkan konstanta ke dalam register terlebih dahulu, lalu biarkan ALU
-#membaca dua register dan menulis yang ketiga.
-#
-#WATCH FOR
-#Langkah sekali per baris dan ikuti $t0, $t1 dan $t2 di
-#Panel register. Hanya baris ketiga yang menyentuh ALU.
-# ==========================================================
+# Coba ganti 30 dengan `0x12345678` dan pasang kembali. Konstanta yang lebih besar memerlukan
+# lebih dari satu instruksi dasar.
+
         .data
 lbl:    .asciiz "12 + 30 = "
         .text
@@ -30,9 +20,9 @@ main:
         syscall
 
         #li adalah instruksi semu; Assemble menunjukkan instruksi sebenarnya yang mana.
-        li   $t0, 12            #segera -> daftar
-        li   $t1, 30            #segera -> daftar
-        add  $t2, $t0, $t1      #ALU membaca dua register
+        li   $t0, 12
+        li   $t1, 30
+        add  $t2, $t0, $t1      # Jumlahnya ditulis ke register yang berbeda.
 
         move $a0, $t2
         li   $v0, 1

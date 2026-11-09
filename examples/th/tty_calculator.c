@@ -137,7 +137,7 @@ int main(void) {
   int op_box[1] = {0};
   int right_box[1] = {0};
 
-  //รักษาเอาต์พุตเริ่มต้นให้สั้นเพื่อให้พร้อมท์ปรากฏขึ้นอย่างรวดเร็ว
+
   tty_puts("TTY calculator ready.");
   tty_newline();
   tty_puts("Use +, -, *, /   |   q quits");

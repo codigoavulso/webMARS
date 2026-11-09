@@ -1,6 +1,6 @@
 ﻿int main(void) {
-  //Membutuhkan C0-S2- atau lebih tinggi: for loop, break/continue, dan ++/--.
-  int sum = 0;   //akumulator tinggal di register setelah dikompilasi
+  //Membutuhkan C0-S2 atau lebih tinggi: for loop, break/continue, dan ++/--.
+  int sum = 0;   // Akumulator menyimpan jumlah berjalan di seluruh iterasi.
 
   for (int i = 0; i < 10; i++) {   //loop for menjadi perbandingan ditambah cabang mundur
     if ((i % 2) == 0) continue;   //lanjutkan lompatan ke atas, lewati badan

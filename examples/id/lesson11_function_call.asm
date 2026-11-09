@@ -1,25 +1,14 @@
-# ==========================================================
-#Pelajaran 11 - Memanggil suatu fungsi
+# 11 - Memanggil suatu fungsi
 #
-#THE PROBLEM
-#Memasuki rutinitas itu mudah. Kembali bukan karena
-#rutinitas yang sama dapat dilakukan dari banyak tempat dan
-#alamat pengirim berbeda setiap saat.
+# Jalankan dengan percabangan tertunda. `jal` melompat ke fungsi dan memasukkan alamat instruksi
+# berikutnya di `$ra`.
 #
-#WHAT THE HARDWARE DOES
-#jal melakukan dua hal dalam satu instruksi: ia menyimpan
-#alamat instruksi berikut di $ra, lalu lompat. jr
-#melompat ke apa pun yang dimiliki register, jadi jr $ra kembali.
+# Konvensi pemanggilan melewati 17 dan 42 di `$a0` dan `$a1`. Fungsi ini mengembalikan nilai
+# yang lebih besar di `$v0`.
 #
-#THE SOLUTION
-#Yang lainnya hanyalah kesepakatan, bukan sirkuit: argumen masuk
-#$a0..$a3, menghasilkan $v0. Hancurkan konvensi dan kode
-#masih dirakit - berhenti beroperasi.
-#
-#WATCH FOR
-#Masuk ke jal dan baca $ra. Bandingkan dengan alamatnya
-#baris setelah panggilan di Segmen Teks.
-# ==========================================================
+# Masuk ke dalam panggilan, bandingkan `$ra` dengan alamat setelah `jal`, lalu ikuti `jr $ra`
+# kembali ke penelepon.
+
         .data
 m1:     .asciiz "max(17, 42) = "
         .text
@@ -31,8 +20,7 @@ main:
 
         li   $a0, 17            #argumen pertama
         li   $a1, 42            #argumen kedua
-        #jal mengubah aliran kontrol dan $ra dalam satu operasi arsitektur.
-        jal  maxof              #$ra = alamat baris berikutnya
+        jal  maxof
 
         move $a0, $v0           #hasilnya muncul kembali di $v0
         li   $v0, 1

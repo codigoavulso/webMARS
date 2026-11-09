@@ -1,24 +1,14 @@
-# ==========================================================
-#Lektion 01 – Register und unmittelbare Werte
+# 01 – Register und Sofortnachrichten
 #
-#THE PROBLEM
-#Der ALU verfügt über zwei Eingangsanschlüsse und beide sind mit dem verkabelt
-#Registerdatei. Eine in der Quelle geschriebene Zahl steht nicht in a
-#registrieren, sodass diese Ports nicht direkt erreicht werden können.
+# Das Unmittelbare ist in der Anweisung kodiert. Bauen Sie zusammen und prüfen Sie, zu welcher
+# Grundanweisung jedes `li` wird.
 #
-#WHAT THE HARDWARE DOES
-#Ein Immediat wandert innerhalb des Anweisungsworts selbst.
-#addi trägt ein 16-Bit-Feld; li ist eine Annehmlichkeit
-#Der Assembler erweitert sich in ein oder zwei echte Anweisungen.
+# Gehen Sie die beiden Ladungen und die Addition schrittweise durch. Folgen Sie in Registern
+# `$t0 = 12`, `$t1 = 30` und `$t2 = 42`.
 #
-#THE SOLUTION
-#Legen Sie die Konstante zuerst in einem Register ab und lassen Sie dann ALU
-#zwei Register lesen und ein drittes schreiben.
-#
-#WATCH FOR
-#Gehen Sie einmal pro Zeile vor und folgen Sie $t0, $t1 und $t2 im
-#Registerbereich. Nur die dritte Zeile berührt den ALU.
-# ==========================================================
+# Versuchen Sie, 30 durch `0x12345678` zu ersetzen, und bauen Sie es erneut zusammen. Die
+# größere Konstante benötigt mehr als eine Grundanweisung.
+
         .data
 lbl:    .asciiz "12 + 30 = "
         .text
@@ -30,9 +20,9 @@ main:
         syscall
 
         #li ist eine Pseudoanweisung; Assemble zeigt, um welche echte Anweisung es sich handelt.
-        li   $t0, 12            #sofort -> anmelden
-        li   $t1, 30            #sofort -> anmelden
-        add  $t2, $t0, $t1      #ALU liest zwei Register
+        li   $t0, 12
+        li   $t1, 30
+        add  $t2, $t0, $t1      # Die Summe wird in ein anderes Register geschrieben.
 
         move $a0, $t2
         li   $v0, 1

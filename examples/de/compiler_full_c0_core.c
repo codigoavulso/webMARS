@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //Das Programm übergibt die Adresse, niemals d
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //Die oben genannten Verträge werden vom Compiler geprüft und nicht gedruckt
+int accumulate(stats_t box, int values[], int n) {   // Die Vorbedingung beschränkt n auf die Array-Grenzen; Die invarianten Spuren, die die Schleife indizieren, können gelesen werden.
   box->count = n;
   box->total = 0;
 

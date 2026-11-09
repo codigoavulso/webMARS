@@ -1,24 +1,12 @@
-# ==========================================================
-#Bài 02 - Hai phần bù
+# 02 - Hai phần bù
 #
-#THE PROBLEM
-#Một thanh ghi có 32 dây, mỗi dây cao hoặc thấp. Không có dây
-#đối với dấu trừ, số âm vẫn phải hoạt động.
+# Trong phần bù hai 32 bit, đảo ngược các bit của 5 và cộng 1 sẽ tạo ra biểu diễn -5.
 #
-#WHAT THE HARDWARE DOES
-#Nó đọc bit trên cùng dưới dạng một dấu hiệu, nhưng không phải dưới dạng cờ riêng biệt:
-#-n được lưu trữ dưới dạng mẫu bit, được thêm vào n, kết thúc thành
-#không. Đảo ngược từng bit và thêm một bit và bạn có nó.
+# Chương trình tính toán cùng một giá trị theo hai cách: `sub` từ 0, sau đó `nor` và `addi`.
 #
-#THE SOLUTION
-#Phép trừ không cần mạch thứ hai. a - b trở thành
-#a + (-b), do đó một bộ cộng phục vụ cả hai thao tác.
-#
-#WATCH FOR
-#Cả hai nửa đều in -5. Người thứ hai đạt được nó một chặng đường dài,
-#với nor và addi, hiển thị những gì sub thực hiện trong nội bộ.
-#Đặt Giá trị thành thập lục phân để xem 0xFFFFFFFB.
-# ==========================================================
+# Cả hai đường dẫn đều in -5. Kiểm tra `0xFFFFFFFB` trong sổ đăng ký để xem các bit giống nhau
+# trông như thế nào trong hệ thập lục phân.
+
         .data
 m1:     .asciiz "zero minus 5 = "
 m2:     .asciiz "invert bits of 5, add 1 = "

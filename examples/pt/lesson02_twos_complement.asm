@@ -1,25 +1,14 @@
-# ==========================================================
-# Aula 02 - Complemento para dois
+# 02 - Complemento para dois
 #
-# O PROBLEMA
-#   Um registo sao 32 fios, cada um a nivel alto ou baixo. Nao ha
-#   fio para o sinal de menos, e ainda assim os negativos tem de
-#   funcionar.
+# Em complemento para dois de 32 bits, inverter os bits de 5 e somar 1 produz a representação de
+# -5.
 #
-# O QUE O HARDWARE FAZ
-#   Le o bit de topo como sinal, mas nao como flag separada: -n e
-#   guardado como o padrao de bits que, somado a n, da a volta
-#   ate zero. Inverter todos os bits e somar um chega la.
+# O programa calcula o mesmo valor de duas formas: com `sub` a partir de zero e depois com `nor`
+# e `addi`.
 #
-# A SOLUCAO
-#   A subtracao nao precisa de um segundo circuito. a - b passa a
-#   a + (-b), logo um unico somador serve as duas operacoes.
-#
-# OBSERVE
-#   As duas metades imprimem -5. A segunda chega la pelo caminho
-#   longo, com nor e addi, mostrando o que o sub faz por dentro.
-#   Ponha os Valores em hexadecimal para ver 0xFFFFFFFB.
-# ==========================================================
+# Ambos os caminhos imprimem -5. Veja `0xFFFFFFFB` nos registos para observar os mesmos bits em
+# hexadecimal.
+
         .data
 m1:     .asciiz "zero minus 5 = "
 m2:     .asciiz "invert bits of 5, add 1 = "

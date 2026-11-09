@@ -1,25 +1,14 @@
-# ==========================================================
-# Aula 11 - Chamar uma funcao
+# 11 - Chamar uma função
 #
-# O PROBLEMA
-#   Saltar para uma rotina e facil. Voltar nao e, porque a mesma
-#   rotina pode ser chamada de muitos sitios e o endereco de
-#   retorno e diferente de cada vez.
+# Execute com os desvios retardados desativados. A instrução `jal` salta para a função e guarda
+# em `$ra` o endereço da instrução seguinte.
 #
-# O QUE O HARDWARE FAZ
-#   O jal faz duas coisas numa instrucao: guarda o endereco da
-#   instrucao seguinte em $ra e depois salta. O jr salta para o
-#   que um registo contiver, logo jr $ra regressa.
+# A convenção de chamada passa 17 e 42 em `$a0` e `$a1`. A função devolve o maior valor em
+# `$v0`.
 #
-# A SOLUCAO
-#   Tudo o resto e acordo, nao circuito: argumentos em $a0..$a3,
-#   resultados em $v0. Quebre a convencao e o codigo continua a
-#   montar - simplesmente deixa de interoperar.
-#
-# OBSERVE
-#   Pare sobre o jal e leia o $ra. Compare-o com o endereco da
-#   linha seguinte a chamada no Segmento de Texto.
-# ==========================================================
+# Entre na função passo a passo, compare `$ra` com o endereço após `jal` e siga `jr $ra` até ao
+# código que fez a chamada.
+
         .data
 m1:     .asciiz "max(17, 42) = "
         .text
@@ -31,8 +20,7 @@ main:
 
         li   $a0, 17            # primeiro argumento
         li   $a1, 42            # segundo argumento
-        # jal altera o fluxo de controlo e $ra numa única operação arquitetural.
-        jal  maxof              # $ra = endereço de retorno
+        jal  maxof
 
         move $a0, $v0           # o resultado regressou em $v0
         li   $v0, 1

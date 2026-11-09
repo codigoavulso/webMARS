@@ -1,4 +1,4 @@
-#Test di parità manuale:
+# Ispeziona Causa e EPC per vedere come la CPU registra un'eccezione in uno slot di ritardo.
 #Con la diramazione ritardata abilitata, l'overflow avviene nello slot di ritardo.
 #Comportamento previsto:
 #- messaggio di eccezione: overflow aritmetico

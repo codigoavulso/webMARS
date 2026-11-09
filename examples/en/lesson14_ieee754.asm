@@ -1,27 +1,13 @@
-# ==========================================================
-# Lesson 14 - Real numbers in 32 bits
+# 14 - Real numbers in 32 bits
 #
-# THE PROBLEM
-#   3.5 has no place in an integer register. Where does the
-#   fractional part go, and how is a very large number stored
-#   in the same 32 bits as a very small one?
+# A single-precision float has one sign bit, eight exponent bits and 23 fraction bits.
 #
-# WHAT THE HARDWARE DOES
-#   IEEE-754 splits the word into three fields: one sign bit,
-#   eight exponent bits and twenty-three fraction bits. The
-#   exponent slides the binary point, which is why the format is
-#   called floating point.
+# `lwc1` copies the bit pattern into a floating-point register. Then `add.s` adds 3.5 and 1.25
+# to produce 4.75.
 #
-# THE SOLUTION
-#   A separate register file ($f0..$f31) and a separate adder
-#   handle these values, which is why the mnemonics differ:
-#   lwc1 to load, add.s to add, syscall 2 to print.
-#
-# WATCH FOR
-#   Open Tools > Floating Point Representation and enter 3.5.
-#   Watch the three fields, then check that 4.75 is exact -
-#   unlike 0.1, which has no finite binary fraction.
-# ==========================================================
+# Compare the encodings of 4.75 and 0.1 in the Floating Point Representation tool. 4.75 is
+# exact; 0.1 needs rounding.
+
         .data
 a:      .float 3.5
 b:      .float 1.25
@@ -29,7 +15,7 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
-        # Integer addresses still locate the data; lwc1 moves its bits into COP1.
+
         la   $a0, m1
         li   $v0, 4
         syscall

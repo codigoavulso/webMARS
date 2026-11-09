@@ -1,24 +1,14 @@
-# ==========================================================
-#Leçon 01 - Registres et valeurs immédiates
+# 01 - Registres et immédiats
 #
-#THE PROBLEM
-#Le ALU possède deux ports d'entrée et les deux sont câblés au
-#enregistrer le fichier. Un numéro écrit dans la source n'est pas dans un
-#s'inscrire, il ne peut donc pas atteindre ces ports directement.
+# L'immédiat est codé dans l'instruction. Assemblez et vérifiez quelle instruction de base
+# devient chaque `li`.
 #
-#WHAT THE HARDWARE DOES
-#Un voyage immédiat se déroule à l'intérieur du mot d'instruction lui-même.
-#addi porte un champ de 16 bits ; Li est une commodité le
-#L'assembleur se développe en une ou deux instructions réelles.
+# Parcourez les deux charges et l’ajout. Dans les registres, suivez `$t0 = 12`, `$t1 = 30` et
+# `$t2 = 42`.
 #
-#THE SOLUTION
-#Placez d'abord la constante dans un registre, puis laissez le ALU
-#lire deux registres et en écrire un troisième.
-#
-#WATCH FOR
-#Effectuez une étape par ligne et suivez $t0, $t1 et $t2 dans le
-#Panneau des registres. Seule la troisième ligne touche le ALU.
-# ==========================================================
+# Essayez de remplacer 30 par `0x12345678` et remontez. La constante la plus grande nécessite
+# plus d’une instruction de base.
+
         .data
 lbl:    .asciiz "12 + 30 = "
         .text
@@ -30,9 +20,9 @@ main:
         syscall
 
         #li est une pseudo-instruction ; Assemble montre quelle véritable instruction il devient.
-        li   $t0, 12            #immédiat -> s'inscrire
-        li   $t1, 30            #immédiat -> s'inscrire
-        add  $t2, $t0, $t1      #ALU lit deux registres
+        li   $t0, 12
+        li   $t1, 30
+        add  $t2, $t0, $t1      # La somme est inscrite dans un autre registre.
 
         move $a0, $t2
         li   $v0, 1

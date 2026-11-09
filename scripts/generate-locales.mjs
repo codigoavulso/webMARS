@@ -439,6 +439,30 @@ async function generateExamples(locale) {
     const source = await readFile(sourcePath, "utf8");
     await writeFileWithRetry(targetPath, await translateExampleSource(source, extension, locale), "utf8");
   }
+
+  const manifest = JSON.parse((await readFile(resolve(projectRoot, "examples/examples.json"), "utf8")).replace(/^\uFEFF/, ""));
+  const sharedFiles = new Set(manifest.examples.flatMap((example) => (example.files || [])
+    .filter((file) => file.shared === true && /\.(?:asm|s)$/i.test(file.path))
+    .map((file) => file.path)));
+  const comments = new Set();
+  for (const path of sharedFiles) {
+    const source = await readFile(resolve(projectRoot, "examples", path), "utf8");
+    for (const segment of commentSegments(source, extname(path).toLowerCase())) {
+      comments.add(segment.text.trim());
+    }
+  }
+  const catalogPath = resolve(targetRoot, "shared-comments.json");
+  let existing = {};
+  try {
+    existing = JSON.parse(await readFile(catalogPath, "utf8"));
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  const missing = [...comments].filter((text) => !Object.hasOwn(existing, text));
+  const translated = await translateMany(missing, locale.translate);
+  missing.forEach((text, index) => { existing[text] = translated[index]; });
+  const catalog = Object.fromEntries([...comments].map((text) => [text, existing[text]]));
+  await writeFileWithRetry(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
 }
 
 async function updateLanguageManifests() {

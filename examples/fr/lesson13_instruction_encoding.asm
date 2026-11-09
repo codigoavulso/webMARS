@@ -1,27 +1,14 @@
-# ==========================================================
-#Leçon 13 - Une instruction est un nombre
+# 13 - Une instruction est un nombre
 #
-#THE PROBLEM
-#Le processeur récupère les mots de la mémoire. Le code vit dans
-#la mémoire aussi. Alors, qu'est-ce qui distingue une instruction d'un
-#morceau de données ?
+# Assemblez et inspectez la colonne Code dans le segment de texte. Chaque instruction de base
+# est un mot de 32 bits divisé en champs.
 #
-#WHAT THE HARDWARE DOES
-#Rien, au-delà duquel le mot se charge. Le
-#Le PC sélectionne les mots qui vont au décodeur ; lw sélectionne des mots
-#qui vont dans le fichier de registre. Les morceaux sont du même genre.
+# Comparez les deux instructions `add`. Les champs d'opération correspondent, tandis que les
+# champs de registre codent les différents opérandes.
 #
-#THE SOLUTION
-#Lisez directement l'encodage. Assembler et ouvrir
-#Principal > Exécuter : la colonne Code affiche chaque instruction comme
-#le mot de 32 bits qu'il est réellement.
-#
-#WATCH FOR
-#Cette leçon n'imprime rien exprès - le résultat est le
-#Segment de texte lui-même. Comparez les deux ajouts : même opcode et
-#champs de fonction, différents numéros de registre. Trouvez ensuite le
-#littéral 100 à l’intérieur du mot addi.
-# ==========================================================
+# Dans `addi`, les 16 bits faibles contiennent le 100 immédiat, qui est `0x0064`. Changez-le en
+# 101 et remontez pour voir le changement.
+
         .text
         .globl main
 main:

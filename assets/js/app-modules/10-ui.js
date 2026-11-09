@@ -972,11 +972,17 @@ function createWindowManager(refs) {
     let top = parseFloat(win.style.top || "0");
     let width = parseFloat(win.style.width || "0");
     let height = parseFloat(win.style.height || "0");
-    if (!(width > 0) || !(height > 0)) {
-      const desktopRect = desktop.getBoundingClientRect();
+    const needsBounds = !(width > 0) || !(height > 0);
+    const contentSized = !isStackedMode() && win.classList.contains("interaction-dialog") && win.offsetHeight > 0;
+    if (needsBounds || contentSized) {
       const rect = win.getBoundingClientRect();
-      left = rect.left - desktopRect.left;
-      top = rect.top - desktopRect.top;
+      // CSS positions start inside the desktop border. Measuring a fitted
+      // dialog must update its size without feeding that border into its position.
+      if (needsBounds) {
+        const desktopRect = getDesktopRect();
+        left = rect.left - desktopRect.left - desktop.clientLeft;
+        top = rect.top - desktopRect.top - desktop.clientTop;
+      }
       width = rect.width;
       height = rect.height;
     }
@@ -2113,11 +2119,14 @@ function createWindowManager(refs) {
     const activeEntry = dragging.entry;
     if (!activeEntry || activeEntry.maximized) return;
     if (isStackedMode() && isStackedFlowEntry(activeEntry)) return;
-    const desktopRect = getDesktopRect();
+    const dx = event.clientX - dragging.startX;
+    const dy = event.clientY - dragging.startY;
+    if (!dragging.moved && Math.max(Math.abs(dx), Math.abs(dy)) < 3) return;
+    dragging.moved = true;
     const metrics = readWindowMetrics(activeEntry);
     const nextMetrics = applySnapToMetrics(activeEntry, {
-      left: event.clientX - desktopRect.left - dragging.offsetX,
-      top: event.clientY - desktopRect.top - dragging.offsetY,
+      left: dragging.startLeft + dx,
+      top: dragging.startTop + dy,
       width: metrics.width,
       height: metrics.height
     }, "move");
@@ -2129,11 +2138,13 @@ function createWindowManager(refs) {
     const activeEntry = dragging.entry;
     if (!activeEntry) return;
     activeEntry.element.classList.remove("window-dragging");
-    if (!isStackedMode()) {
-      const snapped = applySnapToMetrics(activeEntry, readWindowMetrics(activeEntry), "move");
-      setWindowMetrics(activeEntry, snapped, true);
+    if (dragging.moved) {
+      if (!isStackedMode()) {
+        const snapped = applySnapToMetrics(activeEntry, readWindowMetrics(activeEntry), "move");
+        setWindowMetrics(activeEntry, snapped, true);
+      }
+      clampWindow(activeEntry, true, true);
     }
-    clampWindow(activeEntry, true, true);
     dragging = null;
     document.removeEventListener("pointermove", onPointerMove);
     document.removeEventListener("pointerup", stopDragging);
@@ -2166,6 +2177,9 @@ function createWindowManager(refs) {
       next.height = start.height - dy;
     }
 
+    if (next.height !== start.height && resizing.entry.element.classList.contains("interaction-dialog")) {
+      resizing.entry.element.classList.add("dialog-user-sized");
+    }
     const snapped = applySnapToMetrics(resizing.entry, next, directions);
     setWindowMetrics(resizing.entry, snapped, false);
     applyLinkedResizeState(resizing.linkedResize, snapped);
@@ -2419,11 +2433,14 @@ function createWindowManager(refs) {
       if (isStackedMode() && isStackedFlowEntry(entry)) return;
       event.preventDefault();
 
-      const rect = entry.element.getBoundingClientRect();
+      const { left, top } = readWindowMetrics(entry);
       dragging = {
         entry,
-        offsetX: event.clientX - rect.left,
-        offsetY: event.clientY - rect.top
+        startX: event.clientX,
+        startY: event.clientY,
+        startLeft: left,
+        startTop: top,
+        moved: false
       };
 
       entry.element.classList.add("window-dragging");
@@ -3188,6 +3205,8 @@ function createWindowManager(refs) {
     const nextLayoutMode = getViewportMode();
     const wasStacked = isStackedMode();
     if (!wasStacked && nextLayoutMode !== "desktop") {
+      const focusedPanel = document.activeElement?.closest(".mobile-panel-window:not(.window-hidden)");
+      if (focusedPanel && windows.has(focusedPanel.id)) mobileActivePanelId = focusedPanel.id;
       captureDesktopLayoutSnapshot();
       syncStackedHeightsFromCurrentLayout();
       windows.forEach((entry) => {
@@ -3258,6 +3277,10 @@ function createWindowManager(refs) {
     show,
     reveal,
     hide,
+    fitDialog(windowId) {
+      const entry = windows.get(windowId);
+      if (entry && !isStackedMode() && !isHiddenEntry(entry)) clampDialogPosition(entry);
+    },
     resizeWindow,
     toggleMinimize,
     toggleMaximize,
@@ -4452,7 +4475,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
   const win = document.createElement("section");
   // Desktop still renders this as a floating dialog. In stacked/mobile mode it
   // participates in the same tab, focus and close lifecycle as every other window.
-  win.className = "desktop-window window-hidden tool-window dialog-window mobile-panel-window";
+  win.className = "desktop-window window-hidden tool-window dialog-window mobile-panel-window interaction-dialog";
   win.id = windowId;
   win.style.left = defaultLeft;
   win.style.top = defaultTop;
@@ -4462,13 +4485,17 @@ function createDialogSystem(windowManager, desktop, options = {}) {
     <div class="window-titlebar">
       <span class="window-title" data-dialog-role="title">${escapeHtml(windowTitle)}</span>
       <div class="window-controls">
-        <button class="win-btn win-btn-close" data-win-action="close" type="button">x</button>
+        <button class="win-btn win-btn-close" data-win-action="close" type="button" aria-label="Close">x</button>
       </div>
     </div>
     <div class="window-content dialog-window-content">
-      <textarea data-dialog-role="message" class="dialog-message" readonly spellcheck="false" wrap="soft"></textarea>
-      <div data-dialog-role="form" class="dialog-form" hidden></div>
-      <input data-dialog-role="input" class="run-io-input dialog-input" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <div class="dialog-body">
+        <div data-dialog-role="message" class="dialog-message" aria-live="polite" hidden></div>
+        <div data-dialog-role="form" class="dialog-form" hidden></div>
+      </div>
+      <div class="dialog-entry" hidden>
+        <input data-dialog-role="input" class="run-io-input dialog-input" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      </div>
       <div class="dialog-actions">
         <button class="tool-btn" data-dialog-role="cancel" type="button">Cancel</button>
         <button class="tool-btn primary" data-dialog-role="confirm" type="button">OK</button>
@@ -4482,6 +4509,9 @@ function createDialogSystem(windowManager, desktop, options = {}) {
 
   const titleNode = win.querySelector('[data-dialog-role="title"]');
   const messageNode = win.querySelector('[data-dialog-role="message"]');
+  const bodyNode = win.querySelector(".dialog-body");
+  const entryNode = win.querySelector(".dialog-entry");
+  const actionsNode = win.querySelector(".dialog-actions");
   const formNode = win.querySelector('[data-dialog-role="form"]');
   const inputNode = win.querySelector('[data-dialog-role="input"]');
   const confirmButton = win.querySelector('[data-dialog-role="confirm"]');
@@ -4493,23 +4523,28 @@ function createDialogSystem(windowManager, desktop, options = {}) {
   const fieldIdPrefix = `dialog-field-${windowId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
   const dialogTitleId = `${fieldIdPrefix}-title`;
   titleNode.id = dialogTitleId;
+  messageNode.id = `${fieldIdPrefix}-message`;
+  win.setAttribute("role", "dialog");
+  win.setAttribute("aria-labelledby", dialogTitleId);
   messageNode.setAttribute("aria-labelledby", dialogTitleId);
+  inputNode.setAttribute("aria-labelledby", dialogTitleId);
   const defaultSize = {
     width: win.style.width || "460px",
     height: win.style.height || "200px"
   };
 
   function setMessageContent(text, tone = "") {
-    if (!(messageNode instanceof HTMLTextAreaElement)) return;
-    messageNode.value = String(text || "");
-    messageNode.hidden = !messageNode.value.trim();
-    win.classList.toggle("dialog-without-message", messageNode.hidden);
+    messageNode.textContent = String(text || "");
+    messageNode.hidden = !messageNode.textContent.trim();
+    if (messageNode.hidden) win.removeAttribute("aria-describedby");
+    else win.setAttribute("aria-describedby", messageNode.id);
     messageNode.classList.remove("info", "success", "error");
     const normalizedTone = String(tone || "").trim().toLowerCase();
     if (normalizedTone === "info" || normalizedTone === "success" || normalizedTone === "error") {
       messageNode.classList.add(normalizedTone);
     }
-    messageNode.scrollTop = 0;
+    if (normalizedTone === "error") bodyNode.scrollTop = 0;
+    windowManager.fitDialog(win.id);
   }
 
   function setFormDisabled(disabled) {
@@ -4529,6 +4564,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
     const allowCancelWhilePending = active.pendingConfirm === true && active.allowCancelWhilePending === true;
     confirmButton.hidden = confirmHidden;
     cancelButton.hidden = cancelHidden;
+    actionsNode.hidden = confirmHidden && cancelHidden;
     confirmButton.disabled = active.confirmDisabled === true || active.pendingConfirm === true;
     cancelButton.disabled = active.cancelDisabled === true || (active.pendingConfirm === true && !allowCancelWhilePending);
     titleCloseButton.disabled = active.closeDisabled === true || (active.pendingConfirm === true && !allowCancelWhilePending);
@@ -4602,68 +4638,62 @@ function createDialogSystem(windowManager, desktop, options = {}) {
   function renderForm(activeDialog) {
     if (!(formNode instanceof HTMLElement)) return;
     const sections = Array.isArray(activeDialog.sections) ? activeDialog.sections : [];
+    formNode.classList.toggle("dialog-form-columns", activeDialog.layout === "columns");
     formNode.innerHTML = sections.map((section, sectionIndex) => {
       const title = String(section?.title || "").trim();
       const description = String(section?.description || "").trim();
       const sectionLayout = String(section?.layout || "").trim().toLowerCase();
       const sectionClassName = String(section?.className || "").trim();
       const fields = Array.isArray(section?.fields) ? section.fields : [];
-      const sectionClasses = [
-        "dialog-form-section",
-        sectionLayout === "table" ? "dialog-form-section-table" : "",
-        sectionClassName
-      ].filter(Boolean).join(" ");
-      const fieldsClasses = [
-        "dialog-form-fields",
-        sectionLayout === "table" ? "dialog-form-fields-table" : ""
-      ].filter(Boolean).join(" ");
+      const sectionClasses = ["dialog-form-section", sectionClassName].filter(Boolean).join(" ");
       const fieldsMarkup = fields.map((field, fieldIndex) => {
         const fieldId = `${fieldIdPrefix}-${sectionIndex}-${fieldIndex}`;
         const type = String(field?.type || "text");
         const label = escapeHtml(String(field?.label || field?.name || ""));
         const help = String(field?.help || "").trim();
+        const description = help ? ` aria-describedby="${fieldId}-help"` : "";
+        const withHelp = (markup) => help
+          ? `<div class="dialog-form-field">${markup}<p class="dialog-form-help" id="${fieldId}-help">${escapeHtml(help)}</p></div>`
+          : markup;
         const value = field?.value;
         if (type === "checkbox") {
-          return `
+          return withHelp(`
             <label class="dialog-form-check" for="${fieldId}">
-              <input id="${fieldId}" data-field-name="${escapeHtml(String(field?.name || ""))}" type="checkbox" ${value ? "checked" : ""}>
+              <input id="${fieldId}" data-field-name="${escapeHtml(String(field?.name || ""))}" type="checkbox"${description} ${value ? "checked" : ""}>
               <span>${label}</span>
-            </label>
-            ${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}
-          `;
+            </label>`);
         }
         if (type === "select") {
           const options = Array.isArray(field?.options) ? field.options : [];
-          return `
+          return withHelp(`
             <label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
               <span class="dialog-form-label">${label}</span>
-              <select id="${fieldId}" data-field-name="${escapeHtml(String(field?.name || ""))}" class="dialog-form-control">
+              <select id="${fieldId}" data-field-name="${escapeHtml(String(field?.name || ""))}" class="dialog-form-control"${description}>
                 ${options.map((option) => {
                   const optionValue = String(option?.value ?? "");
                   const optionLabel = String(option?.label ?? optionValue);
                   return `<option value="${escapeHtml(optionValue)}" ${String(value ?? "") === optionValue ? "selected" : ""}>${escapeHtml(optionLabel)}</option>`;
                 }).join("")}
               </select>
-            </label>
-            ${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}
-          `;
+            </label>`);
         }
         if (type === "button") {
           const googleIcon = field.icon === "google";
-          return `<button class="tool-btn${googleIcon ? " dialog-google-button" : ""}" type="button" data-dialog-action="${escapeHtml(String(field.name))}">${googleIcon ? '<img src="assets/google-sign-in.png" width="20" height="20" alt="" aria-hidden="true">' : ""}<span>${label}</span></button>`;
+          const appearance = googleIcon ? " dialog-google-button" : (field.appearance === "text" ? " dialog-text-action" : "");
+          return `<button class="tool-btn${appearance}" type="button" data-dialog-action="${escapeHtml(String(field.name))}">${googleIcon ? '<img src="assets/google-sign-in.png" width="20" height="20" alt="" aria-hidden="true">' : ""}<span>${label}</span></button>`;
         }
         if (type === "file") {
-          return `<label class="dialog-form-row" for="${fieldId}">
+          return withHelp(`<label class="dialog-form-row" for="${fieldId}">
             <span class="dialog-form-label">${label}</span>
             <input id="${fieldId}" data-field-name="${escapeHtml(String(field.name))}" type="file"
-              class="dialog-form-control" accept="${escapeHtml(String(field.accept || ""))}"${field.multiple ? " multiple" : ""}>
-          </label>${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}`;
+              class="dialog-form-control" accept="${escapeHtml(String(field.accept || ""))}"${description}${field.multiple ? " multiple" : ""}>
+          </label>`);
         }
         if (type === "textarea") {
-          return `<label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
+          return withHelp(`<label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
             <span class="dialog-form-label">${label}</span>
-            <textarea id="${fieldId}" data-field-name="${escapeHtml(String(field.name))}" class="dialog-form-control" rows="3"${field.readOnly === true ? " readonly" : ""}>${escapeHtml(String(value ?? ""))}</textarea>
-          </label>${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}`;
+            <textarea id="${fieldId}" data-field-name="${escapeHtml(String(field.name))}" class="dialog-form-control" rows="3"${description}${field.readOnly === true ? " readonly" : ""}>${escapeHtml(String(value ?? ""))}</textarea>
+          </label>`);
         }
         const min = Number.isFinite(field?.min) ? ` min="${field.min}"` : "";
         const max = Number.isFinite(field?.max) ? ` max="${field.max}"` : "";
@@ -4683,7 +4713,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
         const inputMode = String(field?.inputMode || inferredInputMode);
         const hasFollowingInput = fields.slice(fieldIndex + 1).some((candidate) => {
           const candidateType = String(candidate?.type || "text");
-          return candidateType !== "checkbox" && candidateType !== "select";
+          return ["text", "number", "password", "textarea"].includes(candidateType);
         });
         const enterKeyHint = String(field?.enterKeyHint || (hasFollowingInput ? "next" : "done"));
         const autocomplete = String(field?.autocomplete || "off");
@@ -4691,7 +4721,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
         const placeholder = field?.placeholder === undefined
           ? ""
           : ` placeholder="${escapeHtml(String(field.placeholder))}"`;
-        return `
+        return withHelp(`
           <label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
             <span class="dialog-form-label">${label}</span>
             ${revealPassword ? '<span class="dialog-password-control">' : ""}
@@ -4707,18 +4737,16 @@ function createDialogSystem(windowManager, desktop, options = {}) {
               autocorrect="off"
               spellcheck="false"
               value="${escapeHtml(String(value ?? ""))}"
-              ${min}${max}${step}${placeholder}
+              ${min}${max}${step}${placeholder}${description}
             >
             ${revealPassword ? `<button type="button" class="tool-btn" data-password-target="${fieldId}" aria-pressed="false" aria-label="${escapeHtml(translateText("Show password"))}">${escapeHtml(translateText("Show"))}</button></span>` : ""}
-          </label>
-          ${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}
-        `;
+          </label>`);
       }).join("");
       return `
         <section class="${sectionClasses}">
           ${title ? `<h3 class="dialog-form-section-title">${escapeHtml(title)}</h3>` : ""}
           ${description ? `<p class="dialog-form-section-description">${escapeHtml(description)}</p>` : ""}
-          <div class="${fieldsClasses}">${fieldsMarkup}</div>
+          <div class="dialog-form-fields">${fieldsMarkup}</div>
         </section>
       `;
     }).join("");
@@ -4744,7 +4772,6 @@ function createDialogSystem(windowManager, desktop, options = {}) {
       return;
     }
 
-    win.classList.toggle("dialog-form-active", active.kind === "form");
     win.style.width = active.width || defaultSize.width;
     win.style.height = active.height || defaultSize.height;
     titleNode.textContent = active.title || "Dialog";
@@ -4759,11 +4786,11 @@ function createDialogSystem(windowManager, desktop, options = {}) {
     }
     confirmButton.textContent = active.confirmLabel || "OK";
     cancelButton.textContent = active.cancelLabel || "Cancel";
+    entryNode.hidden = active.kind !== "prompt";
 
     if (active.kind === "prompt") {
       formNode.hidden = true;
       formNode.innerHTML = "";
-      inputNode.hidden = false;
       inputNode.value = active.defaultValue || "";
       inputNode.placeholder = active.placeholder || "";
       inputNode.inputMode = active.inputMode || "text";
@@ -4773,15 +4800,13 @@ function createDialogSystem(windowManager, desktop, options = {}) {
       setFormDisabled(false);
     } else if (active.kind === "form") {
       renderForm(active);
-      formNode.hidden = false;
-      inputNode.hidden = true;
+      formNode.hidden = !active.sections.length;
       inputNode.value = "";
       inputNode.placeholder = "";
       setFormDisabled(active.formDisabled === true);
     } else {
       formNode.hidden = true;
       formNode.innerHTML = "";
-      inputNode.hidden = true;
       inputNode.value = "";
       inputNode.placeholder = "";
       setFormDisabled(false);
@@ -4790,6 +4815,8 @@ function createDialogSystem(windowManager, desktop, options = {}) {
     syncActiveButtons();
 
     windowManager.show(win.id);
+    windowManager.fitDialog(win.id);
+    bodyNode.scrollTop = 0;
     if (active.kind === "form") {
       const current = active;
       for (const section of current.sections) {
@@ -4821,19 +4848,20 @@ function createDialogSystem(windowManager, desktop, options = {}) {
       }
     }
     if (active.kind === "prompt") {
-      inputNode.focus();
+      inputNode.focus({ preventScroll: true });
       inputNode.select();
-    } else if (active.kind === "form") {
-      const firstInput = formNode.querySelector("input:not([type='checkbox']), select, textarea, input[type='checkbox']");
-      if (firstInput instanceof HTMLElement) firstInput.focus();
     } else {
-      confirmButton.focus();
+      const firstField = formNode.querySelector("[data-field-name]:not(:disabled)")
+        || formNode.querySelector("[data-dialog-action]:not(:disabled)");
+      const firstAction = [confirmButton, cancelButton, titleCloseButton].find((button) => !button.hidden && !button.disabled);
+      (firstField || firstAction)?.focus({ preventScroll: true });
     }
   }
 
   function dequeueNext() {
     if (active || !queue.length) return;
     active = queue.shift();
+    win.classList.remove("dialog-user-sized");
     applyActiveDialog();
   }
 
@@ -4902,26 +4930,16 @@ function createDialogSystem(windowManager, desktop, options = {}) {
   cancelButton?.addEventListener("click", closeAsCancel);
   titleCloseButton?.addEventListener("click", closeAsCancel);
 
-  inputNode?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      confirmButton?.click();
-      return;
-    }
+  win.addEventListener("keydown", (event) => {
+    if (event.isComposing || event.defaultPrevented) return;
     if (event.key === "Escape") {
       event.preventDefault();
-      closeAsCancel();
-    }
-  });
-
-  formNode?.addEventListener("keydown", (event) => {
-    if (!(event.target instanceof HTMLElement)) return;
-    if (event.key === "Escape") {
-      event.preventDefault();
+      event.stopPropagation();
       closeAsCancel();
       return;
     }
-    if (event.key === "Enter" && event.target.tagName !== "TEXTAREA" && event.target.tagName !== "BUTTON") {
+    if (event.key === "Enter" && event.target instanceof HTMLInputElement
+      && ["text", "number", "password"].includes(event.target.type) && !confirmButton.hidden) {
       event.preventDefault();
       confirmButton?.click();
     }
@@ -4995,6 +5013,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
           cancelLabel: String(options.cancelLabel || translateText("Cancel")),
           width: String(options.width || "520px"),
           height: String(options.height || "430px"),
+          layout: options.layout,
           sections: Array.isArray(options.sections) ? options.sections : [],
           beforeResolve: typeof options.beforeResolve === "function" ? options.beforeResolve : null,
           messageTone: String(options.messageTone || ""),
@@ -5214,6 +5233,7 @@ function scrollElementWithinContainer(target, container, options = {}) {
   const dataState = {
     baseSelection: normalizeBaseSelection(execute.dataBaseSelect?.value ?? "data"),
     pageOffset: 0,
+    followWrites: true,
     hexAddresses: execute.dataHexAddresses?.checked !== false,
     hexValues: execute.dataHexValues?.checked !== false,
     ascii: execute.dataAscii?.checked === true
@@ -5344,7 +5364,14 @@ function scrollElementWithinContainer(target, container, options = {}) {
 
   function rerender() {
     if (!lastSnapshot) return;
-    api.render(lastSnapshot, lastRenderOptions);
+    api.render(lastSnapshot, { ...lastRenderOptions, keepDataPage: true });
+  }
+
+  function browseDataPage() {
+    dataState.followWrites = false;
+    rerender();
+    const dataTableWrap = execute.dataBody.closest(".data-table-wrap");
+    if (dataTableWrap) dataTableWrap.scrollTop = 0;
   }
 
   function refreshBaseOptions(snapshot) {
@@ -5419,18 +5446,18 @@ function scrollElementWithinContainer(target, container, options = {}) {
 
   execute.dataNavPrev?.addEventListener("click", () => {
     dataState.pageOffset = Math.max(0, dataState.pageOffset - getDataPageBytes());
-    rerender();
+    browseDataPage();
   });
 
   execute.dataNavNext?.addEventListener("click", () => {
     dataState.pageOffset = Math.min(DATA_VIEW_MAX_RANGE - getDataPageBytes(), dataState.pageOffset + getDataPageBytes());
-    rerender();
+    browseDataPage();
   });
 
   execute.dataBaseSelect?.addEventListener("change", () => {
     dataState.baseSelection = normalizeBaseSelection(execute.dataBaseSelect.value);
     dataState.pageOffset = 0;
-    rerender();
+    browseDataPage();
   });
 
   execute.dataHexAddresses?.addEventListener("change", () => {
@@ -5525,6 +5552,7 @@ function scrollElementWithinContainer(target, container, options = {}) {
       const displayAddressesHex = options.displayAddressesHex !== false;
       const sameAssembly = Boolean(lastSnapshot)
         && Number(snapshot?.runtimeRevision) === Number(lastSnapshot?.runtimeRevision);
+      if (!sameAssembly) dataState.followWrites = true;
       const preservesProgramRows = snapshot?.textRowsIncluded === false
         && lastSnapshot
         && snapshot?.assembled === true
@@ -5612,7 +5640,9 @@ function scrollElementWithinContainer(target, container, options = {}) {
       const currentWriteAddress = changedDataAddresses.size
         ? ((focusDataAddress != null && changedDataAddresses.has(focusDataAddress)) ? focusDataAddress : latestChangedAddress)
         : null;
-      if (currentWriteAddress != null) {
+      const followWrite = dataState.followWrites && !disableAutoScroll && options.keepDataPage !== true
+        && currentWriteAddress != null;
+      if (followWrite) {
         const nextSelection = pickSelectionForAddress(currentWriteAddress, snapshot);
         if (nextSelection !== dataState.baseSelection) {
           dataState.baseSelection = nextSelection;
@@ -5664,20 +5694,12 @@ function scrollElementWithinContainer(target, container, options = {}) {
           });
         }
 
-        const focusCell = currentWriteAddress == null ? null : execute.dataBody.querySelector(`td[data-data-address="${currentWriteAddress}"]`);
-        const dataTableWrap = execute.dataBody.closest(".data-table-wrap");
-        const dataHeader = dataTableWrap?.querySelector("thead");
-        if (focusCell) {
-          if (dataTableWrap) {
+        if (followWrite) {
+          const focusCell = execute.dataBody.querySelector(`td[data-data-address="${currentWriteAddress}"]`);
+          const dataTableWrap = execute.dataBody.closest(".data-table-wrap");
+          const dataHeader = dataTableWrap?.querySelector("thead");
+          if (focusCell && dataTableWrap) {
             scrollElementWithinContainer(focusCell, dataTableWrap, {
-              topInset: dataHeader instanceof HTMLElement ? dataHeader.getBoundingClientRect().height : 0,
-              margin: 6
-            });
-          }
-        } else {
-          const changedDataRow = currentWriteAddress == null ? null : execute.dataBody.querySelector(`td[data-data-address="${currentWriteAddress}"]`);
-          if (changedDataRow && dataTableWrap) {
-            scrollElementWithinContainer(changedDataRow, dataTableWrap, {
               topInset: dataHeader instanceof HTMLElement ? dataHeader.getBoundingClientRect().height : 0,
               margin: 6
             });
@@ -7382,45 +7404,81 @@ function injectRuntimeStyles() {
       resize: none;
     }
 
-    .dialog-window-content {
+    .desktop-window.interaction-dialog {
+      max-height: calc(100% - 12px);
+      max-width: calc(100% - 12px);
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .desktop-window.interaction-dialog:not(.dialog-user-sized) {
+      height: auto !important;
+    }
+
+    .interaction-dialog .window-titlebar {
+      height: 29px;
+      gap: 8px;
+      padding-inline: 10px 6px;
+    }
+
+    .interaction-dialog .window-title {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+
+    .interaction-dialog .win-btn-close {
+      width: 22px;
+      height: 22px;
+    }
+
+    .interaction-dialog .dialog-window-content {
       display: grid;
       grid-template-rows: minmax(0, 1fr) auto auto;
-      gap: 8px;
-      padding: 10px;
-      background: var(--surface-sunken);
+      min-width: 0;
+      padding: 0;
+      overflow: hidden;
+      background: var(--surface-raised);
+    }
+
+    .dialog-body {
+      display: grid;
+      grid-row: 1;
+      align-content: start;
+      min-width: 0;
       min-height: 0;
+      overflow: auto;
+      overscroll-behavior: contain;
+      container: interaction / inline-size;
+      gap: 12px;
+      padding: 12px 14px;
+    }
+
+    .dialog-body > [hidden],
+    .dialog-entry[hidden],
+    .dialog-actions[hidden] {
+      display: none;
+    }
+
+    .dialog-body:not(:has(> :not([hidden]))) {
+      display: none;
     }
 
     .dialog-message {
+      min-width: 0;
       white-space: pre-wrap;
-      overflow: auto;
-      border: 1px solid var(--line-soft);
-      background: var(--surface);
-      padding: 8px;
-      line-height: 1.25;
-      font-size: 11px;
-      min-height: 56px;
-      resize: none;
+      overflow-wrap: anywhere;
+      line-height: 1.45;
+      font-size: 12px;
       color: var(--text);
     }
 
-    .dialog-message[hidden] { display: none; }
-    .dialog-form-active.dialog-without-message .dialog-window-content {
-      grid-template-rows: minmax(0, 1fr) auto;
-    }
-
-    /* With a form present the description is a caption, not the content, so the
-       free row belongs to the fields. The stacked layout already did this; on
-       the desktop the message box stretched to fill the window while the
-       fields it introduces scrolled inside a short strip below it.
-       Three rows for three visible children: the text input is hidden here. */
-    .dialog-form-active .dialog-window-content {
-      grid-template-rows: auto minmax(0, 1fr) auto;
-    }
-
-    .dialog-form-active .dialog-message {
-      min-height: 0;
-      max-height: 84px;
+    .dialog-message:is(.info, .success, .error) {
+      border: 1px solid;
+      border-radius: 3px;
+      padding: 7px 9px;
     }
 
     .dialog-message.info {
@@ -7441,32 +7499,45 @@ function injectRuntimeStyles() {
       border-color: var(--error-line);
     }
 
-    .dialog-input {
-      width: 100%;
-      margin: 0;
+    .dialog-entry {
+      grid-row: 2;
+      padding: 0 14px 12px;
+    }
+
+    .dialog-body:not(:has(> :not([hidden]))) + .dialog-entry {
+      padding-top: 12px;
     }
 
     .dialog-form {
-      min-height: 0;
-      overflow: auto;
       display: grid;
       align-content: start;
-      gap: 10px;
-      padding-right: 2px;
+      min-width: 0;
+      gap: 8px;
     }
 
-    .dialog-form:has(.cloud-conflict-preview) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .cloud-conflict-preview { min-width: 0; }
-    .cloud-conflict-preview textarea { min-height: 260px; font-family: monospace; white-space: pre; }
     .cloud-conflict-choice { grid-column: 1 / -1; }
-    @media (max-width: 600px) { .dialog-form:has(.cloud-conflict-preview) { grid-template-columns: minmax(0, 1fr); } }
+    @container interaction (min-width: 520px) {
+      .dialog-form-columns,
+      .dialog-form:has(.cloud-conflict-preview) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
     .dialog-form-section {
+      min-width: 0;
       border: 1px solid var(--line-soft);
+      border-radius: 3px;
       background: var(--surface);
-      padding: 8px;
+      padding: 9px 10px;
       display: grid;
       align-content: start;
-      gap: 8px;
+      gap: 7px;
+    }
+
+    .dialog-form-section:only-child:not(:has(.dialog-form-section-title, .dialog-form-section-description)) {
+      border: 0;
+      padding: 0;
+      background: transparent;
     }
 
     .dialog-form-section-compact {
@@ -7477,6 +7548,8 @@ function injectRuntimeStyles() {
     .dialog-form-section-title {
       margin: 0;
       font-size: 12px;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
       color: var(--text);
     }
 
@@ -7485,6 +7558,7 @@ function injectRuntimeStyles() {
       color: var(--text-muted);
       font-size: 11px;
       line-height: 1.3;
+      overflow-wrap: anywhere;
     }
 
     .dialog-form-fields {
@@ -7493,49 +7567,65 @@ function injectRuntimeStyles() {
       gap: 8px;
     }
 
-    .dialog-form-row {
+    @container interaction (min-width: 380px) {
+      .dialog-form-fields:has(> .dialog-text-action) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 6px;
+      }
+      .dialog-form-fields:has(> .dialog-text-action) > :not(.dialog-text-action) {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .interaction-dialog .tool-btn.dialog-text-action {
+      justify-self: start;
+      min-width: 0;
+      max-width: 100%;
+      min-height: 24px;
+      padding: 3px 4px;
+      border-color: transparent;
+      background: transparent;
+      color: var(--info);
+      box-shadow: none;
+      text-align: start;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .interaction-dialog .tool-btn.dialog-text-action:hover:not(:disabled) {
+      text-decoration: underline;
+    }
+
+    .interaction-dialog .tool-btn.dialog-text-action:disabled {
+      color: var(--text-muted);
+    }
+
+    .dialog-form-row,
+    .dialog-form-field {
       display: grid;
+      min-width: 0;
       gap: 4px;
-      font-size: 11px;
+    }
+
+    .dialog-form-row,
+    .dialog-form-check {
+      font-size: 12px;
+      line-height: 1.3;
       color: var(--text);
+      overflow-wrap: anywhere;
     }
 
-    .dialog-form-fields-table {
-      gap: 6px;
-    }
-
-    .dialog-form-row-inline {
-      grid-template-columns: minmax(150px, 1fr) minmax(0, 1.35fr);
-      align-items: center;
-      gap: 8px;
-    }
-
-    .dialog-form-row-inline .dialog-form-label {
-      display: block;
-    }
-
-    .dialog-form-section-table {
-      padding: 7px 8px;
-      gap: 6px;
-    }
-
-    .cloud-auth-section {
-      grid-template-rows: auto auto;
-      align-content: start;
+    @container interaction (min-width: 380px) {
+      .dialog-form:not(.dialog-form-columns) .dialog-form-row-inline {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+        align-items: center;
+        gap: 10px;
+      }
     }
 
     .dialog-password-control { display:flex; align-items:stretch; gap:4px; min-width:0; }
     .dialog-password-control input { flex:1; min-width:0; }
     .dialog-password-control > button { flex:0 0 auto; min-height:26px; padding:2px 6px; }
-
-    [id^="window-cloud-merge-"] .dialog-message {
-      min-height: 84px;
-    }
-
-    .cloud-auth-section .dialog-form-fields {
-      align-content: start;
-      gap: 8px;
-    }
 
     /* Official Google mark: https://developers.google.com/identity/branding-guidelines */
     .tool-window .tool-btn.dialog-google-button {
@@ -7573,33 +7663,81 @@ function injectRuntimeStyles() {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 11px;
-      color: var(--text);
     }
 
-    .dialog-form-control {
+    .dialog-form-check input {
+      flex: none;
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
+    .desktop-window.interaction-dialog .dialog-window-content :is(input.dialog-form-control, input.dialog-input, select.dialog-form-control, textarea.dialog-form-control) {
       width: 100%;
       min-width: 0;
+      min-height: 28px;
+      margin: 0;
       border: 1px solid var(--line);
       background: var(--surface);
-      border-radius: 2px;
-      padding: 2px 5px;
-      font-size: 11px;
-      line-height: 1.2;
-      min-height: 22px;
+      border-radius: 3px;
+      padding: 4px 7px;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .interaction-dialog textarea.dialog-form-control {
+      display: block;
+      resize: vertical;
+    }
+
+    .desktop-window.interaction-dialog .cloud-conflict-preview textarea.dialog-form-control {
+      min-height: 11em;
+      font-family: monospace;
+      white-space: pre;
+    }
+
+    .interaction-dialog :is(button, input, select, textarea):focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
     }
 
     .dialog-form-help {
-      margin-top: -4px;
-      font-size: 10px;
-      line-height: 1.3;
-      color: var(--text-soft);
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.35;
+      color: var(--text-muted);
+      overflow-wrap: anywhere;
     }
 
     .dialog-actions {
       display: flex;
+      grid-row: 3;
       justify-content: flex-end;
+      flex-wrap: wrap;
       gap: 6px;
+      border-top: 1px solid var(--line-soft);
+      background: var(--surface-sunken);
+      padding: 8px 14px;
+    }
+
+    .interaction-dialog .dialog-actions .tool-btn {
+      min-height: 28px;
+      max-width: 100%;
+      padding: 4px 12px;
+      border-radius: 3px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .interaction-dialog .dialog-actions .primary:not(:disabled) {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--text-on-accent);
+      box-shadow: none;
+    }
+
+    .interaction-dialog .dialog-actions .primary:hover:not(:disabled) {
+      background: var(--accent-2);
+      border-color: var(--accent-2);
     }
 
     #window-registers table th,
@@ -8533,28 +8671,16 @@ function injectRuntimeStyles() {
         padding: 0 7px 0 8px;
       }
 
-      .desktop.desktop-stacked .desktop-window.mobile-panel-window .dialog-window-content {
-        min-height: 0;
-        padding: 6px;
-        overflow: hidden;
+      .desktop.desktop-stacked .desktop-window.interaction-dialog {
+        max-height: 100%;
       }
 
-      .desktop.desktop-stacked .desktop-window.mobile-panel-window.dialog-form-active .dialog-window-content {
-        grid-template-rows: minmax(48px, 96px) minmax(0, 1fr) auto;
+      .desktop.desktop-stacked .interaction-dialog .dialog-body {
+        padding: 10px;
       }
 
-      .desktop.desktop-stacked .desktop-window.mobile-panel-window.dialog-form-active.dialog-without-message .dialog-window-content {
-        grid-template-rows: minmax(0, 1fr) auto;
-      }
-
-      .desktop.desktop-stacked .desktop-window.mobile-panel-window .dialog-form,
-      .desktop.desktop-stacked .desktop-window.mobile-panel-window .dialog-message {
-        min-width: 0;
-        max-width: 100%;
-      }
-
-      .desktop.desktop-stacked .desktop-window.mobile-panel-window .dialog-form {
-        align-content: start;
+      .desktop.desktop-stacked .interaction-dialog :is(.dialog-actions, .dialog-entry) {
+        padding-inline: 10px;
       }
 
       /* These were visible so the whole page could scroll them. The page no

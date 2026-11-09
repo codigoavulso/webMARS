@@ -45,7 +45,7 @@ command_loop:
   li $t2, 113
   beq $t1, $t2, quit
 
-  #t (toggle trail)
+  # t (activer ou désactiver la trace)
   li $t2, 116
   beq $t1, $t2, toggle_trail
 

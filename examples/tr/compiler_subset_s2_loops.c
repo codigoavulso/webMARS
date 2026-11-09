@@ -1,6 +1,6 @@
 ﻿int main(void) {
-  //Döngüler, ara/devam ve ++/-- için C0-S2- veya üzeri gerekir.
-  int sum = 0;   //akümülatör derlendikten sonra bir kayıt defterinde yaşar
+  //Döngüler, ara/devam ve ++/-- için C0-S2 veya üzeri gerekir.
+  int sum = 0;   // Akümülatör yinelemeler boyunca devam eden toplamı tutar.
 
   for (int i = 0; i < 10; i++) {   //for döngüsü bir karşılaştırma artı bir geriye doğru dal haline gelir
     if ((i % 2) == 0) continue;   //gövdeyi atlayarak artışa atlamaya devam edin

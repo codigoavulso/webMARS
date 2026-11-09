@@ -1,5 +1,5 @@
 #Beispiel für Programmargumente.
-#Verwenden Sie dieses Beispiel, um die argc/argv-Unterstützung in MARS zu testen.
+# Versuchen Sie es mit einem Argument in Anführungszeichen, um zu sehen, wie Leerzeichen innerhalb eines einzelnen Arguments bleiben können.
 #Um es auszuprobieren, gehen Sie zu Einstellungen > Für das Programm MIPS bereitgestellte Programmargumente.
 #Geben Sie einige Argumente ein, montieren Sie dann das Programm und führen Sie es aus.
 #Beispielargumente: ola 123 „abc def“

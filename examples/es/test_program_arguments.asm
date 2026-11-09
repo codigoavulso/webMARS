@@ -1,5 +1,5 @@
 # Ejemplo de argumentos del programa.
-# Usa este ejemplo para probar el soporte de argc/argv en MARS.
+# Prueba un argumento entre comillas para ver cómo puede conservar espacios.
 # Para probarlo, ve a Definiciones > Argumentos del programa proporcionados al programa MIPS,
 # introduce algunos argumentos y luego haz Assemble y ejecuta el programa.
 # Ejemplo de argumentos: ola 123 "abc def"

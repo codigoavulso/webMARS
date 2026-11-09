@@ -1,25 +1,14 @@
-# ==========================================================
-#Pelajaran 12 - Rekursi membutuhkan frame per panggilan
+# 12 - Rekursi dan frame
 #
-#THE PROBLEM
-#Panggilan rekursif menimpa $ra dan register argumen.
-#Panggilan luar tidak mempunyai jalan kembali dan tidak tahu apa itu
-#sendiri dan dulu.
+# Panggilan rekursif menimpa `$ra` dan menggunakan `$a0` untuk argumennya sendiri. Simpan kedua
+# nilai sebelum melakukan panggilan.
 #
-#WHAT THE HARDWARE DOES
-#Ini menyediakan satu $ra, bukan setumpuknya. Tidak ada yang disimpan
-#secara otomatis; jika kode tidak menyimpannya, kode itu hilang.
+# Masuk ke `fact` untuk setiap nilai dari 5 hingga 1. Setiap panggilan mencadangkan delapan
+# byte, termasuk panggilan yang mengembalikan 1.
 #
-#THE SOLUTION
-#Setiap aktivasi membuka bingkai pada tumpukan, menyimpannya
-#masih perlu setelah panggilan, dan mengembalikannya dalam perjalanan
-#keluar. Kedalaman tumpukan adalah kedalaman rekursi.
-#
-#WATCH FOR
-#Tetapkan breakpoint pada mul dan lihat $sp turun sebesar 8 per
-#tingkat. Lima salinan n yang disimpan itulah yang membuatnya
-#perkalian dalam perjalanan kembali mungkin.
-# ==========================================================
+# Tetapkan breakpoint pada `mul` untuk melihat jalur kembali. Setiap panggilan memuat ulang
+# argumennya sendiri, mengalikan, dan melepaskan frame-nya.
+
         .data
 m1:     .asciiz "5! = "
         .text
@@ -61,7 +50,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
-        #Pulihkan status callee dan buang frame yang dialokasikan saat masuk.
+        # Pulihkan alamat pengirim yang disimpan sebelum melepaskan bingkai panggilan ini.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

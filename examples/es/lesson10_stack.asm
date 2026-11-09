@@ -1,25 +1,13 @@
-# ==========================================================
-# Clase 10 - La pila es un registro y un desplazamiento
+# 10 - La pila
 #
-# EL PROBLEMA
-#   Hay 32 registros y los comparte todo el codigo. Donde va un
-#   valor que debe sobrevivir a trabajo que reutilizara esos
-#   registros?
+# Por convención, la pila crece hacia direcciones más bajas. Resta 8 a `$sp` para reservar
+# espacio para dos palabras.
 #
-# LO QUE HACE EL HARDWARE
-#   Nada especial. $sp es un registro corriente que apunta a la
-#   memoria, y la pila crece hacia direcciones mas bajas solo por
-#   convencion.
+# El programa guarda dos registros con `sw`, los pone a cero y recupera sus valores con `lw`.
 #
-# LA SOLUCION
-#   Reservar espacio es restar a $sp, liberarlo es sumar. Apilar y
-#   desapilar son solo sw y lw.
-#
-# OBSERVE
-#   Los registros se limpian a proposito entre las escrituras y
-#   las lecturas, asi que los valores impresos solo pueden venir
-#   de la memoria. Siga a $sp moverse 8 y volver.
-# ==========================================================
+# Observa `$sp` antes de reservar, durante las dos escrituras y después de liberar el espacio.
+# El valor final debe coincidir con el inicial.
+
         .data
 m1:     .asciiz "restored: "
 sp2:    .asciiz " "

@@ -1,4 +1,4 @@
-#Kiểm tra tính chẵn lẻ thủ công cho lỗi địa chỉ khi tải.
+# Tải từ cần có địa chỉ chia hết cho bốn. Ví dụ này sử dụng 0x10010001 để kích hoạt ngoại lệ.
 #Hành vi dự kiến:
 #- ngoại lệ tải được nêu lên trên 0x10010001
 #- địa chỉ xấu / vaddr hiển thị 0x10010001

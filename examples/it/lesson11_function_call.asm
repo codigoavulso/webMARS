@@ -1,25 +1,14 @@
-# ==========================================================
-#Lezione 11 - Chiamare una funzione
+# 11 - Chiamare una funzione
 #
-#THE PROBLEM
-#Entrare in una routine è facile. Tornare indietro non lo è, perché
-#la stessa routine può essere chiamata da molti posti e il
-#l'indirizzo di ritorno è diverso ogni volta.
+# Esegui con diramazione ritardata. `jal` salta alla funzione e inserisce l'indirizzo
+# dell'istruzione successiva in `$ra`.
 #
-#WHAT THE HARDWARE DOES
-#jal fa due cose in un'unica istruzione: memorizza il file
-#indirizzo della seguente istruzione in $ra, quindi salta. jr
-#salta a qualunque cosa contenga un registro, quindi jr $ra restituisce.
+# La convenzione di chiamata passa 17 e 42 in `$a0` e `$a1`. La funzione restituisce il valore
+# più grande in `$v0`.
 #
-#THE SOLUTION
-#Tutto il resto è accordo, non circuiti: discussioni dentro
-#$a0..$a3, risulta in $v0. Rompi la convenzione e il codice
-#si assembla ancora: semplicemente smette di interagire.
-#
-#WATCH FOR
-#Sali sul jal e leggi $ra. Confrontalo con l'indirizzo
-#della linea dopo la chiamata nel segmento di testo.
-# ==========================================================
+# Entra nella chiamata, confronta `$ra` con l'indirizzo dopo `jal`, quindi segui `jr $ra` fino
+# al chiamante.
+
         .data
 m1:     .asciiz "max(17, 42) = "
         .text
@@ -31,8 +20,7 @@ main:
 
         li   $a0, 17            #primo argomento
         li   $a1, 42            #secondo argomento
-        #jal modifica sia il flusso di controllo che $ra in un'unica operazione architetturale.
-        jal  maxof              #$ra = indirizzo della riga successiva
+        jal  maxof
 
         move $a0, $v0           #il risultato è tornato in $v0
         li   $v0, 1

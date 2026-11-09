@@ -1,24 +1,14 @@
-# ==========================================================
-#Bài 03 - Cổng logic trên 32 bit
+# 03 - Cổng logic trên 32 bit
 #
-#THE PROBLEM
-#AND, OR và XOR là các cổng một bit. Một thanh ghi chứa 32 bit.
-#Một cánh cổng có ý nghĩa gì ở chiều rộng đó?
+# Mỗi bit kết quả chỉ phụ thuộc vào các bit tương ứng của hai toán hạng. Không có sự mang theo
+# giữa các vị trí bit.
 #
-#WHAT THE HARDWARE DOES
-#Nó đặt 32 bản sao của cổng cạnh nhau. Bit 0 của
-#kết quả chỉ phụ thuộc vào bit 0 của mỗi toán hạng, chỉ phụ thuộc vào bit 1
-#bit 1, v.v. Không có hành trình mang theo giữa chúng.
+# Với mặt nạ `0x0F`, AND giữ bốn bit thấp và xóa phần còn lại. HOẶC đặt bốn bit thấp và XOR lật
+# chúng.
 #
-#THE SOLUTION
-#Sự độc lập đó là điều khiến chiếc mặt nạ hoạt động: hãy chọn cái nào
-#các bit cần giữ với AND, buộc thành một bằng OR, lật bằng XOR.
-#
-#WATCH FOR
-#0xCC là 11001100 và mặt nạ 0x0F là 00001111. AND giữ nguyên
-#bốn bit thấp, OR đặt chúng, XOR lật chúng. Chỉ có
-#nibble thấp bao giờ thay đổi.
-# ==========================================================
+# So sánh ba kết quả ở dạng thập lục phân, sau đó thử mặt nạ `0xF0` để xử lý nhóm bốn bit tiếp
+# theo.
+
         .data
 ma:     .asciiz "AND keeps the low nibble: "
 mo:     .asciiz "OR sets the low nibble:   "

@@ -1,24 +1,14 @@
-# ==========================================================
-#Lekcja 01 - Rejestry i wartości bezpośrednie
+# 01 - Rejestry i natychmiastowe
 #
-#THE PROBLEM
-#ALU ma dwa porty wejściowe i oba są podłączone do
-#zarejestruj plik. Liczba zapisana w źródle nie występuje w a
-#zarejestruj się, więc nie będzie mógł bezpośrednio połączyć się z tymi portami.
+# Bezpośredniość jest zakodowana w instrukcji. Złóż i sprawdź, jaką podstawową instrukcją staje
+# się każde `li`.
 #
-#WHAT THE HARDWARE DOES
-#Natychmiastowe przemieszczanie się wewnątrz samego słowa instrukcji.
-#addi zawiera 16-bitowe pole; li to wygoda
-#Asembler rozwija się w jedną lub dwie prawdziwe instrukcje.
+# Przejdź przez dwa obciążenia i dodawanie. W rejestrach podążaj za `$t0 = 12`, `$t1 = 30` i
+# `$t2 = 42`.
 #
-#THE SOLUTION
-#Najpierw umieść stałą w rejestrze, a następnie pozwól ALU
-#odczytaj dwa rejestry i zapisz trzeci.
-#
-#WATCH FOR
-#Krok raz w każdym wierszu i postępuj zgodnie z $t0, $t1 i $t2 w
-#Panel rejestrów. Tylko trzecia linia dotyka ALU.
-# ==========================================================
+# Spróbuj zamienić 30 na `0x12345678` i złożyć ponownie. Większa stała wymaga więcej niż jednej
+# instrukcji podstawowej.
+
         .data
 lbl:    .asciiz "12 + 30 = "
         .text
@@ -30,9 +20,9 @@ main:
         syscall
 
         #li jest pseudoinstrukcją; Assemble pokazuje, jaka staje się prawdziwa instrukcja.
-        li   $t0, 12            #natychmiast -> zarejestruj się
-        li   $t1, 30            #natychmiast -> zarejestruj się
-        add  $t2, $t0, $t1      #ALU odczytuje dwa rejestry
+        li   $t0, 12
+        li   $t1, 30
+        add  $t2, $t0, $t1      # Suma jest zapisywana do innego rejestru.
 
         move $a0, $t2
         li   $v0, 1

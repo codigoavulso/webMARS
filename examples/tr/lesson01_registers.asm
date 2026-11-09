@@ -1,24 +1,14 @@
-# ==========================================================
-#Ders 01 - Kayıtlar ve anlık değerler
+# 01 - Kayıtlar ve anında bildirimler
 #
-#THE PROBLEM
-#ALU iki giriş bağlantı noktasına sahiptir ve her ikisi de
-#kayıt dosyası. Kaynakta yazılan bir sayı bir
-#kayıt olduğundan bu bağlantı noktalarına doğrudan ulaşamaz.
+# Anlık talimatta kodlanmıştır. Birleştirin ve her `li`'nin hangi temel talimata dönüştüğünü
+# kontrol edin.
 #
-#WHAT THE HARDWARE DOES
-#Anında talimat kelimesinin içinde hareket eder.
-#addi 16 bitlik bir alan taşır; li bir kolaylıktır
-#assembler bir veya iki gerçek talimata genişler.
+# İki yüklemeyi ve eklemeyi adım adım yapın. Kayıtlar'da `$t0 = 12`, `$t1 = 30` ve `$t2 = 42`'yi
+# takip edin.
 #
-#THE SOLUTION
-#Önce sabiti bir kayda yerleştirin, ardından ALU
-#iki kaydı okuyun ve üçüncüsünü yazın.
-#
-#WATCH FOR
-#Her satırda bir kez adım atın ve $t0, $t1 ve $t2'yi takip edin.
-#Kayıt paneli. Yalnızca üçüncü satır ALU'a dokunuyor.
-# ==========================================================
+# 30'u `0x12345678` ile değiştirmeyi deneyin ve yeniden birleştirin. Daha büyük sabit birden
+# fazla temel talimata ihtiyaç duyar.
+
         .data
 lbl:    .asciiz "12 + 30 = "
         .text
@@ -30,9 +20,9 @@ main:
         syscall
 
         #li bir sözde talimattır; Assemble, onun hangi gerçek talimata dönüştüğünü gösterir.
-        li   $t0, 12            #hemen -> kayıt olun
-        li   $t1, 30            #hemen -> kayıt olun
-        add  $t2, $t0, $t1      #ALU iki kaydı okur
+        li   $t0, 12
+        li   $t1, 30
+        add  $t2, $t0, $t1      # Toplam farklı bir kayda yazılır.
 
         move $a0, $t2
         li   $v0, 1

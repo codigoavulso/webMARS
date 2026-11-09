@@ -1,23 +1,14 @@
-# ==========================================================
-#Lektion 05 – Der Komparator und die Verzweigung
+# 05 – Komparator und Zweig
 #
-#THE PROBLEM
-#Eine Entscheidung benötigt ein Bit, aber den Vergleich zweier 32-Bit-Zahlen
-#ist eine Subtraktion. Wie wird aus einer Subtraktion eine Wahl?
+# `slt` vergleicht zwei ganze Zahlen mit Vorzeichen und schreibt 1, wenn die erste kleiner ist,
+# andernfalls 0.
 #
-#WHAT THE HARDWARE DOES
-#slt subtrahiert und wirft alles außer dem Zeichen weg,
-#Schreiben von 0 oder 1. Der Zweig gibt dieses Bit dann an den PC weiter
-#Logik, die entweder einen Offset hinzufügt oder den PC vorantreiben lässt.
+# Für 7 und 12 ist `$t2` 1, sodass `beq` nicht zu `notless` springt und die Ausführung mit der
+# nächsten Anweisung fortfährt.
 #
-#THE SOLUTION
-#Vergleichen Sie in ein Register und verzweigen Sie in diesem Register. Kontrolle
-#Der Fluss ist arithmetisch plus ein Multiplexer auf dem PC.
-#
-#WATCH FOR
-#Nach slt hält $t2 1. Gehen Sie über den Beq hinaus und beobachten Sie den PC
-#in der Statusleiste: Es springt statt um vier vor.
-# ==========================================================
+# Gehen Sie bei verzögerter Verzweigung über `beq` hinaus und beobachten Sie den PC. Vertauschen
+# Sie die beiden Eingabewerte und vergleichen Sie das neue Ziel.
+
         .data
 lo:     .asciiz "a is smaller"
 hi:     .asciiz "a is not smaller"

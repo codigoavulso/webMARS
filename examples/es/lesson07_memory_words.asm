@@ -1,24 +1,14 @@
-# ==========================================================
-# Clase 07 - Palabras en memoria, y por que los saltos son de 4
+# 07 - Palabras en memoria
 #
-# EL PROBLEMA
-#   La memoria se direcciona byte a byte, pero un registro tiene
-#   cuatro bytes. Que selecciona realmente una direccion?
+# Las direcciones de memoria cuentan bytes. Cada palabra ocupa cuatro bytes, por eso `lw` y `sw`
+# usan aquí los desplazamientos 0, 4 y 8.
 #
-# LO QUE HACE EL HARDWARE
-#   lw y sw mueven cuatro bytes en un acceso, asi que palabras
-#   consecutivas quedan a cuatro direcciones. Los dos bits bajos
-#   deben ser cero: esa alineacion es lo que permite traer una
-#   palabra entera en un ciclo.
+# La dirección de una palabra debe ser múltiplo de cuatro. En este programa, usar el
+# desplazamiento 1 en lugar de 4 provoca una excepción de alineación.
 #
-# LA SOLUCION
-#   La aritmetica de direcciones es en bytes, asi que un indice de
-#   palabras siempre se escala por cuatro.
-#
-# OBSERVE
-#   Ensamble y abra el Segmento de Datos en 0x10010000. Los tres
-#   valores aparecen en columnas adyacentes de la misma fila.
-# ==========================================================
+# Después de las escrituras, busca `cell` en el Segmento de datos. Las tres palabras
+# consecutivas deben contener 111, 222 y 333.
+
         .data
 cell:   .word 0, 0, 0
 m1:     .asciiz "read back: "

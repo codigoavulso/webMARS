@@ -1,4 +1,4 @@
-# Manual parity test for address error on load.
+# A word load needs an address divisible by four. This example uses 0x10010001 to trigger the exception.
 # Expected behavior:
 # - load exception raised on 0x10010001
 # - bad address / vaddr shows 0x10010001

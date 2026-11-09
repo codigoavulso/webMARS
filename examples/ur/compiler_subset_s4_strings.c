@@ -2,7 +2,7 @@
 #use <string>
 
 int main(void) {
-  //درکار ہے C0-S4- یا اس سے زیادہ: bool, char, string, and string library.
+  //درکار ہے C0-S4 یا اس سے زیادہ: bool, char, string, and string library.
   char suffix = 'M';   //چار ایک بائٹ ہے جس میں ایک کوڈ ہوتا ہے، یہاں 77 ہے۔
   string joined = string_join("web", string_fromchar(suffix));   //تاریں ڈھیر میں بنتی ہیں، رجسٹروں میں نہیں۔
   bool matches = string_equal(joined, "webM");   //متن کا موازنہ کرنے کا مطلب ہے بائٹ بائٹ کا موازنہ کرنا

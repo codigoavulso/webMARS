@@ -1,24 +1,13 @@
-# ==========================================================
-# Lesson 09 - Indexing an array
+# 09 - Indexing an array
 #
-# THE PROBLEM
-#   A load instruction offers a base register and a constant
-#   offset. Nothing else. So how is a[i] reached when i is only
-#   known at run time, sitting in a register?
+# Each array element occupies four bytes. Shift the index left by two to compute its byte
+# offset.
 #
-# WHAT THE HARDWARE DOES
-#   It adds the base to whatever the register holds. The index
-#   must therefore already be in bytes, not in elements.
+# Follow the sequence `sll`, `add`, `lw`: scale the index, add the base address and load the
+# element.
 #
-# THE SOLUTION
-#   Scale the index by the element size, then add. For four-byte
-#   words that scaling is a shift left by two, which costs
-#   nothing.
-#
-# WATCH FOR
-#   The three lines sll, add, lw are what a[i] compiles to.
-#   Step through one iteration and read $t5 and $t6.
-# ==========================================================
+# At index 2, `$t5` is 8 and `$t6` points to the value 30. The five elements add up to 150.
+
         .data
 arr:    .word 10, 20, 30, 40, 50
 m1:     .asciiz "sum = "

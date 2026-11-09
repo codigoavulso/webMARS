@@ -1,24 +1,13 @@
-# ==========================================================
-# Lesson 06 - A counter, in software and in hardware
+# 06 - Loop as a counter
 #
-# THE PROBLEM
-#   A hardware counter is a register, an incrementer and a
-#   comparator. What does the same machine look like written
-#   as instructions?
+# `$t0` is the next number to print. `$t1` is the exclusive upper limit, so a limit of 11 prints
+# 1 through 10.
 #
-# WHAT THE HARDWARE DOES
-#   Exactly those three parts, one per instruction: the register
-#   holds the count, addi is the incrementer, slt with a branch
-#   is the comparator that decides on another round.
+# The comparison runs before each iteration. The increment makes progress toward the limit, and
+# the jump repeats the check.
 #
-# THE SOLUTION
-#   A loop is not a new concept. It is sequential logic spelled
-#   out, with the PC as the clock.
-#
-# WATCH FOR
-#   $t0 is the count register and $t1 the limit. Step through
-#   one full round and name which line is which part.
-# ==========================================================
+# Change the limit to 1 and run. The exit branch is taken before the first print.
+
         .data
 sp:     .asciiz " "
         .text
@@ -28,7 +17,7 @@ main:
         li   $t1, 11            # the limit
 
 loop:
-        # Loop invariant: $t0 is the next value to print and remains below $t1.
+        # At the loop test, $t0 is the next candidate. Print it only if it is below $t1.
         slt  $t2, $t0, $t1      # comparator
         beq  $t2, $zero, endl   # exit when count reaches limit
 

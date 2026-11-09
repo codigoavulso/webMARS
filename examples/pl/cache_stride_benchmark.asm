@@ -1,5 +1,5 @@
 #Test porównawczy zachowania pamięci podręcznej: dostęp sekwencyjny i dostęp w trybie 16 kroków.
-#Otwórz Narzędzia > Narzędzie do symulacji pamięci podręcznej danych, podłącz je do MIPS i zaznacz opcję Włączone.
+# Otwórz Narzędzia > Symulator pamięci podręcznej danych i podłącz je do MIPS. Zaznacz „Włączone”.
 #
 #Każde wykonanie mierzy dokładnie jeden wzorzec zimnej pamięci podręcznej. Ustaw ACCESS_PATTERN
 #na 1 lub 2, zresetuj statystyki symulatora, a następnie złóż i uruchom ponownie.

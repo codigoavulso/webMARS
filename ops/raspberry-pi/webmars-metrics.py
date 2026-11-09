@@ -230,6 +230,7 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
     event_sessions = defaultdict(set)
     resources = defaultdict(lambda: {"events": 0, "sessions": set()})
     facets = {name: defaultdict(set) for name in ("source", "returning", "device", "language", "surface", "audience", "build")}
+    build_events = Counter()
     interaction_by_session = Counter()
     presence_by_session = Counter()
     recent_presence = set()
@@ -251,6 +252,7 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
         sessions[sid]["events"].add(row["event"])
         facets["surface"][row["surface"]].add(sid)
         facets["build"][row["build"]].add(sid)
+        build_events[row["build"]] += 1
         facets["audience"][classes[sid]].add(sid)
         event_sessions[row["event"]].add(sid)
         if row["event"] in {"tool_open", "feature_use", "example_open"} | AUTH_EVENTS:
@@ -330,7 +332,8 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
                            "sessions": len(value["sessions"])}
                           for (kind, detail), value in sorted(resources.items(),
                               key=lambda entry: (-len(entry[1]["sessions"]), entry[0]))],
-            **{name: [{"key": value, "sessions": len(sids)} for value, sids in sorted(groups.items(),
+            **{name: [{"key": value, "sessions": len(sids), **({"events": build_events[value]} if name == "build" else {})}
+                for value, sids in sorted(groups.items(),
                 key=lambda entry: (-len(entry[1]), entry[0]))] for name, groups in facets.items()}
         },
         "note": "Sessions are temporary page tokens, not people. Buckets can repeat a session. Interaction and visible presence are different measurements and must not be added."

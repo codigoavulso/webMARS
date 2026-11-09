@@ -1,27 +1,14 @@
-# ==========================================================
-#Lekcja 13 – Instrukcja jest liczbą
+# 13 - Instrukcja jest liczbą
 #
-#THE PROBLEM
-#Procesor pobiera słowa z pamięci. Kod żyje
-#pamięć też. Czym zatem różni się instrukcja od a
-#kawałek danych?
+# Złóż i sprawdź kolumnę Kod w segmencie tekstu. Każda instrukcja podstawowa to 32-bitowe słowo
+# podzielone na pola.
 #
-#WHAT THE HARDWARE DOES
-#Nic, poza którym rejestrem jest ładowane słowo. The
-#PC wybiera słowa, które trafiają do dekodera; lw wybiera słowa
-#które idą do pliku rejestru. Bity są tego samego rodzaju.
+# Porównaj dwie instrukcje `add`. Pola operacyjne są zgodne, natomiast pola rejestrów kodują
+# różne operandy.
 #
-#THE SOLUTION
-#Przeczytaj kodowanie bezpośrednio. Złóż i otwórz
-#Main > Execute: kolumna Code pokazuje każdą instrukcję jako
-#rzeczywiście jest to słowo 32-bitowe.
-#
-#WATCH FOR
-#Ta lekcja nie drukuje niczego celowo - wynikiem jest
-#Sam segment tekstu. Porównaj dwa dodatki: ten sam opcode i
-#pola funkcyjne, różne numery rejestrów. Następnie znajdź
-#dosłownie 100 wewnątrz słowa addi.
-# ==========================================================
+# W `addi` dolne 16 bitów przechowuje bezpośrednie 100, czyli `0x0064`. Zmień go na 101 i złóż
+# ponownie, aby zobaczyć zmianę.
+
         .text
         .globl main
 main:

@@ -1,24 +1,14 @@
-# ==========================================================
-#Lektion 08 – Bytes in einem Wort und Bytereihenfolge
+# 08 – Bytes und Bytereihenfolge
 #
-#THE PROBLEM
-#Ein Wort belegt vier Adressen. Welches Byte hat den niedrigsten Wert?
-#der Name dieser Adressen?
+# Im Little-Endian-Speicher dieses Simulators befindet sich das niedrigstwertige Byte eines
+# Wortes an der niedrigsten Adresse.
 #
-#WHAT THE HARDWARE DOES
-#Bei dieser Wahl handelt es sich um die Byte-Reihenfolge und es handelt sich um eine getroffene Verdrahtungsentscheidung
-#einmal für die ganze Maschine. MIPS hier ist Little-Endian: das
-#Das niedrigstwertige Byte befindet sich an der niedrigsten Adresse.
+# Speichern Sie `0x04030201` als Wort und lesen Sie die Offsets 0 bis 3 als Bytes. Die Ausgabe
+# ist 1, 2, 3, 4.
 #
-#THE SOLUTION
-#Speichern Sie ein Wort, lesen Sie es dann Byte für Byte zurück und lassen Sie es los
-#Die Bestellung beantwortet die Frage für Sie.
-#
-#WATCH FOR
-#0x04030201 kommt als 1 2 3 4 zurück. Das zuletzt geschriebene Byte
-#das Literal wird zuerst gelesen. lbu wird anstelle von lb verwendet, also a
-#Byte über 127 wird nicht vorzeichenerweitert.
-# ==========================================================
+# Versuchen Sie es mit einem Low-Byte von `0xFF`. Eine vorzeichenlose Last mit `lbu` ergibt 255,
+# während eine vorzeichenbehaftete Last mit `lb` -1 ergibt.
+
         .data
 cell:   .word 0
 m1:     .asciiz "bytes from low address: "

@@ -1,25 +1,14 @@
-# ==========================================================
-# Clase 11 - Llamar a una funcion
+# 11 - Llamar a una función
 #
-# EL PROBLEMA
-#   Saltar a una rutina es facil. Volver no lo es, porque la misma
-#   rutina puede llamarse desde muchos sitios y la direccion de
-#   retorno cambia cada vez.
+# Ejecuta con los saltos retardados desactivados. La instrucción `jal` salta a la función y
+# guarda en `$ra` la dirección de la instrucción siguiente.
 #
-# LO QUE HACE EL HARDWARE
-#   jal hace dos cosas en una instruccion: guarda la direccion de
-#   la siguiente instruccion en $ra y luego salta. jr salta a lo
-#   que contenga un registro, asi que jr $ra retorna.
+# La convención de llamada pasa 17 y 42 en `$a0` y `$a1`. La función devuelve el valor mayor en
+# `$v0`.
 #
-# LA SOLUCION
-#   Todo lo demas es acuerdo, no circuito: argumentos en
-#   $a0..$a3, resultados en $v0. Rompa la convencion y el codigo
-#   sigue ensamblando; solo deja de interoperar.
-#
-# OBSERVE
-#   Parese en el jal y lea $ra. Compare con la direccion de la
-#   linea siguiente a la llamada en el Segmento de Texto.
-# ==========================================================
+# Entra paso a paso en la función, compara `$ra` con la dirección posterior a `jal` y sigue
+# `jr $ra` hasta el código que hizo la llamada.
+
         .data
 m1:     .asciiz "max(17, 42) = "
         .text
@@ -31,8 +20,7 @@ main:
 
         li   $a0, 17            # primer argumento
         li   $a1, 42            # segundo argumento
-        # jal cambia el flujo de control y $ra en una sola operación arquitectónica.
-        jal  maxof              # $ra = dirección de retorno
+        jal  maxof
 
         move $a0, $v0           # el resultado volvió en $v0
         li   $v0, 1

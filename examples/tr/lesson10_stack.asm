@@ -1,25 +1,13 @@
-# ==========================================================
-#Ders 10 - Yığın bir yazmaç ve bir uzaklıktır
+# 10 - Yığın
 #
-#THE PROBLEM
-#32 adet kayıt bulunmaktadır ve bunlar her bir bilgisayar tarafından paylaşılmaktadır.
-#kod. Bir değer, bu işte hayatta kalması gerektiğinde nereye gider?
-#bu kayıtları yeniden kullanacak mı?
+# Geleneksel olarak yığın daha düşük adreslere doğru büyür. İki kelimeye yer ayırmak için
+# `$sp`'dan 8 çıkarın.
 #
-#WHAT THE HARDWARE DOES
-#Hiç özel bir şey yok. $sp sıradan bir kayıttır
-#belleğe işaret eder ve yığın ona doğru büyür
-#daha düşük adresler tamamen konvansiyon gereğidir.
+# Program iki kaydı `sw` ile kaydeder, temizler, ardından `lw` ile değerlerini geri yükler.
 #
-#THE SOLUTION
-#Yer ayırmak, $sp değerinden bir çıkarma işlemidir ve onu serbest bırakır
-#ilave. İt ve patlat sadece sw ve lw'dir.
-#
-#WATCH FOR
-#Kasalar mağazalar arasında bilinçli olarak temizleniyor
-#ve yükler, dolayısıyla yazdırılan değerler ancak
-#hafızadan geri dön. $sp'in 8 adım geri hareketini izleyin.
-# ==========================================================
+# Rezervasyondan önce, iki mağaza sırasında ve çıkıştan sonra `$sp` izleyin. Nihai değeri
+# başlangıç ​​değeriyle eşleşmelidir.
+
         .data
 m1:     .asciiz "restored: "
 sp2:    .asciiz " "

@@ -1,25 +1,14 @@
-# ==========================================================
-#Lezione 10 - Lo stack è un registro e un offset
+# 10 - La pila
 #
-#THE PROBLEM
-#Ci sono 32 registri e sono condivisi da ogni pezzo
-#codice. Dove va a finire un valore quando deve sopravvivere a quel lavoro
-#riutilizzerà quei registri?
+# Per convenzione lo stack cresce verso gli indirizzi più bassi. Sottrai 8 da `$sp` per
+# riservare spazio a due parole.
 #
-#WHAT THE HARDWARE DOES
-#Niente di speciale. $sp è un registro ordinario che
-#sembra puntare alla memoria e lo stack cresce verso
-#indirizzi inferiori per pura convenzione.
+# Il programma salva due registri con `sw`, li cancella, quindi ripristina i loro valori con
+# `lw`.
 #
-#THE SOLUTION
-#Prenotare spazio è una sottrazione da $sp, rilasciandolo
-#aggiunta. Push e pop sono solo sw e lw.
-#
-#WATCH FOR
-#I registri vengono deliberatamente cancellati tra i negozi
-#e i carichi, quindi i valori stampati possono solo essere arrivati
-#tornato dalla memoria. Guarda $sp muoversi di 8 e indietro.
-# ==========================================================
+# Guarda `$sp` prima della prenotazione, durante i due negozi e dopo l'uscita. Il suo valore
+# finale dovrebbe corrispondere al suo valore iniziale.
+
         .data
 m1:     .asciiz "restored: "
 sp2:    .asciiz " "

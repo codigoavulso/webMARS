@@ -1,24 +1,14 @@
-# ==========================================================
-#Lezione 04 – Spostamenti, ovvero moltiplicazioni con fili
+# 04 - Turni e potenze di due
 #
-#THE PROBLEM
-#Un moltiplicatore generale è uno dei blocchi più costosi
-#un percorso dati. Moltiplicare per 8 non dovrebbe costare molto.
+# Uno spostamento a sinistra di 3 si moltiplica per 8 quando il risultato si adatta. I bit
+# spostati oltre il bordo vengono scartati.
 #
-#WHAT THE HARDWARE DOES
-#Uno spostamento non è affatto aritmetico: sono gli stessi bit letti
-#da fili diversi. Lo spostamento a sinistra di n si moltiplica per 2^n
-#e costa solo il routing.
+# A destra, `srl` si riempie con zeri e `sra` copia il bit del segno. Per -16 spostato di 2, si
+# aspettano rispettivamente 1073741820 e -4.
 #
-#THE SOLUTION
-#Le potenze di due diventano spostamenti. Da notare i due spostamenti a destra: srl
-#inserisce gli zeri in alto, sra copia il bit del segno, quindi solo
-#sra divide correttamente un numero negativo.
-#
-#WATCH FOR
-#-16 >> 2 dà -4 con sra ma enorme positivo con srl. Il
-#i bit si muovevano in modo identico; differisce solo ciò che è inserito in alto.
-# ==========================================================
+# Prova -15 con `sra`. Il risultato è -4 perché lo spostamento viene arrotondato per difetto;
+# arrotondamenti della divisione con segno verso lo zero.
+
         .data
 m1:     .asciiz "5 << 3 = "
 m2:     .asciiz "-16 >> 2 arithmetic = "

@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //프로그램은 전체 블록이 아닌 주�
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //위 계약은 인쇄되지 않고 컴파일러에 의해 확인됩니다.
+int accumulate(stats_t box, int values[], int n) {   // 전제 조건은 n을 배열 범위로 제한합니다. 루프가 읽을 수 있는 인덱스를 지정하는 불변 트랙입니다.
   box->count = n;
   box->total = 0;
 

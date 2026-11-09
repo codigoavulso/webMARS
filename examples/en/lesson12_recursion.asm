@@ -1,25 +1,14 @@
-# ==========================================================
-# Lesson 12 - Recursion needs a frame per call
+# 12 - Recursion and frames
 #
-# THE PROBLEM
-#   A recursive call overwrites $ra and the argument register.
-#   The outer call then has no way back and no idea what its
-#   own n was.
+# A recursive call overwrites `$ra` and uses `$a0` for its own argument. Save both values before
+# making the call.
 #
-# WHAT THE HARDWARE DOES
-#   It provides one $ra, not a stack of them. Nothing is saved
-#   automatically; if the code does not save it, it is gone.
+# Step into `fact` for each value from 5 to 1. Every call reserves eight bytes, including the
+# call that returns 1.
 #
-# THE SOLUTION
-#   Each activation opens a frame on the stack, keeps what it
-#   will still need after the call, and restores it on the way
-#   out. The stack depth is the recursion depth.
-#
-# WATCH FOR
-#   Set a breakpoint on the mul and watch $sp descend by 8 per
-#   level. The five saved copies of n are what makes the
-#   multiplication on the way back possible.
-# ==========================================================
+# Set a breakpoint on `mul` to watch the return path. Each call reloads its own argument,
+# multiplies and releases its frame.
+
         .data
 m1:     .asciiz "5! = "
         .text
@@ -61,7 +50,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
-        # Restore callee state and discard exactly the frame allocated on entry.
+        # Restore the saved return address before releasing this call's frame.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

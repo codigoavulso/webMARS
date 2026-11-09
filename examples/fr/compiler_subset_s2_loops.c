@@ -1,6 +1,6 @@
 ﻿int main(void) {
-  //Nécessite C0-S2- ou supérieur : for boucles, break/continue et ++/--.
-  int sum = 0;   //l'accumulateur vit dans un registre une fois compilé
+  //Nécessite C0-S2 ou supérieur : for boucles, break/continue et ++/--.
+  int sum = 0;   // L'accumulateur conserve la somme cumulée au fil des itérations.
 
   for (int i = 0; i < 10; i++) {   //une boucle for devient une comparaison plus une branche arrière
     if ((i % 2) == 0) continue;   //continuer à sauter par incréments, en sautant le corps

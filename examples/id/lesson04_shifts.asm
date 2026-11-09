@@ -1,24 +1,14 @@
-# ==========================================================
-#Pelajaran 04 - Pergeseran, atau perkalian dengan kabel
+# 04 - Pergeseran dan pangkat dua
 #
-#THE PROBLEM
-#Pengganda umum adalah salah satu blok termahal
-#jalur data. Mengalikannya dengan 8 tidak memerlukan biaya sebanyak itu.
+# Pergeseran ke kiri sebanyak 3 dikalikan 8 jika hasilnya cocok. Bit yang digeser melewati tepi
+# akan dibuang.
 #
-#WHAT THE HARDWARE DOES
-#Pergeseran bukanlah aritmatika sama sekali: ini adalah bit yang sama yang dibaca
-#dari kabel yang berbeda. Pergeseran ke kiri sebanyak n dikalikan 2^n
-#dan hanya biaya perutean.
+# Di sebelah kanan, `srl` diisi dengan nol dan `sra` menyalin bit tanda. Untuk -16 digeser 2,
+# masing-masing diharapkan 1073741820 dan -4.
 #
-#THE SOLUTION
-#Kekuatan dua menjadi pergeseran. Perhatikan dua shift kanan: srl
-#memberi angka nol di atas, sra menyalin bit tanda, jadi saja
-#sra membagi bilangan negatif dengan benar.
-#
-#WATCH FOR
-#-16 >> 2 menghasilkan -4 dengan sra tetapi positif besar dengan srl. Itu
-#bit dipindahkan secara identik; hanya yang dimasukkan di atas saja yang berbeda.
-# ==========================================================
+# Coba -15 dengan `sra`. Hasilnya -4 karena shiftnya dibulatkan ke bawah; putaran pembagian yang
+# ditandatangani menuju nol.
+
         .data
 m1:     .asciiz "5 << 3 = "
 m2:     .asciiz "-16 >> 2 arithmetic = "

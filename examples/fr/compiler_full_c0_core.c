@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //le programme transmet l'adresse, jamais le bl
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //les contrats ci-dessus sont vérifiés par le compilateur, non imprimés
+int accumulate(stats_t box, int values[], int n) {   // La condition préalable limite n aux limites du tableau ; les pistes invariantes qui indexent la boucle peuvent lire.
   box->count = n;
   box->total = 0;
 

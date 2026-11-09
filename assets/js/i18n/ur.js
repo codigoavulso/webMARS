@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "ایڈیٹر فونٹ سائز (9-22)",
   "Editor line height (1.0-2.2)": "ایڈیٹر لائن کی اونچائی (1.0-2.2)",
   "Editor font size": "ایڈیٹر فونٹ سائز",
+  "Auto-indent on Enter": "Enter دبانے پر خودکار حاشیہ",
   "Editor line height": "ایڈیٹر لائن کی اونچائی",
   "Editor preferences updated.": "ایڈیٹر کی ترجیحات کو اپ ڈیٹ کر دیا گیا۔",
   "Interface preferences updated.": "انٹرفیس کی ترجیحات کو اپ ڈیٹ کر دیا گیا۔",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "کیشے: وقت کو کس طرح بدلتا ہے۔",
   "Branch prediction in action": "عمل میں شاخ کی پیشن گوئی",
   "MIPS Piano": "MIPS پیانو",
+  "MARS-OS TTY Operating System": "TTY ٹرمینل کے لیے MARS-OS آپریٹنگ سسٹم",
+
   "MARS-OS TTY Shell": "MARS-OS TTY شیل",
   "Fundamentals": "بنیادی باتیں",
   "Algorithms": "الگورتھم",

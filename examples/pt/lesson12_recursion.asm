@@ -1,25 +1,14 @@
-# ==========================================================
-# Aula 12 - A recursao precisa de uma trama por chamada
+# 12 - Recursão e tramas
 #
-# O PROBLEMA
-#   Uma chamada recursiva sobrescreve o $ra e o registo do
-#   argumento. A chamada exterior fica sem caminho de volta e sem
-#   saber qual era o seu proprio n.
+# Uma chamada recursiva substitui `$ra` e usa `$a0` para o seu próprio argumento. Guarde ambos
+# os valores antes da chamada.
 #
-# O QUE O HARDWARE FAZ
-#   Oferece um $ra, nao uma pilha deles. Nada e guardado
-#   automaticamente; se o codigo nao guardar, perde-se.
+# Entre em `fact` para cada valor de 5 a 1. Cada chamada reserva oito bytes, incluindo a que
+# devolve 1.
 #
-# A SOLUCAO
-#   Cada ativacao abre uma trama na pilha, guarda o que ainda vai
-#   precisar depois da chamada e restaura a saida. A profundidade
-#   da pilha e a profundidade da recursao.
-#
-# OBSERVE
-#   Ponha um ponto de parada no mul e siga o $sp a descer 8 por
-#   nivel. As cinco copias guardadas de n sao o que torna
-#   possivel a multiplicacao no regresso.
-# ==========================================================
+# Coloque um ponto de paragem em `mul` para observar o regresso. Cada chamada recupera o seu
+# argumento, multiplica e liberta o espaço que reservou na pilha.
+
         .data
 m1:     .asciiz "5! = "
         .text
@@ -61,7 +50,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
-        # Restaurar o estado e descartar exatamente o frame reservado à entrada.
+        # Recupere o endereço de retorno guardado antes de libertar o espaço desta chamada na pilha.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

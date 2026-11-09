@@ -1,24 +1,13 @@
-# ==========================================================
-# Clase 09 - Indexar un array
+# 09 - Indexar un array
 #
-# EL PROBLEMA
-#   Una instruccion de carga ofrece un registro base y un
-#   desplazamiento constante. Nada mas. Como se llega a a[i]
-#   cuando i solo se conoce en ejecucion, en un registro?
+# Cada elemento del vector ocupa cuatro bytes. Desplaza el índice dos posiciones a la izquierda
+# para calcular el desplazamiento en bytes.
 #
-# LO QUE HACE EL HARDWARE
-#   Suma la base a lo que contenga el registro. Por tanto el
-#   indice debe venir ya en bytes, no en elementos.
+# Sigue la secuencia `sll`, `add`, `lw`: ajusta la escala del índice, suma la dirección base y
+# carga el elemento.
 #
-# LA SOLUCION
-#   Escalar el indice por el tamano del elemento y luego sumar.
-#   Para palabras de cuatro bytes ese escalado es un
-#   desplazamiento de dos a la izquierda, que no cuesta nada.
-#
-# OBSERVE
-#   Las tres lineas sll, add, lw son en lo que se traduce a[i].
-#   Recorra una iteracion y lea $t5 y $t6.
-# ==========================================================
+# Con índice 2, `$t5` vale 8 y `$t6` apunta al valor 30. La suma de los cinco elementos es 150.
+
         .data
 arr:    .word 10, 20, 30, 40, 50
 m1:     .asciiz "sum = "

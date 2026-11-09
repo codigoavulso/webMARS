@@ -1,23 +1,13 @@
-# ==========================================================
-#Bài 05 - Bộ so sánh và nhánh
+# 05 - Bộ so sánh và nhánh
 #
-#THE PROBLEM
-#Một quyết định cần một bit, nhưng so sánh hai số 32 bit
-#là một phép trừ. Làm thế nào một phép trừ trở thành một sự lựa chọn?
+# `slt` so sánh hai số nguyên có dấu và ghi 1 khi số đầu tiên nhỏ hơn hoặc 0 nếu ngược lại.
 #
-#WHAT THE HARDWARE DOES
-#slt trừ và vứt bỏ mọi thứ trừ dấu,
-#ghi 0 hoặc 1. Sau đó nhánh sẽ nạp bit đó vào PC
-#logic, thêm phần bù hoặc cho phép PC tiến lên.
+# Đối với 7 và 12, `$t2` là 1, vì vậy `beq` không chuyển tới `notless` và việc thực thi tiếp tục
+# đến lệnh tiếp theo.
 #
-#THE SOLUTION
-#So sánh vào một thanh ghi, nhánh trên thanh ghi đó. Kiểm soát
-#luồng là số học cộng với một bộ ghép kênh trên PC.
-#
-#WATCH FOR
-#Sau slt, $t2 giữ 1. Bước qua beq và xem PC
-#trên thanh trạng thái: nó nhảy thay vì tiến lên bốn.
-# ==========================================================
+# Khi phân nhánh bị trì hoãn, hãy bước qua `beq` và quan sát PC. Hoán đổi hai giá trị đầu vào và
+# so sánh đích mới.
+
         .data
 lo:     .asciiz "a is smaller"
 hi:     .asciiz "a is not smaller"

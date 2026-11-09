@@ -1,24 +1,13 @@
-# ==========================================================
-#Ders 02 - İkinin tamamlayıcısı
+# 02 - İkinin tamamlayıcısı
 #
-#THE PROBLEM
-#Bir kayıt, her biri yüksek veya düşük olan 32 kablodan oluşur. Tel yok
-#eksi işareti için, ancak negatif sayıların çalışması gerekir.
+# 32 bitlik ikinin tamamlayıcısında, 5'in bitlerinin ters çevrilmesi ve 1'in eklenmesi -5
+# temsilini üretir.
 #
-#WHAT THE HARDWARE DOES
-#Üst biti bir işaret olarak okur, ancak ayrı bir bayrak olarak okur:
-#-n, n'ye eklenen bit modeli olarak saklanır
-#sıfır. Her biti ters çevirin ve bir tane ekleyin ve elde ettiniz.
+# Program aynı değeri iki şekilde hesaplar: sıfırdan `sub`, sonra `nor` ve `addi`.
 #
-#THE SOLUTION
-#Çıkarma işleminin ikinci devreye ihtiyacı yoktur. a - b olur
-#a + (-b), yani bir toplayıcı her iki işleme de hizmet eder.
-#
-#WATCH FOR
-#Her iki yarım da -5 yazdırır. İkincisi ona uzun yoldan ulaşır,
-#nor ve addi ile sub'un dahili olarak ne yaptığını gösterir.
-#0xFFFFFFFB'i görmek için Değerleri onaltılık sayıya ayarlayın.
-# ==========================================================
+# Her iki yol da -5 yazdırır. Aynı bitlerin onaltılık sistemde nasıl göründüğünü görmek için
+# kayıtlardaki `0xFFFFFFFB`'yi inceleyin.
+
         .data
 m1:     .asciiz "zero minus 5 = "
 m2:     .asciiz "invert bits of 5, add 1 = "

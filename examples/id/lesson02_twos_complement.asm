@@ -1,24 +1,12 @@
-# ==========================================================
-#Pelajaran 02 - Komplemen Dua
+# 02 - Komplemen dua
 #
-#THE PROBLEM
-#Sebuah register terdiri dari 32 kabel, masing-masing tinggi atau rendah. Tidak ada kawat
-#untuk tanda minus, namun angka negatif harus berfungsi.
+# Dalam komplemen dua 32-bit, membalik bit 5 dan menambahkan 1 menghasilkan representasi -5.
 #
-#WHAT THE HARDWARE DOES
-#Bunyinya bagian atas sebagai tanda, tetapi bukan sebagai bendera terpisah:
-#-n disimpan sebagai pola bit yang, ditambahkan ke n, dibungkus
-#nol. Balikkan setiap bit dan tambahkan satu dan Anda memilikinya.
+# Program menghitung nilai yang sama dengan dua cara: `sub` dari nol, lalu `nor` dan `addi`.
 #
-#THE SOLUTION
-#Pengurangan tidak memerlukan sirkuit kedua. a - b menjadi
-#a + (-b), jadi satu penjumlah melayani kedua operasi tersebut.
-#
-#WATCH FOR
-#Kedua bagian mencetak -5. Yang kedua mencapainya jauh,
-#dengan nor dan addi, menunjukkan apa yang dilakukan sub secara internal.
-#Atur Nilai ke heksadesimal untuk melihat 0xFFFFFFFB.
-# ==========================================================
+# Kedua jalur mencetak -5. Periksa `0xFFFFFFFB` di register untuk melihat tampilan bit yang sama
+# dalam heksadesimal.
+
         .data
 m1:     .asciiz "zero minus 5 = "
 m2:     .asciiz "invert bits of 5, add 1 = "

@@ -1,25 +1,14 @@
-# ==========================================================
-#Ders 12 - Özyinelemenin çağrı başına bir kareye ihtiyacı vardır
+# 12 - Özyineleme ve çerçeveler
 #
-#THE PROBLEM
-#Özyinelemeli bir çağrı, $ra ve bağımsız değişken kaydının üzerine yazar.
-#Bu durumda dış çağrının geri dönüşü yoktur ve ne olduğu hakkında hiçbir fikri yoktur.
-#kendi n'si öyleydi.
+# Özyinelemeli bir çağrı `$ra`'nin üzerine yazar ve kendi argümanı için `$a0`'yi kullanır.
+# Aramayı yapmadan önce her iki değeri de kaydedin.
 #
-#WHAT THE HARDWARE DOES
-#Bir yığın değil, bir $ra sağlar. Hiçbir şey kaydedilmedi
-#otomatik olarak; kod onu kaydetmezse kaybolur.
+# 5'ten 1'e kadar her değer için `fact` adımını atın. 1 döndüren çağrı da dahil olmak üzere her
+# çağrı sekiz bayt ayırır.
 #
-#THE SOLUTION
-#Her aktivasyon yığında bir çerçeve açar ve onu saklar.
-#aramadan sonra hala ihtiyaç duyacak ve yolda geri yükleyecektir
-#dışarı. Yığın derinliği yineleme derinliğidir.
-#
-#WATCH FOR
-#Mul'da bir kesme noktası belirleyin ve $sp'in başına 8 oranında azalmasını izleyin.
-#seviye. N'nin kaydedilen beş kopyası,
-#dönüş yolunda çarpma mümkün.
-# ==========================================================
+# Dönüş yolunu izlemek için `mul`'ye bir kesme noktası ayarlayın. Her çağrı kendi argümanını
+# yeniden yükler, çoğaltır ve çerçevesini serbest bırakır.
+
         .data
 m1:     .asciiz "5! = "
         .text
@@ -61,7 +50,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
-        #Aranan kişinin durumunu geri yükleyin ve girişte ayrılan çerçeveyi tam olarak atın.
+        # Bu aramanın çerçevesini bırakmadan önce kayıtlı gönderici adresini geri yükleyin.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

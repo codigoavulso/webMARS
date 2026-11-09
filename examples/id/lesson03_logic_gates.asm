@@ -1,24 +1,14 @@
-# ==========================================================
-#Pelajaran 03 - Gerbang logika melintasi 32 bit
+# 03 - Gerbang logika lebih dari 32 bit
 #
-#THE PROBLEM
-#AND, OR dan XOR adalah gerbang satu-bit. Sebuah register menampung 32 bit.
-#Apa arti gerbang dengan lebar sebesar itu?
+# Setiap bit hasil hanya bergantung pada bit yang sesuai dari dua operan. Tidak ada carry antar
+# posisi bit.
 #
-#WHAT THE HARDWARE DOES
-#Itu meletakkan 32 salinan gerbang berdampingan. Sedikit 0 dari
-#hasilnya hanya bergantung pada bit 0 setiap operan, bit 1 hanya aktif
-#bit 1, dan seterusnya. Tidak ada barang bawaan yang bergerak di antara mereka.
+# Dengan mask `0x0F`, DAN menyimpan empat bit rendah dan menghapus sisanya. OR menyetel empat
+# bit rendah dan XOR membaliknya.
 #
-#THE SOLUTION
-#Kemandirian itulah yang membuat topeng berfungsi: pilih yang mana
-#bit untuk disimpan dengan AND, paksa menjadi satu dengan OR, balik dengan XOR.
-#
-#WATCH FOR
-#0xCC adalah 11001100 dan topeng 0x0F adalah 00001111. AND tetap
-#   empat bit rendah, ATAU menyetelnya, XOR membaliknya. Hanya itu
-#gigitan rendah selalu berubah.
-# ==========================================================
+# Bandingkan ketiga hasil dalam heksadesimal, lalu coba mask `0xF0` untuk mengerjakan kelompok
+# empat bit berikutnya.
+
         .data
 ma:     .asciiz "AND keeps the low nibble: "
 mo:     .asciiz "OR sets the low nibble:   "

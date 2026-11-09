@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "Ukuran font editor (9-22)",
   "Editor line height (1.0-2.2)": "Tinggi garis editor (1.0-2.2)",
   "Editor font size": "Ukuran font editor",
+  "Auto-indent on Enter": "Indentasi otomatis saat menekan Enter",
   "Editor line height": "Tinggi garis editor",
   "Editor preferences updated.": "Preferensi editor diperbarui.",
   "Interface preferences updated.": "Preferensi antarmuka diperbarui.",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "Cache: bagaimana langkah mengubah waktu",
   "Branch prediction in action": "Prediksi cabang sedang beraksi",
   "MIPS Piano": "Piano MIPS",
+  "MARS-OS TTY Operating System": "MARS-OS, sistem operasi untuk terminal TTY",
+
   "MARS-OS TTY Shell": "MARS-OS TTY Cangkang",
   "Fundamentals": "Dasar-dasar",
   "Algorithms": "Algoritma",

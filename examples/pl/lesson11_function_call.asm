@@ -1,25 +1,14 @@
-# ==========================================================
-#Lekcja 11 - Wywołanie funkcji
+# 11 - Wywołanie funkcji
 #
-#THE PROBLEM
-#Wpadnięcie w rutynę jest łatwe. Powrót nie jest, ponieważ
-#tę samą procedurę można wywołać z wielu miejsc i
-#Adres zwrotny jest za każdym razem inny.
+# Uruchom z opóźnionym rozgałęzianiem. `jal` przeskakuje do funkcji i umieszcza adres następnej
+# instrukcji w `$ra`.
 #
-#WHAT THE HARDWARE DOES
-#jal robi dwie rzeczy w jednej instrukcji: przechowuje plik
-#adres poniższej instrukcji w $ra, a następnie wykonuje skoki. junior
-#przeskakuje do tego, co zawiera rejestr, więc jr $ra wraca.
+# Konwencja wywoływania przechodzi 17 i 42 w `$a0` i `$a1`. Funkcja zwraca większą wartość z
+# `$v0`.
 #
-#THE SOLUTION
-#Wszystko inne to zgoda, a nie obwody: argumenty
-#$a0..$a3, daje w wyniku $v0. Złam konwencję i kod
-#nadal się składa - po prostu przestaje współpracować.
-#
-#WATCH FOR
-#Wejdź na słoik i przeczytaj $ra. Porównaj to z adresem
-#linii po wywołaniu w segmencie tekstowym.
-# ==========================================================
+# Rozpocznij rozmowę, porównaj `$ra` z adresem po `jal`, a następnie podążaj `jr $ra` z powrotem
+# do osoby dzwoniącej.
+
         .data
 m1:     .asciiz "max(17, 42) = "
         .text
@@ -31,8 +20,7 @@ main:
 
         li   $a0, 17            #pierwszy argument
         li   $a1, 42            #drugi argument
-        #jal zmienia zarówno przepływ sterowania, jak i $ra w jednej operacji architektonicznej.
-        jal  maxof              #$ra = adres następnej linii
+        jal  maxof
 
         move $a0, $v0           #wynik wrócił w $v0
         li   $v0, 1

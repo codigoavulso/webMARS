@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "Cỡ phông chữ của trình soạn thảo (9-22)",
   "Editor line height (1.0-2.2)": "Chiều cao dòng soạn thảo (1,0-2,2)",
   "Editor font size": "Cỡ chữ của trình soạn thảo",
+  "Auto-indent on Enter": "Tự động thụt lề khi nhấn Enter",
   "Editor line height": "Chiều cao dòng soạn thảo",
   "Editor preferences updated.": "Đã cập nhật tùy chọn của người chỉnh sửa.",
   "Interface preferences updated.": "Đã cập nhật tùy chọn giao diện.",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "Bộ nhớ đệm: bước tiến thay đổi thời gian như thế nào",
   "Branch prediction in action": "Dự đoán chi nhánh đang hoạt động",
   "MIPS Piano": "Đàn piano MIPS",
+  "MARS-OS TTY Operating System": "Hệ điều hành MARS-OS cho thiết bị đầu cuối TTY",
+
   "MARS-OS TTY Shell": "MARS-OS TTY Shell",
   "Fundamentals": "Nguyên tắc cơ bản",
   "Algorithms": "Thuật toán",

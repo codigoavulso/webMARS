@@ -1,6 +1,6 @@
 # Hello World for Run I/O
 # Prints a simple message and exits.
-# This is the smallest example of the data/text split and the syscall convention.
+# The message belongs in .data; the instructions that print it belong in .text.
 
 .data
 # .asciiz stores the characters followed by the zero terminator required by syscall 4.

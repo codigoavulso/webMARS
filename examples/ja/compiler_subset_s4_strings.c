@@ -2,7 +2,7 @@
 #use <string>
 
 int main(void) {
-  //C0-S4- 以上が必要です: bool、char、string、および文字列ライブラリ。
+  //C0-S4 以上が必要です: bool、char、string、および文字列ライブラリ。
   char suffix = 'M';   //char はコードを保持する 1 バイトです。ここでは 77
   string joined = string_join("web", string_fromchar(suffix));   //文字列はレジスタではなくヒープに構築されます
   bool matches = string_equal(joined, "webM");   //テキストを比較するということは、バイトごとに比較することを意味します

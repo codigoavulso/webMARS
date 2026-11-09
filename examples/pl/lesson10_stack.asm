@@ -1,25 +1,13 @@
-# ==========================================================
-#Lekcja 10 – Stos jest rejestrem i offsetem
+# 10 - Stos
 #
-#THE PROBLEM
-#Rejestrów jest 32 i są one wspólne dla każdego elementu
-#kod. Gdzie idzie wartość, gdy musi przetrwać tę pracę
-#będzie ponownie wykorzystywać te rejestry?
+# Zgodnie z konwencją stos rośnie w kierunku niższych adresów. Odejmij 8 od `$sp`, aby
+# zarezerwować miejsce na dwa słowa.
 #
-#WHAT THE HARDWARE DOES
-#Nic specjalnego. $sp to zwykły rejestr, który
-#zdarza się, że wskazuje na pamięć, a stos rośnie w kierunku
-#niższe adresy wyłącznie według konwencji.
+# Program zapisuje dwa rejestry z `sw`, czyści je, a następnie przywraca ich wartości z `lw`.
 #
-#THE SOLUTION
-#Rezerwowanie miejsca jest odejmowaniem od $sp, zwalnianiem go
-#dodatek. Push i pop to po prostu SW i LW.
-#
-#WATCH FOR
-#Rejestry są celowo rozliczane pomiędzy sklepami
-#i ładunki, więc wydrukowane wartości mogły dopiero przyjść
-#wrócić z pamięci. Zobacz, jak $sp przesuwa się o 8 i z powrotem.
-# ==========================================================
+# Oglądaj `$sp` przed rezerwacją, w trakcie dwóch sklepów i po premierze. Jego wartość końcowa
+# powinna odpowiadać wartości początkowej.
+
         .data
 m1:     .asciiz "restored: "
 sp2:    .asciiz " "

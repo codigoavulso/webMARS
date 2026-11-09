@@ -1,4 +1,4 @@
-#Kiểm tra tính chẵn lẻ bằng tay để hạ thấp pseudo-op.
+# Tập hợp và so sánh Nguồn với Cơ bản trong Phân đoạn văn bản để xem các hướng dẫn giả mở rộng như thế nào.
 #Sau khi chạy, kiểm tra đoạn dữ liệu có kết quả:
 #kết quả[0] = 1 giây 5,5
 #results[1] = 1 sge 5,5

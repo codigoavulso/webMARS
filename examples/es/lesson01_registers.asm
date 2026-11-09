@@ -1,24 +1,14 @@
-# ==========================================================
-# Clase 01 - Registros y valores inmediatos
+# 01 - Registros e inmediatos
 #
-# EL PROBLEMA
-#   La ALU tiene dos puertos de entrada y ambos estan conectados
-#   al banco de registros. Un numero escrito en el codigo no esta
-#   en un registro, por lo que no llega a esos puertos.
+# El valor inmediato está codificado en la instrucción. Ensambla y comprueba en qué instrucción
+# básica se convierte cada `li`.
 #
-# LO QUE HACE EL HARDWARE
-#   El inmediato viaja dentro de la propia palabra de la
-#   instruccion. addi lleva un campo de 16 bits; li es una
-#   comodidad que el ensamblador expande en instrucciones reales.
+# Ejecuta paso a paso las dos cargas y la suma. En Registros, observa `$t0 = 12`, `$t1 = 30` y
+# `$t2 = 42`.
 #
-# LA SOLUCION
-#   Colocar primero la constante en un registro y solo entonces
-#   dejar que la ALU lea dos registros y escriba en un tercero.
-#
-# OBSERVE
-#   Avance paso a paso y siga $t0, $t1 y $t2 en el panel de
-#   Registros. Solo la tercera linea usa la ALU.
-# ==========================================================
+# Cambia 30 por `0x12345678` y vuelve a ensamblar. La constante mayor necesita más de una
+# instrucción básica.
+
         .data
 lbl:    .asciiz "12 + 30 = "
         .text
@@ -30,9 +20,9 @@ main:
         syscall
 
         # li es una pseudoinstrucción; Assemble muestra en qué instrucción real se convierte.
-        li   $t0, 12            # inmediato -> registro
-        li   $t1, 30            # inmediato -> registro
-        add  $t2, $t0, $t1      # la ALU lee dos registros
+        li   $t0, 12
+        li   $t1, 30
+        add  $t2, $t0, $t1      # La suma se guarda en un registro distinto.
 
         move $a0, $t2
         li   $v0, 1

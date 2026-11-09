@@ -1,24 +1,13 @@
-# ==========================================================
-#Ders 04 - Kaydırmalar veya tellerle çarpma
+# 04 - İkinin vardiyaları ve güçleri
 #
-#THE PROBLEM
-#Genel çarpan, piyasadaki en pahalı bloklardan biridir.
-#bir veri yolu. 8 ile çarpmak bu kadar maliyetli olmamalı.
+# Sonuç uygun olduğunda 3 oranında sola kaydırma 8 ile çarpılır. Kenarı geçen parçalar atılır.
 #
-#WHAT THE HARDWARE DOES
-#Kaydırma kesinlikle aritmetik değildir: okunan bitlerin aynısıdır
-#farklı tellerden. n birim sola kaydırma 2^n ile çarpılır
-#ve yalnızca yönlendirme maliyeti.
+# Sağdaki `srl` sıfırlarla doldurur ve `sra` işaret bitini kopyalar. -16'nın 2 kaydırılması için
+# sırasıyla 1073741820 ve -4 bekleniyor.
 #
-#THE SOLUTION
-#İkinin kuvvetleri vardiya haline gelir. İki sağa kaymaya dikkat edin: srl
-#en üstte sıfırları besler, sra işaret bitini kopyalar, bu nedenle yalnızca
-#sra negatif bir sayıyı doğru şekilde böler.
-#
-#WATCH FOR
-#-16 >> 2, sra ile -4 verir, ancak srl ile çok büyük bir pozitiftir.
-#bitler aynı şekilde hareket ediyordu; yalnızca üstte girilenler farklıdır.
-# ==========================================================
+# `sra` ile -15'i deneyin. Sonuç -4'tür çünkü kaydırma aşağı yuvarlanır; İmzalı bölünme sıfıra
+# doğru yuvarlanıyor.
+
         .data
 m1:     .asciiz "5 << 3 = "
 m2:     .asciiz "-16 >> 2 arithmetic = "

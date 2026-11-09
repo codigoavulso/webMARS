@@ -1,5 +1,5 @@
-#Silnia rekurencyjna (klasyczna wydziałowa)
-#Czyta n i wypisuje n! (dla małego n).
+# Silnia rekurencyjna z oddzielną ramką stosu dla każdego wywołania.
+# Spróbuj użyć liczby całkowitej od 0 do 12. Większe silnie przepełniają 32-bitowy wynik ze znakiem.
 
 .data
 ask: .asciiz "n (0..12)? "

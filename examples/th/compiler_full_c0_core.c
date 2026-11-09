@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //โปรแกรมจะส่งผ่า
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //สัญญาข้างต้นได้รับการตรวจสอบโดยคอมไพลเลอร์ ไม่ใช่การพิมพ์
+int accumulate(stats_t box, int values[], int n) {   // เงื่อนไขเบื้องต้นจำกัด n ไว้ที่ขอบเขตของอาร์เรย์ แทร็กคงที่ซึ่งจัดทำดัชนีลูปสามารถอ่านได้
   box->count = n;
   box->total = 0;
 

@@ -1,27 +1,15 @@
-# ==========================================================
-#Pelajaran 15 - Mengapa langkah mengubah kecepatan
+# 15 - Mengapa langkah mengubah kecepatan
 #
-#THE PROBLEM
-#Dua loop di bawah membaca array yang sama dan melakukan hal yang sama
-#jumlah beban. Pada mesin sungguhan, kecepatannya jauh lebih lambat. Itu
-#jumlah instruksi tidak dapat menjelaskannya.
+# Kedua loop menggunakan array yang sama. Yang pertama membaca 256 kata; yang kedua membaca
+# setiap kata ke-16, hanya membuat 16 muatan.
 #
-#WHAT THE HARDWARE DOES
-#Memori tidak menghasilkan satu kata pun. Sebuah kesalahan mengambil keseluruhan
-#blok, bertaruh bahwa kata-kata tetangga akan segera dibutuhkan.
-#Langkah seseorang mengumpulkan taruhan itu; langkah enam belas pembayaran
-#untuk satu blok dan membaca satu kata darinya.
+# Dengan blok cache sebanyak 16 kata, pembacaan berurutan dapat menggunakan kembali setiap blok
+# yang diambil. Loop kedua berlanjut ke blok baru pada setiap beban.
 #
-#THE SOLUTION
-#Tidak ada perubahan dalam kode. Lokalitas adalah milik
-#pola akses, dan pola itulah yang harus diperbaiki.
-#
-#WATCH FOR
-#Buka Tools > Data Cache Simulator, tekan Connect to MIPS,
-#lalu lari. Bandingkan tingkat keberhasilan kedua loop. Kedua jumlah tersebut
-#cetak 0 karena arraynya nol - angkanya bukan
-#titik di sini, tingkat hitnya adalah.
-# ==========================================================
+# Sambungkan simulator ke MIPS, centang «Diaktifkan», lalu atur ukuran blok menjadi 16 word.
+# Gunakan Simulator Tembolok Data dengan breakpoint di `far` untuk memeriksa loop pertama. Setel
+# ulang statistik cache di sana sebelum menjalankan loop kedua, dan bandingkan tingkat hit.
+
         .data
 buf:    .word 0:256
 m1:     .asciiz "stride 1 sum = "
@@ -29,7 +17,7 @@ m2:     .asciiz "stride 16 sum = "
         .text
         .globl main
 main:
-#---- setiap kata di setiap blok ----
+# Lulus berurutan: semua 256 kata.
         la   $t0, buf
         li   $t1, 0
         li   $t2, 256
@@ -55,11 +43,11 @@ endnear:
         li   $a0, 10
         syscall
 
-#---- satu kata per blok, terpisah enam belas kata ----
+# Strided pass: satu muatan setiap enam belas kata.
         li   $t1, 0
         li   $t3, 0
 far:
-        #Menambahkan 16 lompatan 64 byte per iterasi: biasanya satu blok cache utuh.
+        # Alamat berikutnya berjarak 64 byte: enam belas kata masing-masing empat byte.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

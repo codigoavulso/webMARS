@@ -1,27 +1,14 @@
-# ==========================================================
-#Lekcja 14 - Liczby rzeczywiste w 32 bitach
+# 14 - Liczby rzeczywiste w 32 bitach
 #
-#THE PROBLEM
-#3.5 nie ma miejsca w rejestrze całkowitym. Gdzie jest
-#część ułamkowa i jak przechowywana jest bardzo duża liczba
-#w tych samych 32 bitach, co bardzo mały?
+# Liczba zmiennoprzecinkowa o pojedynczej precyzji ma jeden bit znaku, osiem bitów wykładnika i
+# 23 bity ułamkowe.
 #
-#WHAT THE HARDWARE DOES
-#IEEE-754 dzieli słowo na trzy pola: jeden bit znaku,
-#osiem bitów wykładniczych i dwadzieścia trzy bity ułamkowe. The
-#wykładnik przesuwa punkt binarny i dlatego jest taki format
-#zwany zmiennoprzecinkowym.
+# `lwc1` kopiuje wzór bitowy do rejestru zmiennoprzecinkowego. Następnie `add.s` dodaje 3,5 i
+# 1,25, aby otrzymać 4,75.
 #
-#THE SOLUTION
-#Oddzielny plik rejestru ($f0..$f31) i osobny dodatek
-#obsługuj te wartości, dlatego mnemoniki różnią się:
-#lwc1 do załadowania, dodatki do dodania, wywołanie syscall 2 do wydrukowania.
-#
-#WATCH FOR
-#Otwórz Narzędzia > Reprezentacja zmiennoprzecinkowa i wprowadź 3.5.
-#Obserwuj trzy pola, a następnie sprawdź, czy 4,75 jest dokładne -
-#w przeciwieństwie do 0,1, który nie ma skończonego ułamka binarnego.
-# ==========================================================
+# Porównaj kodowanie 4,75 i 0,1 w narzędziu Reprezentacja zmiennoprzecinkowa. 4,75 jest
+# dokładne; 0,1 wymaga zaokrąglenia.
+
         .data
 a:      .float 3.5
 b:      .float 1.25
@@ -29,7 +16,7 @@ m1:     .asciiz "3.5 + 1.25 = "
         .text
         .globl main
 main:
-        #Adresy całkowite nadal lokalizują dane; lwc1 przenosi swoje bity do COP1.
+
         la   $a0, m1
         li   $v0, 4
         syscall

@@ -1,24 +1,14 @@
-# ==========================================================
-#Lekcja 07 – Słowa w pamięci i dlaczego adresy przeskakują o cztery
+# 07 - Słowa w pamięci
 #
-#THE PROBLEM
-#Pamięć jest adresowana bajt po bajcie, ale rejestr się utrzymuje
-#cztery bajty. Co właściwie wybiera pojedynczy adres?
+# Adresy pamięci liczą bajty. Każde słowo zajmuje cztery bajty, więc `lw` i `sw` używają tutaj
+# przesunięć 0, 4 i 8.
 #
-#WHAT THE HARDWARE DOES
-#lw i sw przenoszą cztery bajty w jednym dostępie, a więc po kolei
-#słowa są oddalone od siebie o cztery adresy. Dwa niskie bity
-#adres musi wynosić zero: to wyrównanie pozwala
-#sprzęt pobiera całe słowo w jednym cyklu.
+# Adres słowa musi być wielokrotnością czterech. Użycie przesunięcia 1 zamiast 4 powoduje
+# wyjątek wyrównania w tym programie.
 #
-#THE SOLUTION
-#Arytmetyka adresów odbywa się w bajtach, a więc indeks w słowach
-#jest zawsze skalowana przez cztery.
-#
-#WATCH FOR
-#Złóż, a następnie otwórz segment danych w 0x10010000. The
-#trzy wartości pojawiają się w sąsiednich kolumnach jednego wiersza.
-# ==========================================================
+# Po sklepach spójrz na `cell` w segmencie danych. Trzy sąsiadujące słowa powinny zawierać
+# liczby 111, 222 i 333.
+
         .data
 cell:   .word 0, 0, 0
 m1:     .asciiz "read back: "

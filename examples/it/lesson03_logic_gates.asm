@@ -1,24 +1,14 @@
-# ==========================================================
-#Lezione 03 - Porte logiche su 32 bit
+# 03 - Porte logiche su 32 bit
 #
-#THE PROBLEM
-#AND, OR e XOR sono porte a un bit. Un registro contiene 32 bit.
-#Cosa significa un cancello con quella larghezza?
+# Ciascun bit del risultato dipende solo dai bit corrispondenti dei due operandi. Non c'è
+# riporto tra le posizioni dei bit.
 #
-#WHAT THE HARDWARE DOES
-#Dispone 32 copie del cancello una accanto all'altra. Bit 0 di
-#il risultato dipende solo dal bit 0 di ciascun operando, il bit 1 solo da
-#bit 1 e così via. Nessun trasporto viaggia tra di loro.
+# Con la maschera `0x0F`, AND mantiene i quattro bit bassi e cancella il resto. OR imposta i
+# quattro bit bassi e XOR li capovolge.
 #
-#THE SOLUTION
-#Questa indipendenza è ciò che fa funzionare una maschera: scegli quale
-#bit da mantenere con AND, forzarli a uno con OR, invertirli con XOR.
-#
-#WATCH FOR
-#0xCC è 11001100 e la maschera 0x0F è 00001111. AND mantiene
-#i quattro bit bassi, OR li imposta, XOR li capovolge. Solo il
-#il bocconcino basso cambia sempre.
-# ==========================================================
+# Confronta i tre risultati in esadecimale, quindi prova la maschera `0xF0` per lavorare sul
+# successivo gruppo di quattro bit.
+
         .data
 ma:     .asciiz "AND keeps the low nibble: "
 mo:     .asciiz "OR sets the low nibble:   "

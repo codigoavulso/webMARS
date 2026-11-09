@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //program adresi iletir, asla bloğun tamamın�
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //yukarıdaki sözleşmeler derleyici tarafından kontrol edilir, yazdırılmaz
+int accumulate(stats_t box, int values[], int n) {   // Önkoşul n'yi dizi sınırlarıyla sınırlar; döngüyü indeksleyen değişmez parçalar okuyabilir.
   box->count = n;
   box->total = 0;
 

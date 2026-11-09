@@ -1,27 +1,16 @@
-# ==========================================================
-#Ders 15 - Adımlar hızı neden değiştirir?
+# 15 - Adım hızı neden değiştirir?
 #
-#THE PROBLEM
-#Aşağıdaki iki döngü aynı diziyi okur ve aynı işlemi gerçekleştirir
-#yük sayısı. Gerçek bir makinede çok daha yavaştır.
-#talimat sayısı bunu açıklayamaz.
+# Her iki döngü de aynı diziyi kullanır. İlki 256 kelimenin tamamını okur; ikincisi her 16.
+# kelimeyi okur ve yalnızca 16 yükleme yapar.
 #
-#WHAT THE HARDWARE DOES
-#Bellek tek sözcükleri iletmez. Bir özlem bir bütün getirir
-#blok, komşu kelimelerin yakında isteneceğine dair iddiaya giriyor.
-#Bir adımlık bir adım o bahsi toplar; on altılık bir adım öder
-#bir blok için ve bunun bir kelimesini okur.
+# 16 kelimelik önbellek bloklarıyla sıralı okumalar, getirilen her bloğu yeniden kullanabilir.
+# İkinci döngü her yükte yeni bir bloğa ilerler.
 #
-#THE SOLUTION
-#Kodda hiçbir şey değişmiyor. Yerellik mülkünün bir özelliğidir
-#erişim düzeni ve düzeltilmesi gereken kalıp budur.
-#
-#WATCH FOR
-#Araçlar > Veri Önbelleği Simülatörü'nü açın, MIPS'a bağlan'a basın,
-#sonra koş. İki döngünün isabet oranını karşılaştırın. Her iki toplam
-#dizi sıfırlandığı için 0 yazdır - sayı
-#Burada nokta, isabet oranıdır.
-# ==========================================================
+# Simülatörü MIPS'e bağlayın, «Etkin» kutusunu işaretleyin ve blok boyutunu 16 sözcük yapın.
+# İlk döngüyü incelemek için Veri Önbelleği Simülatörü'yi `far`'de bir kesme noktasıyla
+# kullanın. İkinci döngüyü çalıştırmadan önce önbellek istatistiklerini sıfırlayın ve isabet
+# oranlarını karşılaştırın.
+
         .data
 buf:    .word 0:256
 m1:     .asciiz "stride 1 sum = "
@@ -29,7 +18,7 @@ m2:     .asciiz "stride 16 sum = "
         .text
         .globl main
 main:
-#---- her bloğun her kelimesi ----
+# Sıralı geçiş: 256 kelimenin tamamı.
         la   $t0, buf
         li   $t1, 0
         li   $t2, 256
@@ -55,11 +44,11 @@ endnear:
         li   $a0, 10
         syscall
 
-#---- blok başına bir kelime, on altı kelime arayla ----
+# Adımlı geçiş: her on altı kelimede bir yükleme.
         li   $t1, 0
         li   $t3, 0
 far:
-        #16 eklemek yineleme başına 64 baytı atlar: genellikle tam bir önbellek bloğu.
+        # Bir sonraki adres 64 bayt uzakta: her biri dört baytlık on altı kelime.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

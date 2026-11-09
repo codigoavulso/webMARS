@@ -1,24 +1,13 @@
-# ==========================================================
-#Lekcja 06 - Licznik, programowy i sprzętowy
+# 06 - Pętla jako licznik
 #
-#THE PROBLEM
-#Licznik sprzętowy to rejestr, inkrementator i a
-#komparator. Jak wygląda ta sama maszyna napisana
-#jako instrukcje?
+# `$t0` to następna liczba do wydrukowania. `$t1` to wyłączny górny limit, więc limit 11
+# powoduje wydrukowanie liczb od 1 do 10.
 #
-#WHAT THE HARDWARE DOES
-#Dokładnie te trzy części, po jednej na każdą instrukcję: rejestr
-#przechowuje liczbę, addi jest inkrementatorem, slt z gałęzią
-#jest komparatorem decydującym o kolejnej rundzie.
+# Porównanie jest uruchamiane przed każdą iteracją. Przyrost powoduje postęp w kierunku limitu,
+# a skok powtarza kontrolę.
 #
-#THE SOLUTION
-#Pętla nie jest nową koncepcją. Jest to logika sekwencyjna
-#na zewnątrz, z komputerem PC jako zegarem.
-#
-#WATCH FOR
-#$t0 to rejestr zliczający, a $t1 to limit. Przejdź przez
-#jedną pełną rundę i podaj nazwę, która linia jest która częścią.
-# ==========================================================
+# Zmień limit na 1 i uruchom. Odgałęzienie wyjściowe jest pobierane przed pierwszym wydrukiem.
+
         .data
 sp:     .asciiz " "
         .text
@@ -28,7 +17,7 @@ main:
         li   $t1, 11            #granica
 
 loop:
-        #Niezmiennik pętli: $t0 jest następną wartością do wydrukowania i pozostaje poniżej $t1.
+        # W teście pętli kolejnym kandydatem jest $t0. Wydrukuj go tylko wtedy, gdy jest poniżej $t1.
         slt  $t2, $t0, $t1      #komparator
         beq  $t2, $zero, endl   #wyjdź, gdy liczba osiągnie limit
 

@@ -1,24 +1,14 @@
-# ==========================================================
-#Lekcja 09 – Indeksowanie tablicy
+# 09 – Indeksowanie tablicy
 #
-#THE PROBLEM
-#Instrukcja ładowania oferuje rejestr podstawowy i stałą
-#przesunięcie. Nic więcej. Jak więc osiąga się a[i], skoro jest tylko i
-#znane w czasie wykonywania, siedzące w rejestrze?
+# Każdy element tablicy zajmuje cztery bajty. Przesuń indeks w lewo o dwa, aby obliczyć jego
+# przesunięcie bajtowe.
 #
-#WHAT THE HARDWARE DOES
-#Dodaje bazę do wszystkiego, co zawiera rejestr. Indeks
-#musi zatem być już w bajtach, a nie w elementach.
+# Postępuj zgodnie z sekwencją `sll`, `add`, `lw`: przeskaluj indeks, dodaj adres bazowy i
+# załaduj element.
 #
-#THE SOLUTION
-#Skaluj indeks według rozmiaru elementu, a następnie dodaj. Dla czterech bajtów
-#słowami, że skalowanie to przesunięcie w lewo o dwa, co kosztuje
-#nic.
-#
-#WATCH FOR
-#Trzy linie sll, add, lw są tym, do czego kompiluje się a[i].
-#Przejdź przez jedną iterację i przeczytaj $t5 i $t6.
-# ==========================================================
+# Przy indeksie 2 `$t5` wynosi 8, a `$t6` wskazuje na wartość 30. Pięć elementów daje w sumie
+# 150.
+
         .data
 arr:    .word 10, 20, 30, 40, 50
 m1:     .asciiz "sum = "

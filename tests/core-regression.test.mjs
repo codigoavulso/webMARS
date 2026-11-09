@@ -246,24 +246,23 @@ test("opening a window makes it the active mobile panel", async () => {
 
 test("Cloud, Settings and other shared dialogs participate in the mobile window system", async () => {
   const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
-  const applyDialog = extractNamedFunction(ui, "applyActiveDialog");
 
   assert.match(
     ui,
     /desktop-window window-hidden tool-window dialog-window mobile-panel-window/,
     "shared dialogs must opt into mobile panel selection and tabs"
   );
-  assert.match(applyDialog, /win\.classList\.toggle\("dialog-form-active", active\.kind === "form"\);/);
   assert.match(
     ui,
-    /\.desktop\.desktop-stacked \.desktop-window\.mobile-panel-window\.dialog-form-active \.dialog-window-content \{\s+grid-template-rows: minmax\(48px, 96px\) minmax\(0, 1fr\) auto;/,
-    "mobile forms must reserve a scrollable row for long Cloud and Settings content"
+    /\.interaction-dialog \.dialog-window-content \{\s+display: grid;\s+grid-template-rows: minmax\(0, 1fr\) auto auto;/,
+    "the input and footer must have rows outside the scrollable body"
   );
   assert.match(
     ui,
-    /\.desktop\.desktop-stacked \.desktop-window\.mobile-panel-window \.dialog-form \{\s+align-content: start;/,
-    "short mobile forms must stay packed at the top instead of stretching vertically"
+    /\.dialog-body \{[^}]*align-content: start;[^}]*overflow: auto;/,
+    "the shared body must keep short forms packed and scroll long content"
   );
+  assert.match(ui, /class="dialog-body">[\s\S]*?data-dialog-role="message"[\s\S]*?data-dialog-role="form"[\s\S]*?<\/div>\s*<div class="dialog-entry" hidden>[\s\S]*?<\/div>\s*<div class="dialog-actions">/);
 });
 
 test("right-click closes only closable mobile window tabs", async () => {
@@ -280,6 +279,85 @@ test("right-click closes only closable mobile window tabs", async () => {
   assert.match(renderTabs, /tab\.addEventListener\("contextmenu", \(event\) => \{/);
   assert.match(renderTabs, /event\.preventDefault\(\);/);
   assert.match(renderTabs, /closeMobilePanelEntry\(entry\);/);
+});
+
+test("repeatedly measuring a fitted dialog keeps its position inside a bordered desktop", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const desktopRect = { left: 10, top: 20 };
+  const readWindowMetrics = vm.runInNewContext(`(${extractNamedFunction(ui, "readWindowMetrics")})`, {
+    desktop: { clientLeft: 1, clientTop: 1 },
+    getDesktopRect: () => desktopRect,
+    isStackedMode: () => false
+  });
+  const win = {
+    style: { left: "120px", top: "90px", width: "520px", height: "430px" },
+    classList: { contains: (name) => name === "interaction-dialog" },
+    offsetHeight: 235,
+    getBoundingClientRect() {
+      return {
+        left: desktopRect.left + 1 + parseFloat(this.style.left),
+        top: desktopRect.top + 1 + parseFloat(this.style.top),
+        width: 460,
+        height: 235
+      };
+    }
+  };
+  for (let click = 0; click < 3; click += 1) {
+    const metrics = readWindowMetrics({ element: win });
+    assert.deepEqual({ ...metrics }, { left: 120, top: 90, width: 460, height: 235 });
+    win.style.left = `${metrics.left}px`;
+    win.style.top = `${metrics.top}px`;
+  }
+  win.style.height = "";
+  assert.deepEqual({ ...readWindowMetrics({ element: win }) }, { left: 120, top: 90, width: 460, height: 235 });
+});
+
+test("manual memory navigation survives both a repaint and new writes until the next assembly", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const data = 0x10010000;
+  const heap = 0x10040000;
+  const makeControl = () => ({
+    listeners: {},
+    addEventListener(type, handler) { this.listeners[type] = handler; },
+    querySelector() { return null; }
+  });
+  const execute = {
+    dataBaseSelect: { ...makeControl(), value: "data" },
+    dataNavNext: makeControl(),
+    textBody: { ...makeControl(), querySelectorAll: () => [], closest: () => null },
+    dataBody: { ...makeControl(), closest: () => null },
+    labelsList: {}
+  };
+  const createExecutePane = vm.runInNewContext(`(${extractNamedFunction(ui, "createExecutePane")})`, {
+    DEFAULT_MEMORY_MAP: { dataBase: data, heapBase: heap },
+    document: { querySelector: () => null },
+    window: { addEventListener() {} },
+    HTMLElement: class {},
+    escapeHtml: String,
+    translateText: String,
+    toHex: (value) => value.toString(16)
+  });
+  const pane = createExecutePane({ execute, root: { querySelector: () => null } });
+  const write = (address, runtimeRevision = 1) => pane.render(
+    { runtimeRevision, textRows: [], labels: [] },
+    { changedDataAddresses: new Set([address]), focusDataAddress: address }
+  );
+  const pageStart = () => Number(execute.dataBody.innerHTML.match(/data-row-address="(\d+)"/)[1]);
+
+  write(data + 0x240);
+  assert.equal(pageStart(), data + 0x200);
+  execute.dataBaseSelect.value = "heap";
+  execute.dataBaseSelect.listeners.change();
+  assert.equal(pageStart(), heap);
+  execute.dataNavNext.listeners.click();
+  assert.equal(pageStart(), heap + 0x200);
+  write(data + 0x480);
+  assert.equal(execute.dataBaseSelect.value, "heap");
+  assert.equal(pageStart(), heap + 0x200);
+  write(heap + 0x210);
+  assert.match(execute.dataBody.innerHTML, /updated-cell/);
+  write(data + 0x480, 2);
+  assert.equal(pageStart(), data + 0x400);
 });
 
 test("mobile titlebars show only close for closable windows", async () => {

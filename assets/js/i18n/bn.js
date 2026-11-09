@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "সম্পাদক ফন্টের আকার (9-22)",
   "Editor line height (1.0-2.2)": "সম্পাদক লাইন উচ্চতা (1.0-2.2)",
   "Editor font size": "সম্পাদক ফন্ট আকার",
+  "Auto-indent on Enter": "Enter চাপলে স্বয়ংক্রিয় ইন্ডেন্ট",
   "Editor line height": "সম্পাদক লাইন উচ্চতা",
   "Editor preferences updated.": "সম্পাদকের পছন্দ আপডেট করা হয়েছে।",
   "Interface preferences updated.": "ইন্টারফেস পছন্দ আপডেট করা হয়েছে।",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "ক্যাশে: কিভাবে স্ট্রাইড সময় পরিবর্তন করে",
   "Branch prediction in action": "কর্ম শাখা ভবিষ্যদ্বাণী",
   "MIPS Piano": "MIPS পিয়ানো",
+  "MARS-OS TTY Operating System": "MARS-OS TTY অপারেটিং সিস্টেম",
+
   "MARS-OS TTY Shell": "MARS-OS TTY শেল",
   "Fundamentals": "মৌলিক",
   "Algorithms": "অ্যালগরিদম",

@@ -1,27 +1,14 @@
-# ==========================================================
-#Lezione 13 - Un'istruzione è un numero
+# 13 - Un'istruzione è un numero
 #
-#THE PROBLEM
-#Il processore recupera le parole dalla memoria. Il codice vive
-#anche la memoria. Quindi cosa distingue un'istruzione da a
-#pezzo di dati?
+# Assemblare e ispezionare la colonna Codice nel segmento di testo. Ogni istruzione di base è
+# una parola di 32 bit divisa in campi.
 #
-#WHAT THE HARDWARE DOES
-#Niente, oltre il quale registro viene caricata la parola. Il
-#Il PC seleziona le parole che vanno al decoder; lw seleziona le parole
-#che vanno al file di registro. I bit sono dello stesso tipo.
+# Confronta le due istruzioni `add`. I campi operazione corrispondono, mentre i campi registro
+# codificano i diversi operandi.
 #
-#THE SOLUTION
-#Leggi direttamente la codifica. Assemblare e aprire
-#Principale > Esegui: la colonna Codice mostra ciascuna istruzione come
-#la parola a 32 bit che è realmente.
-#
-#WATCH FOR
-#Questa lezione non stampa nulla di proposito: l'output è the
-#Segmento di testo stesso. Confronta le due aggiunte: stesso codice operativo e
-#campi funzione, numeri di registro diversi. Quindi trova il
-#letterale 100 all'interno della parola addi.
-# ==========================================================
+# In `addi`, i 16 bit bassi contengono il 100 immediato, che è `0x0064`. Cambialo in 101 e
+# rimontalo per vedere il cambiamento.
+
         .text
         .globl main
 main:

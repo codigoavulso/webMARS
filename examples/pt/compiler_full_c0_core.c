@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   // o programa passa o endereço, nunca o bloco 
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   // os contratos acima são verificados pelo compilador, não impressos
+int accumulate(stats_t box, int values[], int n) {   // A pré-condição limita n ao tamanho do vetor. O invariante indica os índices que o ciclo pode ler.
   box->count = n;
   box->total = 0;
 

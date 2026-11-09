@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "اندازه قلم ویرایشگر (9-22)",
   "Editor line height (1.0-2.2)": "ارتفاع خط ویرایشگر (1.0-2.2)",
   "Editor font size": "اندازه فونت ویرایشگر",
+  "Auto-indent on Enter": "تورفتگی خودکار با فشردن Enter",
   "Editor line height": "ارتفاع خط ویرایشگر",
   "Editor preferences updated.": "تنظیمات برگزیده ویرایشگر به روز شد.",
   "Interface preferences updated.": "تنظیمات برگزیده رابط به روز شد.",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "حافظه پنهان: چگونه گام برداشتن زمان را تغییر می دهد",
   "Branch prediction in action": "پیش بینی شاخه در عمل",
   "MIPS Piano": "پیانوی MIPS",
+  "MARS-OS TTY Operating System": "سیستم‌عامل MARS-OS برای پایانهٔ TTY",
+
   "MARS-OS TTY Shell": "MARS-OS TTY پوسته",
   "Fundamentals": "مبانی",
   "Algorithms": "الگوریتم ها",

@@ -1,4 +1,4 @@
-#Test di parità manuale per l'abbassamento pseudo-op.
+# Assembla e confronta Source con Basic nel segmento di testo per vedere come si espandono le pseudo-istruzioni.
 #Dopo l'esecuzione, ispeziona il segmento dati nei risultati:
 #risultati[0] = 1 seq 5,5
 #risultati[1] = 1 sge 5,5

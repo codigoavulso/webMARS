@@ -1,24 +1,14 @@
-# ==========================================================
-# Lesson 03 - Logic gates across 32 bits
+# 03 - Logic gates over 32 bits
 #
-# THE PROBLEM
-#   AND, OR and XOR are one-bit gates. A register holds 32 bits.
-#   What does a gate mean at that width?
+# Each result bit depends only on the corresponding bits of the two operands. There is no carry
+# between bit positions.
 #
-# WHAT THE HARDWARE DOES
-#   It lays 32 copies of the gate side by side. Bit 0 of the
-#   result depends only on bit 0 of each operand, bit 1 only on
-#   bit 1, and so on. No carry travels between them.
+# With mask `0x0F`, AND keeps the low four bits and clears the rest. OR sets the low four bits
+# and XOR flips them.
 #
-# THE SOLUTION
-#   That independence is what makes a mask work: choose which
-#   bits to keep with AND, force to one with OR, flip with XOR.
-#
-# WATCH FOR
-#   0xCC is 11001100 and the mask 0x0F is 00001111. AND keeps
-#   the low four bits, OR sets them, XOR flips them. Only the
-#   low nibble ever changes.
-# ==========================================================
+# Compare the three results in hexadecimal, then try mask `0xF0` to work on the next group of
+# four bits.
+
         .data
 ma:     .asciiz "AND keeps the low nibble: "
 mo:     .asciiz "OR sets the low nibble:   "

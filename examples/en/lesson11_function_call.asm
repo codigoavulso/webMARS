@@ -1,25 +1,14 @@
-# ==========================================================
-# Lesson 11 - Calling a function
+# 11 - Calling a function
 #
-# THE PROBLEM
-#   Jumping into a routine is easy. Getting back is not, because
-#   the same routine may be called from many places and the
-#   return address differs every time.
+# Run with delayed branching off. `jal` jumps to the function and puts the address of the next
+# instruction in `$ra`.
 #
-# WHAT THE HARDWARE DOES
-#   jal does two things in one instruction: it stores the
-#   address of the following instruction in $ra, then jumps. jr
-#   jumps to whatever a register holds, so jr $ra returns.
+# The calling convention passes 17 and 42 in `$a0` and `$a1`. The function returns the larger
+# value in `$v0`.
 #
-# THE SOLUTION
-#   Everything else is agreement, not circuitry: arguments in
-#   $a0..$a3, results in $v0. Break the convention and the code
-#   still assembles - it simply stops interoperating.
-#
-# WATCH FOR
-#   Step onto the jal and read $ra. Compare it with the address
-#   of the line after the call in the Text Segment.
-# ==========================================================
+# Step into the call, compare `$ra` with the address after `jal`, then follow `jr $ra` back to
+# the caller.
+
         .data
 m1:     .asciiz "max(17, 42) = "
         .text
@@ -31,8 +20,7 @@ main:
 
         li   $a0, 17            # first argument
         li   $a1, 42            # second argument
-        # jal changes both control flow and $ra in one architectural operation.
-        jal  maxof              # $ra = address of the next line
+        jal  maxof
 
         move $a0, $v0           # result came back in $v0
         li   $v0, 1

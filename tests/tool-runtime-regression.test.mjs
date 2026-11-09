@@ -938,6 +938,7 @@ test("an assembled program never loses its text segment mid-assembly", async () 
   const context = vm.createContext({});
   vm.runInContext(`
     function applyGuards(lastSnapshot, snapshot, options, renderedRows) {
+      const dataState = { followWrites: false };
       const execute = {
         textBody: {
           querySelectorAll: () => ({ length: renderedRows })

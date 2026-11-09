@@ -1,24 +1,14 @@
-# ==========================================================
-#Leçon 04 - Décalages, ou multiplication avec des fils
+# 04 - Décalages et puissances de deux
 #
-#THE PROBLEM
-#Un multiplicateur général est l'un des blocs les plus chers du marché.
-#un chemin de données. Multiplier par 8 ne devrait pas coûter si cher.
+# Un décalage vers la gauche de 3 est multiplié par 8 lorsque le résultat correspond. Les bits
+# décalés au-delà du bord sont ignorés.
 #
-#WHAT THE HARDWARE DOES
-#Un décalage n'est pas du tout arithmétique : ce sont les mêmes bits lus
-#à partir de différents fils. Décalage vers la gauche de n multiplié par 2 ^ n
-#et ne coûte que le routage.
+# À droite, `srl` se remplit de zéros et `sra` copie le bit de signe. Pour -16 décalé de 2,
+# attendez-vous respectivement à 1073741820 et -4.
 #
-#THE SOLUTION
-#Les puissances de deux deviennent des changements. Notez les deux décalages à droite : srl
-#alimente les zéros en haut, sra copie le bit de signe, donc seulement
-#sra divise correctement un nombre négatif.
-#
-#WATCH FOR
-#-16 >> 2 donne -4 avec sra mais un énorme positif avec srl. Le
-#les bits se sont déplacés de manière identique ; seul ce qui est entré en haut diffère.
-# ==========================================================
+# Essayez -15 avec `sra`. Le résultat est -4 car le décalage est arrondi à l'inférieur ; la
+# division signée s’arrondit vers zéro.
+
         .data
 m1:     .asciiz "5 << 3 = "
 m2:     .asciiz "-16 >> 2 arithmetic = "

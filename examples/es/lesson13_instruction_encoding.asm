@@ -1,26 +1,14 @@
-# ==========================================================
-# Clase 13 - Una instruccion es un numero
+# 13 - Una instrucción es un número
 #
-# EL PROBLEMA
-#   El procesador trae palabras de la memoria. El codigo tambien
-#   vive en la memoria. Que distingue una instruccion de un dato?
+# Ensambla y observa la columna Código del Segmento de texto. Cada instrucción básica es una
+# palabra de 32 bits dividida en campos.
 #
-# LO QUE HACE EL HARDWARE
-#   Nada, mas alla de hacia donde va la palabra. El PC selecciona
-#   palabras que van al decodificador; lw selecciona palabras que
-#   van al banco de registros. Los bits son de la misma clase.
+# Compara las dos instrucciones `add`. Los campos de la operación coinciden, mientras que los
+# campos de los registros codifican los operandos distintos.
 #
-# LA SOLUCION
-#   Leer la codificacion directamente. Ensamble y abra
-#   Principal > Ejecutar: la columna Code muestra cada
-#   instruccion como la palabra de 32 bits que realmente es.
-#
-# OBSERVE
-#   Esta clase no imprime nada a proposito: la salida es el propio
-#   Segmento de Texto. Compare los dos add: mismos campos de
-#   opcode y funct, numeros de registro distintos. Luego busque
-#   el literal 100 dentro de la palabra del addi.
-# ==========================================================
+# En `addi`, los 16 bits inferiores guardan el inmediato 100, o `0x0064`. Cámbialo a 101 y
+# vuelve a ensamblar para ver la diferencia.
+
         .text
         .globl main
 main:

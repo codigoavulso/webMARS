@@ -1,24 +1,14 @@
-# ==========================================================
-#Bài 04 - Phép dịch, hay phép nhân bằng dây
+# 04 - Sự dịch chuyển và lũy thừa của hai
 #
-#THE PROBLEM
-#Hệ số nhân tổng quát là một trong những khối đắt nhất trong
-#một đường dẫn dữ liệu. Nhân với 8 sẽ không tốn nhiều tiền như vậy.
+# Sự dịch chuyển trái bằng 3 nhân với 8 khi kết quả phù hợp. Các bit dịch chuyển qua mép sẽ bị
+# loại bỏ.
 #
-#WHAT THE HARDWARE DOES
-#Một sự thay đổi hoàn toàn không phải là số học: đó là cùng một bit được đọc
-#từ các dây khác nhau. Dịch sang trái với n nhân với 2^n
-#và chỉ tốn chi phí định tuyến.
+# Ở bên phải, `srl` điền số 0 và `sra` sao chép bit dấu. Đối với -16 được dịch chuyển 2, kỳ vọng
+# lần lượt là 1073741820 và -4.
 #
-#THE SOLUTION
-#Sức mạnh của hai trở thành sự thay đổi. Lưu ý hai ca bên phải: srl
-#đưa số 0 vào ở trên cùng, sra sao chép bit dấu, vì vậy chỉ
-#sra chia số âm một cách chính xác.
-#
-#WATCH FOR
-#-16 >> 2 cho -4 với sra nhưng là một giá trị dương rất lớn với srl. các
-#các bit di chuyển giống hệt nhau; chỉ những gì được nhập ở trên cùng là khác.
-# ==========================================================
+# Hãy thử -15 với `sra`. Kết quả là -4 vì số ca làm tròn xuống; các vòng chia đã ký về phía
+# không.
+
         .data
 m1:     .asciiz "5 << 3 = "
 m2:     .asciiz "-16 >> 2 arithmetic = "

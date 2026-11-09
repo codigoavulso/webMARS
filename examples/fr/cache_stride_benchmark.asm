@@ -1,5 +1,5 @@
 #Benchmark du comportement du cache : accès séquentiel ou accès stride-16.
-#Ouvrez Outils > Outil de simulation de cache de données, connectez-le à MIPS et cochez Activé.
+# Ouvrez Outils > Simulateur de cache de données et connectez-le à MIPS. Cochez « Activé ».
 #
 #Chaque exécution mesure exactement un modèle de cache froid. Définir ACCESS_PATTERN
 #à 1 ou 2, réinitialisez les statistiques du simulateur, puis assemblez et exécutez à nouveau.

@@ -1,24 +1,14 @@
-# ==========================================================
-# Lesson 01 - Registers and immediate values
+# 01 - Registers and immediates
 #
-# THE PROBLEM
-#   The ALU has two input ports and both are wired to the
-#   register file. A number written in the source is not in a
-#   register, so it cannot reach those ports directly.
+# The immediate is encoded in the instruction. Assemble and check which basic instruction each
+# `li` becomes.
 #
-# WHAT THE HARDWARE DOES
-#   An immediate travels inside the instruction word itself.
-#   addi carries a 16-bit field; li is a convenience the
-#   assembler expands into one or two real instructions.
+# Step through the two loads and the addition. In Registers, follow `$t0 = 12`, `$t1 = 30` and
+# `$t2 = 42`.
 #
-# THE SOLUTION
-#   Land the constant in a register first, then let the ALU
-#   read two registers and write a third.
-#
-# WATCH FOR
-#   Step once per line and follow $t0, $t1 and $t2 in the
-#   Registers panel. Only the third line touches the ALU.
-# ==========================================================
+# Try replacing 30 with `0x12345678` and reassemble. The larger constant needs more than one
+# basic instruction.
+
         .data
 lbl:    .asciiz "12 + 30 = "
         .text
@@ -30,9 +20,9 @@ main:
         syscall
 
         # li is a pseudo-instruction; Assemble shows which real instruction it becomes.
-        li   $t0, 12            # immediate -> register
-        li   $t1, 30            # immediate -> register
-        add  $t2, $t0, $t1      # ALU reads two registers
+        li   $t0, 12
+        li   $t1, 30
+        add  $t2, $t0, $t1      # The sum is written to a different register.
 
         move $a0, $t2
         li   $v0, 1

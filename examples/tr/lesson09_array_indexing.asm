@@ -1,24 +1,12 @@
-# ==========================================================
-#Ders 09 - Bir diziyi indeksleme
+# 09 - Bir diziyi indeksleme
 #
-#THE PROBLEM
-#Bir yükleme talimatı bir temel kayıt ve bir sabit sunar.
-#ofset. Başka bir şey yok. Peki i yalnızca iken a[i]'ye nasıl ulaşılır?
-#çalışma zamanında biliniyor mu, bir kayıt defterinde mi oturuyor?
+# Her dizi öğesi dört bayt kaplar. Bayt uzaklığını hesaplamak için dizini iki sola kaydırın.
 #
-#WHAT THE HARDWARE DOES
-#Kayıtta bulunan her şeye temel ekler. Endeks
-#bu nedenle zaten öğelerde değil baytlarda olmalıdır.
+# `sll`, `add`, `lw` sırasını izleyin: dizini ölçeklendirin, temel adresi ekleyin ve öğeyi
+# yükleyin.
 #
-#THE SOLUTION
-#Dizini öğe boyutuna göre ölçeklendirin ve ardından ekleyin. Dört bayt için
-#ölçeklendirmenin iki sola kaydırma olduğunu söyleyen kelimeler
-#hiçbir şey.
-#
-#WATCH FOR
-#Üç satır sll, add, lw a[i]'nin derlendiği satırlardır.
-#Bir yineleme boyunca ilerleyin ve $t5 ve $t6 okuyun.
-# ==========================================================
+# Dizin 2'de `$t5` 8'dir ve `$t6` 30 değerini gösterir. Beş öğenin toplamı 150'ye eşittir.
+
         .data
 arr:    .word 10, 20, 30, 40, 50
 m1:     .asciiz "sum = "

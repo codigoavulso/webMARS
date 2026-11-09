@@ -819,6 +819,9 @@ th {
 .usage-stats-table th:last-child,
 .usage-stats-table td:last-child { text-align: end; font-variant-numeric: tabular-nums; }
 .usage-stats-table th { position: sticky; top: 0; background: var(--surface-strong); }
+#usage-stats-builds .usage-stats-table th:nth-child(2),
+#usage-stats-builds .usage-stats-table td { text-align: end; font-variant-numeric: tabular-nums; }
+#usage-stats-builds .usage-stats-table tbody th { position: static; font-variant-numeric: tabular-nums; }
 .usage-stats-note { margin-block: 8px 0; color: var(--text-muted); font-size: 11px; }
 .usage-stats-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-block: 10px; border-bottom: 1px solid var(--line-soft); padding-block-end: 6px; }
 .tool-window .usage-stats-tabs [aria-selected="true"] { background: var(--accent); color: var(--text-on-accent); }

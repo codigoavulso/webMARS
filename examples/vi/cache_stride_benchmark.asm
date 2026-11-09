@@ -1,5 +1,5 @@
 #Điểm chuẩn hành vi của bộ đệm: truy cập tuần tự so với bước 16.
-#Mở Công cụ > Công cụ mô phỏng bộ nhớ đệm dữ liệu, kết nối nó với MIPS và chọn Đã bật.
+# Mở Công cụ > Trình mô phỏng bộ đệm dữ liệu và kết nối nó với MIPS. Đánh dấu «Đã bật».
 #
 #Mỗi lần thực thi đo chính xác một mẫu bộ nhớ đệm nguội. Đặt ACCESS_PATTERN
 #về 1 hoặc 2, đặt lại số liệu thống kê của trình mô phỏng, sau đó tập hợp và chạy lại.

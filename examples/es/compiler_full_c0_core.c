@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   // el programa pasa la dirección, nunca el blo
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   // los contratos de arriba los verifica el compilador, no se imprimen
+int accumulate(stats_t box, int values[], int n) {   // La precondición limita n al tamaño del arreglo. El invariante indica los índices que puede leer el bucle.
   box->count = n;
   box->total = 0;
 

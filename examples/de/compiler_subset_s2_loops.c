@@ -1,6 +1,6 @@
 ﻿int main(void) {
-  //Erfordert C0-S2- oder höher: für Schleifen, Break/Continue und ++/--.
-  int sum = 0;   //Der Akkumulator befindet sich nach der Kompilierung in einem Register
+  //Erfordert C0-S2 oder höher: für Schleifen, Break/Continue und ++/--.
+  int sum = 0;   // Der Akkumulator behält die laufende Summe über Iterationen hinweg.
 
   for (int i = 0; i < 10; i++) {   //Eine for-Schleife wird zu einem Vergleich plus einem Rückwärtszweig
     if ((i % 2) == 0) continue;   //Springt weiter zum Inkrement und überspringt den Körper

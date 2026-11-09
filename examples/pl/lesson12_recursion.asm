@@ -1,25 +1,14 @@
-# ==========================================================
-#Lekcja 12 — Rekurencja potrzebuje ramki na wywołanie
+# 12 - Rekurencja i ramki
 #
-#THE PROBLEM
-#Wywołanie rekurencyjne nadpisuje $ra i rejestr argumentów.
-#Zewnętrzne połączenie nie ma wówczas odwrotu i nie ma pojęcia, co to jest
-#własne n było.
+# Wywołanie rekurencyjne zastępuje `$ra` i używa `$a0` jako własnego argumentu. Zapisz obie
+# wartości przed wykonaniem połączenia.
 #
-#WHAT THE HARDWARE DOES
-#Zapewnia jeden $ra, a nie stos. Nic nie jest zapisane
-#automatycznie; jeśli kod go nie zapisze, zniknął.
+# Wejdź do `fact` dla każdej wartości od 5 do 1. Każde wywołanie rezerwuje osiem bajtów,
+# włączając wywołanie, które zwraca 1.
 #
-#THE SOLUTION
-#Każda aktywacja otwiera ramkę na stosie, zachowując ją
-#będzie nadal potrzebny po zakończeniu połączenia i przywraca go po drodze
-#na zewnątrz. Głębokość stosu to głębokość rekurencji.
-#
-#WATCH FOR
-#Ustaw punkt przerwania na mul i obserwuj, jak $sp spada o 8 na
-#poziom. Pięć zapisanych kopii n sprawia, że
-#możliwe jest mnożenie w drodze powrotnej.
-# ==========================================================
+# Ustaw punkt przerwania na `mul`, aby obserwować ścieżkę powrotną. Każde wywołanie przeładowuje
+# swój własny argument, mnoży i zwalnia swoją ramkę.
+
         .data
 m1:     .asciiz "5! = "
         .text
@@ -61,7 +50,7 @@ recurse:
         mul  $v0, $v0, $a0
 
 factend:
-        #Przywróć stan wywołany i odrzuć dokładnie tę ramkę przydzieloną przy wejściu.
+        # Przywróć zapisany adres zwrotny przed zwolnieniem ramki tego połączenia.
         lw   $ra, 0($sp)
         addi $sp, $sp, 8
         jr   $ra

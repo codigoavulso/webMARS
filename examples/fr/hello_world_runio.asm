@@ -1,6 +1,6 @@
 #Bonjour tout le monde pour exécuter les E/S
 #Imprime un message simple et quitte.
-#Il s'agit du plus petit exemple de séparation données/texte et de convention d'appel système.
+# Le message appartient à .data ; les instructions qui l'impriment appartiennent à .text.
 
 .data
 #.asciiz stocke les caractères suivis du terminateur zéro requis par l'appel système 4.

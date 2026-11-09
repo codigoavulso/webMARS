@@ -2,7 +2,7 @@
 #use <string>
 
 int main(void) {
-  // Requiere C0-S4- o superior: bool, char, string y la libreria string.
+  // Requiere C0-S4 o superior: bool, char, string y la libreria string.
   char suffix = 'M';   // un char es un byte con un código, aquí 77
   string joined = string_join("web", string_fromchar(suffix));   // las cadenas se construyen en el heap, no en registros
   bool matches = string_equal(joined, "webM");   // comparar texto es comparar byte a byte

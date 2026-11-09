@@ -1,24 +1,14 @@
-# ==========================================================
-#Pelajaran 08 - Byte di dalam kata, dan urutan byte
+# 08 - Urutan byte dan byte
 #
-#THE PROBLEM
-#Sebuah kata menempati empat alamat. Byte mana yang menghasilkan nilai terendah
-#dari nama alamat itu?
+# Dalam memori little-endian simulator ini, byte terkecil dari sebuah kata berada di alamat
+# terendah.
 #
-#WHAT THE HARDWARE DOES
-#Pilihan itu adalah urutan byte, dan itu adalah keputusan pengkabelan yang dibuat
-#sekali untuk seluruh mesin. MIPS ini little-endian: the
-#byte paling tidak signifikan berada di alamat terendah.
+# Simpan `0x04030201` sebagai kata dan baca offset 0 hingga 3 sebagai byte. Outputnya adalah 1,
+# 2, 3, 4.
 #
-#THE SOLUTION
-#Simpan satu kata, lalu baca kembali satu byte pada satu waktu dan biarkan
-#pesanan menjawab pertanyaan untuk Anda.
-#
-#WATCH FOR
-#0x04030201 muncul kembali sebagai 1 2 3 4. Byte yang ditulis terakhir dalam
-#literalnya dibaca terlebih dahulu. lbu digunakan daripada lb jadi a
-#byte di atas 127 tidak diperpanjang tandanya.
-# ==========================================================
+# Coba byte rendah `0xFF`. Beban tak bertanda tangan dengan `lbu` menghasilkan 255, sedangkan
+# beban bertanda tangan dengan `lb` menghasilkan -1.
+
         .data
 cell:   .word 0
 m1:     .asciiz "bytes from low address: "

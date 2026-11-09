@@ -1,6 +1,6 @@
 ﻿int main(void) {
-  // Requer C0-S2- ou superior: ciclos for, break/continue e ++/--.
-  int sum = 0;   // o acumulador vive num registo depois de compilado
+  // Requer C0-S2 ou superior: ciclos for, break/continue e ++/--.
+  int sum = 0;   // O acumulador conserva a soma parcial de uma iteração para a seguinte.
 
   for (int i = 0; i < 10; i++) {   // um ciclo for torna-se uma comparação mais um desvio para trás
     if ((i % 2) == 0) continue;   // continue salta para o incremento, ignorando o corpo

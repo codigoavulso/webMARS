@@ -137,7 +137,7 @@ int main(void) {
   int op_box[1] = {0};
   int right_box[1] = {0};
 
-  // Mantenemos el arranque corto para que el prompt aparezca rapido.
+
   tty_puts("Calculadora TTY lista.");
   tty_newline();
   tty_puts("Usa +, -, *, /   |   q sale");

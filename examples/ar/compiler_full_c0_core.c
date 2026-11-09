@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //يقوم البرنامج بتمرير الع
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //يتم فحص العقود المذكورة أعلاه بواسطة المترجم، ولا تتم طباعتها
+int accumulate(stats_t box, int values[], int n) {   // الشرط المسبق يحد n من حدود المصفوفة؛ المسارات الثابتة التي تُفهرس الحلقة التي يمكن قراءتها.
   box->count = n;
   box->total = 0;
 

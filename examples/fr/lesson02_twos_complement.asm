@@ -1,24 +1,14 @@
-# ==========================================================
-#Leçon 02 - Complément à deux
+# 02 - Complément à deux
 #
-#THE PROBLEM
-#Un registre est composé de 32 fils, chacun haut ou bas. Il n'y a pas de fil
-#pour un signe moins, les nombres négatifs doivent fonctionner.
+# Dans le complément à deux 32 bits, inverser les bits de 5 et ajouter 1 produit la
+# représentation de -5.
 #
-#WHAT THE HARDWARE DOES
-#Il lit le bit supérieur comme un signe, mais pas comme un indicateur distinct :
-#-n est stocké comme modèle de bits qui, ajouté à n, revient à
-#zéro. Inversez chaque bit et ajoutez-en un et vous l’avez.
+# Le programme calcule la même valeur de deux manières : `sub` à partir de zéro, puis `nor` et
+# `addi`.
 #
-#THE SOLUTION
-#La soustraction ne nécessite pas de deuxième circuit. a - b devient
-#a + (-b), donc un additionneur sert aux deux opérations.
-#
-#WATCH FOR
-#Les deux moitiés impriment -5. Le second y parvient par le long chemin,
-#avec nor et addi, montrant ce que fait le sub en interne.
-#Définissez les valeurs sur hexadécimal pour voir 0xFFFFFFFB.
-# ==========================================================
+# Les deux chemins impriment -5. Inspectez `0xFFFFFFFB` dans les registres pour voir à quoi
+# ressemblent les mêmes bits en hexadécimal.
+
         .data
 m1:     .asciiz "zero minus 5 = "
 m2:     .asciiz "invert bits of 5, add 1 = "

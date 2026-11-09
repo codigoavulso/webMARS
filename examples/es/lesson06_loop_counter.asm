@@ -1,23 +1,13 @@
-# ==========================================================
-# Clase 06 - Un contador, en software y en hardware
+# 06 - Bucle como contador
 #
-# EL PROBLEMA
-#   Un contador en hardware es un registro, un incrementador y un
-#   comparador. Como es esa misma maquina en instrucciones?
+# El registro `$t0` guarda el siguiente número que se imprime. El límite en `$t1` es exclusivo,
+# así que 11 hace que se imprima del 1 al 10.
 #
-# LO QUE HACE EL HARDWARE
-#   Exactamente esas tres piezas, una por instruccion: el registro
-#   guarda la cuenta, addi es el incrementador, y slt con el salto
-#   es el comparador que decide dar otra vuelta.
+# La comparación se hace antes de cada iteración. El incremento acerca el contador al límite y
+# el salto repite la comprobación.
 #
-# LA SOLUCION
-#   Un bucle no es un concepto nuevo. Es logica secuencial escrita
-#   en detalle, con el PC como reloj.
-#
-# OBSERVE
-#   $t0 es el registro de cuenta y $t1 el limite. Recorra una
-#   vuelta completa y diga que linea es que pieza.
-# ==========================================================
+# Cambia el límite a 1 y ejecuta. El salto de salida se toma antes de la primera impresión.
+
         .data
 sp:     .asciiz " "
         .text
@@ -27,7 +17,7 @@ main:
         li   $t1, 11            # límite exclusivo
 
 loop:
-        # Invariante: $t0 es el próximo valor que se imprimirá y sigue por debajo de $t1.
+        # Al comprobar la condición, $t0 es el siguiente candidato. Imprímelo solo si es menor que $t1.
         slt  $t2, $t0, $t1      # comparador
         beq  $t2, $zero, endl   # salir al alcanzar el límite
 

@@ -1,5 +1,5 @@
 #Önbellek davranışı karşılaştırması: sıralı ve adım-16 erişimi.
-#Araçlar > Veri Önbelleği Simülasyon Aracı'nı açın, onu MIPS'e bağlayın ve Etkin seçeneğini işaretleyin.
+# Araçlar > Veri Önbelleği Simülatörü öğesini açın ve MIPS öğesine bağlayın. «Etkin» kutusunu işaretleyin.
 #
 #Her yürütme tam olarak bir soğuk önbellek modelini ölçer. ACCESS_PATTERN'ı ayarlayın
 #1 veya 2'ye getirin, simülatör istatistiklerini sıfırlayın, ardından toplayın ve tekrar çalıştırın.

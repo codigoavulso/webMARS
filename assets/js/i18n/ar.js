@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "حجم خط المحرر (9-22)",
   "Editor line height (1.0-2.2)": "ارتفاع سطر المحرر (1.0-2.2)",
   "Editor font size": "حجم خط المحرر",
+  "Auto-indent on Enter": "إزاحة تلقائية عند الضغط على Enter",
   "Editor line height": "ارتفاع خط المحرر",
   "Editor preferences updated.": "تم تحديث تفضيلات المحرر.",
   "Interface preferences updated.": "تم تحديث تفضيلات الواجهة.",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "ذاكرة التخزين المؤقت: كيف تغير الخطوة الوقت",
   "Branch prediction in action": "التنبؤ فرع في العمل",
   "MIPS Piano": "بيانو MIPS",
+  "MARS-OS TTY Operating System": "نظام التشغيل MARS-OS لطرفية TTY",
+
   "MARS-OS TTY Shell": "MARS-OS TTY Shell",
   "Fundamentals": "الأساسيات",
   "Algorithms": "الخوارزميات",

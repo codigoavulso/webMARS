@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //プログラムはブロック全体ではな
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //上記のコントラクトはコンパイラによってチェックされ、印刷されません。
+int accumulate(stats_t box, int values[], int n) {   // 前提条件により、n が配列の境界に制限されます。ループが読み取ることができるインデックスの不変トラック。
   box->count = n;
   box->total = 0;
 

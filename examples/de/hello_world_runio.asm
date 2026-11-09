@@ -1,6 +1,6 @@
 #Hallo Welt für Run I/O
 #Gibt eine einfache Nachricht aus und wird beendet.
-#Dies ist das kleinste Beispiel für die Daten-/Textaufteilung und die Systemaufrufkonvention.
+# Die Nachricht gehört in .data; Die Anweisungen, die es ausdrucken, gehören in .text.
 
 .data
 #.asciiz speichert die Zeichen, gefolgt vom Nullabschlusszeichen, das für Systemaufruf 4 erforderlich ist.

@@ -1,27 +1,16 @@
-# ==========================================================
-#Lekcja 15 – Dlaczego krok zmienia prędkość
+# 15 - Dlaczego krok zmienia prędkość
 #
-#THE PROBLEM
-#Dwie pętle poniżej odczytują tę samą tablicę i wykonują to samo
-#liczba ładunków. Na prawdziwej maszynie działa się znacznie wolniej. The
-#liczba instrukcji nie może tego wyjaśnić.
+# Obie pętle korzystają z tej samej tablicy. Pierwszy czyta wszystkie 256 słów; drugi czyta co
+# 16 słowo, co daje tylko 16 ładunków.
 #
-#WHAT THE HARDWARE DOES
-#Pamięć nie dostarcza pojedynczych słów. Miss przynosi całość
-#blok, zakładając, że wkrótce będą potrzebne sąsiednie słowa.
-#Krok jednego zbiera ten zakład; krok szesnastu się opłaca
-#dla bloku i czyta jedno słowo.
+# Dzięki blokom pamięci podręcznej składającym się z 16 słów, odczyty sekwencyjne mogą ponownie
+# wykorzystać każdy pobrany blok. Druga pętla przechodzi do nowego bloku przy każdym obciążeniu.
 #
-#THE SOLUTION
-#Nic w kodzie się nie zmienia. Miejscowość jest własnością
-#wzorzec dostępu i jest to wzorzec, który należy naprawić.
-#
-#WATCH FOR
-#Otwórz Narzędzia > Symulator pamięci podręcznej danych, naciśnij Połącz z MIPS,
-#potem biegnij. Porównaj współczynnik trafień w obu pętlach. Obie sumy
-#wydrukuj 0, ponieważ tablica jest zerowana - liczba nie jest
-#tutaj, współczynnik trafień wynosi.
-# ==========================================================
+# Podłącz symulator do MIPS, zaznacz „Włączone” i ustaw rozmiar bloku na 16 słów.
+# Użyj Symulator pamięci podręcznej danych z punktem przerwania w `far`, aby sprawdzić pierwszą
+# pętlę. Zresetuj tam statystyki pamięci podręcznej przed uruchomieniem drugiej pętli i porównaj
+# współczynniki trafień.
+
         .data
 buf:    .word 0:256
 m1:     .asciiz "stride 1 sum = "
@@ -29,7 +18,7 @@ m2:     .asciiz "stride 16 sum = "
         .text
         .globl main
 main:
-#---- każde słowo każdego bloku ----
+# Przejście sekwencyjne: wszystkie 256 słów.
         la   $t0, buf
         li   $t1, 0
         li   $t2, 256
@@ -55,11 +44,11 @@ endnear:
         li   $a0, 10
         syscall
 
-#---- Jedno słowo w bloku, szesnaście słów od siebie ----
+# Przejście krokowe: jeden ładunek na szesnaście słów.
         li   $t1, 0
         li   $t3, 0
 far:
-        #Dodanie 16 pomija 64 bajty na iterację: zwykle jeden cały blok pamięci podręcznej.
+        # Następny adres jest oddalony o 64 bajty: szesnaście słów po cztery bajty każde.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

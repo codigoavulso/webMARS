@@ -1,24 +1,14 @@
-# ==========================================================
-#Bài 08 - Byte bên trong một từ và thứ tự byte
+# 08 - Byte và thứ tự byte
 #
-#THE PROBLEM
-#Một từ chiếm bốn địa chỉ. Byte nào thấp nhất
-#tên của những địa chỉ đó?
+# Trong bộ nhớ endian nhỏ của trình mô phỏng này, byte có ý nghĩa nhỏ nhất của một từ nằm ở địa
+# chỉ thấp nhất.
 #
-#WHAT THE HARDWARE DOES
-#Lựa chọn đó là thứ tự byte và đó là quyết định nối dây được thực hiện
-#một lần cho toàn bộ máy. MIPS đây là little-endian:
-#byte có ý nghĩa nhỏ nhất tồn tại ở địa chỉ thấp nhất.
+# Lưu trữ `0x04030201` dưới dạng Word và đọc các giá trị chênh lệch từ 0 đến 3 dưới dạng byte.
+# Đầu ra là 1, 2, 3, 4.
 #
-#THE SOLUTION
-#Lưu trữ một từ, sau đó đọc lại từng byte một và để
-#Lệnh trả lời câu hỏi cho bạn.
-#
-#WATCH FOR
-#0x04030201 trả về là 1 2 3 4. Byte được ghi cuối cùng trong
-#nghĩa đen được đọc đầu tiên. lbu được sử dụng thay vì lb nên a
-#byte trên 127 không được mở rộng bằng dấu.
-# ==========================================================
+# Hãy thử byte thấp `0xFF`. Tải không dấu với `lbu` cho kết quả 255, trong khi tải có dấu với
+# `lb` cho kết quả -1.
+
         .data
 cell:   .word 0
 m1:     .asciiz "bytes from low address: "

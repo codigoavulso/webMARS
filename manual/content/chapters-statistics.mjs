@@ -75,6 +75,14 @@ export const statisticsChapters = [
         `
       },
       {
+        id: "builds",
+        title: "Consultar sessões e eventos por build",
+        content: html`
+          <p>Abra <strong>Builds</strong> para consultar as sessões e os eventos recebidos por build. A tabela segue os filtros de período e público e também é incluída em <strong>Exportar CSV</strong>.</p>
+          <p>O número segue o formato <code>AAAAMMDDhhmm</code>. Um travessão agrupa eventos recebidos sem número de build. Cada sessão é contada uma vez por build e pode aparecer em mais de uma linha se atravessar uma atualização.</p>
+        `
+      },
+      {
         id: "perguntas-praticas",
         title: "Responder a perguntas concretas e exportar dados",
         content: html`

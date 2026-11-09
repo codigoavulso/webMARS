@@ -1,4 +1,4 @@
-#Uji paritas manual untuk penurunan operasi semu.
+# Kumpulkan dan bandingkan Sumber dengan Dasar di Segmen Teks untuk melihat bagaimana instruksi semu berkembang.
 #Setelah dijalankan, periksa segmen data pada hasil:
 #hasil[0] = 1 detik 5,5
 #hasil[1] = 1 kali 5,5

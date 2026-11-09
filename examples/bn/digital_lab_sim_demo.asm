@@ -63,7 +63,7 @@ row_idx_loop:
   j row_idx_loop
 row_idx_done:
 
-  #col index = log2(colBit)
+  #কলামের সূচক = log2(colBit)
   li $t6, 0
 col_idx_loop:
   li $t7, 1

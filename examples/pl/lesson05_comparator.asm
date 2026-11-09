@@ -1,23 +1,14 @@
-# ==========================================================
-#Lekcja 05 - Komparator i gałąź
+# 05 - Komparator i gałąź
 #
-#THE PROBLEM
-#Do podjęcia decyzji potrzebny jest jeden bit, ale porównanie dwóch liczb 32-bitowych
-#jest odejmowaniem. W jaki sposób odejmowanie staje się wyborem?
+# `slt` porównuje dwie liczby całkowite ze znakiem i zapisuje 1, gdy pierwsza jest mniejsza, lub
+# 0 w przeciwnym razie.
 #
-#WHAT THE HARDWARE DOES
-#slt odejmuje i odrzuca wszystko oprócz znaku,
-#zapisanie 0 lub 1. Oddział następnie przekazuje ten bit do komputera PC
-#logika, która albo dodaje przesunięcie, albo pozwala komputerowi na postęp.
+# Dla 7 i 12 `$t2` wynosi 1, więc `beq` nie przeskakuje do `notless` i wykonywanie jest
+# kontynuowane do następnej instrukcji.
 #
-#THE SOLUTION
-#Porównaj z rejestrem, oddziałem na tym rejestrze. Kontrola
-#przepływ jest arytmetyczny plus jeden multiplekser na komputerze.
-#
-#WATCH FOR
-#Po slt, $t2 trzyma 1. Przejdź obok beq i obejrzyj komputer
-#na pasku stanu: przeskakuje zamiast przesuwać się o cztery.
-# ==========================================================
+# Przy opóźnionym rozgałęzianiu przejdź obok `beq` i obserwuj komputer. Zamień dwie wartości
+# wejściowe i porównaj nowe miejsce docelowe.
+
         .data
 lo:     .asciiz "a is smaller"
 hi:     .asciiz "a is not smaller"

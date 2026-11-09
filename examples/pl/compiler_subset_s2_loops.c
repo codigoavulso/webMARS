@@ -1,6 +1,6 @@
 ﻿int main(void) {
-  //Wymaga C0-S2- lub nowszego: for pętli, przerwania/kontynuowania i ++/--.
-  int sum = 0;   //akumulator po skompilowaniu znajduje się w rejestrze
+  //Wymaga C0-S2 lub nowszego: for pętli, przerwania/kontynuowania i ++/--.
+  int sum = 0;   // Akumulator przechowuje sumę bieżącą w iteracjach.
 
   for (int i = 0; i < 10; i++) {   //pętla for staje się porównaniem i gałęzią wsteczną
     if ((i % 2) == 0) continue;   //kontynuuj skoki do przyrostu, pomijając ciało

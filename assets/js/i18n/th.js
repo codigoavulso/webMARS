@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "ขนาดตัวอักษรของตัวแก้ไข (9-22)",
   "Editor line height (1.0-2.2)": "ความสูงของบรรทัดตัวแก้ไข (1.0-2.2)",
   "Editor font size": "ขนาดตัวอักษรของตัวแก้ไข",
+  "Auto-indent on Enter": "ย่อหน้าอัตโนมัติเมื่อกด Enter",
   "Editor line height": "ความสูงของบรรทัดตัวแก้ไข",
   "Editor preferences updated.": "อัปเดตการตั้งค่าตัวแก้ไขแล้ว",
   "Interface preferences updated.": "อัปเดตการตั้งค่าอินเทอร์เฟซแล้ว",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "แคช: การก้าวย่างเปลี่ยนแปลงเวลาอย่างไร",
   "Branch prediction in action": "การทำนายสาขาในการดำเนินการ",
   "MIPS Piano": "เปียโน MIPS",
+  "MARS-OS TTY Operating System": "MARS-OS ระบบปฏิบัติการสำหรับเทอร์มินัล TTY",
+
   "MARS-OS TTY Shell": "MARS-OS TTY เชลล์",
   "Fundamentals": "ความรู้พื้นฐาน",
   "Algorithms": "อัลกอริทึม",

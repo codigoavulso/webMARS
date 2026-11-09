@@ -1,5 +1,5 @@
-#Factorielle récursive (classique de la faculté)
-#Lit n et imprime n ! (pour le petit n).
+# Factorielle récursive avec un cadre de pile séparé pour chaque appel.
+# Essayez un entier compris entre 0 et 12. Les factorielles plus grandes débordent d'un résultat signé de 32 bits.
 
 .data
 ask: .asciiz "n (0..12)? "

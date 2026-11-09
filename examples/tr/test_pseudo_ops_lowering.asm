@@ -1,4 +1,4 @@
-#Sahte operasyon düşürme için manuel eşlik testi.
+# Sözde talimatların nasıl genişlediğini görmek için Metin Segmentinde Source'u Basic ile birleştirin ve karşılaştırın.
 #Çalıştırdıktan sonra, sonuçlardaki veri segmentini inceleyin:
 #sonuçlar[0] = 1 sıra 5,5
 #sonuçlar[1] = 1 sge 5,5

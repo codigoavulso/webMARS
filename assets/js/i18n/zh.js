@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "编辑器字体大小 (9-22)",
   "Editor line height (1.0-2.2)": "编辑器行高（1.0-2.2）",
   "Editor font size": "编辑器字体大小",
+  "Auto-indent on Enter": "按 Enter 时自动缩进",
   "Editor line height": "编辑器行高",
   "Editor preferences updated.": "编辑器首选项已更新。",
   "Interface preferences updated.": "界面首选项已更新。",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "缓存：步幅如何改变时间",
   "Branch prediction in action": "分支预测的实际应用",
   "MIPS Piano": "MIPS 钢琴",
+  "MARS-OS TTY Operating System": "MARS-OS TTY 操作系统",
+
   "MARS-OS TTY Shell": "MARS-操作系统 TTY 外壳",
   "Fundamentals": "基础知识",
   "Algorithms": "算法",

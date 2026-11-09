@@ -137,7 +137,7 @@ int main(void) {
   int op_box[1] = {0};
   int right_box[1] = {0};
 
-  //स्टार्टअप आउटपुट को छोटा रखें ताकि प्रॉम्प्ट जल्दी दिखाई दे।
+
   tty_puts("TTY calculator ready.");
   tty_newline();
   tty_puts("Use +, -, *, /   |   q quits");

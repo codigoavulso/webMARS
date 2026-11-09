@@ -1,5 +1,5 @@
-# Recursive factorial (faculty classic)
-# Reads n and prints n! (for small n).
+# Recursive factorial with a separate stack frame for each call.
+# Try an integer from 0 to 12. Larger factorials overflow a signed 32-bit result.
 
 .data
 ask: .asciiz "n (0..12)? "

@@ -1,23 +1,13 @@
-# ==========================================================
-#Leçon 05 - Le comparateur et la branche
+# 05 - Comparateur et branchement
 #
-#THE PROBLEM
-#Une décision nécessite un bit, mais comparer deux nombres de 32 bits
-#est une soustraction. Comment une soustraction devient-elle un choix ?
+# `slt` compare deux entiers signés et écrit 1 lorsque le premier est plus petit, ou 0 sinon.
 #
-#WHAT THE HARDWARE DOES
-#slt soustrait et jette tout sauf le signe,
-#écrire 0 ou 1. La branche transmet ensuite ce bit au PC
-#logique, qui soit ajoute un décalage, soit permet au PC d'avancer.
+# Pour 7 et 12, `$t2` vaut 1, donc `beq` ne passe pas à `notless` et l'exécution passe à
+# l'instruction suivante.
 #
-#THE SOLUTION
-#Comparez dans un registre, branchez sur ce registre. Contrôle
-#le flux est arithmétique plus un multiplexeur sur le PC.
-#
-#WATCH FOR
-#Après slt, $t2 détient 1. Dépassez le beq et regardez le PC
-#dans la barre d'état : il saute plutôt que d'avancer de quatre.
-# ==========================================================
+# Avec un branchement retardé, dépassez `beq` et observez le PC. Échangez les deux valeurs
+# d'entrée et comparez la nouvelle destination.
+
         .data
 lo:     .asciiz "a is smaller"
 hi:     .asciiz "a is not smaller"

@@ -1,6 +1,6 @@
 ﻿int main(void) {
-  //需要 C0-S2- 或更高版本：for 循环、break/ continue 和 ++/--。
-  int sum = 0;   //编译后累加器位于寄存器中
+  //需要 C0-S2 或更高版本：for 循环、break/ continue 和 ++/--。
+  int sum = 0;   // 累加器在迭代中保存运行总和。
 
   for (int i = 0; i < 10; i++) {   //for 循环变成比较加向后分支
     if ((i % 2) == 0) continue;   //continue 跳转到增量，跳过主体

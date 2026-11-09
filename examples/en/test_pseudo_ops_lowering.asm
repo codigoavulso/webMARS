@@ -1,4 +1,4 @@
-# Manual parity test for pseudo-op lowering.
+# Assemble and compare Source with Basic in the Text Segment to see how pseudo-instructions expand.
 # After run, inspect data segment at results:
 #   results[0] = 1            seq 5,5
 #   results[1] = 1            sge 5,5

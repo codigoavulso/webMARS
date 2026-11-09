@@ -1,24 +1,14 @@
-# ==========================================================
-#Lekcja 08 – Bajty w słowie i kolejność bajtów
+# 08 - Bajty i kolejność bajtów
 #
-#THE PROBLEM
-#Słowo zajmuje cztery adresy. Który bajt ma najniższą wartość
-#z tych adresów nazwa?
+# W pamięci typu small-endian tego symulatora najmniej znaczący bajt słowa znajduje się pod
+# najniższym adresem.
 #
-#WHAT THE HARDWARE DOES
-#Wybór ten zależy od kolejności bajtów i jest podjętą decyzją o okablowaniu
-#raz na całą maszynę. MIPS tutaj jest mały endian: the
-#najmniej znaczący bajt znajduje się pod najniższym adresem.
+# Zapisz `0x04030201` jako słowo i odczytaj przesunięcia od 0 do 3 jako bajty. Dane wyjściowe to
+# 1, 2, 3, 4.
 #
-#THE SOLUTION
-#Zapisz jedno słowo, a następnie odczytaj je po bajcie i pozwól
-#zamówienie odpowie na pytanie za Ciebie.
-#
-#WATCH FOR
-#0x04030201 zwraca wartość 1 2 3 4. Ostatni zapisany bajt w
-#najpierw czyta się dosłowność. Używa się lbu zamiast lb, więc a
-#bajt powyżej 127 nie jest rozszerzony znakiem.
-# ==========================================================
+# Spróbuj użyć młodszego bajtu `0xFF`. Obciążenie bez znaku z `lbu` daje 255, podczas gdy
+# obciążenie ze znakiem z `lb` daje -1.
+
         .data
 cell:   .word 0
 m1:     .asciiz "bytes from low address: "

@@ -1,4 +1,4 @@
-#Yükte adres hatası için manuel eşlik testi.
+# Kelime yükünün dörde bölünebilen bir adrese ihtiyacı vardır. Bu örnekte istisnayı tetiklemek için 0x10010001 kullanılır.
 #Beklenen davranış:
 #- 0x10010001 üzerinde yük istisnası oluşturuldu
 #- hatalı adres / vaddr 0x10010001 gösteriyor

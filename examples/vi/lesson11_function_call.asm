@@ -1,25 +1,13 @@
-# ==========================================================
-#Bài 11 - Gọi hàm
+# 11 - Gọi hàm
 #
-#THE PROBLEM
-#Nhảy vào một thói quen là dễ dàng. Quay lại thì không, bởi vì
-#cùng một thói quen có thể được gọi từ nhiều nơi và
-#địa chỉ trả lại khác nhau mỗi lần.
+# Chạy với việc phân nhánh bị trì hoãn. `jal` nhảy tới hàm và đặt địa chỉ của lệnh tiếp theo vào
+# `$ra`.
 #
-#WHAT THE HARDWARE DOES
-#jal thực hiện hai việc trong một lệnh: nó lưu trữ
-#địa chỉ của lệnh sau trong $ra, sau đó nhảy. jr
-#nhảy tới bất cứ thứ gì mà thanh ghi giữ, vì vậy jr $ra trả về.
+# Quy ước gọi vượt qua 17 và 42 trong `$a0` và `$a1`. Hàm trả về giá trị lớn hơn trong `$v0`.
 #
-#THE SOLUTION
-#Mọi thứ khác đều là sự đồng thuận, không phải mạch lạc: những lập luận trong
-#$a0..$a3, kết quả là $v0. Phá vỡ quy ước và mã
-#vẫn lắp ráp - nó chỉ đơn giản là ngừng tương tác.
-#
-#WATCH FOR
-#Bước lên jal và đọc $ra. So sánh nó với địa chỉ
-#của dòng sau cuộc gọi trong Phân đoạn văn bản.
-# ==========================================================
+# Bước vào cuộc gọi, so sánh `$ra` với địa chỉ sau `jal`, sau đó theo dõi `jr $ra` quay lại với
+# người gọi.
+
         .data
 m1:     .asciiz "max(17, 42) = "
         .text
@@ -31,8 +19,7 @@ main:
 
         li   $a0, 17            #đối số đầu tiên
         li   $a1, 42            #đối số thứ hai
-        #jal thay đổi cả luồng điều khiển và $ra trong một thao tác kiến trúc.
-        jal  maxof              #$ra = địa chỉ của dòng tiếp theo
+        jal  maxof
 
         move $a0, $v0           #kết quả được trả về trong $v0
         li   $v0, 1

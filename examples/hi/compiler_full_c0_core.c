@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //प्रोग्राम पते को 
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //उपरोक्त अनुबंधों को संकलक द्वारा जांचा जाता है, मुद्रित नहीं किया जाता है
+int accumulate(stats_t box, int values[], int n) {   // पूर्व शर्त n को सरणी सीमा तक सीमित करती है; लूप को अनुक्रमित करने वाले अपरिवर्तनीय ट्रैक पढ़ सकते हैं।
   box->count = n;
   box->total = 0;
 

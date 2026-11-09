@@ -1,4 +1,4 @@
-#Test de parité manuel pour la réduction pseudo-op.
+# Assemblez et comparez Source avec Basic dans le segment de texte pour voir comment les pseudo-instructions se développent.
 #Après l'exécution, inspectez le segment de données dans les résultats :
 #résultats[0] = 1 séquence 5,5
 #résultats[1] = 1 sge 5,5

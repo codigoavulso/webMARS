@@ -124,6 +124,7 @@
   "Editor font size (9-22)": "Rozmiar czcionki edytora (9-22)",
   "Editor line height (1.0-2.2)": "Wysokość linii edytora (1,0-2,2)",
   "Editor font size": "Rozmiar czcionki edytora",
+  "Auto-indent on Enter": "Automatyczne wcięcie po naciśnięciu Enter",
   "Editor line height": "Wysokość linii edytora",
   "Editor preferences updated.": "Zaktualizowano preferencje edytora.",
   "Interface preferences updated.": "Zaktualizowano preferencje interfejsu.",
@@ -1233,6 +1234,8 @@
   "Cache: how stride changes the time": "Pamięć podręczna: jak krok zmienia czas",
   "Branch prediction in action": "Przewidywanie oddziałów w akcji",
   "MIPS Piano": "Pianino MIPS",
+  "MARS-OS TTY Operating System": "MARS-OS, system operacyjny dla terminala TTY",
+
   "MARS-OS TTY Shell": "MARS-OS TTY Powłoka",
   "Fundamentals": "Podstawy",
   "Algorithms": "Algorytmy",

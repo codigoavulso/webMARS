@@ -1,4 +1,4 @@
-#Kiểm tra tính chẵn lẻ bằng tay:
+# Kiểm tra Nguyên nhân và EPC để xem cách CPU ghi lại ngoại lệ trong khe trễ.
 #Khi bật phân nhánh bị trì hoãn, tình trạng tràn sẽ xảy ra trong khe trễ.
 #Hành vi dự kiến:
 #- thông báo ngoại lệ: tràn số học

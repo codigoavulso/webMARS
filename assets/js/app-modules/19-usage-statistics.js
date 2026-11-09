@@ -53,6 +53,7 @@
         <div class="usage-stats-tabs" role="tablist">
           <button type="button" class="tool-btn" role="tab" data-stat-tab="overview" aria-controls="usage-stats-overview" aria-selected="true" data-stat-label="Overview"></button>
           <button type="button" class="tool-btn" role="tab" data-stat-tab="resources" aria-controls="usage-stats-resources" aria-selected="false" tabindex="-1" data-stat-label="Resources"></button>
+          <button type="button" class="tool-btn" role="tab" data-stat-tab="builds" aria-controls="usage-stats-builds" aria-selected="false" tabindex="-1">Builds</button>
           <button type="button" class="tool-btn" role="tab" data-stat-tab="cloud" aria-controls="usage-stats-cloud" aria-selected="false" tabindex="-1" data-stat-label="Cloud"></button>
         </div>
         <section data-stat-view="overview" id="usage-stats-overview" role="tabpanel">
@@ -99,6 +100,19 @@
             </div>
             <ul data-stat-role="breakdown-chart" class="usage-stats-ranking"></ul>
           </section>
+        </section>
+        <section data-stat-view="builds" id="usage-stats-builds" class="usage-stats-panel" role="tabpanel" hidden>
+          <p class="usage-stats-note" data-stat-role="builds-empty" data-stat-label="No data for these filters." hidden></p>
+          <div class="usage-stats-table-wrap" data-stat-role="builds-table" hidden>
+            <table class="usage-stats-table">
+              <thead><tr>
+                <th scope="col">Build</th>
+                <th scope="col" data-stat-label="Sessions"></th>
+                <th scope="col" data-stat-label="Events received"></th>
+              </tr></thead>
+              <tbody data-stat-role="builds-rows"></tbody>
+            </table>
+          </div>
         </section>
         <section data-stat-view="cloud" id="usage-stats-cloud" role="tabpanel" hidden>
           <section class="usage-stats-panel"><h3 data-stat-label="Server-confirmed Cloud activity"></h3><div data-stat-role="cloud-activity"></div></section>
@@ -242,6 +256,24 @@
       target.replaceChildren(table);
     }
 
+    function buildRows(data) {
+      const rows = data?.breakdowns?.build || [];
+      return [...rows].sort((a, b) => (Number(b.key) || 0) - (Number(a.key) || 0));
+    }
+
+    function renderBuilds(data) {
+      const rows = buildRows(data);
+      field("builds-empty").hidden = !data || rows.length > 0;
+      field("builds-table").hidden = rows.length === 0;
+      field("builds-rows").replaceChildren(...rows.map(({ key, sessions, events }) => {
+        const row = el("tr");
+        const build = el("th", "", key === "unknown" ? "—" : key);
+        build.scope = "row";
+        row.append(build, el("td", "", number(sessions)), el("td", "", events == null ? "—" : number(events)));
+        return row;
+      }));
+    }
+
     function renderRanking(target, items, title) {
       target.setAttribute("aria-label", title);
       const maximum = Math.max(1, ...items.map(item => item.value));
@@ -368,6 +400,7 @@
       const dimensionLabel = translate(DIMENSIONS.find(([key]) => key === dimension)?.[1] || dimension);
       state.exportRows = [[dimension, measure], ...grouped.map(entry => [entry.label, entry.value])];
       renderRanking(field("breakdown-chart"), grouped, dimensionLabel);
+      renderBuilds(data.window === field("window").value && data.audience === field("audience").value ? data : null);
       field("status").textContent = `${translate("Updated")}: ${new Intl.DateTimeFormat(locale(), { dateStyle: "short", timeStyle: "short" }).format(new Date(data.through))}`;
     }
 
@@ -378,6 +411,7 @@
       state.controller = new AbortController();
       state.loading = true;
       field("status").textContent = translate("Loading...");
+      renderBuilds(null);
       const configured = scope.WebMarsConfig?.metrics?.publicEndpoint;
       let endpoint;
       try { endpoint = new URL(configured || "/_metrics/public", scope.location.origin); }
@@ -469,6 +503,7 @@
         field("coverage").textContent = "";
         field("population").replaceChildren();
         field("cloud-activity").replaceChildren();
+        renderBuilds(null);
         field("status").textContent = translate("Statistics are unavailable on this installation.");
       } finally {
         if (request === state.request) state.loading = false;
@@ -534,6 +569,7 @@
         ["interval", "sessions", "events", "interaction_seconds", "presence_seconds"],
         ...data.timeline.map(bucket => [bucket.from, bucket.sessions, bucket.events, bucket.interaction_seconds, bucket.presence_seconds]),
         ...(state.exportRows || []),
+        ["build", "sessions", "events"], ...buildRows(data).map(row => [row.key, row.sessions, row.events]),
         ["cloud_event", "method", "count"], ...(state.cloudData?.events || []).map(row => [row.event, row.method, row.count])];
       const blob = new Blob(["\uFEFF" + rows.map(row => row.map(quote).join(",")).join("\r\n")], {type: "text/csv;charset=utf-8"});
       const url = URL.createObjectURL(blob), link = el("a");

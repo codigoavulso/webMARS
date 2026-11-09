@@ -1,5 +1,5 @@
 #Benchmark sul comportamento della cache: accesso sequenziale rispetto a quello stride-16.
-#Apri Strumenti > Strumento di simulazione cache dati, collegalo a MIPS e seleziona Abilitato.
+# Apri Strumenti > Simulatore di cache di dati e collegalo a MIPS. Seleziona «Abilitato».
 #
 #Ogni esecuzione misura esattamente un modello di cache fredda. Imposta ACCESS_PATTERN
 #su 1 o 2, reimpostare le statistiche del simulatore, quindi assemblare ed eseguire di nuovo.

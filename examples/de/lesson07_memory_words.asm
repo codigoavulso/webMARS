@@ -1,24 +1,14 @@
-# ==========================================================
-#Lektion 07 – Wörter im Gedächtnis und warum Adressen um vier springen
+# 07 – Worte im Gedächtnis
 #
-#THE PROBLEM
-#Der Speicher wird jeweils byteweise adressiert, ein Register hält jedoch
-#vier Bytes. Was wählt eigentlich eine einzelne Adresse aus?
+# Speicheradressen zählen Bytes. Jedes Wort belegt vier Bytes, daher verwenden `lw` und `sw`
+# hier die Offsets 0, 4 und 8.
 #
-#WHAT THE HARDWARE DOES
-#lw und sw verschieben vier Bytes in einem Zugriff, also nacheinander
-#Wörter liegen vier Adressen voneinander entfernt. Die unteren zwei Bits des
-#Die Adresse muss Null sein: Diese Ausrichtung ermöglicht es dem
-#Hardware ruft ein ganzes Wort in einem Zyklus ab.
+# Eine Wortadresse muss ein Vielfaches von vier sein. Die Verwendung von Offset 1 anstelle von 4
+# führt in diesem Programm zu einer Ausrichtungsausnahme.
 #
-#THE SOLUTION
-#Die Adressarithmetik erfolgt in Bytes, also ein Index in Wörtern
-#wird immer mit vier skaliert.
-#
-#WATCH FOR
-#Stellen Sie das Datensegment zusammen und öffnen Sie es unter 0x10010000. Die
-#Drei Werte erscheinen in benachbarten Spalten einer Zeile.
-# ==========================================================
+# Schauen Sie sich nach den Geschäften `cell` im Datensegment an. Die drei benachbarten Wörter
+# sollten 111, 222 und 333 enthalten.
+
         .data
 cell:   .word 0, 0, 0
 m1:     .asciiz "read back: "

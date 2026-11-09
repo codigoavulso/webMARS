@@ -1,23 +1,13 @@
-# ==========================================================
-# Lesson 05 - The comparator and the branch
+# 05 - Comparator and branch
 #
-# THE PROBLEM
-#   A decision needs one bit, but comparing two 32-bit numbers
-#   is a subtraction. How does a subtraction become a choice?
+# `slt` compares two signed integers and writes 1 when the first is smaller, or 0 otherwise.
 #
-# WHAT THE HARDWARE DOES
-#   slt subtracts and throws away everything except the sign,
-#   writing 0 or 1. The branch then feeds that bit to the PC
-#   logic, which either adds an offset or lets the PC advance.
+# For 7 and 12, `$t2` is 1, so `beq` does not jump to `notless` and execution continues to the
+# next instruction.
 #
-# THE SOLUTION
-#   Compare into a register, branch on that register. Control
-#   flow is arithmetic plus one multiplexer on the PC.
-#
-# WATCH FOR
-#   After slt, $t2 holds 1. Step past the beq and watch the PC
-#   in the status bar: it jumps rather than advancing by four.
-# ==========================================================
+# With delayed branching off, step past `beq` and observe the PC. Swap the two input values and
+# compare the new destination.
+
         .data
 lo:     .asciiz "a is smaller"
 hi:     .asciiz "a is not smaller"

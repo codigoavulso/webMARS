@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //program przekazuje adres, nigdy cały blok
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //powyższe kontrakty są sprawdzane przez kompilator, a nie drukowane
+int accumulate(stats_t box, int values[], int n) {   // Warunek wstępny ogranicza n do granic tablicy; niezmienne ścieżki indeksujące pętlę mogą czytać.
   box->count = n;
   box->total = 0;
 

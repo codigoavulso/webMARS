@@ -8,7 +8,7 @@ int row_sum(int row[]) {   // the parameter is an address: the row is not copied
 }
 
 int main(void) {
-  // S3 arrays topic: local arrays, initializer lists, multidimensional shapes, and array parameters.
+  // A 2-by-3 array is laid out row by row. Passing one row passes its address.
   int matrix[2][3] = { {1, 2, 3}, {4, 5, 6} };   // two rows of three words, contiguous in memory
   int total = row_sum(matrix[0]) + row_sum(matrix[1]);   // matrix[0] and matrix[1] are addresses 12 bytes apart
 

@@ -2,7 +2,7 @@
 #use <string>
 
 int main(void) {
-  //Wymaga C0-S4- lub nowszego: bool, char, string i biblioteka string.
+  //Wymaga C0-S4 lub nowszego: bool, char, string i biblioteka string.
   char suffix = 'M';   //znak to jeden bajt zawierający kod, tutaj 77
   string joined = string_join("web", string_fromchar(suffix));   //ciągi znaków są budowane na stercie, a nie w rejestrach
   bool matches = string_equal(joined, "webM");   //porównywanie tekstu oznacza porównywanie bajt po bajcie

@@ -123,6 +123,7 @@
   "Editor font size (9-22)": "エディタのフォント サイズ (9 ～ 22)",
   "Editor line height (1.0-2.2)": "エディターの行の高さ (1.0 ～ 2.2)",
   "Editor font size": "エディタのフォントサイズ",
+  "Auto-indent on Enter": "Enter キーで自動インデント",
   "Editor line height": "エディタの行の高さ",
   "Editor preferences updated.": "エディターの設定が更新されました。",
   "Interface preferences updated.": "インターフェース設定が更新されました。",
@@ -1232,6 +1233,8 @@
   "Cache: how stride changes the time": "キャッシュ: ストライドが時間をどのように変化させるか",
   "Branch prediction in action": "分岐予測の動作",
   "MIPS Piano": "MIPSピアノ",
+  "MARS-OS TTY Operating System": "MARS-OS TTY オペレーティングシステム",
+
   "MARS-OS TTY Shell": "MARS-OS TTY シェル",
   "Fundamentals": "基本",
   "Algorithms": "アルゴリズム",

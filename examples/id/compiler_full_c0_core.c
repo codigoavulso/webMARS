@@ -10,7 +10,7 @@ typedef struct stats* stats_t;   //program meneruskan alamatnya, tidak pernah se
 //@requires box != NULL;
 //@requires 0 <= n && n <= \length(values);
 //@ensures \result == box->total;
-int accumulate(stats_t box, int values[], int n) {   //kontrak di atas diperiksa oleh kompiler, bukan dicetak
+int accumulate(stats_t box, int values[], int n) {   // Prasyarat membatasi n pada batas array; trek invarian yang mengindeks loop dapat dibaca.
   box->count = n;
   box->total = 0;
 

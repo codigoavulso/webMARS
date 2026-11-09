@@ -1,27 +1,16 @@
-# ==========================================================
-#Lektion 15 – Warum der Schritt die Geschwindigkeit verändert
+# 15 – Warum der Schritt die Geschwindigkeit verändert
 #
-#THE PROBLEM
-#Die beiden folgenden Schleifen lesen dasselbe Array und führen dasselbe aus
-#Anzahl der Ladungen. Auf einer echten Maschine ist man viel langsamer. Die
-#Die Anzahl der Anweisungen kann es nicht erklären.
+# Beide Schleifen verwenden dasselbe Array. Der erste liest alle 256 Wörter; Der zweite liest
+# jedes 16. Wort und führt nur 16 Ladevorgänge durch.
 #
-#WHAT THE HARDWARE DOES
-#Das Gedächtnis liefert keine einzelnen Wörter. Ein Fehlschlag bringt ein Ganzes
-#blockieren, wetten, dass benachbarte Wörter bald gesucht werden.
-#Ein Schritt von einem kassiert diese Wette; ein Schritt von sechzehn zahlt sich aus
-#für einen Block und liest ein Wort davon.
+# Mit Cache-Blöcken von 16 Wörtern können sequentielle Lesevorgänge jeden abgerufenen Block
+# wiederverwenden. Die zweite Schleife geht bei jedem Ladevorgang zu einem neuen Block weiter.
 #
-#THE SOLUTION
-#Am Code ändert sich nichts. Lokalität ist eine Eigenschaft der
-#Zugriffsmuster, und dieses Muster muss behoben werden.
-#
-#WATCH FOR
-#Öffnen Sie Extras > Daten-Cache-Simulator, klicken Sie auf „Mit MIPS verbinden“,
-#dann rennen. Vergleichen Sie die Trefferquote der beiden Schleifen. Beide Summen
-#Geben Sie 0 aus, da das Array auf Null gesetzt ist – die Zahl ist nicht die
-#Punkt hier ist die Trefferquote.
-# ==========================================================
+# Verbinden Sie den Simulator mit MIPS, aktivieren Sie „Aktiviert“ und wählen Sie 16 Wörter pro Block.
+# Verwenden Sie Daten-Cache-Simulator mit einem Haltepunkt bei `far`, um die erste Schleife zu
+# überprüfen. Setzen Sie dort die Cache-Statistiken zurück, bevor Sie die zweite Schleife
+# ausführen, und vergleichen Sie die Trefferquoten.
+
         .data
 buf:    .word 0:256
 m1:     .asciiz "stride 1 sum = "
@@ -29,7 +18,7 @@ m2:     .asciiz "stride 16 sum = "
         .text
         .globl main
 main:
-#---- jedes Wort jedes Blocks ----
+# Sequentielle Passage: alle 256 Wörter.
         la   $t0, buf
         li   $t1, 0
         li   $t2, 256
@@ -55,11 +44,11 @@ endnear:
         li   $a0, 10
         syscall
 
-#---- ein Wort pro Block, sechzehn Wörter auseinander ----
+# Geschrittener Durchgang: eine Ladung alle sechzehn Wörter.
         li   $t1, 0
         li   $t3, 0
 far:
-        #Das Hinzufügen von 16 überspringt 64 Bytes pro Iteration: normalerweise ein ganzer Cache-Block.
+        # Die nächste Adresse ist 64 Bytes entfernt: sechzehn Wörter zu je vier Bytes.
         slt  $t4, $t1, $t2
         beq  $t4, $zero, endfar
         sll  $t5, $t1, 2

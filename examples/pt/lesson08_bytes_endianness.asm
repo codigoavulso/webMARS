@@ -1,25 +1,14 @@
-# ==========================================================
-# Aula 08 - Bytes dentro de uma palavra, e ordem dos bytes
+# 08 - Bytes e ordem dos bytes
 #
-# O PROBLEMA
-#   Uma palavra ocupa quatro enderecos. Qual dos bytes e que o
-#   mais baixo desses enderecos designa?
+# Na memória little-endian deste simulador, o byte menos significativo de uma palavra fica no
+# endereço mais baixo.
 #
-# O QUE O HARDWARE FAZ
-#   Essa escolha e a ordem dos bytes, uma decisao de cablagem
-#   tomada uma vez para a maquina toda. Aqui o MIPS e
-#   little-endian: o byte menos significativo fica no endereco
-#   mais baixo.
+# Guarde `0x04030201` como palavra e leia os bytes nos deslocamentos de 0 a 3. O resultado é 1,
+# 2, 3, 4.
 #
-# A SOLUCAO
-#   Guardar uma palavra e le-la byte a byte, deixando a ordem
-#   responder a pergunta.
-#
-# OBSERVE
-#   0x04030201 sai como 1 2 3 4. O byte escrito por ultimo no
-#   literal e lido primeiro. Usa-se lbu e nao lb para que um byte
-#   acima de 127 nao seja estendido com sinal.
-# ==========================================================
+# Experimente `0xFF` no byte menos significativo. A leitura sem sinal com `lbu` dá 255, e a
+# leitura com sinal com `lb` dá -1.
+
         .data
 cell:   .word 0
 m1:     .asciiz "bytes from low address: "

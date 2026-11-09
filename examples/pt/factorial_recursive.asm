@@ -1,5 +1,5 @@
-# Fatorial recursivo (classico da faculdade)
-# Le n e imprime n! (para n pequeno).
+# Fatorial recursivo com espaço próprio na pilha para cada chamada.
+# Experimente um inteiro entre 0 e 12. Fatoriais maiores excedem o intervalo de um inteiro de 32 bits com sinal.
 
 .data
 ask: .asciiz "n (0..12)? "
