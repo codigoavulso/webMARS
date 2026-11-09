@@ -6187,7 +6187,10 @@ class MarsEngine {
       return;
     }
 
-    return;
+    errors.push({
+      line: lineNumber,
+      message: translateText('"{directive}" directive is invalid or not implemented in MARS', { directive })
+    });
   }
   preprocessSourceLines(sourceCode, warnings, errors, options = {}) {
     const includeMap = new Map();
@@ -6598,7 +6601,7 @@ class MarsEngine {
 
       if (/^\./.test(statement)) {
         const directive = statement.split(/\s+/)[0].toLowerCase();
-        if (false) {
+        if (!recognizedDirectives.has(directive)) {
           errors.push({
             line: entry.lineNumber,
             message: translateText('"{directive}" directive is invalid or not implemented in MARS', { directive })
@@ -6691,7 +6694,7 @@ class MarsEngine {
 
       if (/^\./.test(statement)) {
         const directive = statement.split(/\s+/)[0].toLowerCase();
-        if (false) {
+        if (!recognizedDirectives.has(directive)) {
           errors.push({
             line: entry.lineNumber,
             message: translateText('"{directive}" directive is invalid or not implemented in MARS', { directive })

@@ -1625,6 +1625,8 @@ function updateCloudStoreState() {
 
 let linkedMetricsSession = "";
 let linkingMetricsSession = "";
+let metricsAccountId = null;
+let retriedMetricsOwnership = false;
 function linkCloudMetricsSession() {
   if (cloudAuthState !== "authenticated" || !cloudUser?.id) return;
   const token = window.WebMarsUsage?.getSessionId?.();
@@ -1636,14 +1638,23 @@ function linkCloudMetricsSession() {
     method: "POST", body: { session: token }, signal: AbortSignal.timeout(5000)
   });
   void send().catch(async (error) => {
-    if (error.status && error.status < 500) return false;
+    if (error.status && error.status < 500) throw error;
     await new Promise(resolve => setTimeout(resolve, 5000));
     if (linkingMetricsSession !== key || cloudAuthState !== "authenticated") return false;
     await send();
     return true;
   }).then(result => {
-    if (result !== false && linkingMetricsSession === key) linkedMetricsSession = key;
-  }).catch(() => {})
+    if (result !== false && linkingMetricsSession === key) {
+      linkedMetricsSession = key;
+      retriedMetricsOwnership = false;
+    }
+  }).catch(error => {
+    // Another tab may have switched accounts since this token was issued.
+    if (error.status === 409 && linkingMetricsSession === key && !retriedMetricsOwnership) {
+      retriedMetricsOwnership = true;
+      window.WebMarsUsage?.rotateSession?.();
+    }
+  })
     .finally(() => { if (linkingMetricsSession === key) linkingMetricsSession = ""; });
 }
 
@@ -1659,7 +1670,6 @@ function getCloudUserDisplayName(user = cloudUser) {
 }
 
 function setCloudSessionState(nextState, user = null, errorMessage = "") {
-  const previousAccount = cloudUser?.id;
   cloudAuthState = String(nextState || "unknown").trim().toLowerCase() || "unknown";
   cloudUser = user && typeof user === "object" ? { ...user } : null;
   cloudLastError = String(errorMessage || "");
@@ -1668,10 +1678,15 @@ function setCloudSessionState(nextState, user = null, errorMessage = "") {
     renderProjectTree(true);
   }
   updateCloudStoreState();
-  if (previousAccount && (cloudAuthState === "anonymous" || (cloudUser?.id && previousAccount !== cloudUser.id))) {
-    linkedMetricsSession = "";
-    linkingMetricsSession = "";
-    window.WebMarsUsage?.rotateSession?.();
+  if (cloudAuthState === "authenticated" || cloudAuthState === "anonymous") {
+    const nextAccount = cloudUser?.id || null;
+    if (metricsAccountId && metricsAccountId !== nextAccount) {
+      linkedMetricsSession = "";
+      linkingMetricsSession = "";
+      retriedMetricsOwnership = false;
+      window.WebMarsUsage?.rotateSession?.();
+    }
+    metricsAccountId = nextAccount;
   }
   linkCloudMetricsSession();
   window.dispatchEvent(new CustomEvent("webmars:cloud-session-changed"));
