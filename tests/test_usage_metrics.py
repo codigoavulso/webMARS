@@ -145,6 +145,26 @@ class MetricsTests(unittest.TestCase):
             thread.join(timeout=2)
             server.server_close()
 
+    def test_internal_association_reclassifies_previous_and_delayed_events(self):
+        now = 1788600000
+        metrics.record(self.database, event(), now=now - 2)
+        metrics.associate_internal_session(self.database, "a" * 32, now)
+        metrics.record(self.database, event(event="run_success"), now=now)
+        metrics.record(self.database, event(session="b" * 32), now=now)
+        internal = metrics.public_statistics(self.database, now=now, audience="internal")
+        self.assertEqual(internal["totals"]["events"], 2)
+        self.assertEqual(metrics.public_statistics(self.database, now=now, audience="public")["totals"]["events"], 1)
+
+    def test_build_is_allowlisted_and_reported_without_session_ids(self):
+        now = 1788600000
+        metrics.record(self.database, event(build="202611082315"), now=now)
+        metrics.record(self.database, event(session="b" * 32), now=now)
+        result = metrics.public_statistics(self.database, now=now)
+        self.assertEqual(result["breakdowns"]["build"], [
+            {"key": "202611082315", "sessions": 1}, {"key": "unknown", "sessions": 1}])
+        self.assertFalse(metrics.validate_event(event(build="name@example.test")))
+        self.assertFalse(metrics.validate_event(event(build=202611082315)))
+
     def test_empty_and_expired_data(self):
         now = 1788600000
         metrics.record(self.database, event(), now=now - 36 * 86400)

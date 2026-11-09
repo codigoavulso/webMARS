@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("ar",{
+  "Send feedback": "إرسال ملاحظات",
+  "Only your message, the build number and the attachments you select are sent.": "يُرسل فقط نص رسالتك ورقم الإصدار البرمجي والمرفقات التي تختارها.",
+  "Screenshots (optional)": "لقطات الشاشة (اختياري)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "حتى 3 صور بصيغة PNG أو JPEG أو WebP، بحجم 2 ميغابايت لكل صورة.",
+  "Include the open project": "إرفاق المشروع المفتوح",
+  "Enter a message of up to 4000 characters.": "أدخل رسالة لا تتجاوز 4000 حرف.",
+  "The selected project is no longer open.": "المشروع المحدد لم يعد مفتوحًا.",
+  "The project attachment exceeds 1 MB.": "حجم المشروع المرفق يتجاوز 1 ميغابايت.",
+  "Could not send feedback. Please try again.": "تعذر إرسال الملاحظات. حاول مرة أخرى.",
+  "Thank you for your feedback.": "شكرًا على ملاحظاتك.",
+  "Found a bug or have suggestions for improvement?": "هل وجدت خطأ أو لديك اقتراح لتحسين التطبيق؟",
   "File": "ملف",
   "Edit": "تحرير",
   "View": "عرض",

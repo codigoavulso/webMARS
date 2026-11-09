@@ -349,7 +349,7 @@
 
       .mars-help-about-main {
         min-height: 0;
-        padding: 12px 14px 10px;
+        padding: 8px 10px;
         overflow: hidden;
       }
 
@@ -794,8 +794,8 @@
       // it joins the panel tabs instead of hovering over them.
       "mars-java-about-window dialog-window mobile-panel-window",
       ABOUT_MARS_TITLE,
-      625,
-      425,
+      500,
+      280,
       `
         <div class="window-content mars-help-about-content">
           <div class="mars-help-about-main" id="mars-help-about-host"></div>
@@ -804,7 +804,7 @@
           </div>
         </div>
       `,
-      { left: 210, top: 110, minWidth: 440, minHeight: 300 }
+      { left: 210, top: 110, minWidth: 250, minHeight: 200 }
     );
 
     const docWin = buildWindowShell(
@@ -1145,25 +1145,10 @@
         const frame = aboutHostNode.querySelector("iframe");
         if (!(frame instanceof HTMLIFrameElement)) return;
         bindHelpFrameLinks(frame, openDocument);
-        frame.addEventListener("load", () => {
-          const doc = frame.contentDocument;
-          const link = doc?.querySelector('a[href*="privacy"]');
-          if (!link || !globalScope.WebMarsUsage?.setContext) return;
-          const label = doc.createElement("label");
-          const checkbox = doc.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.checked = globalScope.WebMarsUsage.getContext() === "internal";
-          checkbox.disabled = globalScope.WebMarsUsage.getContext() === "test";
-          checkbox.addEventListener("change", () => globalScope.WebMarsUsage.setContext(checkbox.checked ? "internal" : "public"));
-          label.append(checkbox, doc.createTextNode(translate("Mark this browser as internal usage")));
-          const paragraph = doc.createElement("p");
-          paragraph.append(label);
-          link.closest("p")?.after(paragraph);
-        });
         frame.addEventListener("error", () => {
           postMarsError("[error] Failed to load selected help file.");
         });
-        frame.src = path;
+        frame.src = globalScope.WebMarsAppVersion?.withVersion(path) || path;
       } catch {
         if (token !== state.aboutToken) return;
         renderError(aboutHostNode, "Failed to load this help page.");

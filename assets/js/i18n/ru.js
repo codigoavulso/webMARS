@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("ru",{
+  "Send feedback": "Отправить отзыв",
+  "Only your message, the build number and the attachments you select are sent.": "Отправляются только сообщение, номер сборки и выбранные вложения.",
+  "Screenshots (optional)": "Снимки экрана (необязательно)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "До 3 изображений PNG, JPEG или WebP, по 2 МБ каждое.",
+  "Include the open project": "Прикрепить открытый проект",
+  "Enter a message of up to 4000 characters.": "Введите сообщение длиной до 4000 символов.",
+  "The selected project is no longer open.": "Выбранный проект больше не открыт.",
+  "The project attachment exceeds 1 MB.": "Размер вложенного проекта превышает 1 МБ.",
+  "Could not send feedback. Please try again.": "Не удалось отправить отзыв. Попробуйте ещё раз.",
+  "Thank you for your feedback.": "Спасибо за ваш отзыв.",
+  "Found a bug or have suggestions for improvement?": "Нашли ошибку или хотите предложить улучшение?",
   "File": "Файл",
   "Edit": "Редактировать",
   "View": "Вид",

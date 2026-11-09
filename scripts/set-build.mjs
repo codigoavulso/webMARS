@@ -18,6 +18,10 @@ export async function stampBuild(date = new Date()) {
   if (!/const APP_BUILD = "\d{12}";/.test(source)) throw new Error("Missing APP_BUILD declaration");
   const build = formatBuildNumber(date);
   await writeFile(path, source.replace(/const APP_BUILD = "\d{12}";/, `const APP_BUILD = "${build}";`), "utf8");
+  const indexPath = resolve(dirname(fileURLToPath(import.meta.url)), "../index.html");
+  const index = await readFile(indexPath, "utf8");
+  const stampedIndex = index.replace(/(assets\/js\/(?:usage-metrics\.js\?|app-version\.js\?v=[^"&]+&amp;)b=)\d{12}/g, (_, prefix) => prefix + build);
+  if (stampedIndex !== index) await writeFile(indexPath, stampedIndex, "utf8");
   return build;
 }
 

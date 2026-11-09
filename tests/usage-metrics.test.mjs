@@ -28,6 +28,7 @@ function harness(options = {}) {
   };
   const window = {
     document, location: new URL("https://webmars.test/"), localStorage, sessionStorage,
+    WebMarsAppVersion: { build: options.build },
     WebMarsConfig: { appBasePath: "/", metrics: { enabled: options.enabled ?? true, endpoint: options.endpoint || "https://webmars.test/_metrics/events" } },
     navigator: { language: "pt", ...options.navigator }, crypto: webcrypto,
     matchMedia: () => ({ matches: false }), addEventListener: add(events), setInterval: (fn) => timers.push(fn),
@@ -44,6 +45,15 @@ function harness(options = {}) {
     api: window.WebMarsUsage
   };
 }
+
+test("all event types, including heartbeat, carry the deployed build", () => {
+  const env = harness({ build: "202611082321" });
+  env.api.track("run_success");
+  env.api.trackHeartbeat(60);
+  assert.equal(env.sent.length, 3);
+  assert(env.sent.every(({ body }) => body.build === "202611082321"));
+  assert.equal(harness({ build: "not-a-build" }).sent[0].body.build, "unknown");
+});
 
 test("disabled and cross-origin configurations send nothing", () => {
   for (const options of [{ enabled: false }, { endpoint: "https://other.example/events" }]) {

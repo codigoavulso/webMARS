@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("id",{
+  "Send feedback": "Kirim masukan",
+  "Only your message, the build number and the attachments you select are sent.": "Hanya pesan, nomor build, dan lampiran yang Anda pilih yang akan dikirim.",
+  "Screenshots (optional)": "Tangkapan layar (opsional)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "Hingga 3 gambar PNG, JPEG, atau WebP, masing-masing 2 MB.",
+  "Include the open project": "Lampirkan proyek yang terbuka",
+  "Enter a message of up to 4000 characters.": "Masukkan pesan hingga 4000 karakter.",
+  "The selected project is no longer open.": "Proyek yang dipilih sudah tidak terbuka.",
+  "The project attachment exceeds 1 MB.": "Lampiran proyek melebihi 1 MB.",
+  "Could not send feedback. Please try again.": "Masukan tidak dapat dikirim. Silakan coba lagi.",
+  "Thank you for your feedback.": "Terima kasih atas masukan Anda.",
+  "Found a bug or have suggestions for improvement?": "Menemukan bug atau punya saran perbaikan?",
   "File": "Berkas",
   "Edit": "Sunting",
   "View": "Lihat",

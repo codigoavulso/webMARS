@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("ja",{
+  "Send feedback": "フィードバックを送信",
+  "Only your message, the build number and the attachments you select are sent.": "メッセージ、ビルド番号、選択した添付ファイルのみ送信されます。",
+  "Screenshots (optional)": "スクリーンショット（任意）",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "PNG、JPEG、WebP 画像を最大3枚、1枚あたり2 MBまで添付できます。",
+  "Include the open project": "開いているプロジェクトを添付",
+  "Enter a message of up to 4000 characters.": "4000文字以内でメッセージを入力してください。",
+  "The selected project is no longer open.": "選択したプロジェクトはすでに閉じられています。",
+  "The project attachment exceeds 1 MB.": "添付プロジェクトの容量が1 MBを超えています。",
+  "Could not send feedback. Please try again.": "フィードバックを送信できませんでした。もう一度お試しください。",
+  "Thank you for your feedback.": "フィードバックをお寄せいただき、ありがとうございます。",
+  "Found a bug or have suggestions for improvement?": "不具合を見つけましたか？ 改善のご提案はありますか？",
   "File": "ファイル",
   "Edit": "編集",
   "View": "見る",

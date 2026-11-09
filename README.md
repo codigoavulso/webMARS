@@ -1,4 +1,4 @@
-# webMARS v0.7.0
+# webMARS v0.7.1
 
 **Write MIPS. Watch it run. Understand the machine.**
 
@@ -151,7 +151,9 @@ See the [self-hosting guide](docs/self-hosting.md) for deployment and optional
 Cloud configuration. The official installation's automatic usage statistics
 are explained in [Usage metrics and privacy](docs/usage-metrics.md).
 
-## Highlights in v0.7.0
+## Highlights in v0.7.1
+
+- `v0.7.1`: responsive usage statistics and About window, build-aware telemetry, account-based internal traffic, and voluntary feedback with optional screenshots and project source.
 
 - `v0.7.0`: a cleaner menu bar, with the decorative icon beside File removed.
 

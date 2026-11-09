@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("tr",{
+  "Send feedback": "Geri bildirim gönder",
+  "Only your message, the build number and the attachments you select are sent.": "Yalnızca mesajınız, derleme numarası ve seçtiğiniz ekler gönderilir.",
+  "Screenshots (optional)": "Ekran görüntüleri (isteğe bağlı)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "Her biri en fazla 2 MB olan 3 PNG, JPEG veya WebP görseli ekleyebilirsiniz.",
+  "Include the open project": "Açık projeyi ekle",
+  "Enter a message of up to 4000 characters.": "En fazla 4000 karakterden oluşan bir mesaj yazın.",
+  "The selected project is no longer open.": "Seçilen proje artık açık değil.",
+  "The project attachment exceeds 1 MB.": "Proje eki 1 MB sınırını aşıyor.",
+  "Could not send feedback. Please try again.": "Geri bildirim gönderilemedi. Lütfen tekrar deneyin.",
+  "Thank you for your feedback.": "Geri bildiriminiz için teşekkürler.",
+  "Found a bug or have suggestions for improvement?": "Bir hata buldunuz mu veya iyileştirme öneriniz var mı?",
   "File": "Dosya",
   "Edit": "Düzenle",
   "View": "Görüntüle",

@@ -22,25 +22,25 @@ export const statisticsChapters = [
             "Em <strong>Período</strong>, selecione os últimos 60 minutos, 24 horas ou 30 dias.",
             "Em <strong>Público</strong>, escolha tráfego público, provável humano, sem classificação, utilização interna, testes, provável automação ou todo o tráfego. O tráfego público inclui sessões sem classificação; não representa pessoas confirmadas.",
             "Leia os quatro indicadores principais: sessões medidas, sessões com interação, regressos noutros dias e execuções bem-sucedidas.",
-            "Abra <strong>Mostrar valores</strong> sob o resumo para consultar todas as medições; cada gráfico tem a sua própria tabela de valores.",
+            "Abra <strong>Mostrar valores</strong> abaixo do gráfico para consultar as medições adicionais; o gráfico temporal tem a sua própria tabela.",
             "Use <strong>Atualizar</strong> para pedir uma leitura nova. A janela também atualiza automaticamente a cada minuto enquanto está aberta."
           ])}
           <p>A leitura começa em <strong>Panorâmica</strong>. Mude para <strong>Recursos</strong> para comparar funcionalidades e para <strong>Atividade Cloud confirmada pelo servidor</strong> para consultar operações de contas e projetos. Estes separadores evitam misturar medidas com origens e significados diferentes.</p>
-          <p>Em <strong>Classificação do tráfego</strong>, consulte os grupos medidos nos logs e a ligação às sessões da app. Para excluir os seus próprios usos da medição pública, marque este navegador como utilização interna em <strong>Ajuda → Sobre → Privacidade</strong>. Os dados antigos e os usos internos sem marcação continuam sem classificação.</p>
+          <p>Em <strong>Classificação do tráfego</strong>, consulte separadamente os grupos medidos nos logs web e nas sessões da app. Para excluir os seus próprios usos da medição pública, marque este navegador como utilização interna na mesma secção. Os dados antigos e os usos internos sem marcação continuam sem classificação.</p>
           ${table(["Período", "Intervalos do gráfico", "Pergunta a que ajuda a responder"], [
             ["Últimos 60 minutos", "12 intervalos de cinco minutos", "Há atividade recente e que recursos estão a ser usados?"],
             ["Últimas 24 horas", "24 intervalos de uma hora", "Em que horas se concentra a utilização?"],
             ["Últimos 30 dias", "30 intervalos de um dia", "Como evoluem as visitas e a adoção ao longo das semanas?"]
           ])}
           ${screenshot("./assets/screenshots/usage-statistics-light.png", "Versão anterior do painel de estatísticas no tema claro, com dados sintéticos", "Captura de referência do webMARS 0.6.3. A versão atual organiza estes dados nos separadores Panorâmica, Recursos e Atividade Cloud; os números desta imagem são sintéticos.")}
-          <p>Os períodos são móveis, contados para trás a partir da leitura do servidor. As horas e datas são apresentadas segundo o idioma e o fuso horário do browser. A resposta agregada pode ficar em cache no servidor durante 30 segundos.</p>
+          <p>Os períodos são móveis, contados para trás a partir da leitura do servidor. As datas do gráfico de 30 dias identificam o fim de cada intervalo em UTC; nos períodos mais curtos, as horas seguem o fuso horário do browser. A resposta agregada pode ficar em cache no servidor durante 30 segundos.</p>
         `
       },
       {
         id: "resumo-e-medicoes",
         title: "Interpretar o resumo e as medições completas",
         content: html`
-          <p>O resumo destaca quatro indicadores. A opção <strong>Mostrar valores</strong> abre todas as medições, incluindo sessões prontas, eventos, presença recente e distribuições de duração. Quando existe cobertura completa, o cartão de sessões mostra também o período anterior; a comparação perde significado se os períodos tiverem recolha ou filtros diferentes.</p>
+          <p>O resumo destaca quatro indicadores. A opção <strong>Mostrar valores</strong> abre as medições adicionais, incluindo sessões prontas, eventos, presença recente e distribuições de duração. Quando existe cobertura completa, o cartão de sessões mostra também o período anterior; a comparação perde significado se os períodos tiverem recolha ou filtros diferentes.</p>
           ${table(["Medição", "Como interpretar"], [
             ["Sessões medidas", "Sessões temporárias com pelo menos um evento recebido no período; não corresponde a pessoas únicas."],
             ["Novas sessões", "Sessões observadas pela primeira vez no período, sem eventos anteriores na base retida; não significa novos utilizadores ou novas contas."],
@@ -63,13 +63,13 @@ export const statisticsChapters = [
         id: "graficos-e-filtros",
         title: "Escolher gráficos e filtrar os resultados",
         content: html`
-          <p>Em <strong>Panorâmica</strong>, <strong>Métrica da evolução</strong> escolhe o valor do gráfico temporal: sessões, novas sessões, eventos, carregamentos, resultados de compilação/montagem/execução, ferramentas, funcionalidades, exemplos, heartbeats, entrada de contas ou duração. <strong>Tipo de gráfico</strong> alterna entre colunas e linha na evolução. A sequência de estados ao lado ajuda a comparar sessões medidas, prontas, com interação, com execução bem-sucedida e com erros; não é um percurso obrigatório nem uma soma de grupos exclusivos.</p>
+          <p>Em <strong>Panorâmica</strong>, <strong>Métrica da evolução</strong> escolhe o valor do gráfico temporal: sessões, novas sessões, eventos, carregamentos, resultados de compilação/montagem/execução, ferramentas, funcionalidades, exemplos, heartbeats, entrada de contas ou duração. <strong>Tipo de gráfico</strong> alterna entre colunas e linha na evolução.</p>
           <p>No separador <strong>Recursos</strong>, o gráfico de barras horizontais compara os grupos selecionados: classificação do tráfego, tipos de evento, recursos, origens, idiomas, dispositivos de entrada, páginas/app ou categorias de regresso. A medida <strong>Sessões</strong> indica quantas visitas utilizaram uma categoria. <strong>Eventos</strong> está disponível para tipos de evento e recursos.</p>
           ${steps([
             "Abra o separador <strong>Recursos</strong>; escolha <strong>Agrupar por → Recursos</strong> e <strong>Medida → Sessões</strong>.",
             "Escreva parte do nome em <strong>Filtrar resultados</strong>; o filtro atua sobre as categorias já agregadas.",
             "Em <strong>Mostrar</strong>, escolha os primeiros 10, 20 ou todos os resultados. A ordenação segue a medida escolhida, do maior para o menor.",
-            "Consulte <strong>Mostrar valores</strong> sob o gráfico para ler nomes completos e quantidades exatas. Passe o ponteiro sobre uma coluna ou ponto para consultar o respetivo valor."
+            "A lista mostra os nomes completos e as quantidades ao lado de cada barra. No gráfico temporal, passe o ponteiro sobre uma coluna ou ponto para consultar o intervalo e o valor."
           ])}
           <p>Mudar a métrica, a distribuição, o texto ou a quantidade mostrada reutiliza os agregados carregados. Mudar o período ou atualizar pede novos dados ao servidor. Uma sessão pode surgir em vários intervalos temporais e categorias: somar as colunas de sessões pode contar a mesma visita mais de uma vez.</p>
         `

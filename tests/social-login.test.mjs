@@ -25,6 +25,7 @@ function harness({blocked=false, destination="https://accounts.google.com/o/oaut
   const env = {window,URL,AbortSignal,cloudApiBase:"https://backmars.test/api",translateText:s=>s,
     cloudRequestJson:async(path,options)=>{calls.push({path,options});
       if(path.endsWith("/start"))return{url:destination,state:"flow-123"};
+      if(path==="/me" && options?.method==="PATCH")return{user:{...user,username:options.body.username}};
       if(path==="/me")return{authenticated,user:authenticated?user:null};
       return{providers:["google","facebook","not-supported"]};},
     setCloudSessionState:(...args)=>state=args,refreshCloudProjectSyncDocuments:()=>Promise.resolve()};
@@ -77,11 +78,16 @@ test("cancelling the parent closes the Google popup and removes pending listener
 test("Google accounts with an unfinished username resume setup on later logins", async()=>{
   const h=harness({user:{id:1,username:"user-123456789abc"}});
   let prompted=false;
-  h.env.runDialogForm=async()=>{prompted=true; return{ok:true};};
+  h.env.runDialogForm=async form=>{
+    prompted=true;
+    return (await form.beforeResolve({username:"chosen-name"},{setBusy(){},setMessage(){}})).result;
+  };
   const pending=h.run(); await tick();
   h.message({data:{type:"webmars-social-auth",state:"flow-123",provider:"google",status:"success"}});
   assert.equal((await pending).close,true);
   assert.equal(prompted,true);
+  assert.equal(h.state[1].username,"chosen-name");
+  assert(h.calls.some(c=>c.path==="/me"&&c.options?.method==="PATCH"));
 });
 
 test("cancelling Google username setup signs out without completing the original action",async()=>{

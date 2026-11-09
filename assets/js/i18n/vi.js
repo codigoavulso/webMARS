@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("vi",{
+  "Send feedback": "Gửi phản hồi",
+  "Only your message, the build number and the attachments you select are sent.": "Chỉ nội dung phản hồi, số bản dựng và các tệp đính kèm đã chọn được gửi đi.",
+  "Screenshots (optional)": "Ảnh chụp màn hình (không bắt buộc)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "Tối đa 3 ảnh PNG, JPEG hoặc WebP, mỗi ảnh không quá 2 MB.",
+  "Include the open project": "Đính kèm dự án đang mở",
+  "Enter a message of up to 4000 characters.": "Nhập nội dung tối đa 4000 ký tự.",
+  "The selected project is no longer open.": "Dự án đã chọn không còn mở.",
+  "The project attachment exceeds 1 MB.": "Tệp dự án đính kèm vượt quá 1 MB.",
+  "Could not send feedback. Please try again.": "Không thể gửi phản hồi. Vui lòng thử lại.",
+  "Thank you for your feedback.": "Cảm ơn bạn đã gửi phản hồi.",
+  "Found a bug or have suggestions for improvement?": "Bạn phát hiện lỗi hoặc có đề xuất cải tiến?",
   "File": "tập tin",
   "Edit": "Chỉnh sửa",
   "View": "Xem",

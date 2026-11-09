@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("zh",{
+  "Send feedback": "发送反馈",
+  "Only your message, the build number and the attachments you select are sent.": "仅发送您的消息、构建号和您选择的附件。",
+  "Screenshots (optional)": "截图（可选）",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "最多可附加 3 张 PNG、JPEG 或 WebP 图片，每张不超过 2 MB。",
+  "Include the open project": "附上当前打开的项目",
+  "Enter a message of up to 4000 characters.": "请输入不超过 4000 个字符的消息。",
+  "The selected project is no longer open.": "选中的项目已关闭。",
+  "The project attachment exceeds 1 MB.": "项目附件超过 1 MB。",
+  "Could not send feedback. Please try again.": "无法发送反馈，请重试。",
+  "Thank you for your feedback.": "感谢您的反馈。",
+  "Found a bug or have suggestions for improvement?": "发现了问题，或有改进建议吗？",
   "File": "文件",
   "Edit": "编辑",
   "View": "查看",

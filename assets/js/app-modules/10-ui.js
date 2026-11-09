@@ -4652,6 +4652,13 @@ function createDialogSystem(windowManager, desktop, options = {}) {
           const googleIcon = field.icon === "google";
           return `<button class="tool-btn${googleIcon ? " dialog-google-button" : ""}" type="button" data-dialog-action="${escapeHtml(String(field.name))}">${googleIcon ? '<img src="assets/google-sign-in.png" width="20" height="20" alt="" aria-hidden="true">' : ""}<span>${label}</span></button>`;
         }
+        if (type === "file") {
+          return `<label class="dialog-form-row" for="${fieldId}">
+            <span class="dialog-form-label">${label}</span>
+            <input id="${fieldId}" data-field-name="${escapeHtml(String(field.name))}" type="file"
+              class="dialog-form-control" accept="${escapeHtml(String(field.accept || ""))}"${field.multiple ? " multiple" : ""}>
+          </label>${help ? `<div class="dialog-form-help">${escapeHtml(help)}</div>` : ""}`;
+        }
         if (type === "textarea") {
           return `<label class="dialog-form-row${sectionLayout === "table" ? " dialog-form-row-inline" : ""}" for="${fieldId}">
             <span class="dialog-form-label">${label}</span>
@@ -4726,7 +4733,7 @@ function createDialogSystem(windowManager, desktop, options = {}) {
       if (!name) return;
       values[name] = node instanceof HTMLInputElement && node.type === "checkbox"
         ? node.checked
-        : node.value;
+        : node instanceof HTMLInputElement && node.type === "file" ? Array.from(node.files || []) : node.value;
     });
     return values;
   }

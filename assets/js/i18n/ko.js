@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("ko",{
+  "Send feedback": "의견 보내기",
+  "Only your message, the build number and the attachments you select are sent.": "메시지, 빌드 번호, 선택한 첨부 파일만 전송됩니다.",
+  "Screenshots (optional)": "스크린샷(선택 사항)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "PNG, JPEG 또는 WebP 이미지 최대 3장, 각 2MB까지 첨부할 수 있습니다.",
+  "Include the open project": "열린 프로젝트 첨부",
+  "Enter a message of up to 4000 characters.": "4000자 이내의 메시지를 입력하세요.",
+  "The selected project is no longer open.": "선택한 프로젝트가 더 이상 열려 있지 않습니다.",
+  "The project attachment exceeds 1 MB.": "첨부 프로젝트가 1MB를 초과합니다.",
+  "Could not send feedback. Please try again.": "의견을 보낼 수 없습니다. 다시 시도해 주세요.",
+  "Thank you for your feedback.": "의견을 보내 주셔서 감사합니다.",
+  "Found a bug or have suggestions for improvement?": "버그를 발견했거나 개선할 점이 있나요?",
   "File": "파일",
   "Edit": "편집",
   "View": "보기",

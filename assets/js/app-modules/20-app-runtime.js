@@ -1623,6 +1623,30 @@ function updateCloudStoreState() {
   store.setState({ cloud: buildCloudStoreState() });
 }
 
+let linkedMetricsSession = "";
+let linkingMetricsSession = "";
+function linkCloudMetricsSession() {
+  if (cloudAuthState !== "authenticated" || !cloudUser?.id) return;
+  const token = window.WebMarsUsage?.getSessionId?.();
+  if (!token) return;
+  const key = `${cloudApiBase}:${cloudUser.id}:${token}`;
+  if (linkedMetricsSession === key || linkingMetricsSession === key) return;
+  linkingMetricsSession = key;
+  const send = () => cloudRequestJson("/statistics/session", {
+    method: "POST", body: { session: token }, signal: AbortSignal.timeout(5000)
+  });
+  void send().catch(async (error) => {
+    if (error.status && error.status < 500) return false;
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    if (linkingMetricsSession !== key || cloudAuthState !== "authenticated") return false;
+    await send();
+    return true;
+  }).then(result => {
+    if (result !== false && linkingMetricsSession === key) linkedMetricsSession = key;
+  }).catch(() => {})
+    .finally(() => { if (linkingMetricsSession === key) linkingMetricsSession = ""; });
+}
+
 function getCloudUserDisplayName(user = cloudUser) {
   const username = String(user?.username || "").trim();
   const email = String(user?.email || "").trim();
@@ -1635,6 +1659,7 @@ function getCloudUserDisplayName(user = cloudUser) {
 }
 
 function setCloudSessionState(nextState, user = null, errorMessage = "") {
+  const previousAccount = cloudUser?.id;
   cloudAuthState = String(nextState || "unknown").trim().toLowerCase() || "unknown";
   cloudUser = user && typeof user === "object" ? { ...user } : null;
   cloudLastError = String(errorMessage || "");
@@ -1643,6 +1668,12 @@ function setCloudSessionState(nextState, user = null, errorMessage = "") {
     renderProjectTree(true);
   }
   updateCloudStoreState();
+  if (previousAccount && (cloudAuthState === "anonymous" || (cloudUser?.id && previousAccount !== cloudUser.id))) {
+    linkedMetricsSession = "";
+    linkingMetricsSession = "";
+    window.WebMarsUsage?.rotateSession?.();
+  }
+  linkCloudMetricsSession();
   window.dispatchEvent(new CustomEvent("webmars:cloud-session-changed"));
 }
 
@@ -2238,28 +2269,9 @@ async function startCloudSocialLogin(provider, intent, dialog) {
     const payload = await cloudRequestJson("/me");
     if (!payload?.authenticated || !payload?.user) throw new Error(translateText("Social sign-in failed. Try again."));
     if (intent !== "link" && provider === "google" && /^user-[a-f0-9]{12}$/i.test(String(payload.user.username || ""))) {
-      const usernameResult = await runDialogForm({
-        title: translateText("Choose a username"),
-        message: translateText("Choose the name that will appear in webMARS."),
-        confirmLabel: translateText("Continue"), cancelLabel: translateText("Cancel"),
-        width: "430px", height: "220px",
-        sections: [{ title: translateText("Username"), fields: [{ name: "username", label: translateText("Username"), autocomplete: "username", value: "" }] }],
-        beforeResolve: async (values, form) => {
-          const username = String(values?.username || "").trim();
-          if (!username) { form.setMessage(translateText("Username is required."), "error"); return { close: false }; }
-          form.setBusy(true);
-          try {
-            const updated = await cloudRequestJson("/me", { method: "PATCH", body: { username } });
-            payload.user = updated?.user || { ...payload.user, username };
-            return { result: { ok: true, value: true } };
-          } catch (error) {
-            if (Number(error?.status) === 409) form.setMessage(translateText("Username already exists. Please choose another username and try again."), "error");
-            else form.setMessage(describeCloudError(error, "Could not save the username."), "error");
-            return { close: false };
-          } finally { form.setBusy(false); }
-        }
-      }, { windowIdPrefix: "window-cloud-username" });
-      if (!usernameResult?.ok) {
+      const chosenUser = await chooseCloudUsername(payload.user);
+      if (chosenUser) payload.user = chosenUser;
+      if (!chosenUser) {
         try { await cloudRequestJson("/logout", { method: "POST" }); } catch {}
         setCloudSessionState("anonymous", null, "");
         dialog.setMessage(translateText("Google sign-in cancelled. You can try again."), "info");
@@ -2281,6 +2293,32 @@ async function startCloudSocialLogin(provider, intent, dialog) {
     dialog.setBusy?.(false);
     try { popup.close(); } catch {}
   }
+}
+
+async function chooseCloudUsername(user) {
+  let updatedUser = null;
+  const usernameResult = await runDialogForm({
+    title: translateText("Choose a username"),
+    message: translateText("Choose the name that will appear in webMARS."),
+    confirmLabel: translateText("Continue"), cancelLabel: translateText("Cancel"),
+    width: "430px", height: "220px",
+    sections: [{ title: translateText("Username"), fields: [{ name: "username", label: translateText("Username"), autocomplete: "username", value: "" }] }],
+    beforeResolve: async (values, form) => {
+      const username = String(values?.username || "").trim();
+      if (!username) { form.setMessage(translateText("Username is required."), "error"); return { close: false }; }
+      form.setBusy(true);
+      try {
+        const updated = await cloudRequestJson("/me", { method: "PATCH", body: { username } });
+        updatedUser = updated?.user || { ...user, username };
+        return { result: { ok: true, value: true } };
+      } catch (error) {
+        if (Number(error?.status) === 409) form.setMessage(translateText("Username already exists. Please choose another username and try again."), "error");
+        else form.setMessage(describeCloudError(error, "Could not save the username."), "error");
+        return { close: false };
+      } finally { form.setBusy(false); }
+    }
+  }, { windowIdPrefix: "window-cloud-username" });
+  return usernameResult?.ok ? updatedUser : null;
 }
 
 // Navigation returns to this flow so a successful registration or recovery also
@@ -5720,6 +5758,7 @@ function postExecutionSuccess(actionLabel, haltReason = "exit") {
   }
 
   // A normal runtime exit is activation, not a verified exercise solution.
+  window.WebMarsFeedback?.outcome("run", null);
   window.WebMarsUsage?.track("run_success");
   postMarsSystemLine("{action}: execution completed successfully.", { action: actionLabel });
   postRunSystemLine("-- program is finished running --");
@@ -5727,6 +5766,7 @@ function postExecutionSuccess(actionLabel, haltReason = "exit") {
 }
 
 function postExecutionError(actionLabel, message) {
+  window.WebMarsFeedback?.outcome("run", message || "run_error");
   window.WebMarsUsage?.track("run_error");
   if (message) {
     postMarsRaw("{message}\n", {
@@ -8031,6 +8071,7 @@ function runBenchmarkedAssembly(assemblyContext, trigger = "assemble") {
     sourceCharacters: String(assemblyContext.source || "").length,
     fileCount: Number(assemblyContext.fileCount) || 1
   });
+  window.WebMarsFeedback?.outcome("assemble", result?.ok ? null : result?.errors?.map(error => [error.line, error.message]) || "assemble_error");
   window.WebMarsUsage?.track(result?.ok ? "assemble_success" : "assemble_error");
   return result;
 }
@@ -8525,6 +8566,7 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences, opt
   window.WebMarsUsage?.track(ok ? "compile_success" : "compile_error");
   const warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
   const errors = Array.isArray(normalized.errors) ? normalized.errors : [];
+  window.WebMarsFeedback?.outcome("compile", ok ? null : errors.map(error => [error.line, error.message]));
   const logLines = [];
   const logs = Array.isArray(normalized.logs) ? normalized.logs : [];
 
@@ -9396,7 +9438,16 @@ const commands = {
         : sections.length ? "Link Google to sign in to this account with either method. If Google already has an account, you can merge it here."
           : "Social sign-in is unavailable."),
       sections: [{ title: getCloudUserDisplayName(cloudUser), description: String(cloudUser?.email || ""),
-        className: "dialog-form-section-compact", fields: [{
+        className: "dialog-form-section-compact", fields: [
+          ...(/^user-[a-f0-9]{12}$/i.test(String(cloudUser?.username || "")) ? [{
+            type: "button", name: "choose-username", label: translateText("Choose a username"),
+            onClick: async () => {
+              const user = await chooseCloudUsername(cloudUser);
+              if (!user) return { close: false };
+              setCloudSessionState("authenticated", user, "");
+              return { close: true, result: { ok: true, value: true } };
+            }
+          }] : []), {
           type: "button", name: "reset-password", label: translateText("Reset Password"),
           onClick: async () => {
             const ok = await openCloudPasswordResetDialog(cloudUser?.email || "");
@@ -10414,6 +10465,7 @@ const commands = {
   helpTeacherKit() { openTeacherKitDocument(); window.WebMarsUsage?.track("feature_use", "teacher_kit"); },
   helpMipsPdf() { helpSystem.openDocument("./help/mipsref.pdf", "MIPS Reference PDF"); },
   helpUsageStatistics() { openUsageStatistics(); },
+  helpFeedback() { void window.WebMarsFeedback?.open(); },
   helpAbout() { helpSystem.openAbout(); }
 };
 
@@ -11219,6 +11271,15 @@ window.addEventListener("popstate", () => {
 });
 window.addEventListener("hashchange", () => {
   void handleLaunchRoute();
+});
+window.addEventListener("webmars:metrics-session", linkCloudMetricsSession);
+window.WebMarsFeedback = moduleRegistry.feedback?.create({
+  translate: translateText, dialog: runDialogForm, getApi: () => cloudApiBase,
+  getProjectKey: () => projectIsOpen() ? String(projectState.id || projectState.rootPath) : "",
+  getProject: () => projectIsOpen() ? {
+    name: projectState.rootPath,
+    files: collectProjectFilesFromEditor().map(({path, source}) => ({path, source}))
+  } : null
 });
 void refreshCloudSession({
   silent: true,

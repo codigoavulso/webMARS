@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("ur",{
+  "Send feedback": "رائے بھیجیں",
+  "Only your message, the build number and the attachments you select are sent.": "صرف آپ کا پیغام، بلڈ نمبر اور آپ کی منتخب کردہ منسلک فائلیں بھیجی جاتی ہیں۔",
+  "Screenshots (optional)": "اسکرین شاٹس (اختیاری)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "زیادہ سے زیادہ 3 PNG، JPEG یا WebP تصاویر، ہر ایک 2 ایم بی تک۔",
+  "Include the open project": "کھلا پروجیکٹ منسلک کریں",
+  "Enter a message of up to 4000 characters.": "زیادہ سے زیادہ 4000 حروف کا پیغام لکھیں۔",
+  "The selected project is no longer open.": "منتخب پروجیکٹ اب کھلا نہیں ہے۔",
+  "The project attachment exceeds 1 MB.": "منسلک پروجیکٹ کا حجم 1 ایم بی سے زیادہ ہے۔",
+  "Could not send feedback. Please try again.": "رائے نہیں بھیجی جا سکی۔ دوبارہ کوشش کریں۔",
+  "Thank you for your feedback.": "آپ کی رائے کا شکریہ۔",
+  "Found a bug or have suggestions for improvement?": "کوئی خرابی ملی ہے یا بہتری کی کوئی تجویز ہے؟",
   "File": "فائل",
   "Edit": "ترمیم کریں۔",
   "View": "دیکھیں",

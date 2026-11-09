@@ -35,11 +35,13 @@ PUBLIC_WINDOWS = {"60m": (3600, 300), "24h": (86400, 3600), "30d": (30 * 86400, 
 
 
 def validate_event(data):
-    if not isinstance(data, dict) or set(data) not in (FIELDS, FIELDS_V2):
+    if not isinstance(data, dict) or "v" not in data:
         return False
-    if type(data["v"]) is not int or data["v"] not in {1, 2} or set(data) != (FIELDS if data["v"] == 1 else FIELDS_V2):
+    if type(data["v"]) is not int or data["v"] not in {1, 2} or set(data) - {"build"} != (FIELDS if data["v"] == 1 else FIELDS_V2):
         return False
     if not all(isinstance(data[key], str) for key in set(data) - {"v", "seconds"}):
+        return False
+    if not re.fullmatch(r"[0-9]{12}|unknown", data.get("build", "unknown")):
         return False
     if data["v"] == 2 and (data["context"] not in {"public", "internal", "test"}
             or data["automation"] not in {"none", "webdriver"}
@@ -81,9 +83,12 @@ def initialize(database):
         columns = {r[1] for r in db.execute("PRAGMA table_info(events)")}
         for column, declaration in {"context": "TEXT NOT NULL DEFAULT 'legacy'",
                 "automation": "TEXT NOT NULL DEFAULT 'unknown'", "interaction": "TEXT NOT NULL DEFAULT 'not_seen'",
-                "visit": "TEXT NOT NULL DEFAULT 'none'"}.items():
+                "visit": "TEXT NOT NULL DEFAULT 'none'",
+                "build": "TEXT NOT NULL DEFAULT 'unknown'"}.items():
             if column not in columns:
                 db.execute(f"ALTER TABLE events ADD COLUMN {column} {declaration}")
+        db.execute("""CREATE TABLE IF NOT EXISTS internal_sessions (
+            session TEXT PRIMARY KEY, linked_at INTEGER NOT NULL)""")
         # Aggregate immediately: no per-ping timestamps or session identifiers.
         db.execute("""CREATE TABLE IF NOT EXISTS heartbeats (
             day TEXT NOT NULL, active_minutes INTEGER NOT NULL, pings INTEGER NOT NULL,
@@ -97,6 +102,7 @@ def initialize(database):
 def prune(database, now=None):
     with closing(sqlite3.connect(database)) as db, db:
         db.execute("PRAGMA secure_delete=ON")
+        db.execute("DELETE FROM internal_sessions WHERE linked_at < ?", (int(now or time.time()) - RETENTION_SECONDS,))
         db.execute("DELETE FROM events WHERE received < ?", (int(now or time.time()) - RETENTION_SECONDS,))
         cutoff = datetime.fromtimestamp(int(now or time.time()) - RETENTION_SECONDS, timezone.utc).strftime("%Y-%m-%d")
         db.execute("DELETE FROM heartbeats WHERE day < ?", (cutoff,))
@@ -109,12 +115,22 @@ def record(database, data, now=None, user_agent=""):
     if not validate_event(data):
         raise ValueError("Invalid metrics event")
     with closing(sqlite3.connect(database)) as db, db:
-        db.execute("INSERT INTO events(received,session,event,surface,detail,seconds,return_bucket,source,device,language,context,automation,interaction,visit) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+        db.execute("BEGIN IMMEDIATE")
+        internal = db.execute("SELECT 1 FROM internal_sessions WHERE session=?", (data["session"],)).fetchone()
+        db.execute("INSERT INTO events(received,session,event,surface,detail,seconds,return_bucket,source,device,language,context,automation,interaction,visit,build) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
             int(now or time.time()), data["session"], data["event"], data["surface"], data["detail"],
             data["seconds"], data["returning"], data["source"], data["device"], data["language"],
-            data.get("context", "legacy"), "detected_bot" if BOT_PATTERN.search(user_agent) else data.get("automation", "unknown"),
-            data.get("interaction", "not_seen"), data.get("visit", "none")
+            "internal" if internal else data.get("context", "legacy"), "detected_bot" if BOT_PATTERN.search(user_agent) else data.get("automation", "unknown"),
+            data.get("interaction", "not_seen"), data.get("visit", "none"), data.get("build", "unknown")
         ))
+
+
+def associate_internal_session(database, token, now=None):
+    if not isinstance(token, str) or not re.fullmatch(r"[a-f0-9]{32}", token):
+        raise ValueError("Invalid metrics session")
+    with closing(sqlite3.connect(database)) as db, db:
+        db.execute("INSERT OR REPLACE INTO internal_sessions VALUES (?, ?)", (token, int(now or time.time())))
+        db.execute("UPDATE events SET context='internal' WHERE session=? AND context!='internal'", (token,))
 
 
 def validate_heartbeat(data):
@@ -172,6 +188,17 @@ def select_audience(rows, audience):
     return selected, Counter(classes.values())
 
 
+def web_statistics(log_root, database, window, now=None):
+    analyzer_path = Path(__file__).with_name("webmars-audience.py")
+    if not analyzer_path.exists():
+        analyzer_path = Path(__file__).with_name("webmars-audience")
+    try:
+        return runpy.run_path(str(analyzer_path))["analyze"](
+            log_root, database, PUBLIC_WINDOWS[window][0] // 3600, now)
+    except (OSError, ValueError, sqlite3.Error):
+        return {"unavailable": True}
+
+
 def public_statistics(database, window="60m", now=None, audience="all", log_root=None):
     """Publish fixed, aggregate windows without session tokens or individual records."""
     if window not in PUBLIC_WINDOWS:
@@ -202,7 +229,7 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
     sessions = {}
     event_sessions = defaultdict(set)
     resources = defaultdict(lambda: {"events": 0, "sessions": set()})
-    facets = {name: defaultdict(set) for name in ("source", "returning", "device", "language", "surface", "audience")}
+    facets = {name: defaultdict(set) for name in ("source", "returning", "device", "language", "surface", "audience", "build")}
     interaction_by_session = Counter()
     presence_by_session = Counter()
     recent_presence = set()
@@ -223,6 +250,7 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
         sessions[sid]["language"] = row["language"]
         sessions[sid]["events"].add(row["event"])
         facets["surface"][row["surface"]].add(sid)
+        facets["build"][row["build"]].add(sid)
         facets["audience"][classes[sid]].add(sid)
         event_sessions[row["event"]].add(sid)
         if row["event"] in {"tool_open", "feature_use", "example_open"} | AUTH_EVENTS:
@@ -267,13 +295,7 @@ def public_statistics(database, window="60m", now=None, audience="all", log_root
     iso = lambda timestamp: datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
     web_traffic = None
     if log_root:
-        analyzer_path = Path(__file__).with_name("webmars-audience.py")
-        if not analyzer_path.exists():
-            analyzer_path = Path(__file__).with_name("webmars-audience")
-        try:
-            web_traffic = runpy.run_path(str(analyzer_path))["analyze"](log_root, database, duration // 3600, now)
-        except (OSError, ValueError, sqlite3.Error):
-            web_traffic = {"unavailable": True}
+        web_traffic = web_statistics(log_root, database, window, now)
     return {
         "window": window, "from": iso(start), "through": iso(now), "bucket_seconds": step,
         "audience": audience, "classification": {"sessions_by_class": dict(population),
@@ -497,6 +519,29 @@ def summary(data):
 def make_handler(database, origin, log_root=None):
     public_cache = {}
     public_cache_lock = threading.Lock()
+    web_cache = {}
+    web_in_progress = set()
+    cache_generation = 0
+
+    def refresh_web(window, generation):
+        try:
+            result = web_statistics(log_root, database, window)
+            with public_cache_lock:
+                if generation == cache_generation:
+                    web_cache[window] = (time.monotonic(), result)
+        finally:
+            with public_cache_lock:
+                web_in_progress.discard(window)
+
+    def cached_web(window):
+        if not log_root:
+            return {"unavailable": True}
+        with public_cache_lock:
+            cached = web_cache.get(window)
+            if window not in web_in_progress and (cached is None or time.monotonic() - cached[0] >= 300):
+                web_in_progress.add(window)
+                threading.Thread(target=refresh_web, args=(window, cache_generation), daemon=True).start()
+            return cached[1] if cached else None
 
     class Handler(BaseHTTPRequestHandler):
         # Do not log request URLs, IP addresses, payloads or headers.
@@ -510,6 +555,7 @@ def make_handler(database, origin, log_root=None):
             self.end_headers()
 
         def do_POST(self):
+            nonlocal cache_generation
             try:
                 size = int(self.headers.get("Content-Length", "0"))
                 self.connection.settimeout(5)
@@ -522,6 +568,19 @@ def make_handler(database, origin, log_root=None):
                 # Consume the bounded body before rejecting headers, so closing
                 # an HTTP/1.0 connection cannot reset an unread upload on Windows.
                 raw = self.rfile.read(size)
+                if self.path == "/associate":
+                    # Only BackMars calls this private, non-proxied loopback route.
+                    if self.headers.get("Origin") or self.client_address[0] != "127.0.0.1":
+                        return self.reply(403)
+                    data = json.loads(raw)
+                    if not isinstance(data, dict) or set(data) != {"session"}:
+                        return self.reply(400)
+                    associate_internal_session(database, data["session"])
+                    with public_cache_lock:
+                        cache_generation += 1
+                        public_cache.clear()
+                        web_cache.clear()
+                    return self.reply(204)
                 if self.path not in {"/events", "/heartbeat"} or self.headers.get("Origin") != origin:
                     return self.reply(403)
                 if self.headers.get("Content-Type", "").split(";")[0].strip() != "application/json":
@@ -546,28 +605,46 @@ def make_handler(database, origin, log_root=None):
             if parsed.path != "/public":
                 return self.reply(404)
             params = parse_qs(parsed.query, keep_blank_values=True)
-            if not {"window"} <= set(params) <= {"window", "audience"} or len(params["window"]) != 1 or params["window"][0] not in PUBLIC_WINDOWS or ("audience" in params and (len(params["audience"]) != 1 or params["audience"][0] not in AUDIENCES)):
+            if not {"window"} <= set(params) <= {"window", "audience", "part"} or len(params["window"]) != 1 or params["window"][0] not in PUBLIC_WINDOWS or ("audience" in params and (len(params["audience"]) != 1 or params["audience"][0] not in AUDIENCES)):
                 return self.reply(400)
             window = params["window"][0]
             audience = params.get("audience", ["all"])[0]
-            cache_key = (window, audience)
+            parts = params.get("part", ["combined"])
+            if len(parts) != 1 or parts[0] not in {"combined", "app", "web"}:
+                return self.reply(400)
+            status = 200
             try:
-                with public_cache_lock:
-                    cached = public_cache.get(cache_key)
+                if parts[0] == "web":
+                    data = cached_web(window)
+                    if data is None:
+                        status, data = 202, {"pending": True}
+                else:
+                    cache_key = (window, audience)
+                    with public_cache_lock:
+                        cached = public_cache.get(cache_key)
+                        generation = cache_generation
                     if cached and time.monotonic() - cached[0] < 30:
-                        body = cached[1]
+                        data = cached[1]
                     else:
-                        body = json.dumps(public_statistics(database, window, audience=audience, log_root=log_root), separators=(",", ":")).encode("utf-8")
-                        public_cache[cache_key] = (time.monotonic(), body)
+                        data = public_statistics(database, window, audience=audience)
+                        with public_cache_lock:
+                            if generation == cache_generation:
+                                public_cache[cache_key] = (time.monotonic(), data)
+                    if parts[0] == "combined":
+                        data = {**data, "web_traffic": cached_web(window)}
+                body = json.dumps(data, separators=(",", ":")).encode("utf-8")
             except sqlite3.Error:
                 return self.reply(503)
-            self.send_response(200)
+            self.send_response(status)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
-            self.wfile.write(body)
+            try:
+                self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
 
     return Handler
 

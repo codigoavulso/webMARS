@@ -1,15 +1,15 @@
 # Automatic webMARS statistics
 
-## Traffic classification and account adoption (local implementation)
+## Traffic classification and account adoption
 
 Browser events now use schema **v2**. In addition to the bounded v1 fields,
 they carry `context` (`public`, `internal`, `test`), `automation` (`none`,
 `webdriver`), `interaction` (`trusted`, `not_seen`) and `visit` (a temporary
 navigation token or `none`). The collector still accepts v1 events unchanged.
-Existing rows migrate additively to `legacy`/unknown; they are never retrospectively
-declared human, internal or automated.
+Rows from the original schema start as `legacy`/unknown. Signing in can
+reclassify earlier activity in the same metrics session as internal.
 
-Help > About > Privacy contains **Mark this browser as internal usage**. This
+Help > Usage statistics > Traffic classification contains **Mark this browser as internal usage**. This
 persists a one-bit operator marker locally and starts a new metrics session when
 changed. It labels all subsequent use in that browser, including genuine operator
 work, until cleared. A second coarse context cookie lets web logs see the same
@@ -28,7 +28,8 @@ Classification is conservative, in priority order: marked internal, configured
 tests, probable automation (WebDriver/known bot UA), probable human (trusted input
 reported by the browser), unclassified. Merely loading JavaScript is insufficient
 evidence of humanity. Trusted-input reports can be forged; these are statistical
-signals, not bot-proof authentication. Unmarked operator use cannot be inferred.
+signals, not bot-proof authentication. Signing in with a designated internal
+account takes precedence over browser signals.
 
 Public statistics accept `audience=all|public|human|unknown|internal|test|automated`.
 `public` includes probable humans and unclassified sessions, excluding marked
@@ -67,15 +68,31 @@ private minute-bucket account activity for 35 days to deduplicate accounts, and
 returns counts only. These are account statistics, not anonymous visitor counts.
 See the sibling BackMars `SOCIAL-LOGIN.md` for provider activation and linking.
 
+After sign-in or session restoration, BackMars links the current temporary
+metrics token to the authenticated account using a private hashed association.
+When the account is configured as internal, BackMars asks the local collector
+to mark existing and future events with that token as internal. Signing out
+rotates the token. Visits with other tokens and old counters that do not
+identify an account cannot be attributed retrospectively.
+
 The following older v1 protocol description documents compatibility behavior;
 v2 fields and the temporary navigation/context cookies above extend it.
 
 The official installation sends first-party statistics automatically. There is
 no acceptance dialog or statistics checkbox. The user-facing explanation is
-in Help/About's privacy area and the public English/Portuguese privacy pages.
+in the public English/Portuguese privacy pages.
 Reports describe measured visits and must never label them as consent records.
 
 ## Delivery and grouping
+
+Each current event, including the presence heartbeat, includes the deployed
+12-digit build number. Events from older clients remain accepted and appear
+under the unknown build in aggregate breakdowns.
+
+The dashboard loads app aggregates with `part=app`. Web-log diagnostics use
+`part=web`, which can return 202 while an aggregate is prepared in the background.
+The collector reuses the web aggregate across audience filters and refreshes it
+after five minutes. The activity chart does not wait for the logs or BackMars.
 
 The official hostname enables same-origin collectors in `webmars-config.js`.
 Custom operators configure their own endpoints. Interface preferences, old

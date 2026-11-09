@@ -32,7 +32,7 @@
     const win = document.createElement("section");
     win.id = "window-usage-statistics";
     win.className = "desktop-window window-hidden tool-window dialog-window mobile-panel-window usage-stats-window";
-    Object.assign(win.style, { left: "84px", top: "48px", width: "1120px", height: "680px", minWidth: "520px", minHeight: "420px" });
+    Object.assign(win.style, { left: "84px", top: "48px", width: "1120px", height: "680px", minWidth: "280px", minHeight: "280px" });
     win.innerHTML = `
       <div class="window-titlebar">
         <span class="window-title" data-stat-label="Usage statistics"></span>
@@ -50,36 +50,40 @@
           <button class="tool-btn" type="button" data-stat-role="export" data-stat-label="Export CSV"></button>
         </div>
         <p class="usage-stats-status" data-stat-role="status" role="status"></p>
-        <div class="usage-stats-population" data-stat-role="population-summary"></div>
-        <p class="usage-stats-note" data-stat-role="web-summary"></p>
-        <p class="usage-stats-note" data-stat-role="coverage"></p>
-        <div class="usage-stats-overview">
-          <div class="usage-stats-kpis usage-stats-kpis-primary" data-stat-role="kpis-primary"></div>
-          <details class="usage-stats-kpi-details"><summary data-stat-label="Show values"></summary>
-            <div class="usage-stats-kpis usage-stats-kpis-details" data-stat-role="kpis-details"></div>
-          </details>
-        </div>
         <div class="usage-stats-tabs" role="tablist">
           <button type="button" class="tool-btn" role="tab" data-stat-tab="overview" aria-controls="usage-stats-overview" aria-selected="true" data-stat-label="Overview"></button>
           <button type="button" class="tool-btn" role="tab" data-stat-tab="resources" aria-controls="usage-stats-resources" aria-selected="false" tabindex="-1" data-stat-label="Resources"></button>
-          <button type="button" class="tool-btn" role="tab" data-stat-tab="cloud" aria-controls="usage-stats-cloud" aria-selected="false" tabindex="-1" data-stat-label="Server-confirmed Cloud activity"></button>
+          <button type="button" class="tool-btn" role="tab" data-stat-tab="cloud" aria-controls="usage-stats-cloud" aria-selected="false" tabindex="-1" data-stat-label="Cloud"></button>
         </div>
         <section data-stat-view="overview" id="usage-stats-overview" role="tabpanel">
+          <div class="usage-stats-kpis usage-stats-kpis-primary" data-stat-role="kpis-primary"></div>
           <div class="usage-stats-charts">
             <section class="usage-stats-panel">
-              <div class="usage-stats-panel-head"><h3 data-stat-label="Activity over time"></h3>
+              <div class="usage-stats-panel-head"><h3><span data-stat-label="Activity over time"></span> <small data-stat-role="axis-zone" hidden>UTC</small></h3>
                 <div class="usage-stats-controls">
                   <label><span data-stat-label="Trend metric"></span><select data-stat-role="metric"></select></label>
                   <label><span data-stat-label="Chart style"></span><select data-stat-role="style"></select></label>
                 </div>
               </div>
               <svg data-stat-role="trend-chart" class="usage-stats-chart" viewBox="0 0 800 240" role="img"></svg>
-              <details><summary data-stat-label="Show values"></summary><div class="usage-stats-table-wrap" data-stat-role="trend-table"></div></details>
+              <details><summary data-stat-label="Show values"></summary><div class="usage-stats-table-wrap" data-stat-role="trend-table"></div><p class="usage-stats-note" data-stat-label="Sessions are visits, not people. Time measures overlap; sessions may repeat across intervals."></p></details>
             </section>
-            <section class="usage-stats-panel"><h3 data-stat-label="Sessions"></h3><div data-stat-role="funnel"></div></section>
+
           </div>
+          <details class="usage-stats-panel usage-stats-diagnostics">
+            <summary data-stat-label="Show values"></summary>
+            <div class="usage-stats-table-wrap" data-stat-role="kpis-details"></div>
+          </details>
           <details class="usage-stats-panel usage-stats-diagnostics"><summary data-stat-label="Traffic classification"></summary>
-            <div data-stat-role="population"></div>
+            <div class="usage-stats-diagnostic-tables">
+              <div data-stat-role="population"></div>
+              <div data-stat-role="web-summary"></div>
+            </div>
+            <p class="usage-stats-note" data-stat-role="coverage"></p>
+            <label class="usage-stats-internal" data-stat-role="internal-label" hidden>
+              <input type="checkbox" data-stat-role="internal">
+              <span data-stat-label="Mark this browser as internal usage"></span>
+            </label>
             <p data-stat-label="Traffic estimates can include unmarked internal use."></p>
           </details>
         </section>
@@ -93,14 +97,13 @@
                 <label><span data-stat-label="Show"></span><select data-stat-role="limit"></select></label>
               </div>
             </div>
-            <svg data-stat-role="breakdown-chart" class="usage-stats-chart usage-stats-ranking" viewBox="0 0 800 340" role="img"></svg>
-            <details><summary data-stat-label="Show values"></summary><div class="usage-stats-table-wrap" data-stat-role="breakdown-table"></div></details>
+            <ul data-stat-role="breakdown-chart" class="usage-stats-ranking"></ul>
           </section>
         </section>
         <section data-stat-view="cloud" id="usage-stats-cloud" role="tabpanel" hidden>
           <section class="usage-stats-panel"><h3 data-stat-label="Server-confirmed Cloud activity"></h3><div data-stat-role="cloud-activity"></div></section>
         </section>
-        <p class="usage-stats-note" data-stat-label="Sessions are visits, not people. Time measures overlap; sessions may repeat across intervals."></p>
+
       </div>`;
     refs.windows.desktop.appendChild(win);
     windowManager.registerWindow(win);
@@ -135,11 +138,6 @@
       return `${number(Math.floor(value / 3600))} h ${number(Math.floor(value % 3600 / 60))} min`;
     };
     const durationOrDash = (seconds) => seconds == null ? "—" : duration(seconds);
-    const dateLabel = (iso, windowName) => {
-      const date = new Date(iso);
-      return Number.isNaN(date.getTime()) ? "—" : new Intl.DateTimeFormat(locale(), windowName === "30d"
-        ? { day: "numeric", month: "short" } : { hour: "2-digit", minute: "2-digit" }).format(date);
-    };
     const el = (tag, className, value) => {
       const element = document.createElement(tag);
       if (className) element.className = className;
@@ -155,9 +153,10 @@
     function renderChart(target, items, style, metricLabel) {
       target.replaceChildren();
       target.setAttribute("aria-label", `${metricLabel}: ${items.map((item) => `${item.label} ${item.display}`).join(", ")}`);
-      const canvasWidth = Math.max(300, target.clientWidth || 760);
-      target.setAttribute("viewBox", `0 0 ${canvasWidth} 210`);
-      const left = 40, top = 18, width = canvasWidth - 52, height = 145;
+      const canvasWidth = Math.max(160, target.clientWidth || 760);
+      const canvasHeight = target.clientHeight || 210;
+      target.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
+      const left = 46, top = 18, width = canvasWidth - 58, height = canvasHeight - 54;
       const maximum = Math.max(1, ...items.map((item) => item.value));
       const tickCount = Math.min(4, Math.ceil(maximum));
       for (let tick = 0; tick <= tickCount; tick += 1) {
@@ -187,12 +186,31 @@
           bar.appendChild(title);
           target.appendChild(bar);
         }
-        const labelEvery = Math.max(1, Math.ceil(items.length / Math.max(2, Math.floor(width / 85))));
-        if (index === 0 || index === items.length - 1 || (index % labelEvery === 0 && items.length - 1 - index >= labelEvery)) {
-          const label = svg("text", { x, y: 190, "text-anchor": "middle", class: "usage-stats-axis-label" });
-          label.textContent = item.label.length > 13 ? `${item.label.slice(0, 12)}…` : item.label;
-          target.appendChild(label);
+      });
+      // Measure the localized labels instead of truncating dates or assuming a
+      // fixed character width. Reserve space for both ends of the time axis.
+      const ticks = items.map((item, index) => {
+        const x = left + (index + 0.5) * stride;
+        const label = svg("text", { x, y: top + height + 20, "text-anchor": "middle", class: "usage-stats-axis-label" });
+        label.textContent = item.axisLabel;
+        target.appendChild(label);
+        const half = label.getComputedTextLength() / 2;
+        const center = Math.max(half + 4, Math.min(canvasWidth - half - 4, x));
+        label.setAttribute("x", center);
+        return { x, label, start: center - half, end: center + half };
+      });
+      const last = ticks.at(-1);
+      let edge = -Infinity;
+      ticks.forEach((tick, index) => {
+        const first = index === 0;
+        if ((first && last !== tick && tick.end + 10 > last.start)
+            || (!first && tick !== last && (tick.start < edge + 28 || tick.end + 28 > last.start))) {
+          tick.label.remove();
+          return;
         }
+        target.insertBefore(svg("line", { x1: tick.x, x2: tick.x, y1: top + height,
+          y2: top + height + 5, class: "usage-stats-grid" }), tick.label);
+        edge = tick.end;
       });
       if (style === "line") {
         target.appendChild(svg("polyline", { points: points.join(" "), class: "usage-stats-line" }));
@@ -225,29 +243,18 @@
     }
 
     function renderRanking(target, items, title) {
-      target.replaceChildren();
-      const height = Math.max(80, items.length * 32 + 12);
-      const width = Math.max(300, target.clientWidth || 800);
-      const start = Math.round(width * .45), barWidth = width - start - 40;
-      target.setAttribute("viewBox", `0 0 ${width} ${height}`);
-      target.style.height = `${height}px`;
-      target.setAttribute("aria-label", `${title}: ${items.map(item => `${item.label} ${item.display}`).join(", ")}`);
+      target.setAttribute("aria-label", title);
       const maximum = Math.max(1, ...items.map(item => item.value));
-      if (!items.length) {
-        const empty = svg("text", {x: 12, y: 30, class: "usage-stats-axis-label"});
-        empty.textContent = translate("No data for these filters."); target.append(empty);
-      }
-      items.forEach((item, index) => {
-        const y = 12 + index * 32;
-        const label = svg("text", {x: 0, y: y + 13, class: "usage-stats-axis-label"});
-        const characters = Math.max(15, Math.floor((start - 12) / 6));
-        label.textContent = item.label.length > characters ? `${item.label.slice(0, characters - 1)}…` : item.label;
-        const bar = svg("rect", {x: start, y, width: item.value / maximum * barWidth, height: 19, class: "usage-stats-bar"});
-        const tooltip = svg("title"); tooltip.textContent = `${item.label}: ${item.display}`; bar.append(tooltip);
-        const value = svg("text", {x: width - 8, y: y + 13, "text-anchor": "end", class: "usage-stats-axis-label"});
-        value.textContent = item.display;
-        target.append(label, bar, value);
-      });
+      target.replaceChildren(...items.map(item => {
+        const row = el("li", "usage-stats-ranking-row");
+        const bar = el("progress");
+        bar.max = maximum;
+        bar.value = item.value;
+        bar.setAttribute("aria-hidden", "true");
+        row.append(el("span", "", item.label), el("strong", "", item.display), bar);
+        return row;
+      }));
+      if (!items.length) target.append(el("li", "usage-stats-note", translate("No data for these filters.")));
     }
 
     function metricValue(bucket, metric) {
@@ -257,11 +264,18 @@
     function render() {
       const data = state.data;
       if (data) {
-        const classification = data.web_traffic?.web_visits_by_class || data.classification?.sessions_by_class || {};
-        const title = data.web_traffic?.web_visits_by_class ? translate("Web visits") : translate("Sessions");
-        renderTable(field("population"), Object.entries(classification).map(([key,count]) => ({label:audienceLabel(key),display:number(count)})), translate("Traffic classification"), title);
-        if (data.web_traffic && !data.web_traffic.unavailable) {
-          field("population").append(el("p", "", `${translate("App sessions linked to web visits")}: ${number(data.web_traffic.linked_app_sessions)} · ${translate("Unlinked app sessions")}: ${number(data.web_traffic.unlinked_app_sessions)}`));
+        const trafficRows = (counts) => Object.entries(counts || {})
+          .sort(([, a], [, b]) => b - a)
+          .map(([key, count]) => ({label: audienceLabel(key), display: number(count)}));
+        renderTable(field("population"), trafficRows(data.classification?.sessions_by_class),
+          translate("All traffic"), translate("Sessions"));
+        const web = data.web_traffic;
+        if (web?.web_visits_by_class) {
+          renderTable(field("web-summary"), trafficRows(web.web_visits_by_class),
+            translate("Traffic classification"), translate("Web visits"));
+        } else {
+          field("web-summary").textContent = web?.pending ? translate("Loading...")
+            : web?.unavailable ? translate("Statistics are unavailable on this installation.") : "";
         }
         const cloud = state.cloudData;
         if (cloud) {
@@ -272,32 +286,9 @@
       }
       if (!data) return;
       const totals = data.totals || {};
-      const population = data.classification?.sessions_by_class || {};
-      field("population-summary").replaceChildren(...["human", "unknown", "internal", "test", "automated"].map((kind) => {
-        const button = el("button", "tool-btn", audienceLabel(kind) + ": " + number(population[kind]));
-        button.type = "button";
-        button.setAttribute("aria-pressed", String(field("audience").value === kind));
-        button.addEventListener("click", () => { field("audience").value = kind; void load(); });
-        return button;
-      }));
-      field("population-summary").prepend(el("span", "usage-stats-population-caption", translate("Sessions") + " · " + translate("All traffic") + ":"));
-      const web = data.web_traffic?.web_visits_by_class;
-      field("web-summary").textContent = web
-        ? `${translate("Web visits")}: ${number(Object.values(web).reduce((sum, count) => sum + Number(count), 0))} · `
-          + ["human", "unknown", "internal", "test", "automated"].filter(kind => web[kind]).map(kind => `${audienceLabel(kind)}: ${number(web[kind])}`).join(" · ") : "";
       field("coverage").textContent = data.quality?.collected_from
         ? translate("Collected since") + ": " + new Intl.DateTimeFormat(locale(), {dateStyle:"short",timeStyle:"short"}).format(new Date(data.quality.collected_from))
           : "";
-      const steps = [["Measured sessions", totals.sessions], ["Ready sessions", totals.ready_sessions],
-        ["Sessions with interaction", totals.interacting_sessions], ["Successful runs", totals.successful_sessions ?? totals.ready_with_successful_run],
-        ["Error sessions", totals.error_sessions]];
-      field("funnel").replaceChildren(...steps.map(([label, count]) => {
-        const row = el("div", "usage-stats-funnel-row");
-        const progress = el("progress"); progress.max = Math.max(1, Number(totals.sessions) || 0); progress.value = Number(count) || 0;
-        progress.setAttribute("aria-label", translate(label));
-        row.append(el("span", "", translate(label)), el("strong", "", number(count)), progress);
-        return row;
-      }));
       const cards = [
         ["Measured sessions", number(totals.sessions)], ["New sessions", number(totals.new_sessions)],
         ["Sessions with interaction", number(totals.interacting_sessions)],
@@ -327,14 +318,24 @@
         "Measured sessions", "Sessions with interaction", "Returning sessions", "Successful runs"
       ]);
       field("kpis-primary").replaceChildren(...cards.filter(([label]) => primaryLabels.has(label)).map(renderKpi));
-      field("kpis-details").replaceChildren(...cards.map(renderKpi));
+      renderTable(field("kpis-details"), cards.filter(([label]) => !primaryLabels.has(label))
+        .map(([label, display]) => ({label: translate(label), display})), translate("Measure"), translate("Value"));
       const selectedMetric = field("metric").value;
       const metricLabel = translate(METRICS.find(([key]) => key === selectedMetric)?.[1] || selectedMetric);
       const windowName = field("window").value;
+      field("axis-zone").hidden = windowName !== "30d";
+      const axisFormat = new Intl.DateTimeFormat(locale(), windowName === "30d"
+        ? { day: "2-digit", month: "2-digit", timeZone: "UTC" } : { hour: "2-digit", minute: "2-digit" });
+      const intervalFormat = new Intl.DateTimeFormat(locale(), {
+        dateStyle: "short", timeStyle: "short", ...(windowName === "30d" ? {timeZone: "UTC"} : {})
+      });
       const timed = (Array.isArray(data.timeline) ? data.timeline : [])
         .filter((bucket) => !data.quality?.collected_from || new Date(bucket.through) > new Date(data.quality.collected_from)).map((bucket) => {
         const value = metricValue(bucket, selectedMetric);
-        return { label: dateLabel(bucket.from, windowName), value,
+        const from = new Date(bucket.from), through = new Date(bucket.through);
+        const interval = intervalFormat.formatRange(from, through) + (windowName === "30d" ? " UTC" : "");
+        return { label: interval,
+          axisLabel: axisFormat.format(windowName === "30d" ? through : from), value,
           display: selectedMetric.endsWith("_seconds") ? duration(value) : number(value) };
       });
       renderChart(field("trend-chart"), timed, field("style").value, metricLabel);
@@ -367,7 +368,6 @@
       const dimensionLabel = translate(DIMENSIONS.find(([key]) => key === dimension)?.[1] || dimension);
       state.exportRows = [[dimension, measure], ...grouped.map(entry => [entry.label, entry.value])];
       renderRanking(field("breakdown-chart"), grouped, dimensionLabel);
-      renderTable(field("breakdown-table"), grouped, dimensionLabel, translate(measure === "events" ? "Events" : "Sessions"));
       field("status").textContent = `${translate("Updated")}: ${new Intl.DateTimeFormat(locale(), { dateStyle: "short", timeStyle: "short" }).format(new Date(data.through))}`;
     }
 
@@ -393,9 +393,12 @@
       }
       endpoint.searchParams.set("window", field("window").value);
       endpoint.searchParams.set("audience", field("audience").value);
+      const signal = state.controller.signal;
+      const appUrl = new URL(endpoint);
+      appUrl.searchParams.set("part", "app");
       try {
-        const response = await scope.fetch(endpoint.href, { credentials: "omit", cache: "no-store",
-          redirect: "error", signal: state.controller.signal });
+        const response = await scope.fetch(appUrl.href, { credentials: "omit", cache: "no-store",
+          redirect: "error", signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]) });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         if (request !== state.request) return;
@@ -404,6 +407,37 @@
         }
         state.data = data;
         state.cloudData = null;
+        data.web_traffic = { pending: true };
+        render();
+        const webUrl = new URL(endpoint);
+        webUrl.searchParams.delete("audience");
+        webUrl.searchParams.set("part", "web");
+        const loadWeb = async () => {
+          try {
+            for (let attempt = 0; attempt < 10 && !signal.aborted; attempt += 1) {
+              const response = await scope.fetch(webUrl.href, { credentials: "omit", cache: "no-store",
+                redirect: "error", signal: AbortSignal.any([signal, AbortSignal.timeout(5000)]) });
+              if (response.status === 202) {
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                continue;
+              }
+              if (!response.ok) break;
+              const result = await response.json();
+              if (request !== state.request) return;
+              if (result?.web_visits_by_class) {
+                data.web_traffic = result;
+                render();
+                return;
+              }
+              break;
+            }
+          } catch { /* Web diagnostics must not hide the app statistics. */ }
+          if (request === state.request && !signal.aborted) {
+            data.web_traffic = { unavailable: true };
+            render();
+          }
+        };
+        void loadWeb();
         // Account aggregates are server-confirmed and separately labelled;
         // they cannot be restricted to a browser's probable-human class.
         if (["public", "internal", "test", "all"].includes(field("audience").value)) {
@@ -413,8 +447,8 @@
             const accountUrl = new URL(api.href.replace(/\/$/, "") + "/statistics");
             accountUrl.searchParams.set("window", field("window").value);
             accountUrl.searchParams.set("context", field("audience").value);
-            const signal = AbortSignal.any([state.controller.signal, AbortSignal.timeout(3000)]);
-            const accountResponse = await scope.fetch(accountUrl.href, { credentials: "omit", cache: "no-store", redirect: "error", signal });
+            const accountSignal = AbortSignal.any([signal, AbortSignal.timeout(3000)]);
+            const accountResponse = await scope.fetch(accountUrl.href, { credentials: "omit", cache: "no-store", redirect: "error", signal: accountSignal });
             if (accountResponse.ok) {
               const accountData = await accountResponse.json();
               if (request === state.request) state.cloudData = accountData;
@@ -431,18 +465,29 @@
         field("trend-chart").replaceChildren();
         field("breakdown-chart").replaceChildren();
         field("trend-table").replaceChildren();
-        field("breakdown-table").replaceChildren();
-        field("population-summary").replaceChildren();
         field("web-summary").textContent = "";
         field("coverage").textContent = "";
         field("population").replaceChildren();
-        field("funnel").replaceChildren();
         field("cloud-activity").replaceChildren();
         field("status").textContent = translate("Statistics are unavailable on this installation.");
       } finally {
         if (request === state.request) state.loading = false;
       }
     }
+
+    const usage = scope.WebMarsUsage;
+    const internal = field("internal");
+    field("internal-label").hidden = !usage?.setContext;
+    const syncInternal = () => {
+      const context = usage?.getContext?.();
+      internal.checked = context === "internal";
+      internal.disabled = context === "test";
+    };
+    internal.addEventListener("change", () => {
+      usage?.setContext(internal.checked ? "internal" : "public");
+      syncInternal();
+      void load();
+    });
 
     function refreshTranslations() {
       win.querySelectorAll("[data-stat-label]").forEach((node) => {
@@ -511,7 +556,7 @@
     observer.observe(win);
     refreshTranslations();
     return {
-      open() { windowManager.show(win.id); void load(); },
+      open() { syncInternal(); windowManager.show(win.id); void load(); },
       refreshTranslations
     };
   }

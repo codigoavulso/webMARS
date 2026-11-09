@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("it",{
+  "Send feedback": "Invia feedback",
+  "Only your message, the build number and the attachments you select are sent.": "Vengono inviati solo il messaggio, il numero di build e gli allegati selezionati.",
+  "Screenshots (optional)": "Screenshot (facoltativi)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "Fino a 3 immagini PNG, JPEG o WebP da 2 MB ciascuna.",
+  "Include the open project": "Allega il progetto aperto",
+  "Enter a message of up to 4000 characters.": "Scrivi un messaggio di massimo 4000 caratteri.",
+  "The selected project is no longer open.": "Il progetto selezionato non è più aperto.",
+  "The project attachment exceeds 1 MB.": "Il progetto allegato supera 1 MB.",
+  "Could not send feedback. Please try again.": "Impossibile inviare il feedback. Riprova.",
+  "Thank you for your feedback.": "Grazie per il tuo feedback.",
+  "Found a bug or have suggestions for improvement?": "Hai trovato un bug o hai suggerimenti per migliorare l’app?",
   "File": "Archivio",
   "Edit": "Modifica",
   "View": "Visualizza",

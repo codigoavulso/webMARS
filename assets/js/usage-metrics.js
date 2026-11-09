@@ -72,6 +72,7 @@
       write(local, VISIT_KEY, String(now));
       lastSentSeconds = 0;
       usedResources.clear();
+      scope.queueMicrotask?.(() => scope.dispatchEvent(new CustomEvent("webmars:metrics-session")));
     }
     session.touched = now;
     session.seconds = Math.max(0, Math.min(86400, Number(session.seconds) || 0));
@@ -105,6 +106,7 @@
     const language = String(scope.WebMarsI18n?.getLanguage?.() || document.documentElement.lang || "en").split("-")[0];
     const payload = {
       v: 2, session: current.id, event, surface, detail: safeDetail,
+      build: /^[0-9]{12}$/.test(scope.WebMarsAppVersion?.build || "") ? scope.WebMarsAppVersion.build : "unknown",
       context, automation: scope.navigator?.webdriver === true ? "webdriver" : "none",
       interaction: trustedInteraction ? "trusted" : "not_seen", visit,
       seconds: Number.isInteger(secondsOverride) ? secondsOverride : Math.floor(current.seconds), returning: current.returning, source: current.source,
@@ -135,7 +137,7 @@
     return send("heartbeat", "none", current.presenceSeconds);
   }
   function getSessionId() {
-    try { return getSession()?.id || null; } catch { return null; }
+    try { return allowed() ? getSession()?.id || null : null; } catch { return null; }
   }
   function exampleOpened(id) {
     const lesson = /^lesson(0[1-9]|1[0-5])(?:-|$)/.exec(String(id));
@@ -156,6 +158,16 @@
     write(tab, SESSION_KEY, JSON.stringify(current));
     if (current.seconds - lastSentSeconds >= 30) flush();
   }
+  function rotateSession() {
+    flush();
+    session = null;
+    try { tab?.removeItem(SESSION_KEY); } catch {}
+    trustedInteraction = false;
+    lastInteraction = 0;
+    usedResources.clear();
+    lastSentSeconds = 0;
+    track("page_view");
+  }
   function setContext(value) {
     if (!["public", "internal"].includes(value) || config?.context === "test") return false;
     if (context === value) return true;
@@ -169,7 +181,7 @@
     track("page_view");
     return true;
   }
-  scope.WebMarsUsage = Object.freeze({ track, trackHeartbeat, getSessionId, exampleOpened, getContext: () => context, setContext });
+  scope.WebMarsUsage = Object.freeze({ track, trackHeartbeat, getSessionId, exampleOpened, getContext: () => context, setContext, rotateSession });
   scope.addEventListener("storage", (event) => {
     if (event.key === CONTEXT_KEY && ["public", "internal"].includes(event.newValue)) setContext(event.newValue);
   });

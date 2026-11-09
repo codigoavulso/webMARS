@@ -292,19 +292,34 @@ tr:hover td { background: var(--surface-soft); }
 font { font-size: inherit !important; color: inherit; }
 .style1, .style2 { font-weight: 700; color: var(--heading); }
 
-/* The about card is a title block, not a document, so the version carries a
-   little more weight than a page heading -- but nowhere near the 2.15rem the
-   page used to set inline, which overflowed its own window.
-   It stays a single column at every width: side-by-side panels made the
-   credits and the privacy notice read as unrelated tiles. */
+.about-page { padding: 10px; }
 .about-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
 }
-
-.about-grid h1 { font-size: 20px; }
-.about-grid .card { background: var(--surface); }
+.about-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding-block-end: 7px;
+  border-block-end: 1px solid var(--border-soft);
+  white-space: nowrap;
+}
+.about-heading h1 {
+  font-size: clamp(13px, 4.4vw, 22px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.about-heading .build-number {
+  font-size: clamp(9px, 2.4vw, 11px);
+  font-variant-numeric: tabular-nums;
+}
+.about-grid .card { background: var(--surface); margin: 0; padding: 8px 10px; }
+.about-grid h3, .about-grid p { margin: 0 0 4px; }
+.about-grid .about-author { font-size: 1.12em; color: var(--heading); }
 
 img { max-width: 100%; height: auto; }
 hr { margin: 14px 0; border: 0; border-top: 1px solid var(--border-soft); }

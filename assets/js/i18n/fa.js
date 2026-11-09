@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("fa",{
+  "Send feedback": "ارسال بازخورد",
+  "Only your message, the build number and the attachments you select are sent.": "فقط پیام، شمارهٔ ساخت و پیوست‌های انتخابی شما ارسال می‌شوند.",
+  "Screenshots (optional)": "تصاویر صفحه (اختیاری)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "حداکثر ۳ تصویر PNG، JPEG یا WebP، هرکدام تا ۲ مگابایت.",
+  "Include the open project": "پیوست کردن پروژهٔ باز",
+  "Enter a message of up to 4000 characters.": "پیامی با حداکثر ۴۰۰۰ نویسه وارد کنید.",
+  "The selected project is no longer open.": "پروژهٔ انتخاب‌شده دیگر باز نیست.",
+  "The project attachment exceeds 1 MB.": "حجم پروژهٔ پیوست‌شده بیش از ۱ مگابایت است.",
+  "Could not send feedback. Please try again.": "بازخورد ارسال نشد. دوباره تلاش کنید.",
+  "Thank you for your feedback.": "از بازخورد شما سپاسگزاریم.",
+  "Found a bug or have suggestions for improvement?": "خطایی پیدا کرده‌اید یا پیشنهادی برای بهبود دارید؟",
   "File": "پرونده",
   "Edit": "ویرایش کنید",
   "View": "مشاهده کنید",

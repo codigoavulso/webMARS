@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("th",{
+  "Send feedback": "ส่งความคิดเห็น",
+  "Only your message, the build number and the attachments you select are sent.": "ระบบจะส่งเฉพาะข้อความ หมายเลขบิลด์ และไฟล์แนบที่คุณเลือก",
+  "Screenshots (optional)": "ภาพหน้าจอ (ไม่บังคับ)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "แนบภาพ PNG, JPEG หรือ WebP ได้สูงสุด 3 ภาพ ภาพละไม่เกิน 2 MB",
+  "Include the open project": "แนบโปรเจกต์ที่เปิดอยู่",
+  "Enter a message of up to 4000 characters.": "กรอกข้อความไม่เกิน 4000 อักขระ",
+  "The selected project is no longer open.": "โปรเจกต์ที่เลือกไม่ได้เปิดอยู่แล้ว",
+  "The project attachment exceeds 1 MB.": "โปรเจกต์ที่แนบมีขนาดเกิน 1 MB",
+  "Could not send feedback. Please try again.": "ส่งความคิดเห็นไม่สำเร็จ โปรดลองอีกครั้ง",
+  "Thank you for your feedback.": "ขอบคุณสำหรับความคิดเห็น",
+  "Found a bug or have suggestions for improvement?": "พบข้อผิดพลาดหรือมีข้อเสนอแนะเพื่อปรับปรุงไหม?",
   "File": "ไฟล์",
   "Edit": "แก้ไข",
   "View": "ดู",

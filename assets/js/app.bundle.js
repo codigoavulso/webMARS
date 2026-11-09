@@ -30,6 +30,7 @@
     "./assets/js/app-modules/19-usage-statistics.js",
     "./assets/js/app-modules/20-project-repository.js",
     "./assets/js/app-modules/21-project-manager.js",
+    "./assets/js/app-modules/20-feedback.js",
     "./assets/js/app-modules/20-app-runtime.js"
   ];
   const LANGUAGE_MANIFEST_PATH = "./assets/js/i18n/languages.json";

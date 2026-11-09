@@ -1,4 +1,4 @@
-# webMARS Code Architecture (v0.7.0)
+# webMARS Code Architecture (v0.7.1)
 
 webMARS is a static browser application built from ordered, non-ES-module
 scripts. The assembler and simulator use one JavaScript implementation; the
@@ -186,7 +186,8 @@ The current bootstrap order is:
 21. `assets/js/app-modules/19-usage-statistics.js`
 22. `assets/js/app-modules/20-project-repository.js`
 23. `assets/js/app-modules/21-project-manager.js`
-24. `assets/js/app-modules/20-app-runtime.js`
+24. `assets/js/app-modules/20-feedback.js`
+25. `assets/js/app-modules/20-app-runtime.js`
 
 `17-mini-c-compiler.js` is loaded on demand after this eager graph is ready.
 
@@ -251,7 +252,7 @@ should remain incremental:
 
 Names such as `core/syscalls` or `runtime/session` may be useful conceptual
 boundaries for future extraction, but they are not directories or modules in
-the v0.7.0 tree.
+the v0.7.1 tree.
 
 ## Theming
 

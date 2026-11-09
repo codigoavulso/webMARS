@@ -3,6 +3,17 @@
   if (!i18n || typeof i18n.registerLanguage !== "function") return;
 
   i18n.registerLanguage("bn",{
+  "Send feedback": "মতামত পাঠান",
+  "Only your message, the build number and the attachments you select are sent.": "শুধু আপনার বার্তা, বিল্ড নম্বর এবং বেছে নেওয়া সংযুক্তি পাঠানো হবে।",
+  "Screenshots (optional)": "স্ক্রিনশট (ঐচ্ছিক)",
+  "Up to 3 PNG, JPEG or WebP images, 2 MB each.": "সর্বোচ্চ 3টি PNG, JPEG বা WebP ছবি, প্রতিটি 2 MB পর্যন্ত।",
+  "Include the open project": "খোলা প্রকল্পটি সংযুক্ত করুন",
+  "Enter a message of up to 4000 characters.": "4000 অক্ষরের মধ্যে একটি বার্তা লিখুন।",
+  "The selected project is no longer open.": "নির্বাচিত প্রকল্পটি আর খোলা নেই।",
+  "The project attachment exceeds 1 MB.": "সংযুক্ত প্রকল্পের আকার 1 MB-এর বেশি।",
+  "Could not send feedback. Please try again.": "মতামত পাঠানো যায়নি। আবার চেষ্টা করুন।",
+  "Thank you for your feedback.": "মতামতের জন্য ধন্যবাদ।",
+  "Found a bug or have suggestions for improvement?": "কোনো ত্রুটি পেয়েছেন বা উন্নতির পরামর্শ আছে?",
   "File": "ফাইল",
   "Edit": "সম্পাদনা করুন",
   "View": "দেখুন",
