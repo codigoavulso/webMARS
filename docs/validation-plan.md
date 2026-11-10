@@ -127,7 +127,7 @@ publicável e é publicado.
 
 ## 3. Acessibilidade: o que falta a uma auditoria WCAG 2.2 AA
 
-[accessibility.md](accessibility.md) diz o que já é verificado automaticamente e
+`accessibility.md` diz o que já é verificado automaticamente e
 o que não é. O que falta precisa de pessoas:
 
 - **Auditoria completa AA.** Percorrer os critérios que a verificação automática

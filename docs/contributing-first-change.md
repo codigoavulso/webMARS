@@ -135,9 +135,9 @@ npm run mutation
 ```
 
 `coverage` enforces per-module floors and refreshes
-[coverage-report.md](coverage-report.md). `mutation` breaks the source on
+`coverage-report.md`. `mutation` breaks the source on
 purpose and checks that the suite notices; see
-[mutation-report.md](mutation-report.md). A survivor there means your change
+`mutation-report.md`. A survivor there means your change
 has no test that would catch it being wrong.
 
 If you touched the assembler or an instruction, also run the differential
@@ -153,7 +153,7 @@ code, registers, memory and console output. A new difference is a defect unless
 you add it to the exception list in `scripts/differential-mars.mjs` with a
 reason and a minimal case. Not every difference is a bug - webMARS deliberately
 diverges in a few places - but every one of them has to be written down. See
-[mars-conformance.md](mars-conformance.md).
+`mars-conformance.md`.
 
 ## What a good change looks like
 

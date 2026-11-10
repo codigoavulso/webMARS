@@ -641,7 +641,7 @@ export const operationChapters = [
             "Abra uma sessão limpa e execute os smoke tests Assembly/Mini-C/tool.",
             "Só depois atualize ligações/documentação pública."
           ])}
-          <p>A configuração Nginx de referência está em <code>ops/raspberry-pi/nginx-webmars-routes.conf</code>. Num deployment em subpasta, prefixe as rotas e o path de <code>index.html</code>; um catch-all indiscriminado pode esconder uma release incompleta ao devolver HTML no lugar de JavaScript.</p>
+          <p>Use as regras de encaminhamento Nginx do guia de alojamento. Num deployment em subpasta, prefixe as rotas e o path de <code>index.html</code>; um catch-all indiscriminado pode esconder uma release incompleta ao devolver HTML no lugar de JavaScript.</p>
         `
       },
       {
@@ -655,7 +655,7 @@ export const operationChapters = [
             ["metrics.publicEndpoint", "Leitura agregada; normalmente <code>/_metrics/public</code>"]
           ])}
           ${steps([
-            "Instale o coletor e os snippets através de <code>ops/raspberry-pi/install-metrics.sh</code> antes de publicar o frontend que os usa.",
+            "Instale o coletor e configure o proxy da sua instância antes de publicar o frontend que os usa.",
             "Mantenha Python/SQLite em loopback e a base de métricas privada, separada da base de contas/projetos do BackMars.",
             "Inclua o snippet de métricas no servidor HTTPS, valide Nginx e confirme os limites de pedidos e a política de logs.",
             "Verifique a leitura pública para <code>?window=60m</code>, <code>24h</code> e <code>30d</code>, sem sessões ou linhas individuais na resposta.",

@@ -168,9 +168,6 @@ Start with [your first contribution](docs/contributing-first-change.md).
 The [architecture guide](docs/code-architecture.md) maps the code, and the
 [Tool API](docs/tool-api.md) explains how to add a tool.
 
-For diagrams of the project's purpose, design and algorithms, explore the
-Portuguese [Project Atlas](docs/project-atlas.md).
-
 <details>
 <summary>Developer checks and technical reference</summary>
 
@@ -194,7 +191,7 @@ npm run audit:a11y
 
 The functional runtime is not cycle-accurate; Pipeline Lab is a separate
 educational timing model. For detailed scope, see
-[MARS compatibility](docs/mars-conformance.md),
+MARS compatibility (`mars-conformance.md`),
 [Pipeline Lab](docs/pipeline-lab.md) and
 [browser support](docs/portability.md).
 

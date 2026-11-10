@@ -48,10 +48,9 @@ Opening a publication always creates a new independent local copy.
 ## Hosting requirement
 
 The static host must return `index.html` for syntactically valid `/e/...` and
-`/p/...` navigations, while still returning a real 404 for missing assets. The
-reference Nginx locations are in
-`ops/raspberry-pi/nginx-webmars-routes.conf`; the included Node server implements
-the same rule. This behavior and the stable-ID registry are covered by
+`/p/...` navigations, while still returning a real 404 for missing assets. See
+the [self-hosting guide](self-hosting.md) for the Nginx routes. The included Node
+server implements the same rule. This behavior and the stable-ID registry are covered by
 `tests/public-links.test.mjs`.
 
 The entry pages and unversioned files use `Cache-Control: no-cache` so the

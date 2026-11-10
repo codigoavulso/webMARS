@@ -280,7 +280,7 @@ export async function audit() {
   };
 }
 
-function buildReport(result, version) {
+export function buildReport(result, version) {
   const { measurements, failures, warnings } = result;
   const contrastRows = measurements.map((entry) =>
     `| ${entry.theme} | \`${entry.foreground}\` on \`${entry.background}\` | ${entry.context} | ${entry.ratio.toFixed(2)}:1 | ${entry.required}:1 | ${entry.passes ? "pass" : "**FAIL**"} |`

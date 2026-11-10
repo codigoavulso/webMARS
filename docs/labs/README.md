@@ -83,7 +83,7 @@ values, does not read memory, and does not observe real branch outcomes - it
 declares the assumption it uses instead. Do not present its output as what a
 physical MIPS processor would do. The limits are listed in
 [../pipeline-lab.md](../pipeline-lab.md) and the functional-versus-timing split
-is set out in [../comparison-matrix.md](../comparison-matrix.md).
+is set out in ../comparison-matrix.md (`comparison-matrix.md`).
 
 Caches, dynamic branch prediction, superscalar issue and out-of-order execution
 are all outside the model. Lab 05 and Lab 07 point students at that boundary on

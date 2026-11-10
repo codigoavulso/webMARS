@@ -11,7 +11,7 @@ export const statisticsChapters = [
     level: "Todos os níveis",
     readingMinutes: 16,
     keywords: ["estatísticas", "métricas", "sessões", "heartbeat", "ping", "presença", "interação", "gráficos", "mediana", "p90", "privacidade"],
-    sources: ["assets/js/app-modules/19-usage-statistics.js", "assets/js/usage-metrics.js", "assets/js/active-heartbeat.js", "ops/raspberry-pi/webmars-metrics.py", "docs/usage-metrics.md"],
+    sources: ["assets/js/app-modules/19-usage-statistics.js", "assets/js/usage-metrics.js", "assets/js/active-heartbeat.js", "docs/usage-metrics.md"],
     sections: [
       {
         id: "abrir-e-escolher-periodo",

@@ -483,7 +483,7 @@ export async function runDifferential(options = {}) {
 
 // --- report -----------------------------------------------------------------
 
-function buildReport(result, version) {
+export function buildReport(result, version) {
   const { cases, status } = result;
   const agreed = cases.filter((entry) => entry.agreed);
   const explainedOnly = cases.filter((entry) => !entry.agreed && entry.conformant);

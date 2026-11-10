@@ -308,12 +308,12 @@ a device keeps looking like the hardware it emulates.
 | [tool-api.md](tool-api.md) | How do I write a tool for the Tools menu? |
 | [release-process.md](release-process.md) | How is a version cut, and what does it promise? |
 | [pipeline-lab.md](pipeline-lab.md) | What does the cycle-accurate model do and not do? |
-| [comparison-matrix.md](comparison-matrix.md) | What is supported, and what is the evidence? |
-| [mars-conformance.md](mars-conformance.md) | Where does webMARS behave differently from MARS 4.5, and why? |
+| `comparison-matrix.md` | What is supported, and what is the evidence? |
+| `mars-conformance.md` | Where does webMARS behave differently from MARS 4.5, and why? |
 | [evidence.md](evidence.md) | Where is the evidence for every public claim? |
 | [technical-summary.md](technical-summary.md) | How do I describe and cite this system in a paper? |
-| [benchmark.md](benchmark.md) | How fast is it, under what protocol, on what machine? |
-| [accessibility.md](accessibility.md) | Which WCAG criteria were checked, and which were not? |
+| `benchmark.md` | How fast is it, under what protocol, on what machine? |
+| `accessibility.md` | Which WCAG criteria were checked, and which were not? |
 | [portability.md](portability.md) | Which browsers and platforms has it actually been run on? |
-| [coverage-report.md](coverage-report.md) | How much of the shipped source do the tests execute? |
-| [mutation-report.md](mutation-report.md) | Would the tests notice if the code were wrong? |
+| `coverage-report.md` | How much of the shipped source do the tests execute? |
+| `mutation-report.md` | Would the tests notice if the code were wrong? |

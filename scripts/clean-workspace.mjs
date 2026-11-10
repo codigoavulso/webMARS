@@ -6,7 +6,7 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const releaseName = /^webmars-(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)(\.zip(?:\.sha256)?)?$/;
 const generatedDirectories = [
   "manual/dist", "coverage/raw", "tmp/pdfs",
-  "tests/__pycache__", "ops/raspberry-pi/__pycache__"
+  "tests/__pycache__"
 ];
 
 function allowedTarget(path) {

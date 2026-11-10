@@ -12,3 +12,14 @@ coverage/
 vendor/
 /tmp/
 /hs_err_pid*.log
+
+/output/
+/ops/raspberry-pi/
+/docs/raspberry-pi-analytics.md
+/docs/accessibility.md
+/docs/benchmark.md
+/docs/benchmark-history.json
+/docs/comparison-matrix.md
+/docs/coverage-report.md
+/docs/mars-conformance.md
+/docs/mutation-report.md

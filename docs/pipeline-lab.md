@@ -372,4 +372,4 @@ própria suite em `tests/pipeline-execution-trace.test.mjs`.
 
 O runtime funcional normal do webMARS não é cycle-accurate e nunca deve ser
 citado para comparações de desempenho. Ver
-[comparison-matrix.md](comparison-matrix.md).
+`comparison-matrix.md`.

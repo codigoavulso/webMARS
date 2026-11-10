@@ -81,14 +81,13 @@ npm run audit:a11y
 
 They write `docs/comparison-matrix.md`, `docs/coverage-report.md`,
 `docs/mutation-report.md` and `docs/mars-conformance.md`, each stamped with the
-version it describes. Commit the results.
+version it describes. Keep these outputs locally.
 
 The differential step needs the reference MARS 4.5 jar and a JVM. `npm run
 fetch:mars` downloads the jar and refuses any build whose checksum does not
 match the pinned one; without a JVM the differential suite skips rather than
 fails, which is fine for a routine build but not for a release - a release must
-publish a conformance report produced on the same commit. `tests/evidence-package.test.mjs` fails if the matrix is stale, so
-a release cannot ship documentation that describes a different commit.
+publish a conformance report produced on the same commit. The evidence tests validate the matrix generated from the checkout.
 
 A surviving mutant or a coverage threshold failure blocks the release. Fix the
 gap by writing the missing test; never by lowering a floor or deleting a mutant.
@@ -181,7 +180,7 @@ deployed same-origin metrics collector and database.
 
 - [ ] `npm run version:set -- <version> --check` reports every declaration in agreement
 - [ ] `npm run changelog:cut -- <version> --check` reports nothing left to cut, and Spanish and Portuguese written by hand
-- [ ] `npm run docs:matrix`, `npm run coverage`, `npm run mutation`, `npm run differential`, `npm run benchmark` and `npm run audit:a11y` rerun and committed
+- [ ] `npm run docs:matrix`, `npm run coverage`, `npm run mutation`, `npm run differential`, `npm run benchmark` and `npm run audit:a11y` rerun for the release commit
 - [ ] No surviving mutants; no coverage threshold below its floor
 - [ ] No unexplained differences from MARS 4.5; every declared one still occurs
 - [ ] No accessibility failure among the automatically checked criteria
@@ -207,6 +206,6 @@ reference the project targets. For a release intended to be cited:
    when the service supports multiple files.
 4. Record the DOI in `CITATION.cff` and in `README.md`.
 
-Do not mint a DOI for a release whose evidence documents were not regenerated in
-the same commit: the point of a citable archive is that a third party can
+Do not mint a DOI for a release whose evidence documents were not regenerated from
+the release commit: the point of a citable archive is that a third party can
 reproduce what it claims.

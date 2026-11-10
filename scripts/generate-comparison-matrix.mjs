@@ -408,6 +408,11 @@ ${table(mmio.offsets.map((entry) => [`\`${entry.name}\``, `\`${entry.offset}\``]
   browsers or profiles without an explicit export.
 `;
 
+  if (process.argv.includes("--stdout")) {
+    process.stdout.write(document);
+    return;
+  }
+
   // Verification runs alongside readers on Windows. Avoid rewriting an
   // unchanged report and retry transient locks without accepting drift.
   let previous;
@@ -425,4 +430,4 @@ ${table(mmio.offsets.map((entry) => [`\`${entry.name}\``, `\`${entry.offset}\``]
 }
 
 const summary = await build();
-console.log(`comparison matrix written: ${summary.basic} basic instructions, ${summary.extensions} extensions, ${summary.syscalls} syscalls`);
+if (summary) console.log(`comparison matrix written: ${summary.basic} basic instructions, ${summary.extensions} extensions, ${summary.syscalls} syscalls`);

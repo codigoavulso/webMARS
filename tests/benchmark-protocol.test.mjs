@@ -11,7 +11,6 @@ import { mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promi
 import { tmpdir } from "node:os";
 import test from "node:test";
 import { resolve } from "node:path";
-import { projectRoot } from "./helpers/engines.mjs";
 import {
   PROTOCOL,
   WORKLOADS,
@@ -25,9 +24,6 @@ import {
   readBenchmarkHistory,
   summarize
 } from "../scripts/benchmark.mjs";
-
-const reportPath = resolve(projectRoot, "docs/benchmark.md");
-const historyPath = resolve(projectRoot, "docs/benchmark-history.json");
 
 test("the protocol declares warm-up, repetitions and outlier handling", () => {
   assert.ok(PROTOCOL.version >= 1);
@@ -196,8 +192,8 @@ test("tool workload uses the baseline program through the real instruction obser
   assert.equal(engines[1].observerDetaches, 1);
 });
 
-test("the rendered report records the effective repetition override", () => {
-  const report = buildReport({
+function renderBenchmarkReport() {
+  return buildReport({
     protocol: { ...PROTOCOL, repetitions: 11 },
     environment: {
       webMarsVersion: "test",
@@ -213,7 +209,10 @@ test("the rendered report records the effective repetition override", () => {
     },
     results: []
   }, { schema: "webmars.benchmark-history/1", runs: [] });
-  assert.match(report, /\| Measured repetitions \| 11 \|/);
+}
+
+test("the rendered report records the effective repetition override", () => {
+  assert.match(renderBenchmarkReport(), /\| Measured repetitions \| 11 \|/);
 });
 
 test("invalid history fails closed and pair publication rolls back", async () => {
@@ -263,7 +262,7 @@ test("invalid history fails closed and pair publication rolls back", async () =>
 });
 
 test("the published report records the environment it was produced on", async () => {
-  const report = await readFile(reportPath, "utf8");
+  const report = renderBenchmarkReport();
   ["Engine", "Operating system", "CPU", "Logical processors", "Total memory"].forEach((field) => {
     assert.ok(report.includes(field), `the report must record ${field}`);
   });
@@ -276,7 +275,7 @@ test("the published report records the environment it was produced on", async ()
 });
 
 test("the report refuses the comparisons its numbers cannot support", async () => {
-  const report = await readFile(reportPath, "utf8");
+  const report = renderBenchmarkReport();
   // A benchmark that does not state its limits invites exactly the comparison
   // it cannot support.
   assert.match(report, /not comparable to a run on different hardware/);
@@ -284,35 +283,4 @@ test("the report refuses the comparisons its numbers cannot support", async () =
   assert.match(report, /These are \*\*Node\.js\*\* measurements/);
   assert.match(report, /not a hardware figure/);
   assert.match(report, /no cross-browser claim is made/);
-});
-
-test("history is kept, bounded, and stamped with the protocol version", async () => {
-  const history = JSON.parse(await readFile(historyPath, "utf8"));
-  assert.equal(history.schema, "webmars.benchmark-history/1");
-  assert.ok(Array.isArray(history.runs) && history.runs.length >= 1);
-  assert.ok(history.runs.length <= 50, "history must stay bounded");
-
-  history.runs.forEach((entry) => {
-    assert.ok(Number.isInteger(entry.protocolVersion) && entry.protocolVersion >= 1,
-      "every retained run must identify the protocol that produced it");
-    assert.ok(entry.protocolVersion <= PROTOCOL.version,
-      "history cannot contain results from a protocol newer than this script understands");
-    assert.match(entry.recordedAt, /^\d{4}-\d{2}-\d{2}$/);
-    assert.ok(entry.cpu && entry.engine && entry.platform, "each run must carry the machine it ran on");
-    assert.ok(entry.results.length >= 5);
-    entry.results.filter((item) => !item.skipped).forEach((item) => {
-      assert.ok(Number.isFinite(item.median) && item.median > 0, `${item.id} has no usable median`);
-      assert.ok(Number.isFinite(item.iqr) && item.iqr >= 0, `${item.id} has no dispersion figure`);
-    });
-  });
-});
-
-test("the workload identifiers in history match the declared workloads", async () => {
-  const history = JSON.parse(await readFile(historyPath, "utf8"));
-  const declared = new Set(WORKLOADS.map((entry) => entry.id));
-  history.runs.forEach((entry) => {
-    entry.results.forEach((item) => {
-      assert.ok(declared.has(item.id), `history contains '${item.id}', which is no longer a declared workload`);
-    });
-  });
 });

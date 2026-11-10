@@ -281,8 +281,8 @@ IP to the host. Ordinary site logs are a separate system.
 
 ## Installation/update and verification
 
-1. Install/restart the collector and snippets with
-   `ops/raspberry-pi/install-metrics.sh` before the frontend, so it accepts the
+1. Install or restart the collector and proxy configuration for your installation
+   before the frontend, so it accepts the
    new event types. Browser collection is independent of BackMars; social login
    and the server-confirmed Cloud section require the updated BackMars schema
    and API described in `SOCIAL-LOGIN.md`.

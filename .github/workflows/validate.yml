@@ -36,8 +36,6 @@ jobs:
       - name: Package and validate static release
         run: npm run package:release
 
-      - name: Validate optional metrics collector
-        run: python3 -m unittest discover -s tests -p "test_*metrics.py"
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v7

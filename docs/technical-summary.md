@@ -95,12 +95,12 @@ The three declared differences are pseudo-instruction expansions where webMARS
 deliberately diverges: a 32-bit `li` that does not destroy `$at`, and a `ble`
 against an immediate whose expansion cannot raise a spurious overflow. Each is
 documented with a minimal reproduction case. The reference simulator is pinned
-by SHA-256. See [mars-conformance.md](mars-conformance.md).
+by SHA-256. See `mars-conformance.md`.
 
 The full capability inventory - 141 basic instructions, 83 pseudo-instruction
 opcodes, 20 directives, 39 syscalls, 8 exception causes and the memory-mapped
 device registers - is classified per capability and linked to the test or
-example that demonstrates it in [comparison-matrix.md](comparison-matrix.md).
+example that demonstrates it in `comparison-matrix.md`.
 
 ### Correctness of the test suite
 
@@ -108,13 +108,13 @@ Coverage is measured from raw V8 data, because the application modules are
 evaluated in a sandbox that the standard Node coverage reporter does not
 observe. Per-module floors fail the build on regression, and modules that the
 harness cannot measure at file level are listed explicitly as unmeasured rather
-than omitted. See [coverage-report.md](coverage-report.md).
+than omitted. See `coverage-report.md`.
 
 Coverage records that a line ran, not that it was checked, so a mutation suite
 answers the second question directly: twelve hand-written mutants introduce
 specific plausible defects into the assembler, the runtime and the timing model.
 All twelve are detected. Three survived the first run and are now covered by
-tests written in response. See [mutation-report.md](mutation-report.md).
+tests written in response. See `mutation-report.md`.
 
 Bounded deterministic fuzzing drives malformed programs and corrupted state
 payloads through the assembler, the runtime and the state importer; the property
@@ -127,7 +127,7 @@ Measured under a published protocol - three discarded warm-up runs, seven
 measured repetitions, the fastest and slowest discarded, medians reported with
 interquartile ranges - with the machine recorded alongside every result. The
 figures are Node.js measurements and are labelled as bounding the engine's cost
-rather than predicting a browser's. See [benchmark.md](benchmark.md).
+rather than predicting a browser's. See `benchmark.md`.
 
 ### Accessibility
 
@@ -135,7 +135,7 @@ An initial, partial WCAG 2.2 AA audit runs on every build, checking colour
 contrast in both themes, reliance on colour alone, reduced-motion support,
 keyboard operability and accessible names. Criteria that require human judgement
 are listed as unchecked rather than as passing. No assistive-technology user has
-tested the system. See [accessibility.md](accessibility.md).
+tested the system. See `accessibility.md`.
 
 ## Threats to validity
 
@@ -180,4 +180,4 @@ MARS 4.5 (Vollmar and Sanderson) is the reference implementation this system
 targets and is compared against directly. The five-stage pipeline model follows
 the presentation in Patterson and Hennessy; differences between that model and
 both webMARS runtimes are tabulated in
-[comparison-matrix.md](comparison-matrix.md).
+`comparison-matrix.md`.

@@ -11,9 +11,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { resolve } from "node:path";
 import { projectRoot } from "./helpers/engines.mjs";
-import { AUTOMATED_CRITERIA, MANUAL_CRITERIA, audit, contrastRatio, readTokens } from "../scripts/audit-accessibility.mjs";
-
-const statementPath = resolve(projectRoot, "docs/accessibility.md");
+import { AUTOMATED_CRITERIA, MANUAL_CRITERIA, audit, buildReport, contrastRatio, readTokens } from "../scripts/audit-accessibility.mjs";
 
 test("the contrast calculation matches the WCAG reference values", () => {
   // Black on white is exactly 21:1; a mid grey on white is a known 4.5:1 edge.
@@ -77,8 +75,9 @@ test("the editor gutter clears text contrast and dialog messages have an accessi
 });
 
 test("the statement claims an initial audit and names what it did not check", async () => {
-  const statement = await readFile(statementPath, "utf8");
   const version = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8")).version;
+
+  const statement = buildReport(await audit(), version);
 
   assert.ok(statement.includes(`for webMARS ${version}`));
   assert.match(statement, /initial\*\*,? \*\*partial audit\*\*|\*\*initial, ?\n?partial audit\*\*/,
