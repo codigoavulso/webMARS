@@ -211,9 +211,9 @@ export const TOOL_DATA = [
     group: "Arquitetura e desempenho",
     purpose: "Explicar frames, palavras, bytes/bits, alterações de <code>$sp</code>, chamadas e anomalias da stack.",
     example: "Lição 12 — Recursion and frames ou ABI stack/heap demo em Mini-C.",
-    connect: "Ligue antes da primeira chamada. Ative follow <code>$sp</code> e avance até existirem dois frames.",
-    controls: "Overview/blocks/words/bytes/bits, follow, filtros, frame/word inspector, call graph, Step, Back, Run/Pause e comandos run-until.",
-    interpretation: "Frames são inferidos por chamadas/retornos e movimento de <code>$sp</code>. O registo narrativo assinala saves/restores, alinhamento e acessos suspeitos.",
+    connect: "Ligue antes da primeira chamada. Abra Pilha de chamadas e use Passo para observar a entrada e a saída de cada função.",
+    controls: "O mapa de endereços fica à esquerda nas janelas largas. Em janelas estreitas, os separadores dão acesso ao mapa, à memória, às chamadas e à atividade. Na memória, pode ir para um endereço, inspecionar uma palavra e passar de blocos a bits. Use Executar até para parar numa chamada, num retorno, num movimento de <code>$sp</code> ou quando uma palavra mudar.",
+    interpretation: "O tamanho de um frame corresponde aos bytes que a função tem reservados naquele momento. Um frame pode ocupar 0 B. Abra um frame para ver as palavras e selecione uma para saltar para a memória. O gráfico usa os passos de execução no eixo horizontal.",
     protocol: "Observa instruções, registos e memória; também controla o runtime dentro das ações autorizadas.",
     limits: "Assembly arbitrário pode usar convenções não reconhecidas e produzir frames heurísticos. Valide sempre com PC, <code>$sp</code> e fonte."
   },

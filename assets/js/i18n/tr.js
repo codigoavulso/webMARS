@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "Proje bulutla senkronize edildi: {name}.",
     "[error] Project synchronization failed: {message}": "[hata] Proje senkronizasyonu başarısız oldu: {message}",
     "Cloud synchronization failed.": "Cloud senkronizasyonu başarısız oldu.",
-    "Synchronize with Cloud": "Cloud ile senkronize et"
+    "Synchronize with Cloud": "Cloud ile senkronize et",
+    "Memory": "Bellek",
+    "Activity": "Etkinlik",
+    "Stack headroom": "Yığın boşluğu",
+    "Zoom": "Yakınlaştır",
+    "Zoom in": "Yakınlaştır",
+    "Zoom out": "Uzaklaştır",
+    "Invalid address.": "Geçersiz adres.",
+    "This frame reserves no stack space.": "Bu çerçeve yığın alanı ayırmaz.",
+    "Continue in memory": "Bellekte devam et",
+    "Showing the {count} innermost frames.": "En içteki {count} kareler gösteriliyor.",
+    "$sp is outside the stack region.": "$sp yığın bölgesinin dışında.",
+    "{address} changed from {before} to {after}": "{address}, {before}'den {after}'ye değiştirildi",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "Aşağıdaki {address}'i okuyun: $sp ({sp}): bu adres şu anda ayrılmış yığının dışında.",
+    "Possible pointer to {segment}{label}.": "{segment}{label} için olası işaretçi."
   });
 })();

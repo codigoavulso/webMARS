@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "پروژه همگام سازی شده با ابر: {name}.",
     "[error] Project synchronization failed: {message}": "[خطا] همگام سازی پروژه انجام نشد: {message}",
     "Cloud synchronization failed.": "Cloud همگام‌سازی انجام نشد.",
-    "Synchronize with Cloud": "همگام سازی با Cloud"
+    "Synchronize with Cloud": "همگام سازی با Cloud",
+    "Memory": "حافظه",
+    "Activity": "فعالیت",
+    "Stack headroom": "فضای سر را روی هم قرار دهید",
+    "Zoom": "بزرگنمایی ضربه بزنید؛",
+    "Zoom in": "بزرگنمایی کنید",
+    "Zoom out": "بزرگنمایی کنید",
+    "Invalid address.": "آدرس نامعتبر است.",
+    "This frame reserves no stack space.": "این قاب هیچ فضای پشته ای را ذخیره نمی کند.",
+    "Continue in memory": "در حافظه ادامه دهید",
+    "Showing the {count} innermost frames.": "نمایش {count} داخلی ترین فریم ها.",
+    "$sp is outside the stack region.": "$sp خارج از منطقه پشته است.",
+    "{address} changed from {before} to {after}": "{address} از {before} به {after}",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "{address} را در زیر بخوانید $sp ({sp}): این آدرس خارج از پشته رزرو شده فعلی است.",
+    "Possible pointer to {segment}{label}.": "اشاره گر ممکن به {segment}{label}."
   });
 })();

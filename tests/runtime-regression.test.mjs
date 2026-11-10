@@ -2,6 +2,32 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createJavaScriptEngine, loadMiniCCompiler } from "./helpers/engines.mjs";
 
+test("runtime events and observers distinguish a delayed transfer from entry into its target", async () => {
+  const engine = await createJavaScriptEngine({ settings: { startAtMain: true, delayedBranching: true } });
+  const result = engine.assemble(`.text
+.globl main
+main: jal callee
+      addiu $sp, $sp, -4
+      nop
+callee: jr $ra
+        addiu $sp, $sp, 4
+`, { sourceName: "stack-delay.asm" });
+  assert.equal(result.ok, true);
+  const observed = [];
+  engine.registerInstructionObserver((event) => observed.push(event));
+  const step = () => engine.step({ includeSnapshot: false, includeRuntimeEvent: true }).runtimeEvent;
+  const call = step();
+  const callSlot = step();
+  const ret = step();
+  const returnSlot = step();
+  assert.equal(call.controlTransferPending, true);
+  assert.notEqual(call.pcAfter, call.controlTransferTarget);
+  assert.equal(callSlot.pcAfter, call.controlTransferTarget);
+  assert.equal(ret.controlTransferPending, true);
+  assert.equal(returnSlot.pcAfter, ret.controlTransferTarget);
+  assert.deepEqual(observed.map(({ controlTransferPending }) => controlTransferPending), [true, false, true, false]);
+});
+
 function registers(engine) {
   return engine.exportRuntimeState({ includeProgram: false }).registers;
 }

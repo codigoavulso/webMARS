@@ -783,7 +783,7 @@ async function fetchJsonWithFallback(paths) {
   let lastError = null;
   for (const path of paths) {
     try {
-      const response = await fetch(path, { cache: "no-store" });
+      const response = await fetch(path);
       if (!response.ok) throw new Error(`${response.status} ${path}`);
       return await response.json();
     } catch (error) {

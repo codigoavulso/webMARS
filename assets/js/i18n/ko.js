@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "클라우드와 동기화된 프로젝트: {name}.",
     "[error] Project synchronization failed: {message}": "[오류] 프로젝트 동기화 실패: {message}",
     "Cloud synchronization failed.": "Cloud 동기화에 실패했습니다.",
-    "Synchronize with Cloud": "Cloud와 동기화"
+    "Synchronize with Cloud": "Cloud와 동기화",
+    "Memory": "메모리",
+    "Activity": "활동",
+    "Stack headroom": "스택 헤드룸",
+    "Zoom": "줌",
+    "Zoom in": "확대",
+    "Zoom out": "축소",
+    "Invalid address.": "주소가 잘못되었습니다.",
+    "This frame reserves no stack space.": "이 프레임에는 스택 공간이 예약되어 있지 않습니다.",
+    "Continue in memory": "기억 속에 계속",
+    "Showing the {count} innermost frames.": "{count} 가장 안쪽 프레임을 표시합니다.",
+    "$sp is outside the stack region.": "$sp은 스택 영역 외부에 있습니다.",
+    "{address} changed from {before} to {after}": "{address}가 {before}에서 {after}로 변경되었습니다.",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "{address} 아래 $sp ({sp})를 읽으세요. 이 주소는 현재 예약된 스택 외부에 있습니다.",
+    "Possible pointer to {segment}{label}.": "{segment}{label}에 대한 가능한 포인터입니다."
   });
 })();

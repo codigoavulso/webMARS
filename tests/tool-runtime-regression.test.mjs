@@ -707,20 +707,19 @@ test("stack visualizer tracks frames and rewinds through the central delta histo
 
   // A recursive call leaves $ra untouched, so the return address must come from the
   // tracked register instead of an address computed from the call site.
-  assert.match(source, /Number\.isFinite\(trackedRa\) \? trackedRa : readRegister\(REG_RA\)/);
-  assert.doesNotMatch(source, /event\.executedAddress \+ 8/);
+  assert.match(source, /link === REG_RA \? trackedRa/);
 
   // Two programs can share a label count, so the symbol table follows the runtime
   // revision rather than the number of labels alone.
   assert.match(source, /syncLabels\(snapshot, lastRuntimeRevision !== revision\)/);
 
-  // The window can be resized down to roughly 520x320, and mobile mode reuses the
-  // same stacked geometry with touch-sized controls and touch gestures.
-  assert.match(source, /\.sv-tool\.sv-small \.sv-main \{[\s\S]*?grid-template-columns:minmax\(0, 1fr\);/);
-  assert.match(source, /classList\.toggle\("sv-small", width < 780\)/);
-  assert.match(source, /classList\.toggle\("sv-tiny", height < 400\)/);
-  assert.match(source, /\.desktop-stacked \.sv-tool \.sv-main \{[\s\S]*?grid-template-columns:minmax\(0, 1fr\);/);
-  assert.match(source, /\.desktop-stacked \.sv-tool \.sv-footer \.tool-btn \{[\s\S]*?min-height:30px;/);
+  // The desktop shows all four panels and the compact layout switches views.
+  assert.match(source, /grid-template-areas:"map memory frames" "map activity activity"/);
+  assert.match(source, /panel\.hidden = compactLayout && panel\.dataset\.svPanel !== view/);
+  for (const view of ["memory", "map", "frames", "activity"]) {
+    assert.ok(source.includes(`aria-controls="sv-view-${view}"`));
+    assert.ok(source.includes(`id="sv-view-${view}" data-sv-panel="${view}"`));
+  }
   assert.match(source, /canvas\[data-sv="detail"\][\s\S]*?touch-action:none;|\.sv-detail-pane canvas \{[\s\S]*?touch-action:none;/);
   assert.match(source, /pinchOrigin = \{ distance: pinchDistance\(\)/);
 
@@ -787,7 +786,7 @@ test("stack visualizer stops execution exactly on its armed condition", async ()
 
   // Inside a memory observer the program counter still points at the running
   // instruction, so the stop is queued and armed by the instruction observer.
-  assert.match(source, /queuedObserverStop = t\("\{address\} was written with \{value\}"/);
+  assert.match(source, /queuedObserverStop = t\("\{address\} changed from \{before\} to \{after\}"/);
   assert.match(source, /if \(queuedObserverStop\) \{[\s\S]*?armAt\(nextPc, message\);/);
   assert.match(source, /registerInstructionObserver\(\(detail\) => \{/);
   assert.match(source, /registerMemoryObserver\(\{/);
@@ -798,7 +797,7 @@ test("stack visualizer stops execution exactly on its armed condition", async ()
   assert.match(source, /ctx\.runtimeControls\?\.go\?\.\(\)/);
   assert.match(source, /ctx\.runtimeControls\?\.step\?\.\(\)/);
   assert.match(source, /function resolveStepOver\(\)/);
-  assert.match(source, /if \(pendingResume\) return;/);
+  assert.match(source, /if \(pendingResume \|\| ctx\.runtimeControls\?\.isRunning/);
 });
 
 test("floating-point tool accepts register zero as a valid attachment", async () => {
@@ -1235,7 +1234,7 @@ test("the memory map ends free space exactly at $sp, never inside the stack band
   const source = await readFile(resolve(projectRoot, "tools/stack-visualizer.js"), "utf8");
   const buildSource = sourceBetween(source, "      function buildSegments()", "      function segmentAt(");
 
-  function segmentsFor({ sp, deepest }) {
+  function segmentsFor({ sp, deepest, memoryMapOverrides = {}, heapPointer }) {
     const context = vm.createContext({
       memoryMap: () => ({
         textBase: 0x00400000,
@@ -1246,11 +1245,12 @@ test("the memory map ends free space exactly at $sp, never inside the stack band
         stackBase: 0x7ffffffc,
         kernelTextBase: 0x80000000,
         kernelDataBase: 0x90000000,
-        mmioBase: 0xffff0000
+        mmioBase: 0xffff0000,
+        ...memoryMapOverrides
       }),
       currentSp: () => sp,
       deepestSp: deepest,
-      ctx: { engine: { reservedHeapMappedBytes: 0 } }
+      ctx: { engine: { heapPointer } }
     });
     vm.runInContext(`${buildSource}\nglobalThis.result = buildSegments();`, context);
     return context.result;
@@ -1267,6 +1267,10 @@ test("the memory map ends free space exactly at $sp, never inside the stack band
   const pushed = segmentsFor({ sp: 0x7fffef00, deepest: 0x7fffee80 });
   assert.equal(pick(pushed, "stack").start, 0x7fffee80);
   assert.equal(pick(pushed, "free").end, 0x7fffee80);
+
+  const outOfStack = segmentsFor({ sp: 0x20000000, deepest: 0x7fffef00 });
+  assert.equal(pick(outOfStack, "stack").start, 0x7fffef00);
+  assert.equal(pick(outOfStack, "free").start, 0x10040000);
 
   for (const segments of [atRest, pushed]) {
     const stack = pick(segments, "stack");
@@ -1293,6 +1297,47 @@ test("the memory map ends free space exactly at $sp, never inside the stack band
     if (ordered[index].start > ordered[index - 1].end) {
       assert.fail(`gap between '${ordered[index - 1].label}' and '${ordered[index].label}'`);
     }
+  }
+
+  const compact = segmentsFor({
+    sp: 0x2f00, deepest: 0x2e80, heapPointer: 0x2130,
+    memoryMapOverrides: {
+      textBase: 0x3000, dataSegmentBase: 0, dataBase: 0, externBase: 0x1000,
+      heapBase: 0x2000, stackPointer: 0x2ffc, stackBase: 0x2ffc,
+      kernelTextBase: 0x4000, kernelDataBase: 0x5000, mmioBase: 0x7f00
+    }
+  });
+  assert.equal(pick(compact, "data").start, 0);
+  assert.equal(pick(compact, "extern").end, 0x2000);
+  assert.equal(pick(compact, "heap").end, 0x2130);
+  assert.equal(pick(compact, "free").start, 0x2130);
+  assert.equal(pick(compact, "text").end, 0x4000);
+  assert.equal(pick(compact, "mmio").end, 0x8000);
+  for (let index = 1; index < compact.length; index += 1) {
+    assert.equal(compact[index].start, compact[index - 1].end);
+  }
+});
+
+test("map projection and pointer navigation agree in both orientations", async () => {
+  const source = await readFile(resolve(projectRoot, "tools/stack-visualizer.js"), "utf8");
+  const projection = sourceBetween(source, "      function mapYForAddress(", "      function renderMap(");
+  const context = vm.createContext({});
+  vm.runInContext(`${projection}\nglobalThis.geometry = { mapYForAddress, mapAddressAtY };`, context);
+  const { mapYForAddress, mapAddressAtY } = context.geometry;
+
+  for (const highOnTop of [false, true]) {
+    const startY = highOnTop ? 64 : 32;
+    const endY = highOnTop ? 32 : 64;
+    const extern = { segment: { start: 0x10000000, end: 0x10010000 }, y0: 32, y1: 64 };
+    assert.equal(mapYForAddress(extern, 0x10008000, highOnTop), 48);
+    assert.equal(mapAddressAtY(extern, 48, highOnTop), 0x10008000);
+    const stack = { segment: { start: 0x7fffefec, end: 0x7ffff000 }, y0: 32, y1: 64 };
+    assert.equal(mapYForAddress(stack, 0x7fffefec, highOnTop), startY);
+    assert.equal(mapAddressAtY(stack, startY, highOnTop), 0x7fffefec);
+    assert.equal(mapYForAddress(stack, 0x7ffff000, highOnTop), endY);
+    const mmio = { segment: { start: 0xffff0000, end: 0x100000000 }, y0: 32, y1: 64 };
+    assert.equal(mapYForAddress(mmio, 0x100000000, highOnTop), endY);
+    assert.equal(mapAddressAtY(mmio, endY, highOnTop), 0xffffffff);
   }
 });
 
@@ -1380,16 +1425,21 @@ test("map band heights come from region size alone, on one shared scale", async 
   }
 });
 
-test("stack visualizer keeps its memory map inside the medium layout", async () => {
+test("stack visualizer keeps the entire memory window inside unsigned address bounds", async () => {
   const source = await readFile(resolve(projectRoot, "tools/stack-visualizer.js"), "utf8");
-
-  // At medium widths the inspector becomes a second grid row. The fixed-height
-  // bottom chart and readout must yield space, and the canvas must be allowed to
-  // shrink, otherwise the map overflows its pane at ordinary laptop heights.
-  assert.match(source, /\.sv-tool\.sv-medium \.sv-side \{[\s\S]*?max-height:110px;/);
-  assert.match(source, /\.sv-tool\.sv-medium \.sv-map-pane canvas\[data-sv="map"\] \{ min-height:0; \}/);
-  assert.match(source, /\.sv-tool\.sv-medium \.sv-readout \{ display:none; \}/);
-  assert.match(source, /\.sv-tool\.sv-medium \.sv-bottom \{ height:120px; \}/);
+  const clamp = sourceBetween(source, "  function clampViewTop(", "  function linkRegister(");
+  const context = vm.createContext({ ADDRESS_SPACE_END: 0x100000000 });
+  vm.runInContext(clamp, context);
+  for (const stride of [4, 16, 64]) {
+    const rows = 12;
+    const span = (rows - 1) * stride;
+    const topWord = 0x100000000 - stride;
+    assert.equal(context.clampViewTop(-16, rows, stride, false), 0);
+    assert.equal(context.clampViewTop(-16, rows, stride, true), span);
+    assert.equal(context.clampViewTop(0x100000100, rows, stride, false), topWord - span);
+    assert.equal(context.clampViewTop(0x100000100, rows, stride, true), topWord);
+    assert.equal(context.clampViewTop(0x10005, rows, stride, false), Math.floor(0x10005 / stride) * stride);
+  }
 });
 
 test("stack visualizer initially centers the memory window on $sp", async () => {
@@ -1398,7 +1448,7 @@ test("stack visualizer initially centers the memory window on $sp", async () => 
 
   assert.match(
     source,
-    /function renderAll\(\) \{\s*if \(followSp\) centerView\(currentSp\(\)\);/,
+    /if \(!compactLayout \|\| activeView === "memory"\) \{\s*if \(followSp\) centerView\(currentSp\(\)\);/,
     "Follow $sp must keep the view centered before the tool is connected too"
   );
 
@@ -1410,7 +1460,8 @@ test("stack visualizer initially centers the memory window on $sp", async () => 
       visibleRowCount: () => 10,
       highTop
     });
-    vm.runInContext(`${helperSource}\nglobalThis.top = defaultViewAddress();`, context);
+    const clamp = sourceBetween(source, "  function clampViewTop(", "  function linkRegister(");
+    vm.runInContext(`const ADDRESS_SPACE_END = 0x100000000;\n${clamp}\n${helperSource}\nglobalThis.top = defaultViewAddress();`, context);
 
     const direction = highTop ? -1 : 1;
     const middle = (context.top + direction * 5 * 4) >>> 0;

@@ -68,7 +68,7 @@ export function isStableAppRoute(requestUrl) {
   return /^\/(?:e\/[a-z0-9][a-z0-9-]{0,79}|p\/[a-z0-9]+(?:-[a-z0-9]+)*(?:@[1-9]\d*)?)\/?$/.test(pathname);
 }
 
-const server = createServer(async (request, response) => {
+export const server = createServer(async (request, response) => {
   response.setHeader("Cache-Control", "no-store");
   response.setHeader("Referrer-Policy", "no-referrer");
   response.setHeader("X-Content-Type-Options", "nosniff");
@@ -99,6 +99,18 @@ const server = createServer(async (request, response) => {
     if (!publicFile) { sendText(response, 403, "Forbidden"); return; }
     ({ target } = publicFile);
     const { fileStats } = publicFile;
+    const path = relative(projectRoot, target).replaceAll(sep, "/");
+    const build = new URL(request.url, "http://localhost").searchParams.get("b") || "";
+    const versionedAsset = /^\d{12}$/.test(build)
+      && /^(?:assets|examples|help|libs|tools)\/.+\.(?:asm|c|c0|css|gif|h|ico|jpg|js|json|pdf|png|txt)$/.test(path);
+    const etag = `W/"${fileStats.size.toString(16)}-${fileStats.mtimeMs.toString(16)}"`;
+    response.setHeader("Cache-Control", versionedAsset ? "max-age=31536000" : "no-cache");
+    response.setHeader("ETag", etag);
+    const validators = request.headers["if-none-match"]?.split(",") || [];
+    if (validators.some((value) => value.trim() === "*" || value.trim().replace(/^W\//, "") === etag.slice(2))) {
+      response.writeHead(304).end();
+      return;
+    }
 
     response.writeHead(200, {
       "Content-Length": fileStats.size,

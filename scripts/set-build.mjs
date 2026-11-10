@@ -20,7 +20,7 @@ export async function stampBuild(date = new Date()) {
   await writeFile(path, source.replace(/const APP_BUILD = "\d{12}";/, `const APP_BUILD = "${build}";`), "utf8");
   const indexPath = resolve(dirname(fileURLToPath(import.meta.url)), "../index.html");
   const index = await readFile(indexPath, "utf8");
-  const stampedIndex = index.replace(/(assets\/(?:js\/usage-metrics\.js\?|(?:js\/app-version\.js|css\/styles\.css)\?v=[^"&]+&amp;)b=)\d{12}/g, (_, prefix) => prefix + build);
+  const stampedIndex = index.replace(/(assets\/(?:js\/(?:usage-metrics|active-heartbeat)\.js\?|(?:js\/app-version\.js|css\/styles\.css)\?v=[^"&]+&amp;)b=)\d{12}/g, (_, prefix) => prefix + build);
   if (stampedIndex !== index) await writeFile(indexPath, stampedIndex, "utf8");
   return build;
 }

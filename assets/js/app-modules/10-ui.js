@@ -3340,7 +3340,7 @@ function setupEditor(refs, store, options = {}) {
     const key = String(language || "en").trim().toLowerCase();
     if (localizedReferenceCache.has(key)) return Promise.resolve(localizedReferenceCache.get(key));
     if (localizedReferencePending.has(key)) return localizedReferencePending.get(key);
-    const pending = fetch(localizedReferenceUrl(key), { cache: "no-store" })
+    const pending = fetch(localizedReferenceUrl(key))
       .then((response) => response.ok ? response.json() : null)
       .then((reference) => {
         if (reference && typeof reference === "object") localizedReferenceCache.set(key, reference);

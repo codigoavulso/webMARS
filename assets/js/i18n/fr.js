@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "Projet synchronisé avec le cloud : {name}.",
     "[error] Project synchronization failed: {message}": "[erreur] Échec de la synchronisation du projet : {message}",
     "Cloud synchronization failed.": "La synchronisation Cloud a échoué.",
-    "Synchronize with Cloud": "Synchroniser avec Cloud"
+    "Synchronize with Cloud": "Synchroniser avec Cloud",
+    "Memory": "Mémoire",
+    "Activity": "Activité",
+    "Stack headroom": "Marge de pile",
+    "Zoom": "Zoomer",
+    "Zoom in": "Zoomer",
+    "Zoom out": "Zoom arrière",
+    "Invalid address.": "Adresse invalide.",
+    "This frame reserves no stack space.": "Ce cadre ne réserve aucun espace de pile.",
+    "Continue in memory": "Continuer en mémoire",
+    "Showing the {count} innermost frames.": "Affichage des images {count} les plus internes.",
+    "$sp is outside the stack region.": "$sp se trouve en dehors de la région de pile.",
+    "{address} changed from {before} to {after}": "{address} est passé de {before} à {after}",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "Lisez {address} ci-dessous $sp ({sp}) : cette adresse est en dehors de la pile actuellement réservée.",
+    "Possible pointer to {segment}{label}.": "Pointeur possible vers {segment}{label}."
   });
 })();

@@ -657,14 +657,15 @@ function createToolManager(engine, messagesPane, windowManager, desktop, helpSys
   }
 
   async function loadText(path) {
+    const url = window.WebMarsAppVersion?.withVersion?.(path) || path;
     try {
-      const response = await fetch(path, { cache: "no-store" });
+      const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.text();
     } catch (fetchError) {
       return await new Promise((resolve, reject) => {
         const req = new XMLHttpRequest();
-        req.open("GET", path, true);
+        req.open("GET", url, true);
         req.onload = () => {
           if (req.status === 0 || (req.status >= 200 && req.status < 300)) {
             resolve(req.responseText);

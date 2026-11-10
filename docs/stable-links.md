@@ -53,3 +53,9 @@ reference Nginx locations are in
 `ops/raspberry-pi/nginx-webmars-routes.conf`; the included Node server implements
 the same rule. This behavior and the stable-ID registry are covered by
 `tests/public-links.test.mjs`.
+
+The entry pages and unversioned files use `Cache-Control: no-cache` so the
+browser checks for changes and can reuse the cached body on a 304. Packaged
+assets with a build number in their URL (`?b=YYYYMMDDhhmm`) can be reused for
+a year. Stamp a distinct build with `npm run build:stamp` and publish its
+files and HTML together so the entry page points to the new asset URLs.

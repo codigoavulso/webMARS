@@ -7,12 +7,16 @@
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      .sv-tool { display:flex; flex-direction:column; gap:6px; height:100%; box-sizing:border-box; padding:8px; font:12px "Segoe UI", Tahoma, sans-serif; color:var(--text); }
+      .sv-tool { display:flex; flex-direction:column; gap:8px; height:100%; min-height:0; overflow:auto; box-sizing:border-box; padding:8px; font:12px "Segoe UI", Tahoma, sans-serif; color:var(--text); }
       .sv-toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
       .sv-toolbar .tool-btn { padding:4px 9px; }
+      .sv-navigation { display:flex; align-items:center; gap:4px; }
       .sv-field { display:flex; align-items:center; gap:4px; font-weight:700; }
       .sv-field select, .sv-field input { font:12px Consolas, "Courier New", monospace; padding:2px 4px; border:1px solid var(--line); background:var(--surface); color:var(--text); }
+      .sv-field select { max-width:128px; }
       .sv-field input { width:104px; }
+      .sv-toolbar, .sv-exec, .sv-tabs, .sv-footer { flex-shrink:0; }
+      .sv-toolbar .tool-btn, .sv-tabs .tool-btn { min-height:28px; }
       .sv-check { display:flex; align-items:center; gap:4px; white-space:nowrap; }
       .sv-zoom { display:flex; align-items:center; gap:4px; }
       .sv-zoom input[type="range"] { width:96px; }
@@ -21,7 +25,23 @@
 
       .sv-exec { display:flex; align-items:center; gap:8px; flex-wrap:wrap; border:1px solid var(--line); background:var(--surface-raised); padding:4px 6px; }
       .sv-exec-group { display:flex; align-items:center; gap:3px; }
-      .sv-exec-label { font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-soft); margin-right:2px; }
+      .sv-advanced { flex-basis:100%; }
+      .sv-advanced summary { cursor:pointer; width:max-content; margin-bottom:4px; }
+      .sv-advanced .sv-exec-group { flex-wrap:wrap; }
+      .sv-tabs { display:none; flex-wrap:wrap; gap:4px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+      .sv-tabs [aria-pressed="true"] { background:var(--accent-soft); border-color:var(--accent); font-weight:700; }
+      .sv-workspaces {
+        display:grid; flex:1 0 445px; gap:8px; min-width:0; min-height:0;
+        grid-template-columns:minmax(170px, 18%) minmax(0, 1fr) minmax(218px, 25%);
+        grid-template-rows:minmax(300px, 1fr) minmax(137px, 29%);
+        grid-template-areas:"map memory frames" "map activity activity";
+      }
+      .sv-workspace { display:flex; flex-direction:column; gap:5px; min-height:0; min-width:0; }
+      .sv-workspace[data-sv-panel="map"] { grid-area:map; }
+      .sv-workspace[data-sv-panel="memory"] { grid-area:memory; }
+      .sv-workspace[data-sv-panel="frames"] { grid-area:frames; }
+      .sv-workspace[data-sv-panel="activity"] { grid-area:activity; }
+      .sv-workspace[hidden] { display:none; }
       .sv-exec .tool-btn { padding:3px 8px; }
       .sv-exec .tool-btn[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); font-weight:700; }
       .sv-exec .tool-btn:disabled { opacity:.5; }
@@ -29,28 +49,21 @@
       .sv-exec-state.is-armed { color:var(--accent); font-weight:700; }
       .sv-exec-state.is-stopped { color:var(--warn); font-weight:700; }
 
-      .sv-main { display:grid; grid-template-columns:minmax(186px, 228px) minmax(0, 1fr) minmax(0, 274px); grid-template-rows:minmax(0, 1fr); gap:8px; flex:1; min-height:0; }
+      .sv-main { display:flex; flex:1; flex-direction:column; gap:6px; min-height:0; }
+      .sv-main .sv-detail-pane { flex:1; }
       .sv-map-pane, .sv-detail-pane { display:flex; flex-direction:column; gap:4px; min-height:0; min-width:0; }
       .sv-map-pane { border:1px solid var(--line); background:var(--surface); padding:4px; }
-      /* The map is the point of this column, so it takes every pixel the readouts
-         below it do not need. Those are sized by content and never scroll away. */
-      /* flex:1 lets the map take the whole column; the floor stops the medium
-         layout, which puts the side cards on a second grid row, from crushing it. */
-      .sv-map-pane canvas[data-sv="map"] { flex:1 1 auto; min-height:190px; width:100%; display:block; cursor:pointer; touch-action:none; }
+      .sv-map-pane canvas[data-sv="map"] { flex:1 1 0; min-height:140px; width:100%; display:block; cursor:pointer; touch-action:none; }
       .sv-pane-label { font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); }
 
-      /* The readouts sit in the bottom band so the map keeps the whole column:
-         "memory space" is the point of this tool and it earns every pixel. */
-      .sv-readout { flex:0 0 200px; min-width:0; display:flex; flex-direction:column; gap:3px; }
+      .sv-readout { flex:0 0 auto; min-width:0; display:flex; flex-direction:column; gap:4px; }
       /* A <dl> carries a 1em block margin by default, which alone cost this
          column more height than all five readings put together. */
       .sv-vitals { margin:0; display:grid; grid-template-columns:1fr auto; gap:1px 6px; font:11px Consolas, "Courier New", monospace; }
       .sv-vitals dt { color:var(--text-faint); margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
       .sv-vitals dd { margin:0; text-align:right; color:var(--text); font-weight:700; }
       .sv-vitals dd.is-warn { color:var(--warn); }
-      /* Two per row: a 32-bit address plus its name does not fit twice on a flex
-         line, and one chip per row turned four markers into four wasted rows. */
-      .sv-marks { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:3px; }
+      .sv-marks { display:grid; grid-template-columns:minmax(0, 1fr); gap:3px; }
       .sv-mark {
         display:flex; align-items:center; gap:3px; padding:1px 4px; cursor:pointer; min-width:0;
         border:1px solid var(--line); background:var(--surface-raised);
@@ -58,28 +71,28 @@
       }
       .sv-mark:hover { border-color:var(--accent); color:var(--text); }
       .sv-mark .sv-swatch { width:7px; height:7px; flex:0 0 7px; }
-      .sv-mark b { color:var(--text); font-weight:700; overflow:hidden; text-overflow:ellipsis; }
+      .sv-mark b { margin-left:auto; color:var(--text); font-weight:700; overflow:hidden; text-overflow:ellipsis; }
 
       .sv-detail-pane canvas { flex:1; min-height:0; width:100%; display:block; border:1px solid var(--line); background:var(--surface); outline:none; cursor:crosshair; touch-action:none; }
       .sv-detail-pane canvas:focus { border-color:var(--accent); }
       .sv-hint { font-size:10px; color:var(--text-faint); }
       .sv-status { display:flex; flex-wrap:wrap; gap:4px 10px; font:11px Consolas, "Courier New", monospace; color:var(--text-muted); }
+      .sv-tool:not(.sv-small) .sv-status { display:none; }
       .sv-status b { color:var(--text); font-weight:700; }
 
-      .sv-side { display:flex; flex-direction:column; gap:6px; min-height:0; min-width:0; }
       .sv-card { border:1px solid var(--line); background:var(--surface-raised); padding:6px; display:flex; flex-direction:column; gap:4px; min-height:0; }
       .sv-card > h4 { margin:0; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-soft); }
-      .sv-card.sv-inspector { flex:1 1 auto; overflow:auto; }
-      .sv-card.sv-frames { flex:0 0 auto; max-height:38%; overflow:auto; }
+      .sv-card.sv-inspector { flex:0 0 40%; overflow:auto; }
+      .sv-card.sv-frames { flex:1; overflow:auto; }
       .sv-decode { margin:0; font:11px Consolas, "Courier New", monospace; white-space:pre-wrap; word-break:break-word; color:var(--text); user-select:text; }
-      .sv-frame-row { display:flex; gap:6px; align-items:baseline; padding:2px 4px; border-left:4px solid var(--line); cursor:pointer; font:11px Consolas, "Courier New", monospace; }
+      .sv-frame-row { display:flex; gap:6px; align-items:baseline; width:100%; text-align:start; color:var(--text); background:var(--surface); padding:5px 6px; border:0; border-left:4px solid var(--line); cursor:pointer; font:11px Consolas, "Courier New", monospace; }
       .sv-frame-row:hover { background:var(--surface-inset); }
       .sv-frame-row.is-selected { background:var(--accent-soft); }
       .sv-frame-row .sv-frame-name { font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
       .sv-frame-row .sv-frame-size { color:var(--text-muted); }
       .sv-slot {
         display:flex; gap:6px; align-items:baseline; cursor:pointer;
-        padding:1px 4px 1px 14px; font:10px Consolas, "Courier New", monospace; color:var(--text-muted);
+        width:100%; border:0; background:transparent; text-align:start; padding:4px 4px 4px 14px; font:11px Consolas, "Courier New", monospace; color:var(--text-muted);
       }
       .sv-slot:hover { background:var(--surface-inset); color:var(--text); }
       .sv-slot.is-untouched { opacity:.5; }
@@ -89,14 +102,13 @@
       .sv-slot .sv-slot-note { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-faint); }
       .sv-empty { color:var(--text-faint); font-style:italic; }
 
-      /* The depth chart used to be trapped in the narrow map column, where it was
-         62px tall and unreadable. Down here it shares the bottom band with the log
-         and the map column keeps the height it gives up. */
-      .sv-bottom { display:flex; gap:8px; flex:0 0 auto; height:186px; min-height:110px; }
-      .sv-spark-pane { display:flex; flex-direction:column; gap:4px; flex:0 0 320px; min-width:0; min-height:0; }
+      .sv-bottom { display:flex; gap:8px; flex:1; min-height:0; }
+      .sv-map-view { display:flex; flex-direction:column; flex:1; min-height:0; gap:6px; }
+      .sv-map-view .sv-map-pane { flex:1 1 0; }
+      .sv-spark-pane { display:flex; flex-direction:column; gap:4px; flex:0 0 clamp(165px, 33%, 320px); min-width:0; min-height:0; }
       .sv-spark-pane canvas { flex:1; min-height:0; width:100%; display:block; }
       .sv-log-pane { display:flex; flex-direction:column; gap:4px; flex:1 1 auto; min-width:0; min-height:0; }
-      .sv-log-head { display:flex; align-items:center; gap:8px; }
+      .sv-log-head { display:flex; align-items:center; flex-wrap:wrap; gap:5px; }
       .sv-log-head strong { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-soft); }
       .sv-log-head .sv-warn-count { color:var(--warn); font-weight:700; }
       .sv-log-head .sv-filter { display:flex; gap:2px; margin-left:auto; }
@@ -105,7 +117,7 @@
       .sv-log-head .tool-btn[aria-pressed="true"] { border-color:var(--accent); background:var(--accent-soft); color:var(--text); font-weight:700; }
       .sv-log { flex:1; min-height:0; overflow:auto; border:1px solid var(--line); background:var(--surface); font:11px Consolas, "Courier New", monospace; padding:2px; }
       .sv-log-row { display:flex; gap:6px; padding:1px 4px; border-left:3px solid transparent; cursor:default; }
-      .sv-log-row[data-address] { cursor:pointer; }
+      button.sv-log-row { width:100%; border:0; border-left:3px solid transparent; background:transparent; color:inherit; text-align:start; cursor:pointer; font:inherit; }
       .sv-log-row:hover { background:var(--surface-inset); }
       .sv-log-row .sv-log-step { color:var(--text-faint); min-width:56px; }
       .sv-log-row .sv-log-text { flex:1; white-space:pre-wrap; word-break:break-word; }
@@ -117,94 +129,22 @@
       .sv-log-row.sv-kind-warn { border-left-color:var(--warn); background:var(--warn-bg); color:var(--warn); }
       .sv-log-row.sv-kind-stop { border-left-color:var(--accent); background:var(--accent-soft); font-weight:700; }
 
-      .sv-footer { display:flex; align-items:center; gap:8px; }
-      .sv-footer .ctrl { flex:1; text-align:center; font-weight:700; color:var(--text); }
+      .sv-footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:5px; }
       .sv-footer .tool-btn { min-width:110px; }
 
-      /* A narrow window drops the side column below the map and detail panes, and
-         a very narrow one stacks everything so the zoomable view keeps its space. */
-      .sv-tool.sv-medium .sv-main {
-        grid-template-columns:minmax(140px, 172px) minmax(0, 1fr);
-        grid-template-rows:minmax(0, 1fr) auto;
+      .sv-tool.sv-small .sv-tabs { display:flex; }
+      .sv-tool.sv-small .sv-workspaces { display:flex; flex-basis:320px; }
+      .sv-tool.sv-small .sv-workspace { flex:1; }
+      .sv-tool.sv-small .sv-main { min-height:234px; }
+      .sv-tool.sv-small .sv-inspector { flex:0 0 auto; min-height:82px; max-height:112px; }
+      .sv-tool.sv-small .sv-bottom { flex-direction:column; }
+      .sv-tool.sv-small .sv-spark-pane { flex:0 0 100px; }
+      .sv-tool.sv-small .sv-footer .tool-btn { min-width:0; }
+      .sv-tool.sv-small .sv-marks { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .sv-tool .tool-btn:focus-visible, .sv-tool button:focus-visible, .sv-tool canvas:focus-visible {
+        outline:2px solid var(--accent); outline-offset:-2px;
       }
-      .sv-tool.sv-medium .sv-side {
-        grid-column:1 / -1;
-        flex-direction:row;
-        max-height:110px;
-      }
-      .sv-tool.sv-medium .sv-card { flex:1 1 0; min-width:0; }
-      .sv-tool.sv-medium .sv-card.sv-frames { max-height:none; }
-      .sv-tool.sv-medium .sv-map-pane canvas[data-sv="map"] { min-height:0; }
-      .sv-tool.sv-medium .sv-readout { display:none; }
-      .sv-tool.sv-medium .sv-bottom { height:120px; }
-
-      .sv-tool.sv-small .sv-toolbar { flex-wrap:nowrap; overflow-x:auto; }
-      .sv-tool.sv-small .sv-toolbar > * { flex:0 0 auto; }
-      .sv-tool.sv-small .sv-main {
-        grid-template-columns:minmax(0, 1fr);
-        grid-template-rows:78px minmax(120px, 1fr) auto;
-        gap:5px;
-      }
-      /* Stacked layouts lay the map on its side, where the readouts below it would
-         only steal width from it. The status line still carries the same numbers. */
-      .sv-tool.sv-small .sv-map-pane { flex-direction:row; align-items:stretch; }
-      .sv-tool.sv-small .sv-map-pane .sv-pane-label { display:none; }
-      .sv-tool.sv-small .sv-map-pane canvas[data-sv="map"] { flex:2 1 0; min-height:0; height:auto; }
-      .sv-tool.sv-small .sv-readout { flex:0 0 150px; }
-      .sv-tool.sv-small .sv-hint { display:none; }
-      .sv-tool.sv-small .sv-side { flex-direction:row; max-height:132px; }
-      .sv-tool.sv-small .sv-card { flex:1 1 0; min-width:0; }
-      .sv-tool.sv-small .sv-card.sv-frames { max-height:none; }
-      .sv-tool.sv-small .sv-bottom { height:120px; }
-      .sv-tool.sv-medium .sv-spark-pane { flex:0 0 232px; }
-      .sv-tool.sv-medium .sv-readout { flex:0 0 168px; }
-      .sv-tool.sv-small .sv-spark-pane { flex:0 0 168px; }
-      .sv-tool.sv-short .sv-bottom { height:92px; min-height:64px; }
-      .sv-tool.sv-short .sv-readout { display:none; }
-      .sv-tool.sv-short .sv-side { max-height:96px; }
-      .sv-tool.sv-short .sv-hint { display:none; }
-
-      /* A short window (a landscape phone, or a squeezed desktop window) gives
-         every spare pixel to the zoomable view. */
-      .sv-tool.sv-tiny .sv-main { grid-template-rows:54px minmax(96px, 1fr); }
-      .sv-tool.sv-tiny .sv-side { display:none; }
-      .sv-tool.sv-tiny .sv-bottom { height:66px; min-height:52px; }
-      .sv-tool.sv-tiny .sv-spark-pane { display:none; }
-      .sv-tool.sv-tiny .sv-readout { display:none; }
-      .sv-tool.sv-tiny .sv-footer .ctrl { display:none; }
-      .sv-tool.sv-tiny .sv-status { display:none; }
-
-      /* Mobile mode: one full-screen panel, touch-sized controls, and the same
-         stacked geometry the width tiers already produce. */
-      .desktop-stacked .sv-tool { gap:5px; padding:5px; }
-      .desktop-stacked .sv-tool .sv-toolbar { gap:5px; overflow-x:auto; flex-wrap:nowrap; padding-bottom:2px; }
-      .desktop-stacked .sv-tool .sv-toolbar > * { flex:0 0 auto; }
-      .desktop-stacked .sv-tool .sv-toolbar .tool-btn { min-width:max-content; min-height:30px; padding:4px 10px; }
-      .desktop-stacked .sv-tool .sv-field select,
-      .desktop-stacked .sv-tool .sv-field input { min-height:28px; }
-      .desktop-stacked .sv-tool .sv-check input { width:17px; height:17px; }
-      .desktop-stacked .sv-tool .sv-zoom input[type="range"] { width:118px; height:26px; }
-      .desktop-stacked .sv-tool .sv-main {
-        grid-template-columns:minmax(0, 1fr);
-        grid-template-rows:92px minmax(140px, 1fr) auto;
-        gap:5px;
-      }
-      .desktop-stacked .sv-tool .sv-map-pane { flex-direction:row; align-items:stretch; }
-      .desktop-stacked .sv-tool .sv-map-pane .sv-pane-label { display:none; }
-      .desktop-stacked .sv-tool .sv-map-pane canvas[data-sv="map"] { flex:2 1 0; min-height:0; height:auto; }
-      .desktop-stacked .sv-tool .sv-readout { display:none; }
-      .desktop-stacked .sv-tool .sv-side { flex-direction:row; max-height:128px; }
-      .desktop-stacked .sv-tool .sv-card { flex:1 1 0; min-width:0; }
-      .desktop-stacked .sv-tool .sv-card.sv-frames { max-height:none; }
-      .desktop-stacked .sv-tool .sv-bottom { height:118px; }
-      .desktop-stacked .sv-tool .sv-spark-pane { flex:0 0 148px; }
-      .desktop-stacked .sv-tool .sv-log-head .tool-btn { min-height:26px; }
-      .desktop-stacked .sv-tool .sv-footer { gap:5px; overflow-x:auto; }
-      .desktop-stacked .sv-tool .sv-footer .ctrl { display:none; }
-      .desktop-stacked .sv-tool .sv-footer .tool-btn { min-width:max-content; min-height:30px; flex:1 0 auto; }
-      /* Portrait phones are tall enough for the inspector; landscape is not. */
-      .desktop-stacked .sv-tool.sv-tiny .sv-side { display:none; }
-      .desktop-stacked .sv-tool.sv-tiny .sv-main { grid-template-rows:52px minmax(96px, 1fr); }
+      .desktop-stacked .sv-tool .tool-btn { min-height:32px; }
     `;
     document.head.appendChild(style);
   }
@@ -250,6 +190,26 @@
 
   const MAX_NARRATION = 400;
   const MAX_CELLS = 20000;
+  const MAX_FRAME_SLOTS = 32;
+  const MAX_VISIBLE_FRAMES = 128;
+  const ADDRESS_SPACE_END = 0x100000000;
+
+  function wordAddress(address) {
+    return (address & ~3) >>> 0;
+  }
+
+  function clampViewTop(address, rows, stride, descending) {
+    const last = ADDRESS_SPACE_END - stride;
+    const span = Math.min(last, (rows - 1) * stride);
+    const aligned = Math.floor(address / stride) * stride;
+    return descending ? Math.min(last, Math.max(span, aligned)) : Math.max(0, Math.min(last - span, aligned));
+  }
+
+  function linkRegister(op, operands) {
+    if (op === "jal" || op === "bgezal" || op === "bltzal") return REG_RA;
+    if (op !== "jalr") return 0;
+    return operands.length < 2 ? REG_RA : Math.max(0, REGISTER_NAMES.indexOf(normalizeRegisterToken(operands[0])));
+  }
   const MAX_SP_SAMPLES = 720;
   const MAX_DENSITY_SCAN = 60000;
   const DENSITY_REFRESH_MS = 250;
@@ -282,7 +242,7 @@
   }
 
   function parseAddressText(text) {
-    const cleaned = String(text ?? "").trim().replace(/\s+/g, "");
+    const cleaned = String(text ?? "").trim();
     if (!cleaned) return null;
     const parsed = /^0[xX][0-9a-fA-F]+$/.test(cleaned)
       ? Number.parseInt(cleaned.slice(2), 16)
@@ -304,8 +264,9 @@
     const match = /^\$([a-z0-9]+)$/i.exec(String(token ?? "").trim());
     if (!match) return null;
     const name = `$${match[1].toLowerCase()}`;
+    if (name === "$s8") return "$fp";
     if (REGISTER_NAMES.includes(name)) return name;
-    const numeric = Number.parseInt(match[1], 10);
+    const numeric = /^\d+$/.test(match[1]) ? Number(match[1]) : -1;
     if (Number.isInteger(numeric) && numeric >= 0 && numeric < REGISTER_NAMES.length) return REGISTER_NAMES[numeric];
     return name;
   }
@@ -353,65 +314,84 @@
     create(ctx) {
       const shell = ctx.createToolWindowShell("stack-visualizer", "Stack Visualizer", 1060, 700, `
         <div class="sv-tool">
-          <div class="sv-toolbar">
-            <button class="tool-btn" data-sv="connect" type="button">Connect to MIPS</button>
-            <label class="sv-field"><span>Region</span><select data-sv="segment"></select></label>
-            <label class="sv-field"><span>Go to</span><input data-sv="goto" type="text" spellcheck="false" placeholder="0x7fffeffc"></label>
-            <span class="sv-zoom">
-              <button class="tool-btn sv-icon" data-sv="zoom-out" type="button">&minus;</button>
-              <input type="range" min="0" max="4" step="1" value="2" data-sv="zoom">
-              <button class="tool-btn sv-icon" data-sv="zoom-in" type="button">+</button>
-              <span class="sv-zoom-label" data-sv="zoom-label">Words</span>
-            </span>
-            <label class="sv-check"><input type="checkbox" data-sv="follow" checked><span>Follow $sp</span></label>
-            <label class="sv-check"><input type="checkbox" data-sv="hex" checked><span>Hex values</span></label>
-            <label class="sv-check"><input type="checkbox" data-sv="high-top" checked><span>High addresses on top</span></label>
-          </div>
           <div class="sv-exec">
+            <button class="tool-btn" data-sv="connect" type="button">Connect to MIPS</button>
             <span class="sv-exec-group">
               <button class="tool-btn" data-sv-run="step" type="button">Step</button>
               <button class="tool-btn" data-sv-run="backstep" type="button">Back</button>
               <button class="tool-btn" data-sv-run="go" type="button">Run</button>
               <button class="tool-btn" data-sv-run="pause" type="button">Pause</button>
             </span>
-            <span class="sv-exec-group">
-              <span class="sv-exec-label">Run until</span>
-              <button class="tool-btn" data-sv-until="call" type="button" aria-pressed="false">next call</button>
-              <button class="tool-btn" data-sv-until="over" type="button" aria-pressed="false">step over</button>
-              <button class="tool-btn" data-sv-until="finish" type="button" aria-pressed="false">frame returns</button>
-              <button class="tool-btn" data-sv-until="sp" type="button" aria-pressed="false">$sp moves</button>
-              <button class="tool-btn" data-sv-until="watch" type="button" aria-pressed="false">word changes</button>
+            <span class="sv-exec-state" data-sv="exec-state" role="status"></span>
+            <details class="sv-advanced">
+              <summary>Run until</summary>
+              <div class="sv-exec-group">
+                <button class="tool-btn" data-sv-until="call" type="button" aria-pressed="false">next call</button>
+                <button class="tool-btn" data-sv-until="over" type="button" aria-pressed="false">step over</button>
+                <button class="tool-btn" data-sv-until="finish" type="button" aria-pressed="false">frame returns</button>
+                <button class="tool-btn" data-sv-until="sp" type="button" aria-pressed="false">$sp moves</button>
+                <button class="tool-btn" data-sv-until="watch" type="button" aria-pressed="false">word changes</button>
+                <label class="sv-check"><input type="checkbox" data-sv="break-warn"><span>Pause on warning</span></label>
+              </div>
+            </details>
+          </div>
+          <div class="sv-tabs">
+            <button class="tool-btn" data-sv-view="memory" type="button" aria-pressed="true" aria-controls="sv-view-memory">Memory</button>
+            <button class="tool-btn" data-sv-view="map" type="button" aria-pressed="false" aria-controls="sv-view-map">Memory space</button>
+            <button class="tool-btn" data-sv-view="frames" type="button" aria-pressed="false" aria-controls="sv-view-frames">Call stack</button>
+            <button class="tool-btn" data-sv-view="activity" type="button" aria-pressed="false" aria-controls="sv-view-activity">Activity</button>
+          </div>
+          <div class="sv-status" data-sv="status"></div>
+          <div class="sv-workspaces">
+          <section class="sv-workspace" id="sv-view-memory" data-sv-panel="memory">
+          <div class="sv-toolbar">
+            <label class="sv-field"><span>Region</span><select data-sv="segment"></select></label>
+            <span class="sv-navigation">
+            <label class="sv-field"><span>Address</span><input data-sv="goto" type="text" spellcheck="false" placeholder="0x7fffeffc" autocomplete="off"></label>
+            <button class="tool-btn" data-sv="goto-button" type="button">Go to</button>
             </span>
-            <label class="sv-check"><input type="checkbox" data-sv="break-warn"><span>Pause on warning</span></label>
-            <span class="sv-exec-state" data-sv="exec-state"></span>
+            <span class="sv-zoom">
+              <button class="tool-btn sv-icon" data-sv="zoom-out" type="button" aria-label="Zoom out">&minus;</button>
+              <input type="range" min="0" max="4" step="1" value="2" data-sv="zoom" aria-label="Zoom">
+              <button class="tool-btn sv-icon" data-sv="zoom-in" type="button" aria-label="Zoom in">+</button>
+              <span class="sv-zoom-label" data-sv="zoom-label">Words</span>
+            </span>
+            <label class="sv-check"><input type="checkbox" data-sv="follow" checked><span>Follow $sp</span></label>
+            <label class="sv-check"><input type="checkbox" data-sv="hex" checked><span>Hex values</span></label>
+            <label class="sv-check"><input type="checkbox" data-sv="high-top" checked><span>High addresses on top</span></label>
           </div>
           <div class="sv-main">
+            <div class="sv-detail-pane">
+              <canvas data-sv="detail" tabindex="0" role="img" aria-label="Memory window: use the arrow keys to scroll and plus or minus to zoom"></canvas>
+              <div class="sv-hint" data-sv="hint">Wheel scrolls &middot; Ctrl+wheel zooms &middot; click inspects a word &middot; double-click follows it as a pointer</div>
+            </div>
+          </div>
+          </section>
+          <section class="sv-workspace" id="sv-view-map" data-sv-panel="map" hidden>
+          <div class="sv-map-view">
             <div class="sv-map-pane">
               <div class="sv-pane-label">Memory space</div>
               <canvas data-sv="map" role="img" aria-label="Map of the address space with the current stack pointer"></canvas>
             </div>
-            <div class="sv-detail-pane">
-              <canvas data-sv="detail" tabindex="0" role="img" aria-label="Memory window: use the arrow keys to scroll and plus or minus to zoom"></canvas>
-              <div class="sv-status" data-sv="status"></div>
-              <div class="sv-hint" data-sv="hint">Wheel scrolls &middot; Ctrl+wheel zooms &middot; click inspects a word &middot; double-click follows it as a pointer</div>
-            </div>
-            <div class="sv-side">
-              <div class="sv-card sv-inspector">
-                <h4>Word inspector</h4>
-                <pre class="sv-decode" data-sv="decode">Connect the tool and run a program, then click any word.</pre>
-              </div>
-              <div class="sv-card sv-frames">
-                <h4>Call stack</h4>
-                <div data-sv="frames"><div class="sv-empty">No active frames.</div></div>
-              </div>
-            </div>
-          </div>
-          <div class="sv-bottom">
           <div class="sv-readout">
             <div class="sv-pane-label">Vital signs</div>
             <dl class="sv-vitals" data-sv="vitals"></dl>
             <div class="sv-marks" data-sv="marks"></div>
           </div>
+          </div>
+          </section>
+          <section class="sv-workspace" id="sv-view-frames" data-sv-panel="frames" hidden>
+            <div class="sv-card sv-inspector">
+              <h4>Word inspector</h4>
+              <pre class="sv-decode" data-sv="decode">Connect the tool and run a program, then click any word.</pre>
+            </div>
+            <div class="sv-card sv-frames">
+              <h4>Call stack</h4>
+              <div data-sv="frames"><div class="sv-empty">No active frames.</div></div>
+            </div>
+          </section>
+          <section class="sv-workspace" id="sv-view-activity" data-sv-panel="activity" hidden>
+          <div class="sv-bottom">
           <div class="sv-spark-pane">
             <div class="sv-pane-label">Stack depth over time</div>
             <canvas data-sv="spark" role="img" aria-label="Stack depth over time"></canvas>
@@ -431,8 +411,9 @@
             <div class="sv-log" data-sv="log"></div>
           </div>
           </div>
+          </section>
+          </div>
           <div class="sv-footer">
-            <div class="ctrl">Tool Control</div>
             <button class="tool-btn" data-sv="reset" type="button">Reset</button>
             <button class="tool-btn" data-sv="help" type="button">Help</button>
             <button class="tool-btn" data-sv="close" type="button">Close</button>
@@ -480,6 +461,16 @@
             "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
           })[character]);
 
+      const viewButtons = [...root.querySelectorAll("[data-sv-view]")];
+      const panels = [...root.querySelectorAll("[data-sv-panel]")];
+      const inspector = root.querySelector(".sv-inspector");
+      const memoryPane = root.querySelector(".sv-main");
+      const framesPane = root.querySelector("[data-sv-panel='frames']");
+      let activeView = "memory";
+      let compactLayout = false;
+      let detailHeight = 320;
+      let frameMarkup = "";
+      let marksMarkup = "";
       let connected = false;
       let latestSnapshot = null;
       let lastRuntimeRevision = null;
@@ -492,6 +483,7 @@
       let frameSeq = 0;
       let narration = [];
       let narrationSeq = 0;
+      let narrationEpoch = 0;
       let spSamples = [];
       let deepestSp = null;
       let warnCount = 0;
@@ -501,6 +493,8 @@
       let trackedFp = null;
       let trackedRa = null;
       let trackedPc = null;
+      let pendingTransfer = null;
+      let observerCallTarget = null;
 
       let zoomIndex = 2;
       let viewTopAddress = null;
@@ -530,6 +524,7 @@
       let armedBreakpoint = null;
       let pauseOnWarning = false;
       let watchAddress = null;
+      let watchedValue = 0;
       let pendingStepOver = false;
       let observerSp = null;
       let releaseObservers = null;
@@ -557,6 +552,7 @@
       }
 
       function readWord(address) {
+        if (typeof ctx.engine?.readRawWord === "function") return ctx.engine.readRawWord(wordAddress(address)) | 0;
         const words = memoryWords();
         if (!words) return 0;
         return (words.get(address >>> 0) ?? 0) | 0;
@@ -609,40 +605,44 @@
         const stackBase = (map.stackBase ?? map.stackPointer ?? 0x7ffffffc) >>> 0;
         const stackPointer = (map.stackPointer ?? stackBase) >>> 0;
 
-        const heapBytes = Number(ctx.engine?.reservedHeapMappedBytes);
-        const heapBreak = heapBase + (Number.isFinite(heapBytes) && heapBytes > 0 ? heapBytes : 0);
-        const heapEnd = Math.max(heapBreak, heapBase + 0x1000);
+        const stackEnd = stackBase + 4;
+        const heapEnd = Math.min(stackEnd, Math.max(heapBase, Number(ctx.engine?.heapPointer) || heapBase));
+        const stackFloor = Math.max(heapEnd, stackEnd - 0x400000);
+        const observed = [currentSp(), deepestSp, stackPointer]
+          .filter((address) => address != null && address >= stackFloor && address < stackEnd);
+        const stackStart = Math.max(stackFloor, Math.min(stackPointer, ...observed));
+        const stackTop = Math.min(stackEnd, Math.max(stackStart + 4, stackPointer + 4));
+        const dataStart = Math.min((map.dataSegmentBase ?? externBase) >>> 0, dataBase, externBase);
+        const textEnd = [dataStart, kernelTextBase, kernelDataBase, mmioBase]
+          .filter((start) => start > textBase).reduce((end, start) => Math.min(end, start), 0x100000000);
+        const userDataEnd = textBase > dataStart ? textBase : kernelTextBase;
+        const mmioEnd = mmioBase < 0x10000
+          ? 2 ** Math.ceil(Math.log2(mmioBase + 1))
+          : Math.min(0x100000000, mmioBase + 0x10000);
 
-        // The visible stack band follows how deep the program has actually gone.
-        // It has to stop exactly at that address: padding the band downwards drew
-        // half a kilobyte of never-touched memory as stack and pushed the $sp
-        // marker to the middle of the band, which reads as an already-deep stack.
-        // Everything below $sp is free, so the free band runs right up to it.
-        const observed = [currentSp(), deepestSp, stackPointer].filter((value) => Number.isFinite(value));
-        const deepest = observed.length ? Math.min(...observed.map((value) => value >>> 0)) : stackPointer;
-        const stackStart = Math.max(heapEnd, deepest) >>> 0;
-        // MARS parks $sp a page below the top of the segment and keeps that page
-        // for program arguments. Folding it into the stack band made the frames a
-        // 1% sliver of a band that was 99% untouched argument space, so it gets
-        // its own thin band and the stack band ends where the stack really starts.
-        const stackTop = Math.max(stackStart + 4, (stackPointer + 4) >>> 0) >>> 0;
-        const argumentsTop = (stackBase + 4) >>> 0;
-
-        // No hand-tuned weights: every band is measured from its own address
-        // range, so two bands of the same size are always the same height.
-        return [
-          { id: "reserved", label: "reserved", start: 0, end: textBase },
-          { id: "text", label: ".text", start: textBase, end: externBase },
-          { id: "extern", label: ".extern / $gp", start: externBase, end: dataBase },
-          { id: "data", label: ".data", start: dataBase, end: heapBase },
+        const regions = [
+          { id: "text", label: ".text", start: textBase, end: textEnd },
+          { id: "extern", label: ".extern", start: externBase, end: externBase < dataBase ? dataBase : heapBase },
+          { id: "data", label: ".data", start: dataBase, end: dataBase < externBase ? externBase : heapBase },
           { id: "heap", label: "heap", start: heapBase, end: heapEnd },
           { id: "free", label: "free space", start: heapEnd, end: stackStart },
           { id: "stack", label: "stack", start: stackStart, end: stackTop },
-          { id: "args", label: "program arguments", start: stackTop, end: argumentsTop },
+          { id: "args", label: "Stack headroom", start: stackTop, end: stackEnd },
+          { id: "free-upper", label: "free space", start: stackEnd, end: userDataEnd },
           { id: "ktext", label: ".ktext", start: kernelTextBase, end: kernelDataBase },
           { id: "kdata", label: ".kdata", start: kernelDataBase, end: mmioBase },
-          { id: "mmio", label: "MMIO", start: mmioBase, end: Math.min(0x100000000, mmioBase + 0x10000) }
-        ].filter((segment) => segment.end > segment.start);
+          { id: "mmio", label: "MMIO", start: mmioBase, end: mmioEnd }
+        ].filter(({ start, end }) => end > start).sort((a, b) => a.start - b.start);
+        const segments = [];
+        let cursor = 0;
+        for (const region of regions) {
+          if (region.start > cursor) segments.push({ id: `reserved-${cursor}`, label: "reserved", start: cursor, end: region.start });
+          const start = Math.max(cursor, region.start);
+          if (region.end > start) segments.push({ ...region, start });
+          cursor = Math.max(cursor, region.end);
+        }
+        if (cursor < 0x100000000) segments.push({ id: `reserved-${cursor}`, label: "reserved", start: cursor, end: 0x100000000 });
+        return segments;
       }
 
       function segmentAt(address, segments = buildSegments()) {
@@ -652,13 +652,13 @@
 
       function isStackAddress(address, segments = buildSegments()) {
         const map = memoryMap();
-        const stackBase = (map.stackBase ?? map.stackPointer ?? 0x7ffffffc) >>> 0;
-        const addr = address >>> 0;
-        if (addr > stackBase) return false;
-        const segment = segmentAt(addr, segments);
-        // The argument page sits inside the stack segment even though the frames
-        // never reach it, so callers that ask "is this stack memory?" still say yes.
-        return segment?.id === "stack" || segment?.id === "free" || segment?.id === "args";
+        const stackEnd = ((map.stackBase ?? map.stackPointer) >>> 0) + 4;
+        const address32 = address >>> 0;
+        const region = segmentAt(address32, segments);
+        if (region?.id === "stack" || region?.id === "args") return true;
+        // A write just below $sp is still a stack access, but a write in the
+        // middle of the user address space is not. MARS maps a 4 MiB stack.
+        return region?.id === "free" && address32 >= stackEnd - 0x400000 && address32 < stackEnd;
       }
 
       function labelFor(address) {
@@ -698,7 +698,14 @@
         trackedSp = readRegister(REG_SP) >>> 0;
         trackedFp = readRegister(REG_FP) >>> 0;
         trackedRa = readRegister(REG_RA) >>> 0;
-        trackedPc = currentPc();
+        trackedPc = (latestSnapshot?.pc ?? ctx.engine?.pc ?? 0) >>> 0;
+        pendingTransfer = null;
+        observerCallTarget = null;
+        densityCache = null;
+        if (isStackAddress(trackedSp)) {
+          deepestSp = trackedSp;
+          spSamples.push({ step: Number(latestSnapshot?.steps) || 0, sp: trackedSp });
+        }
         selectedFrameId = null;
         renderedNarrationSeq = -1;
         renderedNarrationHead = null;
@@ -713,17 +720,18 @@
           cells: new Map(),
           framesPushed: 0,
           framesPopped: [],
-          frameFlags: new Map(),
           frameSeq,
           narrationAdded: 0,
           narrationShifted: [],
           narrationSeq,
+          narrationEpoch,
           spAdded: 0,
           spShifted: [],
           trackedSp,
           trackedFp,
           trackedRa,
           trackedPc,
+          pendingTransfer,
           deepestSp,
           warnCount,
           lastWriteAddress
@@ -736,33 +744,25 @@
           if (previous == null) cells.delete(address);
           else cells.set(address, previous);
         });
-        if (delta.narrationAdded > 0) narration.length = Math.max(0, narration.length - delta.narrationAdded);
-        if (delta.narrationShifted.length) narration.unshift(...delta.narrationShifted);
-        narrationSeq = delta.narrationSeq;
+        if (delta.narrationEpoch === narrationEpoch) {
+          narration.length = Math.max(0, narration.length - delta.narrationAdded);
+          narration.unshift(...delta.narrationShifted);
+          narrationSeq = delta.narrationSeq;
+          warnCount = delta.warnCount;
+        }
         if (delta.spAdded > 0) spSamples.length = Math.max(0, spSamples.length - delta.spAdded);
         if (delta.spShifted.length) spSamples.unshift(...delta.spShifted);
         if (delta.framesPushed > 0) frames.length = Math.max(0, frames.length - delta.framesPushed);
         if (delta.framesPopped.length) frames.push(...delta.framesPopped);
-        delta.frameFlags.forEach((flags, id) => {
-          const frame = frames.find((entry) => entry.id === id);
-          if (!frame) return;
-          frame.raSaved = flags.raSaved;
-          frame.minSp = flags.minSp;
-        });
         frameSeq = delta.frameSeq;
         trackedSp = delta.trackedSp;
         trackedFp = delta.trackedFp;
         trackedRa = delta.trackedRa;
         trackedPc = delta.trackedPc;
+        pendingTransfer = delta.pendingTransfer;
         deepestSp = delta.deepestSp;
-        warnCount = delta.warnCount;
         lastWriteAddress = delta.lastWriteAddress;
         renderedNarrationSeq = -1;
-      }
-
-      function rememberFrameFlags(delta, frame) {
-        if (!delta || !frame || delta.frameFlags.has(frame.id)) return;
-        delta.frameFlags.set(frame.id, { raSaved: frame.raSaved, minSp: frame.minSp });
       }
 
       function recordCell(delta, address, entry) {
@@ -778,7 +778,8 @@
         if (delta) delta.narrationAdded += 1;
         while (narration.length > MAX_NARRATION) {
           const removed = narration.shift();
-          if (delta) delta.narrationShifted.unshift(removed);
+          if (delta && removed.seq <= delta.narrationSeq) delta.narrationShifted.push(removed);
+          else if (delta) delta.narrationAdded -= 1;
         }
         if (entry.kind === "warn") {
           warnCount += 1;
@@ -791,7 +792,7 @@
         if (delta) delta.spAdded += 1;
         while (spSamples.length > MAX_SP_SAMPLES) {
           const removed = spSamples.shift();
-          if (delta) delta.spShifted.unshift(removed);
+          if (delta) delta.spShifted.push(removed);
         }
       }
 
@@ -807,10 +808,13 @@
 
       function frameRegions() {
         const sp = currentSp();
+        const segments = buildSegments();
         return frames.map((frame, index) => {
-          const high = (frame.spAtCall - 4) >>> 0;
-          const low = (index + 1 < frames.length ? frames[index + 1].spAtCall : sp) >>> 0;
-          return { frame, low, high, index };
+          const upper = frame.spAtCall;
+          const lower = index + 1 < frames.length ? frames[index + 1].spAtCall : sp;
+          const low = Math.min(upper, lower);
+          const valid = isStackAddress(upper, segments) && isStackAddress(lower, segments);
+          return { frame, low, high: upper - 4, size: valid ? upper - low : null };
         });
       }
 
@@ -819,7 +823,7 @@
         const regions = frameRegions();
         for (let index = regions.length - 1; index >= 0; index -= 1) {
           const region = regions[index];
-          if (addr >= region.low && addr <= region.high) return region;
+          if (region.size >= 4 && addr >= region.low && addr <= region.high) return region;
         }
         return null;
       }
@@ -838,6 +842,16 @@
         return null;
       }
 
+      function stackPointerWarning(sp, segments = buildSegments()) {
+        if (sp % 4 !== 0) {
+          return t("$sp is no longer word aligned ({address}); MIPS loads and stores of words will trap.", {
+            address: toHex32(sp)
+          });
+        }
+        if (!isStackAddress(sp, segments)) return t("$sp is outside the stack region.");
+        return null;
+      }
+
       function handleInstructionEvent(event, retainHistory) {
         const step = event.stepAfter | 0;
         const delta = retainHistory ? history.ensure(step, createDelta) : null;
@@ -848,22 +862,23 @@
         const fpChange = findRegisterChange(event.registerChanges, REG_FP);
         const raChange = findRegisterChange(event.registerChanges, REG_RA);
         const accesses = Array.isArray(event.memoryAccesses) ? event.memoryAccesses : [];
-        const segments = spChange || accesses.length ? buildSegments() : null;
+        const segments = spChange || accesses.length || deepestSp == null ? buildSegments() : null;
         const spBefore = Number.isFinite(trackedSp) ? trackedSp >>> 0 : (spChange ? spChange.before >>> 0 : currentSp());
 
         if (spChange) trackedSp = spChange.after >>> 0;
         if (fpChange) trackedFp = fpChange.after >>> 0;
         if (raChange) trackedRa = raChange.after >>> 0;
+        else if (!Number.isFinite(trackedRa)) trackedRa = readRegister(REG_RA) >>> 0;
         trackedPc = event.pcAfter >>> 0;
 
         const sp = currentSp();
-        if (deepestSp == null || sp < deepestSp) deepestSp = sp;
+        if ((spChange || deepestSp == null) && isStackAddress(sp, segments) && (deepestSp == null || sp < deepestSp)) deepestSp = sp;
 
         // 1. Stack pointer movement: the frame being reserved or released.
         if (spChange && spChange.after !== spChange.before) {
-          pushSpSample(delta, step, sp);
-          const moved = (spChange.after | 0) - (spChange.before | 0);
-          const isStack = isStackAddress(sp, segments) || isStackAddress(spBefore, segments);
+          const moved = sp - spBefore;
+          const isStack = isStackAddress(sp, segments) && isStackAddress(spBefore, segments);
+          if (isStack) pushSpSample(delta, step, sp);
           if (isStack) {
             pushNarration(delta, {
               step,
@@ -873,41 +888,21 @@
                 ? t("{instruction} — reserved {bytes} bytes ({words} word(s)): $sp {from} → {to}", {
                     instruction: event.executedInstruction || "$sp change",
                     bytes: Math.abs(moved),
-                    words: Math.round(Math.abs(moved) / 4),
+                    words: Math.abs(moved) / 4,
                     from: toHex32(spChange.before),
                     to: toHex32(spChange.after)
                   })
                 : t("{instruction} — released {bytes} bytes ({words} word(s)): $sp {from} → {to}", {
                     instruction: event.executedInstruction || "$sp change",
                     bytes: Math.abs(moved),
-                    words: Math.round(Math.abs(moved) / 4),
+                    words: Math.abs(moved) / 4,
                     from: toHex32(spChange.before),
                     to: toHex32(spChange.after)
                   })
             });
           }
-          if (sp % 4 !== 0) {
-            pushNarration(delta, {
-              step,
-              kind: "warn",
-              address: sp,
-              text: t("$sp is no longer word aligned ({address}); MIPS loads and stores of words will trap.", {
-                address: toHex32(sp)
-              })
-            });
-          }
-          const map = memoryMap();
-          const stackBase = (map.stackBase ?? 0x7ffffffc) >>> 0;
-          if (sp > stackBase) {
-            pushNarration(delta, {
-              step,
-              kind: "warn",
-              address: sp,
-              text: t("$sp moved above the bottom of the stack ({address}): more was released than reserved.", {
-                address: toHex32(stackBase)
-              })
-            });
-          }
+          const warning = stackPointerWarning(sp, segments);
+          if (warning) pushNarration(delta, { step, kind: "warn", address: sp, text: warning });
         }
 
         // 2. Memory traffic that touches the stack.
@@ -917,44 +912,48 @@
 
         accesses.forEach((access) => {
           const address = access.address >>> 0;
-          const wordAddress = address & ~0x3;
-          const inStack = isStackAddress(wordAddress, segments);
+          const firstWord = wordAddress(address);
+          const size = Math.max(1, access.size || 1);
+          const lastWord = wordAddress(address + size - 1);
+          const inStack = isStackAddress(firstWord, segments);
+          const accessValue = size <= 4 && (access.accessCount ?? 1) === 1
+            ? toHex32(access.value)
+            : t("{bytes} B", { bytes: size });
 
           if (access.kind === "write") {
-            lastWriteAddress = wordAddress;
-            recordCell(delta, wordAddress, {
-              step,
-              pc: event.executedAddress >>> 0,
-              instruction: event.executedInstruction || "",
-              register: storedRegister,
-              base: memoryOperand?.base ?? null,
-              frameId: activeFrame()?.id ?? 0,
-              stack: inStack
-            });
+            lastWriteAddress = lastWord;
+            const count = Math.min(MAX_CELLS, ((lastWord - firstWord) >>> 0) / 4 + 1);
+            for (let index = 0; index < count; index += 1) {
+              const word = (firstWord + index * 4) >>> 0;
+              recordCell(delta, word, {
+                step,
+                pc: event.executedAddress >>> 0,
+                instruction: event.executedInstruction || "",
+                register: storedRegister,
+                base: memoryOperand?.base ?? null,
+                frameId: activeFrame()?.id ?? 0,
+                stack: isStackAddress(word, segments)
+              });
+            }
             if (!inStack) return;
 
-            const frame = activeFrame();
-            if (frame && storedRegister === "$ra") {
-              rememberFrameFlags(delta, frame);
-              frame.raSaved = true;
-            }
             pushNarration(delta, {
               step,
               kind: "store",
-              address: wordAddress,
+              address: firstWord,
               text: t("{instruction} — stored {source} = {value} at {address}{position}", {
                 instruction: event.executedInstruction || parsed.op,
                 source: storedRegister || t("a value"),
-                value: toHex32(access.value),
+                value: accessValue,
                 address: toHex32(address),
-                position: describeSpOffset(wordAddress) ? ` (${describeSpOffset(wordAddress)})` : ""
+                position: describeSpOffset(firstWord) ? ` (${describeSpOffset(firstWord)})` : ""
               })
             });
             if (address < sp) {
               pushNarration(delta, {
                 step,
                 kind: "warn",
-                address: wordAddress,
+                address: firstWord,
                 text: t("Wrote {address} below $sp ({sp}): that area is not reserved and any call may overwrite it.", {
                   address: toHex32(address),
                   sp: toHex32(sp)
@@ -965,35 +964,24 @@
           }
 
           if (!inStack) return;
-          const known = cells.has(wordAddress);
           pushNarration(delta, {
             step,
             kind: "load",
-            address: wordAddress,
+            address: firstWord,
             text: t("{instruction} — loaded {value} from {address}{position} into {target}", {
               instruction: event.executedInstruction || parsed.op,
-              value: toHex32(access.value),
+              value: accessValue,
               address: toHex32(address),
-              position: describeSpOffset(wordAddress) ? ` (${describeSpOffset(wordAddress)})` : "",
+              position: describeSpOffset(firstWord) ? ` (${describeSpOffset(firstWord)})` : "",
               target: loadedRegister || t("a register")
             })
           });
-          if (!known && address >= sp) {
-            pushNarration(delta, {
-              step,
-              kind: "warn",
-              address: wordAddress,
-              text: t("Read {address} before anything was stored there: the value is leftover stack data.", {
-                address: toHex32(address)
-              })
-            });
-          }
           if (address < sp) {
             pushNarration(delta, {
               step,
               kind: "warn",
-              address: wordAddress,
-              text: t("Read {address} below $sp ({sp}): that word belongs to a frame that was already released.", {
+              address: firstWord,
+              text: t("Read {address} below $sp ({sp}): this address is outside the currently reserved stack.", {
                 address: toHex32(address),
                 sp: toHex32(sp)
               })
@@ -1001,14 +989,34 @@
           }
         });
 
-        // 3. Returns first, so a call in the same step opens on top of the caller.
-        const target = Number.isFinite(event.controlTransferTarget) ? event.controlTransferTarget >>> 0 : null;
-        const isCall = parsed.op === "jal" || parsed.op === "jalr"
-          || (raChange != null && target != null && raChange.after !== raChange.before);
-        // Only the jump family can return; a conditional branch that happens to
-        // land on a return address is still an ordinary branch.
-        const isJump = parsed.op === "j" || parsed.op === "jr" || parsed.op === "jalr" || parsed.op === "jal";
+        const previousTransfer = pendingTransfer;
+        pendingTransfer = null;
+        if (!event.exception && !event.interrupt) {
+          if (previousTransfer && (event.pcAfter >>> 0) === previousTransfer.target) {
+            applyTransfer(previousTransfer, delta, step, sp);
+          }
+          if (Number.isFinite(event.controlTransferTarget)) {
+            const link = linkRegister(parsed.op, parsed.operands);
+            const transfer = {
+              op: parsed.op,
+              target: event.controlTransferTarget >>> 0,
+              returnAddress: link === REG_RA ? trackedRa : (findRegisterChange(event.registerChanges, link)?.after
+                ?? ((event.executedAddress + (event.controlTransferPending ? 8 : 4)) >>> 0)),
+              link,
+              instruction: event.executedInstruction,
+              callSite: event.executedAddress >>> 0
+            };
+            if (event.controlTransferPending) pendingTransfer = transfer;
+            else applyTransfer(transfer, delta, step, sp);
+          }
+        }
 
+      }
+
+      function applyTransfer(transfer, delta, step, sp) {
+        const { op, target, link, instruction, callSite } = transfer;
+        const isCall = link > 0;
+        const isJump = op === "j" || op === "jr" || op === "jalr";
         if (target != null && isJump && !isCall && frames.length) {
           for (let index = frames.length - 1; index >= 0; index -= 1) {
             if (frames[index].returnAddress !== target) continue;
@@ -1032,7 +1040,7 @@
               kind: "return",
               address: sp,
               text: t("{instruction} — returned from {name} to {address}; {count} frame(s) closed, depth is now {depth}", {
-                instruction: event.executedInstruction || "return",
+                instruction: instruction || "return",
                 name: returned.name,
                 address: toHex32(target),
                 count: removed.length,
@@ -1043,35 +1051,16 @@
           }
         }
 
-        if (isCall && target != null) {
-          // A recursive call from the same site leaves $ra unchanged, so the live
-          // register is the only reliable source for the return address.
-          const returnAddress = (raChange
-            ? raChange.after
-            : (Number.isFinite(trackedRa) ? trackedRa : readRegister(REG_RA))) >>> 0;
-          const parent = activeFrame();
-          if (parent && parent.raSaved !== true) {
-            pushNarration(delta, {
-              step,
-              kind: "warn",
-              address: sp,
-              text: t("{name} calls another function before saving $ra: its own return address is about to be lost.", {
-                name: parent.name
-              })
-            });
-          }
+        if (isCall) {
+          const returnAddress = transfer.returnAddress >>> 0;
           frameSeq += 1;
           frames.push({
             id: frameSeq,
             name: frameName(target),
             target,
-            callSite: event.executedAddress >>> 0,
+            callSite,
             returnAddress,
-            spAtCall: sp,
-            fpAtCall: currentFp(),
-            step,
-            minSp: sp,
-            raSaved: false
+            spAtCall: sp
           });
           if (delta) delta.framesPushed += 1;
           pushNarration(delta, {
@@ -1079,7 +1068,7 @@
             kind: "call",
             address: sp,
             text: t("{instruction} — called {name}; $ra = {ra}, $sp = {sp}, depth is now {depth}", {
-              instruction: event.executedInstruction || "call",
+              instruction: instruction || "call",
               name: frameName(target),
               ra: toHex32(returnAddress),
               sp: toHex32(sp),
@@ -1098,11 +1087,6 @@
           }
         }
 
-        const frame = activeFrame();
-        if (frame && sp < frame.minSp) {
-          rememberFrameFlags(delta, frame);
-          frame.minSp = sp;
-        }
       }
 
       // --------------------------------------------------------- execution control
@@ -1150,11 +1134,15 @@
         const running = ctx.runtimeControls?.isRunning?.() === true;
         untilButtons.forEach((button, kind) => {
           button.setAttribute("aria-pressed", armedStop?.kind === kind ? "true" : "false");
+          button.disabled = !connected || latestSnapshot?.assembled !== true || latestSnapshot.halted
+            || (running && armedStop?.kind !== kind)
+            || (kind === "finish" && !activeFrame())
+            || (kind === "watch" && selectedAddress == null);
         });
         runButtons.forEach((button, kind) => {
           if (kind === "pause") button.disabled = !running;
-          else if (kind === "go") button.disabled = running;
-          else button.disabled = running;
+          else if (kind === "backstep") button.disabled = running || !(latestSnapshot?.backstepDepth > 0);
+          else button.disabled = running || latestSnapshot?.assembled !== true || latestSnapshot.halted;
         });
         if (armedStop) {
           execStateBox.className = "sv-exec-state is-armed";
@@ -1184,6 +1172,7 @@
         armedStop = null;
         pendingStepOver = false;
         queuedObserverStop = null;
+        observerCallTarget = null;
         if (!silent) updateExecState();
       }
 
@@ -1242,16 +1231,29 @@
               armAt(nextPc, message);
               return;
             }
-            if (!armedStop) return;
             const spNow = engine.registers ? engine.registers[REG_SP] >>> 0 : observerSp;
             const previousSp = observerSp;
             observerSp = spNow;
+            if (pauseOnWarning && spNow !== previousSp) {
+              const warning = stackPointerWarning(spNow);
+              if (warning) {
+                armAt(nextPc, warning);
+                return;
+              }
+            }
+            if (!armedStop) return;
             if (armedStop.kind === "call") {
-              const op = parseInstruction(detail?.executedInstruction).op;
-              if (op === "jal" || op === "jalr") {
-                armAt(nextPc, t("stopped at a call: {instruction}", {
-                  instruction: detail?.executedInstruction || op
-                }));
+              const priorTarget = observerCallTarget;
+              observerCallTarget = null;
+              if (detail.exception || detail.interrupt) return;
+              if (priorTarget != null && nextPc === priorTarget) {
+                armAt(nextPc, t("next call"));
+                return;
+              }
+              const parsed = parseInstruction(detail.executedInstruction);
+              if (linkRegister(parsed.op, parsed.operands) && Number.isFinite(detail.controlTransferTarget)) {
+                if (detail.controlTransferPending) observerCallTarget = detail.controlTransferTarget >>> 0;
+                else armAt(nextPc, t("stopped at a call: {instruction}", { instruction: detail.executedInstruction }));
               }
               return;
             }
@@ -1265,25 +1267,34 @@
         }
 
         if (typeof engine.registerMemoryObserver === "function") {
-          const map = memoryMap();
-          const stackBase = (map.stackBase ?? 0x7ffffffc) >>> 0;
           disposers.push(engine.registerMemoryObserver({
             start: 0,
-            end: stackBase,
+            end: 0xffffffff,
+            onRead(access) {
+              const sp = engine.registers[REG_SP] >>> 0;
+              if (!queuedObserverStop && pauseOnWarning && access.address < sp && isStackAddress(access.address)) {
+                queuedObserverStop = t("Read {address} below $sp ({sp}): this address is outside the currently reserved stack.", {
+                  address: toHex32(access.address), sp: toHex32(sp)
+                });
+              }
+            },
             onWrite(access) {
               if (queuedObserverStop) return;
-              const wordAddress = access.address & ~0x3;
-              if (armedStop?.kind === "watch" && wordAddress === (watchAddress >>> 0)) {
-                queuedObserverStop = t("{address} was written with {value}", {
-                  address: toHex32(access.address),
-                  value: toHex32(access.value)
-                });
-                return;
+              const firstWord = wordAddress(access.address);
+              const lastByte = access.address + access.size - 1;
+              if (armedStop?.kind === "watch" && access.address <= watchAddress + 3 && lastByte >= watchAddress) {
+                const value = readWord(watchAddress);
+                if (value !== watchedValue) {
+                  queuedObserverStop = t("{address} changed from {before} to {after}", {
+                    address: toHex32(watchAddress), before: toHex32(watchedValue), after: toHex32(value)
+                  });
+                  return;
+                }
               }
               // Same rule as the narrated diagnostic, checked early enough to stop
               // the program on the offending instruction.
               if (!pauseOnWarning) return;
-              if (access.address < (engine.registers[REG_SP] >>> 0) && isStackAddress(wordAddress)) {
+              if (access.address < (engine.registers[REG_SP] >>> 0) && isStackAddress(firstWord)) {
                 queuedObserverStop = t("wrote {address} below $sp", { address: toHex32(access.address) });
               }
             }
@@ -1344,7 +1355,8 @@
             updateExecState();
             return;
           }
-          watchAddress = selectedAddress >>> 0;
+          watchAddress = wordAddress(selectedAddress);
+          watchedValue = readWord(watchAddress);
           armedStop = { kind, label: armedLabel(kind, { address: watchAddress }) };
           installObservers();
           updateExecState();
@@ -1375,6 +1387,16 @@
       // opened, so the follow-up run is scheduled outside the command that ran it.
       function resolveStepOver() {
         if (!pendingStepOver) return;
+        if (pendingTransfer?.link > 0 && !pendingResume) {
+          pendingResume = true;
+          window.setTimeout(() => {
+            pendingResume = false;
+            if (pendingStepOver) ctx.runtimeControls?.step?.();
+            keepToolVisible();
+          }, 0);
+          return;
+        }
+        if (pendingResume) return;
         pendingStepOver = false;
         const opened = armedStop && frames.length > (armedStop.depth | 0) ? activeFrame() : null;
         if (!opened) {
@@ -1394,22 +1416,37 @@
         pendingResume = true;
         window.setTimeout(() => {
           pendingResume = false;
-          if (armedStop?.kind === "over") ctx.runtimeControls?.go?.(); keepToolVisible();
+          if (armedStop?.kind === "over") ctx.runtimeControls?.go?.();
+          keepToolVisible();
         }, 0);
       }
 
       // Called once the runtime has actually come to a stop.
       function settleAfterStop() {
+        if (pendingResume || ctx.runtimeControls?.isRunning?.() === true) return;
         if (armedBreakpoint && (ctx.engine?.pc >>> 0) === armedBreakpoint.address) {
+          const frameStillOpen = armedStop?.frameId != null && frames.some(({ id }) => id === armedStop.frameId);
+          if (frameStillOpen && armedBreakpoint.owned && !latestSnapshot?.halted) {
+            const condition = armedStop;
+            pendingResume = true;
+            window.setTimeout(() => {
+              pendingResume = false;
+              if (armedStop === condition) {
+                ctx.runtimeControls?.go?.();
+                keepToolVisible();
+              }
+            }, 0);
+            return;
+          }
           clearArmedBreakpoint();
           armedStop = null;
-          const message = pendingStopMessage || t("reached the armed condition");
+          const message = frameStillOpen ? t("execution stopped before the condition was reached")
+            : pendingStopMessage || t("reached the armed condition");
           pendingStopMessage = "";
           reportStop(message);
           return;
         }
-        if (pendingResume) return;
-        if (armedStop && ctx.runtimeControls?.isRunning?.() !== true && !pendingStepOver) {
+        if ((armedStop || armedBreakpoint) && !pendingStepOver) {
           // The program halted or the user intervened before the condition held.
           cancelArmedStop(true);
           pendingStopMessage = "";
@@ -1474,7 +1511,7 @@
 
       function computeDensity(segments, buckets) {
         const now = performance.now();
-        const key = `${buckets}:${segments.map((segment) => segment.id).join(",")}`;
+        const key = `${buckets}:${segments.map(({ id, start, end }) => `${id}:${start}:${end}`).join(",")}`;
         // Both exits hand back the whole record: returning just the bucket array
         // on a cache hit left the caller without the per-segment totals.
         if (densityCache && now - densityStamp < DENSITY_REFRESH_MS && densityCache.key === key) {
@@ -1545,27 +1582,32 @@
         return 0.2 + 0.38 * Math.min(1, Math.log10(1 + share * 999) / 3);
       }
 
-      // A phone-sized strip cannot label ten bands, so it keeps the ones a program
-      // actually touches; the Region picker still reaches every segment.
-      const COMPACT_MAP_SEGMENTS = new Set(["text", "extern", "data", "heap", "stack", "mmio"]);
+      function mapYForAddress(band, address, highOnTop) {
+        const fraction = (address - band.segment.start) / (band.segment.end - band.segment.start);
+        const offset = Math.max(0, Math.min(1, fraction)) * (band.y1 - band.y0);
+        return highOnTop ? band.y1 - offset : band.y0 + offset;
+      }
+
+      function mapAddressAtY(band, y, highOnTop) {
+        const fraction = (highOnTop ? band.y1 - y : y - band.y0) / (band.y1 - band.y0);
+        const { start, end } = band.segment;
+        return Math.max(start, Math.min(end - 1, start + Math.floor((end - start) * fraction)));
+      }
 
       function renderMap() {
         const { context, width, height } = prepareCanvas(mapCanvas);
         const colors = themeColors();
-        const allSegments = buildSegments();
-        const segments = height < 120
-          ? allSegments.filter((segment) => COMPACT_MAP_SEGMENTS.has(segment.id))
-          : allSegments;
+        const segments = buildSegments();
         const usage = computeDensity(segments, 24);
         const density = usage.data;
         const sp = currentSp();
-        const fp = currentFp();
-        const pc = currentPc();
-        const gp = readRegister(REG_GP) >>> 0;
+        const map = memoryMap();
+        const initialSp = (map.stackPointer ?? map.stackBase) >>> 0;
         const level = ZOOM_LEVELS[zoomIndex];
         const viewSpan = level.bytesPerRow * visibleRowCount();
-        const viewLow = highTop ? ((viewTopAddress ?? 0) - viewSpan + level.bytesPerRow) >>> 0 : (viewTopAddress ?? 0) >>> 0;
-        const viewHigh = (viewLow + viewSpan) >>> 0;
+        const viewLow = highTop ? Math.max(0, (viewTopAddress ?? defaultViewAddress()) - viewSpan + level.bytesPerRow)
+          : (viewTopAddress ?? defaultViewAddress());
+        const viewHigh = Math.min(ADDRESS_SPACE_END, viewLow + viewSpan);
 
         context.font = "10px Consolas, 'Courier New', monospace";
         context.textBaseline = "middle";
@@ -1576,29 +1618,27 @@
 
         // Every band has to fit, however short the strip is on a phone: give each a
         // floor, then rescale the whole column back to the available height.
-        const minBand = Math.max(5, Math.min(18, Math.floor(height / Math.max(1, ordered.length))));
+        const minBand = Math.min(20, height / ordered.length);
         const shareTotal = ordered.reduce((sum, segment) => sum + bandShare(segment.end - segment.start), 0) || 1;
-        const rawHeights = ordered.map((segment) => Math.max(
-          minBand,
-          (bandShare(segment.end - segment.start) / shareTotal) * height
-        ));
-        const rawTotal = rawHeights.reduce((sum, value) => sum + value, 0) || 1;
-        const bandHeights = rawHeights.map((value) => (value * height) / rawTotal);
+        const remainingHeight = height - minBand * ordered.length;
+        const bandHeights = ordered.map((segment) =>
+          minBand + bandShare(segment.end - segment.start) / shareTotal * remainingHeight
+        );
+        const markerLaneWidth = 6;
+        const markerStart = width - MARKER_CHIPS.length * markerLaneWidth;
+        const stripX = markerStart - 13;
 
         ordered.forEach((segment, bandIndex) => {
           const y0 = cursor;
-          const y1 = Math.min(height, cursor + bandHeights[bandIndex]);
+          const y1 = bandIndex === ordered.length - 1 ? height : cursor + bandHeights[bandIndex];
           cursor = y1;
+          const band = { segment, y0, y1 };
           const bandHeight = y1 - y0;
           const index = segments.indexOf(segment);
           const color = SEGMENT_COLORS[segment.id] || colors.line;
 
           const span = segment.end - segment.start;
-          const yForAddress = (address) => {
-            const fraction = ((address >>> 0) - segment.start) / span;
-            const clamped = Math.max(0, Math.min(1, fraction));
-            return highTop ? y1 - clamped * (y1 - y0) : y0 + clamped * (y1 - y0);
-          };
+          const yForAddress = (address) => mapYForAddress(band, address, highTop);
 
           // A band the program never touches stays nearly transparent; one it
           // fills goes solid. Colour and height then answer different questions:
@@ -1609,16 +1649,16 @@
 
           // Inside the stack band, separate what the frames hold right now from the
           // ground the stack has given back: both are "stack", only one is live.
-          if (segment.id === "stack") {
-            const liveEdge = yForAddress(sp);
-            const peakEdge = Number.isFinite(deepestSp) ? yForAddress(deepestSp) : liveEdge;
-            const liveTop = Math.min(liveEdge, highTop ? y0 : y1);
-            context.fillStyle = withAlpha(color, Math.min(0.62, baseAlpha + 0.26));
-            context.fillRect(0, Math.min(liveTop, liveEdge), width, Math.abs(liveEdge - liveTop));
-            if (Math.abs(peakEdge - liveEdge) >= 1) {
-              context.fillStyle = withAlpha(color, Math.min(0.44, baseAlpha + 0.12));
-              context.fillRect(0, Math.min(peakEdge, liveEdge), width, Math.abs(peakEdge - liveEdge));
-            }
+          if (segment.id === "stack" && Number.isFinite(deepestSp)) {
+            const liveStart = sp >= segment.start && sp < initialSp ? sp : initialSp;
+            const fillStackRange = (low, high, alpha) => {
+              const a = yForAddress(low);
+              const b = yForAddress(high);
+              context.fillStyle = withAlpha(color, alpha);
+              context.fillRect(0, Math.min(a, b), width, Math.abs(b - a));
+            };
+            if (deepestSp < liveStart) fillStackRange(deepestSp, liveStart, 0.2);
+            if (liveStart < initialSp) fillStackRange(liveStart, initialSp, 0.45);
           }
 
           context.fillStyle = color;
@@ -1631,28 +1671,27 @@
 
           // Usage strip: where inside this segment the program actually keeps data.
           const buckets = density[index];
-          const stripX = width - 26;
           const bucketHeight = (y1 - y0) / buckets.length;
           for (let bucket = 0; bucket < buckets.length; bucket += 1) {
             if (buckets[bucket] <= 0) continue;
             const intensity = Math.min(1, 0.25 + Math.log10(1 + buckets[bucket]) / 2.4);
             const position = highTop ? buckets.length - 1 - bucket : bucket;
             context.fillStyle = withAlpha(color, intensity);
-            context.fillRect(stripX, y0 + position * bucketHeight, 22, Math.max(1, bucketHeight));
+            context.fillRect(stripX, y0 + position * bucketHeight, 10, Math.min(y1 - y0 - position * bucketHeight, Math.max(1, bucketHeight)));
           }
           context.strokeStyle = withAlpha(colors.line, 0.8);
-          context.strokeRect(stripX + 0.5, y0 + 0.5, 21, Math.max(1, y1 - y0 - 1));
+          context.strokeRect(stripX + 0.5, y0 + 0.5, 9, Math.max(1, y1 - y0 - 1));
 
           if (bandHeight >= 11) {
             context.fillStyle = colors.text;
-            context.fillText(t(segment.label), 8, y0 + Math.min(10, bandHeight / 2));
+            context.fillText(t(segment.label), 8, y0 + Math.min(10, bandHeight / 2), stripX - 12);
           }
           if (bandHeight >= 26) {
             // The start address and the span together let a reader confirm the
             // heights: a band twice as tall covers far more than twice the bytes,
             // because the axis is logarithmic, and the printed size says by how much.
             context.fillStyle = colors.faint;
-            context.fillText(`${toHex32(segment.start)}  ·  ${formatSpan(span)}`, 8, y0 + 22);
+            context.fillText(`${toHex32(segment.start)} · ${formatSpan(span)}`, 8, y0 + 22, stripX - 12);
           }
           // How much of this band the program has really written into. Without it
           // the density strip is the only clue, and it is nearly invisible.
@@ -1660,26 +1699,11 @@
             const occupancy = describeOccupancy(usage.touched[index] || 0, span);
             if (occupancy) {
               context.fillStyle = withAlpha(color, 0.95);
-              context.fillText(occupancy, 8, y0 + 34);
+              context.fillText(occupancy, 8, y0 + 34, stripX - 12);
             }
           }
 
-          mapBands.push({ segment, y0, y1 });
-
-          const markerFor = (address, text, markerColor) => {
-            const addr = address >>> 0;
-            if (addr < segment.start || addr >= segment.end) return;
-            const y = yForAddress(addr);
-            context.strokeStyle = markerColor;
-            context.lineWidth = 1.5;
-            context.beginPath();
-            context.moveTo(4, y);
-            context.lineTo(width - 28, y);
-            context.stroke();
-            context.lineWidth = 1;
-            context.fillStyle = markerColor;
-            context.fillText(text, width - 26 - context.measureText(text).width - 3, y - 5);
-          };
+          mapBands.push(band);
 
           // The high-water line only says something once the stack has retreated
           // from its deepest point; before that it sits under $sp and adds noise.
@@ -1690,18 +1714,10 @@
             context.strokeStyle = withAlpha(SEGMENT_COLORS.stack, 0.9);
             context.beginPath();
             context.moveTo(4, y);
-            context.lineTo(width - 28, y);
+            context.lineTo(stripX, y);
             context.stroke();
             context.restore();
-            const label = t("max");
-            context.fillStyle = withAlpha(SEGMENT_COLORS.stack, 0.9);
-            context.fillText(label, width - 26 - context.measureText(label).width - 3, y + 6);
           }
-
-          markerFor(pc, "pc", colors.accent);
-          markerFor(gp, "$gp", SEGMENT_COLORS.extern);
-          markerFor(fp, "$fp", SEGMENT_COLORS.text);
-          markerFor(sp, "$sp", SEGMENT_COLORS.stack);
 
           // Viewport indicator for the detail pane.
           const overlapLow = Math.max(segment.start, viewLow);
@@ -1711,9 +1727,22 @@
             const yB = yForAddress(highTop ? overlapLow : overlapHigh);
             context.strokeStyle = colors.accent;
             context.lineWidth = 2;
-            context.strokeRect(1, Math.min(yA, yB) - 1, width - 3, Math.max(3, Math.abs(yB - yA) + 2));
+            context.strokeRect(1, Math.min(yA, yB) - 1, markerStart - 2, Math.max(3, Math.abs(yB - yA) + 2));
             context.lineWidth = 1;
           }
+        });
+
+        // Separate lanes keep coincident addresses visible. The chips under the
+        // map give the name and exact address.
+        MARKER_CHIPS.forEach((chip, index) => {
+          const address = chip.read() >>> 0;
+          if (chip.id === "fp" && address === 0) return;
+          const band = mapBands.find(({ segment }) => address >= segment.start && address < segment.end);
+          if (!band) return;
+          const y = mapYForAddress(band, address, highTop);
+          const pixel = Math.max(Math.ceil(band.y0), Math.min(Math.floor(band.y1) - 2, Math.round(y) - 1));
+          context.fillStyle = chip.color();
+          context.fillRect(markerStart + index * markerLaneWidth, pixel, markerLaneWidth - 1, 2);
         });
       }
 
@@ -1736,8 +1765,11 @@
         const map = memoryMap();
         const base = (map.stackPointer ?? map.stackBase ?? 0x7fffeffc) >>> 0;
         const depths = spSamples.map((sample) => Math.max(0, base - (sample.sp >>> 0)));
-        const maxDepth = Math.max(16, ...depths);
-        const stepX = width / Math.max(1, depths.length - 1);
+        const peakDepth = Math.max(...depths);
+        const maxDepth = Math.max(16, peakDepth);
+        const firstStep = spSamples[0].step;
+        const lastStep = Math.max(firstStep + 1, spSamples.at(-1).step, Number(latestSnapshot?.steps) || 0);
+        const stepX = (index) => (width - 2) * (spSamples[index].step - firstStep) / (lastStep - firstStep);
         const headroom = 14;
         const depthY = (depth) => height - 2 - (depth / maxDepth) * (height - headroom);
 
@@ -1758,24 +1790,26 @@
 
         context.beginPath();
         context.moveTo(0, height - 1);
-        depths.forEach((depth, index) => context.lineTo(index * stepX, depthY(depth)));
-        context.lineTo(width, height - 1);
+        depths.forEach((depth, index) => context.lineTo(stepX(index), depthY(depth)));
+        context.lineTo(width - 1, depthY(depths.at(-1)));
+        context.lineTo(width - 1, height - 1);
         context.closePath();
         context.fillStyle = withAlpha(SEGMENT_COLORS.stack, 0.28);
         context.fill();
 
         context.beginPath();
         depths.forEach((depth, index) => {
-          const x = index * stepX;
+          const x = stepX(index);
           const y = depthY(depth);
           if (index === 0) context.moveTo(x, y);
           else context.lineTo(x, y);
         });
+        context.lineTo(width - 1, depthY(depths.at(-1)));
         context.strokeStyle = SEGMENT_COLORS.stack;
         context.stroke();
 
         // The peak is the number a reader is usually hunting for.
-        const peakY = Math.round(depthY(maxDepth)) + 0.5;
+        const peakY = Math.round(depthY(peakDepth)) + 0.5;
         context.save();
         context.setLineDash([3, 3]);
         context.strokeStyle = withAlpha(SEGMENT_COLORS.stack, 0.85);
@@ -1785,7 +1819,7 @@
         context.stroke();
         context.restore();
 
-        const summary = `${t("max {bytes} B", { bytes: maxDepth })}   ${t("now {bytes} B", { bytes: depths[depths.length - 1] })}`;
+        const summary = `${t("max {bytes} B", { bytes: peakDepth })}   ${t("now {bytes} B", { bytes: depths[depths.length - 1] })}`;
         context.fillStyle = colors.surface;
         context.fillRect(4, 2, context.measureText(summary).width + 6, 12);
         context.fillStyle = colors.muted;
@@ -1798,28 +1832,29 @@
       function blockGeometry(width, level) {
         const words = Math.max(1, level.bytesPerRow / 4);
         const startX = 96;
-        const available = Math.max(40, width - startX - 10);
-        return { words, startX, blockWidth: Math.max(3, Math.min(26, (available / words) - 1)) };
+        const available = Math.max(words * 2, width - startX - 4);
+        return { words, startX, blockWidth: Math.max(1, Math.min(26, (available / words) - 1)) };
       }
 
       function visibleRowCount() {
         const level = ZOOM_LEVELS[zoomIndex];
-        const height = detailCanvas.getBoundingClientRect().height || 320;
-        return Math.max(1, Math.floor((height - 20) / level.rowHeight));
+        const height = detailCanvas.getBoundingClientRect().height;
+        if (height > 0) detailHeight = Math.round(height);
+        return Math.max(1, Math.floor((detailHeight - 20) / level.rowHeight));
       }
 
       function rowAddress(index) {
         const level = ZOOM_LEVELS[zoomIndex];
         const top = (viewTopAddress ?? defaultViewAddress()) >>> 0;
         const offset = index * level.bytesPerRow;
-        return (highTop ? top - offset : top + offset) >>> 0;
+        return highTop ? top - offset : top + offset;
       }
 
       function defaultViewAddress() {
         const sp = currentSp();
         const level = ZOOM_LEVELS[zoomIndex];
         const half = Math.floor(visibleRowCount() / 2) * level.bytesPerRow;
-        return (highTop ? sp + half : Math.max(0, sp - half)) >>> 0;
+        return clampViewTop(highTop ? sp + half : sp - half, visibleRowCount(), level.bytesPerRow, highTop);
       }
 
       function centerView(address) {
@@ -1827,14 +1862,14 @@
         const rows = visibleRowCount();
         const aligned = (address >>> 0) - ((address >>> 0) % level.bytesPerRow);
         const half = Math.floor(rows / 2) * level.bytesPerRow;
-        viewTopAddress = (highTop ? aligned + half : Math.max(0, aligned - half)) >>> 0;
+        viewTopAddress = clampViewTop(highTop ? aligned + half : aligned - half, rows, level.bytesPerRow, highTop);
       }
 
       function scrollView(rows) {
         const level = ZOOM_LEVELS[zoomIndex];
         const offset = rows * level.bytesPerRow;
         const next = (viewTopAddress ?? defaultViewAddress()) + (highTop ? -offset : offset);
-        viewTopAddress = Math.max(0, Math.min(0xfffffffc, next)) >>> 0;
+        viewTopAddress = clampViewTop(next, visibleRowCount(), level.bytesPerRow, highTop);
         followSp = false;
         followCheck.checked = false;
       }
@@ -1848,7 +1883,7 @@
         const fp = currentFp();
         const regions = frameRegions();
         const rows = Math.max(1, Math.floor((height - 20) / level.rowHeight));
-        if (viewTopAddress == null) viewTopAddress = defaultViewAddress();
+        viewTopAddress = clampViewTop(viewTopAddress ?? defaultViewAddress(), rows, level.bytesPerRow, highTop);
 
         context.fillStyle = colors.surface;
         context.fillRect(0, 0, width, height);
@@ -1905,7 +1940,7 @@
             register: t("stored"),
             note: t("frame / meaning")
           };
-          columns.forEach((column) => context.fillText(headers[column.id] || "", column.x, 9));
+          columns.forEach((column) => context.fillText(headers[column.id] || "", column.x, 9, column.width));
         }
         context.strokeStyle = withAlpha(colors.line, 0.8);
         context.beginPath();
@@ -1942,9 +1977,9 @@
 
           const value = readWord(address);
           const cell = cells.get(address);
-          const region = regions.find((entry) => address >= entry.low && address <= entry.high);
-          const inStack = isStackAddress(address, segments);
-          const live = inStack && address >= sp;
+          const region = regions.find((entry) => entry.size >= 4 && address >= entry.low && address <= entry.high);
+          const inStack = rowSegment?.id === "stack";
+          const live = inStack && address >= sp && segmentAt(sp, segments)?.id === "stack";
 
           // Row background states: live frame, released area, plain memory.
           if (inStack) {
@@ -2005,7 +2040,7 @@
           const noteX = columnX("note");
           if (noteX != null) {
             context.fillStyle = colors.muted;
-            context.fillText(noteForAddress(address, region, cell, live, inStack, segments), noteX, middle);
+            context.fillText(noteForAddress(address, region, cell, live, inStack, segments), noteX, middle, Math.max(1, width - noteX - 42));
           }
 
           // Pointer markers on the right edge.
@@ -2048,9 +2083,10 @@
       }
 
       function drawWordBlock(context, colors, x, y, width, height, address, sp, segments, regions) {
-        const inStack = isStackAddress(address, segments);
-        const region = regions.find((entry) => address >= entry.low && address <= entry.high);
-        const live = inStack && address >= sp;
+        const segment = segmentAt(address, segments);
+        const inStack = segment?.id === "stack";
+        const region = regions.find((entry) => entry.size >= 4 && address >= entry.low && address <= entry.high);
+        const live = inStack && address >= sp && segmentAt(sp, segments)?.id === "stack";
         const present = hasWord(address);
         let color = colors.faint;
         let alpha = 0.12;
@@ -2060,12 +2096,9 @@
         } else if (inStack) {
           color = live ? SEGMENT_COLORS.stack : colors.faint;
           alpha = present ? 0.6 : 0.16;
-        } else {
-          const segment = segmentAt(address, segments);
-          if (segment) {
-            color = SEGMENT_COLORS[segment.id] || colors.line;
-            alpha = present ? 0.7 : 0.12;
-          }
+        } else if (segment) {
+          color = SEGMENT_COLORS[segment.id] || colors.line;
+          alpha = present ? 0.7 : 0.12;
         }
         context.fillStyle = withAlpha(color, alpha);
         context.fillRect(x, y, width, height);
@@ -2126,7 +2159,7 @@
       // ------------------------------------------------------------- side panels
 
       function describeWord(address) {
-        const addr = address >>> 0;
+        const addr = wordAddress(address);
         const value = readWord(addr);
         const segments = buildSegments();
         const segment = segmentAt(addr, segments);
@@ -2139,7 +2172,7 @@
         lines.push(`${t("Segment")}: ${segment ? t(segment.label) : t("unmapped")}`);
         if (region) {
           lines.push(`${t("Frame")}: #${region.frame.id} ${region.frame.name} (${toHex32(region.low)} … ${toHex32(region.high)})`);
-        } else if (isStackAddress(addr, segments) && addr < sp) {
+        } else if (segment?.id === "stack" && addr < sp) {
           lines.push(`${t("Frame")}: ${t("below $sp — released memory, contents are leftovers")}`);
         }
         lines.push("");
@@ -2155,8 +2188,8 @@
         const valueLabel = labelFor(value >>> 0);
         // "reserved" and "free space" are not real targets, so a value landing there
         // is a plain number rather than a pointer.
-        if (valueSegment && valueSegment.id !== "reserved" && valueSegment.id !== "free") {
-          meaning.push(t("The value points into {segment}{label}.", {
+        if (valueSegment && valueSegment.label !== "reserved" && valueSegment.label !== "free space") {
+          meaning.push(t("Possible pointer to {segment}{label}.", {
             segment: t(valueSegment.label),
             label: valueLabel ? ` (${valueLabel})` : ""
           }));
@@ -2210,7 +2243,7 @@
           `  ${t("$sp / $fp tags = where those registers point right now")}`,
           "",
           `${t("Segments")}: ${buildSegments()
-            .filter((segment) => segment.id !== "reserved" && segment.id !== "free")
+            .filter((segment) => segment.label !== "reserved" && segment.label !== "free space")
             .map((segment) => t(segment.label))
             .join(" · ")}`,
           `  ${t("the left strip colours each one and marks pc, $gp, $fp and $sp")}`
@@ -2226,13 +2259,13 @@
         const fp = currentFp();
         const map = memoryMap();
         const base = (map.stackPointer ?? map.stackBase ?? 0x7fffeffc) >>> 0;
-        const used = Math.max(0, base - sp);
+        const used = isStackAddress(sp) ? Math.max(0, base - sp) : null;
         const deepest = Number.isFinite(deepestSp) ? Math.max(0, base - deepestSp) : 0;
         statusBox.innerHTML = [
           `$sp <b>${toHex32(sp)}</b>`,
           fp !== 0 ? `$fp <b>${toHex32(fp)}</b>` : null,
           `${t("depth")} <b>${frames.length}</b>`,
-          `${t("in use")} <b>${used} B</b>`,
+          `${t("in use")} <b>${used == null ? "—" : `${used} B`}</b>`,
           `${t("deepest")} <b>${deepest} B</b>`
         ].filter(Boolean).join(" ");
       }
@@ -2243,13 +2276,13 @@
         const map = memoryMap();
         const base = (map.stackPointer ?? map.stackBase ?? 0x7fffeffc) >>> 0;
         const sp = currentSp();
-        const used = Math.max(0, base - sp);
+        const used = isStackAddress(sp) ? Math.max(0, base - sp) : null;
         const peak = Number.isFinite(deepestSp) ? Math.max(0, base - (deepestSp >>> 0)) : 0;
         const rows = [
-          { label: t("in use"), value: t("{bytes} B", { bytes: used }) },
+          { label: t("in use"), value: used == null ? "—" : t("{bytes} B", { bytes: used }) },
           { label: t("peak depth"), value: t("{bytes} B", { bytes: peak }) },
           { label: t("open frames"), value: String(frames.length) },
-          { label: t("words written"), value: String(cells.size) },
+          { label: t("words written"), value: String([...cells.values()].filter((cell) => cell.stack).length) },
           { label: t("warnings"), value: String(warnCount), warn: warnCount > 0 }
         ];
         vitalsBox.innerHTML = rows.map((row) => (
@@ -2257,8 +2290,6 @@
         )).join("");
       }
 
-      // The map draws four marker lines and never said what they were. These name
-      // them, show where each points and jump the view there.
       const MARKER_CHIPS = [
         { id: "pc", label: "pc", color: () => themeColors().accent, read: () => currentPc() },
         { id: "gp", label: "$gp", color: () => SEGMENT_COLORS.extern, read: () => readRegister(REG_GP) >>> 0 },
@@ -2267,13 +2298,17 @@
       ];
 
       function renderMarks() {
-        marksBox.innerHTML = MARKER_CHIPS.map((chip) => {
+        const markup = MARKER_CHIPS.map((chip) => {
           const address = chip.read() >>> 0;
           const title = t("Go to {name} at {address}", { name: chip.label, address: toHex32(address) });
           return `<button class="sv-mark" type="button" data-sv-mark="${chip.id}" title="${escapeHtml(title)}">
             <span class="sv-swatch" style="background:${chip.color()}"></span>${escapeHtml(chip.label)} <b>${toHex32(address)}</b>
           </button>`;
         }).join("");
+        if (marksMarkup !== markup) {
+          marksBox.innerHTML = markup;
+          marksMarkup = markup;
+        }
       }
 
       // The region picker doubles as a "you are here" indicator.
@@ -2282,44 +2317,53 @@
         const middle = ((viewTopAddress ?? defaultViewAddress())
           + (highTop ? -1 : 1) * Math.floor(visibleRowCount() / 2) * level.bytesPerRow) >>> 0;
         const segment = segmentAt(middle);
+        const available = buildSegments().map(({ id }) => id);
+        if ([...segmentSelect.options].map(({ value }) => value).join() !== available.join()) populateSegmentSelect();
         if (segment && segmentSelect.value !== segment.id) segmentSelect.value = segment.id;
       }
 
       function renderFrames() {
         const regions = frameRegions();
-        if (!regions.length) {
-          framesBox.innerHTML = `<div class="sv-empty">${escapeHtml(t("No active frames."))}</div>`;
-          return;
-        }
-        framesBox.innerHTML = [...regions].reverse().map((region) => {
-          const size = Math.max(0, region.high + 4 - region.low);
-          const selected = region.frame.id === selectedFrameId ? " is-selected" : "";
-          const slots = describeFrameSlots(region);
-          return `<div class="sv-frame-row${selected}" data-frame-id="${region.frame.id}" style="border-left-color:${frameColor(region.frame.id)}">
-            <span class="sv-frame-name">#${region.frame.id} ${escapeHtml(region.frame.name)}</span>
-            <span class="sv-frame-size">${size}B</span>
-          </div>${slots}`;
-        }).join("");
+        const markup = regions.length ? regions.slice(-MAX_VISIBLE_FRAMES).reverse().map((region) => {
+          const id = region.frame.id;
+          const selected = id === selectedFrameId;
+          return `<button class="sv-frame-row${selected ? " is-selected" : ""}" type="button" data-frame-id="${id}"
+            aria-expanded="${selected}" style="border-left-color:${frameColor(id)}">
+            <span class="sv-frame-name">#${id} ${escapeHtml(region.frame.name)}</span>
+            <span class="sv-frame-size">${region.size == null ? "—" : `${region.size} B`}</span>
+          </button>${selected ? describeFrameSlots(region) : ""}`;
+        }).join("") + (regions.length > MAX_VISIBLE_FRAMES
+          ? `<p class="sv-empty">${escapeHtml(t("Showing the {count} innermost frames.", { count: MAX_VISIBLE_FRAMES }))}</p>`
+          : "") : `<div class="sv-empty">${escapeHtml(t("No active frames."))}</div>`;
+        if (frameMarkup === markup) return;
+        const focusedFrame = document.activeElement?.dataset.frameId;
+        const focusedSlot = document.activeElement?.dataset.address;
+        framesBox.innerHTML = markup;
+        frameMarkup = markup;
+        if (focusedFrame) framesBox.querySelector(`[data-frame-id="${focusedFrame}"]`)?.focus({ preventScroll: true });
+        else if (focusedSlot) framesBox.querySelector(`[data-address="${focusedSlot}"]`)?.focus({ preventScroll: true });
       }
 
-      // A frame used to be a name and a byte count, which says nothing about what
-      // the program actually put there. Each word it owns is listed with the
-      // register that wrote it, its offset from $sp and what the value looks like.
       function describeFrameSlots(region) {
+        if (region.size == null) return `<p class="sv-empty">${escapeHtml(t("$sp is outside the stack region."))}</p>`;
+        if (region.size === 0) return `<p class="sv-empty">${escapeHtml(t("This frame reserves no stack space."))}</p>`;
         const rows = [];
-        for (let address = region.high; address >= region.low; address -= 4) {
-          const addr = address >>> 0;
+        const first = Math.ceil(region.low / 4) * 4;
+        for (let addr = first; addr <= region.high && rows.length < MAX_FRAME_SLOTS; addr += 4) {
           const cell = cells.get(addr);
           const value = readWord(addr);
-          const offset = describeSpOffset(addr) || toHex32(addr);
-          const written = cell && cell.frameId === region.frame.id;
-          const source = written && cell.register ? cell.register : null;
-          rows.push(`<div class="sv-slot${written ? "" : " is-untouched"}" data-address="${addr}">
+          const offset = `-${region.frame.spAtCall - addr}`;
+          const written = cell?.frameId === region.frame.id;
+          const source = written ? cell.register : null;
+          rows.push(`<button type="button" class="sv-slot${written ? "" : " is-untouched"}" data-address="${addr}">
             <span class="sv-slot-at">${escapeHtml(offset)}</span>
-            <span class="sv-slot-reg">${escapeHtml(source || (written ? t("value") : t("unwritten")))}</span>
+            <span class="sv-slot-reg">${escapeHtml(source || (written ? t("value") : "—"))}</span>
             <span class="sv-slot-value">${toHex32(value)}</span>
             <span class="sv-slot-note">${escapeHtml(describeSlotMeaning(value, source))}</span>
-          </div>`);
+          </button>`);
+        }
+        if (first + rows.length * 4 <= region.high) {
+          rows.push(`<button type="button" class="tool-btn" data-address="${first + rows.length * 4}">${escapeHtml(t("Continue in memory"))}</button>`);
         }
         return rows.join("");
       }
@@ -2333,7 +2377,7 @@
         const label = labelFor(word);
         if (label) return t("→ {label}", { label });
         const segment = segmentAt(word);
-        if (segment && segment.id !== "reserved" && segment.id !== "free") {
+        if (segment && segment.label !== "reserved" && segment.label !== "free space") {
           return t("→ {segment}", { segment: t(segment.label) });
         }
         if ((value | 0) >= -1024 && (value | 0) <= 1024) return String(value | 0);
@@ -2361,10 +2405,14 @@
           && first === renderedNarrationHead
           && last >= renderedNarrationSeq;
 
-        const rowHtml = (entry) => `<div class="sv-log-row sv-kind-${entry.kind}"${entry.address != null ? ` data-address="${entry.address >>> 0}"` : ""}>
-          <span class="sv-log-step">${escapeHtml(t("step {step}", { step: entry.step }))}</span>
-          <span class="sv-log-text">${escapeHtml(entry.text)}</span>
-        </div>`;
+        const stickToBottom = logBox.scrollHeight - logBox.scrollTop - logBox.clientHeight < 12;
+        const rowHtml = (entry) => {
+          const tag = entry.address == null ? "div" : "button";
+          return `<${tag} class="sv-log-row sv-kind-${entry.kind}"${entry.address != null ? ` type="button" data-address="${entry.address >>> 0}"` : ""}>` +
+            `<span class="sv-log-step">${escapeHtml(t("step {step}", { step: entry.step }))}</span>
+             <span class="sv-log-text">${escapeHtml(entry.text)}</span></${tag}>`;
+        };
+
 
         if (!canAppend) {
           logBox.innerHTML = visible.map(rowHtml).join("");
@@ -2374,23 +2422,41 @@
         }
         renderedNarrationSeq = last;
         renderedNarrationHead = first;
-        logBox.scrollTop = logBox.scrollHeight;
+        if (stickToBottom) logBox.scrollTop = logBox.scrollHeight;
         warnCountLabel.textContent = warnCount > 0 ? t("{count} warning(s)", { count: warnCount }) : "";
       }
 
       function renderAll() {
-        if (followSp) centerView(currentSp());
-        renderMap();
-        renderSpark();
-        renderDetail();
         renderStatus();
-        renderVitals();
-        renderMarks();
-        syncRegionSelect();
-        renderInspector();
-        renderFrames();
-        renderNarration();
+        updateExecState();
+        if (!compactLayout || activeView === "memory") {
+          if (followSp) centerView(currentSp());
+          renderDetail();
+          syncRegionSelect();
+          renderInspector();
+        }
+        if (!compactLayout || activeView === "map") {
+          renderMap();
+          renderVitals();
+          renderMarks();
+        }
+        if (!compactLayout || activeView === "frames") {
+          renderFrames();
+        }
+        if (!compactLayout || activeView === "activity") {
+          renderSpark();
+          renderNarration();
+        }
       }
+
+      function showView(view) {
+        activeView = view;
+        viewButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.svView === view)));
+        panels.forEach((panel) => { panel.hidden = compactLayout && panel.dataset.svPanel !== view; });
+        scheduleRender();
+      }
+
+      viewButtons.forEach((button) => button.addEventListener("click", () => showView(button.dataset.svView)));
 
       function scheduleRender() {
         if (renderScheduled) return;
@@ -2426,19 +2492,24 @@
         if (level.mode !== "blocks") return row.address;
         const { words, startX, blockWidth } = blockGeometry(rect.width, level);
         const index = Math.floor((x - startX) / (blockWidth + 1));
-        if (index < 0 || index >= words) return row.address;
+        if (index < 0 || index >= words) return null;
         return (row.address + index * 4) >>> 0;
       }
 
       function selectAddress(address) {
-        selectedAddress = address == null ? null : address >>> 0;
+        selectedAddress = address == null ? null : wordAddress(address);
+        updateExecState();
         scheduleRender();
       }
 
       function applyZoom(nextIndex, anchorAddress = null) {
         const clamped = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, nextIndex));
         if (clamped === zoomIndex) return;
-        const anchor = anchorAddress ?? selectedAddress ?? (viewTopAddress ?? defaultViewAddress());
+        const anchor = anchorAddress ?? (followSp ? currentSp() : selectedAddress ?? rowAddress(Math.floor(visibleRowCount() / 2)));
+        if (anchorAddress != null) {
+          followSp = false;
+          followCheck.checked = false;
+        }
         zoomIndex = clamped;
         zoomInput.value = String(zoomIndex);
         zoomLabel.textContent = t(ZOOM_LEVELS[zoomIndex].label);
@@ -2463,7 +2534,10 @@
         followCheck.checked = false;
         // Every segment is interesting where it begins; the stack is the exception
         // because it fills downwards from its base.
-        centerView(id === "stack" ? currentSp() : segment.start);
+        const sp = currentSp();
+        const address = id === "stack" && sp >= segment.start && sp < segment.end ? sp : segment.start;
+        selectedAddress = wordAddress(address);
+        centerView(address);
       }
 
       function updateConnectLabel() {
@@ -2522,7 +2596,7 @@
         if (movedRows === 0) return;
         const offset = movedRows * level.bytesPerRow;
         const next = dragOrigin.top + (highTop ? offset : -offset);
-        viewTopAddress = Math.max(0, Math.min(0xfffffffc, next)) >>> 0;
+        viewTopAddress = clampViewTop(next, visibleRowCount(), level.bytesPerRow, highTop);
         followSp = false;
         followCheck.checked = false;
         scheduleRender();
@@ -2542,10 +2616,11 @@
         const address = addressFromDetailPoint(event.clientX, event.clientY);
         if (address == null) return;
         const value = readWord(address) >>> 0;
-        if (!segmentAt(value)) return;
+        const target = segmentAt(value);
+        if (!value || !target || target.label === "reserved" || target.label === "free space") return;
         followSp = false;
         followCheck.checked = false;
-        selectedAddress = value;
+        selectedAddress = wordAddress(value);
         centerView(value);
         scheduleRender();
       });
@@ -2560,6 +2635,8 @@
         else if (event.key === "Home") {
           followSp = true;
           followCheck.checked = true;
+        } else if (event.key === "Enter" || event.key === " ") {
+          selectAddress(rowAddress(Math.floor(visibleRowCount() / 2)));
         } else return;
         event.preventDefault();
         scheduleRender();
@@ -2570,14 +2647,11 @@
         const y = clientY - rect.top;
         const band = mapBands.find((entry) => y >= entry.y0 && y < entry.y1);
         if (!band) return;
-        const span = band.segment.end - band.segment.start;
-        const fraction = highTop
-          ? (band.y1 - y) / Math.max(1, band.y1 - band.y0)
-          : (y - band.y0) / Math.max(1, band.y1 - band.y0);
-        const address = (band.segment.start + Math.floor(span * fraction)) >>> 0;
+        const address = mapAddressAtY(band, y, highTop);
         followSp = false;
         followCheck.checked = false;
         segmentSelect.value = band.segment.id;
+        selectedAddress = wordAddress(address);
         centerView(address);
         scheduleRender();
       }
@@ -2608,9 +2682,10 @@
         if (!Number.isFinite(address)) return;
         followSp = false;
         followCheck.checked = false;
-        selectedAddress = address >>> 0;
-        centerView(address >>> 0);
-        scheduleRender();
+        selectedAddress = wordAddress(address);
+        showView("memory");
+        centerView(address);
+        detailCanvas.focus({ preventScroll: true });
       });
 
       marksBox.addEventListener("click", (event) => {
@@ -2622,21 +2697,27 @@
         // jump releases the follow lock exactly like the log and frame rows do.
         followSp = false;
         followCheck.checked = false;
-        centerView(chip.read() >>> 0);
-        scheduleRender();
+        showView("memory");
+        selectedAddress = wordAddress(chip.read());
+        centerView(selectedAddress);
+        detailCanvas.focus({ preventScroll: true });
       });
 
       framesBox.addEventListener("click", (event) => {
+        const slot = event.target.closest?.("[data-address]");
+        if (slot) {
+          followSp = false;
+          followCheck.checked = false;
+          selectedAddress = wordAddress(Number(slot.dataset.address));
+          showView("memory");
+          centerView(selectedAddress);
+          detailCanvas.focus({ preventScroll: true });
+          return;
+        }
         const row = event.target.closest?.("[data-frame-id]");
         if (!row) return;
-        const id = Number.parseInt(row.dataset.frameId, 10);
-        const region = frameRegions().find((entry) => entry.frame.id === id);
-        if (!region) return;
-        selectedFrameId = id;
-        followSp = false;
-        followCheck.checked = false;
-        selectedAddress = region.high;
-        centerView(region.high);
+        const id = Number(row.dataset.frameId);
+        selectedFrameId = selectedFrameId === id ? null : id;
         scheduleRender();
       });
 
@@ -2645,10 +2726,12 @@
         scheduleRender();
       });
 
-      gotoInput.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter") return;
+      function goToAddress() {
         const address = parseAddressText(gotoInput.value);
+        gotoInput.setAttribute("aria-invalid", String(address == null));
         if (address == null) {
+          gotoInput.setCustomValidity(t("Invalid address."));
+          gotoInput.reportValidity();
           ctx.messagesPane.postMars(`${t("[tool] Stack Visualizer: '{value}' is not a valid address.", {
             value: gotoInput.value
           })}\n`);
@@ -2656,10 +2739,20 @@
         }
         followSp = false;
         followCheck.checked = false;
-        selectedAddress = address & ~0x3;
+        gotoInput.setCustomValidity("");
+        selectedAddress = wordAddress(address);
         centerView(address);
         scheduleRender();
+      }
+
+      gotoInput.addEventListener("input", () => {
+        gotoInput.setCustomValidity("");
+        gotoInput.removeAttribute("aria-invalid");
       });
+      gotoInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") goToAddress();
+      });
+      root.querySelector("[data-sv='goto-button']").addEventListener("click", goToAddress);
 
       zoomInput.addEventListener("input", () => applyZoom(Number.parseInt(zoomInput.value, 10) || 0));
       zoomInButton.addEventListener("click", () => applyZoom(zoomIndex + 1));
@@ -2675,7 +2768,7 @@
       });
       highTopCheck.addEventListener("change", () => {
         highTop = highTopCheck.checked === true;
-        centerView(selectedAddress ?? currentSp());
+        centerView(followSp ? currentSp() : selectedAddress ?? rowAddress(Math.floor(visibleRowCount() / 2)));
         scheduleRender();
       });
 
@@ -2714,7 +2807,8 @@
 
       breakWarnCheck.addEventListener("change", () => {
         pauseOnWarning = breakWarnCheck.checked === true;
-        if (pauseOnWarning) installObservers();
+        if (connected && pauseOnWarning) installObservers();
+        else if (!armedStop) removeObservers();
         updateExecState();
       });
 
@@ -2732,6 +2826,7 @@
 
       clearLogButton.addEventListener("click", () => {
         narration = [];
+        narrationEpoch += 1;
         warnCount = 0;
         renderedNarrationSeq = -1;
         renderedNarrationHead = null;
@@ -2750,6 +2845,9 @@
       });
 
       helpButton.addEventListener("click", () => {
+        showView("memory");
+        selectedAddress = null;
+        scheduleRender();
         ctx.messagesPane.postMars(`${t("[tool] Stack Visualizer: the left strip is the whole address space, the middle pane is a zoomable window into memory (wheel scrolls, Ctrl+wheel zooms from blocks to bits) and the log explains every $sp movement, save, restore, call and return.")}\n`);
       });
 
@@ -2768,8 +2866,6 @@
 
       const toolRoot = root.querySelector(".sv-tool");
 
-      // The tool window can be resized down to roughly 520x320, so the three-column
-      // desktop layout collapses in two stages instead of squeezing the canvases.
       function applyLayoutClasses(detail = {}) {
         const width = Number.isFinite(detail.width) && detail.width > 0
           ? detail.width
@@ -2778,12 +2874,14 @@
           ? detail.height
           : (toolRoot.clientHeight || 0);
         if (!width || !height) return;
-        toolRoot.classList.toggle("sv-medium", width < 1040 && width >= 780);
-        toolRoot.classList.toggle("sv-small", width < 780);
-        toolRoot.classList.toggle("sv-short", height < 520);
-        // Narrow but tall (a phone in portrait) still has room for the inspector;
-        // only a genuinely short window has to drop it.
-        toolRoot.classList.toggle("sv-tiny", height < 400);
+        compactLayout = width < 810;
+        toolRoot.classList.toggle("sv-small", compactLayout);
+        const inspectorParent = compactLayout ? memoryPane : framesPane;
+        if (inspector.parentElement !== inspectorParent) {
+          if (compactLayout) memoryPane.append(inspector);
+          else framesPane.prepend(inspector);
+        }
+        showView(activeView);
         updateHint();
       }
 
@@ -2837,13 +2935,16 @@
             populateSegmentSelect();
           } else {
             history.sync(snapshot);
-            if (!Number.isFinite(trackedSp)) trackedSp = readRegister(REG_SP) >>> 0;
+            trackedSp = readRegister(REG_SP) >>> 0;
+            trackedFp = readRegister(REG_FP) >>> 0;
+            trackedRa = readRegister(REG_RA) >>> 0;
+            trackedPc = (snapshot.pc ?? ctx.engine?.pc ?? 0) >>> 0;
           }
           if (viewTopAddress == null) centerView(currentSp());
           resolveStepOver();
           settleAfterStop();
           updateExecState();
-          if (connected) scheduleRender();
+          scheduleRender();
         },
         onRuntimeEvent(event, delivery = {}) {
           if (!connected || !event) return;

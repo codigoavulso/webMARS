@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "クラウドと同期されたプロジェクト: {name}。",
     "[error] Project synchronization failed: {message}": "[エラー] プロジェクトの同期に失敗しました: {message}",
     "Cloud synchronization failed.": "Cloud 同期に失敗しました。",
-    "Synchronize with Cloud": "Cloud と同期します"
+    "Synchronize with Cloud": "Cloud と同期します",
+    "Memory": "記憶",
+    "Activity": "アクティビティ",
+    "Stack headroom": "スタックのヘッドルーム",
+    "Zoom": "ズーム",
+    "Zoom in": "ズームイン",
+    "Zoom out": "ズームアウト",
+    "Invalid address.": "無効なアドレスです。",
+    "This frame reserves no stack space.": "このフレームはスタック領域を予約しません。",
+    "Continue in memory": "記憶の中で続ける",
+    "Showing the {count} innermost frames.": "{count} の最も内側のフレームを表示しています。",
+    "$sp is outside the stack region.": "$sp はスタック領域の外にあります。",
+    "{address} changed from {before} to {after}": "{address} が {before} から {after} に変更されました",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "$sp の下の {address} ({sp}) を読み取ります: このアドレスは現在予約されているスタックの外にあります。",
+    "Possible pointer to {segment}{label}.": "{segment}{label} へのポインターの可能性。"
   });
 })();

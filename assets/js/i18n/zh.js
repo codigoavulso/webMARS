@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "与云端同步的项目：{name}。",
     "[error] Project synchronization failed: {message}": "[错误] 项目同步失败：{message}",
     "Cloud synchronization failed.": "Cloud 同步失败。",
-    "Synchronize with Cloud": "与 Cloud 同步"
+    "Synchronize with Cloud": "与 Cloud 同步",
+    "Memory": "内存",
+    "Activity": "活动",
+    "Stack headroom": "堆栈净空",
+    "Zoom": "变焦",
+    "Zoom in": "放大",
+    "Zoom out": "缩小",
+    "Invalid address.": "地址无效。",
+    "This frame reserves no stack space.": "该帧不保留堆栈空间。",
+    "Continue in memory": "继续在记忆中",
+    "Showing the {count} innermost frames.": "显示 {count} 最里面的帧。",
+    "$sp is outside the stack region.": "$sp 位于堆栈区域之外。",
+    "{address} changed from {before} to {after}": "{address} 由 {before} 更改为 {after}",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "读取 $sp 下面的 {address} ({sp})：该地址位于当前保留堆栈之外。",
+    "Possible pointer to {segment}{label}.": "可能指向 {segment}{label} 的指针。"
   });
 })();

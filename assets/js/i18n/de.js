@@ -1996,6 +1996,20 @@
     "Keep local version (replace cloud)": "Lokale Version behalten (Cloud ersetzen)",
     "Keep cloud version (replace local)": "Cloud-Version beibehalten (lokal ersetzen)",
     "New project name": "Neuer Projektname",
-    "Choose an unused project name.": "Wählen Sie einen unbenutzten Projektnamen."
+    "Choose an unused project name.": "Wählen Sie einen unbenutzten Projektnamen.",
+    "Memory": "Erinnerung",
+    "Activity": "Aktivität",
+    "Stack headroom": "Stapelhöhe",
+    "Zoom": "Zoomen",
+    "Zoom in": "Vergrößern",
+    "Zoom out": "Herauszoomen",
+    "Invalid address.": "Ungültige Adresse.",
+    "This frame reserves no stack space.": "Dieser Rahmen reserviert keinen Stapelplatz.",
+    "Continue in memory": "Weiter in Erinnerung",
+    "Showing the {count} innermost frames.": "Zeigt die {count} innersten Frames.",
+    "$sp is outside the stack region.": "$sp liegt außerhalb der Stapelregion.",
+    "{address} changed from {before} to {after}": "{address} wurde von {before} in {after} geändert",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "Lesen Sie {address} unter $sp ({sp}): Diese Adresse liegt außerhalb des aktuell reservierten Stapels.",
+    "Possible pointer to {segment}{label}.": "Möglicher Zeiger auf {segment}{label}."
   });
 })();

@@ -2813,6 +2813,7 @@ class MarsEngine {
       controlTransferTarget: Number.isFinite(details.controlTransferTarget)
         ? (details.controlTransferTarget >>> 0)
         : null,
+      controlTransferPending: details.controlTransferPending === true,
       registerChanges: this.createRuntimeChangeTriples(journal.r, this.registers),
       cop0Changes: this.createRuntimeChangeTriples(journal.c0, this.cop0Registers),
       cop1Changes: this.createRuntimeChangeTriples(journal.c1, this.cop1Registers),
@@ -7175,11 +7176,14 @@ class MarsEngine {
     }
 
     const sleepMs = Number.isFinite(result.sleepMs) ? Math.max(0, result.sleepMs | 0) : 0;
+    const controlTransferPending = this.delayedBranchAddress === currentPc && this.delayedBranchTarget !== null;
     this.notifyInstructionObservers({
       type: "instruction",
       executedAddress: currentPc,
       // An interrupt replaced the instruction, so nothing at this address ran yet.
       executedInstruction: interruptDelivered ? "" : (decodedInstruction ?? ""),
+      controlTransferTarget: result.nextPc,
+      controlTransferPending,
       machineWord,
       exception: result.exception === true,
       interrupt: interruptDelivered,
@@ -7198,6 +7202,7 @@ class MarsEngine {
           instructionOperands: interruptDelivered ? EMPTY_RUNTIME_EVENT_LIST : decodedEntry.operands,
           machineWord,
           controlTransferTarget: result.nextPc,
+          controlTransferPending,
           memoryAccesses: runtimeMemoryAccesses,
           exception: result.exception === true,
           interrupt: interruptDelivered,

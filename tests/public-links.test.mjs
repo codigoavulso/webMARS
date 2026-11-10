@@ -1,11 +1,49 @@
 import assert from "node:assert/strict";
+import { once } from "node:events";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import vm from "node:vm";
 import { resolve } from "node:path";
 
 import { projectRoot } from "./helpers/engines.mjs";
-import { isStableAppRoute } from "../scripts/serve.mjs";
+import { isStableAppRoute, server } from "../scripts/serve.mjs";
+
+test("static hosting revalidates entry pages and caches assets by build", async () => {
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const request = (path, options) => fetch(base + path, options);
+  try {
+    for (const path of ["/", "/e/lesson01-registers", "/p/first-lab@3", "/manual/", "/webmars-config.js"]) {
+      const response = await request(path, { method: "HEAD" });
+      assert.equal(response.status, 200, path);
+      assert.equal(response.headers.get("cache-control"), "no-cache", path);
+      const etag = response.headers.get("etag");
+      assert.ok(etag, path);
+      const cached = await request(path, { headers: { "If-None-Match": etag } });
+      assert.equal(cached.status, 304, path);
+    }
+
+    const asset = "/assets/js/app.bundle.js";
+    for (const query of ["", "?b=invalid"]) {
+      const response = await request(asset + query, { method: "HEAD" });
+      assert.equal(response.headers.get("cache-control"), "no-cache");
+    }
+    const entry = await request("/");
+    const html = await entry.text();
+    const builds = [...html.matchAll(/(?:\?|&amp;)b=(\d{12})"/g)].map((match) => match[1]);
+    assert.equal(builds.length, 4);
+    assert.equal(new Set(builds).size, 1);
+    const versioned = await request(`${asset}?b=${builds[0]}`, { method: "HEAD" });
+    assert.equal(versioned.headers.get("cache-control"), "max-age=31536000");
+    const missing = await request(`/tools/nonexistent.js?b=${builds[0]}`);
+    assert.equal(missing.status, 404);
+    assert.equal(missing.headers.get("cache-control"), "no-store");
+    await missing.text();
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});
 
 async function loadPublicLibraryModule() {
   const source = await readFile(

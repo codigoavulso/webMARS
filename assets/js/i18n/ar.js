@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "المشروع متزامن مع السحابة: {name}.",
     "[error] Project synchronization failed: {message}": "[خطأ] فشلت مزامنة المشروع: {message}",
     "Cloud synchronization failed.": "فشلت مزامنة Cloud.",
-    "Synchronize with Cloud": "المزامنة مع Cloud"
+    "Synchronize with Cloud": "المزامنة مع Cloud",
+    "Memory": "الذاكرة",
+    "Activity": "النشاط",
+    "Stack headroom": "كومة الإرتفاع",
+    "Zoom": "تكبير",
+    "Zoom in": "تكبير",
+    "Zoom out": "تصغير",
+    "Invalid address.": "عنوان غير صالح.",
+    "This frame reserves no stack space.": "لا يحتفظ هذا الإطار بأي مساحة مكدسة.",
+    "Continue in memory": "تواصل في الذاكرة",
+    "Showing the {count} innermost frames.": "إظهار الإطارات الأعمق {count}.",
+    "$sp is outside the stack region.": "$sp موجود خارج منطقة المكدس.",
+    "{address} changed from {before} to {after}": "تم تغيير {address} من {before} إلى {after}",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "اقرأ {address} أدناه $sp ({sp}): هذا العنوان خارج المكدس المحجوز حاليًا.",
+    "Possible pointer to {segment}{label}.": "مؤشر محتمل إلى {segment} {label}."
   });
 })();

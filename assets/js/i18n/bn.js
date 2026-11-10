@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "ক্লাউডের সাথে সিঙ্ক্রোনাইজ করা প্রকল্প: {name}।",
     "[error] Project synchronization failed: {message}": "[ত্রুটি] প্রকল্প সিঙ্ক্রোনাইজেশন ব্যর্থ হয়েছে: {message}",
     "Cloud synchronization failed.": "Cloud সিঙ্ক্রোনাইজেশন ব্যর্থ হয়েছে৷",
-    "Synchronize with Cloud": "Cloud এর সাথে সিঙ্ক্রোনাইজ করুন"
+    "Synchronize with Cloud": "Cloud এর সাথে সিঙ্ক্রোনাইজ করুন",
+    "Memory": "স্মৃতি",
+    "Activity": "কার্যকলাপ",
+    "Stack headroom": "স্ট্যাক হেডরুম",
+    "Zoom": "জুম",
+    "Zoom in": "জুম ইন করুন",
+    "Zoom out": "জুম আউট করুন",
+    "Invalid address.": "অবৈধ ঠিকানা।",
+    "This frame reserves no stack space.": "এই ফ্রেমে স্ট্যাক স্পেস সংরক্ষণ করা হয় না।",
+    "Continue in memory": "স্মৃতিতে চালিয়ে যান",
+    "Showing the {count} innermost frames.": "{count} সবচেয়ে ভেতরের ফ্রেমগুলো দেখানো হচ্ছে।",
+    "$sp is outside the stack region.": "$sp স্ট্যাক অঞ্চলের বাইরে।",
+    "{address} changed from {before} to {after}": "{address} {before} থেকে {after} এ পরিবর্তিত হয়েছে",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "পড়ুন {address} নীচে $sp ({sp}): এই ঠিকানাটি বর্তমানে সংরক্ষিত স্ট্যাকের বাইরে।",
+    "Possible pointer to {segment}{label}.": "সম্ভাব্য পয়েন্টার {segment}{label}।"
   });
 })();

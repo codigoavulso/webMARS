@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "Проект синхронизирован с облаком: {name}.",
     "[error] Project synchronization failed: {message}": "[ошибка] Не удалось синхронизировать проект: {message}",
     "Cloud synchronization failed.": "Синхронизация Cloud не удалась.",
-    "Synchronize with Cloud": "Синхронизировать с Cloud"
+    "Synchronize with Cloud": "Синхронизировать с Cloud",
+    "Memory": "Память",
+    "Activity": "Деятельность",
+    "Stack headroom": "Высота стека",
+    "Zoom": "Увеличить",
+    "Zoom in": "Увеличить масштаб",
+    "Zoom out": "Уменьшить масштаб",
+    "Invalid address.": "Неверный адрес.",
+    "This frame reserves no stack space.": "Этот кадр не резервирует места в стеке.",
+    "Continue in memory": "Продолжить в памяти",
+    "Showing the {count} innermost frames.": "Показаны самые внутренние кадры {count}.",
+    "$sp is outside the stack region.": "$sp находится за пределами области стека.",
+    "{address} changed from {before} to {after}": "{address} изменен с {before} на {after}",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "Прочтите {address} ниже $sp ({sp}): этот адрес находится за пределами текущего зарезервированного стека.",
+    "Possible pointer to {segment}{label}.": "Возможный указатель на {segment}{label}."
   });
 })();

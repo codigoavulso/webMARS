@@ -513,6 +513,7 @@ test("application-version tokens are replaced inside iframe documents", async ()
   assert.match(build, /^\d{12}$/);
   assert.equal(textNode.nodeValue, `Version ${expectedReleaseVersion} · Build ${build}`);
   assert.equal(sandbox.window.WebMarsAppVersion.replaceVersionToken("__WEBMARS_APP_BUILD__"), build);
+  assert.equal(sandbox.window.WebMarsAppVersion.withVersion("./help/info.html?v=1#notes"), `./help/info.html?v=1&b=${build}#notes`);
 });
 
 test("build stamps use Lisbon release time with zero padding and a 24-hour clock", async () => {

@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "Dự án được đồng bộ hóa với đám mây: {name}.",
     "[error] Project synchronization failed: {message}": "[lỗi] Đồng bộ hóa dự án không thành công: {message}",
     "Cloud synchronization failed.": "Đồng bộ hóa Cloud không thành công.",
-    "Synchronize with Cloud": "Đồng bộ hóa với Cloud"
+    "Synchronize with Cloud": "Đồng bộ hóa với Cloud",
+    "Memory": "Bộ nhớ",
+    "Activity": "Hoạt động",
+    "Stack headroom": "ngăn xếp ngăn xếp",
+    "Zoom": "Thu phóng",
+    "Zoom in": "Phóng to",
+    "Zoom out": "Thu nhỏ",
+    "Invalid address.": "Địa chỉ không hợp lệ.",
+    "This frame reserves no stack space.": "Khung này không có không gian ngăn xếp.",
+    "Continue in memory": "Tiếp tục trong bộ nhớ",
+    "Showing the {count} innermost frames.": "Hiển thị các khung trong cùng {count}.",
+    "$sp is outside the stack region.": "$sp nằm ngoài vùng ngăn xếp.",
+    "{address} changed from {before} to {after}": "{address} đã thay đổi từ {before} thành {after}",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "Đọc {address} bên dưới $sp ({sp}): địa chỉ này nằm ngoài ngăn xếp hiện được bảo lưu.",
+    "Possible pointer to {segment}{label}.": "Con trỏ có thể tới {segment}{label}."
   });
 })();

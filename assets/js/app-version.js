@@ -2,7 +2,7 @@
   const globalScope = typeof window !== "undefined" ? window : globalThis;
   const APP_NAME = "webMARS";
   const APP_VERSION = "0.7.1";
-  const APP_BUILD = "202611092317";
+  const APP_BUILD = "202611101347";
   const VERSION_TOKEN = "__WEBMARS_APP_VERSION__";
   const BUILD_TOKEN = "__WEBMARS_APP_BUILD__";
 
@@ -14,10 +14,13 @@
   function withVersion(value) {
     const source = String(value || "");
     if (!source || /^(?:data:|blob:|#)/i.test(source)) return source;
-    const separator = source.includes("?") ? "&" : "?";
-    if (/(?:[?&])b=/.test(source)) return source;
-    const version = /(?:[?&])v=/.test(source) ? "" : `v=${encodeURIComponent(APP_VERSION)}&`;
-    return `${source}${separator}${version}b=${APP_BUILD}`;
+    const hashIndex = source.indexOf("#");
+    const path = hashIndex < 0 ? source : source.slice(0, hashIndex);
+    const hash = hashIndex < 0 ? "" : source.slice(hashIndex);
+    if (/(?:[?&])b=/.test(path)) return source;
+    const separator = path.includes("?") ? "&" : "?";
+    const version = /(?:[?&])v=/.test(path) ? "" : `v=${encodeURIComponent(APP_VERSION)}&`;
+    return `${path}${separator}${version}b=${APP_BUILD}${hash}`;
   }
 
   function applyVersionTokens(rootDocument = document) {

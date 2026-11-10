@@ -403,14 +403,15 @@
   }
 
   function loadTextResource(path) {
-    return fetch(path, { cache: "no-store" })
+    const url = globalScope.WebMarsAppVersion?.withVersion?.(path) || path;
+    return fetch(url)
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.text();
       })
       .catch((fetchError) => new Promise((resolve, reject) => {
         const req = new XMLHttpRequest();
-        req.open("GET", path, true);
+        req.open("GET", url, true);
         req.onload = () => {
           if (req.status === 0 || (req.status >= 200 && req.status < 300)) {
             resolve(req.responseText);

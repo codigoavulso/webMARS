@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "Proyek disinkronkan dengan cloud: {name}.",
     "[error] Project synchronization failed: {message}": "[kesalahan] Sinkronisasi proyek gagal: {message}",
     "Cloud synchronization failed.": "Sinkronisasi Cloud gagal.",
-    "Synchronize with Cloud": "Sinkronisasi dengan Cloud"
+    "Synchronize with Cloud": "Sinkronisasi dengan Cloud",
+    "Memory": "Memori",
+    "Activity": "Aktivitas",
+    "Stack headroom": "Ruang kepala tumpukan",
+    "Zoom": "Perbesar",
+    "Zoom in": "Perbesar",
+    "Zoom out": "Perkecil",
+    "Invalid address.": "Alamat tidak valid.",
+    "This frame reserves no stack space.": "Bingkai ini tidak memiliki ruang tumpukan.",
+    "Continue in memory": "Lanjutkan dalam memori",
+    "Showing the {count} innermost frames.": "Menampilkan bingkai terdalam {count}.",
+    "$sp is outside the stack region.": "$sp berada di luar wilayah tumpukan.",
+    "{address} changed from {before} to {after}": "{address} diubah dari {before} menjadi {after}",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "Baca {address} di bawah $sp ({sp}): alamat ini berada di luar tumpukan yang saat ini dipesan.",
+    "Possible pointer to {segment}{label}.": "Kemungkinan penunjuk ke {segment}{label}."
   });
 })();

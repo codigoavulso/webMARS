@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "پروجیکٹ کو کلاؤڈ کے ساتھ ہم آہنگ کیا گیا: {name}۔",
     "[error] Project synchronization failed: {message}": "[خرابی] پروجیکٹ کی مطابقت پذیری ناکام ہوگئی: {message}",
     "Cloud synchronization failed.": "Cloud مطابقت پذیری ناکام ہوگئی۔",
-    "Synchronize with Cloud": "Cloud کے ساتھ ہم وقت سازی کریں"
+    "Synchronize with Cloud": "Cloud کے ساتھ ہم وقت سازی کریں",
+    "Memory": "یادداشت",
+    "Activity": "سرگرمی",
+    "Stack headroom": "اسٹیک ہیڈ روم",
+    "Zoom": "زوم",
+    "Zoom in": "زوم ان کریں۔",
+    "Zoom out": "زوم آؤٹ کریں۔",
+    "Invalid address.": "غلط پتہ۔",
+    "This frame reserves no stack space.": "اس فریم میں اسٹیک کی کوئی جگہ محفوظ نہیں ہے۔",
+    "Continue in memory": "یادداشت میں جاری رکھیں",
+    "Showing the {count} innermost frames.": "{count} سب سے اندرونی فریم دکھا رہا ہے۔",
+    "$sp is outside the stack region.": "$sp اسٹیک ریجن سے باہر ہے۔",
+    "{address} changed from {before} to {after}": "{address} کو {before} سے {after} میں تبدیل کر دیا گیا",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "پڑھیں {address} ذیل میں $sp ({sp}): یہ پتہ موجودہ محفوظ شدہ اسٹیک سے باہر ہے۔",
+    "Possible pointer to {segment}{label}.": "ممکنہ پوائنٹر {segment}{label}۔"
   });
 })();

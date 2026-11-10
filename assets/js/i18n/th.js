@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "โครงการซิงโครไนซ์กับคลาวด์: {name}",
     "[error] Project synchronization failed: {message}": "[ข้อผิดพลาด] การซิงโครไนซ์โครงการล้มเหลว: {message}",
     "Cloud synchronization failed.": "การซิงโครไนซ์ Cloud ล้มเหลว",
-    "Synchronize with Cloud": "ซิงโครไนซ์กับ Cloud"
+    "Synchronize with Cloud": "ซิงโครไนซ์กับ Cloud",
+    "Memory": "หน่วยความจำ",
+    "Activity": "กิจกรรม",
+    "Stack headroom": "กองเฮดรูม",
+    "Zoom": "ซูม",
+    "Zoom in": "ซูมเข้า",
+    "Zoom out": "ซูมออก",
+    "Invalid address.": "ที่อยู่ไม่ถูกต้อง",
+    "This frame reserves no stack space.": "เฟรมนี้ไม่ขอสงวนพื้นที่สแต็ก",
+    "Continue in memory": "ต่อไปในความทรงจำ",
+    "Showing the {count} innermost frames.": "กำลังแสดง {count} เฟรมที่อยู่ด้านในสุด",
+    "$sp is outside the stack region.": "$sp อยู่นอกขอบเขตสแต็ก",
+    "{address} changed from {before} to {after}": "{address} เปลี่ยนจาก {before} เป็น {after}",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "อ่าน {address} ด้านล่าง $sp ({sp}): ที่อยู่นี้อยู่นอกสแต็กที่สงวนไว้ในปัจจุบัน",
+    "Possible pointer to {segment}{label}.": "ตัวชี้ที่เป็นไปได้ไปที่ {segment}{label}"
   });
 })();

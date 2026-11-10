@@ -1997,6 +1997,20 @@
     "Project synchronized with the cloud: {name}.": "प्रोजेक्ट क्लाउड के साथ सिंक्रनाइज़: {name}।",
     "[error] Project synchronization failed: {message}": "[त्रुटि] परियोजना सिंक्रनाइज़ेशन विफल: {message}",
     "Cloud synchronization failed.": "Cloud सिंक्रनाइज़ेशन विफल रहा।",
-    "Synchronize with Cloud": "Cloud के साथ सिंक्रनाइज़ करें"
+    "Synchronize with Cloud": "Cloud के साथ सिंक्रनाइज़ करें",
+    "Memory": "स्मृति",
+    "Activity": "गतिविधि",
+    "Stack headroom": "ढेर हेडरूम",
+    "Zoom": "ज़ूम करें",
+    "Zoom in": "ज़ूम इन करें",
+    "Zoom out": "ज़ूम आउट करें",
+    "Invalid address.": "अमान्य पता.",
+    "This frame reserves no stack space.": "यह फ़्रेम कोई स्टैक स्थान आरक्षित नहीं करता है.",
+    "Continue in memory": "स्मृति में जारी रखें",
+    "Showing the {count} innermost frames.": "{count} अंतरतम फ़्रेम दिखा रहा है।",
+    "$sp is outside the stack region.": "$sp स्टैक क्षेत्र के बाहर है।",
+    "{address} changed from {before} to {after}": "{address} को {before} से {after} में बदल दिया गया",
+    "Read {address} below $sp ({sp}): this address is outside the currently reserved stack.": "{address} नीचे पढ़ें $sp ({sp}): यह पता वर्तमान में आरक्षित स्टैक के बाहर है।",
+    "Possible pointer to {segment}{label}.": "{segment}{label} का संभावित संकेतक।"
   });
 })();

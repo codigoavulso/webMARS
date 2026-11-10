@@ -84,7 +84,7 @@
 
   async function readLanguageManifest() {
     try {
-      const response = await fetch(LANGUAGE_MANIFEST_PATH, { cache: "no-store" });
+      const response = await fetch(withAppVersion(LANGUAGE_MANIFEST_PATH));
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const manifest = await response.json();
       const entries = Array.isArray(manifest) ? manifest : manifest?.languages;

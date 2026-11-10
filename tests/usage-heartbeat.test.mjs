@@ -112,7 +112,7 @@ test("disabled and cross-origin configurations create no timer; failed sends nev
 
 test("the app loads the heartbeat and the proxy does not persist or forward visitor headers", async () => {
   const index = await readFile(new URL("../index.html", import.meta.url), "utf8");
-  assert.match(index, /src="\.\/assets\/js\/active-heartbeat.js"/);
+  assert.match(index, /src="\.\/assets\/js\/active-heartbeat\.js\?b=\d{12}"/);
   const proxy = await readFile(new URL("../ops/raspberry-pi/nginx-webmars-metrics.conf", import.meta.url), "utf8");
   const route = proxy.split("location = /_metrics/heartbeat {")[1].split("\n}\n")[0];
   assert.match(route, /access_log off;/);
