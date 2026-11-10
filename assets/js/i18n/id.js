@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "Menampilkan instruksi {first}-{last} dari {total}; siklus {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "Menampilkan instruksi {first}-{last} dari {total}; siklus 0.",
   "ScavengerHunt": "Perburuan Pemulung",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "Editor MIDI TTY",
 
   "TTY Device + ANSI Terminal": "TTY Perangkat + ANSI Terminal",
   "{bytes} B · {percent}%": "{bytes} B · {percent}%",

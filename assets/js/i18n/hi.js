@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "निर्देश दिखा रहा है {first}-{last} का {total}; चक्र {cycleFirst}-{cycleLast}।",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "निर्देश दिखा रहा है {first}-{last} का {total}; चक्र 0.",
   "ScavengerHunt": "मेहतर शिकार",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "TTY MIDI संपादक",
 
   "TTY Device + ANSI Terminal": "TTY डिवाइस + ANSI टर्मिनल",
   "{bytes} B · {percent}%": "{bytes} बी · {percent}%",

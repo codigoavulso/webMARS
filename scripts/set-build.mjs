@@ -9,18 +9,18 @@ export function formatBuildNumber(date = new Date(), timeZone = "Europe/Lisbon")
     hour: "2-digit", minute: "2-digit", hourCycle: "h23"
   }).formatToParts(date);
   const fields = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  return ["year", "month", "day", "hour", "minute"].map((key) => fields[key]).join("");
+  return `${fields.year}${fields.month}.${fields.day}.${fields.hour}${fields.minute}`;
 }
 
 export async function stampBuild(date = new Date()) {
   const path = resolve(dirname(fileURLToPath(import.meta.url)), "../assets/js/app-version.js");
   const source = await readFile(path, "utf8");
-  if (!/const APP_BUILD = "\d{12}";/.test(source)) throw new Error("Missing APP_BUILD declaration");
+  if (!/const APP_BUILD = "(?:\d{12}|\d{6}\.\d{2}\.\d{4})";/.test(source)) throw new Error("Missing APP_BUILD declaration");
   const build = formatBuildNumber(date);
-  await writeFile(path, source.replace(/const APP_BUILD = "\d{12}";/, `const APP_BUILD = "${build}";`), "utf8");
+  await writeFile(path, source.replace(/const APP_BUILD = "(?:\d{12}|\d{6}\.\d{2}\.\d{4})";/, `const APP_BUILD = "${build}";`), "utf8");
   const indexPath = resolve(dirname(fileURLToPath(import.meta.url)), "../index.html");
   const index = await readFile(indexPath, "utf8");
-  const stampedIndex = index.replace(/(assets\/(?:js\/(?:usage-metrics|active-heartbeat)\.js\?|(?:js\/app-version\.js|css\/styles\.css)\?v=[^"&]+&amp;)b=)\d{12}/g, (_, prefix) => prefix + build);
+  const stampedIndex = index.replace(/(assets\/(?:js\/(?:usage-metrics|active-heartbeat)\.js\?|(?:js\/app-version\.js|css\/styles\.css)\?v=[^"&]+&amp;)b=)(?:\d{6}\.\d{2}\.\d{4}|\d{12})/g, (_, prefix) => prefix + build);
   if (stampedIndex !== index) await writeFile(indexPath, stampedIndex, "utf8");
   return build;
 }

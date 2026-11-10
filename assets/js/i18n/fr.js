@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "Affichage des instructions {first}-{last} de {total} ; cycles {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "Affichage des instructions {first}-{last} de {total} ; cycle 0.",
   "ScavengerHunt": "Chasse au trésor",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "Éditeur MIDI TTY",
 
   "TTY Device + ANSI Terminal": "TTY Périphérique + ANSI Terminal",
   "{bytes} B · {percent}%": "{bytes} B · {percent}%",

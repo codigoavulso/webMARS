@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "Показаны инструкции {first}-{last} из {total}; циклы {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "Показаны инструкции {first}-{last} из {total}; цикл 0.",
   "ScavengerHunt": "МусорщикОхота",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "MIDI-редактор TTY",
 
   "TTY Device + ANSI Terminal": "TTY Устройство + ANSI Терминал",
   "{bytes} B · {percent}%": "{bytes} B · {percent}%",

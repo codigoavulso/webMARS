@@ -47,11 +47,11 @@ function harness(options = {}) {
 }
 
 test("all event types, including heartbeat, carry the deployed build", () => {
-  const env = harness({ build: "202611082321" });
+  const env = harness({ build: "202611.08.2321" });
   env.api.track("run_success");
   env.api.trackHeartbeat(60);
   assert.equal(env.sent.length, 3);
-  assert(env.sent.every(({ body }) => body.build === "202611082321"));
+  assert(env.sent.every(({ body }) => body.build === "202611.08.2321"));
   assert.equal(harness({ build: "not-a-build" }).sent[0].body.build, "unknown");
 });
 

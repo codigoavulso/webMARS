@@ -1,4 +1,4 @@
-# webMARS v0.7.2
+# webMARS v0.7.3
 
 **Write MIPS. Watch it run. Understand the machine.**
 
@@ -150,7 +150,9 @@ See the [self-hosting guide](docs/self-hosting.md) for deployment and optional
 Cloud configuration. The official installation's automatic usage statistics
 are explained in [Usage metrics and privacy](docs/usage-metrics.md).
 
-## Highlights in v0.7.2
+## Highlights in v0.7.3
+
+- `v0.7.3`: updated build numbering and validation fixes.
 
 - `v0.7.2`: MIDI editing and the four Piano MIPS movements, improved context menus and refreshed examples.
 

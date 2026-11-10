@@ -152,7 +152,7 @@ async function readPackageMetadata() {
   const appVersionSource = await readFile(join(projectRoot, APP_VERSION_PATH), "utf8");
   const appVersion = appVersionSource.match(/\bAPP_VERSION\s*=\s*["']([^"']+)["']/)?.[1];
   assert(appVersion, `${APP_VERSION_PATH} does not declare APP_VERSION.`);
-  assert(/\bAPP_BUILD\s*=\s*"\d{12}"/.test(appVersionSource), `${APP_VERSION_PATH} must declare a fixed YYYYMMDDhhmm build.`);
+  assert(/\bAPP_BUILD\s*=\s*"\d{6}\.\d{2}\.\d{4}"/.test(appVersionSource), `${APP_VERSION_PATH} must declare a fixed YYYYMM.DD.hhmm build.`);
   assert(
     appVersion === version,
     `Version mismatch: package.json is ${version}, but ${APP_VERSION_PATH} is ${appVersion}.`

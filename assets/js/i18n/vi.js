@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "Hiển thị hướng dẫn {first}-{last} của {total}; chu kỳ {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "Hiển thị hướng dẫn {first}-{last} của {total}; chu kỳ 0.",
   "ScavengerHunt": "Người nhặt rácSăn",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "Trình chỉnh sửa MIDI TTY",
 
   "TTY Device + ANSI Terminal": "TTY Thiết bị + ANSI Thiết bị đầu cuối",
   "{bytes} B · {percent}%": "{bytes} B · {percent}%",

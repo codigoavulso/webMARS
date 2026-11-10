@@ -112,5 +112,5 @@ test("disabled and cross-origin configurations create no timer; failed sends nev
 
 test("the app loads the heartbeat", async () => {
   const index = await readFile(new URL("../index.html", import.meta.url), "utf8");
-  assert.match(index, /src="\.\/assets\/js\/active-heartbeat\.js\?b=\d{12}"/);
+  assert.match(index, /src="\.\/assets\/js\/active-heartbeat\.js\?b=\d{6}\.\d{2}\.\d{4}"/);
 });

@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "নির্দেশাবলী দেখানো হচ্ছে {first}-{last} এর {total}; চক্র {cycleFirst}-{cycleLast}।",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "নির্দেশাবলী দেখানো হচ্ছে {first}-{last} এর {total}; চক্র 0",
   "ScavengerHunt": "স্ক্যাভেঞ্জারহান্ট",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "TTY MIDI সম্পাদক",
 
   "TTY Device + ANSI Terminal": "TTY ডিভাইস + ANSI টার্মিনাল",
   "{bytes} B · {percent}%": "{bytes} B · {percent}%",

@@ -44,7 +44,7 @@ test("feedback includes a project only on consent and refuses a different open p
     document: {addEventListener() {}}, performance: {now: () => 0},
     addEventListener() {}, setInterval() {},
     location: {origin: "https://webmars.test"},
-    WebMarsAppVersion: {build: "202611082358"},
+    WebMarsAppVersion: {build: "202611.08.2358"},
     fetch: async (url, options) => { requests.push({url, options}); return {status: 204}; }
   });
   let values = {message: "Something went wrong", project: false, screenshots: []};
@@ -62,7 +62,7 @@ test("feedback includes a project only on consent and refuses a different open p
   await ui.open();
   assert.equal(snapshots, 0);
   assert.equal(requests[0].options.body.has("project"), false);
-  assert.equal(requests[0].options.body.get("build"), "202611082358");
+  assert.equal(requests[0].options.body.get("build"), "202611.08.2358");
   values = {...values, project: true};
   await ui.open();
   assert.equal(snapshots, 1);

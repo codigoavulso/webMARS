@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "عرض التعليمات {first}-{last} من {total}؛ دورات {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "عرض التعليمات {first}-{last} من {total}؛ دورة 0.",
   "ScavengerHunt": "ScavengerHunt",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "محرر MIDI TTY",
 
   "TTY Device + ANSI Terminal": "TTY الجهاز + ANSI الطرفية",
   "{bytes} B · {percent}%": "{bytes} ب · {percent}%",

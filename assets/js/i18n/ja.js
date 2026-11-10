@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "命令 {first}-{last} の {total} を表示しています。サイクル {cycleFirst}-{cycleLast}。",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "命令 {first}-{last} の {total} を表示しています。サイクル0。",
   "ScavengerHunt": "スカベンジャーハント",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "TTY MIDI エディター",
 
   "TTY Device + ANSI Terminal": "TTY デバイス + ANSI 端末",
   "{bytes} B · {percent}%": "{bytes} B · {percent}%",

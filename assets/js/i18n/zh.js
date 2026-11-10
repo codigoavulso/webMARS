@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "显示说明 {first}-{last} 的 {total};周期 {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "显示说明 {first}-{last} 的 {total};周期 0。",
   "ScavengerHunt": "寻宝游戏",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "TTY MIDI 编辑器",
 
   "TTY Device + ANSI Terminal": "TTY 设备 + ANSI 终端",
   "{bytes} B · {percent}%": "{bytes} B · {percent}%",

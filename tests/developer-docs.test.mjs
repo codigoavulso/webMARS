@@ -13,6 +13,13 @@ import { projectRoot } from "./helpers/engines.mjs";
 
 const docsRoot = resolve(projectRoot, "docs");
 
+const GENERATED_REPORTS = {
+  "docs/comparison-matrix.md": "scripts/generate-comparison-matrix.mjs",
+  "docs/coverage-report.md": "scripts/measure-coverage.mjs",
+  "docs/mutation-report.md": "scripts/mutation-test.mjs",
+  "docs/mars-conformance.md": "scripts/differential-mars.mjs"
+};
+
 const DEVELOPER_DOCS = [
   "code-architecture.md",
   "contributing-first-change.md",
@@ -76,7 +83,8 @@ test("every repository path quoted in a developer guide resolves", async () => {
     for (const path of paths) {
       // Wildcards describe a family rather than a file.
       if (path.includes("*") || path.endsWith("/")) continue;
-      assert.ok(await exists(path), `${name} references ${path}, which does not exist`);
+      const target = GENERATED_REPORTS[path] || path;
+      assert.ok(await exists(target), `${name} references ${path}, whose file or generator does not exist`);
     }
   }
 });

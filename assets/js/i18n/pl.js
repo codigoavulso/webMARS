@@ -1478,7 +1478,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "Wyświetlanie instrukcji {first}-{last} z {total}; cykle {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "Wyświetlanie instrukcji {first}-{last} z {total}; cykl 0.",
   "ScavengerHunt": "Polowanie na padlinożerców",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "Edytor MIDI TTY",
 
   "TTY Device + ANSI Terminal": "TTY Urządzenie + ANSI Terminal",
   "{bytes} B · {percent}%": "{bytes} B · {percent}%",

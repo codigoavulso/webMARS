@@ -1479,7 +1479,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "Anweisungen anzeigen {first}-{last} von {total}; Zyklen {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "Anweisungen anzeigen {first}-{last} von {total}; Zyklus 0.",
   "ScavengerHunt": "Schnitzeljagd",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "TTY MIDI-Editor",
   "TTY Device + ANSI Terminal": "TTY Gerät + ANSI Terminal",
   "{bytes} B · {percent}%": "{bytes} B · {percent}%",
   "{bytes} B": "{bytes} B",

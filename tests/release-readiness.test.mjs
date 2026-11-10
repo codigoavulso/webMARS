@@ -19,7 +19,7 @@ import {
 
 const run = promisify(execFile);
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.7.2";
+const expectedReleaseVersion = "0.7.3";
 const languages = [
   "en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id",
   "de", "ja", "ko", "tr", "vi", "ur", "it", "pl", "fa", "th"
@@ -510,7 +510,7 @@ test("application-version tokens are replaced inside iframe documents", async ()
   assert.equal(foreignDocument.title, `webMARS ${expectedReleaseVersion}`);
   assert.equal(attributes.get("content"), `webMARS ${expectedReleaseVersion}`);
   const build = sandbox.window.WebMarsAppVersion.build;
-  assert.match(build, /^\d{12}$/);
+  assert.match(build, /^\d{6}\.\d{2}\.\d{4}$/);
   assert.equal(textNode.nodeValue, `Version ${expectedReleaseVersion} · Build ${build}`);
   assert.equal(sandbox.window.WebMarsAppVersion.replaceVersionToken("__WEBMARS_APP_BUILD__"), build);
   assert.equal(sandbox.window.WebMarsAppVersion.withVersion("./help/info.html?v=1#notes"), `./help/info.html?v=1&b=${build}#notes`);
@@ -518,12 +518,12 @@ test("application-version tokens are replaced inside iframe documents", async ()
 
 test("build stamps use Lisbon release time with zero padding and a 24-hour clock", async () => {
   const { formatBuildNumber } = await import("../scripts/set-build.mjs");
-  assert.equal(formatBuildNumber(new Date("2026-01-02T00:03:59Z")), "202601020003");
-  assert.equal(formatBuildNumber(new Date("2026-07-02T23:04:00Z")), "202607030004");
+  assert.equal(formatBuildNumber(new Date("2026-01-02T00:03:59Z")), "202601.02.0003");
+  assert.equal(formatBuildNumber(new Date("2026-07-02T23:04:00Z")), "202607.03.0004");
   const source = await readFile(resolve(projectRoot, "assets/js/app-version.js"), "utf8");
   const sandbox = {};
   vm.runInNewContext(source, sandbox);
-  assert.match(sandbox.WebMarsAppVersion.build, /^\d{12}$/);
+  assert.match(sandbox.WebMarsAppVersion.build, /^\d{6}\.\d{2}\.\d{4}$/);
   for (const language of await readdir(resolve(projectRoot, "help"))) {
     const path = resolve(projectRoot, "help", language, "about-card.html");
     try {

@@ -101,7 +101,7 @@ export const server = createServer(async (request, response) => {
     const { fileStats } = publicFile;
     const path = relative(projectRoot, target).replaceAll(sep, "/");
     const build = new URL(request.url, "http://localhost").searchParams.get("b") || "";
-    const versionedAsset = /^\d{12}$/.test(build)
+    const versionedAsset = /^(?:\d{12}|\d{6}\.\d{2}\.\d{4})$/.test(build)
       && /^(?:assets|examples|help|libs|tools)\/.+\.(?:asm|c|c0|css|gif|h|ico|jpg|js|json|pdf|png|txt)$/.test(path);
     const etag = `W/"${fileStats.size.toString(16)}-${fileStats.mtimeMs.toString(16)}"`;
     response.setHeader("Cache-Control", versionedAsset ? "max-age=31536000" : "no-cache");

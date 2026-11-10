@@ -106,7 +106,7 @@
     const language = String(scope.WebMarsI18n?.getLanguage?.() || document.documentElement.lang || "en").split("-")[0];
     const payload = {
       v: 2, session: current.id, event, surface, detail: safeDetail,
-      build: /^[0-9]{12}$/.test(scope.WebMarsAppVersion?.build || "") ? scope.WebMarsAppVersion.build : "unknown",
+      build: /^(?:[0-9]{12}|[0-9]{6}\.[0-9]{2}\.[0-9]{4})$/.test(scope.WebMarsAppVersion?.build || "") ? scope.WebMarsAppVersion.build : "unknown",
       context, automation: scope.navigator?.webdriver === true ? "webdriver" : "none",
       interaction: trustedInteraction ? "trusted" : "not_seen", visit,
       seconds: Number.isInteger(secondsOverride) ? secondsOverride : Math.floor(current.seconds), returning: current.returning, source: current.source,

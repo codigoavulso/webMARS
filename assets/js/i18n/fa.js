@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "نمایش دستورالعمل‌ها {first}-{last} از {total}؛ چرخه {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "نمایش دستورالعمل‌ها {first}-{last} از {total}؛ چرخه 0.",
   "ScavengerHunt": "ScavengerHunt",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "ویرایشگر MIDI TTY",
 
   "TTY Device + ANSI Terminal": "TTY دستگاه + ANSI پایانه",
   "{bytes} B · {percent}%": "{bytes} B · {percent}٪",

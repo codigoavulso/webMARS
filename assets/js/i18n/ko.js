@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "{first}-{last} 지침 표시 {total}; 사이클 {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "{first}-{last} 지침 표시 {total}; 사이클 0.",
   "ScavengerHunt": "청소부 사냥",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "TTY MIDI 편집기",
 
   "TTY Device + ANSI Terminal": "TTY 장치 + ANSI 터미널",
   "{bytes} B · {percent}%": "{bytes} B · {percent}%",

@@ -31,7 +31,7 @@ test("static hosting revalidates entry pages and caches assets by build", async 
     }
     const entry = await request("/");
     const html = await entry.text();
-    const builds = [...html.matchAll(/(?:\?|&amp;)b=(\d{12})"/g)].map((match) => match[1]);
+    const builds = [...html.matchAll(/(?:\?|&amp;)b=(\d{6}\.\d{2}\.\d{4})"/g)].map((match) => match[1]);
     assert.equal(builds.length, 4);
     assert.equal(new Set(builds).size, 1);
     const versioned = await request(`${asset}?b=${builds[0]}`, { method: "HEAD" });

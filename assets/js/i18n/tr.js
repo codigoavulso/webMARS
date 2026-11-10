@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "Talimatlar gösteriliyor {first}-{last} arasında {total}; döngüler {cycleFirst}-{cycleLast}.",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "Talimatlar gösteriliyor {first}-{last} arasında {total}; döngü 0.",
   "ScavengerHunt": "Çöpçü Avı",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "TTY MIDI düzenleyici",
 
   "TTY Device + ANSI Terminal": "TTY Cihaz + ANSI Terminal",
   "{bytes} B · {percent}%": "{bytes} B · %{percent}",

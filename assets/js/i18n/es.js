@@ -1696,7 +1696,7 @@
     "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "Mostrando instrucciones {first}-{last} de {total}; ciclos {cycleFirst}-{cycleLast}.",
     "Showing instructions {first}-{last} of {total}; cycle 0.": "Mostrando instrucciones {first}-{last} de {total}; ciclo 0.",
     "ScavengerHunt": "ScavengerHunt",
-    "TTY MIDI DAW": "TTY MIDI DAW",
+    "TTY MIDI DAW": "Editor MIDI TTY",
     "TTY Device + ANSI Terminal": "TTY Device + ANSI Terminal",
     "{bytes} B · {percent}%": "{bytes} B · {percent}%",
     "{bytes} B": "{bytes} B",

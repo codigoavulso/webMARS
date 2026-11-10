@@ -1477,7 +1477,7 @@
   "Showing instructions {first}-{last} of {total}; cycles {cycleFirst}-{cycleLast}.": "กำลังแสดงคำแนะนำ {first}-{last} ของ {total}; รอบ {cycleFirst}-{cycleLast}",
   "Showing instructions {first}-{last} of {total}; cycle 0.": "กำลังแสดงคำแนะนำ {first}-{last} ของ {total}; รอบ 0",
   "ScavengerHunt": "ScavengerHunt",
-  "TTY MIDI DAW": "TTY MIDI DAW",
+  "TTY MIDI DAW": "ตัวแก้ไข MIDI TTY",
 
   "TTY Device + ANSI Terminal": "TTY อุปกรณ์ + ขั้วต่อ ANSI",
   "{bytes} B · {percent}%": "{bytes} ข · {percent}%",
