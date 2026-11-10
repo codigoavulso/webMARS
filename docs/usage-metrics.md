@@ -80,7 +80,7 @@ v2 fields and the temporary navigation/context cookies above extend it.
 
 The official installation sends first-party statistics automatically. There is
 no acceptance dialog or statistics checkbox. The user-facing explanation is
-in the public English/Portuguese privacy pages.
+in Help / About and the Manual’s privacy appendix.
 Reports describe measured visits and must never label them as consent records.
 
 ## Delivery and grouping
@@ -297,5 +297,4 @@ IP to the host. Ordinary site logs are a separate system.
 `--days` accepts 1–35; a missing database is an error, not an empty report.
 `npm run test:metrics` covers automatic delivery with old settings, browser
 signals, blocked storage, resource allowlists and temporary SQLite/HTTP
-servers. No tests send production events. Regenerate public privacy content
-using `npm run docs:public` after editing its source.
+servers. No tests send production events.

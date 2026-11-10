@@ -151,12 +151,10 @@ is not a release state.
 
 For every delivered change, including fixes that keep the same version, stamp
 the build after the edits and before committing and packaging. The build number
-uses the date and time in Lisbon in `YYYYMMDDhhmm` format. Refresh the public
-pages so their telemetry sends the same build number.
+uses the date and time in Lisbon in `YYYYMMDDhhmm` format.
 
 ```bash
 npm run build:stamp
-npm run docs:public
 npm run package:release
 ```
 

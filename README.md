@@ -132,7 +132,6 @@ revisions help everyone start with the same material.
 - [Teacher Kit](manual/teacher-kit/README.md) — first-class activities, sharing, migration and hosting guidance in Portuguese.
 - [Pipeline labs](docs/labs/README.md) — seven guided experiments with teacher solutions.
 - [User manual](manual/README.md) — illustrated Portuguese guide, practical exercises and searchable reference.
-- [Discover webMARS](https://webmars.nfiles.top/discover/) — introductions for learners and teachers, also available in [Portuguese](https://webmars.nfiles.top/discover/pt/).
 
 ## Run it on your own computer
 

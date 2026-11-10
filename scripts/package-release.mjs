@@ -41,7 +41,6 @@ const PUBLIC_ROOT_FILES = Object.freeze([
 ]);
 
 const PUBLIC_TREES = Object.freeze([
-  { root: "discover", extensions: [".html"] },
   {
     root: "assets",
     extensions: [".css", ".gif", ".ico", ".jpg", ".js", ".json", ".png"]

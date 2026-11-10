@@ -96,7 +96,7 @@ The device model includes external interrupts for the timer, keyboard, display, 
 - Import and download through standard browser file controls.
 - Optional cloud accounts and project synchronization; cloud access is not required for local work.
 - Light and dark themes.
-- Twenty-language interface, help, diagnostics, and examples, with right-to-left support for Arabic, Urdu and Persian. The independent Manual is in Portuguese; public discovery pages are in English and Portuguese.
+- Twenty-language interface, help, diagnostics, and examples, with right-to-left support for Arabic, Urdu and Persian. The independent Manual is in Portuguese.
 - Permanent example links, versioned public project publishing and a Teacher Kit.
 - Responsive desktop, tablet, and phone layouts.
 - Android keyboard-aware terminal and editor sizing.

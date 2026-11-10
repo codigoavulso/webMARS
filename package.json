@@ -27,7 +27,6 @@
     "i18n:new-keys": "node scripts/translate-new-keys.mjs",
     "version:set": "node scripts/set-version.mjs",
     "changelog:cut": "node scripts/cut-changelog.mjs",
-    "docs:public": "node scripts/generate-public-pages.mjs",
     "test:metrics": "node --test tests/feedback.test.mjs tests/usage-metrics.test.mjs tests/traffic-classification.test.mjs tests/social-login.test.mjs tests/online-menu.test.mjs tests/cloud-auth-flow.test.mjs tests/file-manager-status-regression.test.mjs tests/project-lifecycle.test.mjs tests/startup-recovery.test.mjs tests/usage-heartbeat.test.mjs tests/public-pages.test.mjs",
     "test:manual": "node --test tests/manual-examples.test.mjs",
     "build:stamp": "node scripts/set-build.mjs"
