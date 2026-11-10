@@ -265,7 +265,7 @@ test("Cloud, Settings and other shared dialogs participate in the mobile window 
   assert.match(ui, /class="dialog-body">[\s\S]*?data-dialog-role="message"[\s\S]*?data-dialog-role="form"[\s\S]*?<\/div>\s*<div class="dialog-entry" hidden>[\s\S]*?<\/div>\s*<div class="dialog-actions">/);
 });
 
-test("right-click closes only closable mobile window tabs", async () => {
+test("mobile window tabs offer close only for closable windows", async () => {
   const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
   const getCloseControl = extractNamedFunction(ui, "getWindowCloseControl");
   const closeMobilePanel = extractNamedFunction(ui, "closeMobilePanelEntry");
@@ -278,7 +278,8 @@ test("right-click closes only closable mobile window tabs", async () => {
   assert.match(renderTabs, /tab\.dataset\.closable = isClosable \? "true" : "false";/);
   assert.match(renderTabs, /tab\.addEventListener\("contextmenu", \(event\) => \{/);
   assert.match(renderTabs, /event\.preventDefault\(\);/);
-  assert.match(renderTabs, /closeMobilePanelEntry\(entry\);/);
+  assert.match(renderTabs, /if \(isClosable\) items\.push\(\{ id: "close"/);
+  assert.match(renderTabs, /if \(id === "close"\) closeMobilePanelEntry\(entry\);/);
 });
 
 test("repeatedly measuring a fitted dialog keeps its position inside a bordered desktop", async () => {

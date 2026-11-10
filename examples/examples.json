@@ -1691,6 +1691,26 @@
                     "path": "mips_piano.asm",
                     "main": true,
                     "shared": true
+                },
+                {
+                    "path": "mips_piano_01_allegro_con_brio.asm",
+                    "main": false,
+                    "shared": true
+                },
+                {
+                    "path": "mips_piano_02_andante_con_moto.asm",
+                    "main": false,
+                    "shared": true
+                },
+                {
+                    "path": "mips_piano_03_allegro.asm",
+                    "main": false,
+                    "shared": true
+                },
+                {
+                    "path": "mips_piano_04_finale.asm",
+                    "main": false,
+                    "shared": true
                 }
             ],
             "id": "mips-piano"

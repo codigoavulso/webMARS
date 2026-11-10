@@ -1220,18 +1220,68 @@ int main(void) {
   assert.equal(runToHalt(projectEngine), "sum=42\nmax=13\n");
 });
 
-test("new Assembly examples execute their defining behavior", async () => {
-  const pianoPath = await resolveExampleFile("en", "mips_piano.asm");
-  const piano = await assembleSource(await readFile(pianoPath, "utf8"), "mips_piano.asm");
-  const tones = [];
-  piano.setRuntimeHooks({ midi: (tone) => tones.push({ ...tone }) });
-  const pianoOutput = runToHalt(piano);
-  assert.match(pianoOutput, /MIPS Piano/);
-  assert.equal(tones.length, 18);
-  assert.deepEqual(tones.slice(-3).map((tone) => tone.pitch), [60, 64, 67]);
-  assert.ok(tones.slice(0, -3).every((tone) => tone.service === 33 && tone.instrument === 0));
-  assert.ok(tones.slice(-3).every((tone) => tone.service === 31));
+test("MIPS Piano performs all four movements with timed polyphony", async () => {
+  const entry = entries.find(({ id }) => id === "mips-piano");
+  const files = await Promise.all(sourceSpecs(entry).map(async ({ path, main }) => ({
+    name: path,
+    main,
+    source: await readFile(await resolveExampleFile("en", path), "utf8")
+  })));
+  const piano = await createJavaScriptEngine({ settings: { startAtMain: true, maxBacksteps: 0 } });
+  piano.setSourceFiles(files);
+  const main = files.find((file) => file.main);
+  const assembly = piano.assemble(main.source, { sourceName: main.name });
+  assert.equal(assembly.ok, true, formatDiagnostics(assembly));
 
+  let clock = 0;
+  let lastNoteEnd = 0;
+  const movements = [];
+  const opening = new Map();
+  const velocities = new Set();
+  piano.setRuntimeHooks({
+    midi(tone) {
+      assert.equal(tone.service, 31);
+      assert.equal(tone.instrument, 0);
+      assert.ok(tone.pitch >= 21 && tone.pitch <= 108 && tone.duration > 0);
+      assert.ok(tone.volume > 0 && tone.volume <= 127);
+      velocities.add(tone.volume);
+      movements.at(-1).notes += 1;
+      lastNoteEnd = Math.max(lastNoteEnd, clock + tone.duration);
+      if (clock < 1200) {
+        if (!opening.has(clock)) opening.set(clock, []);
+        opening.get(clock).push(tone.pitch);
+      }
+    }
+  });
+
+  let output = "";
+  let done = false;
+  for (let step = 0; step < 600000 && !done; step += 1) {
+    const result = piano.step({ includeSnapshot: false });
+    assert.equal(result.ok, true, result.message);
+    if (result.runIo) {
+      output += result.message;
+      if (/^\n(?:I|II|III|IV)\. /.test(result.message)) movements.push({ at: clock, notes: 0 });
+    }
+    clock += result.sleepMs || 0;
+    done = result.done;
+  }
+  assert.ok(done, "The symphony must reach the final exit syscall.");
+  assert.match(output, /MIPS Piano[\s\S]+Allegro con brio[\s\S]+Andante con moto[\s\S]+III\. Allegro[\s\S]+Presto[\s\S]+Fine/);
+  assert.deepEqual(movements, [
+    { at: 0, notes: 5976 }, { at: 476965, notes: 4935 },
+    { at: 1073463, notes: 4408 }, { at: 1411750, notes: 14457 }
+  ]);
+  assert.deepEqual([...opening], [
+    [278, [31, 43, 55, 67]], [556, [31, 43, 55, 67]],
+    [833, [31, 43, 55, 67]], [1111, [27, 39, 51, 63]]
+  ]);
+  assert.ok(velocities.size > 20, "The arrangement must retain its dynamic contrasts.");
+  assert.equal(clock, 2093411);
+  assert.ok(clock >= lastNoteEnd, "The final note must finish before the program exits.");
+});
+
+test("new Assembly examples execute their defining behavior", async () => {
   const cop1Path = await resolveExampleFile("en", "cop1_arithmetic_demo.asm");
   const cop1 = await assembleSource(await readFile(cop1Path, "utf8"), "cop1_arithmetic_demo.asm");
   const cop1Output = runToHalt(cop1);

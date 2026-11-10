@@ -73,8 +73,8 @@
       .sv-mark .sv-swatch { width:7px; height:7px; flex:0 0 7px; }
       .sv-mark b { margin-left:auto; color:var(--text); font-weight:700; overflow:hidden; text-overflow:ellipsis; }
 
-      .sv-detail-pane canvas { flex:1; min-height:0; width:100%; display:block; border:1px solid var(--line); background:var(--surface); outline:none; cursor:crosshair; touch-action:none; }
-      .sv-detail-pane canvas:focus { border-color:var(--accent); }
+      .sv-detail-pane canvas { flex:1; min-height:0; width:100%; display:block; background:var(--surface); outline:1px solid var(--line); outline-offset:-1px; cursor:crosshair; touch-action:none; }
+      .sv-detail-pane canvas:focus { outline-color:var(--accent); }
       .sv-hint { font-size:10px; color:var(--text-faint); }
       .sv-status { display:flex; flex-wrap:wrap; gap:4px 10px; font:11px Consolas, "Courier New", monospace; color:var(--text-muted); }
       .sv-tool:not(.sv-small) .sv-status { display:none; }
@@ -1460,8 +1460,10 @@
       function prepareCanvas(canvas) {
         const ratio = window.devicePixelRatio || 1;
         const rect = canvas.getBoundingClientRect();
-        const width = Math.max(1, Math.round(rect.width));
-        const height = Math.max(1, Math.round(rect.height));
+        // The canvases have no border or padding, so this is also the drawing
+        // area. Rounding it in CSS pixels would make the browser rescale it.
+        const width = Math.max(1, rect.width);
+        const height = Math.max(1, rect.height);
         const pixelWidth = Math.round(width * ratio);
         const pixelHeight = Math.round(height * ratio);
         if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
@@ -1469,7 +1471,7 @@
           canvas.height = pixelHeight;
         }
         const context = canvas.getContext("2d");
-        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+        context.setTransform(pixelWidth / width, 0, 0, pixelHeight / height, 0, 0);
         context.clearRect(0, 0, width, height);
         return { context, width, height };
       }
@@ -1839,7 +1841,7 @@
       function visibleRowCount() {
         const level = ZOOM_LEVELS[zoomIndex];
         const height = detailCanvas.getBoundingClientRect().height;
-        if (height > 0) detailHeight = Math.round(height);
+        if (height > 0) detailHeight = height;
         return Math.max(1, Math.floor((detailHeight - 20) / level.rowHeight));
       }
 

@@ -939,12 +939,16 @@
       }
     }
 
-    /* Context menu shared by right-click, the row overflow button and long press. */
+    /* Context menu shared across the desktop. */
     .fm-menu {
       position: fixed;
       z-index: 12000;
+      box-sizing: border-box;
+      width: max-content;
       min-width: 172px;
       max-width: 260px;
+      max-height: calc(100vh - 8px);
+      overflow: auto;
       border: 1px solid var(--line);
       border-radius: 4px;
       background: var(--surface-raised);
@@ -980,13 +984,13 @@
       background: transparent;
       color: var(--text);
       font: inherit;
-      text-align: left;
+      text-align: start;
       padding: 5px 8px;
       min-height: 28px;
       cursor: pointer;
     }
 
-    .fm-menu-item:hover:enabled {
+    .fm-menu-item:hover:enabled, .fm-menu-item:focus-visible {
       background: var(--accent-soft);
     }
 
@@ -1022,6 +1026,7 @@
   // One popup is enough: only one context menu can be open at a time, and
   // sharing it keeps every file-manager instance consistent.
   let sharedMenu = null;
+  let contextMenuInvoker = null;
 
   function getSharedMenu() {
     if (sharedMenu && sharedMenu.isConnected) return sharedMenu;
@@ -1030,29 +1035,45 @@
     sharedMenu.className = "fm-menu";
     sharedMenu.hidden = true;
     sharedMenu.setAttribute("role", "menu");
+    sharedMenu.tabIndex = -1;
+    sharedMenu.addEventListener("contextmenu", (event) => event.preventDefault());
     document.body.appendChild(sharedMenu);
     return sharedMenu;
   }
 
-  function closeContextMenu() {
-    if (sharedMenu) {
-      sharedMenu.hidden = true;
-      sharedMenu.innerHTML = "";
-    }
+  function closeContextMenu(restoreFocus = false) {
+    if (!sharedMenu || sharedMenu.hidden) return;
+    const invoker = contextMenuInvoker;
+    contextMenuInvoker = null;
+    sharedMenu.hidden = true;
+    sharedMenu.innerHTML = "";
+    if (restoreFocus && invoker?.isConnected) invoker.focus?.({ preventScroll: true });
   }
 
-  function openContextMenu(items, position, onPick, titleText = "") {
+  function contextMenuPosition(event, anchor) {
+    if (event.clientX || event.clientY || event.button === 2) {
+      return { x: event.clientX, y: event.clientY };
+    }
+    const rect = anchor.getBoundingClientRect();
+    return { x: rect.left, y: rect.bottom };
+  }
+
+  function openContextMenu(items, position, onPick, titleText = "", invoker = document.activeElement) {
     const menu = getSharedMenu();
     const usable = (Array.isArray(items) ? items : []).filter(Boolean);
     if (!usable.length) {
       closeContextMenu();
       return;
     }
-    menu.innerHTML = `${titleText ? `<div class="fm-menu-title">${esc(titleText)}</div>` : ""}${usable.map((item) => {
-      if (item === "-") return "<div class=\"fm-menu-sep\"></div>";
+    contextMenuInvoker = invoker;
+    menu.setAttribute("aria-label", titleText || t("More actions"));
+    menu.innerHTML = `${titleText ? `<div class="fm-menu-title" aria-hidden="true">${esc(titleText)}</div>` : ""}${usable.map((item) => {
+      if (item === "-") return "<div class=\"fm-menu-sep\" role=\"separator\"></div>";
       const classes = ["fm-menu-item", item.danger ? "danger" : ""].filter(Boolean).join(" ");
-      return `<button type="button" class="${classes}" data-fm-menu-id="${esc(item.id)}"${item.disabled ? " disabled" : ""} role="menuitem">${item.icon ? icon(item.icon) : ""}<span>${esc(item.label)}</span></button>`;
+      return `<button type="button" tabindex="-1" class="${classes}" data-fm-menu-id="${esc(item.id)}"${item.disabled ? " disabled" : ""} role="menuitem">${item.icon ? icon(item.icon) : ""}<span>${esc(item.label)}</span></button>`;
     }).join("")}`;
+    menu.style.left = "0px";
+    menu.style.top = "0px";
     menu.hidden = false;
     const rect = menu.getBoundingClientRect();
     const left = Math.max(4, Math.min(position.x, window.innerWidth - rect.width - 4));
@@ -1063,11 +1084,12 @@
       const button = event.target instanceof Element
         ? event.target.closest("[data-fm-menu-id]")
         : null;
-      if (!(button instanceof HTMLElement)) return;
+      if (!(button instanceof HTMLButtonElement) || button.disabled) return;
       const id = String(button.dataset.fmMenuId || "");
-      closeContextMenu();
+      closeContextMenu(true);
       if (id) onPick(id);
     };
+    (menu.querySelector("button:enabled") || menu).focus({ preventScroll: true });
   }
 
   if (typeof document !== "undefined") {
@@ -1076,10 +1098,34 @@
       if (event.target instanceof Node && sharedMenu.contains(event.target)) return;
       closeContextMenu();
     }, true);
-    window.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") closeContextMenu();
-    });
-    window.addEventListener("blur", closeContextMenu);
+    document.addEventListener("keydown", (event) => {
+      if (!sharedMenu || sharedMenu.hidden) return;
+      if (event.key === "Tab") {
+        closeContextMenu(true);
+        return;
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        closeContextMenu(true);
+        return;
+      }
+      if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const buttons = [...sharedMenu.querySelectorAll("button:enabled")];
+      if (!buttons.length) return;
+      const index = buttons.indexOf(document.activeElement);
+      const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
+        : event.key === "ArrowDown" ? (index + 1) % buttons.length
+        : (index <= 0 ? buttons.length : index) - 1;
+      buttons[next].focus();
+    }, true);
+    document.addEventListener("scroll", (event) => {
+      if (sharedMenu && !sharedMenu.contains(event.target)) closeContextMenu();
+    }, true);
+    window.addEventListener("blur", () => closeContextMenu());
+    window.addEventListener("resize", () => closeContextMenu());
   }
 
   function compareNodes(left, right, sortKey, sortDirection) {
@@ -1474,15 +1520,17 @@
     }
 
     function openMenuFor(node, position) {
-      if (!features.contextMenu) return;
+      if (!features.contextMenu) return false;
       const items = callback("getContextItems", node);
-      if (!Array.isArray(items) || !items.length) return;
+      if (!Array.isArray(items) || !items.length) return false;
       openContextMenu(
         items.map((item) => (item === "-" ? item : { ...item, label: t(item.label) })),
         position,
         (id) => callback("onAction", id, node),
-        node.name
+        node.name,
+        bodyNode
       );
+      return true;
     }
 
     function navigateInto(node) {
@@ -1590,13 +1638,14 @@
     });
 
     on(bodyNode, "contextmenu", (event) => {
+      if (!features.contextMenu) return;
       const hit = rowNodeFromEvent(event.target);
       if (!hit) return;
-      event.preventDefault();
+      const position = contextMenuPosition(event, hit.row);
       state.focusKey = hit.node.key;
       callback("onSelect", hit.node);
       render();
-      openMenuFor(hit.node, { x: event.clientX, y: event.clientY });
+      if (openMenuFor(hit.node, position)) event.preventDefault();
     });
 
     // Long press stands in for right click on touch devices.
@@ -1633,6 +1682,12 @@
 
     if (features.keyboard) {
       on(bodyNode, "keydown", (event) => {
+        if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
+          syncFocusRow();
+          const hit = rowNodeFromEvent(bodyNode.querySelector('[data-fm-focused="1"]'));
+          if (hit && openMenuFor(hit.node, contextMenuPosition(event, hit.row))) event.preventDefault();
+          return;
+        }
         const keys = ["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft", "Enter", "Home", "End", "F2", "Delete", " "];
         if (!keys.includes(event.key)) return;
         syncFocusRow();
@@ -2001,6 +2056,8 @@
     createFileManager,
     ensureFileManagerStyles,
     closeContextMenu,
+    contextMenuPosition,
+    openContextMenu,
     formatBytes,
     formatDate,
     formatDateFull,

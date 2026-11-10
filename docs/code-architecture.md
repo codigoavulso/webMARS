@@ -1,4 +1,4 @@
-# webMARS Code Architecture (v0.7.1)
+# webMARS Code Architecture (v0.7.2)
 
 webMARS is a static browser application built from ordered, non-ES-module
 scripts. The assembler and simulator use one JavaScript implementation; the
@@ -252,7 +252,7 @@ should remain incremental:
 
 Names such as `core/syscalls` or `runtime/session` may be useful conceptual
 boundaries for future extraction, but they are not directories or modules in
-the v0.7.1 tree.
+the v0.7.2 tree.
 
 ## Theming
 

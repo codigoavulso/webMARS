@@ -10609,44 +10609,12 @@ window.addEventListener("webmars:toggle-fullscreen", () => {
   void toggleFullScreen();
 });
 
-const editorTabContextMenu = document.createElement("div");
-editorTabContextMenu.className = "menu-popup editor-tab-context-menu hidden";
-document.body.appendChild(editorTabContextMenu);
-let editorTabContextFileId = "";
-
-function hideEditorTabContextMenu() {
-  editorTabContextFileId = "";
-  editorTabContextMenu.classList.add("hidden");
-  editorTabContextMenu.innerHTML = "";
-}
-
-function positionEditorTabContextMenu(clientX = 0, clientY = 0) {
-  editorTabContextMenu.style.left = `${Math.max(4, Math.round(Number(clientX) || 0))}px`;
-  editorTabContextMenu.style.top = `${Math.max(4, Math.round(Number(clientY) || 0))}px`;
-  const rect = editorTabContextMenu.getBoundingClientRect();
-  if (rect.right > window.innerWidth - 4) {
-    editorTabContextMenu.style.left = `${Math.max(4, Math.round(window.innerWidth - rect.width - 4))}px`;
-  }
-  if (rect.bottom > window.innerHeight - 4) {
-    editorTabContextMenu.style.top = `${Math.max(4, Math.round(window.innerHeight - rect.height - 4))}px`;
-  }
-}
-
 function getEditorTabContextState(fileId = "") {
   const normalizedFileId = String(fileId || "").trim();
   const files = editor.getFiles();
   const file = files.find((entry) => String(entry?.id || "") === normalizedFileId) || null;
   const dirty = Boolean(file && String(file.source ?? "") !== String(file.savedSource ?? ""));
-  const readOnly = file?.readOnly === true;
-  const canSave = Boolean(file && !readOnly && dirty);
-  return {
-    file,
-    dirty,
-    readOnly,
-    canClose: Boolean(file),
-    canSave,
-    canSaveAndClose: canSave
-  };
+  return { file, canSave: Boolean(file && !file.readOnly && dirty) };
 }
 
 function activateEditorTabContextFile(fileId = "") {
@@ -10657,95 +10625,220 @@ function activateEditorTabContextFile(fileId = "") {
   return active;
 }
 
-async function runEditorTabContextCommand(action = "close") {
-  const state = getEditorTabContextState(editorTabContextFileId);
-  hideEditorTabContextMenu();
-  if (!state.file) return;
-  activateEditorTabContextFile(state.file.id);
-
-  if (action === "save") {
-    if (!state.canSave) return;
-    commands.saveFile();
-    return;
-  }
-
-  if (action === "saveAndClose") {
-    if (!state.canSaveAndClose) return;
-    commands.saveFile();
-    await commands.closeFile();
-    return;
-  }
-
-  if (state.canClose) {
-    await commands.closeFile();
-  }
-}
-
-function renderEditorTabContextMenu(fileId = "") {
+async function runEditorTabContextCommand(fileId, action) {
   const state = getEditorTabContextState(fileId);
-  if (!state.file) {
-    hideEditorTabContextMenu();
-    return false;
-  }
-
-  editorTabContextFileId = state.file.id;
-  editorTabContextMenu.innerHTML = "";
-  const items = [
-    { label: "Close", action: "close", enabled: state.canClose },
-    { label: "Save", action: "save", enabled: state.canSave },
-    { label: "Save and Close", action: "saveAndClose", enabled: state.canSaveAndClose }
-  ];
-
-  items.forEach((item) => {
-    const row = document.createElement("button");
-    row.type = "button";
-    row.className = "menu-row";
-    row.innerHTML = `<span class="menu-check"></span><span>${escapeHtml(translateText(item.label))}</span><span class="menu-shortcut"></span><span class="menu-arrow"></span>`;
-    if (!item.enabled) {
-      row.classList.add("disabled");
-      row.disabled = true;
-    } else {
-      row.addEventListener("click", () => {
-        void runEditorTabContextCommand(item.action);
-      });
-    }
-    editorTabContextMenu.appendChild(row);
-  });
-
-  editorTabContextMenu.classList.remove("hidden");
-  return true;
+  if (!state.file || (action !== "close" && !state.canSave)) return;
+  if (activateEditorTabContextFile(state.file.id)?.id !== state.file.id) return;
+  if (action !== "close") commands.saveFile();
+  if (action !== "save") await commands.closeFile();
 }
 
 const menuSystem = createMenuSystem(refs, commands, () => store.getState(), toolManager);
-refs.editorTabs?.addEventListener("contextmenu", (event) => {
+const contextMenu = window.WebMarsFileManager;
+
+function contextAction(label, run, disabled = false) {
+  return { label, run, disabled };
+}
+
+function contextButton(label, button) {
+  return button && contextAction(label, () => button.click(), button.disabled);
+}
+
+async function copyContextText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    postMarsMessage("Clipboard access was blocked.");
+  }
+}
+
+async function editContextSelection(field, action) {
+  const doc = field.ownerDocument;
+  field.focus({ preventScroll: true });
+  const { value, selectionStart: start, selectionEnd: end } = field;
+  if (action !== "paste" && doc.execCommand(action)) return;
+
+  try {
+    const clipboard = doc.defaultView.navigator.clipboard;
+    if (action === "copy" || action === "cut") {
+      if (start == null) throw new Error("Selection is not exposed");
+      await clipboard.writeText(value.slice(start, end));
+      if (action === "copy") return;
+    }
+    const text = action === "paste" ? await clipboard.readText() : "";
+    if (!field.isConnected || field.disabled || field.readOnly || doc.activeElement !== field
+      || field.value !== value || field.selectionStart !== start || field.selectionEnd !== end) return;
+    const command = action === "cut" ? "delete" : "insertText";
+    if (!doc.execCommand(command, false, text)) {
+      if (start == null) throw new Error("Selection is not exposed");
+      field.setRangeText(text, start, end, "end");
+      field.dispatchEvent(new doc.defaultView.Event("input", { bubbles: true }));
+    }
+  } catch {
+    postMarsMessage("Clipboard access was blocked.");
+  }
+}
+
+function getTextContextActions(field) {
+  const actions = [];
+  const editable = !field.readOnly && !field.disabled;
+  const canCopy = field.type !== "password"
+    && (field.selectionStart == null ? Boolean(field.value) : field.selectionStart !== field.selectionEnd);
+  if (field === refs.editor) {
+    const file = editor.getActiveFile();
+    actions.push(
+      contextAction("Undo", commands.undo, !editable || (file?.undoStack?.length ?? 0) < 2),
+      contextAction("Redo", commands.redo, !editable || !file?.redoStack?.length),
+      "-"
+    );
+  }
+  actions.push(
+    contextAction("Cut", () => editContextSelection(field, "cut"), !editable || !canCopy),
+    contextAction("Copy", () => editContextSelection(field, "copy"), !canCopy)
+  );
+  if (editable) actions.push(contextAction("Paste", () => editContextSelection(field, "paste")));
+  actions.push(contextAction("Select All", () => { field.focus(); field.select(); }, !field.value));
+  if (field === refs.editor) actions.push(contextAction("Find", commands.find));
+  const clear = field === refs.messages.mars ? refs.messages.clearMars
+    : field === refs.messages.run ? refs.messages.clearRun : null;
+  if (clear) actions.push("-", contextAction("Clear", () => clear.click(), !field.value));
+  return actions;
+}
+
+function getWindowContextActions(win) {
+  if (!win) return [];
+  const min = win.querySelector('[data-win-action="min"]');
+  const max = win.querySelector('[data-win-action="max"]');
+  const close = win.querySelector('[data-win-action="close"]');
+  return [
+    contextButton(win.classList.contains("window-minimized") ? "Restore" : "Minimize", min?.getClientRects().length ? min : null),
+    contextButton(win.classList.contains("window-maximized") ? "Restore" : "Maximize", max?.getClientRects().length ? max : null),
+    contextButton("Close", close?.getClientRects().length ? close : null)
+  ].filter(Boolean);
+}
+
+function getAppContextActions(target, frame) {
+  const tab = target.closest("#editor-file-tabs [data-file-id]");
+  if (tab) {
+    const fileId = tab.dataset.fileId;
+    const state = getEditorTabContextState(fileId);
+    if (state.file) return [
+      contextAction("Close", () => runEditorTabContextCommand(fileId, "close")),
+      contextAction("Save", () => runEditorTabContextCommand(fileId, "save"), !state.canSave),
+      contextAction("Save and Close", () => runEditorTabContextCommand(fileId, "saveAndClose"), !state.canSave)
+    ];
+  }
+
+  const field = target.closest("textarea, input");
+  if (field && (typeof field.selectionStart === "number" || field.type === "email") && !field.disabled) {
+    return getTextContextActions(field);
+  }
+  if (target.closest("#editor-surface")) return getTextContextActions(refs.editor);
+
+  const toolbarGroup = target.closest(".toolbar-file-group, .toolbar-run-group");
+  if (toolbarGroup) {
+    return [...toolbarGroup.querySelectorAll("button.tool-btn")]
+      .filter((button) => button.getClientRects().length)
+      .map((button) => contextButton(button.textContent.trim(), button));
+  }
+
+  const anchor = target.closest("a[href]");
+  const selection = target.ownerDocument.getSelection()?.toString();
+  const cell = target.closest("td");
+  const text = selection || cell?.textContent.trim() || target.closest("#labels-list li")?.textContent.trim();
+  const actions = text ? [contextAction("Copy", () => copyContextText(text))] : [];
+  if (anchor && /^(https?:|mailto:)$/.test(anchor.protocol)) {
+    const url = anchor.href;
+    actions.push(contextAction("Open", () => anchor.click()), contextAction("Copy Link", () => copyContextText(url)));
+  }
+  const win = (frame || target).closest(".desktop-window");
+  if (target.closest(".window-titlebar")) return getWindowContextActions(win);
+
+  const instruction = target.closest("tr[data-text-address]");
+  if (instruction) {
+    actions.push(contextAction("Copy Address", () => copyContextText(toHex(Number(instruction.dataset.textAddress)))));
+    const breakpoint = instruction.querySelector("[data-breakpoint-address]");
+    if (breakpoint) actions.push(contextButton("Toggle Breakpoint", breakpoint));
+  }
+  if (target.closest(".execute-text-window")) {
+    actions.push(contextAction("Clear all breakpoints", commands.clearBreakpoints, !refs.execute.textBody.querySelector("[data-breakpoint-address]:checked")));
+  }
+  if (target.closest(".execute-data-window")) {
+    if (cell?.hasAttribute("data-data-address")) {
+      actions.push(contextAction("Copy Address", () => copyContextText(toHex(Number(cell.dataset.dataAddress)))));
+    }
+    actions.push(
+      contextButton("Previous page", refs.execute.dataNavPrev),
+      contextButton("Next page", refs.execute.dataNavNext),
+      contextAction("Dump Memory...", commands.dumpMemory)
+    );
+  }
+  const messages = target.closest("#panel-mars-messages, #panel-run-io");
+  if (messages) {
+    actions.push(contextButton("Clear", messages.querySelector(".messages-clear-btn")));
+  }
+  const button = target.closest("button");
+  if (button && button.closest(".toolbar, .menu-bar, .subtabs") && button.getClientRects().length) {
+    const label = button.getAttribute("aria-label") || button.textContent.trim() || button.title;
+    if (label) actions.push(contextButton(label, button));
+  }
+  if (win?.classList.contains("tool-window") || frame) actions.push(...getWindowContextActions(win));
+  if (!actions.some(Boolean)) {
+    if (!win || target.closest("#main-panel-project")) {
+      actions.push(contextAction("New Project", commands.newProject), contextAction("Open from Disk...", commands.openFileFromDisk));
+    }
+    actions.push(contextAction("Help", commands.helpHub), contextAction("Open the Manual", commands.helpManual));
+  }
+  return actions.filter(Boolean);
+}
+
+function openAppContextMenu(event, frame = null) {
   const target = event.target;
-  if (!(target instanceof HTMLElement)) return;
-  const tab = target.closest("[data-file-id]");
-  if (!(tab instanceof HTMLElement)) return;
-  const fileId = String(tab.dataset.fileId || "").trim();
-  if (!fileId) return;
+  if (target?.nodeType !== 1 || !refs.root.contains(frame || target)) return;
+  menuSystem.hide();
+  if (event.defaultPrevented) return;
+
+  const actions = getAppContextActions(target, frame);
+  if (!actions.some((action) => action !== "-" && !action.disabled)) {
+    actions.push(contextAction("Help", commands.helpHub));
+  }
+  const position = contextMenu.contextMenuPosition(event, target);
+  if (frame) {
+    const bounds = frame.getBoundingClientRect();
+    position.x += bounds.left + frame.clientLeft;
+    position.y += bounds.top + frame.clientTop;
+  }
+  const invoker = target.closest("textarea, input, button, a[href], [tabindex]") || target.ownerDocument.activeElement;
   event.preventDefault();
-  activateEditorTabContextFile(fileId);
-  if (!renderEditorTabContextMenu(fileId)) return;
-  positionEditorTabContextMenu(event.clientX, event.clientY);
-});
-refs.editorTabs?.addEventListener("click", () => {
-  hideEditorTabContextMenu();
-});
-document.addEventListener("mousedown", (event) => {
+  contextMenu.openContextMenu(actions.map((action, id) => action === "-" ? "-" : {
+    id: String(id), label: translateText(action.label), disabled: action.disabled
+  }), position, (id) => { void actions[id].run(); }, "", invoker);
+}
+
+function handleAppContextKey(event, frame = null) {
+  if (event.defaultPrevented || (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10"))) return;
   const target = event.target;
-  if (target instanceof HTMLElement && (editorTabContextMenu.contains(target) || refs.editorTabs?.contains(target))) return;
-  hideEditorTabContextMenu();
-});
-document.addEventListener("scroll", () => {
-  hideEditorTabContextMenu();
+  if (target?.nodeType !== 1 || !refs.root.contains(frame || target)) return;
+  if (frame) {
+    openAppContextMenu(event, frame);
+  } else if (!target.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }))) {
+    event.preventDefault();
+  }
+}
+
+document.addEventListener("contextmenu", (event) => openAppContextMenu(event));
+document.addEventListener("keydown", (event) => handleAppContextKey(event));
+document.addEventListener("load", (event) => {
+  const frame = event.target;
+  if (!(frame instanceof HTMLIFrameElement) || !refs.root.contains(frame)) return;
+  const doc = frame.contentDocument;
+  if (!doc) return;
+  doc.addEventListener("pointerdown", () => contextMenu.closeContextMenu(), true);
+  doc.addEventListener("scroll", () => contextMenu.closeContextMenu(), true);
+  doc.addEventListener("contextmenu", (frameEvent) => openAppContextMenu(frameEvent, frame));
+  doc.addEventListener("keydown", (frameEvent) => handleAppContextKey(frameEvent, frame));
 }, true);
-window.addEventListener("resize", () => {
-  hideEditorTabContextMenu();
-});
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") hideEditorTabContextMenu();
-});
+
 getI18nApi()?.subscribe?.(() => {
   refs.refreshTranslations?.();
   messagesPane.refreshTranslations?.();

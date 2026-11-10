@@ -315,6 +315,7 @@ function createToolManager(engine, messagesPane, windowManager, desktop, helpSys
     { id: "screen-magnifier", label: "Screen Magnifier", script: "./tools/screen-magnifier.js" },
     { id: "system-clock", label: "System Clock and Timer", script: "./tools/system-clock.js" },
     { id: "stack-visualizer", label: "Stack Visualizer", script: "./tools/stack-visualizer.js" },
+    { id: "tty-midi-daw", label: "TTY MIDI DAW", script: "./tools/tty-midi-daw.js" },
     { id: "tty-ansi-terminal", label: "TTY Device + ANSI Terminal", script: "./tools/tty-ansi-terminal.js" }
   ];
 

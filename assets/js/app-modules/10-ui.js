@@ -1608,13 +1608,16 @@ function createWindowManager(refs) {
       }
 
       tab.addEventListener("click", () => setMobilePanel(entry.id));
-      if (isClosable) {
-        tab.addEventListener("contextmenu", (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          closeMobilePanelEntry(entry);
-        });
-      }
+      tab.addEventListener("contextmenu", (event) => {
+        const contextMenu = window.WebMarsFileManager;
+        const items = [{ id: "show", label: translateText("Show") }];
+        if (isClosable) items.push({ id: "close", label: translateText("Close") });
+        event.preventDefault();
+        contextMenu.openContextMenu(items, contextMenu.contextMenuPosition(event, tab), (id) => {
+          if (id === "close") closeMobilePanelEntry(entry);
+          else setMobilePanel(entry.id);
+        }, label, tab);
+      });
       host.appendChild(tab);
     });
   }
@@ -3503,6 +3506,7 @@ function setupEditor(refs, store, options = {}) {
       button.addEventListener("click", () => selectCompletion(index));
       completionPopup.appendChild(button);
     });
+    completionPopup.addEventListener("contextmenu", (event) => event.preventDefault());
     document.body.appendChild(completionPopup);
     completionIndex = 0;
     positionCompletionPopup(context);
@@ -7940,6 +7944,10 @@ function injectRuntimeStyles() {
     #btn-redo { background-image: url("./assets/images/Redo16.png"); }
     #btn-assemble { background-image: url("./assets/images/Assemble16.png"); }
     #btn-compile-c0 { background-image: url("./assets/images/Assemble16.png"); }
+    /* Firefox skips contextmenu events on disabled buttons. Let the toolbar
+       receive the click so it can still show the available commands. */
+    .toolbar button:disabled { pointer-events: none; }
+
     #btn-go { background-image: url("./assets/images/Play16.png"); }
     #btn-step { background-image: url("./assets/images/StepForward16.png"); }
     #btn-backstep { background-image: url("./assets/images/StepBack16.png"); }

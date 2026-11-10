@@ -11,6 +11,12 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
   submenuPopupLevel2.className = "menu-popup menu-sub-popup hidden";
   document.body.appendChild(submenuPopupLevel2);
 
+  // These menus are mounted outside the desktop. Keep the open menu visible
+  // when the user right-clicks a row, a separator or a submenu.
+  for (const menu of [popup, submenuPopup, submenuPopupLevel2]) {
+    menu.addEventListener("contextmenu", (event) => event.preventDefault());
+  }
+
   // Submenus open on hover only on the desktop layout with a real pointer.
   //
   // Touch is excluded because a tap synthesizes mouseenter on whatever ends up
