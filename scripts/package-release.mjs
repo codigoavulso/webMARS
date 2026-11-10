@@ -22,7 +22,6 @@ const distRoot = join(projectRoot, "dist");
 const PUBLIC_ROOT_FILES = Object.freeze([
   "index.html",
   "webmars-config.js",
-  "favicon.ico",
   "robots.txt",
   "sitemap.xml",
   "LICENSE",
@@ -585,7 +584,7 @@ async function validateIsolatedRelease(targetRoot, sourceFiles) {
   const requiredFiles = [
     "index.html",
     "webmars-config.js",
-    "favicon.ico",
+    "assets/images/favicon.ico",
     "robots.txt",
     "LICENSE",
     APP_VERSION_PATH,
