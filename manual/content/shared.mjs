@@ -3,8 +3,8 @@ export const MANUAL = Object.freeze({
   version: "0.3.0",
   displayVersion: "v0.3.0",
   webmarsVersion: "0.7.4",
-  verifiedCommit: "PENDING-release",
-  verifiedAt: "PENDING-release",
+  verifiedCommit: "32377560cd282b59060059085765bc3f427e3456",
+  verifiedAt: "2026-11-13",
   locale: "pt-PT"
 });
 
