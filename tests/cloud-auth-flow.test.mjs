@@ -5,6 +5,39 @@ import vm from "node:vm";
 
 const runtime = await readFile(new URL("../assets/js/app-modules/20-app-runtime.js", import.meta.url), "utf8");
 const source = runtime.slice(runtime.indexOf("async function cloudSocialSections("), runtime.indexOf("async function openCloudServerPreferencesDialog("));
+
+test("a project sync response from an old account cannot replace the new account's indicators", async () => {
+  const refresh = runtime.match(/async function refreshCloudProjectSyncDocuments\([\s\S]*?\n\}/)[0];
+  const accountA = { id: 1 };
+  const accountB = { id: 2 };
+  const replies = [];
+  const snapshots = new Map();
+  const env = vm.createContext({
+    cloudProjectSyncRefreshPromise: null, cloudProjectSyncRefreshOwner: null,
+    cloudAuthState: "authenticated", cloudUser: accountA,
+    projectLibraryState: { projects: [{ rootPath: "project.p" }] },
+    cloudProjectSyncDocuments: snapshots,
+    listCloudProjects: () => new Promise(resolve => replies.push(resolve)),
+    normalizeProjectData: value => value,
+    normalizeProjectRootKey: value => value,
+    chooseLatestRemoteProjectByName: projects => new Map(projects.map(project => [project.name, project])),
+    clearCloudProjectSyncDocuments: () => snapshots.clear(),
+    deserializeProjectFromCloudDocument: value => value,
+    setCloudProjectSyncDocument: (name, value) => snapshots.set(name, value),
+    renderProjectTree() {}, postMarsMessage() {}, describeCloudError: error => error.message
+  });
+  vm.runInContext(refresh, env);
+  const oldRequest = env.refreshCloudProjectSyncDocuments();
+  env.cloudUser = accountB;
+  const newRequest = env.refreshCloudProjectSyncDocuments();
+  assert.equal(replies.length, 2);
+  replies[1]([{ id: 2, name: "project.p", project: { owner: "B" } }]);
+  await newRequest;
+  replies[0]([{ id: 1, name: "project.p", project: { owner: "A" } }]);
+  await oldRequest;
+  assert.equal(snapshots.get("project.p").owner, "B");
+});
+
 function harness() {
   const forms = [], requests = [], sessions = [], messages = [];
   const env = {
@@ -84,6 +117,19 @@ test("recovery permits code resend and invalid codes without blocking retry", as
   h.env.cloudRequestJson = async () => { throw Object.assign(new Error("invalid code"), { status: 400 }); };
   assert.equal((await form.beforeResolve({ code: "123456", password: "12345678", repeatPassword: "12345678" }, h.dialog)).close, false);
   assert.match(h.messages.at(-1), /invalid or expired/);
+});
+
+test("password recovery rejects malformed email addresses before requesting a code", async () => {
+  const h = harness();
+  await h.env.openCloudPasswordResetDialog();
+  const form = h.forms[0];
+  for (const email of ["person@", "@example.test", "person@example", "person@@example.test", "person @example.test"]) {
+    assert.equal((await form.beforeResolve({ email }, h.dialog)).close, false, email);
+    assert.match(h.messages.at(-1), /valid email/);
+  }
+  assert.equal(h.requests.filter((request) => request.path === "/password-reset/request").length, 0);
+  await form.beforeResolve({ email: " Person@Example.Test " }, h.dialog);
+  assert.equal(h.requests.at(-1).options.body.email, "person@example.test");
 });
 
 test("an already linked Google identity is not offered for linking again", async () => {

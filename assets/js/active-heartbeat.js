@@ -28,7 +28,7 @@
     flush();
   }
   function flush() {
-    const activeSeconds = Math.min(86400, Math.floor(activeMs / 1000));
+    const activeSeconds = Math.floor(activeMs / 1000);
     if (activeSeconds <= sentSeconds) return;
     sentSeconds = activeSeconds;
     try {

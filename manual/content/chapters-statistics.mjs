@@ -32,7 +32,7 @@ export const statisticsChapters = [
             ["Últimas 24 horas", "Horas de xx:00 a xx:59", "Em que horas se concentra a utilização?"],
             ["Últimos 30 dias", "Dias de 00:00 a 23:59", "Como evoluem as visitas e a adoção ao longo das semanas?"]
           ])}
-          ${screenshot("./assets/screenshots/usage-statistics-light.png", "Versão anterior do painel de estatísticas no tema claro, com dados sintéticos", "Captura de referência do webMARS 0.6.3. A versão atual organiza estes dados nos separadores Panorâmica, Recursos e Atividade Cloud; os números desta imagem são sintéticos.")}
+          ${screenshot("./assets/screenshots/usage-statistics-light.png", "Painel de estatísticas no tema claro", "Os separadores apresentam a panorâmica, os recursos, as builds e a atividade Cloud. Os valores são fictícios.")}
           <p>O gráfico usa a hora de Lisboa e inclui o minuto, a hora ou o dia em curso, com os dados recebidos até à última leitura. Na mudança de hora, o desvio UTC distingue as horas que se repetem. A resposta agregada pode ficar em cache durante 30 segundos.</p>
         `
       },

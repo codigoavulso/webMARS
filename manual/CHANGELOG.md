@@ -3,6 +3,14 @@
 Todas as alterações relevantes deste subprojeto são registadas aqui. O formato
 segue *Keep a Changelog* e o manual usa versionamento semântico próprio.
 
+## [0.3.0] — 2026-11-13
+
+Tag independente: `manual-v0.3.0`.
+
+- Atualizada a edição para webMARS 0.7.4.
+- Acrescentado o editor MIDI TTY e renovadas as capturas das ferramentas.
+- Revistos os fluxos de projetos, biblioteca e estatísticas.
+
 ## [0.2.2] — 2026-10-24
 
 Tag independente: `manual-v0.2.2`.

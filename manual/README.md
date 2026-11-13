@@ -3,7 +3,7 @@
 ![Área de trabalho do webMARS no tema claro](./assets/screenshots/workspace-overview-light.png)
 
 O Manual do webMARS é um subprojeto editorial autónomo, com versão e ciclo de
-lançamento próprios. A versão `0.2.2` documenta o webMARS `0.7.0` em português
+lançamento próprios. A versão `0.3.0` documenta o webMARS `0.7.4` em português
 e foi concebida para poder ser publicada tanto em `/manual/` juntamente com a
 aplicação como num alojamento estático independente.
 
@@ -18,20 +18,20 @@ aplicação como num alojamento estático independente.
 - funcionar sem frameworks, serviços externos, cookies ou telemetria.
 
 A edição contém 21 capítulos numerados, apêndices e páginas editoriais, além de
-36 capturas reais: 16 estados gerais da aplicação e uma captura para cada uma
-das 20 ferramentas.
+37 capturas: 16 estados gerais da aplicação e uma captura para cada uma
+das 21 ferramentas.
 
 Esta edição inclui o painel público de estatísticas, os seus períodos, filtros,
-medições e limites de interpretação, além da Biblioteca pública em tabela,
-com pesquisa no servidor e páginas de 25 resultados. A informação de privacidade
+medições e limites de interpretação, além da Biblioteca pública integrada na vista Projetos,
+com pesquisa e filtros. A informação de privacidade
 e os procedimentos do operador/Kit Docente acompanham a recolha automática da
 instalação oficial. O Manual mantém pesquisa local e não envia telemetria.
 
-A atualização editorial em preparação acrescenta o manual integrado em
+A edição inclui o manual integrado em
 **Ajuda → Abrir o Manual**, com tema sincronizado e abertura do mesmo capítulo
 num separador independente. O índice pode ser filtrado por assunto. Os guias
 cobrem entrada Google, associação e fusão de contas existentes, os separadores
-Panorâmica/Recursos/Cloud das estatísticas e a exportação CSV. As capturas
+Panorâmica/Recursos/Builds/Cloud das estatísticas e a exportação CSV. As capturas
 anteriores conservam a versão de origem na legenda.
 
 O conteúdo prático acrescenta 13 secções: soma de vetores em Assembly e Mini-C,
@@ -95,7 +95,7 @@ O manual usa versionamento semântico independente da aplicação:
 - **major** — reorganização incompatível de URLs, formato ou público-alvo.
 
 As releases usam o prefixo de tag `manual-v`, por exemplo
-`manual-v0.2.2`, para não colidirem com as tags da aplicação.
+`manual-v0.3.0`, para não colidirem com as tags da aplicação.
 
 A versão compatível da aplicação é sempre mostrada no cabeçalho e registada no
 changelog. Uma nova versão do webMARS não muda automaticamente a versão do

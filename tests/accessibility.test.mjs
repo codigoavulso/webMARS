@@ -13,6 +13,15 @@ import { resolve } from "node:path";
 import { projectRoot } from "./helpers/engines.mjs";
 import { AUTOMATED_CRITERIA, MANUAL_CRITERIA, audit, buildReport, contrastRatio, readTokens } from "../scripts/audit-accessibility.mjs";
 
+test("menus remain scrollable inside short and narrow viewports", async () => {
+  const ui = await readFile(resolve(projectRoot, "assets/js/app-modules/10-ui.js"), "utf8");
+  const menu = ui.match(/\.menu-popup \{([\s\S]*?)\}/)?.[1];
+  assert.ok(menu, "menu styles should exist");
+  assert.match(menu, /max-height:\s*calc\(100vh - 8px\)/);
+  assert.match(menu, /max-width:\s*calc\(100vw - 8px\)/);
+  assert.match(menu, /overflow-y:\s*auto/);
+});
+
 test("the contrast calculation matches the WCAG reference values", () => {
   // Black on white is exactly 21:1; a mid grey on white is a known 4.5:1 edge.
   assert.equal(Math.round(contrastRatio("#000000", "#ffffff")), 21);

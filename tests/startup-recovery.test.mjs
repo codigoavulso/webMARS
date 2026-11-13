@@ -111,3 +111,30 @@ test("committed catalogue takes precedence over an older active project; legacy 
   assert.equal(migrated.files[0].path, "src/main.c");
   assert.equal(migrated.files[0].savedSource, "saved");
 });
+
+test("startup never overlays another project's newer session on a same-named file", () => {
+  const context = vm.createContext({
+    normalizeProjectRootKey: value => String(value || "").toLowerCase(),
+    mapProjectFilesToEditorFiles(files, fallback, { preferFallbackSource }) {
+      return files.map(file => ({
+        ...file,
+        source: preferFallbackSource ? fallback.find(item => item.name === file.name)?.source ?? file.source : file.source
+      }));
+    },
+    collectSessionExternalEditorFiles(files) {
+      return files.filter(file => file.projectOwned === false);
+    }
+  });
+  const code = runtime.match(/^function buildStartupEditorFiles\([\s\S]*?^\}/m)[0];
+  vm.runInContext(code, context);
+  const project = { isOpen: true, rootPath: "second.p", updatedAt: 1, files: [{ name: "main.s", source: "second project" }] };
+  const draft = { projectRootPath: "first.p", updatedAt: 2, files: [
+    { name: "main.s", source: "first project", projectOwned: true },
+    { name: "external.s", source: "independent", projectOwned: false }
+  ] };
+  assert.deepEqual(Array.from(context.buildStartupEditorFiles(project, draft), item => item.source), ["second project", "independent"]);
+  draft.projectRootPath = "SECOND.P";
+  assert.equal(context.buildStartupEditorFiles(project, draft)[0].source, "first project");
+  delete draft.projectRootPath;
+  assert.equal(context.buildStartupEditorFiles(project, draft)[0].source, "first project");
+});

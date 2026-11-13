@@ -120,8 +120,8 @@ export const operationChapters = [
           <p>Se uma tentativa falhar, corrija os campos e volte a tentar na mesma janela. Os atalhos entre entrada, registo e recuperação mantêm a operação que estava a realizar, sem transportar a palavra-passe entre formulários.</p>
           <p><strong>Esqueceu-se da palavra-passe?</strong> permite pedir um código temporário para o email da conta ou usar um código já recebido. No passo seguinte pode reenviar o código ou alterar o email. A resposta ao pedido não revela se existe uma conta com esse endereço. Depois de confirmar o código e a nova palavra-passe, fica com sessão iniciada; as outras sessões são revogadas. Se entrar com Google, também pode voltar à janela de entrada e escolher <strong>Continuar com Google</strong>.</p>
           <p><strong>Online → Conta → Verificar email…</strong> permite confirmar o endereço antes de publicar projetos. Introduza o código recebido ou escolha <strong>Enviar novo código</strong>. Cada código é temporário e de uso único; o novo código substitui o anterior. A eliminação de conta ainda depende do administrador da instalação.</p>
-          ${screenshot("./assets/screenshots/password-reset-light.png", "Diálogo Esqueceu-se da palavra-passe no tema claro, com o email de uma conta de teste e a opção para usar um código já recebido", "A recuperação começa pelo email da conta ou continua com um código temporário já recebido; a resposta não confirma se esse email está registado.")}
-          ${screenshot("./assets/screenshots/email-verification-light.png", "Diálogo Verificar email no tema claro, com o campo para um código temporário de seis dígitos", "A verificação associa o endereço de email à conta antes de permitir publicação pública; o código temporário é introduzido apenas nesta instalação BackMars.")}
+          ${screenshot("./assets/screenshots/password-reset-light.png", "Diálogo Esqueceu-se da palavra-passe no tema claro, com a opção para usar um código já recebido", "A recuperação começa pelo email da conta ou continua com um código temporário já recebido; a resposta não confirma se esse email está registado.")}
+          ${screenshot("./assets/screenshots/email-verification-light.png", "Diálogo Verificar email no tema claro, com o campo para um código temporário de seis dígitos", "Captura histórica do webMARS 0.6.0, com dados de teste. A interface atual pode diferir.")}
         `
       },
       {
@@ -351,8 +351,8 @@ export const operationChapters = [
             ["C and compilation", "13", "Mini-C, bibliotecas, ABI, perfis e projetos."],
             ["Devices and system", "17", "MMIO, terminais, bitmap, interrupções, cache, BHT e MARS-OS."]
           ])}
-          <p>Abra em <strong>Ficheiro → Exemplos → categoria → exemplo</strong>. O menu é hierárquico e não tem pesquisa na 0.6.3; use esta página ou a pesquisa do manual para escolher. A pesquisa da <a href="#/biblioteca-publica/explorar">Biblioteca pública</a> é um fluxo separado.</p>
-          ${screenshot("./assets/screenshots/help-menu-light.png", "Menu Ajuda do webMARS 0.6.3 com a entrada Estatísticas de utilização", "O menu reúne ajuda, documentação, Boas-vindas, Kit Docente, estatísticas públicas e informação da aplicação.")}
+          <p>Abra em <strong>Ficheiro → Exemplos → categoria → exemplo</strong>. O menu é hierárquico; use esta página ou a pesquisa do manual para escolher. A pesquisa da <a href="#/biblioteca-publica/explorar">Biblioteca pública</a> é um fluxo separado.</p>
+          ${screenshot("./assets/screenshots/help-menu-light.png", "Menu Ajuda do webMARS 0.7.4 com a entrada Estatísticas de utilização", "O menu reúne ajuda, documentação, Boas-vindas, Kit Docente, estatísticas públicas e informação da aplicação.")}
         `
       },
       {
@@ -596,7 +596,7 @@ export const operationChapters = [
         content: html`
           <p>Inclua versão, browser/OS, passos mínimos, fonte pequena, input, opções relevantes, mensagem completa e resultado esperado/real. Para pipeline/tool, anexe export/configuração; para Cloud, não envie password, cookie, token ou projeto privado.</p>
           ${table(["Incluir", "Evitar"], [
-            ["webMARS 0.6.3 e URL/local", "“Não funciona” sem fase"],
+            ["webMARS 0.7.4 e URL/local", "“Não funciona” sem fase"],
             ["Exemplo ou fonte mínima", "Projeto inteiro com dados pessoais"],
             ["Primeiro diagnóstico completo", "Screenshot ilegível sem texto"],
             ["Mapa, delayed branch, strict, backsteps", "Credenciais, IPs, cookies ou tokens"],
@@ -906,7 +906,7 @@ export const operationChapters = [
         title: "Divergências corrigidas nesta edição",
         content: html`
           <ul>
-            <li>20 ferramentas, não 18.</li>
+            <li>21 ferramentas, incluindo o editor MIDI TTY.</li>
             <li>Breakpoints na tabela Text Segment, não no gutter do editor.</li>
             <li>Slots não guardam o estado do motor MIPS.</li>
             <li>Browser Storage gere ficheiros individuais, não slots de projeto.</li>
@@ -928,7 +928,7 @@ export const operationChapters = [
         id: "imagens",
         title: "Estado das capturas",
         content: html`
-          <p>A edição v0.2 integra <strong>36 capturas reais em tema claro</strong>: 16 estados gerais e uma captura isolada de cada uma das 20 ferramentas. Biblioteca pública, menu Ajuda e estatísticas foram capturados no webMARS 0.6.3; as 33 imagens restantes mantêm a proveniência 0.6.0 indicada no protocolo. O conjunto e os fixtures estão definidos em <code>SCREENSHOTS.md</code>; mockups nunca substituem evidência visual do produto.</p>
+          <p>A edição v0.3 integra <strong>37 capturas em tema claro</strong>: 16 estados gerais e as 21 ferramentas. As imagens de publicação e verificação de email são históricas e identificadas nas legendas. Os estados da biblioteca e das estatísticas usam dados fictícios. O conjunto está definido em <code>SCREENSHOTS.md</code>.</p>
           ${callout("note", "Critério de publicação", "<p>Cada captura tem de indicar versão, tema, idioma, viewport, exemplo e estado. A ausência de uma imagem nunca remove os passos em texto.</p>")}
         `
       },
@@ -937,7 +937,7 @@ export const operationChapters = [
         title: "Critérios para as próximas edições",
         content: html`
           <ul>
-            <li>Manter as 36 capturas, recapturando cada estado quando a interface correspondente mudar.</li>
+            <li>Manter as capturas, recapturando cada estado quando a interface correspondente mudar.</li>
             <li>Separar páginas profundas por ferramenta sem quebrar slugs.</li>
             <li>Gerar edição PDF completa e índice remissivo.</li>
             <li>Adicionar manifesto automatizado de features → capítulos → screenshots → testes.</li>
@@ -960,6 +960,11 @@ export const operationChapters = [
     sources: ["manual/CHANGELOG.md"],
     sections: [
       {
+        id: "v0-3-0",
+        title: "0.3.0 — 13 de novembro de 2026",
+        content: html`<p>Atualização para webMARS 0.7.4, editor MIDI TTY, gestão integrada de projetos, estatísticas e novas capturas.</p>`
+      },
+      {
         id: "v0-2-0",
         title: "0.2.0 — 20 de outubro de 2026",
         content: html`
@@ -971,7 +976,7 @@ export const operationChapters = [
             <li>Três capturas atuais dos fluxos novos ou alterados; 36 imagens no total.</li>
             <li>Catálogos auditados contra o webMARS 0.6.3 e referências de versão atualizadas.</li>
           </ul>
-          <p>webMARS <code>${MANUAL.webmarsVersion}</code>, commit <code>${MANUAL.verifiedCommit.slice(0, 12)}</code>, verificado em ${MANUAL.verifiedAt}.</p>
+          <p>Esta edição documentou o webMARS 0.6.3.</p>
         `
       },
       {

@@ -2151,6 +2151,7 @@ function createWindowManager(refs) {
     dragging = null;
     document.removeEventListener("pointermove", onPointerMove);
     document.removeEventListener("pointerup", stopDragging);
+    document.removeEventListener("pointercancel", stopDragging);
     document.body.style.cursor = "";
     if (!isStackedMode()) scheduleDesktopLayoutSave(80);
   }
@@ -2199,6 +2200,7 @@ function createWindowManager(refs) {
     resizing = null;
     document.removeEventListener("pointermove", onResizePointerMove);
     document.removeEventListener("pointerup", stopResizing);
+    document.removeEventListener("pointercancel", stopResizing);
     document.body.style.cursor = "";
     if (!isStackedMode()) scheduleDesktopLayoutSave(80);
   }
@@ -2299,6 +2301,7 @@ function createWindowManager(refs) {
     sharedDragging = null;
     document.removeEventListener("pointermove", onSharedSplitterPointerMove);
     document.removeEventListener("pointerup", stopSharedSplitterDragging);
+    document.removeEventListener("pointercancel", stopSharedSplitterDragging);
     document.body.style.cursor = "";
     scheduleSharedSplitterRefresh();
     if (!isStackedMode()) scheduleDesktopLayoutSave(100);
@@ -2450,6 +2453,7 @@ function createWindowManager(refs) {
       focus(entry.id, { skipRestore: true });
       document.addEventListener("pointermove", onPointerMove);
       document.addEventListener("pointerup", stopDragging);
+      document.addEventListener("pointercancel", stopDragging);
       document.body.style.cursor = "move";
     });
   }
@@ -2477,6 +2481,7 @@ function createWindowManager(refs) {
         };
         document.addEventListener("pointermove", onResizePointerMove);
         document.addEventListener("pointerup", stopResizing);
+        document.addEventListener("pointercancel", stopResizing);
         document.body.style.cursor = window.getComputedStyle(handle).cursor;
       });
       entry.element.appendChild(handle);
@@ -2509,6 +2514,7 @@ function createWindowManager(refs) {
       };
       document.addEventListener("pointermove", onSharedSplitterPointerMove);
       document.addEventListener("pointerup", stopSharedSplitterDragging);
+      document.addEventListener("pointercancel", stopSharedSplitterDragging);
       document.body.style.cursor = orientation === "vertical" ? "col-resize" : "row-resize";
     });
     desktop.appendChild(splitter);
@@ -5300,6 +5306,7 @@ function scrollElementWithinContainer(target, container, options = {}) {
       document.body.style.cursor = "";
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", stopDrag);
+      window.removeEventListener("pointercancel", stopDrag);
     };
 
     splitter.addEventListener("pointerdown", (event) => {
@@ -5314,6 +5321,7 @@ function scrollElementWithinContainer(target, container, options = {}) {
       document.body.style.cursor = "row-resize";
       window.addEventListener("pointermove", onPointerMove, { passive: false });
       window.addEventListener("pointerup", stopDrag);
+      window.addEventListener("pointercancel", stopDrag);
       splitter.setPointerCapture?.(event.pointerId);
       event.preventDefault();
     });
@@ -7958,7 +7966,11 @@ function injectRuntimeStyles() {
     .menu-popup {
       position: fixed;
       z-index: 1200;
-      min-width: 300px;
+      box-sizing: border-box;
+      min-width: min(300px, calc(100vw - 8px));
+      max-width: calc(100vw - 8px);
+      max-height: calc(100vh - 8px);
+      overflow-y: auto;
       background: var(--surface-muted);
       border: 1px solid var(--line-strong);
       border-radius: 2px;
@@ -7967,7 +7979,7 @@ function injectRuntimeStyles() {
     }
 
     .menu-popup.hidden { display: none; }
-    .menu-sub-popup { min-width: 220px; }
+    .menu-sub-popup { min-width: min(220px, calc(100vw - 8px)); }
 
     .menu-row {
       width: 100%;
@@ -7984,7 +7996,7 @@ function injectRuntimeStyles() {
       font-size: 12px;
     }
 
-    .menu-row:hover { border-color: var(--line-strong); background: var(--accent-soft-2); }
+    .menu-row:hover, .menu-row:focus-visible { border-color: var(--line-strong); background: var(--accent-soft-2); }
     .menu-row.disabled { color: var(--text-faint); cursor: not-allowed; }
     .menu-row.disabled:hover { border-color: transparent; background: transparent; }
     .menu-row.has-submenu .menu-shortcut { color: var(--text-faint); }

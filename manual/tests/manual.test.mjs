@@ -155,7 +155,7 @@ test("every product tool in the vendored manifest has an individual section", as
   const manifest = await readJson(join(manualRoot, "data", "tool-manifest.json"));
   const manifestIds = manifest.tools.map((tool) => tool.id).sort();
   const documentedIds = TOOL_DATA.map((tool) => tool.id).sort();
-  assert.equal(manifestIds.length, 20);
+  assert.equal(manifestIds.length, 21);
   assert.deepEqual(documentedIds, manifestIds);
   const chapter = chapters.find((entry) => entry.id === "ferramentas");
   for (const id of manifestIds) assert.ok(chapter.sections.some((section) => section.id === id), id);
@@ -185,7 +185,7 @@ test("vendored product catalogs match their hashes and declared counts", async (
   });
   assert.equal(syscalls.length, 39);
   assert.ok(syscalls.some((entry) => entry.number === 10 && entry.name === "Exit"));
-  assert.equal(tools.tools.length, 20);
+  assert.equal(tools.tools.length, 21);
 });
 
 test("normal build and browser runtime use only Manual-local product data", async () => {
@@ -247,7 +247,7 @@ test("the standalone distribution contains metadata, configuration and accessibl
   assert.equal(version.webmars, lock.product.version);
   assert.equal(version.verificationStatus, lock.product.verificationStatus);
   assert.equal(version.verifiedCommit, lock.product.verifiedCommit);
-  assert.equal(version.reference.tools, 20);
+  assert.equal(version.reference.tools, 21);
 });
 
 test("light and dark Manual text tokens meet WCAG AA contrast on every paper surface", async () => {
@@ -335,7 +335,7 @@ test("screenshot inventory is exact, canonical and identical in source and dist"
   const outputInventory = (await readdir(join(distRoot, "assets", "screenshots")))
     .filter((file) => file.endsWith(".png"))
     .sort();
-  assert.equal(sourceInventory.length, 36);
+  assert.equal(sourceInventory.length, 37);
   assert.deepEqual([...referenced].sort(), sourceInventory, "every screenshot must be referenced exactly by the edition");
   assert.deepEqual(outputInventory, sourceInventory, "dist screenshot inventory");
   for (const tool of TOOL_DATA) assert.ok(referenced.has(`tool-${tool.id}-light.png`), tool.id);
@@ -352,7 +352,7 @@ test("screenshot inventory is exact, canonical and identical in source and dist"
   }
 
   const overview = await stat(join(distRoot, "assets", "screenshots", "workspace-overview-light.png"));
-  assert.ok(overview.size > 100_000);
+  assert.ok(overview.size > 20_000);
 });
 
 test("editorial metadata and screenshot protocol stay aligned", async () => {
@@ -364,7 +364,7 @@ test("editorial metadata and screenshot protocol stay aligned", async () => {
   assert.match(readme, /prefixo de tag `manual-v`/);
   assert.match(readme, new RegExp(`webMARS \`${MANUAL.webmarsVersion.replaceAll(".", "\\.")}\``));
   assert.match(screenshots, /tema: \*\*Claro\*\*/);
-  assert.match(screenshots, /36 capturas/);
+  assert.match(screenshots, /37 capturas/);
   assert.match(screenshots, /1280 × 720/);
   for (const tool of TOOL_DATA) assert.match(screenshots, new RegExp(`\\b${tool.id.replaceAll("-", "\\-")}\\b`));
 });

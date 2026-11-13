@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "manual": {
     "name": "webmars-manual",
-    "version": "0.2.2"
+    "version": "0.3.0"
   },
   "product": {
     "name": "webmars",
-    "version": "0.7.0",
-    "verificationStatus": "verified",
-    "verifiedCommit": "53cbcfbf4be3f4b6b302a86bef31d191df55f6c1",
-    "verifiedAt": "2026-11-02"
+    "version": "0.7.4",
+    "verificationStatus": "pending",
+    "verifiedCommit": null,
+    "verifiedAt": null
   },
   "catalogs": {
     "helpReference": {
@@ -33,9 +33,9 @@
     "toolManifest": {
       "file": "data/tool-manifest.json",
       "source": "tools/tools.json",
-      "sha256": "7993e4f9d6c77ee23642431ae5ac0858285e91ff6402bab85f781a84da567c39",
+      "sha256": "8963d0f8b4295905b1c0443e2f876401f7d6c98fb567d6bcea3afaeda37324ba",
       "counts": {
-        "tools": 20
+        "tools": 21
       }
     }
   }

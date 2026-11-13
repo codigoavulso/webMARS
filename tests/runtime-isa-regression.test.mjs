@@ -41,6 +41,33 @@ function assertAddressException(engine, result, expectedCode, expectedAddress) {
   assert.equal(state.cop0[8] >>> 0, expectedAddress >>> 0);
 }
 
+test("three-operand division and remainder trap on a zero register divisor", async () => {
+  for (const delayedBranching of [false, true]) {
+    for (const operation of ["div", "divu", "rem", "remu"]) {
+      for (const divisor of [0, 3]) {
+        const engine = await createJavaScriptEngine({ settings: { startAtMain: true, delayedBranching } });
+        const assembled = engine.assemble(`.text
+.globl main
+main: li $t0, 10
+      li $t1, ${divisor}
+      ${operation} $t2, $t0, $t1
+      li $v0, 10
+      syscall
+`);
+        assert.equal(assembled.ok, true, operation);
+        const result = engine.go(30);
+        if (divisor === 0) {
+          assert.equal(result.exception, true, operation);
+          assert.equal((engine.cop0Registers[13] >>> 2) & 31, 9, operation);
+        } else {
+          assert.notEqual(result.exception, true, operation);
+          assert.equal(engine.registers[10], operation.startsWith("rem") ? 1 : 3, operation);
+        }
+      }
+    }
+  }
+});
+
 test("breakpoints allow one Step or Go continuation and re-arm when control returns", async () => {
   const stepEngine = await createJavaScriptEngine({
     settings: { startAtMain: true, maxBacksteps: 20 }

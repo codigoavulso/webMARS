@@ -10,6 +10,50 @@ const runtimePath = resolve(projectRoot, "assets/js/app-modules/20-app-runtime.j
 const uiPath = resolve(projectRoot, "assets/js/app-modules/10-ui.js");
 const pipelineLabPath = resolve(projectRoot, "tools/pipeline-lab.js");
 
+test("a failed tool script can be retried without retaining a failed placeholder", async () => {
+  const source = await readFile(managerPath, "utf8");
+  const loader = sourceBetween(source, "  function loadScript(path)", "  function normalizeManifestTool");
+  const ensure = sourceBetween(source, "  const toolScriptLoads = new Map()", "  async function loadManifest");
+  const scripts = new Map();
+  let attempts = 0;
+  const registry = { definitions: new Map() };
+  const definition = { id: "retry", label: "Retry", script: "./tools/retry.js" };
+  const document = {
+    createElement() {
+      const script = { dataset: {}, remove() { scripts.delete(script.dataset.marsToolScript); } };
+      return script;
+    },
+    querySelector(selector) {
+      const path = selector.match(/data-mars-tool-script="(.+?)"/)?.[1];
+      return scripts.get(path) || null;
+    },
+    head: {
+      appendChild(script) {
+        attempts++;
+        scripts.set(script.dataset.marsToolScript, script);
+        queueMicrotask(() => {
+          if (attempts === 1) script.onerror();
+          else {
+            registry.definitions.set("retry", { create() {}, label: "Retry" });
+            script.onload();
+          }
+        });
+      }
+    }
+  };
+  const context = vm.createContext({
+    document, window: {}, registry, toolEntries: [definition], queueMicrotask,
+    upsertEntries(entries) { Object.assign(definition, entries[0]); }
+  });
+  vm.runInContext(loader + "\n" + ensure + "\nthis.loadTool = ensureToolScript;", context);
+  assert.equal(await context.loadTool("retry"), false);
+  assert.equal(scripts.size, 0);
+  assert.equal(await context.loadTool("retry"), true);
+  assert.equal(attempts, 2);
+  assert.equal(typeof definition.factory, "function");
+});
+
+
 function sourceBetween(source, startMarker, endMarker) {
   const start = source.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing source marker: ${startMarker}`);
@@ -654,6 +698,25 @@ test("System Clock starts on enable and reverses its local tick state", async ()
   instance.onSnapshot({ runtimeRevision: 2, steps: 0, backstepDepth: 0, textRows: [] });
   assert.match(selectors.get("[data-sc='state']").textContent, /^0 tick/);
   assert.equal(selectors.get("[data-sc='log']").innerHTML, "");
+
+  // MMIO periods and counters are unsigned 32-bit values.
+  selectors.get("[data-sc='period']").value = "2147483648";
+  selectors.get("[data-sc='period']").emit("change");
+  memoryWords.set(controlAddress, 1);
+  engine.steps = 1;
+  instructionObserver({ steps: 1 });
+  instance.onRuntimeBatchEnd();
+  assert.equal(selectors.get("[data-sc='bar']").style.width, "0%");
+  engine.steps = 2;
+  instructionObserver({ steps: 2 });
+  instance.onRuntimeBatchEnd();
+  assert.equal(memoryWords.get(0xffff0058) >>> 0, 2147483648);
+  assert.equal(memoryWords.get(0xffff005c) >>> 0, 2147483647);
+  assert.match(selectors.get("[data-sc='period']").value, /^2147483648$/);
+
+  selectors.get("[data-sc='period']").value = "4294967296";
+  selectors.get("[data-sc='period']").emit("change");
+  assert.equal(memoryWords.get(0xffff0058) >>> 0, 0xffffffff);
 });
 
 test("stack visualizer decodes the instruction text the runtime actually emits", async () => {

@@ -130,7 +130,7 @@
                 <h4>Timer</h4>
                 <div class="sc-field">
                   <label>Period</label>
-                  <input type="number" min="1" step="1" value="1000" data-sc="period">
+                  <input type="number" min="1" max="4294967295" step="1" value="1000" data-sc="period">
                   <span data-sc="period-unit">instructions</span>
                 </div>
                 <label class="sc-check"><input type="checkbox" data-sc="enable"><span>Enabled (control bit 0)</span></label>
@@ -279,8 +279,12 @@
       }
 
       function period() {
-        const value = peek("period") | 0;
+        const value = peek("period") >>> 0;
         return value > 0 ? value : DEFAULT_PERIOD;
+      }
+
+      function periodFromUi() {
+        return Math.min(0xffffffff, Math.max(1, Number.parseInt(periodInput.value, 10) || DEFAULT_PERIOD));
       }
 
       function usesWallClock() {
@@ -306,7 +310,7 @@
         if (enableCheck.checked) value |= CONTROL_ENABLE;
         if (irqCheck.checked) value |= CONTROL_INTERRUPT_ENABLE;
         if (wallCheck.checked) value |= CONTROL_WALL_CLOCK;
-        const configuredPeriod = Math.max(1, Number.parseInt(periodInput.value, 10) || DEFAULT_PERIOD);
+        const configuredPeriod = periodFromUi();
         poke("control", value);
         poke("period", configuredPeriod);
         lastControlValue = value;
@@ -435,7 +439,7 @@
         });
 
         const span = period();
-        const remaining = Math.max(0, Math.min(span, peek("counter") | 0));
+        const remaining = Math.min(span, peek("counter") >>> 0);
         bar.style.width = `${Math.round(((span - remaining) / span) * 100)}%`;
         counterLabel.textContent = t("{remaining} of {period} {unit} to the next tick", {
           remaining,
@@ -518,7 +522,7 @@
         updateConnectLabel();
         if (connected) {
           installObserver();
-          poke("period", Math.max(1, Number.parseInt(periodInput.value, 10) || DEFAULT_PERIOD));
+          poke("period", periodFromUi());
           resetDevice();
           ctx.messagesPane.postMars(`${t("[tool] System Clock connected at {address}.", {
             address: toHex32(addressOf("control"))

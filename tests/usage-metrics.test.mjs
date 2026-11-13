@@ -112,6 +112,15 @@ test("heartbeat events reuse the visit session and carry cumulative seconds", ()
   assert.equal(heartbeat.detail, "none");
 });
 
+test("a new session still receives presence after a day on the same page", () => {
+  const env = harness();
+  assert.equal(env.api.trackHeartbeat(86400), true);
+  env.api.rotateSession();
+  assert.equal(env.api.trackHeartbeat(86460), true);
+  assert.equal(env.sent.at(-1).body.event, "heartbeat");
+  assert.equal(env.sent.at(-1).body.seconds, 60);
+});
+
 test("presence and resource adoption survive reloads without double counting", () => {
   const first = harness();
   first.api.trackHeartbeat(60);
@@ -215,6 +224,21 @@ test("metrics explanation is absent from Interface preferences and resource hook
   const manager = await readFile(new URL("../assets/js/app-modules/12-ui-tool-manager.js", import.meta.url), "utf8");
   assert.match(manager, /tool\.open\(\);\s*window\.WebMarsUsage\?\.track\("tool_open", toolId\)/);
   assert.match(runtime, /WebMarsUsage\?\.track\(ok \? "compile_success" : "compile_error"\)/);
+});
+
+test("build statistics sort both current and legacy build formats by date", async () => {
+  const source = await readFile(new URL("../assets/js/app-modules/19-usage-statistics.js", import.meta.url), "utf8");
+  const buildRows = source.match(/    function buildRows\(data\) \{[\s\S]*?\n    \}/)[0];
+  const sortRows = vm.runInNewContext(`(${buildRows})`);
+  const rows = sortRows({ breakdowns: { build: [
+    { key: "unknown" },
+    { key: "202611.10.2137" },
+    { key: "202611102033" },
+    { key: "202611.13.2140" }
+  ] } });
+  assert.deepEqual(Array.from(rows, row => row.key), [
+    "202611.13.2140", "202611.10.2137", "202611102033", "unknown"
+  ]);
 });
 
 test("assembly and execution hooks do not count pauses or fall-through as success", async () => {

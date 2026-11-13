@@ -153,10 +153,15 @@
         }
 
         function newDocument(key, title, song) {
-          documents.set(key, { title, song, track: 0, undo: [], redo: [], muted: new Set(), solo: new Set(), loop: null });
+          documents.set(key, { title, song, savedSong: song, track: 0, undo: [], redo: [], muted: new Set(), solo: new Set(), loop: null });
         }
 
         newDocument("new", tr("Untitled", "Sem título"), midi.emptyMidi());
+        window.addEventListener("beforeunload", (event) => {
+          if (![...documents.values()].some((item) => item.song !== item.savedSong)) return;
+          event.preventDefault();
+          event.returnValue = "";
+        });
 
         const files = part("files");
         const scores = select(files, tr("Score", "Partitura"));
@@ -697,6 +702,7 @@
           link.click();
           link.remove();
           setTimeout(() => URL.revokeObjectURL(url), 30000);
+          doc().savedSong = doc().song;
           report(tr("MIDI exported.", "MIDI exportado."));
         }
 

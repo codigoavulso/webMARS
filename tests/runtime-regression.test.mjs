@@ -32,6 +32,78 @@ function registers(engine) {
   return engine.exportRuntimeState({ includeProgram: false }).registers;
 }
 
+test("signed add with a small immediate traps on overflow while addu wraps", async () => {
+  for (const [initial, immediate] of [["0x7fffffff", 1], ["0x80000000", -1]]) {
+    for (const opcode of ["add", "addu"]) {
+      const engine = await createJavaScriptEngine({ settings: { startAtMain: true } });
+      assert.equal(engine.assemble(`.text
+.globl main
+main: li $t0, ${initial}
+      ${opcode} $t1, $t0, ${immediate}
+      li $v0, 10
+      syscall
+`).ok, true);
+      const result = engine.go(20);
+      if (opcode === "add") {
+        assert.equal(result.exception, true);
+        assert.match(result.message, /overflow/i);
+        assert.equal(engine.registers[9], 0);
+      } else {
+        assert.notEqual(result.exception, true);
+        assert.equal(engine.registers[9], initial === "0x7fffffff" ? -2147483648 : 2147483647);
+      }
+    }
+  }
+});
+
+test("reading zero bytes from standard input completes without requesting input", async () => {
+  const engine = await createJavaScriptEngine({ settings: { startAtMain: true } });
+  const assembled = engine.assemble(`.text
+.globl main
+main: li $v0, 14
+      li $a0, 0
+      la $a1, buffer
+      li $a2, 0
+      syscall
+      li $v0, 10
+      syscall
+.data
+buffer: .space 4
+`);
+  assert.equal(assembled.ok, true);
+  let result = engine.step();
+  assert.equal(engine.registers[2], 14);
+  for (let index = 0; index < 8 && engine.registers[2] !== 0; index++) {
+    result = engine.step();
+    assert.notEqual(result.waitingForInput, true);
+  }
+  assert.equal(engine.registers[2], 0);
+  assert.equal(engine.backstep().ok, true);
+  assert.equal(engine.registers[2], 14);
+  assert.notEqual(engine.step().waitingForInput, true);
+  assert.equal(engine.registers[2], 0);
+});
+
+test("cancelling standard input stops execution without reporting an empty read", async () => {
+  const engine = await createJavaScriptEngine({ settings: { startAtMain: true } });
+  engine.setRuntimeHooks({ readInput: () => ({ cancelled: true }) });
+  assert.equal(engine.assemble(`.data
+buffer: .space 4
+.text
+.globl main
+main: li $v0, 14
+      li $a0, 0
+      la $a1, buffer
+      li $a2, 4
+      syscall
+      li $t0, 1
+`).ok, true);
+  const result = engine.go(20);
+  assert.equal(result.done, true);
+  assert.equal(result.haltReason, "user");
+  assert.equal(engine.registers[8], 0);
+});
+
 test("MIDI syscalls forward all voice parameters and preserve sync timing", async () => {
   const engine = await createJavaScriptEngine();
   const tones = [];

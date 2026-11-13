@@ -267,7 +267,7 @@ function renderFooter(chapter) {
     </div>
     ${sources.length ? `<details class="source-details">
       <summary>Verificação editorial e fontes</summary>
-      <p>Comportamento verificado com webMARS ${escapeHtml(MANUAL.webmarsVersion)}, commit <code>${escapeHtml(MANUAL.verifiedCommit.slice(0, 12))}</code>. Ficheiros principais:</p>
+      <p>${MANUAL.verifiedCommit.startsWith("PENDING-") ? `Versão documentada: webMARS ${escapeHtml(MANUAL.webmarsVersion)}. Verificação do commit por concluir.` : `Comportamento verificado com webMARS ${escapeHtml(MANUAL.webmarsVersion)}, commit <code>${escapeHtml(MANUAL.verifiedCommit.slice(0, 12))}</code>.`} Ficheiros principais:</p>
       <ul>${sources.map((source) => `<li><code>${escapeHtml(source)}</code></li>`).join("")}</ul>
     </details>` : ""}
   </footer>`;

@@ -30,7 +30,7 @@ export const TOOL_DATA = [
     name: "Bitmap Terminal Tool",
     group: "Ecrãs e dispositivos",
     purpose: "Combinar um terminal de texto desenhado num framebuffer com uma fila de teclado acessível ao programa.",
-    example: "Não há exemplo dedicado na 0.6.3; derive <code>bitmap_ascii.c</code> e use <code>bitmap_configure_terminal</code> em vez de <code>bitmap_configure_display</code>.",
+    example: "Não há exemplo dedicado; derive <code>bitmap_ascii.c</code> e use <code>bitmap_configure_terminal</code> em vez de <code>bitmap_configure_display</code>.",
     connect: "Configure geometria/base, ligue e dê foco à área de teclado antes de executar o fixture.",
     controls: "Configuração recolhível, endereço e dimensões, teclado, Connect, Reset e Fit Window.",
     interpretation: "O framebuffer mostra células/píxeis; teclas introduzidas entram na fila MMIO consumida pelo programa.",
@@ -230,6 +230,18 @@ export const TOOL_DATA = [
     limits: "Wall-clock depende do scheduler e não é reproduzível por backstep. Para aulas e testes, prefira contagem de instruções."
   },
   {
+    id: "tty-midi-daw",
+    name: "TTY MIDI DAW",
+    group: "Ecrãs e dispositivos",
+    purpose: "Criar, ouvir e editar sequências MIDI com precisão de evento.",
+    example: "Os quatro movimentos da Quinta Sinfonia de Beethoven incluídos no Piano MIPS.",
+    connect: "Abra a ferramenta e escolha uma partitura ou importe um ficheiro MIDI. A reprodução utiliza o áudio do browser.",
+    controls: "Notas e eventos, pistas, canais, transporte, repetição, desfazer/refazer, importação e exportação MIDI.",
+    interpretation: "Edite posição em ticks, duração, canal, altura e velocidade de cada nota. Os comandos permitem também eventos MIDI, tempo e compasso.",
+    protocol: "Lê e escreve ficheiros MIDI standard; os movimentos incluídos preservam os tempos e as notas do Piano MIPS.",
+    limits: "Guarde as alterações num ficheiro .mid. O som usa o sintetizador do browser e pode diferir de um instrumento MIDI externo."
+  },
+  {
     id: "tty-ansi-terminal",
     name: "TTY Device + ANSI Terminal",
     group: "Ecrãs e dispositivos",
@@ -252,7 +264,7 @@ function toolSection(tool) {
       ${screenshot(
         `./assets/screenshots/tool-${tool.id}-light.png`,
         `${tool.name} aberta no webMARS, em tema claro, sobre a área de trabalho do simulador`,
-        `Interface real de ${tool.name} no tema claro, capturada no webMARS 0.6.0. A janela é apresentada isoladamente para manter controlos e resultados legíveis.`
+        `Interface real de ${tool.name} no tema claro, capturada no webMARS 0.7.4. A janela está maximizada para manter os controlos legíveis.`
       )}
       <div class="tool-spec">
         <div>

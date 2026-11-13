@@ -1,4 +1,4 @@
-# webMARS v0.7.3
+# webMARS v0.7.4
 
 **Write MIPS. Watch it run. Understand the machine.**
 
@@ -150,7 +150,9 @@ See the [self-hosting guide](docs/self-hosting.md) for deployment and optional
 Cloud configuration. The official installation's automatic usage statistics
 are explained in [Usage metrics and privacy](docs/usage-metrics.md).
 
-## Highlights in v0.7.3
+## Highlights in v0.7.4
+
+- `v0.7.4`: safer project import and recovery, MIPS compatibility fixes, accessible menus and updated manual.
 
 - `v0.7.3`: updated build numbering and validation fixes.
 

@@ -8,6 +8,26 @@ import { fileURLToPath } from "node:url";
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const runtimePath = resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js");
 
+test("cloud sync detects unsynced empty folders and empty projects with no cloud copy", async () => {
+  const source = await readFile(runtimePath, "utf8");
+  const classify = source.match(/function classifyCloudSyncTone\([\s\S]*?\n\}/)[0];
+  const summary = source.match(/function buildProjectCloudSyncSummary\([\s\S]*?\n\}/)[0];
+  const context = vm.createContext({
+    normalizeProjectFiles: files => files || [],
+    normalizeProjectFolderPaths: paths => paths || [],
+    normalizeProjectPath: path => path,
+    isPathInsideFolder: (path, folder) => path.startsWith(folder + "/")
+  });
+  const compare = vm.runInContext(classify + "; " + summary + "; buildProjectCloudSyncSummary", context);
+  const project = { files: [{ path: "main.s", source: "nop" }], folderPaths: ["empty"] };
+  const remote = { files: [{ path: "main.s", source: "nop" }], folderPaths: [] };
+  assert.notEqual(compare(project, remote).projectTone, "green");
+  assert.notEqual(compare(remote, project).projectTone, "green");
+  assert.notEqual(compare({ files: [], folderPaths: ["empty"] }, { files: [], folderPaths: [] }).projectTone, "green");
+  assert.equal(compare({ files: [], folderPaths: [] }, null).projectTone, "red");
+  assert.equal(compare(project, project).projectTone, "green");
+});
+
 test("different cloud copies require confirmation and batch saves never overwrite them", async () => {
   const source = await readFile(runtimePath, "utf8");
   const save = source.match(/async function saveProjectToCloud\([\s\S]*?\n\}/)[0];

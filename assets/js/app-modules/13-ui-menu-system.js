@@ -11,6 +11,10 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
   submenuPopupLevel2.className = "menu-popup menu-sub-popup hidden";
   document.body.appendChild(submenuPopupLevel2);
 
+  for (const menu of [popup, submenuPopup, submenuPopupLevel2]) {
+    menu.setAttribute("role", "menu");
+  }
+
   // These menus are mounted outside the desktop. Keep the open menu visible
   // when the user right-clicks a row, a separator or a submenu.
   for (const menu of [popup, submenuPopup, submenuPopupLevel2]) {
@@ -196,12 +200,14 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
   }
 
   function hideDeepSubmenu() {
+    submenuPopup.querySelector('[aria-expanded="true"]')?.setAttribute("aria-expanded", "false");
     submenuPopupLevel2.classList.add("hidden");
     submenuPopupLevel2.innerHTML = "";
   }
 
   function hideSubmenu() {
     hideDeepSubmenu();
+    popup.querySelector('[aria-expanded="true"]')?.setAttribute("aria-expanded", "false");
     submenuPopup.classList.add("hidden");
     submenuPopup.innerHTML = "";
   }
@@ -210,7 +216,10 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
     hideSubmenu();
     popup.classList.add("hidden");
     popup.innerHTML = "";
-    refs.root.querySelectorAll(".menu-item").forEach((button) => button.classList.remove("active"));
+    refs.root.querySelectorAll(".menu-item").forEach((button) => {
+      button.classList.remove("active");
+      button.setAttribute("aria-expanded", "false");
+    });
     activeMenu = null;
   }
 
@@ -227,6 +236,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
       if (item === "-") {
         const sep = document.createElement("div");
         sep.className = "menu-separator";
+        sep.setAttribute("role", "separator");
         target.appendChild(sep);
         return;
       }
@@ -235,8 +245,10 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
       row.type = "button";
       const hasSubmenu = Array.isArray(item.submenu) && item.submenu.length > 0;
       row.className = `menu-row${hasSubmenu ? " has-submenu" : ""}`;
+      row.setAttribute("role", typeof item.check === "function" ? "menuitemcheckbox" : "menuitem");
 
       const checked = typeof item.check === "function" ? item.check(state) : false;
+      if (typeof item.check === "function") row.setAttribute("aria-checked", String(checked));
       const enabled = typeof item.enabled === "function" ? item.enabled(state) : true;
       const label = typeof item.label === "function" ? String(item.label(state) ?? "") : String(item.label ?? "");
       const shortcut = typeof item.shortcut === "function" ? String(item.shortcut(state) ?? "") : String(item.shortcut ?? "");
@@ -250,10 +262,14 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
       }
 
       if (hasSubmenu) {
+        row.setAttribute("aria-haspopup", "menu");
+        row.setAttribute("aria-expanded", "false");
         const submenuItems = item.submenu;
         const childPopup = target === submenuPopup ? submenuPopupLevel2 : submenuPopup;
         const openSubmenu = () => {
           if (childPopup === submenuPopup) hideDeepSubmenu();
+          target.querySelector('[aria-expanded="true"]')?.setAttribute("aria-expanded", "false");
+          row.setAttribute("aria-expanded", "true");
           renderRows(childPopup, submenuItems, state);
           const rowRect = row.getBoundingClientRect();
           childPopup.style.left = `${Math.round(rowRect.right - 2)}px`;
@@ -288,6 +304,13 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
           event.preventDefault();
           event.stopPropagation();
           openSubmenu();
+          if (event.detail === 0) childPopup.querySelector(".menu-row:not(:disabled)")?.focus();
+        });
+        row.addEventListener("keydown", (event) => {
+          if (event.key !== "ArrowRight") return;
+          event.preventDefault();
+          openSubmenu();
+          childPopup.querySelector(".menu-row:not(:disabled)")?.focus();
         });
       } else {
         if (opensSubmenuOnHover()) {
@@ -338,6 +361,7 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
 
     refs.root.querySelectorAll(".menu-item").forEach((button) => {
       button.classList.toggle("active", button === anchor);
+      button.setAttribute("aria-expanded", String(button === anchor));
     });
 
     activeMenu = menuName;
@@ -362,15 +386,66 @@ function createMenuSystem(refs, handlers, getState, toolManager) {
   });
 
   refs.root.querySelectorAll(".menu-item").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.setAttribute("aria-haspopup", "menu");
+    button.setAttribute("aria-expanded", "false");
+    button.addEventListener("click", (event) => {
       const menuName = button.dataset.menu || button.textContent.trim();
       if (menuName === activeMenu) {
         hide();
         return;
       }
       open(menuName, button);
+      if (event.detail === 0) popup.querySelector(".menu-row:not(:disabled)")?.focus();
+    });
+    button.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        button.click();
+        return;
+      }
+      if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+      event.preventDefault();
+      open(button.dataset.menu || button.textContent.trim(), button);
+      const rows = popup.querySelectorAll(".menu-row:not(:disabled)");
+      rows[event.key === "ArrowDown" ? 0 : rows.length - 1]?.focus();
     });
   });
+
+  for (const menu of [popup, submenuPopup, submenuPopupLevel2]) {
+    menu.addEventListener("keydown", (event) => {
+      const rows = [...menu.querySelectorAll(".menu-row:not(:disabled)")];
+      const current = rows.indexOf(document.activeElement);
+      if (current < 0) return;
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        rows[current].click();
+        return;
+      }
+      let next;
+      if (event.key === "ArrowDown") next = (current + 1) % rows.length;
+      if (event.key === "ArrowUp") next = (current + rows.length - 1) % rows.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = rows.length - 1;
+      if (next !== undefined) {
+        event.preventDefault();
+        if (menu === popup) hideSubmenu();
+        else if (menu === submenuPopup) hideDeepSubmenu();
+        rows[next].focus();
+      } else if (event.key === "ArrowLeft" && menu !== popup) {
+        event.preventDefault();
+        const parent = menu === submenuPopupLevel2 ? submenuPopup : popup;
+        const anchor = parent.querySelector('[aria-expanded="true"]');
+        if (menu === submenuPopupLevel2) hideDeepSubmenu();
+        else hideSubmenu();
+        anchor?.focus();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        const anchor = refs.root.querySelector(".menu-item.active");
+        hide();
+        anchor?.focus();
+      }
+    });
+  }
 
   // Swing exposes File/Edit/Run/Settings/Help mnemonics through Alt+letter.
   // Browsers may reserve some of these combinations, but registering them on

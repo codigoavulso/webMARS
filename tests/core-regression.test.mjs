@@ -524,7 +524,7 @@ test("local saves stay local and reload persistence flushes the active project",
   assert.doesNotMatch(runtimeSource, /promptStartupRecoveryChoiceIfNeeded|STARTUP_RECOVERY_SKIP_SESSION_KEY/);
   assert.match(runtimeSource, /function flushPendingLocalPersistence\(\)/);
   assert.match(runtimeSource, /persistProjectNow\(\{ syncFromEditor: true \}\);/);
-  assert.match(runtimeSource, /preferFallbackSource: sessionUpdatedAt >= projectUpdatedAt/);
+  assert.match(runtimeSource, /preferFallbackSource: matchingProject && sessionUpdatedAt >= projectUpdatedAt/);
   assert.match(runtimeSource, /updatedAt: Number\(parsed\.updatedAt\) \|\| 0/);
 });
 

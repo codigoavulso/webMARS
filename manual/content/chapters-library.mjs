@@ -34,7 +34,7 @@ export const libraryChapters = [
             ["Instância", "BackMars configurado", "O mesmo BackMars configurado"]
           ])}
           ${callout("note", "Por instalação", "<p><code>https://a.example/p/aula-1</code> e <code>https://b.example/p/aula-1</code> podem pertencer a autores diferentes. Contas e nomes não atravessam instalações.</p>")}
-          ${screenshot("./assets/screenshots/library-menu-light.png", "Menu Biblioteca aberto no webMARS em tema claro", "A Biblioteca é um menu próprio, separado de Cloud e do catálogo de exemplos incorporados.")}
+          ${screenshot("./assets/screenshots/library-menu-light.png", "Menu Online aberto no webMARS em tema claro", "O menu Online reúne conta, projetos na nuvem, biblioteca pública, publicações e ligações.")}
         `
       },
       {
@@ -58,15 +58,13 @@ export const libraryChapters = [
         content: html`
           ${steps([
             "Escolha <strong>Online → Explorar biblioteca pública…</strong>.",
-            "Consulte a tabela com título, nome público, autor, tipo, dificuldade, idioma e data de modificação.",
-            "Escreva na barra de pesquisa para filtrar por nome público, título, descrição ou tag. A pesquisa é submetida após uma breve pausa; o botão <strong>Explorar</strong> permite submetê-la imediatamente. Deixe vazio para consultar todos os itens publicados.",
-            "Use <strong>Página anterior</strong> e <strong>Página seguinte</strong>: o servidor entrega até 25 resultados de cada vez. Uma pesquisa nova regressa à primeira página.",
-            "Escolha um item e selecione <strong>Pré-visualizar</strong>.",
-            "Confirme autor, revisão, licença, descrição e instruções.",
-            "Selecione <strong>Abrir como cópia local</strong>. O novo projeto passa a pertencer apenas ao seu browser."
+            "Na vista Projetos, selecione <strong>Biblioteca pública</strong>.",
+            "Pesquise pelo nome e use <strong>Filtrar resultados</strong> para escolher tipo, idioma, dificuldade e ordenação.",
+            "Expanda um projeto para consultar os seus ficheiros.",
+            "Selecione o projeto e escolha <strong>Abrir como cópia local</strong> no menu de contexto para o editar no seu dispositivo."
           ])}
-          <p>Um clique seleciona a linha e mostra descrição, revisão, licença e tags na zona de detalhes. Faça duplo clique ou prima <kbd>Enter</kbd> para pré-visualizar; as setas <kbd>↑</kbd>/<kbd>↓</kbd> percorrem as linhas. Os cabeçalhos identificam as colunas; esta versão não oferece ordenação ao clicar neles.</p>
-          ${screenshot("./assets/screenshots/public-library-search-light.png", "Biblioteca pública em vista de detalhe: pesquisa, linhas com metadados, descrição do item selecionado e paginação", "Interface real do webMARS 0.6.3 com publicações sintéticas. A pesquisa consulta o servidor da instalação; a paginação limita cada resposta a 25 resultados.")}
+          <p>A pesquisa e os filtros consultam a biblioteca da instalação. As ações disponíveis dependem da seleção e da sessão iniciada.</p>
+          ${screenshot("./assets/screenshots/public-library-search-light.png", "Biblioteca pública na vista Projetos", "A biblioteca está integrada no gestor de projetos. O item apresentado é fictício.")}
           <p><strong>Abrir ligação pública…</strong> aceita um nome, <code>/p/nome</code>, <code>/p/nome@3</code> ou uma URL completa da mesma origem webMARS. Uma URL absoluta de outra instalação é recusada para não abrir silenciosamente um projeto homónimo no servidor errado.</p>
         `
       },
@@ -84,7 +82,7 @@ export const libraryChapters = [
             "Marque <strong>Não listado</strong> se pretender acesso apenas por ligação.",
             "Confirme e guarde as duas URLs apresentadas: latest e revisão fixa."
           ])}
-          ${screenshot("./assets/screenshots/publish-project-light.png", "Diálogo Publicar projeto do webMARS em tema claro", "Os metadados ajudam docentes e estudantes a avaliar o material antes de criarem uma cópia local.")}
+          ${screenshot("./assets/screenshots/publish-project-light.png", "Diálogo Publicar projeto do webMARS em tema claro", "Captura histórica do webMARS 0.6.0, com dados de teste. A interface atual pode diferir.")}
           ${table(["Campo", "Regra prática"], [
             ["Nome público", "64 caracteres; permanente, único e não renomeável"],
             ["Título", "Humano e pesquisável; pode ser atualizado no latest"],

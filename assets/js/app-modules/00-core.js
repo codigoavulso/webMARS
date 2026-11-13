@@ -5482,7 +5482,8 @@ class MarsEngine {
           const rs = args[1];
           const imm = args[2];
           if ((op === "add" || op === "addu") && fitsSigned16(asImmediate(imm))) {
-            return [`addiu ${rt}, ${rs}, ${asImmediate(imm)}`];
+            const instruction = op === "add" ? "addi" : "addiu";
+            return [`${instruction} ${rt}, ${rs}, ${asImmediate(imm)}`];
           }
           if ((op === "sub" || op === "subu") && fitsSigned16(asImmediate(imm))) {
             return [`addiu $at, $zero, ${asImmediate(imm)}`, `${op} ${rt}, ${rs}, $at`];
@@ -5596,7 +5597,13 @@ class MarsEngine {
         if (isImmediateToken(args[2])) {
           return [...loadToAt(args[2]), `${divOp} ${args[1]}, $at`, `mflo ${args[0]}`];
         }
-        return [`${divOp} ${args[1]}, ${args[2]}`, `mflo ${args[0]}`];
+        return [
+          `bne ${args[2]}, $zero, ${branchOffset}`,
+          ...(this.settings.delayedBranching ? ["nop"] : []),
+          "break",
+          `${divOp} ${args[1]}, ${args[2]}`,
+          `mflo ${args[0]}`
+        ];
       }
 
       case "rem":
@@ -5606,7 +5613,13 @@ class MarsEngine {
         if (isImmediateToken(args[2])) {
           return [...loadToAt(args[2]), `${divOp} ${args[1]}, $at`, `mfhi ${args[0]}`];
         }
-        return [`${divOp} ${args[1]}, ${args[2]}`, `mfhi ${args[0]}`];
+        return [
+          `bne ${args[2]}, $zero, ${branchOffset}`,
+          ...(this.settings.delayedBranching ? ["nop"] : []),
+          "break",
+          `${divOp} ${args[1]}, ${args[2]}`,
+          `mfhi ${args[0]}`
+        ];
       }
       case "seq":
       case "sne":
@@ -7980,8 +7993,13 @@ class MarsEngine {
         let sourceNextCursor = null;
 
         if (fd === STDIN_FD) {
+          if (length === 0) {
+            this.setRegisterValue(2, 0);
+            return {};
+          }
           const inputResult = promptInput("Read syscall (fd 0)", "", { kind: "read-fd0", length });
           if (inputResult.waitForInput) return inputResult;
+          if (inputResult.cancelled) return { halt: true, message: "", haltReason: "user" };
           payload = textToBytes(String(inputResult.value ?? "")).slice(0, length);
         } else {
           const file = this.openFiles.get(fd);

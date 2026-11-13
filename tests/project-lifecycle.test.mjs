@@ -56,6 +56,151 @@ async function readStore(db, name) {
   });
 }
 
+test("disk project import validates the descriptor and preserves existing projects", async () => {
+  const existing = sample("test");
+  const projectLibraryState = { projects: [existing] };
+  let nextId = 0;
+  const normalizeProjectData = project => ({ ...project, id: project.id || "import-" + ++nextId });
+  const managerContext = vm.createContext({ MAX_IMPORT_BYTES: 8 * 1024 * 1024, TextEncoder, t: value => value });
+  vm.runInContext(fn(manager, "validateImportedProject", "  "), managerContext);
+  const context = vm.createContext({
+    projectLibraryState, normalizeProjectData, TextEncoder,
+    window: { WebMarsProjectManager: { validateImportedProject: managerContext.validateImportedProject } },
+    findProjectInLibrary: path => projectLibraryState.projects.find(item => item.rootPath.toLowerCase() === path.toLowerCase()),
+    resolveUniqueProjectName: name => name + "_1",
+    normalizeProjectRootPath: (_, name) => name + ".p"
+  });
+  vm.runInContext(fn(runtime, "loadProjectDescriptorFromFile") + "\n" + fn(runtime, "prepareDiskImportedProject"), context);
+  const descriptor = await context.loadProjectDescriptorFromFile({ text: async () => JSON.stringify({ ...existing, files: [{ path: "main.s", source: "new" }] }) });
+  assert.equal(existing.files[0].source, "nop");
+  const prepared = context.prepareDiskImportedProject(descriptor);
+  assert.equal(prepared.project.rootPath, "test_1.p");
+  assert.notEqual(prepared.project.id, existing.id);
+  assert.equal(prepared.project.files[0].source, "new");
+  assert.equal(prepared.renamed, true);
+  const fresh = context.prepareDiskImportedProject(sample("fresh"));
+  assert.equal(fresh.project.rootPath, "fresh.p");
+  assert.equal(fresh.project.id, "fresh");
+  assert.equal(fresh.renamed, false);
+  for (const value of ["{}", "[]", "null", "{"]) {
+    assert.equal(await context.loadProjectDescriptorFromFile({ text: async () => value }), null);
+  }
+  for (const path of ["../secret.s", "/absolute.s", "C:/secret.s"]) {
+    const unsafe = JSON.stringify({ files: [{ path, source: "nop" }] });
+    assert.equal(await context.loadProjectDescriptorFromFile({ text: async () => unsafe }), null);
+    assert.throws(() => managerContext.validateImportedProject(JSON.parse(unsafe)));
+  }
+  const empty = JSON.stringify({ files: [] });
+  assert.ok(await context.loadProjectDescriptorFromFile({ text: async () => empty }));
+  assert.doesNotThrow(() => managerContext.validateImportedProject(JSON.parse(empty)));
+  const legacy = JSON.stringify({ files: [{ name: "old.s" }] });
+  assert.ok(await context.loadProjectDescriptorFromFile({ text: async () => legacy }));
+  const hugeSource = JSON.stringify({ files: [{ path: "large.s", source: "x".repeat(2 * 1024 * 1024 + 1) }] });
+  assert.equal(await context.loadProjectDescriptorFromFile({ text: async () => hugeSource }), null);
+  assert.throws(() => managerContext.validateImportedProject(JSON.parse(hugeSource)));
+  assert.equal(await context.loadProjectDescriptorFromFile({ text: async () => { throw new Error("read failed"); } }), null);
+  let readOversized = false;
+  assert.equal(await context.loadProjectDescriptorFromFile({
+    size: 8 * 1024 * 1024 + 1,
+    text: async () => { readOversized = true; return "{}"; }
+  }), null);
+  assert.equal(readOversized, false);
+  assert.equal(await context.loadProjectDescriptorFromFile({
+    size: 1, text: async () => JSON.stringify({ files: [], description: "á".repeat(4 * 1024 * 1024) })
+  }), null);
+  assert.equal(projectLibraryState.projects.length, 1);
+});
+
+test("disk project import does not open the incoming project if saving the active project fails", async () => {
+  const start = runtime.indexOf('fileInput.addEventListener("change", async (event) => {');
+  const end = runtime.indexOf("\nexecutePane.onToggleBreakpoint", start);
+  assert.ok(start >= 0 && end > start);
+  let handler;
+  let openCount = 0;
+  let saveCount = 0;
+  const messages = [];
+  class Input {
+    constructor(file) { this.files = [file]; this.value = "selected"; }
+  }
+  const fileInput = { addEventListener(name, callback) { handler = callback; } };
+  const context = vm.createContext({
+    fileInput, HTMLInputElement: Input,
+    loadProjectDescriptorFromFile: async () => sample("incoming"),
+    projectIsOpen: () => true,
+    persistProjectNow: () => { saveCount++; return false; },
+    prepareDiskImportedProject: () => { throw new Error("must not prepare"); },
+    openProjectWorkspace: () => { openCount++; },
+    postMarsMessage: (...args) => messages.push(args)
+  });
+  vm.runInContext(runtime.slice(start, end), context);
+  const input = new Input({ name: "incoming.p" });
+  await handler({ target: input });
+  assert.equal(saveCount, 1);
+  assert.equal(openCount, 0);
+  assert.equal(input.value, "");
+  assert.match(messages[0][0], /Failed to load project descriptor/);
+});
+
+
+test("disk import persists the active editor before opening a unique copy", async () => {
+  const start = runtime.indexOf('fileInput.addEventListener("change", async (event) => {');
+  const end = runtime.indexOf("\nexecutePane.onToggleBreakpoint", start);
+  let handler;
+  const previous = sample("test");
+  previous.files[0].source = "before editing";
+  const projectLibraryState = { projects: [previous] };
+  const imported = { ...sample("test"), files: [{ path: "main.s", source: "imported" }] };
+  let opened;
+  class Input { constructor() { this.files = [{ name: "test.p" }]; this.value = "selected"; } }
+  const fileInput = { addEventListener(name, callback) { handler = callback; } };
+  const context = vm.createContext({
+    fileInput, HTMLInputElement: Input, projectLibraryState,
+    normalizeProjectData: project => ({ ...project, id: project.id || "independent" }),
+    findProjectInLibrary: path => projectLibraryState.projects.find(item => item.rootPath.toLowerCase() === path.toLowerCase()),
+    resolveUniqueProjectName: name => name + "_1",
+    normalizeProjectRootPath: (_, name) => name + ".p",
+    loadProjectDescriptorFromFile: async () => imported,
+    projectIsOpen: () => true,
+    persistProjectNow(options) {
+      assert.equal(options.syncFromEditor, true);
+      projectLibraryState.projects[0].files[0].source = "latest editor content";
+      return true;
+    },
+    openProjectWorkspace(project) {
+      opened = project;
+      projectLibraryState.projects.push(project);
+      return true;
+    },
+    postMarsMessage() {}, window: { WebMarsUsage: { track() {} } }
+  });
+  vm.runInContext(fn(runtime, "prepareDiskImportedProject") + "\n" + runtime.slice(start, end), context);
+  const input = new Input();
+  await handler({ target: input });
+  assert.equal(projectLibraryState.projects[0].files[0].source, "latest editor content");
+  assert.equal(opened.rootPath, "test_1.p");
+  assert.equal(opened.id, "independent");
+  assert.equal(opened.files[0].source, "imported");
+  assert.equal(input.value, "");
+});
+
+test("opening an imported project with exhausted quota preserves the active project", () => {
+  const active = sample("active");
+  let writeCount = 0;
+  const context = vm.createContext({
+    projectState: active,
+    projectLibraryState: { projects: [active], activeRootPath: active.rootPath },
+    normalizeProjectData: value => ({ ...value }),
+    buildProjectLibraryCandidate: project => ({ projects: [active, project], activeRootPath: project.rootPath }),
+    ensureProjectLibraryQuota: () => ({ ok: false }),
+    saveProjectAndLibraryData: () => { writeCount++; return true; }
+  });
+  vm.runInContext(fn(runtime, "openProjectWorkspace"), context);
+  assert.equal(context.openProjectWorkspace(sample("incoming")), false);
+  assert.equal(writeCount, 0);
+  assert.equal(context.projectState, active);
+  assert.equal(context.projectLibraryState.projects.length, 1);
+});
+
 test("failed active-project write rolls back the catalogue without mirroring rejected data", async () => {
   const h = await setup();
   h.localStorage.failKey = ACTIVE;

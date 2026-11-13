@@ -295,6 +295,7 @@ let cloudSyncInFlight = false;
 let cloudLastSyncAt = 0;
 let cloudSessionRefreshPromise = null;
 let cloudProjectSyncRefreshPromise = null;
+let cloudProjectSyncRefreshOwner = null;
 const cloudProjectSyncDocuments = new Map();
 // ETag per project root, so a save can tell the service which version it read.
 const cloudProjectVersionTokens = new Map();
@@ -451,8 +452,11 @@ function buildStartupEditorFiles(project, restoredSession = null, fallbackFiles 
   if (project?.isOpen === true) {
     const projectUpdatedAt = Number(project.updatedAt) || 0;
     const sessionUpdatedAt = Number(restoredSession?.updatedAt) || 0;
-    const projectFiles = mapProjectFilesToEditorFiles(project.files, restoredFiles, {
-      preferFallbackSource: sessionUpdatedAt >= projectUpdatedAt
+    const sessionRoot = String(restoredSession?.projectRootPath || "").trim();
+    const matchingProject = !sessionRoot || normalizeProjectRootKey(sessionRoot) === normalizeProjectRootKey(project.rootPath);
+    const projectSessionFiles = matchingProject ? restoredFiles.filter((file) => file?.projectOwned !== false) : [];
+    const projectFiles = mapProjectFilesToEditorFiles(project.files, projectSessionFiles, {
+      preferFallbackSource: matchingProject && sessionUpdatedAt >= projectUpdatedAt
     });
     return [
       ...projectFiles,
@@ -1011,6 +1015,7 @@ function loadWorkspaceSession() {
         activeFileId: active.id,
         active,
         windowState,
+        projectRootPath: String(parsed.projectRootPath || ""),
         updatedAt: Number(parsed.updatedAt) || 0
       };
     } catch {
@@ -1923,9 +1928,12 @@ async function renameCloudProjectByName(previousRootPath, nextRootPath) {
 }
 
 async function refreshCloudProjectSyncDocuments(options = {}) {
-  if (cloudProjectSyncRefreshPromise) return cloudProjectSyncRefreshPromise;
+  const owner = cloudUser;
+  if (cloudProjectSyncRefreshPromise && cloudProjectSyncRefreshOwner === owner) return cloudProjectSyncRefreshPromise;
   const shouldPostStatus = options.postStatus === true;
-  cloudProjectSyncRefreshPromise = (async () => {
+  const isCurrentSession = () => cloudAuthState === "authenticated" && cloudUser === owner;
+  cloudProjectSyncRefreshOwner = owner;
+  const refresh = (async () => {
     if (cloudAuthState !== "authenticated") {
       clearCloudProjectSyncDocuments();
       if (options.render !== false) renderProjectTree(true);
@@ -1944,6 +1952,7 @@ async function refreshCloudProjectSyncDocuments(options = {}) {
     }
 
     const remoteProjects = await listCloudProjects();
+    if (!isCurrentSession()) return { ok: false, count: 0 };
     const remoteByName = chooseLatestRemoteProjectByName(remoteProjects);
     clearCloudProjectSyncDocuments();
 
@@ -1956,9 +1965,11 @@ async function refreshCloudProjectSyncDocuments(options = {}) {
         const projectRecord = remoteMeta.project
           ? remoteMeta
           : await loadCloudProject(remoteMeta.id);
+        if (!isCurrentSession()) return { ok: false, count: 0 };
         const normalizedRemote = deserializeProjectFromCloudDocument(projectRecord?.project, remoteMeta.name || localProject.rootPath);
         setCloudProjectSyncDocument(localProject.rootPath, normalizedRemote, projectRecord?.etag);
       } catch {
+        if (!isCurrentSession()) return { ok: false, count: 0 };
         setCloudProjectSyncDocument(localProject.rootPath, null);
       }
     }
@@ -1971,15 +1982,20 @@ async function refreshCloudProjectSyncDocuments(options = {}) {
     }
     return { ok: true, count: cloudProjectSyncDocuments.size };
   })().catch((error) => {
+    if (!isCurrentSession()) return { ok: false, count: 0 };
     const message = describeCloudError(error, "Cloud project sync failed.");
     if (shouldPostStatus) {
       postMarsMessage("[warn] Cloud project sync failed: {message}", { message });
     }
     throw error;
   }).finally(() => {
-    cloudProjectSyncRefreshPromise = null;
+    if (cloudProjectSyncRefreshPromise === refresh) {
+      cloudProjectSyncRefreshPromise = null;
+      cloudProjectSyncRefreshOwner = null;
+    }
   });
-  return cloudProjectSyncRefreshPromise;
+  cloudProjectSyncRefreshPromise = refresh;
+  return refresh;
 }
 
 function importCloudProjectRecord(projectRecord, options = {}) {
@@ -2577,7 +2593,7 @@ async function openCloudPasswordResetDialog(initialEmail = "", options = {}) {
     }],
     beforeResolve: async (values, dialog) => {
       const email = String(values?.email || "").trim().toLowerCase();
-      if (!email || !email.includes("@")) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         dialog.setMessage(translateText("Enter a valid email address."), "error");
         return { close: false };
       }
@@ -3203,8 +3219,11 @@ function buildProjectCloudSyncSummary(localProject, remoteProject) {
   });
 
   const remoteOnlyFolders = Array.from(remoteFolders).filter((folderPath) => !localFolders.includes(folderPath));
+  const localOnlyFolders = localFolders.filter((folderPath) => !remoteFolders.has(folderPath));
   return {
-    projectTone: classifyCloudSyncTone(syncedFiles, localFiles.length, remoteOnlyPaths.length > 0 || remoteOnlyFolders.length > 0),
+    projectTone: remoteProject
+      ? classifyCloudSyncTone(syncedFiles, localFiles.length, remoteOnlyPaths.length > 0 || remoteOnlyFolders.length > 0 || localOnlyFolders.length > 0)
+      : "red",
     fileTones,
     folderTones
   };
@@ -7994,15 +8013,28 @@ function normalizeDiskImportPath(pathValue, fallbackName = "untitled") {
 
 async function loadProjectDescriptorFromFile(file) {
   try {
+    const maxBytes = 8 * 1024 * 1024;
+    if (Number.isFinite(file?.size) && file.size > maxBytes) return null;
     const descriptorText = await file.text();
+    if (new TextEncoder().encode(descriptorText).length > maxBytes) return null;
     const parsed = JSON.parse(descriptorText);
-    const importedProject = normalizeProjectData(parsed);
-    if (!importedProject) return null;
-    upsertProjectInLibrary(importedProject, { makeActive: true });
-    return importedProject;
+    window.WebMarsProjectManager.validateImportedProject(parsed, { allowLegacyFiles: true });
+    return normalizeProjectData(parsed);
   } catch {
     return null;
   }
+}
+
+function prepareDiskImportedProject(project) {
+  const existing = Array.isArray(projectLibraryState?.projects) ? projectLibraryState.projects : [];
+  const renamed = Boolean(findProjectInLibrary(project.rootPath));
+  const name = renamed ? resolveUniqueProjectName(String(project.rootPath).replace(/\.p$/i, "")) : project.name;
+  const rootPath = renamed ? normalizeProjectRootPath("", name) : project.rootPath;
+  const idAlreadyUsed = existing.some((item) => item.id && item.id === project.id);
+  return {
+    project: normalizeProjectData({ ...project, id: idAlreadyUsed ? "" : project.id, name, rootPath }),
+    renamed
+  };
 }
 
 async function readSourceFileFromDisk(file) {
@@ -10889,6 +10921,7 @@ function persistWorkspaceSession() {
     const basePayload = {
       version: SESSION_SCHEMA_VERSION,
       updatedAt: Date.now(),
+      projectRootPath: projectIsOpen() ? projectState.rootPath : "",
       activeFileId: active.id,
       files: files.map((file) => ({
         id: file.id,
@@ -11074,13 +11107,22 @@ fileInput.addEventListener("change", async (event) => {
       target.value = "";
       return;
     }
-    const opened = openProjectWorkspace(importedProject, {
+    if (projectIsOpen() && !persistProjectNow({ syncFromEditor: true })) {
+      postMarsMessage("[warn] Failed to load project descriptor '{name}'.", { name: descriptorFiles[0].name });
+      target.value = "";
+      return;
+    }
+    const prepared = prepareDiskImportedProject(importedProject);
+    const opened = openProjectWorkspace(prepared.project, {
       applySettings: true,
       applyLayout: true
     });
     if (opened) {
       window.WebMarsUsage?.track("feature_use", "project_import");
-      postMarsMessage("Project loaded: {name}.", { name: importedProject.rootPath });
+      if (prepared.renamed) {
+        postMarsMessage("[warn] Project name already exists. Created '{name}' instead.", { name: prepared.project.rootPath });
+      }
+      postMarsMessage("Project loaded: {name}.", { name: prepared.project.rootPath });
       target.value = "";
       return;
     }

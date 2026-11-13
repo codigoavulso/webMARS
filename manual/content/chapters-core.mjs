@@ -75,11 +75,11 @@ export const coreChapters = [
           <p>A versão ${MANUAL.displayVersion} documenta o <strong>webMARS ${MANUAL.webmarsVersion}</strong>. Cobre o ambiente de trabalho, a árvore de projetos, a montagem MIPS32, o runtime funcional, Mini-C, Cloud, Biblioteca pública, estatísticas de utilização, ligações estáveis, todas as ferramentas incluídas, o Pipeline Lab, o Kit Docente, acessibilidade, formatos de dados, privacidade e administração.</p>
           <div class="stat-strip" aria-label="Cobertura da edição">
             <div class="stat"><strong>21</strong><span>capítulos numerados</span></div>
-            <div class="stat"><strong>20</strong><span>ferramentas descritas</span></div>
+            <div class="stat"><strong>21</strong><span>ferramentas descritas</span></div>
             <div class="stat"><strong>565</strong><span>entradas MIPS incorporadas</span></div>
             <div class="stat"><strong>0</strong><span>dependências externas</span></div>
           </div>
-          ${callout("note", "Manual e aplicação têm versões diferentes", `<p>A versão do manual indica a maturidade editorial. A etiqueta “webMARS ${MANUAL.webmarsVersion}” identifica o produto cujo comportamento foi verificado. Uma nova release da aplicação exige auditoria, mas não obriga o manual a usar o mesmo número.</p>`)}
+          ${callout("note", "Manual e aplicação têm versões diferentes", `<p>A versão do manual indica a maturidade editorial. A etiqueta “webMARS ${MANUAL.webmarsVersion}” identifica o produto documentado. Uma nova release da aplicação exige auditoria, mas não obriga o manual a usar o mesmo número.</p>`)}
         `
       },
       {
@@ -183,8 +183,8 @@ export const coreChapters = [
             ["Manual", `<code>${MANUAL.version}</code>`, "Versão semântica do conteúdo e da aplicação do manual."],
             ["Apresentação", `<code>${MANUAL.displayVersion}</code>`, "Forma curta usada no cabeçalho."],
             ["webMARS", `<code>${MANUAL.webmarsVersion}</code>`, "Release funcional documentada."],
-            ["Commit verificado", `<code>${MANUAL.verifiedCommit.slice(0, 12)}</code>`, "Estado exato do repositório auditado."],
-            ["Data", `<time datetime="${MANUAL.verifiedAt}">${MANUAL.verifiedAt}</time>`, "Data da última verificação integral."]
+            ["Commit verificado", MANUAL.verifiedCommit.startsWith("PENDING-") ? "Por verificar" : `<code>${MANUAL.verifiedCommit.slice(0, 12)}</code>`, "Estado do repositório auditado."],
+            ["Data", MANUAL.verifiedAt.startsWith("PENDING-") ? "Por verificar" : `<time datetime="${MANUAL.verifiedAt}">${MANUAL.verifiedAt}</time>`, "Data da última verificação integral."]
           ])}
           <p>Correções ortográficas aumentam a versão <em>patch</em>. Novos capítulos ou cobertura de uma release do webMARS aumentam a versão <em>minor</em>. URLs ou formatos incompatíveis justificam uma versão <em>major</em>.</p>
         `
@@ -389,7 +389,7 @@ int main(void) {
             "Leia os comentários no Editor antes de montar; cada lição declara o conceito e o resultado a observar.",
             "Prossiga pela ordem 01–15: a sequência passa de registos e representação para memória, funções, recursão, codificação, IEEE 754 e hierarquia de memória."
           ])}
-          ${screenshot("./assets/screenshots/file-examples-light.png", "Menus Ficheiro, Exemplos e Aulas abertos, mostrando os quinze exemplos da categoria", "Os exemplos formam uma cascata de categoria e exemplo; a versão 0.6.0 não apresenta um catálogo com pesquisa.")}
+          ${screenshot("./assets/screenshots/file-examples-light.png", "Menus Ficheiro e Exemplos abertos com as categorias disponíveis", "Os exemplos estão organizados por categorias no menu Ficheiro.")}
         `
       },
       {

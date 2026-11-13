@@ -48,6 +48,15 @@ test("heartbeat sends only cumulative seconds every 60 seconds, without storage 
   }
 });
 
+test("heartbeat continues sampling after a day so a new session can receive presence", () => {
+  const env = browser();
+  env.run(86400);
+  const before = env.sent.length;
+  env.run(60);
+  assert.equal(env.sent.length, before + 1);
+  assert.equal(JSON.parse(env.sent.at(-1).request.body).seconds, 86460);
+});
+
 test("heartbeat can share the event session and emits a matching heartbeat event", () => {
   const eventSessions = [];
   const env = browser({ usage: {

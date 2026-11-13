@@ -55,17 +55,18 @@
     return copy;
   }
 
-  function validateImportedProject(source) {
-    if (!source || typeof source !== "object" || !Array.isArray(source.files)
-      || !source.files.length || source.files.length > 4096
+  function validateImportedProject(source, options = {}) {
+    if (!source || typeof source !== "object" || Array.isArray(source) || !Array.isArray(source.files)
+      || source.files.length > 4096
       || (source.folderPaths && (!Array.isArray(source.folderPaths) || source.folderPaths.length > 4096))) throw new Error(t("Failed to load file."));
     let total = 0;
     for (const file of source.files) {
+      if (!file || typeof file !== "object" || Array.isArray(file)) throw new Error(t("Failed to load file."));
       const path = String(file?.path || file?.name || "").replace(/\\/g, "/");
-      if (!path || path.length > 1024 || path.startsWith("/") || /^[a-z]:/i.test(path)
+      if ((!path && !options.allowLegacyFiles) || path.length > 1024 || path.startsWith("/") || /^[a-z]:/i.test(path)
         || path.split("/").some((part) => part === "..") || /[\x00-\x1f]/.test(path)
-        || typeof file.source !== "string") throw new Error(t("Failed to load file."));
-      const size = new TextEncoder().encode(file.source).length;
+        || (!options.allowLegacyFiles && typeof file.source !== "string")) throw new Error(t("Failed to load file."));
+      const size = new TextEncoder().encode(String(file.source ?? "")).length;
       total += size;
       if (size > 2 * 1024 * 1024 || total > MAX_IMPORT_BYTES) throw new Error(t("Failed to load file."));
     }
@@ -766,5 +767,5 @@
 
   function open(location) { mount()?.open(location); return manager; }
 
-  root.WebMarsProjectManager = Object.freeze({ mount, open, reload: () => manager?.reload?.() });
+  root.WebMarsProjectManager = Object.freeze({ mount, open, validateImportedProject, reload: () => manager?.reload?.() });
 })(typeof window !== "undefined" ? window : globalThis);

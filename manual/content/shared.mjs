@@ -1,10 +1,10 @@
 export const MANUAL = Object.freeze({
   title: "Manual do webMARS",
-  version: "0.2.2",
-  displayVersion: "v0.2.2",
-  webmarsVersion: "0.7.0",
-  verifiedCommit: "53cbcfbf4be3f4b6b302a86bef31d191df55f6c1",
-  verifiedAt: "2026-11-02",
+  version: "0.3.0",
+  displayVersion: "v0.3.0",
+  webmarsVersion: "0.7.4",
+  verifiedCommit: "PENDING-release",
+  verifiedAt: "PENDING-release",
   locale: "pt-PT"
 });
 
@@ -62,7 +62,7 @@ export const MENU_ATLAS = [
   ["Ver", "Mostra, esconde e recupera janelas do ambiente e das ferramentas"],
   ["Executar", "Compilar Mini-C; Montar; Executar; Pausar; Parar; Passo; Passo atrás; Reiniciar"],
   ["Definições", "Apresentação; assembler; Mini-C; armazenamento; Cloud; interface; runtime e memória"],
-  ["Ferramentas", "Vinte ferramentas educativas, de arquitetura, desempenho e dispositivos"],
+  ["Ferramentas", "Vinte e uma ferramentas educativas, de arquitetura, desempenho e dispositivos"],
   ["Ajuda", "Centro de ajuda; manual integrado; boas-vindas; kit docente; estatísticas de utilização; referência MIPS em PDF; informação e créditos"]
 ];
 
@@ -110,7 +110,7 @@ export const SETTINGS_MATRIX = [
 
 export const FEATURE_FAMILIES = [
   ["Menus e comandos", 9, "Cobertos"],
-  ["Ferramentas", 20, "Cobertas individualmente"],
+  ["Ferramentas", 21, "Cobertas individualmente"],
   ["Instruções básicas", 157, "Referência incorporada"],
   ["Pseudoinstruções", 388, "Referência incorporada"],
   ["Diretivas", 20, "Referência incorporada"],

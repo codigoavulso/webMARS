@@ -700,7 +700,10 @@ function createToolManager(engine, messagesPane, windowManager, desktop, helpSys
       script.async = true;
       script.dataset.marsToolScript = path;
       script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
+      script.onerror = () => {
+        script.remove();
+        resolve(false);
+      };
       document.head.appendChild(script);
     });
   }
@@ -729,10 +732,15 @@ function createToolManager(engine, messagesPane, windowManager, desktop, helpSys
 
     const pending = loadScript(definition.script).then((loaded) => {
       const plugin = registry.definitions.get(toolId);
-      if (plugin) {
+      if (typeof plugin?.create === "function") {
         upsertEntries([{ ...definition, label: plugin.label || definition.label, factory: plugin.create }]);
       }
-      return loaded;
+      if (!loaded || typeof plugin?.create !== "function") {
+        toolScriptLoads.delete(toolId);
+        document.querySelector(`script[data-mars-tool-script="${window.CSS?.escape?.(definition.script) || definition.script.replace(/["\\]/g, "\\$&")}"]`)?.remove();
+        return false;
+      }
+      return true;
     });
     toolScriptLoads.set(toolId, pending);
     return pending;
@@ -917,7 +925,15 @@ function createToolManager(engine, messagesPane, windowManager, desktop, helpSys
       return toolEntries.map(({ id, label }) => ({ id, label }));
     },
     open(toolId) {
-      void ensureLoaded().then(() => ensureToolScript(toolId)).finally(() => {
+      void ensureLoaded().then(() => ensureToolScript(toolId)).then((loaded) => {
+        if (!loaded) {
+          const definition = toolEntries.find((entry) => entry.id === toolId);
+          messagesPane.postMars(`${translateText("[error] Tool '{label}' failed to initialize: {message}", {
+            label: definition?.label || toolId,
+            message: translateText("Failed to load file.")
+          })}\n`);
+          return;
+        }
         const alreadyCreated = instances.has(toolId);
         const tool = ensureToolInstance(toolId);
         if (!tool) {

@@ -261,7 +261,10 @@
 
     function buildRows(data) {
       const rows = data?.breakdowns?.build || [];
-      return [...rows].sort((a, b) => (Number(b.key) || 0) - (Number(a.key) || 0));
+      const buildValue = (key) => /^(?:\d{12}|\d{6}\.\d{2}\.\d{4})$/.test(key)
+        ? Number(key.replaceAll(".", ""))
+        : 0;
+      return [...rows].sort((a, b) => buildValue(b.key) - buildValue(a.key));
     }
 
     function renderBuilds(data) {

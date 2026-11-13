@@ -87,8 +87,8 @@ if (!Array.isArray(helpReference.basicInstructions)
   || !Array.isArray(helpReference.directives)) {
   throw new Error("The help reference does not contain the expected instruction catalogs.");
 }
-if (!Array.isArray(toolManifest.tools) || toolManifest.tools.length !== 20) {
-  throw new Error("The product tool manifest must contain exactly 20 tools.");
+if (!Array.isArray(toolManifest.tools) || !toolManifest.tools.length) {
+  throw new Error("The product tool manifest must contain tools.");
 }
 
 const documents = {
