@@ -49,10 +49,11 @@ const SLICES = {
     "tests/runtime-isa-regression.test.mjs",
     "tests/runtime-memory-invariants.test.mjs"
   ],
+  // Invalid directives are exercised directly here. The shipped-example
+  // execution suite runs separately in the full release validation.
   assembler: [
     "tests/core-regression.test.mjs",
-    "tests/runtime-isa-regression.test.mjs",
-    "tests/examples-catalog-regression.test.mjs"
+    "tests/runtime-isa-regression.test.mjs"
   ],
   pipeline: [
     "tests/pipeline-lab-microarchitecture.test.mjs",
@@ -111,6 +112,7 @@ const MUTANTS = [
         find: [
           "    errors.push({",
           "      line: lineNumber,",
+          '      code: "assemble_directive",',
           `      message: translateText('"{directive}" directive is invalid or not implemented in MARS', { directive })`,
           "    });"
         ].join("\n"),
