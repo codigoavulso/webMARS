@@ -233,6 +233,7 @@ async function runDialogForm(options = {}, windowOptions = {}) {
 const SESSION_STORAGE_KEY = "mars45-web-session-v3";
 const LEGACY_SESSION_STORAGE_KEY = "mars45-web-session-v1";
 const SESSION_SERVER_DRAFT_KEY = "mars45-web-session-server-draft-v1";
+const BUILD_UPDATE_SESSION_KEY = "webmars-build-update-workspace-v1";
 const SESSION_SCHEMA_VERSION = 3;
 const SESSION_PERSIST_DEBOUNCE_MS = 180;
 const SESSION_PERSIST_INTERVAL_MS = 2 * 60 * 1000;
@@ -447,7 +448,7 @@ function collectSessionExternalEditorFiles(files = [], existingFiles = []) {
     .filter(Boolean);
 }
 
-function buildStartupEditorFiles(project, restoredSession = null, fallbackFiles = []) {
+function buildStartupEditorFiles(project, restoredSession = null, fallbackFiles = [], { buildUpdate = false } = {}) {
   const restoredFiles = Array.isArray(restoredSession?.files) ? restoredSession.files : [];
   if (project?.isOpen === true) {
     const projectUpdatedAt = Number(project.updatedAt) || 0;
@@ -456,7 +457,7 @@ function buildStartupEditorFiles(project, restoredSession = null, fallbackFiles 
     const matchingProject = !sessionRoot || normalizeProjectRootKey(sessionRoot) === normalizeProjectRootKey(project.rootPath);
     const projectSessionFiles = matchingProject ? restoredFiles.filter((file) => file?.projectOwned !== false) : [];
     const projectFiles = mapProjectFilesToEditorFiles(project.files, projectSessionFiles, {
-      preferFallbackSource: matchingProject && sessionUpdatedAt >= projectUpdatedAt
+      preferFallbackSource: matchingProject && (buildUpdate || sessionUpdatedAt >= projectUpdatedAt)
     });
     return [
       ...projectFiles,
@@ -992,43 +993,63 @@ function buildProjectStoreState(project) {
   };
 }
 
-function loadWorkspaceSession() {
-  const candidateKeys = [SESSION_STORAGE_KEY, LEGACY_SESSION_STORAGE_KEY];
-  for (let i = 0; i < candidateKeys.length; i += 1) {
-    const storageKey = candidateKeys[i];
-    try {
-      const raw = window.localStorage.getItem(storageKey);
-      if (!raw) continue;
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.files) || !parsed.files.length) continue;
-
-      const files = parsed.files
-        .map((file, index) => normalizeRestoredFile(file, index))
-        .filter(Boolean);
-
-      if (!files.length) continue;
-      const activeFileId = String(parsed.activeFileId || files[0].id);
-      const active = files.find((file) => file.id === activeFileId) || files[0];
-      const windowState = normalizeWindowSessionData(parsed.windowState);
-      return {
-        files,
-        activeFileId: active.id,
-        active,
-        windowState,
-        projectRootPath: String(parsed.projectRootPath || ""),
-        updatedAt: Number(parsed.updatedAt) || 0
-      };
-    } catch {
-      // Try next key.
-    }
+function readWorkspaceSession(storage, key) {
+  try {
+    const parsed = JSON.parse(storage.getItem(key));
+    if (!Array.isArray(parsed?.files)) return null;
+    const files = parsed.files.map(normalizeRestoredFile).filter(Boolean);
+    if (!files.length) return null;
+    const active = files.find((file) => file.id === String(parsed.activeFileId)) || files[0];
+    return {
+      files,
+      activeFileId: active.id,
+      active,
+      windowState: normalizeWindowSessionData(parsed.windowState),
+      projectRootPath: String(parsed.projectRootPath || ""),
+      updatedAt: Number(parsed.updatedAt) || 0
+    };
+  } catch {
+    return null;
   }
-  return null;
 }
 
+function loadWorkspaceSession() {
+  try {
+    const storage = window.localStorage;
+    return readWorkspaceSession(storage, SESSION_STORAGE_KEY) || readWorkspaceSession(storage, LEGACY_SESSION_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function loadBuildUpdateSession() {
+  if (!window.WebMarsBuildUpdate?.isReload) return null;
+  try {
+    return readWorkspaceSession(window.sessionStorage, BUILD_UPDATE_SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function selectBuildUpdateProject(library, session) {
+  if (!library?.projects?.length || !session) return library;
+  const rootKey = normalizeProjectRootKey(session.projectRootPath || library.activeRootPath);
+  const active = library.projects.find((project) => normalizeProjectRootKey(project.rootPath) === rootKey);
+  if (!active) return library;
+  return {
+    ...library,
+    activeRootPath: active.rootPath,
+    projects: library.projects.map((project) => project === active
+      ? { ...project, isOpen: Boolean(session.projectRootPath) }
+      : project)
+  };
+}
+
+const buildUpdateSession = loadBuildUpdateSession();
 const projectBootstrap = moduleRegistry.projectBootstrap.resolve({
-  library: loadProjectLibraryData(),
+  library: selectBuildUpdateProject(loadProjectLibraryData(), buildUpdateSession),
   project: loadProjectData(),
-  session: loadWorkspaceSession(),
+  session: buildUpdateSession || loadWorkspaceSession(),
   createDefault: options => createDefaultProjectData({ ...options, settings: preferences }),
   normalizeLibrary: normalizeProjectLibraryData,
   rootKey: normalizeProjectRootKey
@@ -1049,7 +1070,9 @@ const fallbackInitialFiles = restoredSession?.files?.length ? restoredSession.fi
   undoStack: [initialSource],
   redoStack: []
 }];
-const initialFiles = buildStartupEditorFiles(bootstrapProject, restoredSession, fallbackInitialFiles);
+const initialFiles = buildStartupEditorFiles(bootstrapProject, restoredSession, fallbackInitialFiles, {
+  buildUpdate: Boolean(buildUpdateSession)
+});
 const preferredInitialActiveId = resolveStartupActiveFileId(bootstrapProject, restoredSession, initialFiles);
 const initialActiveFile = initialFiles.find((file) => file.id === preferredInitialActiveId) || initialFiles[0];
 
@@ -1123,6 +1146,7 @@ let resumeRunAfterInput = false;
 let backstepDepthEstimate = 0;
 let allowPageUnload = false;
 let suppressPersistenceForResetReload = false;
+let pendingLaunchRoutes = 0;
 let runScheduleGeneration = 0;
 let runImmediateTaskPending = false;
 const RUN_LOOP_INTERVAL_MS = 16;
@@ -1589,6 +1613,7 @@ const miniCCompilerState = {
   lastCompiledAt: 0
 };
 let miniCCompileRequestId = 0;
+let miniCCompileInProgress = false;
 let projectLibraryState = normalizeProjectLibraryData(bootstrapProjectLibrary);
 let projectState = normalizeProjectData(bootstrapProject) || createDefaultProjectData({ settings: preferences });
 let projectPersistTimer = null;
@@ -9268,40 +9293,45 @@ async function previewAndOpenStableExample(example) {
 
 async function handleLaunchRoute(route = publicLibraryModule.parseLaunchRoute(window.location)) {
   if (!route) return false;
-  if (route.kind === "invalid") {
-    postMarsMessage("[warn] Invalid stable webMARS link.");
-    return true;
-  }
-  if (route.kind === "example") {
-    await exampleManifestReady;
-    let resolvedId = route.id;
-    if (stableExampleRegistryEntries.length) {
-      const registryResolution = publicLibraryModule.resolveExampleRegistryId(route.id, stableExampleRegistryEntries);
-      if (registryResolution.status !== "active") {
+  pendingLaunchRoutes += 1;
+  try {
+    if (route.kind === "invalid") {
+      postMarsMessage("[warn] Invalid stable webMARS link.");
+      return true;
+    }
+    if (route.kind === "example") {
+      await exampleManifestReady;
+      let resolvedId = route.id;
+      if (stableExampleRegistryEntries.length) {
+        const registryResolution = publicLibraryModule.resolveExampleRegistryId(route.id, stableExampleRegistryEntries);
+        if (registryResolution.status !== "active") {
+          postMarsMessage("[warn] Built-in example link not found: {id}.", { id: route.id });
+          return true;
+        }
+        resolvedId = registryResolution.id;
+      }
+      const example = runtimeExampleFiles.find((entry) => String(entry.id || "").toLowerCase() === resolvedId);
+      if (!example) {
         postMarsMessage("[warn] Built-in example link not found: {id}.", { id: route.id });
         return true;
       }
-      resolvedId = registryResolution.id;
-    }
-    const example = runtimeExampleFiles.find((entry) => String(entry.id || "").toLowerCase() === resolvedId);
-    if (!example) {
-      postMarsMessage("[warn] Built-in example link not found: {id}.", { id: route.id });
+      await previewAndOpenStableExample(example);
       return true;
     }
-    await previewAndOpenStableExample(example);
-    return true;
-  }
-  if (route.kind === "publication") {
-    try {
-      await loadAndPreviewPublication(route.slug, route.revision);
-    } catch (error) {
-      postMarsMessage("[error] Public project link failed: {message}", {
-        message: describePublicLibraryError(error, "Publication not found.")
-      });
+    if (route.kind === "publication") {
+      try {
+        await loadAndPreviewPublication(route.slug, route.revision);
+      } catch (error) {
+        postMarsMessage("[error] Public project link failed: {message}", {
+          message: describePublicLibraryError(error, "Publication not found.")
+        });
+      }
+      return true;
     }
-    return true;
+    return false;
+  } finally {
+    pendingLaunchRoutes -= 1;
   }
-  return false;
 }
 
 function openTeacherKitDocument() {
@@ -9831,6 +9861,7 @@ const commands = {
   },
   async compileC0() {
     const compileRequestId = ++miniCCompileRequestId;
+    miniCCompileInProgress = true;
     try {
       if (runActive || runPausedForInput) return;
       const active = editor.getActiveFile();
@@ -9899,6 +9930,8 @@ const commands = {
       if (compileRequestId !== miniCCompileRequestId) return;
       const message = error instanceof Error ? error.message : String(error || "Unknown compile error.");
       postMarsMessage("[error] Compile C0 failed unexpectedly: {message}", { message });
+    } finally {
+      if (compileRequestId === miniCCompileRequestId) miniCCompileInProgress = false;
     }
   },
   step() {
@@ -10964,34 +10997,38 @@ function buildWorkspaceSessionPersistenceCandidates(basePayload) {
   return [basePayload, withoutWindowState, withoutRedundantSavedSources, minimalRecoveryPayload];
 }
 
-function persistWorkspaceSession() {
-  if (suppressPersistenceForResetReload) return;
-  try {
-    const files = editor.getFiles();
-    if (!Array.isArray(files) || !files.length) return;
-    const active = editor.getActiveFile() || files[0];
-    const basePayload = {
-      version: SESSION_SCHEMA_VERSION,
-      updatedAt: Date.now(),
-      projectRootPath: projectIsOpen() ? projectState.rootPath : "",
-      activeFileId: active.id,
-      files: files.map((file) => ({
-        id: file.id,
-        name: file.name,
-        source: file.source,
-        savedSource: typeof file.savedSource === "string" ? file.savedSource : file.source,
-        readOnly: file?.readOnly === true,
-        projectOwned: file?.projectOwned !== false,
-        sourceKind: String(file?.sourceKind || ""),
-        sourceProjectRootPath: String(file?.sourceProjectRootPath || ""),
-        sourceProjectPath: String(file?.sourceProjectPath || file?.name || ""),
-        originKey: String(file?.originKey || "")
-      })),
-      windowState: typeof windowManager.exportSessionWindowState === "function"
-        ? windowManager.exportSessionWindowState()
-        : null
-    };
+function captureWorkspaceSession() {
+  const files = editor.getFiles();
+  if (!Array.isArray(files) || !files.length) return null;
+  const active = editor.getActiveFile() || files[0];
+  return {
+    version: SESSION_SCHEMA_VERSION,
+    updatedAt: Date.now(),
+    projectRootPath: projectIsOpen() ? projectState.rootPath : "",
+    activeFileId: active.id,
+    files: files.map((file) => ({
+      id: file.id,
+      name: file.name,
+      source: file.source,
+      savedSource: typeof file.savedSource === "string" ? file.savedSource : file.source,
+      readOnly: file?.readOnly === true,
+      projectOwned: file?.projectOwned !== false,
+      sourceKind: String(file?.sourceKind || ""),
+      sourceProjectRootPath: String(file?.sourceProjectRootPath || ""),
+      sourceProjectPath: String(file?.sourceProjectPath || file?.name || ""),
+      originKey: String(file?.originKey || "")
+    })),
+    windowState: typeof windowManager.exportSessionWindowState === "function"
+      ? windowManager.exportSessionWindowState()
+      : null
+  };
+}
 
+function persistWorkspaceSession(snapshot) {
+  if (suppressPersistenceForResetReload) return false;
+  try {
+    const basePayload = snapshot || captureWorkspaceSession();
+    if (!basePayload) return false;
     const candidates = buildWorkspaceSessionPersistenceCandidates(basePayload);
     const attemptedPayloads = new Set();
 
@@ -11006,7 +11043,7 @@ function persistWorkspaceSession() {
         window.localStorage.setItem(SESSION_SERVER_DRAFT_KEY, JSON.stringify(buildServerDraftPayload(payload)));
         const mirror = window.WebMarsProjectRepository?.saveSession?.(payload);
         if (mirror && typeof mirror.catch === "function") mirror.catch(() => {});
-        return;
+        return true;
       } catch {
         // Try the next smaller candidate.
       }
@@ -11014,6 +11051,7 @@ function persistWorkspaceSession() {
   } catch {
     // Ignore storage issues.
   }
+  return false;
 }
 
 if (typeof window !== "undefined") {
@@ -11319,8 +11357,8 @@ window.addEventListener("keydown", async (event) => {
   }
 });
 
-function flushPendingLocalPersistence() {
-  if (suppressPersistenceForResetReload) return;
+function flushPendingLocalPersistence(snapshot) {
+  if (suppressPersistenceForResetReload) return false;
   if (persistTimer !== null) {
     window.clearTimeout(persistTimer);
     persistTimer = null;
@@ -11330,11 +11368,38 @@ function flushPendingLocalPersistence() {
     projectPersistTimer = null;
   }
   projectPersistWantsEditorSync = false;
-  persistWorkspaceSession();
-  if (projectIsOpen()) {
-    persistProjectNow({ syncFromEditor: true });
+  const workspaceSaved = persistWorkspaceSession(snapshot);
+  const projectSaved = !projectIsOpen() || persistProjectNow({ syncFromEditor: true });
+  return workspaceSaved && projectSaved;
+}
+
+function clearBuildUpdateSession() {
+  try {
+    window.sessionStorage.removeItem(BUILD_UPDATE_SESSION_KEY);
+  } catch {
+    // The snapshot is only read for a navigation initiated by the updater.
   }
 }
+
+function reloadForBuildUpdate(navigate) {
+  if (allowPageUnload || suppressPersistenceForResetReload || runActive || runPausedForInput
+      || transientDialogSystems.size || cloudSyncInFlight || pendingLaunchRoutes || miniCCompileInProgress) return false;
+  try {
+    const snapshot = captureWorkspaceSession();
+    if (!snapshot || !flushPendingLocalPersistence(snapshot)) return false;
+    // A different tab can change the shared autosave before this tab restarts.
+    window.sessionStorage.setItem(BUILD_UPDATE_SESSION_KEY, JSON.stringify(snapshot));
+    allowPageUnload = true;
+    navigate();
+    return true;
+  } catch {
+    allowPageUnload = false;
+    clearBuildUpdateSession();
+    return false;
+  }
+}
+
+window.WebMarsBuildUpdateRuntime = Object.freeze({ reload: reloadForBuildUpdate });
 
 function handleBeforeUnload(event) {
   if (suppressPersistenceForResetReload || allowPageUnload) return;
@@ -11489,9 +11554,13 @@ if (restoredSession && store.getState().preferences.assembleOnOpen) {
 }
 persistWorkspaceSession();
 persistProjectNow({ syncFromEditor: projectIsOpen() });
-void handleLaunchRoute().then((handled) => {
-  if (!handled) showWelcomeOnFirstVisit();
-});
+if (window.WebMarsBuildUpdate?.isReload) {
+  clearBuildUpdateSession();
+} else {
+  void handleLaunchRoute().then((handled) => {
+    if (!handled) showWelcomeOnFirstVisit();
+  });
+}
 window.addEventListener("popstate", () => {
   void handleLaunchRoute();
 });

@@ -27,26 +27,47 @@ in it. For a subdirectory deployment also change `<base href="/">` in
 
 ## 2. Serve the static application
 
-Publish the isolated output produced by `npm run package:release`. Configure
-normal static 404 behavior plus a narrow SPA fallback for valid stable links:
+Set the installation configuration before running `npm run package:release`.
+Publish the resulting directory as an immutable artifact. Its `build.json`
+identifies the exact payload, independently of the date shown in webMARS.
 
-```nginx
-root /var/www/webmars;
-index index.html;
+For Nginx at the site root, configure the HTTPS server to use the supplied
+[`ops/nginx-webmars-release.conf`](../ops/nginx-webmars-release.conf) in place
+of the earlier static routes and `root` directive. Keep the existing TLS,
+metrics and logging settings. If metrics are enabled, complete the [collector
+upgrade](usage-metrics.md#installationupdate-and-verification) before activating
+the frontend. Deploy with the following commands:
 
-location ~ ^/(?:e/[a-z0-9][a-z0-9-]{0,79}|p/[a-z0-9]+(?:-[a-z0-9]+)*(?:@[1-9][0-9]*)?)/?$ {
-    try_files /index.html =404;
-}
-
-location / {
-    try_files $uri $uri/ =404;
-}
+```sh
+bash scripts/deploy-release.sh --check
+WEBMARS_DEPLOY_HOST=operator@example.edu bash scripts/deploy-release.sh
 ```
 
-Prefix both locations for `appBasePath != "/"`. Do not use a catch-all fallback
-for every missing path: a missing JavaScript file must fail as 404, not receive
-HTML. Serve `.js` and `.mjs` as JavaScript, JSON as JSON and Assembly/C sources
-as UTF-8 text.
+The script verifies the package before upload and verifies the staged files
+again on the host. It installs each package under
+`/var/www/webmars-deploy/releases/<id>` and switches the `current` symlink only
+after the package is complete. Serve the previous release directories while
+old tabs may still need their resources. Roll back by switching `current` back
+to a retained release through an atomic rename of a new symlink.
+
+For the first deployment, publish to the new layout before switching the
+HTTPS configuration to the new routes. Run `nginx -t` and reload Nginx, then
+check that `/`, stable example and publication links, and `/build.json` all
+serve the active package. They must use `Cache-Control: no-store` and return
+`200` even when a client sends validators from the previous release. Reproducible
+ZIPs preserve a fixed file date, so date-and-size validators can collide across
+releases. Check that an asset URL with `?b=<id>` for a retained release still
+serves that release's bytes. Keep the existing navigation cookie header at
+server scope if traffic classification is enabled.
+
+On a different static host, apply the same cache rules and publish the
+manifest and shell in one switch. Map assets to the release identified by
+`b` or return `404` for unknown release IDs. For `appBasePath != "/"`, prefix
+the app's public routes and the manifest with that base and preserve relative
+URLs from `index.html`. Use an HTML fallback only for valid stable links.
+Serve `.js` and `.mjs` as JavaScript, JSON as JSON and Assembly/C sources as
+UTF-8 text. You can preview a package locally with
+`node scripts/serve.mjs --root dist/webmars-0.7.4`.
 
 ## 3. Configure BackMars securely
 

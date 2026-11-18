@@ -8,6 +8,10 @@ import { chapters, parts, MANUAL } from "../content/index.mjs";
    ========================================================================= */
 
 const chapterById = new Map(chapters.map((chapter) => [chapter.id, chapter]));
+const metricsParts = new Map([
+  ["Começar", "part_1"], ["Ambiente", "part_2"], ["Programar", "part_3"], ["Referência", "part_4"],
+  ["Explorar", "part_5"], ["Serviços e configuração", "part_6"], ["Aprender e manter", "part_7"], ["Apêndices", "part_8"]
+]);
 const APPENDIX_IDS = ["sobre-o-manual", "cobertura", "changelog"];
 
 const book = document.querySelector("#book");
@@ -741,9 +745,11 @@ async function renderRoute() {
     return;
   }
 
+  const changedChapter = currentChapter?.id !== chapter.id;
   currentChapter = chapter;
   const body = chapter.sections.map((section, index) => renderSection(chapter, section, index)).join("");
   article.innerHTML = `${chapter.home ? renderTitlePage(chapter) : renderChapterOpener(chapter)}${body}${renderFooter(chapter)}`;
+  if (changedChapter) window.WebMarsUsage?.track("manual_chapter_view", metricsParts.get(chapter.part));
   document.title = `${chapter.home ? MANUAL.title : chapter.title} · ${MANUAL.displayVersion}`;
 
   updateActiveNav(chapter.id);

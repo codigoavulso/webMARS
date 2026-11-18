@@ -1,0 +1,143 @@
+--- a/ops/raspberry-pi/webmars-metrics.py
++++ b/ops/raspberry-pi/webmars-metrics.py
+@@ -41,14 +41,15 @@
+ EVENTS = {"page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "active_time", "heartbeat", "tool_open", "feature_use"}
+ FEATURES = {"step", "backstep", "run", "compile", "assemble", "reset", "pause", "breakpoint", "input_wait",
+             "project_manager", "project_save", "project_import", "cloud_save", "cloud_load", "help", "teacher_kit"}
+-SURFACES = {"overview", "learn", "teach", "stack", "pipeline", "minic", "privacy", "app"}
++SURFACES = {"overview", "learn", "teach", "stack", "pipeline", "minic", "privacy", "app", "manual"}
++MANUAL_PARTS = {f"part_{index}" for index in range(1, 9)}
+ SOURCES = {"direct", "search", "social", "internal", "other"}
+ RETURNING_BUCKETS = {"days_1_6", "days_7_30", "older"}
+ RETURNS = {"new", "same_day"} | RETURNING_BUCKETS
+ LANGUAGES = set("en pt es zh hi ar fr bn ru id de ja ko tr vi ur it pl fa th other".split())
+ FIELDS = {"v", "session", "event", "surface", "detail", "seconds", "returning", "source", "device", "language"}
+ AUTH_EVENTS = {"login_start", "login_success", "login_error", "account_created", "account_linked"}
+-EVENTS |= AUTH_EVENTS | {"interaction"} | set(EXECUTION_OUTCOMES) | set(ANALYZED_DETAILS) | set(BUILD_UPDATE_EVENTS)
++EVENTS |= AUTH_EVENTS | {"interaction", "manual_chapter_view"} | set(EXECUTION_OUTCOMES) | set(ANALYZED_DETAILS) | set(BUILD_UPDATE_EVENTS)
+ FIELDS_V2 = FIELDS | {"context", "automation", "interaction", "visit"}
+ MEASUREMENT_EVENTS = ("window_time", "operation_time", "operation_error")
+ SEPARATE_CLOCK_EVENTS = ("heartbeat", *MEASUREMENT_EVENTS, *BUILD_UPDATE_EVENTS)
+@@ -109,6 +110,12 @@
+                 and data["seconds"] == 0 and data["from_build_id"] != data["to_build_id"]
+                 and bool(re.fullmatch(r"[a-f0-9]{32}", data["update_id"]))
+                 and all(re.fullmatch(r"[a-f0-9]{64}", data[key]) for key in ("from_build_id", "to_build_id")))
++    if data["surface"] == "manual":
++        return data["v"] == 2 and data["seconds"] == 0 and (
++            (data["event"] == "page_view" and data["detail"] == "none")
++            or (data["event"] == "manual_chapter_view" and data["detail"] in MANUAL_PARTS))
++    if data["event"] == "manual_chapter_view":
++        return False
+     if data["event"] == "example_open":
+         return bool(re.fullmatch(r"lesson(?:0[1-9]|1[0-5])|other", data["detail"]))
+     if data["event"] == "tool_open":
+@@ -407,6 +414,16 @@
+             "successful_sessions": len(successful)}
+ 
+ 
++def manual_statistics(rows, audience, classes):
++    selected, _ = select_audience([row for row in rows if row["surface"] == "manual"], audience, classes)
++    chapters = [row for row in selected if row["event"] == "manual_chapter_view"]
++    parts = Counter(row["detail"] for row in chapters)
++    return {"sessions": len({row["session"] for row in selected}),
++            "page_views": sum(row["event"] == "page_view" for row in selected),
++            "chapter_views": len(chapters),
++            "parts": [{"key": key, "chapter_views": views} for key, views in sorted(parts.items())]}
++
++
+ def public_statistics(database, window="60m", now=None, audience="all", log_root=None):
+     """Publish fixed, aggregate windows without session tokens or individual records."""
+     if window not in PUBLIC_WINDOWS:
+@@ -427,15 +444,17 @@
+         db.row_factory = sqlite3.Row
+         db.execute("BEGIN")
+         rows = db.execute("SELECT * FROM events WHERE received >= ? AND received <= ? ORDER BY received, rowid", (start, now)).fetchall()
+-        collected_from = db.execute("SELECT MIN(received) FROM events WHERE received <= ?", (now,)).fetchone()[0]
++        collected_from = db.execute("SELECT MIN(received) FROM events WHERE received <= ? AND surface != 'manual'", (now,)).fetchone()[0]
+         previous_complete = collected_from is not None and collected_from <= previous_start
+         if previous_complete:
+             previous_rows = db.execute("""SELECT session, received, event, seconds, interaction, return_bucket
+-                FROM events WHERE received >= ? AND received < ? ORDER BY received, rowid""", (previous_start, start)).fetchall()
++                FROM events WHERE received >= ? AND received < ? AND surface != 'manual'
++                ORDER BY received, rowid""", (previous_start, start)).fetchall()
+             previous_baseline = {sid: interaction for sid, interaction, _ in session_time_baselines(db, previous_start, start - 1)
+                                  if interaction is not None}
+         else:
+-            previous_rows = db.execute("SELECT DISTINCT session FROM events WHERE received >= ? AND received < ?", (previous_start, start)).fetchall()
++            previous_rows = db.execute("""SELECT DISTINCT session FROM events
++                WHERE received >= ? AND received < ? AND surface != 'manual'""", (previous_start, start)).fetchall()
+             previous_baseline = {}
+         classes = classify_sessions(session_signals(db, previous_start, now))
+         earlier = set()
+@@ -448,7 +467,9 @@
+             if presence is not None:
+                 presence_baseline[sid] = presence
+ 
+-    all_rows = rows
++    manual = manual_statistics(rows, audience, classes)
++    all_rows = [row for row in rows if row["surface"] != "manual"]
++    rows = all_rows
+     rows, population = select_audience(rows, audience, classes)
+     previous_rows, _ = select_audience(previous_rows, audience, classes)
+     buckets = [{"from": lower, "through": upper,
+@@ -539,6 +560,7 @@
+         "audience": audience, "classification": {"sessions_by_class": dict(population),
+             "note": "Human/automation are probable signals, not identity proof. Unknown includes historical events. Internal/test are explicit markers; unmarked operator use cannot be inferred."},
+         "web_traffic": web_traffic,
++        "manual": manual,
+         "quality": {"collected_from": iso(collected_from) if collected_from is not None else None,
+                     "classified_sessions": sum(value for key, value in population.items() if key != "unknown"),
+                     "total_sessions": sum(population.values()),
+@@ -612,7 +634,8 @@
+         heartbeat_visits = db.execute("SELECT first_seen, last_seen, active_seconds, pings FROM heartbeat_sessions WHERE last_seen >= ? AND last_seen <= ?", (now - days * 86400, now)).fetchall()
+         baseline = dict(db.execute(f"SELECT session, MAX(seconds) FROM events WHERE received < ? AND event NOT IN ({SEPARATE_CLOCK_PARAMETERS}) GROUP BY session",
+                                    (start, *SEPARATE_CLOCK_EVENTS)).fetchall())
+-    rows, population = select_audience(rows, audience, classes)
++    manual = manual_statistics(rows, audience, classes)
++    rows, population = select_audience([row for row in rows if row["surface"] != "manual"], audience, classes)
+     sessions = {}
+     event_counts = Counter()
+     event_sessions = defaultdict(set)
+@@ -679,6 +702,7 @@
+     legacy_recent_hashes = {row["session_hash"] for row in presence_rows}
+     return {
+         "window_days": days,
++        "manual": manual,
+         "audience": audience,
+         "traffic_classification": dict(population),
+         "event_window_utc": {"from": datetime.fromtimestamp(now - days * 86400, timezone.utc).isoformat(),
+@@ -760,6 +784,7 @@
+     lines = [f"webMARS statistics — last {data['window_days']} days",
+              f"UTC: {data['event_window_utc']['from']} to {data['event_window_utc']['through']}",
+              f"Measured tab visits: {data['measured_tab_sessions']}",
++             f"Manual sessions: {data['manual']['sessions']}; chapter views: {data['manual']['chapter_views']}",
+              f"Recent heartbeat sessions (5 min): {data['live_presence']['active_sessions_estimated']}",
+              f"Ready visits with successful execution: {data['activation']['ready_sessions_with_successful_run']} / {data['activation']['ready_sessions']}",
+              "", "UTC day       Visits   Interaction seconds observed"]
+--- a/ops/raspberry-pi/test_usage_metrics.py
++++ b/ops/raspberry-pi/test_usage_metrics.py
+@@ -32,6 +32,24 @@
+ 
+ 
+ class MetricsTests(unittest.TestCase):
++    def test_manual_views_are_grouped_and_do_not_count_as_simulator_sessions(self):
++        now = 1788600000
++        base = dict(v=2, surface="manual", context="public", automation="none", interaction="not_seen", visit="none")
++        chapter = event(event="manual_chapter_view", detail="part_3", **base)
++        self.assertTrue(metrics.validate_event(chapter))
++        for changes in ({"surface": "app"}, {"detail": "#/personal-url"}, {"event": "assemble_success"}, {"seconds": 4}):
++            self.assertFalse(metrics.validate_event({**chapter, **changes}))
++        metrics.record(self.database, event(event="page_view", **base), now=now - 2)
++        metrics.record(self.database, chapter, now=now - 1)
++        metrics.record(self.database, {**chapter, "session": "b" * 32, "context": "test"}, now=now)
++        metrics.record(self.database, event(session="c" * 32), now=now)
++        public = metrics.public_statistics(self.database, now=now, audience="public")
++        self.assertEqual(public["totals"]["sessions"], 1)
++        self.assertEqual(public["manual"], {"sessions": 1, "page_views": 1, "chapter_views": 1,
++                         "parts": [{"key": "part_3", "chapter_views": 1}]})
++        self.assertEqual(metrics.public_statistics(self.database, now=now, audience="test")["manual"]["sessions"], 1)
++        self.assertEqual(metrics.report(self.database, now=now)["manual"]["chapter_views"], 2)
++
+     def test_build_update_validation_and_duplicate_acknowledgement(self):
+         now = 1788600000
+         for changes in ({"update_id": "private"}, {"to_build_id": "private"}, {"to_build_id": "e" * 64},

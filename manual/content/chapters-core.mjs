@@ -193,7 +193,7 @@ export const coreChapters = [
         id: "privacidade-manual",
         title: "Privacidade deste manual",
         content: html`
-          <p>O manual é uma aplicação estática. A pesquisa ocorre no seu browser e não envia termos para um servidor. Não define cookies, não recolhe métricas e não carrega tipos de letra, scripts ou imagens de terceiros.</p>
+          <p>O Manual é uma aplicação estática. A pesquisa decorre no browser e os termos ficam no dispositivo. Quando incluído numa instalação webMARS com métricas ativas, o Manual envia aberturas e visualizações agrupadas por parte ao coletor da própria instalação. A edição autónoma pode ser usada sem recolha.</p>
           <p>A ligação “Abrir webMARS” conduz, num novo separador, à aplicação configurada pelo responsável desta edição do manual. Pode apontar para a instalação oficial, para uma universidade ou para um deployment local. A aplicação tem uma política própria: consulte <a href="#/cloud">Cloud e sincronização</a> para contas/projetos e <a href="#/estatisticas-utilizacao/o-que-e-enviado">Estatísticas de utilização</a> para a recolha automática da instalação oficial.</p>
         `
       }

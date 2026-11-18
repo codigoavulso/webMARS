@@ -19,7 +19,7 @@ import {
 
 const run = promisify(execFile);
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const expectedReleaseVersion = "0.7.4";
+const expectedReleaseVersion = "0.7.5";
 const languages = [
   "en", "es", "pt", "zh", "hi", "ar", "fr", "bn", "ru", "id",
   "de", "ja", "ko", "tr", "vi", "ur", "it", "pl", "fa", "th"
@@ -514,6 +514,23 @@ test("application-version tokens are replaced inside iframe documents", async ()
   assert.equal(textNode.nodeValue, `Version ${expectedReleaseVersion} · Build ${build}`);
   assert.equal(sandbox.window.WebMarsAppVersion.replaceVersionToken("__WEBMARS_APP_BUILD__"), build);
   assert.equal(sandbox.window.WebMarsAppVersion.withVersion("./help/info.html?v=1#notes"), `./help/info.html?v=1&b=${build}#notes`);
+});
+
+test("the deployed artifact ID versions resources independently of the build label", async () => {
+  const source = await readFile(resolve(projectRoot, "assets", "js", "app-version.js"), "utf8");
+  const id = "a".repeat(64);
+  const window = {
+    document: {
+      querySelector(selector) {
+        assert.equal(selector, 'meta[name="webmars-build-id"]');
+        return { content: id };
+      }
+    }
+  };
+  vm.runInNewContext(source, { window }, { filename: "app-version.js" });
+  assert.equal(window.WebMarsAppVersion.id, id);
+  assert.match(window.WebMarsAppVersion.build, /^\d{6}\.\d{2}\.\d{4}$/);
+  assert.equal(window.WebMarsAppVersion.withVersion("./assets/js/app.bundle.js"), `./assets/js/app.bundle.js?v=${expectedReleaseVersion}&b=${id}`);
 });
 
 test("build stamps use Lisbon release time with zero padding and a 24-hour clock", async () => {

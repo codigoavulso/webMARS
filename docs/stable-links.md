@@ -53,8 +53,7 @@ the [self-hosting guide](self-hosting.md) for the Nginx routes. The included Nod
 server implements the same rule. This behavior and the stable-ID registry are covered by
 `tests/public-links.test.mjs`.
 
-The entry pages and unversioned files use `Cache-Control: no-cache` so the
-browser checks for changes and can reuse the cached body on a 304. Packaged
-assets with a build number in their URL (`?b=YYYYMM.DD.hhmm`) can be reused for
-a year. Stamp a distinct build with `npm run build:stamp` and publish its
-files and HTML together so the entry page points to the new asset URLs.
+The app entry pages and `build.json` use `Cache-Control: no-store`. Packaged
+asset URLs contain the artifact ID in `b` and can be cached for one year when
+the server serves the bytes of that artifact. Publish the manifest, HTML and
+assets as a unit. See the [static hosting setup](self-hosting.md#2-serve-the-static-application).

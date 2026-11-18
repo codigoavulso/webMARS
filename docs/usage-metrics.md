@@ -89,8 +89,8 @@ Reports describe measured visits and must never label them as consent records.
 ## Delivery and grouping
 
 Each current event, including the presence heartbeat, includes the deployed
-12-digit build number. Events from older clients remain accepted and appear
-under the unknown build in aggregate breakdowns.
+build label in `YYYYMM.DD.HHmm` or legacy compact format. Older clients can omit
+the label and appear under the unknown build in aggregate breakdowns.
 
 The Builds tab and CSV export show distinct sessions and received events per
 build for the selected period and audience. A session can span several builds.
@@ -124,11 +124,30 @@ least 24 hours since the previous recorded visit started in that browser.
 No permanent visitor ID or fingerprint is created.
 
 POST requests omit credentials and referrer, reject redirects and use no URL
-parameters. Failures never interrupt the simulator. There is no persistent
-queue or retry loop. A disabled installation collector still supports purely
-static hosting. User preferences do not disable a configured collector.
+parameters. Ordinary events have no persistent queue or retry loop. A disabled
+installation collector still supports purely static hosting. User preferences
+do not disable a configured collector.
+
+Automatic updates produce two separate observations. The old document requests
+delivery of `build_update_attempted` immediately before navigation. The target
+document sends `build_update_completed` when its runtime is ready. A temporary
+tab marker links the observations and allows bounded delivery retries for the
+confirmation. The collector stores each phase at most once per transition and
+acknowledges it with HTTP 204. An offline or blocked request can leave either
+observation missing. Completed events can arrive before attempts, and the
+separately reported counts depend on delivery and the selected time window.
+The updater works independently of the metrics endpoint.
 
 ## Events
+
+The Manual included in the webMARS package uses the same configured collector.
+It measures Manual tab sessions, document loads and chapter views grouped by
+the Manual's eight parts. Changing section within a chapter does not count as
+another chapter view, and direct visits and the in-app Manual use the same
+rules. The events contain a fixed part code in place of a chapter title, URL
+or search text. The independent Manual package does not load collection scripts.
+The Statistics window's Manual tab and CSV use the selected period and audience.
+Simulator session and activity totals exclude Manual events.
 
 Schema version 1 has these required keys: `v`, `session`, `event`,
 `surface`, `detail`, `seconds`, `returning`, `source`, `device`, `language`.
@@ -136,12 +155,21 @@ Version 2 adds the fields described under traffic classification. The `build`
 field is optional in both versions for compatibility. Values are allowlisted
 on both sides.
 
+The two update events require schema v2 with `surface=app`, `detail=none` and
+`seconds=0`. Their extra fields contain a random, per-transition `update_id`
+(32 lowercase hexadecimal characters) and `from_build_id` and `to_build_id`
+(each a 64-character lowercase hexadecimal artifact digest). These IDs remain
+in private event storage under the same retention policy as other events. The
+public API exposes only aggregate counts for the phases.
+
 | Event | Meaning |
 | --- | --- |
 | `page_view` | Public page or simulator loaded |
 | `launch_app` | Public-page simulator link clicked |
 | `app_ready` | Application scripts loaded successfully |
 | `app_startup` | First reported simulator loading attempt for the current document. Details: `under_1s`, `1_to_3s`, `3_to_8s`, `8s_or_more` or `failed` |
+| `build_update_attempted` | Automatic reload requested by the source build |
+| `build_update_completed` | Target build reached runtime readiness after an automatic reload |
 | `example_open` | Example opened; only lesson01–lesson15 or `other` |
 | `compile_success`, `compile_error` | Mini-C compilation outcome |
 | `assemble_success`, `assemble_error` | Assembly outcome |
@@ -272,7 +300,7 @@ contributes to each applicable build, with interaction and execution
 attributed to the builds on which those outcomes were observed.
 
 The Diagnostics tab shows distinct sessions and received event counts for
-execution endings, execution error categories and app startup. A session can
+automatic updates, execution endings, execution error categories and app startup. A session can
 contribute to multiple rows. An error category describes the same occurrence as
 the execution error, so these counts should be read separately. New categories
 cover events from the updated app. Compare equivalent periods with the same
@@ -299,8 +327,9 @@ JSON: `sudo webmars-metrics --report --days 14 --summary`.
   received event counts. Tool/feature events count adoption, not every click.
 - `sessions_by_event` and `activation`: visits per action and ready visits
   with successful execution, including the denominator.
-- `execution_outcomes`, `execution_faults` and `startup`: session and event
-  counts for execution endings, execution error categories and app startup.
+- `execution_outcomes`, `execution_faults`, `startup` and `build_updates`:
+  session and event counts for execution endings, execution error categories,
+  app startup and automatic update phases.
 - `session_durations`: visit-level interaction duration buckets, median, p90
   and maximum. Zero includes short/unmeasured visits.
 - `sources`, `activation_by_source`, `languages`, `input_devices`,
@@ -367,6 +396,22 @@ to a bot flag in memory, never retained by the collector. HTTP still exposes a n
 IP to the host. Ordinary site logs are a separate system.
 
 ## Installation/update and verification
+
+For the Raspberry Pi collector sources maintained outside the public tree,
+apply [the update metrics patch](patches/webmars-build-update-metrics.patch) and
+[the Manual metrics patch](patches/webmars-manual-metrics.patch)
+from the project root containing `ops/raspberry-pi`:
+
+```sh
+git apply --check --ignore-space-change docs/patches/webmars-build-update-metrics.patch
+git apply --ignore-space-change docs/patches/webmars-build-update-metrics.patch
+git apply --check --ignore-space-change docs/patches/webmars-manual-metrics.patch
+git apply --ignore-space-change docs/patches/webmars-manual-metrics.patch
+python -B -m unittest discover -s ops/raspberry-pi -p 'test_*metrics.py'
+```
+
+The collector migrates the existing SQLite database when the updated service
+starts. Keep the collector and frontend changes together when publishing.
 
 1. Install or restart the collector and proxy configuration for your installation
    before the frontend, so it accepts the

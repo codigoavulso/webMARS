@@ -166,6 +166,10 @@ citation artefact; the deployment ZIP is intentionally only the runnable site.
 
 Verify reproducibility by running it twice from a clean tree and comparing the
 checksums. A difference means something non-deterministic reached the package.
+The packager derives the artifact ID from the deployed payload, independently
+of the displayed build stamp. It writes `build.json` and embeds the ID in the
+HTML and its asset URLs. Two packages with different contents get distinct
+IDs even when they share a displayed stamp.
 
 ### 7. Tag and publish
 
@@ -173,6 +177,9 @@ Commit, tag the release, and publish the packaged tree. The archive is
 self-contained for the simulator: it needs an HTTP server and no build step at
 the destination. The public usage-statistics panel requires the separately
 deployed same-origin metrics collector and database.
+Follow the [static hosting setup](self-hosting.md#2-serve-the-static-application)
+so that the active manifest and HTML refresh together and older asset URLs
+continue to resolve to their own release.
 
 ## Release checklist
 

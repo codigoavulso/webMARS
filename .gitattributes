@@ -19,6 +19,7 @@
 *.txt text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
+docs/patches/*.patch text eol=lf whitespace=-blank-at-eol
 ops/raspberry-pi/logrotate-webmars text eol=lf
 *.bat text eol=crlf
 

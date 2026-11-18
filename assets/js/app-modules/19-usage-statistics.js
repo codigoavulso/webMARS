@@ -31,8 +31,11 @@
   ];
   const DIAGNOSTICS = [["page_view", "Page views"], ["app_ready", "App ready"],
     ["events", "Events received"], ["heartbeat", "Heartbeats"], ["app_startup", "App startup"],
+    ["build_update_attempted", "Update reloads requested"], ["build_update_completed", "Updates confirmed"],
     ["run_stopped", "Stopped by user"], ["run_fallthrough", "Reached end without exit"],
     ["run_input_cancelled", "Input cancelled"], ["run_fault_group", "Execution error categories"]];
+  const MANUAL_PARTS = ["Começar", "Ambiente", "Programar", "Referência", "Explorar",
+    "Serviços e configuração", "Aprender e manter", "Apêndices"];
   const COLLECTOR_DIAGNOSTICS = [
     ["window_time", "Visible window time", {}, "Window visibility is estimated. Several windows can be visible at once."],
     ["operation_time", "Operation duration", {}],
@@ -48,7 +51,10 @@
     ["startup", "App startup", {
       under_1s: "Under 1 second", "1_to_3s": "1 to under 3 seconds", "3_to_8s": "3 to under 8 seconds",
       "8s_or_more": "8 seconds or more", failed: "Startup failed"
-    }, "Startup measures the first reported loading attempt on each page."]
+    }, "Startup measures the first reported loading attempt on each page."],
+    ["build_updates", "Automatic updates", {
+      build_update_attempted: "Update reloads requested", build_update_completed: "Updates confirmed"
+    }]
   ];
   const WINDOW_LABELS = { help: "Help", settings: "Settings", editor: "Editor", execute: "Execute",
     messages: "Messages", registers: "Registers", project_manager: "Project Manager" };
@@ -149,6 +155,7 @@
           <button type="button" class="tool-btn" role="tab" data-stat-tab="diagnostics" aria-controls="usage-stats-diagnostics" aria-selected="false" tabindex="-1" data-stat-label="Diagnostics"></button>
           <button type="button" class="tool-btn" role="tab" data-stat-tab="resources" aria-controls="usage-stats-resources" aria-selected="false" tabindex="-1" data-stat-label="Resources"></button>
           <button type="button" class="tool-btn" role="tab" data-stat-tab="builds" aria-controls="usage-stats-builds" aria-selected="false" tabindex="-1" data-stat-label="Builds"></button>
+          <button type="button" class="tool-btn" role="tab" data-stat-tab="manual" aria-controls="usage-stats-manual" aria-selected="false" tabindex="-1" data-stat-label="Manual"></button>
           <button type="button" class="tool-btn" role="tab" data-stat-tab="cloud" aria-controls="usage-stats-cloud" aria-selected="false" tabindex="-1" data-stat-label="Cloud"></button>
         </div>
         <section data-stat-view="overview" id="usage-stats-overview" role="tabpanel">
@@ -242,6 +249,11 @@
               <tbody data-stat-role="builds-rows"></tbody>
             </table>
           </div>
+        </section>
+        <section data-stat-view="manual" id="usage-stats-manual" class="usage-stats-panel" role="tabpanel" hidden>
+          <p class="usage-stats-note" data-stat-role="manual-empty" data-stat-label="No data for these filters." hidden></p>
+          <div class="usage-stats-table-wrap" data-stat-role="manual-totals"></div>
+          <div class="usage-stats-table-wrap" data-stat-role="manual-parts"></div>
         </section>
         <section data-stat-view="cloud" id="usage-stats-cloud" role="tabpanel" hidden>
           <section class="usage-stats-panel">
@@ -463,6 +475,23 @@
         row.append(build, el("td", "", number(sessions)), el("td", "", events == null ? "—" : number(events)));
         return row;
       }));
+    }
+
+    function renderManual(data) {
+      const report = data?.manual;
+      const totals = field("manual-totals");
+      const parts = field("manual-parts");
+      field("manual-empty").hidden = !data || Boolean(report?.sessions);
+      totals.replaceChildren();
+      parts.replaceChildren();
+      if (!report?.sessions) return;
+      renderTable(totals, ["Manual", "Sessions", "Page views", "Chapter views"].map(translate),
+        [[translate("Manual"), count(report.sessions), count(report.page_views), count(report.chapter_views)]]);
+      const rows = (report.parts || []).flatMap(({ key, chapter_views }) => {
+        const index = /^part_([1-8])$/.exec(key)?.[1];
+        return index ? [[MANUAL_PARTS[index - 1], count(chapter_views)]] : [];
+      });
+      if (rows.length) renderTable(parts, ["Part", "Chapter views"].map(translate), rows);
     }
 
     function renderRanking(target, items, title, sessionTotal) {
@@ -885,6 +914,7 @@
       renderCollectorDiagnostics(data);
       renderOverviewRankings(data);
       renderBuilds(data);
+      renderManual(data);
       renderSources();
       const dimension = field("dimension").value;
       const dimensionLabel = translate(DIMENSIONS.find(([key]) => key === dimension)?.[1] || dimension);
@@ -1104,6 +1134,9 @@
         ["breakdown", field("dimension").value, "measure", field("measure").value, "filter", csvFilter, "limit", field("limit").value],
         ["key", "kind", "label", "value"], ...breakdown.map(entry => [entry.key, entry.kind, entry.label, entry.value]),
         ["build", "sessions", "events"], ...buildRows(data).map(row => [row.key, row.sessions, row.events]),
+        ...(data.manual ? [["manual_sessions", "manual_page_views", "manual_chapter_views"],
+          [data.manual.sessions, data.manual.page_views, data.manual.chapter_views], ["manual_part", "chapter_views"],
+          ...data.manual.parts.map(row => [row.key, row.chapter_views])] : []),
         ...(web ? [["web_from", web.from, "web_through", web.through], ["web_classification", "visits"],
           ...Object.entries(web.web_visits_by_class)] : []),
         ...(cloud ? [["cloud_from", cloud.from, "cloud_through", cloud.through, "cloud_context", cloud.context, "cloud_precision", cloud.precision],

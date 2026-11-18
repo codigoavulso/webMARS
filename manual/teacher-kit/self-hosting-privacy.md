@@ -21,7 +21,8 @@
 - Métricas da instalação oficial: eventos e tempos aproximados enviados automaticamente,
   com sessão temporária e categorias limitadas; fontes, input/output e contas ficam fora.
 - Estatísticas públicas: apenas agregados; sessões não são pessoas únicas ou contas registadas.
-- Manual: pesquisa local e sem telemetria.
+- Manual: pesquisa local. O pacote webMARS pode medir aberturas e visualizações
+  de capítulos por parte através do coletor da instalação.
 
 ## Estatísticas e leitura dos dados
 

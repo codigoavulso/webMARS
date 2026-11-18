@@ -1,8 +1,10 @@
 (() => {
   const globalScope = typeof window !== "undefined" ? window : globalThis;
   const APP_NAME = "webMARS";
-  const APP_VERSION = "0.7.4";
-  const APP_BUILD = "202611.13.2212";
+  const APP_VERSION = "0.7.5";
+  const APP_BUILD = "202611.18.0228";
+  const buildId = globalScope.document?.querySelector?.('meta[name="webmars-build-id"]')?.content || "";
+  const artifactId = /^[a-f0-9]{64}$/.test(buildId) ? buildId : null;
   const VERSION_TOKEN = "__WEBMARS_APP_VERSION__";
   const BUILD_TOKEN = "__WEBMARS_APP_BUILD__";
 
@@ -20,7 +22,7 @@
     if (/(?:[?&])b=/.test(path)) return source;
     const separator = path.includes("?") ? "&" : "?";
     const version = /(?:[?&])v=/.test(path) ? "" : `v=${encodeURIComponent(APP_VERSION)}&`;
-    return `${path}${separator}${version}b=${APP_BUILD}${hash}`;
+    return `${path}${separator}${version}b=${artifactId || APP_BUILD}${hash}`;
   }
 
   function applyVersionTokens(rootDocument = document) {
@@ -66,6 +68,7 @@
     name: APP_NAME,
     version: APP_VERSION,
     build: APP_BUILD,
+    id: artifactId,
     buildToken: BUILD_TOKEN,
     token: VERSION_TOKEN,
     label: `${APP_NAME} ${APP_VERSION}`,

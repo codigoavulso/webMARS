@@ -41,6 +41,7 @@ for (const required of [
   "webmars-config.js",
   "examples/stable-ids.json",
   "assets/js/app.bundle.js",
+  "assets/js/build-update.js",
   "assets/js/app-modules/00-core.js"
 ]) {
   if (!relativeFiles.has(required)) fail(`Missing required file: ${required}`);

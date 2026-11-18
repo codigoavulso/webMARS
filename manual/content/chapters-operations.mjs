@@ -871,7 +871,8 @@ export const operationChapters = [
             ["Tempos de compilação e montagem, categorias detalhadas de erro", "Mesmo fluxo de eventos estatísticos", "Após a operação medida ou o erro categorizado"],
             ["Gráficos públicos", "Endpoint de agregados da instalação", "Ao abrir/atualizar as estatísticas; sem registos individuais"],
             ["Bench", "Só memória/UI local", "Compilar/montar/executar"],
-            ["Manual: pesquisa", "Só browser", "Ao escrever nesta pesquisa"]
+            ["Manual: pesquisa", "Só browser", "Ao escrever nesta pesquisa"],
+            ["Manual: aberturas e visualizações por parte", "Coletor da instalação", "Ao consultar o Manual incluído no webMARS com métricas ativas"]
           ])}
           <p>A área de privacidade de Ajuda/Sobre e o apêndice de privacidade do Manual explicam a recolha automática. As preferências de interface não controlam o envio. O token temporário liga eventos de uma visita, mas não é publicado no painel; <a href="#/estatisticas-utilizacao/o-que-e-enviado">Que informação alimenta os gráficos</a> descreve os campos e exclusões.</p>
           <p>Os logs do servidor web podem registar pedidos e endereços conforme a política do operador; são separados da base de métricas. O coletor de referência não guarda IP, cookies ou cabeçalhos completos, e expira os seus registos após 35 dias. Não inclua credenciais ou dados pessoais em screenshots, exports ou relatórios públicos.</p>

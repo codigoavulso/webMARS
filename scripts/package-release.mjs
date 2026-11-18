@@ -81,6 +81,11 @@ const PUBLIC_TREES = Object.freeze([
 const FORBIDDEN_RELEASE_PATH = /(^|\/)(?:\.git|\.github|docs|node_modules|scripts|test-results|tests)(?:\/|$)/i;
 const TEMPORARY_NAME = /(?:^|[._-])(?:tmp|temp)(?:[._-]|$)|(?:\.bak|~)$/i;
 const APP_VERSION_PATH = "assets/js/app-version.js";
+const BUILD_MANIFEST = "build.json";
+const BUILD_ID_PATTERN = /^[a-f0-9]{64}$/;
+const BUILD_ID_META = '<meta name="webmars-build-id" content="">';
+const BUILD_STAMP = /\bAPP_BUILD\s*=\s*"(\d{6}\.\d{2}\.\d{4})"/;
+const APP_ASSET_STAMPS = /(\b(?:href|src)="\.\/(?:webmars-config\.js|assets\/[^"]*?)(?:\?|&amp;)b=)(?:\d{6}\.\d{2}\.\d{4}|\d{12})(?=")/g;
 const CHECKSUM_MANIFEST = "SHA256SUMS";
 const ZIP_FLAG_UTF8 = 0x0800;
 const ZIP_METHOD_DEFLATE = 8;
@@ -91,7 +96,7 @@ function isPublicReleasePath(path) {
   const normalized = String(path).replaceAll("\\", "/");
   if (normalized.split("/").some((part) => !part || part.startsWith("."))
     || FORBIDDEN_RELEASE_PATH.test(normalized) || TEMPORARY_NAME.test(normalized)) return false;
-  return PUBLIC_ROOT_FILES.includes(normalized) || PUBLIC_TREES.some((tree) =>
+  return normalized === BUILD_MANIFEST || PUBLIC_ROOT_FILES.includes(normalized) || PUBLIC_TREES.some((tree) =>
     normalized.startsWith(`${tree.root}/`) && tree.extensions.includes(extname(normalized).toLowerCase()));
 }
 
@@ -152,7 +157,7 @@ async function readPackageMetadata() {
   const appVersionSource = await readFile(join(projectRoot, APP_VERSION_PATH), "utf8");
   const appVersion = appVersionSource.match(/\bAPP_VERSION\s*=\s*["']([^"']+)["']/)?.[1];
   assert(appVersion, `${APP_VERSION_PATH} does not declare APP_VERSION.`);
-  assert(/\bAPP_BUILD\s*=\s*"\d{6}\.\d{2}\.\d{4}"/.test(appVersionSource), `${APP_VERSION_PATH} must declare a fixed YYYYMM.DD.hhmm build.`);
+  assert(BUILD_STAMP.test(appVersionSource), `${APP_VERSION_PATH} must declare a fixed YYYYMM.DD.hhmm build.`);
   assert(
     appVersion === version,
     `Version mismatch: package.json is ${version}, but ${APP_VERSION_PATH} is ${appVersion}.`
@@ -243,6 +248,48 @@ async function copyReleaseInputs(files, targetRoot) {
   }
 }
 
+function renderReleaseIndex(index, id) {
+  assert(index.includes(BUILD_ID_META), "index.html must declare the empty webmars-build-id meta tag.");
+  return index.replace(BUILD_ID_META, `<meta name="webmars-build-id" content="${id}">`)
+    .replace(APP_ASSET_STAMPS, (_, prefix) => prefix + id);
+}
+
+function renderReleaseManual(index, id) {
+  const marker = "<!-- webMARS bundled metrics -->";
+  assert(index.includes(marker), "The bundled Manual index must declare the metrics marker.");
+  return index.replace(marker, [
+    '<meta name="webmars-surface" content="manual">',
+    `<script src="../webmars-config.js?b=${id}"></script>`,
+    `<script defer src="../assets/js/usage-metrics.js?b=${id}"></script>`
+  ].join("\n  "));
+}
+
+async function writeReleaseBuild(files, targetRoot) {
+  // Hash the staged public payload before injecting its ID into the shell. The
+  // paths separate files with identical bytes, and sorting keeps IDs reproducible.
+  const payload = createHash("sha256").update("webmars release\0");
+  for (const path of [...files].sort()) {
+    payload.update(path).update("\0").update(sha256(await readFile(resolveInside(targetRoot, path))));
+  }
+  const id = payload.digest("hex");
+  const versionSource = await readFile(resolveInside(targetRoot, APP_VERSION_PATH), "utf8");
+  const build = versionSource.match(BUILD_STAMP)?.[1];
+  assert(build, `${APP_VERSION_PATH} must declare a fixed YYYYMM.DD.hhmm build.`);
+  const releaseBuild = { id, build };
+  const indexPath = resolveInside(targetRoot, "index.html");
+  await writeFile(indexPath, renderReleaseIndex(await readFile(indexPath, "utf8"), id), "utf8");
+  if (files.includes("manual/index.html")) {
+    const manualIndex = resolveInside(targetRoot, "manual/index.html");
+    await writeFile(manualIndex, renderReleaseManual(await readFile(manualIndex, "utf8"), id), "utf8");
+  }
+  await writeFile(resolveInside(targetRoot, BUILD_MANIFEST), `${JSON.stringify(releaseBuild)}\n`, "utf8");
+  return releaseBuild;
+}
+
+function releasePayloadFiles(sourceFiles) {
+  return [...sourceFiles, BUILD_MANIFEST].sort((left, right) => left.localeCompare(right, "en"));
+}
+
 async function writePayloadChecksums(files, targetRoot) {
   const lines = [];
   for (const relativePath of files) {
@@ -256,9 +303,10 @@ async function writePayloadChecksums(files, targetRoot) {
   );
 }
 
-async function validateCopyIntegrity(sourceFiles, targetRoot) {
+async function validateCopyIntegrity(sourceFiles, targetRoot, releaseBuild) {
+  const payloadFiles = releasePayloadFiles(sourceFiles);
   const generatedFiles = await listFiles(targetRoot);
-  const expectedFiles = [...sourceFiles, CHECKSUM_MANIFEST]
+  const expectedFiles = [...payloadFiles, CHECKSUM_MANIFEST]
     .sort((left, right) => left.localeCompare(right, "en"));
   assert(
     JSON.stringify(generatedFiles) === JSON.stringify(expectedFiles),
@@ -267,15 +315,25 @@ async function validateCopyIntegrity(sourceFiles, targetRoot) {
 
   const checksumSource = await readFile(resolveInside(targetRoot, CHECKSUM_MANIFEST), "utf8");
   const checksumEntries = checksumSource.trimEnd().split("\n");
-  assert(checksumEntries.length === sourceFiles.length, "SHA256SUMS does not cover every payload file.");
+  assert(checksumEntries.length === payloadFiles.length, "SHA256SUMS does not cover every payload file.");
 
-  for (let index = 0; index < sourceFiles.length; index += 1) {
-    const relativePath = sourceFiles[index];
-    const sourceContent = await readFile(resolveInside(projectRoot, relativePath));
+  for (let index = 0; index < payloadFiles.length; index += 1) {
+    const relativePath = payloadFiles[index];
+    let expectedContent;
+    if (relativePath === BUILD_MANIFEST) {
+      expectedContent = Buffer.from(`${JSON.stringify(releaseBuild)}\n`, "utf8");
+    } else {
+      expectedContent = await readFile(resolveInside(projectRoot, relativePath));
+      if (relativePath === "index.html") {
+        expectedContent = Buffer.from(renderReleaseIndex(expectedContent.toString("utf8"), releaseBuild.id), "utf8");
+      } else if (relativePath === "manual/index.html") {
+        expectedContent = Buffer.from(renderReleaseManual(expectedContent.toString("utf8"), releaseBuild.id), "utf8");
+      }
+    }
     const targetContent = await readFile(resolveInside(targetRoot, relativePath));
     const digest = sha256(targetContent);
     assert(
-      sourceContent.equals(targetContent),
+      expectedContent.equals(targetContent),
       `Generated file differs from its source: ${relativePath}`
     );
     assert(
@@ -579,8 +637,8 @@ function requireExactFile(fileSet, relativePath, owner) {
   assert(fileSet.has(relativePath), `${owner} references a file absent from the package: ${relativePath}`);
 }
 
-async function validateIsolatedRelease(targetRoot, sourceFiles) {
-  const generatedFiles = await validateCopyIntegrity(sourceFiles, targetRoot);
+async function validateIsolatedRelease(targetRoot, sourceFiles, releaseBuild) {
+  const generatedFiles = await validateCopyIntegrity(sourceFiles, targetRoot, releaseBuild);
   const requiredFiles = [
     "index.html",
     "webmars-config.js",
@@ -588,6 +646,8 @@ async function validateIsolatedRelease(targetRoot, sourceFiles) {
     "robots.txt",
     "LICENSE",
     APP_VERSION_PATH,
+    BUILD_MANIFEST,
+    "assets/js/build-update.js",
     "assets/css/styles.css",
     "assets/images/screenshot-main.png",
     "assets/js/app.bundle.js",
@@ -852,8 +912,9 @@ async function packageRelease() {
     const sourceFiles = await collectReleaseInputs();
     await mkdir(stagingDirectory, { recursive: true });
     await copyReleaseInputs(sourceFiles, stagingDirectory);
-    await writePayloadChecksums(sourceFiles, stagingDirectory);
-    const generatedFiles = await validateIsolatedRelease(stagingDirectory, sourceFiles);
+    const releaseBuild = await writeReleaseBuild(sourceFiles, stagingDirectory);
+    await writePayloadChecksums(releasePayloadFiles(sourceFiles), stagingDirectory);
+    const generatedFiles = await validateIsolatedRelease(stagingDirectory, sourceFiles, releaseBuild);
 
     const archivePaths = generatedFiles.map((relativePath) => `${releaseName}/${relativePath}`);
     const archive = await createZipArchive(stagingDirectory, releaseName, generatedFiles);
@@ -895,4 +956,7 @@ if (invokedPath === fileURLToPath(import.meta.url)) {
   }
 }
 
-export { collectReleaseInputs, collectTreeFiles, publishReleaseSet, validateDocumentReferences, isPublicReleasePath };
+export {
+  BUILD_MANIFEST, BUILD_ID_PATTERN, collectReleaseInputs, collectTreeFiles, publishReleaseSet,
+  validateDocumentReferences, isPublicReleasePath, writeReleaseBuild
+};

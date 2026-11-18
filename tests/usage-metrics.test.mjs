@@ -30,12 +30,15 @@ function harness(options = {}) {
   Object.assign(document, options.windowLayout);
   const window = {
     document, location: new URL("https://webmars.test/"), localStorage, sessionStorage,
-    WebMarsAppVersion: { build: options.build },
+    WebMarsAppVersion: { build: options.build, id: options.buildId },
     WebMarsConfig: { appBasePath: "/", metrics: { enabled: options.enabled ?? true, endpoint: options.endpoint || "https://webmars.test/_metrics/events" } },
     navigator: { language: "pt", ...options.navigator }, crypto: webcrypto, performance: { now: options.performanceNow || (() => now) },
     matchMedia: () => ({ matches: false }), addEventListener: add(events), setInterval: (fn) => timers.push(fn),
     dispatchEvent: (event) => emit(events, event.type, event),
-    fetch: (url, request) => { sent.push({ url, request, body: JSON.parse(request.body) }); return options.failFetch ? Promise.reject(new Error("offline")) : Promise.resolve({ ok: true }); }
+    fetch: (url, request) => {
+      sent.push({ url, request, body: JSON.parse(request.body) });
+      return options.failFetch ? Promise.reject(new Error("offline")) : Promise.resolve({ status: options.status ?? 204 });
+    }
   };
   class Clock extends Date { static now() { return now; } }
   vm.runInNewContext(source, { window, URL, Uint8Array, Date: Clock, Event, Promise });
@@ -58,6 +61,56 @@ test("all event types, including heartbeat, carry the deployed build", () => {
   assert.equal(env.sent.length, 3);
   assert(env.sent.every(({ body }) => body.build === "202611.08.2321"));
   assert.equal(harness({ build: "not-a-build" }).sent[0].body.build, "unknown");
+});
+
+test("build updates report only the associated transition and require a collector ACK", async () => {
+  const transition = { id: "a".repeat(32), from: "b".repeat(64), to: "c".repeat(64), path: "/private-project" };
+  const old = harness({ build: "202611.08.2321", buildId: transition.from });
+  assert.equal(await old.api.trackBuildUpdate("completed", transition), false);
+  assert.equal(old.api.track("build_update_attempted"), false);
+  assert.equal(await old.api.trackBuildUpdate("attempted", transition), true);
+  const { body, request } = old.sent.at(-1);
+  assert.equal(body.event, "build_update_attempted");
+  assert.equal(body.build, "202611.08.2321");
+  assert.equal(body.update_id, transition.id);
+  assert.equal(body.from_build_id, transition.from);
+  assert.equal(body.to_build_id, transition.to);
+  assert.equal(body.seconds, 0);
+  assert.equal(request.keepalive, true);
+  assert.doesNotMatch(request.body, /private-project/);
+
+  const target = { build: "202611.08.2322", buildId: transition.to };
+  for (const options of [{ status: 400 }, { status: 200 }, { failFetch: true }]) {
+    const updated = harness({ ...target, ...options });
+    assert.equal(await updated.api.trackBuildUpdate("completed", transition), false);
+  }
+  const updated = harness(target);
+  assert.equal(await updated.api.trackBuildUpdate("completed", { ...transition, id: "private" }), false);
+  assert.equal(await updated.api.trackBuildUpdate("completed", { ...transition, from: transition.to }), false);
+  assert.equal(await updated.api.trackBuildUpdate("completed", transition), true);
+  assert.equal(updated.sent.length, 2);
+  assert.equal(updated.sent.at(-1).body.event, "build_update_completed");
+  assert.equal(updated.sent.at(-1).body.update_id, transition.id);
+  assert.equal(updated.sent.at(-1).body.build, "202611.08.2322");
+  const disabled = harness({ ...target, enabled: false });
+  assert.equal(await disabled.api.trackBuildUpdate("completed", transition), true);
+  assert.equal(disabled.sent.length, 0);
+});
+
+test("Manual views report only a shipped part and use a separate tab session", () => {
+  const sessionStorage = memoryStorage();
+  const simulator = harness({ sessionStorage });
+  const manual = harness({ sessionStorage, surface: "manual" });
+  assert.equal(manual.api.track("manual_chapter_view", "part_3"), true);
+  assert.equal(manual.api.track("manual_chapter_view", "arbitrary chapter"), false);
+  assert.equal(manual.api.track("run_success"), false);
+  assert.equal(simulator.api.track("manual_chapter_view", "part_3"), false);
+  assert.deepEqual(manual.sent.map(({ body }) => [body.surface, body.event, body.detail, body.seconds]), [
+    ["manual", "page_view", "none", 0],
+    ["manual", "manual_chapter_view", "part_3", 0]
+  ]);
+  assert.notEqual(manual.api.getSessionId(), simulator.api.getSessionId());
+  assert.equal(harness({ surface: "manual", enabled: false }).sent.length, 0);
 });
 
 test("disabled and cross-origin configurations send nothing", () => {

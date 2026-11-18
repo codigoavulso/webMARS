@@ -1,0 +1,190 @@
+--- a/ops/raspberry-pi/webmars-metrics.py
++++ b/ops/raspberry-pi/webmars-metrics.py
+@@ -19,6 +19,8 @@
+ from zoneinfo import ZoneInfo
+ 
+ EXECUTION_OUTCOMES = ("run_success", "run_error", "run_stopped", "run_fallthrough", "run_input_cancelled")
++BUILD_UPDATE_EVENTS = ("build_update_attempted", "build_update_completed")
++BUILD_UPDATE_FIELDS = {"update_id", "from_build_id", "to_build_id"}
+ TOOLS = set("bht-simulator bitmap-display bitmap-terminal-tool cache-simulator digital-lab-sim float-representation instruction-counter instruction-statistics intro-to-tools keyboard-display-mmio mars-bot memory-reference-visualization mips-xray example-register-watch pipeline-lab scavenger-hunt screen-magnifier stack-visualizer system-clock tty-midi-daw tty-ansi-terminal".split())
+ ANALYZED_DETAILS = {
+     "app_startup": ("under_1s", "1_to_3s", "3_to_8s", "8s_or_more", "failed"),
+@@ -46,10 +48,10 @@
+ LANGUAGES = set("en pt es zh hi ar fr bn ru id de ja ko tr vi ur it pl fa th other".split())
+ FIELDS = {"v", "session", "event", "surface", "detail", "seconds", "returning", "source", "device", "language"}
+ AUTH_EVENTS = {"login_start", "login_success", "login_error", "account_created", "account_linked"}
+-EVENTS |= AUTH_EVENTS | {"interaction"} | set(EXECUTION_OUTCOMES) | set(ANALYZED_DETAILS)
++EVENTS |= AUTH_EVENTS | {"interaction"} | set(EXECUTION_OUTCOMES) | set(ANALYZED_DETAILS) | set(BUILD_UPDATE_EVENTS)
+ FIELDS_V2 = FIELDS | {"context", "automation", "interaction", "visit"}
+ MEASUREMENT_EVENTS = ("window_time", "operation_time", "operation_error")
+-SEPARATE_CLOCK_EVENTS = ("heartbeat", *MEASUREMENT_EVENTS)
++SEPARATE_CLOCK_EVENTS = ("heartbeat", *MEASUREMENT_EVENTS, *BUILD_UPDATE_EVENTS)
+ SEPARATE_CLOCK_PARAMETERS = ", ".join("?" for _ in SEPARATE_CLOCK_EVENTS)
+ AUDIENCES = {"all", "public", "human", "unknown", "internal", "test", "automated"}
+ BOT_PATTERN = re.compile(r"bot|crawler|spider|headless|curl|wget|python|playwright|puppeteer|selenium|uptimerobot|scanner", re.I)
+@@ -69,8 +71,13 @@
+     if type(data["v"]) is not int or data["v"] not in {1, 2}:
+         return False
+     timed = data.get("event") == "operation_time"
++    build_update = data.get("event") in BUILD_UPDATE_EVENTS
+     expected = FIELDS if data["v"] == 1 else FIELDS_V2
+-    if set(data) - {"build"} != (expected | {"milliseconds"} if timed else expected):
++    if timed:
++        expected = expected | {"milliseconds"}
++    if build_update:
++        expected = expected | BUILD_UPDATE_FIELDS
++    if set(data) - {"build"} != expected:
+         return False
+     if not all(isinstance(data[key], str) for key in set(data) - {"v", "seconds", "milliseconds"}):
+         return False
+@@ -97,6 +104,11 @@
+         return False
+     if data["language"] not in LANGUAGES or data["device"] not in {"touch", "pointer"}:
+         return False
++    if build_update:
++        return (data["v"] == 2 and data["surface"] == "app" and data["detail"] == "none"
++                and data["seconds"] == 0 and data["from_build_id"] != data["to_build_id"]
++                and bool(re.fullmatch(r"[a-f0-9]{32}", data["update_id"]))
++                and all(re.fullmatch(r"[a-f0-9]{64}", data[key]) for key in ("from_build_id", "to_build_id")))
+     if data["event"] == "example_open":
+         return bool(re.fullmatch(r"lesson(?:0[1-9]|1[0-5])|other", data["detail"]))
+     if data["event"] == "tool_open":
+@@ -125,9 +137,12 @@
+         for column, declaration in {"context": "TEXT NOT NULL DEFAULT 'legacy'",
+                 "automation": "TEXT NOT NULL DEFAULT 'unknown'", "interaction": "TEXT NOT NULL DEFAULT 'not_seen'",
+                 "visit": "TEXT NOT NULL DEFAULT 'none'",
+-                "build": "TEXT NOT NULL DEFAULT 'unknown'", "milliseconds": "INTEGER"}.items():
++                "build": "TEXT NOT NULL DEFAULT 'unknown'", "milliseconds": "INTEGER",
++                "update_id": "TEXT", "from_build_id": "TEXT", "to_build_id": "TEXT"}.items():
+             if column not in columns:
+                 db.execute(f"ALTER TABLE events ADD COLUMN {column} {declaration}")
++        db.execute("""CREATE UNIQUE INDEX IF NOT EXISTS events_build_update ON events(update_id, event)
++            WHERE update_id IS NOT NULL""")
+         db.execute("""CREATE TABLE IF NOT EXISTS internal_sessions (
+             session TEXT PRIMARY KEY, linked_at INTEGER NOT NULL)""")
+         # Aggregate immediately: no per-ping timestamps or session identifiers.
+@@ -157,12 +172,23 @@
+         raise ValueError("Invalid metrics event")
+     with closing(sqlite3.connect(database)) as db, db:
+         db.execute("BEGIN IMMEDIATE")
++        if data["event"] in BUILD_UPDATE_EVENTS:
++            existing = db.execute("SELECT event, from_build_id, to_build_id FROM events WHERE update_id = ?",
++                                  (data["update_id"],)).fetchall()
++            builds = (data["from_build_id"], data["to_build_id"])
++            if any((source, target) != builds for _, source, target in existing):
++                raise ValueError("Conflicting build update")
++            if any(kind == data["event"] for kind, _, _ in existing):
++                return
+         internal = db.execute("SELECT 1 FROM internal_sessions WHERE session=?", (data["session"],)).fetchone()
+-        db.execute("INSERT INTO events(received,session,event,surface,detail,seconds,return_bucket,source,device,language,context,automation,interaction,visit,build,milliseconds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
++        db.execute("""INSERT INTO events(received, session, event, surface, detail, seconds, return_bucket, source,
++            device, language, context, automation, interaction, visit, build, milliseconds, update_id, from_build_id, to_build_id)
++            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", (
+             int(now or time.time()), data["session"], data["event"], data["surface"], data["detail"],
+             data["seconds"], data["returning"], data["source"], data["device"], data["language"],
+             "internal" if internal else data.get("context", "legacy"), "detected_bot" if BOT_PATTERN.search(user_agent) else data.get("automation", "unknown"),
+-            data.get("interaction", "not_seen"), data.get("visit", "none"), data.get("build", "unknown"), data.get("milliseconds")
++            data.get("interaction", "not_seen"), data.get("visit", "none"), data.get("build", "unknown"), data.get("milliseconds"),
++            data.get("update_id"), data.get("from_build_id"), data.get("to_build_id")
+         ))
+ 
+ 
+@@ -251,9 +277,9 @@
+     return stages
+ 
+ 
+-def execution_outcomes(event_counts, event_sessions):
++def event_outcomes(kinds, event_counts, event_sessions):
+     return [{"key": kind, "events": event_counts[kind], "sessions": len(event_sessions[kind])}
+-            for kind in EXECUTION_OUTCOMES]
++            for kind in kinds]
+ 
+ 
+ def grouped_outcomes(details, event):
+@@ -524,9 +550,10 @@
+         "analysis": {
+             "stages": analyze_stages(first_results, recovery_times),
+             "segments": analyze_segments(facets, engaged, successful, build_engaged, build_successful),
+-            "execution_outcomes": execution_outcomes(event_counts, event_sessions),
++            "execution_outcomes": event_outcomes(EXECUTION_OUTCOMES, event_counts, event_sessions),
+             "execution_faults": grouped_outcomes(details, "run_fault_group"),
+             "startup": grouped_outcomes(details, "app_startup"),
++            "build_updates": event_outcomes(BUILD_UPDATE_EVENTS, event_counts, event_sessions),
+             **measurement_analysis(details),
+             "note": "Stages use events received in the selected window, ordered by receipt. "
+                     "A session can appear under several builds. Build outcomes require evidence under that build. "
+@@ -695,9 +722,10 @@
+         "sessions_by_event": {event: len(event_sessions[event]) for event in sorted(EVENTS)},
+         "event_counts": dict(event_counts),
+         "workflow": workflow_outcomes(event_counts, event_sessions),
+-        "execution_outcomes": execution_outcomes(event_counts, event_sessions),
++        "execution_outcomes": event_outcomes(EXECUTION_OUTCOMES, event_counts, event_sessions),
+         "execution_faults": grouped_outcomes(details, "run_fault_group"),
+         "startup": grouped_outcomes(details, "app_startup"),
++        "build_updates": event_outcomes(BUILD_UPDATE_EVENTS, event_counts, event_sessions),
+         **measurement_analysis(details),
+         "activation": {"ready_sessions": len(ready), "ready_sessions_with_successful_run": activated, "percent": round(100 * activated / len(ready), 1) if ready else None},
+         "sessions_opening_two_distinct_lessons": sum(len(item["lessons"]) >= 2 for item in sessions.values()),
+--- a/ops/raspberry-pi/test_usage_metrics.py
++++ b/ops/raspberry-pi/test_usage_metrics.py
+@@ -24,7 +24,41 @@
+     return data
+ 
+ 
++def build_update(**changes):
++    data = event(v=2, event="build_update_attempted", context="public", automation="none", interaction="not_seen",
++                 visit="none", update_id="d" * 32, from_build_id="e" * 64, to_build_id="f" * 64)
++    data.update(changes)
++    return data
++
++
+ class MetricsTests(unittest.TestCase):
++    def test_build_update_validation_and_duplicate_acknowledgement(self):
++        now = 1788600000
++        for changes in ({"update_id": "private"}, {"to_build_id": "private"}, {"to_build_id": "e" * 64},
++                        {"surface": "learn"}, {"seconds": 60}, {"source": "private"}, {"event": "app_ready"}):
++            with self.subTest(changes=changes):
++                self.assertFalse(metrics.validate_event(build_update(**changes)))
++        metrics.record(self.database, build_update(), now=now - 3)
++        metrics.record(self.database, build_update(), now=now - 2)
++        with self.assertRaises(ValueError):
++            metrics.record(self.database, build_update(event="build_update_completed", from_build_id="a" * 64), now=now - 1)
++        complete = build_update(event="build_update_completed", session="b" * 32)
++        metrics.record(self.database, complete, now=now - 1)
++        metrics.record(self.database, complete, now=now)
++        metrics.record(self.database, build_update(context="internal", session="c" * 32, update_id="0" * 32), now=now)
++        result = metrics.public_statistics(self.database, now=now, audience="public")
++        self.assertEqual(result["analysis"]["build_updates"], [
++            {"key": "build_update_attempted", "events": 1, "sessions": 1},
++            {"key": "build_update_completed", "events": 1, "sessions": 1},
++        ])
++        internal = metrics.public_statistics(self.database, now=now, audience="internal")
++        self.assertEqual(internal["analysis"]["build_updates"][0]["events"], 1)
++        self.assertNotIn("d" * 32, json.dumps(result))
++        self.assertNotIn("e" * 64, json.dumps(result))
++        self.assertEqual(result["totals"]["events"], 2)
++        self.assertEqual(result["totals"]["interacting_sessions"], 0)
++        self.assertEqual(result["totals"]["presence_seconds"], 0)
++
+     def test_small_sample_percentiles_engagement_and_coverage_are_honest(self):
+         now = 1788600000
+         metrics.record(self.database, event(session="c" * 32), now=now - 8000)
+@@ -540,6 +574,9 @@
+             with contextlib.redirect_stderr(stderr):
+                 self.assertEqual(post(json.dumps(event())), 204)
+                 self.assertEqual(post(json.dumps(event(event="tool_open", detail="pipeline-lab"))), 204)
++                self.assertEqual(post(json.dumps(build_update())), 204)
++                self.assertEqual(post(json.dumps(build_update())), 204)
++                self.assertEqual(post(json.dumps(build_update(to_build_id="a" * 64))), 400)
+                 self.assertEqual(post(json.dumps(event(event="tool_open", detail="private-filename.asm"))), 400)
+                 self.assertEqual(post(json.dumps(event()), origin="https://other.test"), 403)
+                 self.assertEqual(post(json.dumps(event()), content_type="text/plain"), 415)
+@@ -551,7 +588,7 @@
+                 self.assertEqual(post('{"active_seconds":60,"session":"' + 'a' * 32 + '","registered":false}', origin="https://other.test", path="/heartbeat"), 403)
+             self.assertEqual(stderr.getvalue(), "")
+             with contextlib.closing(sqlite3.connect(self.database)) as db:
+-                self.assertEqual(db.execute("SELECT COUNT(*) FROM events").fetchone()[0], 2)
++                self.assertEqual(db.execute("SELECT COUNT(*) FROM events").fetchone()[0], 3)
+         finally:
+             server.shutdown()
+             server.server_close()

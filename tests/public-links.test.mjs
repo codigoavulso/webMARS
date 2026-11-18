@@ -1,14 +1,16 @@
 import assert from "node:assert/strict";
 import { once } from "node:events";
-import { readFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import test from "node:test";
 import vm from "node:vm";
 import { resolve } from "node:path";
 
 import { projectRoot } from "./helpers/engines.mjs";
-import { isStableAppRoute, server } from "../scripts/serve.mjs";
+import { writeReleaseBuild } from "../scripts/package-release.mjs";
+import { createStaticServer, isStableAppRoute, server } from "../scripts/serve.mjs";
 
-test("static hosting revalidates entry pages and caches assets by build", async () => {
+test("the source checkout serves fresh entry pages without claiming a packaged build", async () => {
   server.listen(0, "127.0.0.1");
   await once(server, "listening");
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -17,25 +19,28 @@ test("static hosting revalidates entry pages and caches assets by build", async 
     for (const path of ["/", "/e/lesson01-registers", "/p/first-lab@3", "/manual/", "/webmars-config.js"]) {
       const response = await request(path, { method: "HEAD" });
       assert.equal(response.status, 200, path);
-      assert.equal(response.headers.get("cache-control"), "no-cache", path);
-      const etag = response.headers.get("etag");
-      assert.ok(etag, path);
-      const cached = await request(path, { headers: { "If-None-Match": etag } });
-      assert.equal(cached.status, 304, path);
+      assert.equal(response.headers.get("cache-control"), "no-store", path);
+      assert.equal(response.headers.get("etag"), null, path);
+      const fresh = await request(path, { method: "HEAD", headers: { "If-None-Match": 'W/"5e0be100-2bb8"' } });
+      assert.equal(fresh.status, 200, path);
     }
 
     const asset = "/assets/js/app.bundle.js";
     for (const query of ["", "?b=invalid"]) {
       const response = await request(asset + query, { method: "HEAD" });
-      assert.equal(response.headers.get("cache-control"), "no-cache");
+      assert.equal(response.headers.get("cache-control"), "no-store");
     }
     const entry = await request("/");
     const html = await entry.text();
     const builds = [...html.matchAll(/(?:\?|&amp;)b=(\d{6}\.\d{2}\.\d{4})"/g)].map((match) => match[1]);
-    assert.equal(builds.length, 4);
+    assert.equal(builds.length, 6);
     assert.equal(new Set(builds).size, 1);
+    assert.match(html, /<meta name="webmars-build-id" content="">/);
+    const manifest = await request("/build.json", { method: "HEAD" });
+    assert.equal(manifest.status, 404);
+    assert.equal(manifest.headers.get("cache-control"), "no-store");
     const versioned = await request(`${asset}?b=${builds[0]}`, { method: "HEAD" });
-    assert.equal(versioned.headers.get("cache-control"), "max-age=31536000");
+    assert.equal(versioned.headers.get("cache-control"), "no-store");
     const missing = await request(`/tools/nonexistent.js?b=${builds[0]}`);
     assert.equal(missing.status, 404);
     assert.equal(missing.headers.get("cache-control"), "no-store");
@@ -43,6 +48,71 @@ test("static hosting revalidates entry pages and caches assets by build", async 
   } finally {
     await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
   }
+});
+
+test("packaged deployments receive distinct identities and never serve current bytes under a stale identity", async (t) => {
+  const directory = await mkdtemp(resolve(tmpdir(), "webmars-deployment-test-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const shell = await readFile(resolve(projectRoot, "index.html"));
+  const manual = await readFile(resolve(projectRoot, "manual/index.html"));
+  const version = await readFile(resolve(projectRoot, "assets/js/app-version.js"));
+  const fixedDate = new Date("2020-01-01T00:00:00Z");
+  const files = ["assets/js/app-version.js", "index.html", "assets/js/app.bundle.js", "webmars-config.js", "manual/index.html"];
+  async function createRelease(name, module) {
+    const root = resolve(directory, name);
+    await mkdir(resolve(root, "assets/js"), { recursive: true });
+    await mkdir(resolve(root, "manual"), { recursive: true });
+    await writeFile(resolve(root, "index.html"), shell);
+    await writeFile(resolve(root, "manual/index.html"), manual);
+    await writeFile(resolve(root, "assets/js/app-version.js"), version);
+    await writeFile(resolve(root, "assets/js/app.bundle.js"), module);
+    await writeFile(resolve(root, "webmars-config.js"), module);
+    const build = await writeReleaseBuild(files, root);
+    for (const file of ["index.html", "build.json"]) {
+      await utimes(resolve(root, file), fixedDate, fixedDate);
+    }
+    return { root, ...build };
+  }
+
+  const first = await createRelease("first", "window.generation = 'A';");
+  const identical = await createRelease("identical", "window.generation = 'A';");
+  const second = await createRelease("second", "window.generation = 'B';");
+  assert.equal(first.id, identical.id);
+  assert.equal(first.build, second.build);
+  assert.notEqual(first.id, second.id);
+  assert.match(second.id, /^[a-f0-9]{64}$/);
+
+  const instance = createStaticServer(second.root);
+  instance.listen(0, "127.0.0.1");
+  await once(instance, "listening");
+  t.after(() => new Promise((resolve, reject) => instance.close((error) => error ? reject(error) : resolve())));
+  const request = (path, headers) => fetch(`http://127.0.0.1:${instance.address().port}${path}`, { headers });
+  const oldValidators = { "If-None-Match": 'W/"5e0be100-2bb8"', "If-Modified-Since": fixedDate.toUTCString() };
+  const manifest = await request("/build.json", oldValidators);
+  assert.equal(manifest.status, 200);
+  assert.equal(manifest.headers.get("cache-control"), "no-store");
+  assert.deepEqual(await manifest.json(), { id: second.id, build: second.build });
+  const packagedManual = await (await request("/manual/")).text();
+  assert.ok(packagedManual.includes('<meta name="webmars-surface" content="manual">'));
+  assert.ok(packagedManual.includes(`../assets/js/usage-metrics.js?b=${second.id}`));
+  assert.ok(packagedManual.includes(`../webmars-config.js?b=${second.id}`));
+  const entry = await request(`/e/lesson01-registers?__webmars_update=${second.id}`, oldValidators);
+  assert.equal(entry.status, 200);
+  assert.equal(entry.headers.get("cache-control"), "no-store");
+  const html = await entry.text();
+  assert.ok(html.includes(`<meta name="webmars-build-id" content="${second.id}">`));
+  assert.deepEqual([...html.matchAll(/(?:\?|&amp;)b=([a-f0-9]{64})"/g)].map((match) => match[1]), Array(6).fill(second.id));
+
+  const old = await request(`/assets/js/app.bundle.js?b=${first.id}`);
+  assert.equal(old.status, 404);
+  assert.equal(old.headers.get("cache-control"), "no-store");
+  await old.text();
+  const current = await request(`/assets/js/app.bundle.js?b=${second.id}`);
+  assert.equal(current.headers.get("cache-control"), "public, max-age=31536000, immutable");
+  assert.equal(await current.text(), "window.generation = 'B';");
+  const config = await request(`/webmars-config.js?b=${second.id}`);
+  assert.equal(config.headers.get("cache-control"), "public, max-age=31536000, immutable");
+  assert.equal(await config.text(), "window.generation = 'B';");
 });
 
 async function loadPublicLibraryModule() {

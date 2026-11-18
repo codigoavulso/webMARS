@@ -25,7 +25,8 @@ Esta edição inclui o painel público de estatísticas, os seus períodos, filt
 medições e limites de interpretação, além da Biblioteca pública integrada na vista Projetos,
 com pesquisa e filtros. A informação de privacidade
 e os procedimentos do operador/Kit Docente acompanham a recolha automática da
-instalação oficial. O Manual mantém pesquisa local e não envia telemetria.
+instalação oficial. A pesquisa do Manual é local. O Manual incluído no pacote
+webMARS pode enviar aberturas e visualizações por parte ao coletor da instalação.
 
 A edição inclui o manual integrado em
 **Ajuda → Abrir o Manual**, com tema sincronizado e abertura do mesmo capítulo

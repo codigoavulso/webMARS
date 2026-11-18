@@ -555,9 +555,9 @@ test("local saves stay local and reload persistence flushes the active project",
   assert.doesNotMatch(runtimeSource.slice(saveFileStart, saveCommandsEnd), /saveActiveProjectToCloud|ensureCloudAuthenticated/);
   assert.doesNotMatch(runtimeSource, /\nvoid refreshCloudSession\(\{ silent: true \}\);/);
   assert.doesNotMatch(runtimeSource, /promptStartupRecoveryChoiceIfNeeded|STARTUP_RECOVERY_SKIP_SESSION_KEY/);
-  assert.match(runtimeSource, /function flushPendingLocalPersistence\(\)/);
+  assert.match(runtimeSource, /function flushPendingLocalPersistence\(snapshot\)/);
   assert.match(runtimeSource, /persistProjectNow\(\{ syncFromEditor: true \}\);/);
-  assert.match(runtimeSource, /preferFallbackSource: matchingProject && sessionUpdatedAt >= projectUpdatedAt/);
+  assert.match(runtimeSource, /preferFallbackSource: matchingProject && \(buildUpdate \|\| sessionUpdatedAt >= projectUpdatedAt\)/);
   assert.match(runtimeSource, /updatedAt: Number\(parsed\.updatedAt\) \|\| 0/);
 });
 

@@ -78,7 +78,7 @@ test("a valid empty catalogue does not resurrect deleted projects from active or
   assert.equal(result.project.files.length, 0);
   assert.equal(result.session.files.length, 0);
   const context = vm.createContext({ ...result, bootstrapProject: result.project, bootstrapProjectLibrary: result.library,
-    restoredSession: result.session, INITIAL_SOURCE: "must not resurrect" });
+    restoredSession: result.session, buildUpdateSession: null, INITIAL_SOURCE: "must not resurrect" });
   for (const name of ["buildStartupEditorFiles", "resolveStartupActiveFileId"]) {
     vm.runInContext(runtime.match(new RegExp(`^function ${name}\\([\\s\\S]*?^\\}`, "m"))[0], context);
   }
@@ -135,6 +135,53 @@ test("startup never overlays another project's newer session on a same-named fil
   assert.deepEqual(Array.from(context.buildStartupEditorFiles(project, draft), item => item.source), ["second project", "independent"]);
   draft.projectRootPath = "SECOND.P";
   assert.equal(context.buildStartupEditorFiles(project, draft)[0].source, "first project");
+  project.updatedAt = 3;
+  assert.equal(context.buildStartupEditorFiles(project, draft)[0].source, "second project");
+  assert.equal(context.buildStartupEditorFiles(project, draft, [], { buildUpdate: true })[0].source, "first project");
   delete draft.projectRootPath;
-  assert.equal(context.buildStartupEditorFiles(project, draft)[0].source, "first project");
+  assert.equal(context.buildStartupEditorFiles(project, draft)[0].source, "second project");
+});
+
+test("an automatic reload requires an idle workspace and a confirmed recovery snapshot", () => {
+  const snapshot = { files: [{ source: "uncommitted changes", savedSource: "original" }] };
+  const saved = new Map();
+  const env = vm.createContext({
+    allowPageUnload: false, suppressPersistenceForResetReload: false, runActive: false, runPausedForInput: false,
+    cloudSyncInFlight: false, pendingLaunchRoutes: 0, miniCCompileInProgress: false, transientDialogSystems: new Set(),
+    BUILD_UPDATE_SESSION_KEY: "snapshot",
+    window: { sessionStorage: {
+      setItem(key, value) { saved.set(key, value); },
+      removeItem(key) { saved.delete(key); }
+    } },
+    captureWorkspaceSession: () => snapshot,
+    flushPendingLocalPersistence: () => false
+  });
+  for (const name of ["clearBuildUpdateSession", "reloadForBuildUpdate"]) {
+    vm.runInContext(runtime.match(new RegExp(`^function ${name}\\([\\s\\S]*?^\\}`, "m"))[0], env);
+  }
+  const unexpected = () => assert.fail("must not navigate");
+  assert.equal(env.reloadForBuildUpdate(unexpected), false);
+  assert.equal(env.allowPageUnload, false);
+  assert.equal(saved.size, 0);
+  env.flushPendingLocalPersistence = value => value === snapshot;
+  env.runPausedForInput = true;
+  assert.equal(env.reloadForBuildUpdate(unexpected), false);
+  env.runPausedForInput = false;
+  env.pendingLaunchRoutes = 1;
+  assert.equal(env.reloadForBuildUpdate(unexpected), false);
+  env.pendingLaunchRoutes = 0;
+  env.window.sessionStorage.setItem = () => { throw new Error("quota"); };
+  assert.equal(env.reloadForBuildUpdate(unexpected), false);
+  env.window.sessionStorage.setItem = (key, value) => saved.set(key, value);
+  assert.equal(env.reloadForBuildUpdate(() => { throw new Error("navigation failed"); }), false);
+  assert.equal(env.allowPageUnload, false);
+  assert.equal(saved.size, 0);
+  let navigationStarted = false;
+  assert.equal(env.reloadForBuildUpdate(() => {
+    navigationStarted = true;
+    assert.equal(env.allowPageUnload, true);
+    assert.deepEqual(JSON.parse(saved.get("snapshot")), snapshot);
+  }), true);
+  assert.equal(navigationStarted, true);
+  assert.equal(env.reloadForBuildUpdate(unexpected), false);
 });

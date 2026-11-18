@@ -4,7 +4,8 @@
   const config = scope.WebMarsConfig?.metrics;
   const APP_EVENTS = new Set(["app_startup", "run_stopped", "run_fallthrough", "run_input_cancelled", "run_fault_group",
     "window_time", "operation_time", "operation_error"]);
-  const EVENTS = new Set(["page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "heartbeat", "tool_open", "feature_use", "interaction", "login_start", "login_success", "login_error", "account_created", "account_linked", ...APP_EVENTS]);
+  const EVENTS = new Set(["page_view", "app_ready", "launch_app", "example_open", "assemble_success", "assemble_error", "compile_success", "compile_error", "run_success", "run_error", "active_time", "heartbeat", "tool_open", "feature_use", "interaction", "login_start", "login_success", "login_error", "account_created", "account_linked", "manual_chapter_view", ...APP_EVENTS]);
+  const BUILD_UPDATE_EVENTS = { attempted: "build_update_attempted", completed: "build_update_completed" };
   const STARTUP_BANDS = [[1000, "under_1s"], [3000, "1_to_3s"], [8000, "3_to_8s"], [Infinity, "8s_or_more"]];
   const RUN_FAULT_GROUPS = new Set(["address", "syscall", "instruction", "arithmetic", "trap", "interrupt", "other"]);
   // Only shipped product resource identifiers may leave this boundary.
@@ -23,9 +24,7 @@
     "run_overflow", "run_divide_by_zero", "run_break_instruction", "run_trap", "run_interrupt", "run_other"
   ]);
   const FEATURES = new Set(["step", "backstep", "run", "compile", "assemble", "reset", "pause", "breakpoint", "input_wait", "project_manager", "project_save", "project_import", "cloud_save", "cloud_load", "help", "teacher_kit"]);
-  const SURFACES = new Set(["overview", "learn", "teach", "stack", "pipeline", "minic", "privacy", "app"]);
-  const SESSION_KEY = "webmars-metrics-session-v1";
-  const VISIT_KEY = "webmars-metrics-last-visit-v1";
+  const SURFACES = new Set(["overview", "learn", "teach", "stack", "pipeline", "minic", "privacy", "app", "manual"]);
   const DAY = 86400000;
   const SESSION_IDLE = 30 * 60000;
   const INTERACTION_IDLE = 60000;
@@ -43,6 +42,10 @@
   } catch { /* Misconfigured installations collect nothing. */ }
   const surfaceValue = document.querySelector('meta[name="webmars-surface"]')?.content || "app";
   const surface = SURFACES.has(surfaceValue) ? surfaceValue : "app";
+  const manual = surface === "manual";
+  const prefix = manual ? "webmars-manual-metrics" : "webmars-metrics";
+  const SESSION_KEY = `${prefix}-session-v1`;
+  const VISIT_KEY = `${prefix}-last-visit-v1`;
   function read(storage, key) { try { return storage.getItem(key); } catch { return null; } }
   function write(storage, key, value) { try { storage.setItem(key, value); } catch { /* Memory-only session is sufficient. */ } }
   function storage(name) { try { return scope[name]; } catch { return null; } }
@@ -97,8 +100,10 @@
     write(tab, SESSION_KEY, JSON.stringify(session));
     return session;
   }
-  function send(event, detail = "none", secondsOverride = null, milliseconds = null) {
-    if (!allowed() || !EVENTS.has(event) || (APP_EVENTS.has(event) && surface !== "app")) return false;
+  function send(event, detail = "none", secondsOverride = null, milliseconds = null, buildUpdate = null) {
+    if (!allowed() || (!buildUpdate && !EVENTS.has(event))
+        || ((buildUpdate || APP_EVENTS.has(event)) && surface !== "app")) return false;
+    if (manual && event !== "page_view" && event !== "manual_chapter_view") return false;
     let safeDetail = "none";
     const resource = event === "tool_open" || event === "feature_use";
     if (resource) {
@@ -106,6 +111,9 @@
       safeDetail = detail;
     } else if (["login_start", "login_success", "login_error", "account_created", "account_linked"].includes(event)) {
       if (!["password", "google", "facebook"].includes(detail)) return false;
+      safeDetail = detail;
+    } else if (event === "manual_chapter_view") {
+      if (!manual || !/^part_[1-8]$/.test(detail)) return false;
       safeDetail = detail;
     } else if (event === "example_open") {
       safeDetail = /^lesson(?:0[1-9]|1[0-5])$/.test(detail) ? detail : "other";
@@ -147,19 +155,36 @@
       language: /^(en|pt|es|zh|hi|ar|fr|bn|ru|id|de|ja|ko|tr|vi|ur|it|pl|fa|th)$/.test(language) ? language : "other"
     };
     if (event === "operation_time") payload.milliseconds = milliseconds;
+    if (buildUpdate) {
+      payload.update_id = buildUpdate.id;
+      payload.from_build_id = buildUpdate.from;
+      payload.to_build_id = buildUpdate.to;
+    }
     try {
-      // No cookies, URL parameters, retries, persistent queue, or third-party host.
-      Promise.resolve(scope.fetch(endpoint, {
+      const delivery = Promise.resolve(scope.fetch(endpoint, {
         // CORS mode preserves Origin with no-referrer. The URL is already
         // restricted to this origin and redirects cannot forward the payload.
         method: "POST", credentials: "omit", mode: "cors", redirect: "error", cache: "no-store",
         referrerPolicy: "no-referrer", keepalive: true,
+        signal: event === BUILD_UPDATE_EVENTS.completed ? scope.AbortSignal?.timeout?.(10000) : undefined,
         headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
-      })).catch(() => {});
+      }));
+      if (buildUpdate) return delivery.then(response => response?.status === 204, () => false);
+      delivery.catch(() => {});
     } catch { /* Metrics must never interrupt learning. */ }
-    return true;
+    return !buildUpdate;
   }
   function track(event, detail = "none") { return send(event, detail); }
+  async function trackBuildUpdate(phase, transition) {
+    if (!allowed()) return true;
+    if (!Object.hasOwn(BUILD_UPDATE_EVENTS, phase)) return false;
+    const { id, from, to } = transition || {};
+    const buildId = /^[a-f0-9]{64}$/;
+    if (typeof id !== "string" || !/^[a-f0-9]{32}$/.test(id)
+        || typeof from !== "string" || !buildId.test(from) || typeof to !== "string" || !buildId.test(to)
+        || from === to || (phase === "attempted" ? from : to) !== scope.WebMarsAppVersion?.id) return false;
+    return send(BUILD_UPDATE_EVENTS[phase], "none", 0, null, { id, from, to });
+  }
   function trackOperationTime(detail, milliseconds) { return send("operation_time", detail, null, milliseconds); }
   function trackHeartbeat(seconds) {
     if (!allowed() || !Number.isInteger(seconds) || seconds <= lastPresenceSeconds) return false;
@@ -229,7 +254,7 @@
     try { document.cookie = `webmars_metrics_context=${value}; Path=/; SameSite=Lax; Max-Age=31536000${scope.location.protocol === "https:" ? "; Secure" : ""}`; } catch {}
     return true;
   }
-  scope.WebMarsUsage = Object.freeze({ track, trackOperationTime, trackHeartbeat, getSessionId, exampleOpened, getContext: () => context, setContext, rotateSession });
+  scope.WebMarsUsage = Object.freeze({ track, trackBuildUpdate, trackOperationTime, trackHeartbeat, getSessionId, exampleOpened, getContext: () => context, setContext, rotateSession });
   scope.addEventListener("storage", (event) => {
     if (event.key === CONTEXT_KEY && ["public", "internal"].includes(event.newValue)) setContext(event.newValue);
   });
@@ -342,6 +367,7 @@
   function init() {
     if (!endpoint) return;
     track("page_view");
+    if (manual) return;
     scope.addEventListener("pointerdown", onInput, { capture: true, passive: true });
     scope.addEventListener("keydown", onInput, { capture: true, passive: true });
     scope.addEventListener("focus", onFocusChange);
