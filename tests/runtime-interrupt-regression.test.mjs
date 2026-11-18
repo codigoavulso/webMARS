@@ -159,5 +159,6 @@ main:
   const result = engine.step();
   assert.equal(result.done, true);
   assert.equal(result.exception, true);
+  assert.equal(result.faultGroup, "interrupt");
   assert.match(String(result.message), /interrupt/i);
 });

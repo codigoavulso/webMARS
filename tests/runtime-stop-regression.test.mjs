@@ -46,8 +46,10 @@ test("user Stop cancels a pending sleep and terminates the engine exactly once",
     let benchmarkOutcome = null;
     let benchmarkMetadata = null;
     let engineHalted = false;
+    const usageEvents = [];
 
     const window = {
+      WebMarsUsage: { track(...args) { usageEvents.push(args); } },
       clearTimeout(timer) {
         calls.push(["clearTimeout", timer]);
       },
@@ -121,7 +123,8 @@ test("user Stop cancels a pending sleep and terminates the engine exactly once",
       synchronizedOptions,
       benchmarkOutcome,
       benchmarkMetadata,
-      engineHalted
+      engineHalted,
+      usageEvents
     };
   `, context);
 
@@ -140,6 +143,7 @@ test("user Stop cancels a pending sleep and terminates the engine exactly once",
   assert.equal(observed.synchronizedOptions.force, true);
   assert.equal(observed.benchmarkOutcome, "user");
   assert.equal(observed.benchmarkMetadata.haltReason, "user");
+  assert.equal(JSON.stringify(observed.usageEvents), '[["run_stopped"]]');
 
   const callNames = calls.map(([name]) => name);
   assert.equal(callNames[0], "clearTimeout");

@@ -36,6 +36,7 @@
     } catch { /* A failed metric must never affect the simulator. */ }
   }
   document.addEventListener("visibilitychange", () => { sample(); if (!isActive()) flush(); });
+  window.addEventListener("webmars:metrics-session-ending", () => { lastPing = sample(); flush(); });
   window.addEventListener("pagehide", () => { sample(); flush(); running = false; active = false; });
   window.addEventListener("pageshow", () => {
     running = true;

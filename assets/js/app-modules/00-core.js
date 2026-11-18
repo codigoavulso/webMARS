@@ -2095,6 +2095,28 @@ const EXCEPTION_CODES = {
   DIVIDE_BY_ZERO: 15
 };
 
+const EXCEPTION_GROUPS = {
+  [EXCEPTION_CODES.ADDRESS_LOAD]: "address",
+  [EXCEPTION_CODES.ADDRESS_STORE]: "address",
+  [EXCEPTION_CODES.SYSCALL]: "syscall",
+  [EXCEPTION_CODES.BREAKPOINT]: "trap",
+  [EXCEPTION_CODES.RESERVED]: "instruction",
+  [EXCEPTION_CODES.OVERFLOW]: "arithmetic",
+  [EXCEPTION_CODES.TRAP]: "trap",
+  [EXCEPTION_CODES.DIVIDE_BY_ZERO]: "arithmetic"
+};
+
+const EXCEPTION_DETAILS = {
+  [EXCEPTION_CODES.ADDRESS_LOAD]: "run_memory_read",
+  [EXCEPTION_CODES.ADDRESS_STORE]: "run_memory_write",
+  [EXCEPTION_CODES.SYSCALL]: "run_syscall",
+  [EXCEPTION_CODES.BREAKPOINT]: "run_break_instruction",
+  [EXCEPTION_CODES.RESERVED]: "run_reserved_instruction",
+  [EXCEPTION_CODES.OVERFLOW]: "run_overflow",
+  [EXCEPTION_CODES.TRAP]: "run_trap",
+  [EXCEPTION_CODES.DIVIDE_BY_ZERO]: "run_divide_by_zero"
+};
+
 const COP0_REGISTERS = {
   vaddr: 8,
   badvaddr: 8,
@@ -3512,6 +3534,7 @@ class MarsEngine {
     if (!candidates.length) {
       errors.push({
         line: lineNumber,
+        code: "assemble_unknown_operator",
         message: translateText('"{opcode}" is not a recognized operator', {
           opcode: opcodeToken
         })
@@ -3526,6 +3549,7 @@ class MarsEngine {
       : `Too many or incorrectly formatted operands. Expected: ${example}`;
     errors.push({
       line: lineNumber,
+      code: "assemble_operand_count",
       message: translateText('"{opcode}": {message}', {
         opcode: opcodeToken,
         message
@@ -3539,6 +3563,7 @@ class MarsEngine {
     if (!candidates.length) {
       errors.push({
         line: lineNumber,
+        code: "assemble_unknown_operator",
         message: translateText('"{opcode}" is not a recognized operator', {
           opcode: opcodeToken
         })
@@ -3548,6 +3573,7 @@ class MarsEngine {
 
     errors.push({
       line: lineNumber,
+      code: "assemble_operand_format",
       message: translateText('"{opcode}": {message}', {
         opcode: opcodeToken,
         message: translateText("Too few or incorrectly formatted operands. Expected: {example}", { example })
@@ -3558,6 +3584,7 @@ class MarsEngine {
   pushInstructionOperandError(lineNumber, token, message, errors) {
     errors.push({
       line: lineNumber,
+      code: "assemble_operand_format",
       message: translateText('"{token}": {message}', {
         token: String(token ?? ""),
         message
@@ -3583,6 +3610,7 @@ class MarsEngine {
     if (!symbol) return false;
     errors.push({
       line: lineNumber,
+      code: "assemble_undefined_symbol",
       message: translateText('Symbol "{symbol}" not found in symbol table.', {
         symbol
       })
@@ -3604,6 +3632,7 @@ class MarsEngine {
     if (!candidates.length) {
       errors.push({
         line: lineNumber,
+        code: "assemble_unknown_operator",
         message: translateText('"{opcode}" is not a recognized operator', {
           opcode: opcodeToken
         })
@@ -5168,14 +5197,16 @@ class MarsEngine {
       ?? this.program.textRows.some((row) => row.address === handlerAddress);
     const message = translateText("External interrupt {cause}.", { cause: toHex(value) });
     if (hasHandler) {
-      return { nextPc: handlerAddress, message, exception: true, interrupt: true };
+      return { nextPc: handlerAddress, message, exception: true, interrupt: true, faultGroup: "interrupt", faultDetail: "run_interrupt" };
     }
-    return { halt: true, message, exception: true, interrupt: true };
+    return { halt: true, message, exception: true, interrupt: true, faultGroup: "interrupt", faultDetail: "run_interrupt" };
   }
 
-  raiseException(cause, message, badAddress = null) {
+  raiseException(cause, message, badAddress = null, detail = null) {
     this.llReservationAddress = null;
     const code = cause | 0;
+    const faultGroup = EXCEPTION_GROUPS[code] ?? "other";
+    const faultDetail = detail ?? EXCEPTION_DETAILS[code] ?? "run_other";
     const exceptionLevelActive = (this.cop0Registers[COP0_REGISTERS.status] & (1 << 1)) !== 0;
     const preserved = this.cop0Registers[COP0_REGISTERS.cause]
       & (exceptionLevelActive ? 0xfffffc83 : 0x7ffffc83);
@@ -5198,6 +5229,8 @@ class MarsEngine {
         nextPc: handlerAddress,
         message: message ?? translateText("exception {code}", { code }),
         exception: true,
+        faultGroup,
+        faultDetail,
         exceptionContextCaptured: !exceptionLevelActive
       };
     }
@@ -5206,6 +5239,8 @@ class MarsEngine {
       halt: true,
       message: message ?? translateText("exception {code}", { code }),
       exception: true,
+      faultGroup,
+      faultDetail,
       exceptionContextCaptured: !exceptionLevelActive
     };
   }
@@ -5899,6 +5934,7 @@ class MarsEngine {
       if (isStrictSegmentAddressValid(this.memoryMap, segmentName, start, size)) return true;
       errors.push({
         line: lineNumber,
+        code: "assemble_memory_limit",
         message: translateText(
           "Strict MARS segment limit exceeded for {context} at {address} ({bytes} byte(s)).",
           {
@@ -5925,6 +5961,7 @@ class MarsEngine {
       } catch (error) {
         errors.push({
           line: lineNumber,
+          code: "assemble_memory_limit",
           message: translateText(
             "Cannot emit {context} at {address}: {message}",
             {
@@ -5976,7 +6013,7 @@ class MarsEngine {
         || count <= 0
         || count > DATA_DIRECTIVE_REPETITION_HARD_LIMIT
       ) {
-        errors.push({ line: lineNumber, message: translateText("Invalid repetition factor '{factor}' in '{arg}'.", {
+        errors.push({ line: lineNumber, code: "assemble_directive", message: translateText("Invalid repetition factor '{factor}' in '{arg}'.", {
           factor: match[2],
           arg
         }) });
@@ -5990,12 +6027,12 @@ class MarsEngine {
 
     if (directive === ".align") {
       if (args.length !== 1) {
-        errors.push({ line: lineNumber, message: translateText('".align" requires one operand') });
+        errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".align" requires one operand') });
         return;
       }
       const value = parseImmediate(args[0]);
       if (!Number.isFinite(value) || Math.trunc(value) !== value || value < 0) {
-        errors.push({ line: lineNumber, message: translateText('".align" requires a non-negative integer') });
+        errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".align" requires a non-negative integer') });
         return;
       }
       if (value === 0) {
@@ -6010,17 +6047,17 @@ class MarsEngine {
 
     if (directive === ".space") {
       if (args.length !== 1) {
-        errors.push({ line: lineNumber, message: translateText('".space" requires one operand') });
+        errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".space" requires one operand') });
         return;
       }
       const count = parseImmediate(args[0]);
       if (!Number.isSafeInteger(count) || count < 0) {
-        errors.push({ line: lineNumber, message: translateText('".space" requires a non-negative integer') });
+        errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".space" requires a non-negative integer') });
         return;
       }
       const currentAddress = getAddr();
       if (count > 0xffffffff || count > (0xffffffff - currentAddress)) {
-        errors.push({ line: lineNumber, message: translateText('".space" requires a non-negative integer') });
+        errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".space" requires a non-negative integer') });
         return;
       }
       const amount = count;
@@ -6033,7 +6070,7 @@ class MarsEngine {
 
       if (directive === ".set") {
         if (args.length < 1) {
-          errors.push({ line: lineNumber, message: translateText('".set" requires at least one argument.') });
+          errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".set" requires at least one argument.') });
           return;
         }
       if (sizeOnly) {
@@ -6047,14 +6084,14 @@ class MarsEngine {
 
     if (directive === ".globl") {
       if (args.length < 1) {
-        errors.push({ line: lineNumber, message: translateText('".globl" directive requires at least one argument.') });
+        errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".globl" directive requires at least one argument.') });
         return;
       }
       if (!(state.globalDeclarations instanceof Set)) state.globalDeclarations = new Set();
       for (const token of args) {
         const symbol = stripToken(token);
         if (!/^[A-Za-z_.$][\w.$]*$/.test(symbol)) {
-          errors.push({ line: lineNumber, message: translateText('".globl" directive argument must be label.') });
+          errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".globl" directive argument must be label.') });
           return;
         }
         state.globalDeclarations.add(symbol);
@@ -6064,24 +6101,24 @@ class MarsEngine {
 
     if (directive === ".extern") {
       if (args.length !== 2) {
-        errors.push({ line: lineNumber, message: translateText('".extern" directive requires two operands (label and size).') });
+        errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".extern" directive requires two operands (label and size).') });
         return;
       }
       const symbol = stripToken(args[0]);
       const size = parseImmediate(args[1]);
       if (!/^[A-Za-z_.$][\w.$]*$/.test(symbol)) {
-        errors.push({ line: lineNumber, message: translateText("Invalid .extern symbol '{symbol}'.", { symbol: args[0] }) });
+        errors.push({ line: lineNumber, code: "assemble_directive", message: translateText("Invalid .extern symbol '{symbol}'.", { symbol: args[0] }) });
         return;
       }
       if (!Number.isSafeInteger(size) || size < 0 || size > 0xffffffff) {
-        errors.push({ line: lineNumber, message: translateText('".extern" requires a non-negative integer size') });
+        errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".extern" requires a non-negative integer size') });
         return;
       }
       if (state.labelsMap instanceof Map) {
         if (!state.labelsMap.has(symbol)) {
           const externalBase = state.externAddress >>> 0;
           if (size > (0xffffffff - externalBase)) {
-            errors.push({ line: lineNumber, message: translateText('".extern" requires a non-negative integer size') });
+            errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".extern" requires a non-negative integer size') });
             return;
           }
           if (!enforceStrictSegmentRange("data", externalBase, size, directive)) return;
@@ -6091,7 +6128,7 @@ class MarsEngine {
       } else {
         const externalBase = state.externAddress >>> 0;
         if (size > (0xffffffff - externalBase)) {
-          errors.push({ line: lineNumber, message: translateText('".extern" requires a non-negative integer size') });
+          errors.push({ line: lineNumber, code: "assemble_directive", message: translateText('".extern" requires a non-negative integer size') });
           return;
         }
         if (!enforceStrictSegmentRange("data", externalBase, size, directive)) return;
@@ -6127,7 +6164,7 @@ class MarsEngine {
           !Number.isSafeInteger(repeatedBytes)
           || repeatedBytes > (0xffffffff - currentAddress)
         ) {
-          errors.push({ line: lineNumber, message: translateText("Invalid repetition factor '{factor}' in '{arg}'.", {
+          errors.push({ line: lineNumber, code: "assemble_directive", message: translateText("Invalid repetition factor '{factor}' in '{arg}'.", {
             factor: repetition.repetitions,
             arg
           }) });
@@ -6143,7 +6180,7 @@ class MarsEngine {
               ? Number(raw)
               : Number.NaN;
             if (!Number.isFinite(parsed)) {
-              errors.push({ line: lineNumber, message: translateText("Invalid {directive} value '{token}'.", {
+              errors.push({ line: lineNumber, code: "assemble_directive", message: translateText("Invalid {directive} value '{token}'.", {
                 directive,
                 token
               }) });
@@ -6182,7 +6219,7 @@ class MarsEngine {
       for (const arg of args) {
         const decoded = parseStringLiteral(arg);
         if (decoded === null) {
-          errors.push({ line: lineNumber, message: translateText("Invalid string literal '{arg}'.", { arg }) });
+          errors.push({ line: lineNumber, code: "assemble_directive", message: translateText("Invalid string literal '{arg}'.", { arg }) });
           continue;
         }
         const totalBytes = decoded.length + (directive === ".asciiz" ? 1 : 0);
@@ -6203,6 +6240,7 @@ class MarsEngine {
 
     errors.push({
       line: lineNumber,
+      code: "assemble_directive",
       message: translateText('"{directive}" directive is invalid or not implemented in MARS', { directive })
     });
   }
@@ -6246,6 +6284,7 @@ class MarsEngine {
       if (typeof sourceText !== "string") {
         errors.push({
           line: 0,
+          code: "assemble_include",
           message: translateText("Error reading include file {includeName}", {
             includeName: projectPathBasename(normalizedName)
           })
@@ -6261,7 +6300,7 @@ class MarsEngine {
         if (/^\.include\b/i.test(statement)) {
           const includeMatch = /^\.include\s+["']([^"']+)["']/i.exec(statement);
           if (!includeMatch) {
-            errors.push({ line: lineNumber, message: translateText("[{fileName}] malformed .include directive.", { fileName: normalizedName }) });
+            errors.push({ line: lineNumber, code: "assemble_include", message: translateText("[{fileName}] malformed .include directive.", { fileName: normalizedName }) });
             continue;
           }
           const resolved = resolveInclude(includeMatch[1], normalizedName);
@@ -6269,6 +6308,7 @@ class MarsEngine {
             const includeName = normalizePathLike(includeMatch[1]) || includeMatch[1];
             errors.push({
               line: lineNumber,
+              code: "assemble_include",
               message: translateText("Error reading include file {includeName}", {
                 includeName
               })
@@ -6276,7 +6316,7 @@ class MarsEngine {
             continue;
           }
           if (stack.includes(resolved)) {
-            errors.push({ line: lineNumber, message: translateText("[{fileName}] circular include detected for '{resolved}'.", {
+            errors.push({ line: lineNumber, code: "assemble_include", message: translateText("[{fileName}] circular include detected for '{resolved}'.", {
               fileName: normalizedName,
               resolved
             }) });
@@ -6299,7 +6339,7 @@ class MarsEngine {
 
     const emit = (lineObj, depth = 0) => {
       if (depth > 20) {
-        errors.push({ line: lineObj.lineNumber, message: translateText("[{fileName}] Macro expansion depth exceeded.", {
+        errors.push({ line: lineObj.lineNumber, code: "assemble_macro", message: translateText("[{fileName}] Macro expansion depth exceeded.", {
           fileName: lineObj.fileName
         }) });
         return;
@@ -6349,6 +6389,7 @@ class MarsEngine {
       if (hasMacroWithDifferentArity) {
         errors.push({
           line: lineObj.lineNumber,
+          code: "assemble_macro",
           message: translateText('Forward reference or invalid parameters for macro "{macroName}"', {
             macroName
           })
@@ -6369,7 +6410,7 @@ class MarsEngine {
         const body = statement.replace(/^\.eqv\b/i, "").trim();
         const match = /^([A-Za-z_.$][\w.$]*)\s+(.+)$/.exec(body);
         if (!match) {
-          errors.push({ line: lineNumber, message: translateText("[{fileName}] Malformed .eqv directive.", { fileName }) });
+          errors.push({ line: lineNumber, code: "assemble_directive", message: translateText("[{fileName}] Malformed .eqv directive.", { fileName }) });
           continue;
         }
         eqvMap.set(match[1], match[2].trim());
@@ -6379,7 +6420,7 @@ class MarsEngine {
       if (/^\.macro\b/i.test(statement)) {
         const header = this.parseMacroHeader(statement);
         if (!header) {
-          errors.push({ line: lineNumber, message: translateText("[{fileName}] Malformed .macro header.", { fileName }) });
+          errors.push({ line: lineNumber, code: "assemble_macro", message: translateText("[{fileName}] Malformed .macro header.", { fileName }) });
           continue;
         }
 
@@ -6398,14 +6439,14 @@ class MarsEngine {
           const innerEntry = flattened[i];
           const innerLine = stripComment(innerEntry.statement).trim();
           if (/^\.macro\b/i.test(innerLine)) {
-            errors.push({ line: innerEntry.lineNumber, message: translateText("[{fileName}] Nested macros are not allowed.", {
+            errors.push({ line: innerEntry.lineNumber, code: "assemble_macro", message: translateText("[{fileName}] Nested macros are not allowed.", {
               fileName: innerEntry.fileName
             }) });
             continue;
           }
           if (/^\.end_macro\b/i.test(innerLine)) {
             if (!/^\.end_macro\b\s*$/i.test(innerLine)) {
-              errors.push({ line: innerEntry.lineNumber, message: translateText("[{fileName}] invalid text after .END_MACRO", {
+              errors.push({ line: innerEntry.lineNumber, code: "assemble_macro", message: translateText("[{fileName}] invalid text after .END_MACRO", {
                 fileName: innerEntry.fileName
               }) });
             }
@@ -6416,7 +6457,7 @@ class MarsEngine {
         }
 
         if (!closed) {
-          errors.push({ line: lineNumber, message: translateText("[{fileName}] Macro '{macroName}' missing .end_macro.", {
+          errors.push({ line: lineNumber, code: "assemble_macro", message: translateText("[{fileName}] Macro '{macroName}' missing .end_macro.", {
             fileName,
             macroName: header.name
           }) });
@@ -6435,9 +6476,9 @@ class MarsEngine {
 
       if (/^\.end_macro\b/i.test(statement)) {
         if (!/^\.end_macro\b\s*$/i.test(statement)) {
-          errors.push({ line: lineNumber, message: translateText("[{fileName}] invalid text after .END_MACRO", { fileName }) });
+          errors.push({ line: lineNumber, code: "assemble_macro", message: translateText("[{fileName}] invalid text after .END_MACRO", { fileName }) });
         } else {
-          errors.push({ line: lineNumber, message: translateText("[{fileName}] .END_MACRO without .MACRO", { fileName }) });
+          errors.push({ line: lineNumber, code: "assemble_macro", message: translateText("[{fileName}] .END_MACRO without .MACRO", { fileName }) });
         }
         continue;
       }
@@ -6468,6 +6509,7 @@ class MarsEngine {
         warnings.forEach((warning) => {
           errors.push({
             line: warning.line,
+            code: "assemble_warning_as_error",
             message: translateText("Warning treated as error: {message}", { message: warning.message })
           });
         });
@@ -6528,6 +6570,7 @@ class MarsEngine {
       if (isStrictSegmentAddressValid(this.memoryMap, segmentName, start, size)) return true;
       errors.push({
         line: lineNumber,
+        code: "assemble_memory_limit",
         message: translateText(
           "Strict MARS segment limit exceeded for {context} at {address} ({bytes} byte(s)).",
           {
@@ -6597,7 +6640,7 @@ class MarsEngine {
         else if (pass1State.segment === "kdata") address = predictAlignedDataLabelAddress(pass1State, statement) ?? pass1State.kernelDataAddress;
 
         if (labels.has(label)) {
-          errors.push({ line: entry.lineNumber, message: translateText("Duplicate label '{label}'.", { label }) });
+          errors.push({ line: entry.lineNumber, code: "assemble_duplicate_label", message: translateText("Duplicate label '{label}'.", { label }) });
         } else {
           labels.set(label, address >>> 0);
         }
@@ -6618,6 +6661,7 @@ class MarsEngine {
         if (!recognizedDirectives.has(directive)) {
           errors.push({
             line: entry.lineNumber,
+            code: "assemble_directive",
             message: translateText('"{directive}" directive is invalid or not implemented in MARS', { directive })
           });
           return;
@@ -6629,6 +6673,7 @@ class MarsEngine {
         } else {
           errors.push({
             line: entry.lineNumber,
+            code: "assemble_directive",
             message: translateText('"{directive}" directive cannot appear in text segment', { directive })
           });
         }
@@ -6642,7 +6687,7 @@ class MarsEngine {
       }
 
       if (pass1State.segment !== "text" && pass1State.segment !== "ktext") {
-        errors.push({ line: entry.lineNumber, message: translateText("Instruction found in non-text segment.") });
+        errors.push({ line: entry.lineNumber, code: "assemble_directive", message: translateText("Instruction found in non-text segment.") });
         return;
       }
       const expanded = this.expandPseudo(statement, true, pass1State.setOptions);
@@ -6711,6 +6756,7 @@ class MarsEngine {
         if (!recognizedDirectives.has(directive)) {
           errors.push({
             line: entry.lineNumber,
+            code: "assemble_directive",
             message: translateText('"{directive}" directive is invalid or not implemented in MARS', { directive })
           });
           return;
@@ -6722,6 +6768,7 @@ class MarsEngine {
         } else {
           errors.push({
             line: entry.lineNumber,
+            code: "assemble_directive",
             message: translateText('"{directive}" directive cannot appear in text segment', { directive })
           });
         }
@@ -6760,6 +6807,7 @@ class MarsEngine {
         if (machineCodeWord == null) {
           errors.push({
             line: entry.lineNumber,
+            code: "assemble_encoding",
             message: translateText(
               "Instruction '{instruction}' has no machine-code encoding.",
               { instruction: basic }
@@ -6777,6 +6825,7 @@ class MarsEngine {
         } catch (error) {
           errors.push({
             line: entry.lineNumber,
+            code: "assemble_memory_limit",
             message: translateText(
               "Cannot emit instruction at {address}: {message}",
               {
@@ -6830,7 +6879,7 @@ class MarsEngine {
     unresolvedFixups.forEach((fixup) => {
       const resolved = this.resolveValue(fixup.token);
       if (!Number.isFinite(resolved)) {
-        errors.push({ line: fixup.line, message: translateText("Cannot resolve '{token}' in data directive.", {
+        errors.push({ line: fixup.line, code: "assemble_undefined_symbol", message: translateText("Cannot resolve '{token}' in data directive.", {
           token: fixup.token
         }) });
         return;
@@ -6840,6 +6889,7 @@ class MarsEngine {
       } catch (error) {
         errors.push({
           line: fixup.line,
+          code: "assemble_memory_limit",
           message: translateText(
             "Cannot emit data fixup at {address}: {message}",
             {
@@ -6877,7 +6927,7 @@ class MarsEngine {
         this.applyProgramArguments(argumentLine);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        errors.push({ line: 0, message: translateText("Program arguments error: {message}", { message }) });
+        errors.push({ line: 0, code: "assemble_program_arguments", message: translateText("Program arguments error: {message}", { message }) });
         this.program.errors = errors;
         this.assembled = false;
         return { ok: false, warnings, errors };
@@ -7069,7 +7119,7 @@ class MarsEngine {
           Number.isFinite(error?.badAddress) ? (error.badAddress >>> 0) : null
         );
       } else {
-        result = this.raiseException(EXCEPTION_CODES.RESERVED, error?.message ?? translateText("Runtime exception."));
+        result = this.raiseException(EXCEPTION_CODES.RESERVED, error?.message ?? translateText("Runtime exception."), null, "run_other");
       }
     } finally {
       runtimeMemoryAccesses = Array.isArray(this.activeRuntimeMemoryAccesses)
@@ -7149,7 +7199,8 @@ class MarsEngine {
       const fetchException = this.raiseException(
         EXCEPTION_CODES.ADDRESS_LOAD,
         translateText("Address not aligned on word boundary: {address}", { address: toHex(invalidPc) }),
-        invalidPc
+        invalidPc,
+        "run_instruction_fetch"
       );
       this.delayedBranchTarget = null;
       this.delayedBranchAddress = null;
@@ -7231,6 +7282,7 @@ class MarsEngine {
       sleepMs,
       runIo: result.runIo === true,
       exception: result.exception === true,
+      ...(result.faultGroup ? { faultGroup: result.faultGroup, faultDetail: result.faultDetail } : {}),
       haltReason: result.haltReason,
       executedAddress: currentPc,
       executedInstruction: decodedInstruction ?? "",
@@ -7292,6 +7344,7 @@ class MarsEngine {
       stoppedOnBreakpoint,
       waitingForInput,
       exception,
+      ...(exception && lastResult?.faultGroup ? { faultGroup: lastResult.faultGroup, faultDetail: lastResult.faultDetail } : {}),
       haltReason,
       stepLimitReached,
       message: lastResult?.message ?? translateText("Execution stopped."),
@@ -7836,7 +7889,7 @@ class MarsEngine {
         if (inputResult.cancelled) return { halt: true, message: "", haltReason: "user" };
         const parsed = parseStrictInteger(inputResult.value);
         if (parsed === null) {
-          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid integer input (syscall 5)"));
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid integer input (syscall 5)"), null, "run_invalid_input");
         }
         this.setRegisterValue(2, clamp32(parsed));
         return {};
@@ -7847,7 +7900,7 @@ class MarsEngine {
         if (inputResult.cancelled) return { halt: true, message: "", haltReason: "user" };
         const parsed = parseStrictFiniteFloat(inputResult.value);
         if (parsed === null) {
-          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid float input (syscall 6)"));
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid float input (syscall 6)"), null, "run_invalid_input");
         }
         this.setFloat32(0, parsed);
         return {};
@@ -7858,7 +7911,7 @@ class MarsEngine {
         if (inputResult.cancelled) return { halt: true, message: "", haltReason: "user" };
         const parsed = parseStrictFiniteFloat(inputResult.value);
         if (parsed === null) {
-          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid double input (syscall 7)"));
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid double input (syscall 7)"), null, "run_invalid_input");
         }
         this.setFloat64(0, parsed);
         return {};
@@ -7927,7 +7980,7 @@ class MarsEngine {
         if (inputResult.cancelled) return { halt: true, message: "", haltReason: "user" };
         const value = String(inputResult.value ?? "");
         if (!value.length) {
-          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid char input (syscall 12)"));
+          return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid char input (syscall 12)"), null, "run_invalid_input");
         }
         this.setRegisterValue(2, value.charCodeAt(0) & 0xff);
         return {};
@@ -8627,7 +8680,8 @@ class MarsEngine {
         return {};
       }
       default:
-        return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid or unimplemented syscall service: {service}", { service }));
+        return this.raiseException(EXCEPTION_CODES.SYSCALL, tx("invalid or unimplemented syscall service: {service}", { service }),
+          null, "run_unsupported_syscall");
       }
     } catch (error) {
       rollbackSyscallTransaction();
@@ -8706,7 +8760,9 @@ class MarsEngine {
 
     if (opcode === "break") {
       const code = tokens.length >= 2 ? (imm(1) | 0) : 0;
-      return this.raiseException(EXCEPTION_CODES.BREAKPOINT, translateText("break instruction executed; code = {code}", { code }));
+      // Mini-C uses break 7 to signal division by zero.
+      const detail = code === 7 ? "run_divide_by_zero" : "run_break_instruction";
+      return this.raiseException(EXCEPTION_CODES.BREAKPOINT, translateText("break instruction executed; code = {code}", { code }), null, detail);
     }
 
     if (["teq", "tne", "tge", "tgeu", "tlt", "tltu"].includes(opcode) && tokens.length >= 3) {

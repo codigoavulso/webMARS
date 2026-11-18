@@ -36,6 +36,8 @@ test("internal marker persists and starts a fresh session; test deployment canno
   const env = harness();
   const before = env.sent[0].session;
   assert.equal(env.api.setContext("internal"), true);
+  assert.equal(env.sent.length, 1);
+  env.api.track("app_ready");
   assert.equal(env.sent.at(-1).context, "internal");
   assert.notEqual(env.sent.at(-1).session, before);
   assert.equal(env.store.get("webmars-metrics-context-v1"), "internal");
@@ -57,5 +59,6 @@ test("the internal marker follows changes from another tab", () => {
   const env = harness();
   env.emit("storage", {key:"webmars-metrics-context-v1", newValue:"internal"});
   assert.equal(env.api.getContext(), "internal");
+  env.api.track("app_ready");
   assert.equal(env.sent.at(-1).context, "internal");
 });

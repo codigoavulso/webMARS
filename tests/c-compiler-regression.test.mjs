@@ -39,6 +39,21 @@ async function runC(source, { subset = "C1-NATIVE" } = {}) {
   return output.trim();
 }
 
+test("compile failures expose their stage without inspecting diagnostic messages", async () => {
+  for (const [source, stage] of [
+    ['#include "private.h"\nint main(void){return 0;}', "include"],
+    ["int main(void){ @ return 0; }", "lexical"],
+    ["int main(void){ return ( ; }", "syntax"]
+  ]) {
+    const result = await compile(source);
+    assert.equal(result.ok, false);
+    assert.equal(result.failureStage, stage);
+  }
+  const missingMain = await compile("int helper(void){return 0;}");
+  assert.equal(missingMain.failureStage, "semantic");
+  assert.ok(missingMain.errors.some(error => error.code === "MC_MISSING_ENTRY_POINT"));
+});
+
 test("a leading zero reads as octal, like C", async () => {
   assert.equal(await runC("int main(void){print_int(010);return 0;}"), "8");
   assert.equal(await runC("int main(void){print_int(0777);return 0;}"), "511");

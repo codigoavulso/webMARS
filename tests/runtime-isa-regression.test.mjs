@@ -32,11 +32,13 @@ function stepToAddress(engine, address, limit = 30) {
   assert.equal(engine.getSnapshot().pc >>> 0, target);
 }
 
-function assertAddressException(engine, result, expectedCode, expectedAddress) {
+function assertAddressException(engine, result, expectedCode, expectedAddress, detail = expectedCode === 5 ? "run_memory_write" : "run_memory_read") {
   const state = engine.exportRuntimeState({ includeProgram: false });
   assert.equal(result.ok, true);
   assert.equal(result.done, true);
   assert.equal(result.exception, true);
+  assert.equal(result.faultGroup, "address");
+  assert.equal(result.faultDetail, detail);
   assert.equal(((state.cop0[13] >>> 2) & 0x1f), expectedCode);
   assert.equal(state.cop0[8] >>> 0, expectedAddress >>> 0);
 }
@@ -58,6 +60,7 @@ main: li $t0, 10
         const result = engine.go(30);
         if (divisor === 0) {
           assert.equal(result.exception, true, operation);
+          assert.equal(result.faultDetail, "run_break_instruction", operation);
           assert.equal((engine.cop0Registers[13] >>> 2) & 31, 9, operation);
         } else {
           assert.notEqual(result.exception, true, operation);
@@ -66,6 +69,14 @@ main: li $t0, 10
       }
     }
   }
+});
+
+test("execution reports the fixed division-by-zero and unsupported system call categories", async () => {
+  const engine = await createJavaScriptEngine();
+  assert.equal(engine.assemble(".text\nbreak 7").ok, true);
+  assert.equal(engine.step().faultDetail, "run_divide_by_zero");
+  assert.equal(engine.assemble(".text\nli $v0, 999\nsyscall").ok, true);
+  assert.equal(engine.go().faultDetail, "run_unsupported_syscall");
 });
 
 test("breakpoints allow one Step or Go continuation and re-arm when control returns", async () => {
@@ -409,7 +420,7 @@ main:
     stepToAddress(engine, row.address);
     const stateBeforeJump = engine.exportRuntimeState({ includeProgram: false });
     const result = engine.step({ includeSnapshot: false });
-    assertAddressException(engine, result, 4, 0x00400001);
+    assertAddressException(engine, result, 4, 0x00400001, "run_instruction_fetch");
     if (opcode === "jalr") {
       assert.equal(registers(engine)[9] >>> 0, ((row.address >>> 0) + 4) >>> 0);
     }
@@ -436,7 +447,7 @@ main:
   const jumpResult = delayed.step({ includeSnapshot: false });
   assert.notEqual(jumpResult.exception, true);
   const fetchResult = delayed.step({ includeSnapshot: false });
-  assertAddressException(delayed, fetchResult, 4, 0x00400001);
+  assertAddressException(delayed, fetchResult, 4, 0x00400001, "run_instruction_fetch");
   assert.equal(registers(delayed)[16], 7);
 });
 

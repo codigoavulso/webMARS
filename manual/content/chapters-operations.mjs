@@ -866,6 +866,9 @@ export const operationChapters = [
             ["Documento de projeto", "Endpoint Cloud", "Abrir/sincronizar"],
             ["Eventos, categorias e sessão temporária", "Coletor da instalação", "Automaticamente na instalação oficial; sem conteúdo de fontes ou identificadores de conta"],
             ["Interação e presença visível", "Mesmo fluxo de eventos estatísticos", "Amostras de interação e heartbeat de presença a cada 60 segundos"],
+            ["Faixa de tempo ou falha de arranque, motivo de fim e categoria de erro de execução", "Mesmo fluxo de eventos estatísticos", "Primeira tentativa de arranque comunicada por página e resultados de execução observados"],
+            ["Tempo visível por categoria de janela", "Mesmo fluxo de eventos estatísticos", "Amostras de janelas visíveis, agrupadas em incrementos de segundos"],
+            ["Tempos de compilação e montagem, categorias detalhadas de erro", "Mesmo fluxo de eventos estatísticos", "Após a operação medida ou o erro categorizado"],
             ["Gráficos públicos", "Endpoint de agregados da instalação", "Ao abrir/atualizar as estatísticas; sem registos individuais"],
             ["Bench", "Só memória/UI local", "Compilar/montar/executar"],
             ["Manual: pesquisa", "Só browser", "Ao escrever nesta pesquisa"]

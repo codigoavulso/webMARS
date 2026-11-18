@@ -3132,7 +3132,8 @@
     });
 
     if (!signatureTable.has("main") || signatureTable.get("main")?.intrinsic || signatureTable.get("main")?.defined !== true) {
-      diagnostics.push(createDiagnostic("Missing required function 'main'.", functions[0] || null, "semantic"));
+      diagnostics.push(createDiagnostic("Missing required function 'main'.", functions[0] || null, "semantic",
+        { code: "MC_MISSING_ENTRY_POINT" }));
     } else {
       const mainSignature = signatureTable.get("main");
       const mainNode = functions.find((entry) => entry?.name === "main") || null;
@@ -7699,6 +7700,7 @@
         targetAbi,
         logs,
         warnings,
+        failureStage: "include",
         errors: preprocessed.diagnostics
       };
     }
@@ -7718,6 +7720,7 @@
         targetAbi,
         logs,
         warnings,
+        failureStage: "lexical",
         errors: tokenized.diagnostics
       };
     }
@@ -7735,6 +7738,7 @@
         targetAbi,
         logs,
         warnings,
+        failureStage: "syntax",
         errors: parser.diagnostics
       };
     }
@@ -7751,6 +7755,7 @@
         targetAbi,
         logs,
         warnings,
+        failureStage: "semantic",
         errors: semanticErrors
       };
     }
@@ -7794,6 +7799,7 @@
         targetAbi,
         logs,
         warnings,
+        failureStage: "codegen",
         errors: [diagnostic]
       };
     }

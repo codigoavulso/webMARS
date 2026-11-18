@@ -37,7 +37,11 @@ internal/tests and probable automation. The UI defaults to this public filter,
 offers each class explicitly and displays the population breakdown separately.
 The API defaults to `all` for v1 API compatibility. `classification` includes
 all-class counts; neither it nor the filtered aggregates exposes individual
-tokens. CLI reports accept `--audience` with the same values.
+tokens. The public aggregate applies the same classification to the selected
+period and its comparison period, using retained evidence available at the
+time of the query. For example, trusted input can reclassify a session that
+started near the end of the previous period. CLI reports accept `--audience`
+with the same values.
 
 Install the updated logging configuration before the frontend; confirm the HTML
 response actually sets the navigation cookie. A location with its own
@@ -62,6 +66,8 @@ subject, user ID or account identifier is sent to this collector.
 
 The dashboard's separate Cloud section calls BackMars `/api/statistics` for
 server-confirmed counts and distinct active accounts in minute-rounded windows.
+The Cloud view uses the BackMars windows of 60 minutes, 24 hours and 30 days.
+It offers a switch to 24 hours when the dashboard is showing 6 hours or 7 days.
 Only public/internal/test/all contexts can be selected there; account aggregates
 cannot be restricted to the browser-only probable-human class. BackMars keeps
 private minute-bucket account activity for 35 days to deduplicate accounts, and
@@ -74,9 +80,6 @@ When the account is configured as internal, BackMars asks the local collector
 to mark existing and future events with that token as internal. Signing out
 rotates the token. Visits with other tokens and old counters that do not
 identify an account cannot be attributed retrospectively.
-
-The following older v1 protocol description documents compatibility behavior;
-v2 fields and the temporary navigation/context cookies above extend it.
 
 The official installation sends first-party statistics automatically. There is
 no acceptance dialog or statistics checkbox. The user-facing explanation is
@@ -92,11 +95,13 @@ under the unknown build in aggregate breakdowns.
 The Builds tab and CSV export show distinct sessions and received events per
 build for the selected period and audience. A session can span several builds.
 
-App statistics use 60 clock minutes, 24 clock hours or 30 calendar days in
-`Europe/Lisbon`, including the interval in progress. A timeline bucket exposes
-its calendar boundary as `until` and the extent covered by the response as
-`through`. The nominal `bucket_seconds` stays at 86400 for days even when a
-day spans 23 or 25 hours across a daylight-saving change.
+App statistics use clock intervals in `Europe/Lisbon`, including the interval
+in progress. The 60-minute, 6-hour and 24-hour views use buckets of one minute,
+five minutes and one hour, respectively. The 7-day and 30-day views use
+calendar days. A timeline bucket exposes its calendar boundary as `until` and
+the extent covered by the response as `through`. The nominal `bucket_seconds`
+stays at 86400 for days even when a day spans 23 or 25 hours across a
+daylight-saving change.
 
 The dashboard loads app aggregates with `part=app`. Web-log diagnostics use
 `part=web`, which can return 202 while an aggregate is prepared in the background.
@@ -114,8 +119,9 @@ Blocked storage does not stop collection; it prevents continuity on reload.
 Duplicated tabs can inherit sessionStorage. These are approximate visits, not
 unique people or registered accounts. A local last-visit timestamp supplies a
 coarse return category; without storage the historical `new` bucket means no
-usable previous timestamp, not a proven new person. No permanent visitor ID
-or fingerprint is created.
+usable previous timestamp. A return displayed in the dashboard requires at
+least 24 hours since the previous recorded visit started in that browser.
+No permanent visitor ID or fingerprint is created.
 
 POST requests omit credentials and referrer, reject redirects and use no URL
 parameters. Failures never interrupt the simulator. There is no persistent
@@ -124,33 +130,42 @@ static hosting. User preferences do not disable a configured collector.
 
 ## Events
 
-JSON retains schema version 1 and exactly these keys: `v`, `session`, `event`,
+Schema version 1 has these required keys: `v`, `session`, `event`,
 `surface`, `detail`, `seconds`, `returning`, `source`, `device`, `language`.
-Values are allowlisted on both sides.
+Version 2 adds the fields described under traffic classification. The `build`
+field is optional in both versions for compatibility. Values are allowlisted
+on both sides.
 
 | Event | Meaning |
 | --- | --- |
 | `page_view` | Public page or simulator loaded |
 | `launch_app` | Public-page simulator link clicked |
 | `app_ready` | Application scripts loaded successfully |
+| `app_startup` | First reported simulator loading attempt for the current document. Details: `under_1s`, `1_to_3s`, `3_to_8s`, `8s_or_more` or `failed` |
 | `example_open` | Example opened; only lesson01–lesson15 or `other` |
 | `compile_success`, `compile_error` | Mini-C compilation outcome |
 | `assemble_success`, `assemble_error` | Assembly outcome |
 | `run_success`, `run_error` | Normal exit or execution error |
+| `run_stopped`, `run_fallthrough`, `run_input_cancelled` | User stop, end of the program without an exit call, or cancellation of input |
+| `run_fault_group` | Coarse category of an execution error: `address`, `syscall`, `instruction`, `arithmetic`, `trap`, `interrupt` or `other` |
+| `window_time` | Visible seconds for an allowed simulator window or shipped tool |
+| `operation_time` | Time spent in the compiler or assembler, grouped by operation and outcome |
+| `operation_error` | Fixed compiler, assembler or runtime diagnostic category, once per category per operation |
 | `tool_open` | Shipped tool opened, identified by manifest ID |
-| `feature_use` | Step, Backstep, Run, project save/import, Cloud save/load, help or Teacher Kit |
+| `feature_use` | Step, Backstep, Run, manual compile and assemble commands, reset, pause, reaching a breakpoint, waiting for input, Project Manager, project save/import, Cloud save/load, help or Teacher Kit |
 | `active_time` | Approximate cumulative interaction seconds |
 | `heartbeat` | Cumulative visible presence sample, sent with the page-session token |
 
-Tool/feature adoption sends once per resource per page/visit. Reports
+Tool/feature adoption sends once per resource per session. Reports
 deduplicate by visit token; repeated stepping cannot dominate adoption ranks.
 These adoption counts measure first use, not every click. Compilation,
 assembly, execution and example events retain action and visit counts.
 User tools outside the shipped allowlist are excluded. Keep client/server
 resource allowlists aligned; tests compare them with the manifest.
 
-No code, filenames, project contents, input/output, diagnostics, account IDs,
-emails, publication slugs, full URLs or raw referrers are sent. Sources are
+No code, filenames, project contents, input/output, diagnostic text, memory
+addresses, system call numbers, account IDs, emails, publication slugs, full
+URLs or raw referrers are sent. Sources are
 broad categories, languages are enumerated and device is touch/pointer.
 Temporary tokens do link events within a visit; aggregate reporting does not
 make the underlying records unlinkable.
@@ -158,27 +173,47 @@ make the underlying records unlinkable.
 Interaction time requires visibility, focus and interaction in the last minute.
 It is sampled every five seconds, sent every 30 active seconds and on hide/exit
 where possible. Suspension gaps are capped. Reading without input can be
-missed. Pause, input waits, Stop and falling off the program do not count as
-successful execution. A normal exit does not prove a correct solution or
-completed lesson.
+missed. The run success event records a normal exit. Pauses and input waits
+can precede a terminal result. A user stop, reaching the end without an exit
+call and cancellation of input have their own result categories. The recovery
+and success-rate reports continue to use successful exits and execution errors.
+
+Startup time uses the browser's elapsed time since navigation, through the
+first reported completion. The client submits the range only. A reported
+startup failure submits `failed` without a duration, diagnostic, module path
+or URL. A loading attempt that fails before the reporter can run may go
+unobserved.
+
+Window exposure is sampled roughly every five seconds in a visible page and
+sent in bounded increments. Hit testing checks a grid of points within each
+window's viewport area. A minimized, hidden or completely covered window does
+not accrue time. Several partially visible windows may accrue time together.
+The result describes exposure, with sampling error for brief transitions and
+small visible areas. It cannot be added to session presence or interaction.
+The report assigns an increment to its receipt interval and does not reconstruct
+its precise start and end. The collector receives only the fixed category and
+the number of seconds, with no window titles or on-screen contents.
+
+Operation duration measures the synchronous compiler or assembler call in the
+browser and rounds to milliseconds. Samples outside 0–120,000 ms are omitted.
+The report shows sample counts, median, P90 and maximum separately for successful
+and failed operations. Detailed errors use fixed identifiers from diagnostic
+sites, such as syntax, duplicate label, memory read or division by zero. One
+failed operation may contribute to several categories. The new measures use
+only received samples from updated browsers.
 
 ## Presence heartbeat
 
-The `heartbeat` event is sent every 60 seconds while visible, including without
-focus, through `/_metrics/events`. It carries the same page-session token as
-the other events and its cumulative seconds. The legacy `/_metrics/heartbeat`
-collector remains available for rollout compatibility but is no longer called
-by the frontend. The random token is memory-only and resets on reload;
-`registered` is the authenticated/not-authenticated classification, never an
-account ID. The collector stores the token's SHA-256 hash.
+The browser sends the `heartbeat` event through `/_metrics/events` every 60
+seconds while visible, including without focus, and flushes partial presence
+on hide or page exit when possible. It reports cumulative visible seconds with
+the same temporary session token as other browser events. Live presence counts
+sessions with a heartbeat received within five minutes.
 
-The collector estimates time from receipt intervals, capped at 90 seconds.
-The first ping adds zero seconds. This is observed presence, not exact
-attention: hidden gaps can contribute up to the cap. Visits under a minute
-and the final partial interval are absent. Live presence counts sessions seen
-within five minutes, not simultaneous people. Event and heartbeat records can be
-joined within a page visit through the temporary token, but their durations must
-not be summed because they use different timing rules.
+The older `/_metrics/heartbeat` endpoint remains available for compatibility.
+For that endpoint the collector stores the token's SHA-256 hash and estimates
+duration from receipt intervals capped at 90 seconds. The first ping adds zero
+seconds. Its `registered` field is a Boolean classification.
 
 Historical minute buckets are repeated cumulative samples, including older
 collection methods. Never sum them as total time or interpret ping medians as
@@ -188,22 +223,68 @@ visit medians. `event_heartbeat_visits` describes current event samples;
 ## Reading reports
 
 The public dashboard is available inside the simulator at **Help → Usage statistics**.
-Its read-only `GET /_metrics/public?window=60m|24h|30d` endpoint publishes
-only aggregates: 5-minute, hourly or daily trend buckets; event and resource
-counts; coarse source, return, device, language and page categories; activation;
-and separate interaction/presence durations. It exposes no session tokens,
-account data, IP addresses or individual event rows. The window offers column
-and line charts plus local filters for metric, breakdown, measure, text and
-number of categories. A session may appear in multiple trend buckets, and
-session counts are never unique-person counts. The endpoint uses a 30-second
+Its read-only `GET /_metrics/public?window=60m|6h|24h|7d|30d` endpoint publishes
+only aggregates. These include trend buckets, event and resource counts, action
+outcomes, coarse source, return, device, language and page categories, and
+separate interaction and presence durations. It exposes no session tokens,
+account data, IP addresses or individual event rows. The endpoint uses a 30-second
 server cache and the window refreshes once per minute while open. Historical
 legacy duration-only pings have only day-level aggregates and are not merged
 into the current event charts.
 
-Interaction seconds and heartbeat seconds represent different clocks. Public
-charts derive their increments independently; they must not be added. The
-current event heartbeat has no authenticated-account classification, so the
-dashboard does not infer registered users.
+The overview's four indicator cards show the total for the selected period and
+an inline trend when the collector supplies the series. Selecting a card shows
+that measure in the main chart. The metric selector also exposes more detailed
+measures. Move the pointer over the chart or focus it and use the arrow keys,
+Home or End to inspect an interval. A session may appear in multiple trend
+buckets. The card totals deduplicate sessions over the full period.
+
+The overview ranks tools, features, examples, sources, languages and input
+devices by measured sessions. The Resources tab supports other breakdowns,
+event counts where available, text filtering and a configurable number of rows.
+
+The overview counts sessions with a normal execution exit once per session.
+For each of compilation, assembly and execution, the outcome table also
+shows the observed success and error event counts, distinct sessions with a
+result, and sessions with errors and no success for that action. The success
+rate divides success events by the sum of success and error events for the
+action. An empty denominator leaves the rate unavailable. These outcomes use
+existing events and can be calculated from retained records.
+
+The Analysis tab uses the selected time window and audience. For each stage
+it counts distinct sessions with a recorded result. It groups them by first
+recorded result successful, first result failed followed by a success, and
+errors only. Ordering follows collector receipt time. Each stage has its own
+population, and results are bounded by the selected window. For example, a
+session that receives a success after the window closed can appear as errors
+only in that window. Median and p90 recovery times are based on the receipt
+time elapsed from the first error to the first subsequent success among
+recovered sessions in that stage.
+
+The segment comparison shows counts and rates for interaction and successful
+execution. The denominator is every measured session in each segment. The
+interface reports absolute differences in percentage points alongside the
+session counts. Small groups are sensitive to single events. Segment
+differences are descriptive and can reflect differences in audience or task.
+Source and input device use the session's first event in the selected window.
+Language uses its last event. A session observed on multiple builds
+contributes to each applicable build, with interaction and execution
+attributed to the builds on which those outcomes were observed.
+
+The Diagnostics tab shows distinct sessions and received event counts for
+execution endings, execution error categories and app startup. A session can
+contribute to multiple rows. An error category describes the same occurrence as
+the execution error, so these counts should be read separately. New categories
+cover events from the updated app. Compare equivalent periods with the same
+instrumentation coverage. The CSV includes the diagnostic groups supplied by
+the collector, with each row's session and event counts.
+
+The public charts calculate interaction and visible presence increments
+independently. Each session's first increment for each clock is capped at the
+time elapsed since the start of the window. A session counts as interacting
+when the window contains a trusted interaction event or a positive interaction
+increment with a trusted-input signal. An idle heartbeat can still contribute
+evidence to the session's probable-human classification.
 
 Run `sudo webmars-metrics --report --days 14`:
 
@@ -218,6 +299,8 @@ JSON: `sudo webmars-metrics --report --days 14 --summary`.
   received event counts. Tool/feature events count adoption, not every click.
 - `sessions_by_event` and `activation`: visits per action and ready visits
   with successful execution, including the denominator.
+- `execution_outcomes`, `execution_faults` and `startup`: session and event
+  counts for execution endings, execution error categories and app startup.
 - `session_durations`: visit-level interaction duration buckets, median, p90
   and maximum. Zero includes short/unmeasured visits.
 - `sources`, `activation_by_source`, `languages`, `input_devices`,
@@ -249,22 +332,26 @@ open tabs through the browser storage event. No account identifier is added.
 
 The overview separates app-session classification from web-visit classification,
 including automation visible only in the HTTP logs. Its four primary measures
-are sessions, sessions with interaction, returns on later days, and sessions
-with a successful run. Returning sessions exclude same-day reloads and are not
-unique returning people. Historical v1 interaction time remains estimated and
-unclassified; these changes cannot retrospectively identify human visitors.
+are measured sessions, sessions with interaction, returns after 24 hours and
+sessions with a successful run. Historical v1 interaction time remains
+estimated and unclassified.
 
-The API exposes the earliest retained observation and previous-period session
-counts, with a completeness flag. The dashboard only shows comparisons when the
-whole preceding period is covered, and omits chart buckets preceding the first
-retained record. Completeness does not prove uninterrupted collection or an
-unchanged policy. Compare periods under the same policy before claiming growth.
+The API exposes the earliest retained observation and compares the four overview
+session counts with the immediately preceding interval of the same elapsed
+duration. The dashboard shows comparisons when the preceding period has coverage
+and the collector returns the corresponding counts. It omits chart buckets
+preceding the first retained record and marks the interval in progress as
+partial. The 7-day view supports week-scale comparisons within the 35-day
+retention period. Comparison assumes both periods use the same collection policy
+and that collection ran continuously.
 P90 uses nearest rank (`ceil(0.9*n)-1`), including small samples. Session language
 uses the latest received value instead of the pre-translation page-load default.
 
-Overview, Resources and Cloud views retain the numerical details, with CSV
-export of aggregate totals, timeline, the filtered resource breakdown and Cloud
-events. Cloud reads and writes are labelled authenticated sessions, not password
+CSV export includes aggregate totals, action outcomes, timeline, the filtered
+resource breakdown, builds and Cloud events for the displayed selection.
+It also includes recovery counts and times, the listed segments for the
+chosen dimension and minimum session count, and the selected pair's deltas.
+Cloud reads and writes are labelled authenticated sessions, not password
 logins; historical default labels are normalized at query time without rewriting
 the stored counters.
 

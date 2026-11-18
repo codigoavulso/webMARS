@@ -765,7 +765,13 @@
     return manager;
   }
 
-  function open(location) { mount()?.open(location); return manager; }
+  function open(location) {
+    const current = mount();
+    if (!current) return current;
+    current.open(location);
+    root.WebMarsUsage?.track("feature_use", "project_manager");
+    return current;
+  }
 
   root.WebMarsProjectManager = Object.freeze({ mount, open, validateImportedProject, reload: () => manager?.reload?.() });
 })(typeof window !== "undefined" ? window : globalThis);

@@ -5778,8 +5778,15 @@ function formatDiagnosticMessage(kind, diagnostic, fallbackFileName = "") {
   });
 }
 
-function postExecutionSuccess(actionLabel, haltReason = "exit") {
+function postExecutionSuccess(actionLabel, haltReason) {
+  if (haltReason === "user") {
+    window.WebMarsUsage?.track("run_input_cancelled");
+    postMarsSystemLine("{action}: execution terminated by user.", { action: actionLabel });
+    messagesPane.selectMarsTab?.();
+    return;
+  }
   if (haltReason === "cliff") {
+    window.WebMarsUsage?.track("run_fallthrough");
     postMarsSystemLine(
       actionLabel === translateText("Step")
         ? "{action}: execution terminated due to null instruction."
@@ -5792,16 +5799,20 @@ function postExecutionSuccess(actionLabel, haltReason = "exit") {
   }
 
   // A normal runtime exit is activation, not a verified exercise solution.
-  window.WebMarsFeedback?.outcome("run", null);
-  window.WebMarsUsage?.track("run_success");
+  if (haltReason === "exit") {
+    window.WebMarsFeedback?.outcome("run", null);
+    window.WebMarsUsage?.track("run_success");
+  }
   postMarsSystemLine("{action}: execution completed successfully.", { action: actionLabel });
   postRunSystemLine("-- program is finished running --");
   messagesPane.selectRunTab?.();
 }
 
-function postExecutionError(actionLabel, message) {
+function postExecutionError(actionLabel, message, faultGroup, faultDetail = "run_other") {
   window.WebMarsFeedback?.outcome("run", message || "run_error");
   window.WebMarsUsage?.track("run_error");
+  if (faultGroup) window.WebMarsUsage?.track("run_fault_group", faultGroup);
+  window.WebMarsUsage?.track("operation_error", faultDetail);
   if (message) {
     postMarsRaw("{message}\n", {
       message: formatDiagnosticMessage("error", { line: 0, message })
@@ -6897,6 +6908,7 @@ function stopRunLoop() {
 }
 
 function terminateRunByUser() {
+  const wasExecuting = runActive || runPausedForInput;
   clearRunTimer();
   runActive = false;
   runStopRequested = false;
@@ -6907,6 +6919,7 @@ function terminateRunByUser() {
   messagesPane.clearInputRequest();
 
   const result = engine.stop();
+  if (result?.ok && wasExecuting) window.WebMarsUsage?.track("run_stopped");
   const snapshot = resolveStableRuntimeSnapshot(result?.snapshot);
   syncSnapshot(snapshot, { force: true });
   postMarsSystemLine("{action}: execution terminated by user.", { action: translateText("Go") });
@@ -7034,7 +7047,7 @@ function runLoopTick() {
       }
       lastStepResult = result;
       if (!result.ok) {
-        postExecutionError(translateText("Go"), result.message);
+        postExecutionError(translateText("Go"), result.message, result.faultGroup, result.faultDetail);
         stopReason = "error";
         runStopRequested = true;
         break;
@@ -7104,6 +7117,7 @@ function runLoopTick() {
   flushRunOutputMessages(runOutputMessages);
 
   if (waitingForInput) {
+    window.WebMarsUsage?.track("feature_use", "input_wait");
     markPausedForInput(true);
     messagesPane.focusRunInput();
     addRunBenchmarkCpu(performance.now() - benchmarkTickStartedAt, benchmarkExecutedInstructions);
@@ -7121,18 +7135,20 @@ function runLoopTick() {
     clearInputPauseState();
     syncSnapshot(engine.getSnapshot(), { force: true });
     if (stopReason === "user") {
+      window.WebMarsUsage?.track("run_stopped");
       postMarsSystemLine("{action}: execution terminated by user.", { action: translateText("Go") });
       messagesPane.selectMarsTab?.();
     } else if (stopReason === "breakpoint") {
+      window.WebMarsUsage?.track("feature_use", "breakpoint");
       postMarsSystemLine("{action}: execution paused at breakpoint: {name}", {
         action: translateText("Go"),
         name: getCurrentProgramName()
       });
       messagesPane.selectMarsTab?.();
     } else if (stopReason === "exception") {
-      postExecutionError(translateText("Go"), lastStepResult?.message);
+      postExecutionError(translateText("Go"), lastStepResult?.message, lastStepResult?.faultGroup, lastStepResult?.faultDetail);
     } else if (stopReason === "normal") {
-      postExecutionSuccess(translateText("Go"), lastStepResult?.haltReason || "exit");
+      postExecutionSuccess(translateText("Go"), lastStepResult?.haltReason);
     }
     addRunBenchmarkCpu(performance.now() - benchmarkTickStartedAt, benchmarkExecutedInstructions);
     finishRunBenchmark(stopReason || "stopped", {
@@ -8130,13 +8146,32 @@ function buildAssemblyContext(options = {}) {
   };
 }
 
+function measureUsageOperation(stage, operation) {
+  const startedAt = performance.now();
+  let succeeded = false;
+  try {
+    const result = operation();
+    succeeded = result?.ok === true;
+    return result;
+  } finally {
+    const elapsed = performance.now() - startedAt;
+    if (Number.isFinite(elapsed) && elapsed >= 0 && elapsed <= 120000) {
+      window.WebMarsUsage?.trackOperationTime?.(`${stage}_${succeeded ? "ok" : "error"}`, Math.round(elapsed));
+    }
+  }
+}
+
+function trackOperationErrors(details) {
+  for (const detail of new Set(details)) window.WebMarsUsage?.track("operation_error", detail);
+}
+
 function runBenchmarkedAssembly(assemblyContext, trigger = "assemble") {
-  const result = benchmarkCollector.measure("assemble", () => engine.assemble(assemblyContext.source, {
+  const result = benchmarkCollector.measure("assemble", () => measureUsageOperation("assemble", () => engine.assemble(assemblyContext.source, {
     sourceName: assemblyContext.sourceName,
     includeMap: assemblyContext.includeMap,
     programArgumentsEnabled: runtimeSettings.programArguments,
     programArguments: runtimeSettings.programArgumentsLine
-  }), {
+  })), {
     trigger: String(trigger || "assemble"),
     sourceName: String(assemblyContext.sourceName || ""),
     sourceCharacters: String(assemblyContext.source || "").length,
@@ -8144,6 +8179,10 @@ function runBenchmarkedAssembly(assemblyContext, trigger = "assemble") {
   });
   window.WebMarsFeedback?.outcome("assemble", result?.ok ? null : result?.errors?.map(error => [error.line, error.message]) || "assemble_error");
   window.WebMarsUsage?.track(result?.ok ? "assemble_success" : "assemble_error");
+  if (!result?.ok) {
+    const errors = result?.errors;
+    trackOperationErrors(errors?.length ? errors.map(error => error.code || "assemble_other") : ["assemble_other"]);
+  }
   return result;
 }
 
@@ -8601,14 +8640,14 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences, opt
     const includeSourceMap = collectMiniCIncludeSourceMap();
     const includeResolver = createMiniCIncludeResolver(sourceName, includeSourceMap);
     const useLibrarySources = buildMiniCUseLibrarySources(includeSourceMap, subset);
-    compileResult = benchmarkCollector.measure("compile", () => compiler.compile(source, {
+    compileResult = benchmarkCollector.measure("compile", () => measureUsageOperation("compile", () => compiler.compile(source, {
       sourceName,
       subset,
       targetAbi,
       emitComments,
       includeResolver,
       useLibrarySources
-    }), {
+    })), {
       sourceName,
       sourceCharacters: source.length,
       subset,
@@ -8628,6 +8667,7 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences, opt
       targetAbi,
       logs: [],
       warnings: [],
+      failureStage: "internal",
       errors: [diagnostic]
     };
   }
@@ -8637,6 +8677,13 @@ async function buildMiniCOutput(activeFile, sourceText, compilerPreferences, opt
   window.WebMarsUsage?.track(ok ? "compile_success" : "compile_error");
   const warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
   const errors = Array.isArray(normalized.errors) ? normalized.errors : [];
+  if (!ok) {
+    const stage = normalized.failureStage || "internal";
+    const semanticErrors = { MC_MISSING_ENTRY_POINT: "compile_entry_point", MC_SUBSET_MISMATCH: "compile_subset" };
+    trackOperationErrors(stage === "semantic" && errors.length
+      ? errors.map(error => semanticErrors[error.code] || "compile_semantic")
+      : [`compile_${stage}`]);
+  }
   window.WebMarsFeedback?.outcome("compile", ok ? null : errors.map(error => [error.line, error.message]));
   const logLines = [];
   const logs = Array.isArray(normalized.logs) ? normalized.logs : [];
@@ -9625,7 +9672,6 @@ const commands = {
 
   openProjectManager() {
     window.WebMarsProjectManager?.open?.();
-    window.WebMarsUsage?.track("feature_use", "project_manager");
   },
   async closeProject() {
     if (runActive) stopRunLoop();
@@ -9769,6 +9815,7 @@ const commands = {
       action: translateText("Assemble"),
       sources: describeAssemblySources(assemblyContext)
     });
+    window.WebMarsUsage?.track("feature_use", "assemble");
     const result = runBenchmarkedAssembly(assemblyContext, "assemble");
     reportDiagnostics(result, assemblyContext);
 
@@ -9806,6 +9853,7 @@ const commands = {
       }
 
       const currentPreferences = store.getState().preferences || preferences;
+      window.WebMarsUsage?.track("feature_use", "compile");
       const output = await buildMiniCOutput(active, source, currentPreferences, {
         isCurrent: () => compileRequestId === miniCCompileRequestId
       });
@@ -9868,6 +9916,7 @@ const commands = {
       postMarsMessage("You must reset before you can execute the program again.");
       return;
     }
+    window.WebMarsUsage?.track("feature_use", "step");
     messagesPane.selectRunTab?.();
     const captureRuntimeEvent = typeof toolManager.hasRuntimeEventConsumers === "function"
       && toolManager.hasRuntimeEventConsumers();
@@ -9877,7 +9926,7 @@ const commands = {
       programName: getCurrentProgramName()
     });
     if (!result.ok) {
-      postExecutionError(translateText("Step"), result.message);
+      postExecutionError(translateText("Step"), result.message, result.faultGroup, result.faultDetail);
       return;
     }
 
@@ -9885,6 +9934,7 @@ const commands = {
       messagesPane.postRun(result.message, { translate: false });
     }
     if (result.waitingForInput) {
+      window.WebMarsUsage?.track("feature_use", "input_wait");
       runPausedForInput = true;
       resumeRunAfterInput = false;
     } else {
@@ -9896,7 +9946,6 @@ const commands = {
       toolManager.onRuntimeEventBatch([result.runtimeEvent]);
     }
     const nextSnapshot = resolveStableRuntimeSnapshot(result.snapshot, { expectBackstep: true });
-    window.WebMarsUsage?.track("feature_use", "step");
     syncSnapshot(nextSnapshot, {
       force: result.runIo === true || result.waitingForInput === true
     });
@@ -9907,11 +9956,12 @@ const commands = {
       messagesPane.focusRunInput();
       return;
     }
+    if (result.stoppedOnBreakpoint) window.WebMarsUsage?.track("feature_use", "breakpoint");
     if (result.done) {
       if (result.exception) {
-        postExecutionError(translateText("Step"), result.message);
+        postExecutionError(translateText("Step"), result.message, result.faultGroup, result.faultDetail);
       } else {
-        postExecutionSuccess(translateText("Step"), result.haltReason || "exit");
+        postExecutionSuccess(translateText("Step"), result.haltReason);
       }
     }
   },  go() {
@@ -9955,6 +10005,7 @@ const commands = {
       postMarsMessage("[warn] Runtime is not running.");
       return;
     }
+    window.WebMarsUsage?.track("feature_use", "pause");
     clearRunTimer();
     runActive = false;
     runStopRequested = false;
@@ -10053,6 +10104,7 @@ const commands = {
         postMarsRaw("Unable to reset.  Please close file then re-open and re-assemble.\n");
       } else {
         rememberSuccessfulAssemblyContext(assemblyContext);
+        window.WebMarsUsage?.track("feature_use", "reset");
         postRunSystemLine("{action}: reset completed.", { action: translateText("Reset") });
         messagesPane.selectRunTab?.();
       }

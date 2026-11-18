@@ -37,6 +37,39 @@ function extractNamedFunction(source, name) {
   throw new Error(`unterminated function ${name}`);
 }
 
+test("operation timing measures successful and failed engine calls without changing their result", async () => {
+  const source = await readFile(resolve(projectRoot, "assets/js/app-modules/20-app-runtime.js"), "utf8");
+  const measurements = [];
+  let time = 0;
+  const measure = vm.runInNewContext(`(${extractNamedFunction(source, "measureUsageOperation")})`, {
+    performance: { now: () => time },
+    window: { WebMarsUsage: { trackOperationTime: (detail, milliseconds) => measurements.push([detail, milliseconds]) } }
+  });
+  const success = { ok: true };
+  assert.equal(measure("compile", () => { time += 3.3; return success; }), success);
+  const failure = { ok: false };
+  assert.equal(measure("assemble", () => { time += 4.8; return failure; }), failure);
+  assert.throws(() => measure("compile", () => { time += 2; throw new Error("private diagnostic"); }), /private diagnostic/);
+  assert.equal(measure("assemble", () => { time += 120001; return success; }), success);
+  assert.deepEqual(measurements, [["compile_ok", 3], ["assemble_error", 5], ["compile_error", 2]]);
+});
+
+test("assembler diagnostics carry a stable category separate from diagnostic text", async () => {
+  const engine = await createJavaScriptEngine();
+  for (const [source, code] of [
+    [".text\nprivate_op", "assemble_unknown_operator"],
+    [".text\nadd $t0", "assemble_operand_count"],
+    [".text\nadd $t0, $private_register, $t2", "assemble_operand_format"],
+    [".text\nj private_label", "assemble_undefined_symbol"],
+    ['.include "private.asm"', "assemble_include"],
+    [".text\nprivate_label: nop\nprivate_label: nop", "assemble_duplicate_label"]
+  ]) {
+    const result = engine.assemble(source);
+    assert.equal(result.ok, false);
+    assert.equal(result.errors[0].code, code);
+  }
+});
+
 test("runtime memory settings expose the JavaScript engine limit", async () => {
   const settings = await loadRuntimeSettings();
   assert.equal(settings.MAX_MEMORY_GB, 2);
